@@ -1,21 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, User, Briefcase, Activity, Volume2, RotateCcw, Target, Clock, MessageSquare, CheckCircle, Shield, DollarSign, Calendar } from 'lucide-react';
-
-interface Message {
-  id: string;
-  role: 'rep' | 'prospect';
-  text: string;
-  timestamp: Date;
-}
-
-interface LiveMetrics {
-  discovery: number;
-  value: number;
-  objection: number;
-  cta: number;
-  suggestions: string[];
-}
+import { Activity, Target, CheckCircle, Shield, DollarSign, Calendar } from 'lucide-react';
 
 interface Objective {
   id: string;
@@ -27,17 +12,6 @@ interface Objective {
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'practice' | 'feedback'>('home');
-  const [, setAttemptId] = useState<string>('');
-  const [currentState, setCurrentState] = useState<string>('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [isTerminal, setIsTerminal] = useState(false);
-  const [isCustomerSpeaking, setIsCustomerSpeaking] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [liveMetrics, setLiveMetrics] = useState<LiveMetrics>({
-    discovery: 0, value: 0, objection: 0, cta: 0, suggestions: []
-  });
   const [evaluation, setEvaluation] = useState<any>(null);
   const [doorClicked, setDoorClicked] = useState(false);
   const [objectives, setObjectives] = useState<Objective[]>([
@@ -48,194 +22,10 @@ function App() {
   ]);
   const [showPerformanceButton, setShowPerformanceButton] = useState(false);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
-
-  const startSimulation = async () => {
-    try {
-      setIsProcessing(true);
-      
-      // Get microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      
-      // Start simulation - persona is randomly selected on backend
-      const response = await fetch('/api/sim/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ personaType: 'random' }) // Always random
-      });
-      
-      if (!response.ok) throw new Error('Failed to start simulation');
-      
-      const data = await response.json();
-      setAttemptId(data.attemptId);
-      setCurrentState(data.state);
-      
-      // Add initial message from prospect
-      if (data.reply) {
-        setMessages([{
-          id: Date.now().toString(),
-          role: 'prospect',
-          text: data.reply,
-          timestamp: new Date()
-        }]);
-        
-        // Play audio if available
-        if (data.audioUrl) {
-          const audio = new Audio(data.audioUrl);
-          setIsCustomerSpeaking(true);
-          audio.addEventListener('ended', () => setIsCustomerSpeaking(false));
-          await audio.play();
-        }
-      }
-      
-      setIsSessionActive(true);
-    } catch (error) {
-      console.error('Error starting simulation:', error);
-      alert('Failed to start simulation. Please check your microphone permissions.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      if (!streamRef.current) {
-        streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-      }
-      
-      audioChunksRef.current = [];
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current);
-      
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await sendAudioForProcessing(audioBlob);
-      };
-      
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      alert('Failed to start recording. Please check your microphone permissions.');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const sendAudioForProcessing = async (audioBlob: Blob) => {
-    setIsProcessing(true);
-    
-    try {
-      // First transcribe the audio
-      const formData = new FormData();
-      formData.append('audio', audioBlob);
-      
-      const transcribeResponse = await fetch('/api/practice/transcribe', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!transcribeResponse.ok) throw new Error('Transcription failed');
-      
-      const { text } = await transcribeResponse.json();
-      
-      // Add user message
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        role: 'rep',
-        text,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage]);
-      
-      // Get AI response
-      const stepResponse = await fetch('/api/sim/step', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          attemptId: '',
-          repText: text
-        })
-      });
-      
-      if (!stepResponse.ok) throw new Error('Failed to get response');
-      
-      const stepData = await stepResponse.json();
-      
-      // Update state
-      setCurrentState(stepData.state);
-      setIsTerminal(stepData.isTerminal);
-      setLiveMetrics(stepData.liveMetrics || liveMetrics);
-      
-      // Add AI response
-      if (stepData.reply) {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'prospect',
-          text: stepData.reply,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiMessage]);
-        
-        // Play audio
-        if (stepData.audioUrl) {
-          const audio = new Audio(stepData.audioUrl);
-          setIsCustomerSpeaking(true);
-          audio.addEventListener('ended', () => setIsCustomerSpeaking(false));
-          await audio.play();
-        }
-      }
-      
-      // End if terminal
-      if (stepData.isTerminal) {
-        setTimeout(() => endSimulation(), 2000);
-      }
-    } catch (error) {
-      console.error('Error processing audio:', error);
-      alert('Failed to process audio. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const endSimulation = async () => {
-    // Get evaluation
-    fetch('/api/sim/end', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ attemptId: '' })
-    }).then(res => res.json()).then(data => {
-      if (data.eval) {
-        setEvaluation(data);
-        setCurrentScreen('feedback');
-      }
-    });
-    setIsSessionActive(false);
-  };
 
   const resetSimulation = () => {
     setCurrentScreen('home');
-    setAttemptId('');
-    setCurrentState('');
-    setMessages([]);
-    setIsSessionActive(false);
-    setIsTerminal(false);
-    setIsCustomerSpeaking(false);
-    setIsProcessing(false);
-    setLiveMetrics({ discovery: 0, value: 0, objection: 0, cta: 0, suggestions: [] });
     setEvaluation(null);
     setDoorClicked(false);
     setObjectives(objectives.map(obj => ({ ...obj, completed: false })));
@@ -439,7 +229,7 @@ function App() {
                         'bg-blue-500/20 text-blue-400'
                       }`}>
                         {objective.icon}
-                      </div>
+      </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-white">{objective.name}</h3>
                         <p className="text-sm text-gray-400">
@@ -447,8 +237,8 @@ function App() {
                           {objective.id === '2' && 'Clearly explain how your product/service solves their problem'}
                           {objective.id === '3' && 'Address concerns and overcome objections professionally'}
                           {objective.id === '4' && 'Secure a clear next step or close the sale'}
-                        </p>
-                      </div>
+        </p>
+      </div>
                       <AnimatePresence>
                         {objective.completed && (
                           <motion.div
