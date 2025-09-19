@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, User, Briefcase, Activity, Volume2, RotateCcw } from 'lucide-react';
 
 interface Message {
@@ -18,7 +18,7 @@ interface LiveMetrics {
 }
 
 function App() {
-  const [attemptId, setAttemptId] = useState<string>('');
+  const [, setAttemptId] = useState<string>('');
   const [currentState, setCurrentState] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -134,7 +134,7 @@ function App() {
   };
 
   // Process audio response
-  const processAudioResponse = async (audioBlob: Blob) => {
+  const processAudioResponse = async (_audioBlob: Blob) => {
     setIsProcessing(true);
     
     try {
