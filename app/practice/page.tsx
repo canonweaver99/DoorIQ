@@ -242,7 +242,7 @@ export default function PracticePage() {
       setMessages(prev => [...prev, userMessage]);
       
       // Get AI response
-      const stepResponse = await fetch('/api/sim/step', {
+      const stepResponse = await fetch('/api/sim/step-simple', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -270,6 +270,13 @@ export default function PracticePage() {
         
         // Play audio response
         await playTextToSpeech(stepData.prospectReply, currentPersona?.voiceId);
+        
+        // Automatically start listening again after AI finishes speaking
+        setTimeout(() => {
+          if (!isRecording && !isProcessing && !stepData.terminal) {
+            startRecording();
+          }
+        }, 500);
       }
       
       // Check if conversation ended
@@ -427,6 +434,12 @@ export default function PracticePage() {
         // Play greeting audio using ElevenLabs
         if (data.reply) {
           await playTextToSpeech(data.reply, currentPersona?.voiceId);
+          // Automatically start listening after AI finishes speaking
+          setTimeout(() => {
+            if (!isRecording && !isProcessing) {
+              startRecording();
+            }
+          }, 500);
         }
       }
     } catch (error) {
@@ -681,11 +694,11 @@ export default function PracticePage() {
                     className={`relative group ${
                       isRecording 
                         ? 'bg-red-500 hover:bg-red-600' 
-                        : 'bg-green-500 hover:bg-green-600'
+                        : 'bg-blue-500 hover:bg-blue-600'
                     } text-white p-6 rounded-full shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {isRecording ? (
-                      <MicOff className="w-8 h-8" />
+                      <Pause className="w-8 h-8" />
                     ) : (
                       <Mic className="w-8 h-8" />
                     )}
@@ -704,10 +717,10 @@ export default function PracticePage() {
                 </div>
                 
                 <p className="text-center text-gray-400 mt-4 text-sm">
-                  {isRecording ? 'Recording... Stop talking to auto-submit' : 
+                  {isRecording ? 'Listening... (pause when done speaking)' : 
                    isCustomerSpeaking ? `${currentPersona?.name} is speaking...` :
                    isProcessing ? 'Processing...' :
-                   'Click microphone to respond'}
+                   'Conversation paused - click to resume'}
                 </p>
               </div>
             </div>
