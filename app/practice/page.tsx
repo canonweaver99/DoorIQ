@@ -201,7 +201,7 @@ export default function PracticePage() {
       const formData = new FormData();
       formData.append('audio', audioBlob);
       
-      const transcribeResponse = await fetch('/api/practice/transcribe', {
+      const transcribeResponse = await fetch('/api/elevenlabs/transcribe', {
         method: 'POST',
         body: formData
       });
@@ -225,8 +225,7 @@ export default function PracticePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           attemptId,
-          repText: text,
-          personaData: currentPersona
+          repUtterance: text
         })
       });
       
@@ -235,29 +234,24 @@ export default function PracticePage() {
       const stepData = await stepResponse.json();
       
       // Update objectives based on progress
-      if (stepData.objectivesCompleted) {
-        setObjectives(prev => prev.map(obj => ({
-          ...obj,
-          completed: stepData.objectivesCompleted.includes(obj.id)
-        })));
-      }
+      // Optionally update objectives based on live metrics or custom logic
       
       // Add AI response
-      if (stepData.reply) {
+      if (stepData.prospectReply) {
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'prospect',
-          text: stepData.reply,
+          text: stepData.prospectReply,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, aiMessage]);
         
         // Play audio response
-        await playTextToSpeech(stepData.reply, currentPersona?.voiceId);
+        await playTextToSpeech(stepData.prospectReply, currentPersona?.voiceId);
       }
       
       // Check if conversation ended
-      if (stepData.isTerminal) {
+      if (stepData.terminal) {
         setTimeout(() => endConversation(), 2000);
       }
     } catch (error) {
