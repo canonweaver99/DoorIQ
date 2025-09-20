@@ -5,6 +5,7 @@ import Scenario from "@/models/Scenario";
 import Rubric from "@/models/Rubric";
 import { PersonaFactory } from "@/lib/persona-engine";
 import type { Persona } from "@/lib/types";
+import type { HomeownerPersona } from "@/lib/personas";
 
 function makePersona(scenario?: any): Persona {
   const personas: Persona[] = [
@@ -79,6 +80,26 @@ function makePersona(scenario?: any): Persona {
   return personas[Math.floor(Math.random() * personas.length)];
 }
 
+function convertHomeownerPersonaToPersona(homeowner: HomeownerPersona): Persona {
+  return {
+    company: `${homeowner.name}'s Home`,
+    vertical: "Residential",
+    size: homeowner.backgroundInfo.familySize,
+    role: homeowner.occupation,
+    pain: homeowner.backgroundInfo.previousPestIssues || ["general pest concerns"],
+    budget: "$100-300/month", // Default range
+    urgency: homeowner.temperature === 'warm' || homeowner.temperature === 'interested' ? "high" : 
+             homeowner.temperature === 'neutral' ? "medium" : "low",
+    objections: homeowner.conversationStyle.objections,
+    hiddenGoal: `${homeowner.personality} - responds to ${homeowner.conversationStyle.interests.join(', ')}`,
+    successCriteria: {
+      requiresROIQuant: homeowner.temperature === 'skeptical',
+      requiresScheduling: true,
+      requiresBudgetCheck: homeowner.temperature !== 'warm'
+    }
+  };
+}
+
 export async function POST(req: Request) {
   try {
     await db();
@@ -98,11 +119,10 @@ export async function POST(req: Request) {
       hardRules: {}
     };
 
-    // Use advanced persona factory for more sophisticated personas
-    const personaType = body.personaType || 'random';
-    const persona = personaType === 'random' 
-      ? PersonaFactory.createRandomPestControlPersona()
-      : PersonaFactory.createPersonaByType(personaType);
+    // Use persona data from request or generate random one
+    const persona = body.personaData 
+      ? convertHomeownerPersonaToPersona(body.personaData)
+      : makePersona();
     
     // Create new attempt
     const attempt = await Attempt.create({
@@ -114,10 +134,15 @@ export async function POST(req: Request) {
       rubricSnapshot: rubric
     });
 
+    // Generate initial greeting based on persona data
+    const greeting = body.personaData?.conversationStyle?.greeting || 
+                    "Hello, what can I help you with today?";
+
     return NextResponse.json({ 
       attemptId: attempt._id.toString(), 
       persona, 
       state: "OPENING",
+      reply: greeting,
       scenario: scenario ? {
         title: scenario.title,
         vertical: scenario.vertical,
