@@ -124,51 +124,67 @@ export default function PracticePage() {
     }, 800);
   };
 
-  const playTextToSpeech = async (text: string, voiceId?: string) => {
-    try {
-      setIsCustomerSpeaking(true);
-      
-      const response = await fetch('/api/elevenlabs/generate-voice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          voiceId: voiceId || 'EXAVITQu4vr4xnSDxMaL'
-        })
-      });
-
-      if (!response.ok) {
-        console.log('Voice generation failed, skipping audio');
-        setIsCustomerSpeaking(false);
-        return;
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      
-      // Store reference so we can stop it
-      audioPlayerRef.current = audio;
-      
-      if (audio) {
-        audio.addEventListener('ended', () => {
-          setIsCustomerSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-          audioPlayerRef.current = null;
-        });
+  const playTextToSpeech = async (text: string, voiceId?: string): Promise<void> => {
+    return new Promise((resolve) => {
+      try {
+        setIsCustomerSpeaking(true);
         
-        audio.addEventListener('error', () => {
-          setIsCustomerSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-          audioPlayerRef.current = null;
-        });
+        fetch('/api/elevenlabs/generate-voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            voiceId: voiceId || 'EXAVITQu4vr4xnSDxMaL'
+          })
+        }).then(response => {
+          if (!response.ok) {
+            console.log('Voice generation failed, skipping audio');
+            setIsCustomerSpeaking(false);
+            resolve();
+            return;
+          }
 
-        await audio.play();
+          return response.blob();
+        }).then(audioBlob => {
+          if (!audioBlob) return;
+          
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+          
+          // Store reference so we can stop it
+          audioPlayerRef.current = audio;
+          
+          audio.addEventListener('ended', () => {
+            setIsCustomerSpeaking(false);
+            URL.revokeObjectURL(audioUrl);
+            audioPlayerRef.current = null;
+            resolve(); // Resolve when audio actually finishes
+          });
+          
+          audio.addEventListener('error', () => {
+            setIsCustomerSpeaking(false);
+            URL.revokeObjectURL(audioUrl);
+            audioPlayerRef.current = null;
+            resolve(); // Resolve even on error
+          });
+
+          audio.play().catch(() => {
+            setIsCustomerSpeaking(false);
+            URL.revokeObjectURL(audioUrl);
+            audioPlayerRef.current = null;
+            resolve(); // Resolve if play fails
+          });
+        }).catch(error => {
+          console.error('Error playing text to speech:', error);
+          setIsCustomerSpeaking(false);
+          resolve(); // Resolve on any error
+        });
+      } catch (error) {
+        console.error('Error in playTextToSpeech:', error);
+        setIsCustomerSpeaking(false);
+        resolve(); // Resolve on any error
       }
-    } catch (error) {
-      console.error('Error playing text to speech:', error);
-      setIsCustomerSpeaking(false);
-    }
+    });
   };
 
   const formatTime = (date: Date): string => {
@@ -318,15 +334,16 @@ export default function PracticePage() {
         // Increment turn count
         setTurnCount(prev => prev + 1);
         
-        // Play audio response
+        // Play audio response and wait for it to finish
         await playTextToSpeech(stepData.prospectReply, currentPersona?.voiceId);
         
-        // Automatically start listening again after AI finishes speaking (with better delay)
-        setTimeout(() => {
-          if (!isRecording && !isProcessing && !stepData.terminal && currentScreen === 'conversation') {
+        // Start listening immediately after AI finishes speaking (no delay)
+        if (!isRecording && !isProcessing && !stepData.terminal && currentScreen === 'conversation') {
+          // Small delay to let user process, but much shorter
+          setTimeout(() => {
             startRecording();
-          }
-        }, 1200); // Give user time to process and think
+          }, 300);
+        }
       }
       
       // Check if conversation ended
@@ -500,12 +517,12 @@ export default function PracticePage() {
         // Play greeting audio using ElevenLabs
         if (data.reply) {
           await playTextToSpeech(data.reply, currentPersona?.voiceId);
-          // Give user a moment to prepare before auto-listening
-          setTimeout(() => {
-            if (!isRecording && !isProcessing && currentScreen === 'conversation') {
+          // Start listening right after greeting finishes
+          if (!isRecording && !isProcessing && currentScreen === 'conversation') {
+            setTimeout(() => {
               startRecording();
-            }
-          }, 1500); // Increased delay for user to prepare
+            }, 300);
+          }
         }
       }
     } catch (error) {
