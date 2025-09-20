@@ -76,7 +76,45 @@ export default function PracticePage() {
     }
   };
 
+  const playDoorKnockSound = () => {
+    try {
+      // Create door knock sound using Web Audio API
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Create three quick knocks
+      const createKnock = (startTime: number) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Low frequency for wooden door sound
+        oscillator.frequency.setValueAtTime(100, startTime);
+        oscillator.frequency.exponentialRampToValueAtTime(50, startTime + 0.1);
+        
+        // Sharp attack, quick decay
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + 0.1);
+      };
+      
+      // Three knocks: knock-knock-knock
+      const now = audioContext.currentTime;
+      createKnock(now);
+      createKnock(now + 0.15);
+      createKnock(now + 0.3);
+      
+    } catch (error) {
+      console.log('Could not play door knock sound:', error);
+    }
+  };
+
   const handleDoorClick = () => {
+    playDoorKnockSound();
     setDoorClicked(true);
     const persona = getRandomPersona();
     setCurrentPersona(persona);

@@ -291,7 +291,9 @@ export async function POST(req: Request) {
     // Clean up old conversations (keep last 50)
     if (conversationContext.size > 50) {
       const firstKey = conversationContext.keys().next().value;
-      conversationContext.delete(firstKey);
+      if (firstKey) {
+        conversationContext.delete(firstKey);
+      }
     }
     
     // More natural terminal conditions
