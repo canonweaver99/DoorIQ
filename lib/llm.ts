@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 const client = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY 
@@ -14,7 +15,7 @@ export async function callProspectLLM(params: {
 }) {
   const { system, persona, state, history, repUtterance, ragText } = params;
   
-  const messages: any[] = [
+  const messages: ChatCompletionMessageParam[] = [
     { role: "system", content: `${system}\n\nIMPORTANT: Respond ONLY in English. Be a realistic American homeowner.` },
     { role: "system", content: `STATE=${state}` },
     { role: "system", content: `PERSONA=${JSON.stringify(persona)}` },
@@ -43,7 +44,7 @@ export async function callEvaluatorLLM(params: {
   transcript: string;
   rubric: any;
 }) {
-  const messages = [
+  const messages: ChatCompletionMessageParam[] = [
     { role: "system", content: params.system },
     { role: "user", content: `RUBRIC=${JSON.stringify(params.rubric)}` },
     { role: "user", content: `TRANSCRIPT:\n${params.transcript}` }
