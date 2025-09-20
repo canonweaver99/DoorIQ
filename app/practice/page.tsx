@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Target, CheckCircle, Shield, DollarSign, Calendar, Mic, MicOff, Volume2, Play, Pause, RotateCcw, Home } from 'lucide-react';
 import { getRandomPersona, HomeownerPersona } from '@/lib/personas';
@@ -9,7 +9,7 @@ interface Objective {
   id: string;
   name: string;
   color: string;
-  icon: JSX.Element;
+  icon: React.ReactElement;
   completed: boolean;
 }
 
