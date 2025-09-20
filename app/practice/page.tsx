@@ -121,6 +121,17 @@ export default function PracticePage() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const checkMicrophonePermission = async () => {
+    try {
+      const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      console.log('Microphone permission state:', result.state);
+      return result.state === 'granted';
+    } catch (error) {
+      console.log('Permission API not supported, trying direct access');
+      return true; // Fallback to direct getUserMedia
+    }
+  };
+
   const startRecording = async () => {
     try {
       if (!streamRef.current) return;
@@ -355,8 +366,50 @@ export default function PracticePage() {
       setIsProcessing(true);
       setCurrentScreen('conversation');
       
-      // Get microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Check if microphone is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Microphone access not supported in this browser');
+      }
+      
+      // Check if we're on HTTPS (required for microphone in production)
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        throw new Error('Microphone access requires HTTPS connection');
+      }
+      
+      // Get microphone access with better error handling
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+      } catch (micError: any) {
+        console.error('Microphone access error:', micError);
+        console.error('Error details:', {
+          name: micError.name,
+          message: micError.message,
+          protocol: location.protocol,
+          hostname: location.hostname,
+          userAgent: navigator.userAgent
+        });
+        
+        let errorMessage = 'Microphone access failed. ';
+        if (micError.name === 'NotAllowedError') {
+          errorMessage += 'Please click the microphone icon in your browser address bar and allow access.';
+        } else if (micError.name === 'NotFoundError') {
+          errorMessage += 'No microphone found. Please connect a microphone and try again.';
+        } else if (micError.name === 'NotSupportedError') {
+          errorMessage += 'Microphone not supported in this browser.';
+        } else {
+          errorMessage += micError.message;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
       streamRef.current = stream;
       
       // Start simulation with selected persona
@@ -547,7 +600,14 @@ export default function PracticePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  onClick={startConversation}
+                  onClick={async () => {
+                    const hasPermission = await checkMicrophonePermission();
+                    if (!hasPermission) {
+                      alert('Please allow microphone access in your browser settings, then refresh the page.');
+                      return;
+                    }
+                    startConversation();
+                  }}
                   className="w-full mt-8 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors"
                 >
                   Start Conversation
