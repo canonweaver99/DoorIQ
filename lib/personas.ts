@@ -648,7 +648,7 @@ export const homeownerPersonas: HomeownerPersona[] = [
       
       interruptionTolerance: 'high',
       commonInterruptions: ['Oh, that reminds me of...', 'You know, funny story...', 'Speaking of that...'],
-      sideComments: ['(to neighbor) Hey Bill! I'll catch up with you later!', '(to dog) Jordan, stay!'],
+      sideComments: ["(to neighbor) Hey Bill! I'll catch up with you later!", "(to dog) Jordan, stay!"],
       distractions: ['Dog barking', 'Neighbor waving', 'Student driving by honking']
     },
     
@@ -867,7 +867,7 @@ export const homeownerPersonas: HomeownerPersona[] = [
       researchStyle: 'Thorough online research, checks credentials, reads studies',
       
       interruptionTolerance: 'low',
-      commonInterruptions: ['Let me stop you there', 'That's not accurate', 'Can you clarify that claim?'],
+      commonInterruptions: ["Let me stop you there", "That's not accurate", "Can you clarify that claim?"],
       sideComments: ['(checking phone for hospital alerts)', '(making mental notes)'],
       distractions: ['Hospital pager', 'Phone calls from hospital', 'Medical emergency alerts']
     },
@@ -1062,10 +1062,10 @@ export const homeownerPersonas: HomeownerPersona[] = [
       
       previousPestIssues: ['Bad roach problem 3 years ago', 'Mice ate car wiring', 'Fire ants in yard'],
       currentPestConcerns: ['Protecting family', 'Clean home for gatherings', 'No pests in garage/tools'],
-      pestControlHistory: 'Cousin did it cheap, wasn't reliable',
-      badExperiences: 'Big company locked into contract, poor service',
+      pestControlHistory: "Cousin did it cheap, wasn't reliable",
+      badExperiences: "Big company locked into contract, poor service",
       
-      financialStatus: 'Successful business owner, but careful with money',
+      financialStatus: "Successful business owner, but careful with money",
       budgetConcerns: ['Fair value', 'No contracts', 'Honest pricing', 'Supporting family'],
       
       hobbies: ['Working on classic cars', 'Sunday soccer', 'Family BBQs', 'Helping at church'],
@@ -1086,7 +1086,7 @@ export const homeownerPersonas: HomeownerPersona[] = [
       researchStyle: 'Asks other business owners, values reputation',
       
       interruptionTolerance: 'medium',
-      commonInterruptions: ['Okay, okay, bottom line?', 'Cut to the chase', 'What's this gonna cost?'],
+      commonInterruptions: ["Okay, okay, bottom line?", "Cut to the chase", "What's this gonna cost?"],
       sideComments: ['(in Spanish to family)', '(to dog) Diesel, sit!', '(checking work phone)'],
       distractions: ['Work calls', 'Kids asking questions', 'Neighbors stopping by']
     },
