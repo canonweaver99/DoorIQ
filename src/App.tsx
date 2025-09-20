@@ -80,9 +80,10 @@ function App() {
   };
 
   useEffect(() => {
+    const currentStream = streamRef.current;
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);

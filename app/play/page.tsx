@@ -275,7 +275,7 @@ export default function PlayPage() {
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">Ready to Practice?</h2>
               <p className="text-gray-600 mb-6">
-                You'll be speaking with a homeowner about pest control services. 
+                You&apos;ll be speaking with a homeowner about pest control services. 
                 Your goal is to schedule an inspection or start a service plan.
               </p>
               

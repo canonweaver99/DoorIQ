@@ -347,6 +347,7 @@ export default function PracticePage() {
     return () => {
       resetSimulation();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startConversation = async () => {
