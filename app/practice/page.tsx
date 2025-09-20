@@ -366,9 +366,10 @@ export default function PracticePage() {
       setIsProcessing(true);
       setCurrentScreen('conversation');
       
-      // Get microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      // Microphone access should already be granted and stored in streamRef
+      if (!streamRef.current) {
+        throw new Error('No microphone stream available');
+      }
       
       // Start simulation with selected persona
       const response = await fetch('/api/sim/start', {
@@ -559,12 +560,19 @@ export default function PracticePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                   onClick={async () => {
-                    const hasPermission = await checkMicrophonePermission();
-                    if (!hasPermission) {
-                      alert('Please allow microphone access in your browser settings, then refresh the page.');
-                      return;
+                    try {
+                      // Immediately request microphone access - this will show the browser permission popup
+                      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                      
+                      // If we get here, permission was granted - store the stream and start
+                      streamRef.current = stream;
+                      
+                      // Now start the conversation with the already-granted microphone access
+                      startConversation();
+                    } catch (error) {
+                      console.error('Microphone permission denied:', error);
+                      alert('Microphone access is required for voice chat. Please click "Allow" when prompted and try again.');
                     }
-                    startConversation();
                   }}
                   className="w-full mt-8 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors"
                 >
