@@ -366,50 +366,8 @@ export default function PracticePage() {
       setIsProcessing(true);
       setCurrentScreen('conversation');
       
-      // Check if microphone is available
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Microphone access not supported in this browser');
-      }
-      
-      // Check if we're on HTTPS (required for microphone in production)
-      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        throw new Error('Microphone access requires HTTPS connection');
-      }
-      
-      // Get microphone access with better error handling
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        });
-      } catch (micError: any) {
-        console.error('Microphone access error:', micError);
-        console.error('Error details:', {
-          name: micError.name,
-          message: micError.message,
-          protocol: location.protocol,
-          hostname: location.hostname,
-          userAgent: navigator.userAgent
-        });
-        
-        let errorMessage = 'Microphone access failed. ';
-        if (micError.name === 'NotAllowedError') {
-          errorMessage += 'Please click the microphone icon in your browser address bar and allow access.';
-        } else if (micError.name === 'NotFoundError') {
-          errorMessage += 'No microphone found. Please connect a microphone and try again.';
-        } else if (micError.name === 'NotSupportedError') {
-          errorMessage += 'Microphone not supported in this browser.';
-        } else {
-          errorMessage += micError.message;
-        }
-        
-        throw new Error(errorMessage);
-      }
-      
+      // Get microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
       // Start simulation with selected persona
@@ -444,7 +402,7 @@ export default function PracticePage() {
         }
       }
     } catch (error) {
-      console.error('Error starting conversation:', error);
+      console.error('Microphone error:', error);
       alert('Failed to start conversation. Please check your microphone permissions.');
       resetSimulation();
     } finally {
