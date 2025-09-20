@@ -34,7 +34,7 @@ export class AIConversationManager {
   }
 
   private generatePersonality(scenario: string): string {
-    const personalities = {
+    const personalities: Record<string, string> = {
       skeptical_homeowner: `You are a skeptical homeowner who:
         - Is naturally suspicious of door-to-door salespeople
         - Values their time and hates feeling pressured
@@ -68,7 +68,7 @@ export class AIConversationManager {
         - Will negotiate on price if interested`,
     };
 
-    return personalities[scenario] || personalities.skeptical_homeowner;
+    return personalities[scenario] ?? personalities["skeptical_homeowner"];
   }
 
   async generateResponse(salesRepMessage: string): Promise<{
