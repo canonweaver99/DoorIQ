@@ -1,41 +1,63 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
-const client = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
+export async function generateResponse(
+  state: string,
+  persona: any,
+  ragText: string | null,
+  history: ChatCompletionMessageParam[],
+  repUtterance: string
+) {
+  const messages: ChatCompletionMessageParam[] = [
+    { role: "system" as const, content: `STATE=${state}` },
+    { role: "system" as const, content: `PERSONA=${JSON.stringify(persona)}` },
+    ...(ragText ? [{ role: "system" as const, content: `RAG:\n${ragText}` } as ChatCompletionMessageParam] : []),
+    ...history,
+    { role: "user" as const, content: repUtterance }
+  ];
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4",
+    messages: messages,
+  });
+
+  return completion.choices[0].message.content;
+}
+
+// Legacy functions for backward compatibility
 export async function callProspectLLM(params: {
   system: string;
   persona: any;
   state: string;
-  history: {role: "user" | "assistant", content: string}[];
+  history: ChatCompletionMessageParam[];
   repUtterance: string;
   ragText?: string;
 }) {
   const { system, persona, state, history, repUtterance, ragText } = params;
   
   const messages: ChatCompletionMessageParam[] = [
-    { role: "system", content: `${system}\n\nIMPORTANT: Respond ONLY in English. Be a realistic American homeowner.` },
-    { role: "system", content: `STATE=${state}` },
-    { role: "system", content: `PERSONA=${JSON.stringify(persona)}` },
-    ...(ragText ? [{ role: "system", content: `RAG:\n${ragText}` }] : []),
+    { role: "system" as const, content: `${system}\n\nIMPORTANT: Respond ONLY in English. Be a realistic American homeowner.` },
+    { role: "system" as const, content: `STATE=${state}` },
+    { role: "system" as const, content: `PERSONA=${JSON.stringify(persona)}` },
+    ...(ragText ? [{ role: "system" as const, content: `RAG:\n${ragText}` } as ChatCompletionMessageParam] : []),
     ...history,
-    { role: "user", content: repUtterance }
+    { role: "user" as const, content: repUtterance }
   ];
 
   try {
-    const res = await client.chat.completions.create({
+    const res = await openai.chat.completions.create({
       model: process.env.MODEL_NAME || 'gpt-4o-mini',
       temperature: 0.6,
-      max_tokens: 200,
       messages
     });
-    
     return res.choices[0]?.message?.content?.trim() || "";
   } catch (error) {
-    console.error('Prospect LLM error:', error);
-    throw error;
+    console.error("Error calling Prospect LLM:", error);
+    return "I'm sorry, I'm having trouble responding right now. Can you please repeat that?";
   }
 }
 
@@ -45,13 +67,13 @@ export async function callEvaluatorLLM(params: {
   rubric: any;
 }) {
   const messages: ChatCompletionMessageParam[] = [
-    { role: "system", content: params.system },
-    { role: "user", content: `RUBRIC=${JSON.stringify(params.rubric)}` },
-    { role: "user", content: `TRANSCRIPT:\n${params.transcript}` }
+    { role: "system" as const, content: params.system },
+    { role: "user" as const, content: `RUBRIC=${JSON.stringify(params.rubric)}` },
+    { role: "user" as const, content: `TRANSCRIPT:\n${params.transcript}` }
   ];
 
   try {
-    const res = await client.chat.completions.create({
+    const res = await openai.chat.completions.create({
       model: process.env.MODEL_NAME || 'gpt-4o-mini',
       temperature: 0.2,
       max_tokens: 1000,
@@ -63,36 +85,16 @@ export async function callEvaluatorLLM(params: {
     if (!content) {
       throw new Error('No response from evaluator LLM');
     }
-    
+
     return JSON.parse(content);
   } catch (error) {
-    console.error('Evaluator LLM error:', error);
-    // Return fallback evaluation
+    console.error("Error calling Evaluator LLM:", error);
     return {
-      score: 50,
-      result: "advanced",
-      rubric_breakdown: { discovery: 12, value: 12, objection: 13, cta: 13 },
-      feedback_bullets: ["Unable to generate detailed feedback due to API error"],
-      missed_opportunities: ["System error prevented detailed analysis"]
+      score: 0,
+      result: "rejected",
+      rubric_breakdown: { discovery:0, value:0, objection:0, cta:0 },
+      feedback_bullets: ["Error during evaluation."],
+      missed_opportunities: ["Could not generate detailed feedback."]
     };
-  }
-}
-
-// Whisper transcription for better accuracy
-export async function transcribeWithWhisper(audioBuffer: Buffer): Promise<string> {
-  try {
-    const file = new File([audioBuffer], 'audio.webm', { type: 'audio/webm' });
-    
-    const transcription = await client.audio.transcriptions.create({
-      file: file,
-      model: 'whisper-1',
-      language: 'en',
-      response_format: 'text'
-    });
-    
-    return transcription;
-  } catch (error) {
-    console.error('Whisper transcription error:', error);
-    throw error;
   }
 }
