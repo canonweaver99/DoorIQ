@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -99,14 +100,16 @@ export class AIConversationManager {
     
     Keep responses concise and realistic.`;
 
+    const historyMessages: ChatCompletionMessageParam[] = this.context.conversationHistory.map((msg) => ({
+      role: (msg.role === 'sales_rep' ? 'user' : 'assistant') as const,
+      content: msg.content,
+    }));
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: [
-        { role: 'system', content: systemPrompt },
-        ...this.context.conversationHistory.map(msg => ({
-          role: msg.role === 'sales_rep' ? 'user' : 'assistant',
-          content: msg.content,
-        })),
+        { role: 'system' as const, content: systemPrompt },
+        ...historyMessages,
       ],
       temperature: 0.8,
       max_tokens: 150,
@@ -123,11 +126,11 @@ export class AIConversationManager {
       model: 'gpt-4-turbo-preview',
       messages: [
         {
-          role: 'system',
+          role: 'system' as const,
           content: 'What is this customer thinking but not saying? Be brief and insightful.',
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `Customer said: "${customerResponse}"\nWhat are they really thinking?`,
         },
       ],
@@ -157,7 +160,7 @@ export class AIConversationManager {
       model: 'gpt-4-turbo-preview',
       messages: [
         {
-          role: 'system',
+          role: 'system' as const,
           content: `Analyze this sales pitch for:
             1. Rapport building (0-10)
             2. Objection handling (0-10)
@@ -167,7 +170,7 @@ export class AIConversationManager {
             Return as JSON.`,
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: message,
         },
       ],
@@ -210,7 +213,7 @@ export class AIConversationManager {
       model: 'gpt-4-turbo-preview',
       messages: [
         {
-          role: 'system',
+          role: 'system' as const,
           content: `You are an expert sales coach. Analyze this door-to-door sales conversation and provide detailed, actionable feedback. Focus on:
             1. Specific moments that went well or poorly
             2. Concrete suggestions for improvement
@@ -219,7 +222,7 @@ export class AIConversationManager {
             Be encouraging but honest. Provide specific examples from the conversation.`,
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `Analyze this conversation:\n\n${conversationText}\n\nProvide detailed feedback in JSON format with: overallScore (0-100), strengths (array), improvements (array), specificExamples (array of {moment, feedback, suggestion}), nextSteps (array).`,
         },
       ],
