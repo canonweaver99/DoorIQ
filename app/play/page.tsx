@@ -329,7 +329,7 @@ export default function PlayPage() {
               <div className="grid md:grid-cols-4 gap-4 mb-8">
                 {Object.entries(evaluation.eval.rubric_breakdown).map(([key, value]) => (
                   <div key={key} className="bg-gray-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-gray-900">{value}/25</div>
+                    <div className="text-2xl font-bold text-gray-900">{value as number}/25</div>
                     <div className="text-sm text-gray-600 capitalize">{key}</div>
                   </div>
                 ))}
