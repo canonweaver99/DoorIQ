@@ -1,274 +1,61 @@
 import { NextResponse } from "next/server";
 import { getPersonaById } from "@/lib/personas";
+import OpenAI from "openai";
 
-// Track conversation context to avoid repetition and create natural flow
-const conversationContext = new Map<string, {
-  usedResponses: string[];
-  topics: string[];
-  mood: 'cold' | 'warming' | 'interested' | 'annoyed' | 'ready_to_close';
-  lastResponseType: 'question' | 'objection' | 'story' | 'humor' | 'consideration';
-}>();
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-function getConversationFlow(personaId: string, repUtterance: string, attemptId: string, turnCount: number): string {
-  const persona = getPersonaById(personaId);
-  if (!persona) return "I'm not sure what you're talking about.";
-  
-  const lowerRep = repUtterance.toLowerCase();
-  
-  // Initialize or get context
-  let context = conversationContext.get(attemptId);
-  if (!context) {
-    context = {
-      usedResponses: [],
-      topics: [],
-      mood: persona.temperature === 'warm' ? 'warming' : 
-            persona.temperature === 'interested' ? 'interested' : 'cold',
-      lastResponseType: 'question'
-    };
-    conversationContext.set(attemptId, context);
-  }
-  
-  // Analyze what the rep said to determine appropriate response
-  const repMentions = {
-    price: lowerRep.includes('$') || lowerRep.includes('cost') || lowerRep.includes('price') || lowerRep.includes('cheap'),
-    safety: lowerRep.includes('safe') || lowerRep.includes('pet') || lowerRep.includes('kid') || lowerRep.includes('child'),
-    neighbor: lowerRep.includes('neighbor') || lowerRep.includes('johnson') || lowerRep.includes('street') || lowerRep.includes('area'),
-    problem: lowerRep.includes('ant') || lowerRep.includes('bug') || lowerRep.includes('pest') || lowerRep.includes('spider') || lowerRep.includes('mouse') || lowerRep.includes('roach'),
-    process: lowerRep.includes('how') || lowerRep.includes('work') || lowerRep.includes('spray') || lowerRep.includes('treat'),
-    schedule: lowerRep.includes('schedule') || lowerRep.includes('appointment') || lowerRep.includes('today') || lowerRep.includes('tomorrow'),
-    humor: lowerRep.includes('funny') || lowerRep.includes('joke') || lowerRep.includes('laugh'),
-    personal: lowerRep.includes('family') || lowerRep.includes('wife') || lowerRep.includes('husband') || lowerRep.includes('work'),
-    pushy: lowerRep.includes('special') || lowerRep.includes('limited') || lowerRep.includes('right now') || lowerRep.includes('today only')
-  };
-  
-  // Generate contextual responses based on persona and what rep said
-  let response = '';
-  
-  // Handle different personas differently
-  switch (personaId) {
-    case 'harold':
-      response = getHaroldResponse(repMentions, context, turnCount, lowerRep);
-      break;
-    case 'amanda':
-      response = getAmandaResponse(repMentions, context, turnCount, lowerRep);
-      break;
-    case 'marcus':
-      response = getMarcusResponse(repMentions, context, turnCount, lowerRep);
-      break;
-    case 'jennifer':
-      response = getJenniferResponse(repMentions, context, turnCount, lowerRep);
-      break;
-    case 'carlos':
-      response = getCarlosResponse(repMentions, context, turnCount, lowerRep);
-      break;
-    default:
-      response = getMarcusResponse(repMentions, context, turnCount, lowerRep);
-  }
-  
-  // Track used response and update context
-  context.usedResponses.push(response);
-  conversationContext.set(attemptId, context);
-  
-  return response;
-}
+// Track conversation history for context
+const conversationHistory = new Map<string, Array<{role: 'user' | 'assistant', content: string}>>();
 
-function getHaroldResponse(mentions: any, context: any, turnCount: number, repText: string): string {
-  if (mentions.pushy || turnCount > 6) {
-    context.mood = 'annoyed';
-    return "Look, I said I need to think about it. Stop pushing me.";
-  }
-  
-  if (mentions.neighbor) {
-    context.mood = 'warming';
-    return "Oh, you're doing the Johnsons? Well, I suppose if Bob trusts you... he's not the sharpest tool in the shed, but still.";
-  }
-  
-  if (mentions.price) {
-    return "How much are we talking here? I'm on a fixed income, not made of money.";
-  }
-  
-  if (mentions.safety) {
-    context.mood = 'warming';
-    return "Well, I do worry about Whiskers. That cat gets into everything. Is this stuff gonna hurt him?";
-  }
-  
-  if (mentions.problem) {
-    return "Yeah, we got ants. Marge has been complaining about them for weeks. But I've been handling pests myself for 40 years.";
-  }
-  
-  if (turnCount === 0) {
-    return "What do you want? I'm watching the news.";
-  }
-  
-  // Default progression
-  const responses = [
-    "I've heard this all before from you people.",
-    "What makes you different from the last guy who came by?",
-    "Marge! Come here, pest control's at the door!",
-    "Alright, you got my attention. But this better not be some scam."
-  ];
-  
-  return responses[Math.min(turnCount, responses.length - 1)];
-}
+function getPersonaPrompt(persona: any, turnCount: number): string {
+  const basePrompt = `You are ${persona.name}, a ${persona.age}-year-old ${persona.occupation}. 
 
-function getAmandaResponse(mentions: any, context: any, turnCount: number, repText: string): string {
-  if (mentions.safety) {
-    context.mood = 'interested';
-    return "Okay, that's actually my biggest concern. Sofia just turned 3 and puts everything in her mouth. Is this really safe once it dries?";
-  }
-  
-  if (mentions.price) {
-    return "Okay, but what's the real cost here? I need the full picture because David handles our budget.";
-  }
-  
-  if (mentions.schedule) {
-    return "Can you work around nap time? Sofia sleeps from 1 to 3, and that's like... sacred time in this house.";
-  }
-  
-  if (mentions.problem) {
-    context.mood = 'interested';
-    return "Actually, yes! We've been seeing spiders in the basement where the kids play. It's driving me crazy.";
-  }
-  
-  if (turnCount === 0) {
-    return "Hi! Sorry, I literally just walked in from picking up the kids. What's this about?";
-  }
-  
-  if (turnCount > 4 && !mentions.schedule) {
-    return "Look, I really need to get dinner started. Can you just tell me when you can come and how much it costs?";
-  }
-  
-  const responses = [
-    "I only have like 5 minutes before chaos erupts again.",
-    "Hold on - SOFIA, SHARE WITH YOUR BROTHER! Sorry, what were you saying?",
-    "That actually makes sense. We tried the DIY stuff but it didn't work.",
-    "I'd need to run this by David, but if it's safe for the kids..."
-  ];
-  
-  return responses[Math.min(turnCount - 1, responses.length - 1)];
-}
+PERSONALITY: ${persona.personality}
+CURRENT MOOD: ${persona.currentMood}
+CURRENT ACTIVITY: ${persona.currentActivity}
 
-function getMarcusResponse(mentions: any, context: any, turnCount: number, repText: string): string {
-  if (mentions.neighbor) {
-    context.mood = 'interested';
-    return "Oh, you're working with the Garcias? Good people! Maria mentioned they had some bug issues. How's that going?";
-  }
-  
-  if (mentions.problem) {
-    context.mood = 'interested';
-    return "Actually, funny you mention that. We've been dealing with mice in the garage. They got into my basketball equipment last month!";
-  }
-  
-  if (mentions.price) {
-    return "What are we looking at cost-wise? Teacher salary, you know, but if it works...";
-  }
-  
-  if (mentions.humor || repText.includes('joke') || repText.includes('funny')) {
-    context.mood = 'warming';
-    return "Ha! That's good. I like that. You remind me of one of my students - he's got jokes too.";
-  }
-  
-  if (mentions.schedule) {
-    context.mood = 'ready_to_close';
-    return "You know what? Let's do it. When can you come out? I'm usually home after 4 PM.";
-  }
-  
-  if (turnCount === 0) {
-    return "Hey there! How's it going? Just finished mowing the lawn. What brings you by?";
-  }
-  
-  if (turnCount > 3 && context.mood === 'interested') {
-    return "You seem like good people. I appreciate you taking the time to explain everything properly.";
-  }
-  
-  const responses = [
-    "That's interesting! Tell me more about how this works.",
-    "You know, that reminds me of when we had wasps under the deck last summer...",
-    "I try to support local businesses when I can. You guys local?",
-    "My wife Keisha's been after me to do something about the mice."
-  ];
-  
-  return responses[Math.min(turnCount - 1, responses.length - 1)];
-}
+BACKGROUND:
+- Family: ${persona.backgroundInfo.maritalStatus}, ${persona.backgroundInfo.familySize} people in household
+- Home: ${persona.backgroundInfo.propertyType}, lived here ${persona.backgroundInfo.yearsInHome} years
+- Known pest issues: ${persona.backgroundInfo.previousPestIssues?.join(', ') || 'none mentioned'}
+- Financial situation: ${persona.backgroundInfo.financialStatus}
 
-function getJenniferResponse(mentions: any, context: any, turnCount: number, repText: string): string {
-  if (mentions.safety) {
-    return "What's the active ingredient? I need to know exactly what chemicals you're using and their half-lives.";
-  }
-  
-  if (mentions.process) {
-    context.mood = 'warming';
-    return "That's actually a scientifically sound approach. Most homeowners don't understand integrated pest management.";
-  }
-  
-  if (mentions.price) {
-    return "Cost is less important than efficacy. What's your success rate, and do you have any peer-reviewed studies?";
-  }
-  
-  if (turnCount === 0) {
-    return "Yes? I'm Dr. Chen. What exactly are you selling?";
-  }
-  
-  if (mentions.pushy) {
-    context.mood = 'annoyed';
-    return "I don't make impulsive decisions. Send me your technical documentation and I'll review it.";
-  }
-  
-  if (turnCount > 2 && context.mood === 'warming') {
-    return "Your approach seems evidence-based. What certifications do your technicians have?";
-  }
-  
-  const responses = [
-    "I need to see data before making any decisions.",
-    "What's your company's Better Business Bureau rating?",
-    "Do you have EPA registration numbers for your products?",
-    "I'll need references from other medical professionals."
-  ];
-  
-  return responses[Math.min(turnCount - 1, responses.length - 1)];
-}
+BEHAVIORAL TRAITS:
+- Door behavior: ${persona.behavioralPatterns.doorAnswerSpeed}, ${persona.behavioralPatterns.doorOpeningStyle}
+- Voice tone: ${persona.behavioralPatterns.voiceTone}
+- Trust signals: ${persona.behavioralPatterns.trustSignals.join(', ')}
+- Decision making: ${persona.behavioralPatterns.decisionMakingStyle}
 
-function getCarlosResponse(mentions: any, context: any, turnCount: number, repText: string): string {
-  if (mentions.price) {
-    return "Alright, what's the damage? Just give me the number straight up.";
-  }
-  
-  if (mentions.safety) {
-    context.mood = 'interested';
-    return "My family's safety comes first. We got three kids and they're always running around. This stuff safe?";
-  }
-  
-  if (mentions.problem) {
-    context.mood = 'interested';
-    return "Yeah, we got roaches in the kitchen. Elena's embarrassed to have people over. It's driving her crazy.";
-  }
-  
-  if (mentions.schedule) {
-    context.mood = 'ready_to_close';
-    return "You know what? Let's do it. I'm tired of dealing with this myself. When can you come?";
-  }
-  
-  if (turnCount === 0) {
-    return "Yeah? What can I do for you?";
-  }
-  
-  if (mentions.personal) {
-    return "I work hard for my family. Got three shops to run and a house full of kids. No time for games.";
-  }
-  
-  const responses = [
-    "Just give it to me straight - what's this gonna cost?",
-    "I respect honest work. You seem like good people.",
-    "Elena's been after me to do something about the bugs.",
-    "Alright, you got my attention. What's the deal?"
-  ];
-  
-  return responses[Math.min(turnCount - 1, responses.length - 1)];
+CONVERSATION STYLE:
+- Temperament: ${persona.conversationStyle.temperament}
+- Common phrases: ${persona.conversationStyle.commonPhrases.slice(0, 3).join(', ')}
+- Main objections: ${persona.conversationStyle.objections.slice(0, 3).join(', ')}
+- Interests: ${persona.conversationStyle.interests.join(', ')}
+
+INSTRUCTIONS:
+1. Respond as this specific person would, using their voice, concerns, and personality
+2. Reference your specific background details naturally when relevant
+3. Keep responses conversational and realistic (1-2 sentences usually)
+4. Show genuine reactions to what the salesperson actually says
+5. Use interruptions, side comments, or distractions occasionally: ${persona.conversationStyle.sideConversations?.slice(0, 2).join(', ') || 'none'}
+6. Your mood can change based on how the salesperson treats you
+7. Ask follow-up questions when curious
+8. Give realistic objections based on your character
+9. Don't reveal information the salesperson hasn't earned through good questions
+10. Be more receptive if they mention neighbors, show expertise, or address your specific concerns
+
+Current conversation turn: ${turnCount}
+
+Respond ONLY as ${persona.name} would respond. Do not break character or mention this is a simulation.`;
+
+  return basePrompt;
 }
 
 export async function POST(req: Request) {
   try {
-    console.log('Enhanced step endpoint called');
+    console.log('AI-powered step endpoint called');
     
     const body = await req.json().catch(() => ({}));
     console.log('Step request body:', body);
@@ -284,50 +71,106 @@ export async function POST(req: Request) {
     
     const personaId = personaData?.id || 'marcus';
     const turnCount = body.turnCount || 0;
+    const persona = getPersonaById(personaId);
     
-    // Generate natural conversation response
-    const response = getConversationFlow(personaId, repUtterance, attemptId, turnCount);
-    
-    // Clean up old conversations (keep last 50)
-    if (conversationContext.size > 50) {
-      const firstKey = conversationContext.keys().next().value;
-      if (firstKey) {
-        conversationContext.delete(firstKey);
-      }
+    if (!persona) {
+      return NextResponse.json(
+        { error: 'Persona not found' },
+        { status: 400 }
+      );
     }
     
-    // More natural terminal conditions
-    const lowerRep = repUtterance.toLowerCase();
-    const context = conversationContext.get(attemptId);
-    const isTerminal = 
-      // Positive endings
-      (lowerRep.includes('schedule') && lowerRep.includes('appointment')) ||
-      (lowerRep.includes('let') && lowerRep.includes('do it')) ||
-      lowerRep.includes('sign me up') ||
-      lowerRep.includes('sounds good') ||
-      // Negative endings  
-      lowerRep.includes('not interested') ||
-      lowerRep.includes('no thank you') ||
-      lowerRep.includes('goodbye') ||
-      lowerRep.includes('stop') ||
-      response.includes('Stop pushing') ||
-      response.includes('Get lost') ||
-      // Natural conversation end
-      (context?.mood === 'ready_to_close' && turnCount > 3) ||
-      // Time limit
-      turnCount > 10;
+    // Get or initialize conversation history
+    let history = conversationHistory.get(attemptId) || [];
     
-    console.log('Sending natural response:', response);
+    // Add the user's message to history
+    history.push({ role: 'user', content: repUtterance });
+    
+    // Create the persona prompt
+    const systemPrompt = getPersonaPrompt(persona, turnCount);
+    
+    try {
+      // Call OpenAI to generate a contextual response
+      const completion = await openai.chat.completions.create({
+        model: process.env.MODEL_NAME || 'gpt-4o-mini',
+        temperature: 0.8, // Higher temperature for more natural variation
+        max_tokens: 150, // Keep responses concise
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...history.slice(-6), // Keep last 6 messages for context (3 exchanges)
+        ],
+      });
 
-    return NextResponse.json({ 
-      prospectReply: response,
-      state: isTerminal ? "TERMINAL" : "DISCOVERY",
-      terminal: isTerminal,
-      objectivesCompleted: turnCount > 2 ? ['1', '2'] : ['1'],
-      success: true
-    });
+      const response = completion.choices[0]?.message?.content?.trim() || "I'm not sure what to say to that.";
+      
+      // Add AI response to history
+      history.push({ role: 'assistant', content: response });
+      
+      // Store updated history (keep last 10 messages)
+      conversationHistory.set(attemptId, history.slice(-10));
+      
+      // Clean up old conversations (keep last 20 attempts)
+      if (conversationHistory.size > 20) {
+        const firstKey = conversationHistory.keys().next().value;
+        if (firstKey) {
+          conversationHistory.delete(firstKey);
+        }
+      }
+      
+      // Determine if conversation should end
+      const lowerRep = repUtterance.toLowerCase();
+      const lowerResponse = response.toLowerCase();
+      
+      const isTerminal = 
+        // Positive endings
+        (lowerRep.includes('schedule') && lowerResponse.includes('yes')) ||
+        lowerResponse.includes('let\'s do it') ||
+        lowerResponse.includes('sounds good') ||
+        lowerResponse.includes('when can you') ||
+        // Negative endings  
+        lowerResponse.includes('not interested') ||
+        lowerResponse.includes('no thank you') ||
+        lowerResponse.includes('goodbye') ||
+        lowerResponse.includes('please leave') ||
+        lowerResponse.includes('get off my property') ||
+        // Time/turn limits
+        turnCount > 12;
+      
+      console.log('AI generated response:', response);
+
+      return NextResponse.json({ 
+        prospectReply: response,
+        state: isTerminal ? "TERMINAL" : "DISCOVERY",
+        terminal: isTerminal,
+        objectivesCompleted: turnCount > 2 ? ['1', '2'] : ['1'],
+        success: true
+      });
+      
+    } catch (openaiError) {
+      console.error('OpenAI API error:', openaiError);
+      
+      // Fallback to basic response if OpenAI fails
+      const fallbackResponses = {
+        harold: "I need to think about this. What exactly are you offering?",
+        amanda: "I'm sorry, I'm really busy right now. Can you be quick?",
+        marcus: "That's interesting. Tell me more about how this works.",
+        jennifer: "I'll need to see some data before making any decisions.",
+        carlos: "Just give it to me straight - what's this going to cost?"
+      };
+      
+      const fallbackResponse = fallbackResponses[personaId as keyof typeof fallbackResponses] || fallbackResponses.marcus;
+      
+      return NextResponse.json({ 
+        prospectReply: fallbackResponse,
+        state: "DISCOVERY",
+        terminal: false,
+        objectivesCompleted: ['1'],
+        success: true
+      });
+    }
+    
   } catch (error) {
-    console.error('Enhanced step error:', error);
+    console.error('Step endpoint error:', error);
     return NextResponse.json(
       { 
         error: 'Failed to process step',
