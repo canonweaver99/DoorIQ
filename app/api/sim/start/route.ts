@@ -102,58 +102,52 @@ function convertHomeownerPersonaToPersona(homeowner: HomeownerPersona): Persona 
 
 export async function POST(req: Request) {
   try {
-    await db();
+    console.log('Starting simulation...');
     
     const body = await req.json().catch(() => ({}));
-    const scenarioId = body.scenarioId;
+    console.log('Request body:', body);
     
-    // Get scenario or use default
-    const scenario = scenarioId 
-      ? await Scenario.findById(scenarioId)
-      : await Scenario.findOne();
+    // Connect to database
+    await db();
+    console.log('Database connected');
     
-    // Get rubric or use default
-    const rubric = await Rubric.findOne() || {
-      name: "Standard Sales Rubric",
-      weights: { discovery: 25, value: 25, objection: 25, cta: 25 },
-      hardRules: {}
-    };
-
     // Use persona data from request or generate random one
     const persona = body.personaData 
       ? convertHomeownerPersonaToPersona(body.personaData)
       : makePersona();
     
-    // Create new attempt
+    console.log('Persona created:', persona);
+    
+    // Create new attempt with minimal required fields
     const attempt = await Attempt.create({
       userId: body.userId || "demo-user",
-      scenarioId: scenario?._id,
       persona,
       state: "OPENING",
-      turnCount: 0,
-      rubricSnapshot: rubric
+      turnCount: 0
     });
+
+    console.log('Attempt created:', attempt._id);
 
     // Generate initial greeting based on persona data
     const greeting = body.personaData?.conversationStyle?.greeting || 
                     "Hello, what can I help you with today?";
 
+    console.log('Sending response with greeting:', greeting);
+
     return NextResponse.json({ 
       attemptId: attempt._id.toString(), 
       persona, 
       state: "OPENING",
-      reply: greeting,
-      scenario: scenario ? {
-        title: scenario.title,
-        vertical: scenario.vertical,
-        difficulty: scenario.difficulty,
-        goal: scenario.goal
-      } : null
+      reply: greeting
     });
   } catch (error) {
     console.error('Start simulation error:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
     return NextResponse.json(
-      { error: 'Failed to start simulation' },
+      { 
+        error: 'Failed to start simulation',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
