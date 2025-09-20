@@ -49,6 +49,7 @@ export default function PracticePage() {
   const [currentPlaybackIndex, setCurrentPlaybackIndex] = useState(-1);
   const [conversationAnalysis, setConversationAnalysis] = useState<ConversationAnalysis | null>(null);
   const [turnCount, setTurnCount] = useState(0);
+  const [liveTranscription, setLiveTranscription] = useState('');
 
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -56,6 +57,7 @@ export default function PracticePage() {
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vadIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const resetSimulation = () => {
     setCurrentScreen('home');
@@ -65,6 +67,7 @@ export default function PracticePage() {
     setEvaluation(null);
     setTurnCount(0);
     setDoorClicked(false);
+    setLiveTranscription('');
     setObjectives(objectives.map(obj => ({ ...obj, completed: false })));
     setIsPlayingRecording(false);
     setCurrentPlaybackIndex(-1);
@@ -193,6 +196,54 @@ export default function PracticePage() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const startLiveTranscription = () => {
+    try {
+      // Check if browser supports Web Speech API
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        console.log('Speech recognition not supported');
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setLiveTranscription(transcript);
+      };
+      
+      recognition.onerror = (event: any) => {
+        console.log('Speech recognition error:', event.error);
+      };
+      
+      recognition.onend = () => {
+        // Recognition ended
+        setLiveTranscription('');
+      };
+      
+      recognition.start();
+    } catch (error) {
+      console.log('Could not start live transcription:', error);
+    }
+  };
+
+  const stopLiveTranscription = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setLiveTranscription('');
+  };
+
   const checkMicrophonePermission = async () => {
     try {
       const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
@@ -227,6 +278,9 @@ export default function PracticePage() {
       
       // Start voice activity detection
       startVoiceActivityDetection();
+      
+      // Start live transcription
+      startLiveTranscription();
     } catch (error) {
       console.error('Error starting recording:', error);
     }
@@ -274,6 +328,9 @@ export default function PracticePage() {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
+    
+    // Stop live transcription
+    stopLiveTranscription();
   };
 
   const processUserAudio = async (audioBlob: Blob) => {
@@ -743,6 +800,24 @@ export default function PracticePage() {
                       </div>
                     </motion.div>
                   ))}
+                  
+                  {/* Live Transcription */}
+                  {liveTranscription && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-end"
+                    >
+                      <div className="max-w-[70%] order-2">
+                        <div className="rounded-2xl px-4 py-3 bg-yellow-600/30 text-yellow-100 border-2 border-yellow-500/50 border-dashed">
+                          <p className="text-sm italic">{liveTranscription}</p>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1 px-2">
+                          Speaking...
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
 
                 {isCustomerSpeaking && (
