@@ -399,7 +399,7 @@ export default function PracticePage() {
       }
       
       // Start simulation with selected persona
-      const response = await fetch('/api/sim/start', {
+      const response = await fetch('/api/sim/start-simple', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
