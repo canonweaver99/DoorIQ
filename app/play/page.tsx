@@ -195,7 +195,7 @@ export default function PlayPage() {
         formData.append('audio', audioBlob);
         
         try {
-          const response = await fetch('/api/practice/transcribe', {
+          const response = await fetch('/api/elevenlabs/transcribe', {
             method: 'POST',
             body: formData
           });
