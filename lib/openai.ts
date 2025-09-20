@@ -245,8 +245,10 @@ export class AIConversationManager {
 // Whisper integration for better speech recognition
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   try {
+    const blob = new Blob([audioBuffer], { type: 'audio/webm' });
+    const file = new File([blob], 'audio.webm', { type: 'audio/webm' });
     const transcription = await openai.audio.transcriptions.create({
-      file: new File([audioBuffer], 'audio.webm', { type: 'audio/webm' }),
+      file,
       model: 'whisper-1',
       language: 'en',
     });
