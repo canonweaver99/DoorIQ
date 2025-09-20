@@ -109,15 +109,20 @@ export default function PracticePage() {
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       
+      // Store reference so we can stop it
+      audioPlayerRef.current = audio;
+      
       if (audio) {
         audio.addEventListener('ended', () => {
           setIsCustomerSpeaking(false);
           URL.revokeObjectURL(audioUrl);
+          audioPlayerRef.current = null;
         });
         
         audio.addEventListener('error', () => {
           setIsCustomerSpeaking(false);
           URL.revokeObjectURL(audioUrl);
+          audioPlayerRef.current = null;
         });
 
         await audio.play();
@@ -190,7 +195,7 @@ export default function PracticePage() {
 
     let silenceStart = Date.now();
     const SILENCE_THRESHOLD = 30;
-    const SILENCE_DURATION = 1500; // 1.5 seconds of silence
+    const SILENCE_DURATION = 2500; // 2.5 seconds of silence for more natural pauses
 
     javascriptNode.onaudioprocess = () => {
       const array = new Uint8Array(analyser.frequencyBinCount);
@@ -278,12 +283,12 @@ export default function PracticePage() {
         // Play audio response
         await playTextToSpeech(stepData.prospectReply, currentPersona?.voiceId);
         
-        // Automatically start listening again after AI finishes speaking
+        // Automatically start listening again after AI finishes speaking (with better delay)
         setTimeout(() => {
-          if (!isRecording && !isProcessing && !stepData.terminal) {
+          if (!isRecording && !isProcessing && !stepData.terminal && currentScreen === 'conversation') {
             startRecording();
           }
-        }, 500);
+        }, 1200); // Give user time to process and think
       }
       
       // Check if conversation ended
@@ -300,6 +305,19 @@ export default function PracticePage() {
 
   const endConversation = async () => {
     try {
+      // Stop any playing audio immediately
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.currentTime = 0;
+        audioPlayerRef.current = null;
+      }
+      setIsCustomerSpeaking(false);
+      
+      // Stop recording if active
+      if (isRecording) {
+        stopRecording();
+      }
+      
       // Get evaluation
       const response = await fetch('/api/sim/end', {
         method: 'POST',
@@ -320,6 +338,9 @@ export default function PracticePage() {
       }
     } catch (error) {
       console.error('Error ending conversation:', error);
+      // Generate basic feedback even if API fails
+      const analysis = generateConversationAnalysis(messages);
+      setConversationAnalysis(analysis);
       setCurrentScreen('feedback');
     }
   };
@@ -441,12 +462,12 @@ export default function PracticePage() {
         // Play greeting audio using ElevenLabs
         if (data.reply) {
           await playTextToSpeech(data.reply, currentPersona?.voiceId);
-          // Automatically start listening after AI finishes speaking
+          // Give user a moment to prepare before auto-listening
           setTimeout(() => {
-            if (!isRecording && !isProcessing) {
+            if (!isRecording && !isProcessing && currentScreen === 'conversation') {
               startRecording();
             }
-          }, 500);
+          }, 1500); // Increased delay for user to prepare
         }
       }
     } catch (error) {
@@ -717,9 +738,9 @@ export default function PracticePage() {
 
                   <button
                     onClick={endConversation}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg font-medium transition-colors text-lg shadow-lg"
                   >
-                    End Conversation
+                    End & Get Feedback
                   </button>
                 </div>
                 
