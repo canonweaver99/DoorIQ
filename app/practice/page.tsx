@@ -97,18 +97,29 @@ export default function PracticePage() {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to generate voice');
+      if (!response.ok) {
+        console.log('Voice generation failed, skipping audio');
+        setIsCustomerSpeaking(false);
+        return;
+      }
 
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       
-      audio.addEventListener('ended', () => {
-        setIsCustomerSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-      });
+      if (audio) {
+        audio.addEventListener('ended', () => {
+          setIsCustomerSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+        });
+        
+        audio.addEventListener('error', () => {
+          setIsCustomerSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+        });
 
-      await audio.play();
+        await audio.play();
+      }
     } catch (error) {
       console.error('Error playing text to speech:', error);
       setIsCustomerSpeaking(false);
@@ -301,18 +312,34 @@ export default function PracticePage() {
 
   const playConversationRecording = async (index: number) => {
     const message = messages[index];
-    if (!message.audioUrl) return;
+    if (!message.audioUrl) {
+      console.log('No audio URL for message:', message);
+      return;
+    }
     
-    setIsPlayingRecording(true);
-    setCurrentPlaybackIndex(index);
-    
-    const audio = new Audio(message.audioUrl);
-    audio.addEventListener('ended', () => {
+    try {
+      setIsPlayingRecording(true);
+      setCurrentPlaybackIndex(index);
+      
+      const audio = new Audio(message.audioUrl);
+      
+      audio.addEventListener('ended', () => {
+        setIsPlayingRecording(false);
+        setCurrentPlaybackIndex(-1);
+      });
+      
+      audio.addEventListener('error', (e) => {
+        console.error('Audio playback error:', e);
+        setIsPlayingRecording(false);
+        setCurrentPlaybackIndex(-1);
+      });
+      
+      await audio.play();
+    } catch (error) {
+      console.error('Error playing recording:', error);
       setIsPlayingRecording(false);
       setCurrentPlaybackIndex(-1);
-    });
-    
-    await audio.play();
+    }
   };
 
   const generateConversationAnalysis = (messages: Message[]): ConversationAnalysis => {
