@@ -48,6 +48,7 @@ export default function PracticePage() {
   const [isPlayingRecording, setIsPlayingRecording] = useState(false);
   const [currentPlaybackIndex, setCurrentPlaybackIndex] = useState(-1);
   const [conversationAnalysis, setConversationAnalysis] = useState<ConversationAnalysis | null>(null);
+  const [turnCount, setTurnCount] = useState(0);
 
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -62,6 +63,7 @@ export default function PracticePage() {
     setAttemptId('');
     setMessages([]);
     setEvaluation(null);
+    setTurnCount(0);
     setDoorClicked(false);
     setObjectives(objectives.map(obj => ({ ...obj, completed: false })));
     setIsPlayingRecording(false);
@@ -247,7 +249,9 @@ export default function PracticePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           attemptId,
-          repUtterance: text
+          repUtterance: text,
+          personaData: currentPersona,
+          turnCount: turnCount
         })
       });
       
@@ -267,6 +271,9 @@ export default function PracticePage() {
           timestamp: new Date()
         };
         setMessages(prev => [...prev, aiMessage]);
+        
+        // Increment turn count
+        setTurnCount(prev => prev + 1);
         
         // Play audio response
         await playTextToSpeech(stepData.prospectReply, currentPersona?.voiceId);
