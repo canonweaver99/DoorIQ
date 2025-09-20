@@ -101,7 +101,7 @@ export class AIConversationManager {
     Keep responses concise and realistic.`;
 
     const historyMessages: ChatCompletionMessageParam[] = this.context.conversationHistory.map((msg) => ({
-      role: (msg.role === 'sales_rep' ? 'user' : 'assistant') as const,
+      role: (msg.role === 'sales_rep' ? 'user' : 'assistant') as 'user' | 'assistant',
       content: msg.content,
     }));
 
