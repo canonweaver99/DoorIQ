@@ -7,7 +7,7 @@ import { PersonaFactory } from "@/lib/persona-engine";
 import type { Persona } from "@/lib/types";
 
 function makePersona(scenario?: any): Persona {
-  const personas = [
+  const personas: Persona[] = [
     {
       company: "Suburban Family Home",
       vertical: "Residential",
