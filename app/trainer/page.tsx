@@ -27,7 +27,7 @@ export default function Trainer() {
   const [turns, setTurns] = useState<Array<{speaker:string,text:string}>>([]);
   
   // Voice states
-  const [isRecording, setIsRecording] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTranscript, setCurrentTranscript] = useState('');
@@ -38,17 +38,8 @@ export default function Trainer() {
   
   // Refs
   const audioRef = useRef<HTMLAudioElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<any>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Helper: start listening when safe
-  const safeStartListening = async () => {
-    if (!isPlaying && !isProcessing && !isRecording && !sessionEnded) {
-      await startRecording();
-    }
-  };
+  const restartTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Initialize session and agent data
@@ -63,7 +54,7 @@ export default function Trainer() {
       const agentData = await agentRes.json();
       setAgent(agentData);
 
-      // Initialize speech recognition for live transcription
+      // Initialize speech recognition for live transcription-only loop
       if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
         const SpeechRecognition = (window as any).webkitSpeechRecognition;
         recognitionRef.current = new SpeechRecognition();
@@ -72,25 +63,33 @@ export default function Trainer() {
         recognitionRef.current.lang = 'en-US';
         
         recognitionRef.current.onresult = (event: any) => {
-          let transcript = '';
+          let finalText = '';
+          let interim = '';
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            transcript += event.results[i][0].transcript;
-          }
-          setCurrentTranscript(transcript);
-          
-          // Reset silence timer
-          if (silenceTimerRef.current) {
-            clearTimeout(silenceTimerRef.current);
-          }
-          
-          // Set new silence timer (2 seconds of silence = stop recording)
-          silenceTimerRef.current = setTimeout(() => {
-            if (isRecording) {
-              stopRecording();
+            const res = event.results[i];
+            if (res.isFinal) {
+              finalText += res[0].transcript;
+            } else {
+              interim += res[0].transcript;
             }
-          }, 2000);
+          }
+          if (interim) setCurrentTranscript(interim);
+          if (finalText.trim().length > 0) {
+            setCurrentTranscript('');
+            handleUtterance(finalText.trim());
+          }
         };
         
+        recognitionRef.current.onend = () => {
+          // Auto-restart recognition when not speaking audio
+          if (!isPlaying && !sessionEnded) {
+            if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+            restartTimerRef.current = setTimeout(() => {
+              try { recognitionRef.current?.start(); setIsListening(true); } catch {}
+            }, 150);
+          }
+        };
+
         recognitionRef.current.onerror = (event: any) => {
           console.error('Speech recognition error:', event.error);
         };
@@ -98,134 +97,36 @@ export default function Trainer() {
     }
     
     initialize().then(() => {
-      // Request mic immediately for open-mic experience
-      safeStartListening();
+      try { recognitionRef.current?.start(); setIsListening(true); } catch {}
     });
   }, []);
 
-  async function startRecording() {
-    if (isPlaying || isProcessing || isRecording) return;
-    
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } 
-      });
-      
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-      
-      audioChunksRef.current = [];
-      
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await processAudio(audioBlob);
-        
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-      };
-      
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-      setCurrentTranscript('');
-      
-      // Start live transcription
-      if (recognitionRef.current) {
-        recognitionRef.current.start();
-      }
-      
-    } catch (error) {
-      console.error('Recording error:', error);
-      alert('Microphone access denied. Please enable microphone permissions and try again.');
-    }
-  }
-
-  async function stopRecording() {
-    if (!isRecording || !mediaRecorderRef.current) return;
-    
-    setIsRecording(false);
-    mediaRecorderRef.current.stop();
-    
-    // Stop live transcription
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    
-    // Clear silence timer
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-  }
-
-  async function processAudio(audioBlob: Blob) {
-    if (!sessionId) return;
-    
+  async function handleUtterance(userText: string) {
+    if (!sessionId || isProcessing) return;
     setIsProcessing(true);
-    
     try {
-      // Convert to WAV for better Whisper compatibility
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-      
-      // Transcribe with Whisper
-      const transcribeRes = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: formData
-      });
-      
-      const transcribeData = await transcribeRes.json();
-      const userText = transcribeData.text?.trim() || currentTranscript.trim();
-      
-      if (!userText) {
-        setIsProcessing(false);
-        return;
-      }
-      
-      // Add user message to UI
       setTurns(prev => [...prev, { speaker: 'rep', text: userText }]);
-      setCurrentTranscript('');
-      
       // Get Amanda's response
       const replyRes = await fetch('/api/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, userText })
       });
-      
       const replyData = await replyRes.json();
       const replyText = replyData.replyText || 'I see.';
-      
-      // Add Amanda's response to UI
       setTurns(prev => [...prev, { speaker: 'homeowner', text: replyText }]);
-      
-      // Speak Amanda's response
       await speakText(replyText);
-      
-    } catch (error) {
-      console.error('Processing error:', error);
+    } catch (e) {
+      console.error('Utterance error:', e);
     } finally {
       setIsProcessing(false);
-      // Resume listening after processing
-      safeStartListening();
     }
   }
 
   async function speakText(text: string) {
     // Pause listening while Amanda speaks
-    if (isRecording) {
-      try { await stopRecording(); } catch {}
-    }
+    // Stop recognition to avoid capturing TTS audio
+    try { recognitionRef.current?.stop(); setIsListening(false); } catch {}
     setIsPlaying(true);
     
     try {
@@ -247,8 +148,8 @@ export default function Trainer() {
               audioRef.current.onended = () => {
                 URL.revokeObjectURL(audioUrl);
                 setIsPlaying(false);
-                // Resume listening shortly after Amanda finishes
-                setTimeout(() => { safeStartListening(); }, 250);
+                // Resume recognition after Amanda finishes
+                setTimeout(() => { try { recognitionRef.current?.start(); setIsListening(true); } catch {} }, 250);
                 resolve();
               };
               audioRef.current.play();
