@@ -9,9 +9,7 @@ import { getRandomPersona, HomeownerPersona } from '@/lib/personas';
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'elevenlabs-convai': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        'agent-id'?: string;
-      };
+      'elevenlabs-convai': any;
     }
   }
 }
@@ -89,7 +87,7 @@ export default function PracticePage() {
     return () => {
       // keep script loaded across navigations; no cleanup
     };
-  }, [currentScreen]);
+  }, [currentScreen, useElevenAgent]);
 
   const resetSimulation = () => {
     setCurrentScreen('home');
