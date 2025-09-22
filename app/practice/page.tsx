@@ -559,7 +559,7 @@ export default function PracticePage() {
                   animate={{ opacity: 1 }}
                   className="mt-4 p-3 bg-blue-500/20 rounded-lg border border-blue-500/30 max-w-md"
                 >
-                  <p className="text-sm text-blue-200">You're saying: "{liveTranscription}"</p>
+                  <p className="text-sm text-blue-200">You&apos;re saying: &quot;{liveTranscription}&quot;</p>
                 </motion.div>
               )}
             </div>
