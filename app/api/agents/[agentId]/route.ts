@@ -3,10 +3,10 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: Request,
-  { params }: { params: { agentId: string } }
+  context: { params: Promise<{ agentId: string }> }
 ) {
   try {
-    const { agentId } = params;
+    const { agentId } = await context.params;
 
     // Fetch agent with training data
     const { data: agent, error } = await supabaseAdmin
