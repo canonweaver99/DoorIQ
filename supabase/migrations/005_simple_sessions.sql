@@ -4,7 +4,8 @@ create table if not exists sessions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid,
   started_at timestamptz default now(),
-  ended_at timestamptz
+  ended_at timestamptz,
+  grading jsonb
 );
 
 -- Turns = every line of dialog
