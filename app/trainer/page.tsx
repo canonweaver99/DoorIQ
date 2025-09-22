@@ -1,21 +1,35 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
+interface AgentData {
+  name: string;
+  avatar_url: string | null;
+  avatar_initials: string;
+  persona_description: string;
+}
+
 export default function Trainer() {
   const [sessionId, setSessionId] = useState<string>('');
   const [input, setInput] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
   const [turns, setTurns] = useState<Array<{speaker:string,text:string}>>([]);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [agent, setAgent] = useState<AgentData | null>(null);
 
   useEffect(() => {
-    // Start a session
-    async function createSession() {
-      const res = await fetch('/api/session', { method: 'POST' });
-      const data = await res.json();
-      setSessionId(data.sessionId);
+    // Start a session and fetch agent data
+    async function initialize() {
+      // Create session
+      const sessionRes = await fetch('/api/session', { method: 'POST' });
+      const sessionData = await sessionRes.json();
+      setSessionId(sessionData.sessionId);
+
+      // Fetch agent data
+      const agentRes = await fetch('/api/agent');
+      const agentData = await agentRes.json();
+      setAgent(agentData);
     }
-    createSession();
+    initialize();
   }, []);
 
   async function speak(text: string) {
@@ -74,8 +88,50 @@ export default function Trainer() {
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-2">DoorIQ Sales Trainer</h1>
-          <p className="text-gray-400">Practice with Amanda Rodriguez - Suburban Mom</p>
+          <p className="text-gray-400">Practice with {agent?.name || 'Amanda Rodriguez'} - Suburban Mom</p>
           {sessionId && <p className="text-xs text-gray-500 mt-2">Session: {sessionId}</p>}
+        </div>
+
+        {/* Floating Avatar */}
+        <div className="flex justify-center mb-6">
+          <div className="relative">
+            {/* Pulsing ring effect */}
+            <div className={`absolute inset-0 rounded-full ${isPlaying ? 'animate-pulse bg-purple-500/30' : 'bg-purple-500/10'} blur-xl`}></div>
+            
+            {/* Main avatar circle */}
+            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500/30 shadow-2xl">
+              {agent?.avatar_url ? (
+                <img 
+                  src={agent.avatar_url} 
+                  alt={agent.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                  <span className="text-3xl font-bold text-white">
+                    {agent?.avatar_initials || 'AR'}
+                  </span>
+                </div>
+              )}
+              
+              {/* Speaking indicator */}
+              {isPlaying && (
+                <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Agent name and description */}
+            <div className="text-center mt-4">
+              <h3 className="text-lg font-semibold text-white">{agent?.name || 'Amanda Rodriguez'}</h3>
+              <p className="text-sm text-gray-400 max-w-xs">{agent?.persona_description}</p>
+            </div>
+          </div>
         </div>
 
         {/* Conversation Area */}
