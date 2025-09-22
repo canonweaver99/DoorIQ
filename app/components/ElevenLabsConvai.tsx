@@ -1,14 +1,17 @@
 "use client";
-import { useEffect } from "react";
+
+import React, { useEffect } from "react";
 
 export default function ElevenLabsConvai({
   agentId,
   mode = "embedded",
-  theme = "dark"
+  theme = "dark",
+  startOpen = true
 }: {
   agentId: string;
   mode?: "embedded" | "floating";
   theme?: "light" | "dark" | "system";
+  startOpen?: boolean;
 }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -16,9 +19,8 @@ export default function ElevenLabsConvai({
     
     const s = document.createElement("script");
     s.id = "elevenlabs-convai-script";
-    s.src = "https://unpkg.com/@elevenlabs/convai-widget-embed";
-    s.async = true;
-    s.type = "text/javascript";
+    s.src = "https://elevenlabs.io/convai-widget/index.js";
+    s.defer = true;
     document.head.appendChild(s);
     
     return () => {
@@ -26,13 +28,12 @@ export default function ElevenLabsConvai({
     };
   }, []);
 
-  // All attributes on custom elements must be strings
-  return (
-    <elevenlabs-convai 
-      agent-id={agentId} 
-      mode={mode}
-      theme={theme}
-      start-open="true"
-    />
-  );
+  // Note: pass strings to custom-element attributes
+  // Use React.createElement to bypass TypeScript JSX typing issues
+  return React.createElement('elevenlabs-convai', {
+    'agent-id': String(agentId),
+    mode: String(mode),
+    theme: String(theme),
+    'start-open': startOpen ? "true" : undefined
+  });
 }
