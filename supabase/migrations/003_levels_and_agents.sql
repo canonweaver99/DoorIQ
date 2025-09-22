@@ -6,26 +6,26 @@ CREATE TABLE IF NOT EXISTS agents (
   
   -- Agent identification
   name TEXT NOT NULL,
-  agent_id TEXT UNIQUE NOT NULL, -- ElevenLabs agent ID or custom ID
-  avatar_url TEXT, -- URL to agent's avatar image
-  avatar_initials TEXT, -- e.g., "AR" for Amanda Rodriguez
+  agent_id TEXT UNIQUE NOT NULL,
+  avatar_url TEXT,
+  avatar_initials TEXT,
   
   -- Agent configuration
-  voice_id TEXT, -- ElevenLabs voice ID
-  temperature DECIMAL(3,2) DEFAULT 0.7, -- LLM temperature
-  model TEXT DEFAULT 'gpt-4', -- LLM model to use
+  voice_id TEXT,
+  temperature DECIMAL(3,2) DEFAULT 0.7,
+  model TEXT DEFAULT 'gpt-4',
   
   -- Training data
-  system_prompt TEXT NOT NULL, -- Full system prompt for this agent
-  persona_description TEXT NOT NULL, -- Human-readable description
-  conversation_style JSONB DEFAULT '{}', -- Style preferences, objections, etc.
-  knowledge_base JSONB DEFAULT '[]', -- Array of training documents/facts
-  behavioral_rules JSONB DEFAULT '[]', -- Specific behavioral rules
+  system_prompt TEXT NOT NULL,
+  persona_description TEXT NOT NULL,
+  conversation_style JSONB DEFAULT '{}',
+  knowledge_base JSONB DEFAULT '[]',
+  behavioral_rules JSONB DEFAULT '[]',
   
   -- Metadata
   is_active BOOLEAN DEFAULT true,
-  tags TEXT[] DEFAULT '{}', -- Tags for categorization
-  metrics JSONB DEFAULT '{}' -- Success rates, avg scores, etc.
+  tags TEXT[] DEFAULT '{}',
+  metrics JSONB DEFAULT '{}'
 );
 
 -- Create levels table for different households/scenarios
@@ -42,29 +42,29 @@ CREATE TABLE IF NOT EXISTS levels (
   
   -- Household details
   agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE RESTRICT,
-  household_type TEXT NOT NULL, -- e.g., "suburban_family", "urban_apartment", "rural_home"
+  household_type TEXT NOT NULL,
   
   -- Environment details
   home_description TEXT,
   neighborhood TEXT,
-  time_of_day TEXT DEFAULT 'afternoon', -- morning, afternoon, evening
-  weather TEXT DEFAULT 'sunny', -- sunny, rainy, cold, hot
+  time_of_day TEXT DEFAULT 'afternoon',
+  weather TEXT DEFAULT 'sunny',
   
   -- Scenario configuration
-  initial_mood TEXT DEFAULT 'neutral', -- happy, neutral, skeptical, annoyed, busy
-  pain_points TEXT[] DEFAULT '{}', -- Current problems they're facing
-  prior_experiences TEXT[] DEFAULT '{}', -- Past pest control experiences
-  budget_range TEXT, -- e.g., "$50-100/month"
-  decision_timeline TEXT, -- e.g., "immediate", "this_week", "next_month"
+  initial_mood TEXT DEFAULT 'neutral',
+  pain_points TEXT[] DEFAULT '{}',
+  prior_experiences TEXT[] DEFAULT '{}',
+  budget_range TEXT,
+  decision_timeline TEXT,
   
   -- Success criteria
-  objectives JSONB DEFAULT '[]', -- Array of objectives to complete
-  bonus_objectives JSONB DEFAULT '[]', -- Optional bonus objectives
-  time_limit_seconds INTEGER DEFAULT 600, -- 10 minutes default
+  objectives JSONB DEFAULT '[]',
+  bonus_objectives JSONB DEFAULT '[]',
+  time_limit_seconds INTEGER DEFAULT 600,
   
   -- Unlock requirements
   is_unlocked BOOLEAN DEFAULT false,
-  unlock_requirements JSONB DEFAULT '{}', -- e.g., {"previous_level_score": 80}
+  unlock_requirements JSONB DEFAULT '{}',
   
   -- Statistics
   attempts_count INTEGER DEFAULT 0,
@@ -80,8 +80,8 @@ CREATE TABLE IF NOT EXISTS agent_training_docs (
   agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
   training_document_id UUID NOT NULL REFERENCES training_documents(id) ON DELETE CASCADE,
   
-  relevance_score DECIMAL(3,2) DEFAULT 1.0, -- How relevant this doc is to the agent
-  category TEXT, -- Type of training (objection_handling, rapport_building, etc.)
+  relevance_score DECIMAL(3,2) DEFAULT 1.0,
+  category TEXT,
   
   UNIQUE(agent_id, training_document_id)
 );
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS user_level_progress (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
-  user_id TEXT NOT NULL, -- Clerk user ID
+  user_id TEXT NOT NULL,
   level_id UUID NOT NULL REFERENCES levels(id) ON DELETE CASCADE,
   
   -- Progress tracking
@@ -259,11 +259,11 @@ ALTER TABLE user_level_progress ENABLE ROW LEVEL SECURITY;
 -- RLS Policies
 -- Agents are readable by all, writable by admins only
 CREATE POLICY "Anyone can read agents" ON agents FOR SELECT USING (true);
-CREATE POLICY "Admins can manage agents" ON agents FOR ALL USING (true); -- Update with proper admin check
+CREATE POLICY "Admins can manage agents" ON agents FOR ALL USING (true);
 
 -- Levels are readable by all, progress tracked per user
 CREATE POLICY "Anyone can read levels" ON levels FOR SELECT USING (true);
-CREATE POLICY "Admins can manage levels" ON levels FOR ALL USING (true); -- Update with proper admin check
+CREATE POLICY "Admins can manage levels" ON levels FOR ALL USING (true);
 
 -- Users can only see/update their own progress
 CREATE POLICY "Users can view own progress" ON user_level_progress 
