@@ -166,6 +166,30 @@ export class PersonaEngine {
     return this.trustLevel > 0 && this.interestLevel > 5;
   }
 
+  // Get behavior modifiers for the LLM system prompt
+  getBehaviorModifiers(params: {
+    turnCount: number;
+    lastUserMessage: string;
+    currentState: string;
+  }) {
+    // Update persona state based on the latest message
+    this.updateFromRepMessage(params.lastUserMessage);
+    
+    return {
+      systemPromptAddition: this.getBehavioralContext(),
+      personaOverrides: {
+        // Add dynamic personality adjustments based on trust/interest
+        trustLevel: this.trustLevel,
+        interestLevel: this.interestLevel
+      },
+      responseMetadata: {
+        trustLevel: this.trustLevel,
+        interestLevel: this.interestLevel,
+        timeInConversation: this.timeInConversation
+      }
+    };
+  }
+
   // Get current state for debugging/monitoring
   getState() {
     return {
