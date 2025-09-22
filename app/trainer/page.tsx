@@ -43,6 +43,13 @@ export default function Trainer() {
   const recognitionRef = useRef<any>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Helper: start listening when safe
+  const safeStartListening = async () => {
+    if (!isPlaying && !isProcessing && !isRecording && !sessionEnded) {
+      await startRecording();
+    }
+  };
+
   useEffect(() => {
     // Initialize session and agent data
     async function initialize() {
@@ -90,11 +97,14 @@ export default function Trainer() {
       }
     }
     
-    initialize();
+    initialize().then(() => {
+      // Request mic immediately for open-mic experience
+      safeStartListening();
+    });
   }, []);
 
   async function startRecording() {
-    if (isPlaying || isProcessing) return;
+    if (isPlaying || isProcessing || isRecording) return;
     
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -206,10 +216,16 @@ export default function Trainer() {
       console.error('Processing error:', error);
     } finally {
       setIsProcessing(false);
+      // Resume listening after processing
+      safeStartListening();
     }
   }
 
   async function speakText(text: string) {
+    // Pause listening while Amanda speaks
+    if (isRecording) {
+      try { await stopRecording(); } catch {}
+    }
     setIsPlaying(true);
     
     try {
@@ -231,6 +247,8 @@ export default function Trainer() {
               audioRef.current.onended = () => {
                 URL.revokeObjectURL(audioUrl);
                 setIsPlaying(false);
+                // Resume listening shortly after Amanda finishes
+                setTimeout(() => { safeStartListening(); }, 250);
                 resolve();
               };
               audioRef.current.play();
@@ -250,6 +268,10 @@ export default function Trainer() {
     setIsProcessing(true);
     
     try {
+      // Stop any ongoing capture
+      if (isRecording) {
+        await stopRecording();
+      }
       const res = await fetch('/api/session/end', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -443,29 +465,12 @@ export default function Trainer() {
         )}
 
         {/* Controls */}
-        <div className="flex justify-center gap-4">
-          {!isRecording ? (
-            <button
-              onClick={startRecording}
-              disabled={isPlaying || isProcessing}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-8 py-4 rounded-xl font-semibold transition-colors flex items-center gap-2"
-            >
-              🎤 {isProcessing ? 'Processing...' : 'Hold to Speak'}
-            </button>
-          ) : (
-            <button
-              onClick={stopRecording}
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors animate-pulse"
-            >
-              🛑 Stop Recording
-            </button>
-          )}
-          
+        <div className="flex justify-center">
           {turns.length > 0 && (
             <button
               onClick={endSession}
-              disabled={isProcessing}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-6 py-4 rounded-xl font-semibold transition-colors"
+              disabled={isProcessing || isPlaying}
+              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
             >
               End & Grade
             </button>
@@ -475,12 +480,10 @@ export default function Trainer() {
         {/* Instructions */}
         <div className="text-center text-gray-400 text-sm">
           {turns.length === 0 ? (
-            <p>Click &quot;Hold to Speak&quot; and introduce yourself to Amanda!<br/>
+            <p>Microphone is live. Introduce yourself to Amanda!<br/>
             Try: &quot;Hi Amanda, I&apos;m from SafeGuard Pest Control...&quot;</p>
-          ) : isRecording ? (
-            <p>Speak now... Recording will stop automatically when you pause</p>
           ) : (
-            <p>Click to respond to Amanda, or end the session to get your grade</p>
+            <p>We&apos;re always listening. Pause for ~2s to let Amanda reply, or end the session to get your grade.</p>
           )}
         </div>
 
