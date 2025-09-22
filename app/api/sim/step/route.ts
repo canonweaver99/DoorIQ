@@ -1,127 +1,133 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import Attempt from "@/models/Attempt";
-import Turn from "@/models/Turn";
-import { retrieveRAG } from "@/lib/rag";
+import { supabaseAdmin } from "@/lib/supabase";
+import { inferNextState } from "@/lib/fsm";
 import { callProspectLLM } from "@/lib/llm";
 import { PROSPECT_SYSTEM } from "@/lib/prompts";
-import { inferNextState, shouldTerminate, analyzeConversationQuality } from "@/lib/fsm";
+import { retrieveContext } from "@/lib/rag";
 import { PersonaEngine } from "@/lib/persona-engine";
+import type { SimState } from "@/lib/types";
 
 export async function POST(req: Request) {
   try {
-    await db();
+    const body = await req.json();
+    const { attemptId, repUtterance } = body;
     
-    const { attemptId, repUtterance } = await req.json();
+    // Get attempt from Supabase
+    const { data: attempt, error: attemptError } = await supabaseAdmin
+      .from('attempts')
+      .select('*')
+      .eq('id', attemptId)
+      .single();
+      
+    if (attemptError || !attempt) {
+      return NextResponse.json({ error: 'Attempt not found' }, { status: 404 });
+    }
     
-    if (!attemptId || !repUtterance) {
-      return NextResponse.json(
-        { error: 'Missing attemptId or repUtterance' },
-        { status: 400 }
-      );
+    // Get conversation history from Supabase
+    const { data: turns, error: turnsError } = await supabaseAdmin
+      .from('turns')
+      .select('*')
+      .eq('attempt_id', attemptId)
+      .order('turn_number', { ascending: true });
+      
+    if (turnsError) {
+      console.error('Error fetching turns:', turnsError);
     }
-
-    const attempt = await Attempt.findById(attemptId);
-    if (!attempt || attempt.state === "TERMINAL") {
-      return NextResponse.json(
-        { error: "Invalid attempt or already terminated" },
-        { status: 400 }
-      );
-    }
-
-    // Get conversation history
-    const historyTurns = await Turn.find({ attemptId }).sort({ ts: 1 });
-    const history = historyTurns
-      .filter(t => t.role !== "system")
-      .map(t => ({ 
-        role: t.role === "rep" ? "user" as const : "assistant" as const, 
-        content: t.text 
-      }));
-
-    // Save rep's turn
-    await Turn.create({ 
-      attemptId, 
-      role: "rep", 
-      text: repUtterance,
-      meta: { state: attempt.state }
+    
+    const history = (turns || []).map(turn => [
+      { role: "user" as const, content: turn.user_message },
+      { role: "assistant" as const, content: turn.ai_response }
+    ]).flat();
+    
+    // Use PersonaEngine for advanced behavioral modeling
+    const engine = new PersonaEngine(attempt.persona);
+    const behaviorModifiers = engine.getBehaviorModifiers({
+      turnCount: attempt.turn_count,
+      lastUserMessage: repUtterance,
+      currentState: attempt.state as SimState
     });
-
-    // Get relevant knowledge for this context
-    const rag = await retrieveRAG(repUtterance, 3);
     
-    // Create persona engine for advanced behavioral modeling
-    const personaEngine = new PersonaEngine(attempt.persona);
+    // Retrieve RAG context
+    const ragText = await retrieveContext(repUtterance);
     
-    // Update persona state based on rep's message
-    personaEngine.updateFromRepMessage(repUtterance);
-    
-    // Get behavioral context for more realistic responses
-    const behavioralContext = personaEngine.getBehavioralContext();
-    
-    // Generate prospect response with enhanced context
-    const enhancedSystem = `${PROSPECT_SYSTEM}\n\nCURRENT BEHAVIORAL STATE: ${behavioralContext}`;
-    
+    // Generate AI response
     const prospectReply = await callProspectLLM({
-      system: enhancedSystem,
-      persona: attempt.persona,
+      system: PROSPECT_SYSTEM + '\n' + behaviorModifiers.systemPromptAddition,
+      persona: {
+        ...attempt.persona,
+        ...behaviorModifiers.personaOverrides
+      },
       state: attempt.state,
       history,
       repUtterance,
-      ragText: rag
+      ragText
     });
-
-    // Determine next state using FSM
-    const { next, terminal } = inferNextState(attempt.state, repUtterance, prospectReply);
     
-    // Save prospect's turn
-    await Turn.create({ 
-      attemptId, 
-      role: "prospect", 
-      text: prospectReply, 
-      meta: { state: next, terminal }
-    });
-
-    // Check if conversation should terminate
-    const terminationCheck = shouldTerminate(
-      attempt.turnCount + 1,
-      next,
-      prospectReply,
-      repUtterance
+    // Infer next state
+    const { next, terminal } = inferNextState(
+      attempt.state as SimState,
+      repUtterance,
+      prospectReply
     );
-
-    // Update attempt
-    attempt.state = terminationCheck.terminal ? "TERMINAL" : next;
-    attempt.turnCount += 1;
     
-    if (terminationCheck.terminal) {
-      attempt.result = terminationCheck.result;
-      attempt.endedAt = new Date();
+    // Save turn to Supabase
+    const turnNumber = (turns?.length || 0) + 1;
+    const { error: turnError } = await supabaseAdmin
+      .from('turns')
+      .insert({
+        attempt_id: attemptId,
+        turn_number: turnNumber,
+        user_message: repUtterance,
+        ai_response: prospectReply
+      });
+      
+    if (turnError) {
+      console.error('Error saving turn:', turnError);
     }
     
-    await attempt.save();
-
-    // Get real-time quality analysis
-    const allTurns = await Turn.find({ attemptId }).sort({ ts: 1 });
-    const qualityAnalysis = analyzeConversationQuality(allTurns);
-
-    return NextResponse.json({ 
-      prospectReply, 
-      state: attempt.state,
-      terminal: terminal || terminationCheck.terminal,
-      result: terminal || terminationCheck.result,
-      turnCount: attempt.turnCount,
-      liveMetrics: {
-        discovery: qualityAnalysis.discoveryScore,
-        value: qualityAnalysis.valueScore,
-        objection: qualityAnalysis.objectionScore,
-        cta: qualityAnalysis.ctaScore,
-        suggestions: qualityAnalysis.suggestions
-      }
+    // Update attempt state
+    const { error: updateError } = await supabaseAdmin
+      .from('attempts')
+      .update({
+        state: next,
+        turn_count: turnNumber
+      })
+      .eq('id', attemptId);
+      
+    if (updateError) {
+      console.error('Error updating attempt:', updateError);
+    }
+    
+    // Track objectives completed
+    const objectivesCompleted = [];
+    if (repUtterance.toLowerCase().includes('understand') || 
+        repUtterance.toLowerCase().includes('need')) {
+      objectivesCompleted.push('1'); // Qualify
+    }
+    if (repUtterance.toLowerCase().includes('protect') || 
+        repUtterance.toLowerCase().includes('benefit')) {
+      objectivesCompleted.push('2'); // Present
+    }
+    if (prospectReply.toLowerCase().includes('makes sense') || 
+        prospectReply.toLowerCase().includes('i see')) {
+      objectivesCompleted.push('3'); // Handle objections
+    }
+    if (terminal) {
+      objectivesCompleted.push('4'); // Get commitment
+    }
+    
+    return NextResponse.json({
+      prospectReply,
+      state: next,
+      terminal: terminal || false,
+      objectivesCompleted,
+      responseMetadata: behaviorModifiers.responseMetadata
     });
+    
   } catch (error) {
-    console.error('Simulation step error:', error);
+    console.error('Step error:', error);
     return NextResponse.json(
-      { error: 'Failed to process simulation step' },
+      { error: 'Failed to process step' },
       { status: 500 }
     );
   }

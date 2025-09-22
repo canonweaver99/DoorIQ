@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import Attempt from "@/models/Attempt";
-import Scenario from "@/models/Scenario";
-import Rubric from "@/models/Rubric";
+import { supabaseAdmin } from "@/lib/supabase";
 import { PersonaFactory } from "@/lib/persona-engine";
 import type { Persona } from "@/lib/types";
 import type { HomeownerPersona } from "@/lib/personas";
@@ -80,6 +77,7 @@ function makePersona(scenario?: any): Persona {
   return personas[Math.floor(Math.random() * personas.length)];
 }
 
+// New conversion function
 function convertHomeownerPersonaToPersona(homeowner: HomeownerPersona): Persona {
   return {
     company: `${homeowner.name}'s Home`,
@@ -102,14 +100,10 @@ function convertHomeownerPersonaToPersona(homeowner: HomeownerPersona): Persona 
 
 export async function POST(req: Request) {
   try {
-    console.log('Starting simulation...');
+    console.log('Starting simulation with Supabase...');
     
     const body = await req.json().catch(() => ({}));
     console.log('Request body:', body);
-    
-    // Connect to database
-    await db();
-    console.log('Database connected');
     
     // Use persona data from request or generate random one
     const persona = body.personaData 
@@ -118,15 +112,24 @@ export async function POST(req: Request) {
     
     console.log('Persona created:', persona);
     
-    // Create new attempt with minimal required fields
-    const attempt = await Attempt.create({
-      userId: body.userId || "demo-user",
-      persona,
-      state: "OPENING",
-      turnCount: 0
-    });
+    // Create new attempt in Supabase
+    const { data: attempt, error } = await supabaseAdmin
+      .from('attempts')
+      .insert({
+        user_id: body.userId || "demo-user",
+        persona: persona,
+        state: "OPENING",
+        turn_count: 0
+      })
+      .select()
+      .single();
 
-    console.log('Attempt created:', attempt._id);
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    console.log('Attempt created:', attempt.id);
 
     // Generate initial greeting based on persona data
     const greeting = body.personaData?.conversationStyle?.greeting || 
@@ -135,7 +138,7 @@ export async function POST(req: Request) {
     console.log('Sending response with greeting:', greeting);
 
     return NextResponse.json({ 
-      attemptId: attempt._id.toString(), 
+      attemptId: attempt.id, 
       persona, 
       state: "OPENING",
       reply: greeting

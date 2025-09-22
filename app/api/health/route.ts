@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,12 +8,13 @@ export async function GET() {
     env: {
       OPENAI_API_KEY: Boolean(process.env.OPENAI_API_KEY),
       ELEVENLABS_API_KEY: Boolean(process.env.ELEVENLABS_API_KEY),
-      DATABASE_URL: Boolean(process.env.DATABASE_URL),
+      SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      SUPABASE_SERVICE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
     },
     checks: {
       openai: { ok: false, detail: '' },
       elevenlabs: { ok: false, detail: '' },
-      database: { ok: false, detail: '' },
+      supabase: { ok: false, detail: '' },
     },
   };
 
@@ -51,24 +52,33 @@ export async function GET() {
     results.checks.elevenlabs.detail = 'Missing ELEVENLABS_API_KEY';
   }
 
-  // Database connection check (direct MongoDB driver to avoid Prisma init issues)
-  if (process.env.DATABASE_URL) {
+  // Supabase connection check
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
-      const client = new MongoClient(process.env.DATABASE_URL as string, { serverSelectionTimeoutMS: 3000 });
-      await client.connect();
-      // Force a round-trip
-      await client.db().command({ ping: 1 });
-      await client.close();
-      results.checks.database.ok = true;
-      results.checks.database.detail = 'Connected';
+      // Try to list tables or do a simple query
+      const { error } = await supabaseAdmin
+        .from('attempts')
+        .select('count')
+        .limit(1)
+        .single();
+      
+      if (error && error.code === 'PGRST116') {
+        // Table doesn't exist yet, but connection works
+        results.checks.supabase.ok = true;
+        results.checks.supabase.detail = 'Connected (tables not created yet)';
+      } else if (error) {
+        results.checks.supabase.ok = false;
+        results.checks.supabase.detail = error.message;
+      } else {
+        results.checks.supabase.ok = true;
+        results.checks.supabase.detail = 'Connected';
+      }
     } catch (e: any) {
-      results.checks.database.detail = e?.message || 'Error connecting';
+      results.checks.supabase.detail = e?.message || 'Error connecting';
     }
   } else {
-    results.checks.database.detail = 'Missing DATABASE_URL';
+    results.checks.supabase.detail = 'Missing SUPABASE credentials';
   }
 
   return NextResponse.json(results);
 }
-
-

@@ -1,109 +1,75 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import Attempt from "@/models/Attempt";
-import Turn from "@/models/Turn";
+import { supabaseAdmin } from "@/lib/supabase";
 import { callEvaluatorLLM } from "@/lib/llm";
 import { EVALUATOR_SYSTEM } from "@/lib/prompts";
 import type { EvalReport } from "@/lib/types";
 
 export async function POST(req: Request) {
   try {
-    await db();
+    const { attemptId } = await req.json();
     
-    const { attemptId, forcedResult } = await req.json();
-    
-    if (!attemptId) {
-      return NextResponse.json(
-        { error: 'Missing attemptId' },
-        { status: 400 }
-      );
-    }
-
-    const attempt = await Attempt.findById(attemptId);
-    if (!attempt) {
-      return NextResponse.json(
-        { error: "Invalid attempt" },
-        { status: 404 }
-      );
-    }
-
-    // Get all turns for transcript
-    const turns = await Turn.find({ attemptId }).sort({ ts: 1 });
-    const transcript = turns
-      .filter(t => t.role !== "system")
-      .map(t => `${t.role.toUpperCase()}: ${t.text}`)
-      .join("\n");
-
-    // Get rubric for evaluation
-    const rubric = attempt.rubricSnapshot || { 
-      weights: { discovery: 25, value: 25, objection: 25, cta: 25 }, 
-      hardRules: {} 
-    };
-
-    // Generate detailed evaluation
-    let evalReport: EvalReport;
-    
-    try {
-      evalReport = await callEvaluatorLLM({ 
-        system: EVALUATOR_SYSTEM, 
-        transcript, 
-        rubric 
-      });
+    // Get attempt from Supabase
+    const { data: attempt, error: attemptError } = await supabaseAdmin
+      .from('attempts')
+      .select('*')
+      .eq('id', attemptId)
+      .single();
       
-      // Validate the evaluation structure
-      if (!evalReport.score || !evalReport.result || !evalReport.rubric_breakdown) {
-        throw new Error('Invalid evaluation response structure');
-      }
-    } catch (error) {
-      console.error('Evaluation error:', error);
-      // Fallback evaluation
-      evalReport = {
-        score: 60,
-        result: forcedResult || "advanced",
-        rubric_breakdown: { discovery: 15, value: 15, objection: 15, cta: 15 },
-        feedback_bullets: [
-          "Maintained professional tone throughout conversation",
-          "Attempted to understand prospect needs",
-          "Could improve on specific value quantification"
-        ],
-        missed_opportunities: [
-          "Could have asked more specific discovery questions",
-          "Missed opportunity to address budget concerns directly"
-        ]
-      };
+    if (attemptError || !attempt) {
+      return NextResponse.json({ error: 'Attempt not found' }, { status: 404 });
     }
-
-    // Update attempt with final results
-    attempt.result = forcedResult || evalReport.result;
-    attempt.score = evalReport.score;
-    attempt.endedAt = new Date();
-    attempt.state = "TERMINAL";
-    await attempt.save();
-
-    // Calculate additional metrics
-    const repTurns = turns.filter(t => t.role === 'rep');
-    const prospectTurns = turns.filter(t => t.role === 'prospect');
-    const duration = attempt.endedAt.getTime() - attempt.startedAt.getTime();
-
-    return NextResponse.json({ 
-      eval: evalReport,
-      metrics: {
-        totalTurns: turns.length,
-        repTurns: repTurns.length,
-        prospectTurns: prospectTurns.length,
-        duration: Math.round(duration / 1000), // seconds
-        avgTurnLength: repTurns.length > 0 
-          ? Math.round(repTurns.reduce((sum, t) => sum + t.text.length, 0) / repTurns.length)
-          : 0
-      },
-      attempt: {
-        id: attempt._id.toString(),
-        state: attempt.state,
-        result: attempt.result,
-        score: attempt.score,
-        turnCount: attempt.turnCount
-      }
+    
+    // Get all turns for transcript
+    const { data: turns, error: turnsError } = await supabaseAdmin
+      .from('turns')
+      .select('*')
+      .eq('attempt_id', attemptId)
+      .order('turn_number', { ascending: true });
+      
+    if (turnsError) {
+      console.error('Error fetching turns:', turnsError);
+    }
+    
+    // Build transcript
+    const transcript = (turns || []).map(turn => 
+      `Rep: ${turn.user_message}\nProspect: ${turn.ai_response}`
+    ).join('\n\n');
+    
+    // Get evaluation rubric (using default for now)
+    const rubric = {
+      discovery: { weight: 0.25, criteria: "Asking good questions to understand needs" },
+      value: { weight: 0.25, criteria: "Connecting solution to specific problems" },
+      objection: { weight: 0.25, criteria: "Addressing concerns effectively" },
+      cta: { weight: 0.25, criteria: "Clear next steps and scheduling" }
+    };
+    
+    // Generate evaluation
+    const evaluation: EvalReport = await callEvaluatorLLM({
+      system: EVALUATOR_SYSTEM,
+      transcript,
+      rubric
     });
+    
+    // Update attempt with evaluation and completion time
+    const { error: updateError } = await supabaseAdmin
+      .from('attempts')
+      .update({
+        evaluation: evaluation,
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', attemptId);
+      
+    if (updateError) {
+      console.error('Error updating attempt with evaluation:', updateError);
+    }
+    
+    return NextResponse.json({
+      attemptId,
+      eval: evaluation,
+      transcript,
+      turns: turns?.length || 0
+    });
+    
   } catch (error) {
     console.error('End simulation error:', error);
     return NextResponse.json(
@@ -112,4 +78,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
