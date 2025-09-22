@@ -77,9 +77,11 @@ export default function PracticePage() {
 
   const endConversation = async () => {
     try {
-      // TODO: Get transcript from ElevenLabs agent
-      // TODO: Send to grading API
-      // For now, show mock results
+      // Note: The actual grading happens via ElevenLabs webhook
+      // This is triggered when the agent calls the submit_transcript tool
+      // For MVP, we'll show mock results immediately
+      // In production, you'd wait for the webhook response
+      
       const mockGrade = {
         total: 16,
         maxScore: 20,
@@ -174,109 +176,135 @@ export default function PracticePage() {
         </div>
       )}
 
-      {/* 2. CONVERSATION SCREEN - Amanda Centered */}
+      {/* 2. CONVERSATION SCREEN - Floating Amanda Avatar */}
       {currentScreen === 'conversation' && (
-        <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="min-h-screen flex items-center justify-center p-8 relative overflow-hidden">
+          {/* Background Effects */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-pink-900/20" />
+          <div className="absolute inset-0">
+            <div className="absolute top-20 left-20 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-20 right-20 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl" />
+          </div>
+          
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-2xl w-full"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative z-10"
           >
-            {/* Amanda's Profile Card */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-3xl border border-white/20 p-8 text-center mb-8">
-              
-              {/* Header */}
-              <h1 className="text-2xl font-bold text-white mb-6">Live Conversation</h1>
-              
-              {/* Amanda Avatar & Info */}
-              <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl p-6 mb-6 border border-purple-500/30">
-                {/* Avatar */}
-                <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">AR</span>
-                </div>
+            {/* Floating Amanda Avatar - ChatGPT Style */}
+            <div className="flex flex-col items-center">
+              {/* Pulsing Ring Effect */}
+              <div className="relative">
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-2xl opacity-50"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 0.3, 0.5],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
                 
-                {/* Basic Info */}
-                <h2 className="text-xl font-bold text-white mb-1">{AMANDA.name}</h2>
-                <p className="text-purple-200 mb-3">{AMANDA.occupation}</p>
-                
-                {/* Key Details */}
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="text-left">
-                    <p className="text-gray-400">Age</p>
-                    <p className="text-white font-medium">{AMANDA.age}</p>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-gray-400">Family</p>
-                    <p className="text-white font-medium">Married + 2 kids</p>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-gray-400">Home</p>
-                    <p className="text-white font-medium">{AMANDA.home}</p>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-gray-400">Temperature</p>
-                    <p className="text-white font-medium">{AMANDA.temperature}</p>
-                  </div>
-                </div>
-                
-                {/* Personality */}
-                <div className="mt-4 p-3 bg-black/20 rounded-lg">
-                  <p className="text-xs text-gray-300 italic">&quot;{AMANDA.personality}&quot;</p>
-                </div>
+                {/* Main Avatar */}
+                <motion.div
+                  className="relative w-40 h-40 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-2xl flex items-center justify-center"
+                  animate={{
+                    y: [0, -10, 0],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  {/* Inner Circle */}
+                  <div className="absolute inset-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full" />
+                  
+                  {/* Avatar Content */}
+                  <span className="relative text-5xl font-bold text-white z-10">AR</span>
+                  
+                  {/* Speaking Indicator */}
+                  {conversationStarted && !isPaused && (
+                    <motion.div
+                      className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+                      animate={{
+                        scale: [1, 1.2, 1],
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                      }}
+                    >
+                      <div className="w-4 h-4 bg-white rounded-full" />
+                    </motion.div>
+                  )}
+                </motion.div>
               </div>
-
-              {/* ElevenLabs Agent Widget */}
-              <div className="mb-6 bg-black/20 rounded-xl p-4">
+              
+              {/* Name Label */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-6 text-center"
+              >
+                <h2 className="text-2xl font-bold text-white mb-1">Amanda Rodriguez</h2>
+                <p className="text-purple-300 text-sm">Homeowner • Suburban Mom</p>
+              </motion.div>
+              
+              {/* Hidden ElevenLabs Widget (for voice only) */}
+              <div className="absolute -left-[9999px]">
                 <ElevenLabsConvai 
                   agentId={ELEVEN_AGENT_ID} 
                   mode="embedded"
                   theme="dark"
                 />
               </div>
-
-              {/* Simple Controls */}
-              <div className="flex justify-center gap-4">
-                <motion.button
-                  onClick={pauseConversation}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
-                    isPaused 
-                      ? 'bg-green-600 hover:bg-green-700 text-white' 
-                      : 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {isPaused ? (
-                    <>
-                      <Play className="w-4 h-4" />
-                      Resume
-                    </>
-                  ) : (
-                    <>
-                      <Pause className="w-4 h-4" />
-                      Pause
-                    </>
-                  )}
-                </motion.button>
-
-                <motion.button
-                  onClick={endConversation}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium transition-all"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <StopCircle className="w-4 h-4" />
-                  End & Grade
-                </motion.button>
-              </div>
-
-              {/* Status */}
-              <div className="mt-4">
-                <p className="text-center text-gray-400 text-sm">
-                  {isPaused ? '⏸️ Conversation paused' : '🎤 Speaking with Amanda...'}
-                </p>
-              </div>
             </div>
+            
+            {/* Floating Controls */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4"
+            >
+              <motion.button
+                onClick={pauseConversation}
+                className={`flex items-center gap-2 px-8 py-4 rounded-full font-medium transition-all backdrop-blur-md ${
+                  isPaused 
+                    ? 'bg-green-600/80 hover:bg-green-700/80 text-white' 
+                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {isPaused ? (
+                  <>
+                    <Play className="w-5 h-5" />
+                    Resume
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-5 h-5" />
+                    Pause
+                  </>
+                )}
+              </motion.button>
+
+              <motion.button
+                onClick={endConversation}
+                className="flex items-center gap-2 bg-red-600/80 hover:bg-red-700/80 backdrop-blur-md text-white px-8 py-4 rounded-full font-medium transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <StopCircle className="w-5 h-5" />
+                End Conversation
+              </motion.button>
+            </motion.div>
           </motion.div>
         </div>
       )}
