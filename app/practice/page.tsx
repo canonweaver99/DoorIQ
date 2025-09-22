@@ -4,15 +4,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Target, CheckCircle, Shield, DollarSign, Calendar, Mic, MicOff, Volume2, Play, Pause, RotateCcw, Home } from 'lucide-react';
 import { getRandomPersona, HomeownerPersona } from '@/lib/personas';
+import dynamic from "next/dynamic";
 
-// Allow custom ElevenLabs web component in TSX
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'elevenlabs-convai': any;
-    }
-  }
-}
+const ElevenLabsConvai = dynamic(() => import("@/app/components/ElevenLabsConvai"), {
+  ssr: false,
+});
+
 
 interface Objective {
   id: string;
@@ -69,25 +66,8 @@ export default function PracticePage() {
   const recognitionRef = useRef<any>(null);
 
   // ElevenLabs Convai agent integration
-  const ELEVEN_AGENT_ID = (process as any).env?.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || 'agent_7001k5jqfjmtejvs77jvhjf254tz';
+  const ELEVEN_AGENT_ID = process.env.NEXT_PUBLIC_ELEVEN_AGENT_ID || 'agent_7001k5jqfjmtejvs77jvhjf254tz';
   const useElevenAgent = true; // feature flag to use ElevenLabs agent during conversation
-
-  // Load the ElevenLabs Convai script when entering conversation
-  useEffect(() => {
-    if (!useElevenAgent) return;
-    if (currentScreen !== 'conversation') return;
-
-    const src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) return;
-    const s = document.createElement('script');
-    s.src = src;
-    s.async = true;
-    document.body.appendChild(s);
-    return () => {
-      // keep script loaded across navigations; no cleanup
-    };
-  }, [currentScreen, useElevenAgent]);
 
   const resetSimulation = () => {
     setCurrentScreen('home');
@@ -946,7 +926,11 @@ export default function PracticePage() {
               <div className="hidden md:flex items-center justify-center border-l border-white/10 relative">
                 {useElevenAgent && (
                   <div className="w-full h-full flex items-center justify-center p-4">
-                    <elevenlabs-convai agent-id={ELEVEN_AGENT_ID} />
+                    <ElevenLabsConvai 
+                      agentId={ELEVEN_AGENT_ID} 
+                      mode="embedded"
+                      theme="dark"
+                    />
                   </div>
                 )}
               </div>
