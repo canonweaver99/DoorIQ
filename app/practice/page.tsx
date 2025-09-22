@@ -5,6 +5,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Target, CheckCircle, Shield, DollarSign, Calendar, Mic, MicOff, Volume2, Play, Pause, RotateCcw, Home } from 'lucide-react';
 import { getRandomPersona, HomeownerPersona } from '@/lib/personas';
 
+// Allow custom ElevenLabs web component in TSX
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'elevenlabs-convai': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        'agent-id'?: string;
+      };
+    }
+  }
+}
+
 interface Objective {
   id: string;
   name: string;
@@ -58,6 +69,27 @@ export default function PracticePage() {
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vadIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
+
+  // ElevenLabs Convai agent integration
+  const ELEVEN_AGENT_ID = (process as any).env?.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || 'agent_7001k5jqfjmtejvs77jvhjf254tz';
+  const useElevenAgent = true; // feature flag to use ElevenLabs agent during conversation
+
+  // Load the ElevenLabs Convai script when entering conversation
+  useEffect(() => {
+    if (!useElevenAgent) return;
+    if (currentScreen !== 'conversation') return;
+
+    const src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) return;
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    document.body.appendChild(s);
+    return () => {
+      // keep script loaded across navigations; no cleanup
+    };
+  }, [currentScreen]);
 
   const resetSimulation = () => {
     setCurrentScreen('home');
@@ -774,10 +806,12 @@ export default function PracticePage() {
               <p className="text-gray-400">Speaking with {currentPersona?.name}</p>
             </div>
 
-            {/* Chat Interface */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 h-[500px] flex flex-col">
+            {/* Chat Interface with ElevenLabs agent centered */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 h-[500px] grid grid-cols-1 md:grid-cols-3">
+              {/* Left: Messages */}
+              <div className="md:col-span-2 flex flex-col">
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <AnimatePresence>
                   {messages.map((message) => (
                     <motion.div
@@ -818,7 +852,7 @@ export default function PracticePage() {
                       </div>
                     </motion.div>
                   )}
-                </AnimatePresence>
+                  </AnimatePresence>
 
                 {isCustomerSpeaking && (
                   <motion.div
@@ -840,11 +874,11 @@ export default function PracticePage() {
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent"></div>
                     <span className="text-sm">Processing...</span>
                   </motion.div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              {/* Voice Controls */}
-              <div className="p-6 border-t border-white/20">
+                {/* Voice Controls */}
+                <div className="p-6 border-t border-white/20">
                 <div className="flex justify-center gap-4">
                   <button
                     onClick={isRecording ? stopRecording : startRecording}
@@ -906,8 +940,18 @@ export default function PracticePage() {
                     </p>
                   </div>
                 ))}
+                  </div>
+                </div>
               </div>
-            </div>
+
+              {/* Right: ElevenLabs agent profile */}
+              <div className="hidden md:flex items-center justify-center border-l border-white/10 relative">
+                {useElevenAgent && (
+                  <div className="w-full h-full flex items-center justify-center p-4">
+                    <elevenlabs-convai agent-id={ELEVEN_AGENT_ID} />
+                  </div>
+                )}
+              </div>
           </div>
         </div>
       )}
