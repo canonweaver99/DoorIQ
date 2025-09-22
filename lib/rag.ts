@@ -81,3 +81,6 @@ export async function seedKnowledge() {
   
   console.log('Seeded knowledge base with', chunks.length, 'chunks');
 }
+
+// Export alias for backward compatibility
+export const retrieveContext = retrieveRAG;
