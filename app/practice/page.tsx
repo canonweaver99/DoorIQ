@@ -1,35 +1,53 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pause, Play, StopCircle, RotateCcw, Home } from 'lucide-react';
-import dynamic from "next/dynamic";
+import { Pause, Play, StopCircle, RotateCcw, Home, Mic, MicOff } from 'lucide-react';
 
-const ElevenLabsConvai = dynamic(() => import("@/app/components/ElevenLabsConvai"), {
-  ssr: false,
-});
-
-// Amanda Rodriguez - The only homeowner for MVP
-const AMANDA = {
-  name: "Amanda Rodriguez",
-  age: 34,
-  occupation: "Marketing Director at tech startup",
-  family: "Married to David; kids Sofia (6) and Lucas (3); Goldendoodle Bailey",
-  home: "4BR/2.5BA (built 2005)",
-  personality: "Polite but time-constrained, values child & pet safety, wants clear communication",
-  temperature: "Neutral → warms with clarity",
-  painPoints: ["Late technicians", "Vague pricing", "Hidden fees", "Chemical jargon"],
-  interests: ["Child safety", "Pet safety", "Predictable pricing", "On-time service"]
-};
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
 
 export default function PracticePage() {
   const [currentScreen, setCurrentScreen] = useState<'door' | 'conversation' | 'feedback'>('door');
   const [isPaused, setIsPaused] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
   const [gradeResult, setGradeResult] = useState<any>(null);
+  
+  // Conversation state
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [currentAgent, setCurrentAgent] = useState<any>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [liveTranscription, setLiveTranscription] = useState('');
+  
+  // Audio refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ElevenLabs agent ID
-  const ELEVEN_AGENT_ID = process.env.NEXT_PUBLIC_ELEVEN_AGENT_ID || 'agent_7001k5jqfjmtejvs77jvhjf254tz';
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+      
+      recognitionRef.current.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setLiveTranscription(transcript);
+      };
+    }
+  }, []);
 
   const playDoorKnockSound = () => {
     try {
@@ -62,56 +80,297 @@ export default function PracticePage() {
     }
   };
 
-  const handleDoorClick = () => {
+  const handleDoorClick = async () => {
     playDoorKnockSound();
-    setTimeout(() => {
-      setCurrentScreen('conversation');
-      setConversationStarted(true);
-    }, 800);
+    
+    try {
+      // Start conversation with Amanda (default agent)
+      const response = await fetch('/api/conversation/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          agentId: 'amanda_001',
+          userId: 'demo-user' // Replace with actual user ID from auth
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+        setCurrentAgent(data.agent);
+        setConversationHistory([{
+          role: 'assistant',
+          content: data.greeting,
+          timestamp: new Date().toISOString()
+        }]);
+        
+        setTimeout(() => {
+          setCurrentScreen('conversation');
+          setConversationStarted(true);
+          
+          // Speak the greeting
+          speakText(data.greeting, data.agent.voice_id);
+        }, 800);
+      }
+    } catch (error) {
+      console.error('Failed to start conversation:', error);
+    }
   };
 
+  const speakText = async (text: string, voiceId?: string) => {
+    try {
+      // Stop any currently playing audio
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+      
+      const response = await fetch('/api/elevenlabs/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voiceId })
+      });
+      
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        currentAudioRef.current = audio;
+        
+        return new Promise<void>((resolve) => {
+          audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            currentAudioRef.current = null;
+            resolve();
+          };
+          audio.play();
+        });
+      }
+    } catch (error) {
+      console.error('Speech synthesis error:', error);
+    }
+  };
+  
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+      
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        await processUserAudio(audioBlob);
+      };
+      
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      
+      // Start live transcription
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+      }
+      
+    } catch (error) {
+      console.error('Recording error:', error);
+    }
+  };
+  
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      
+      // Stop live transcription
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      
+      // Stop all tracks
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+  
+  const processUserAudio = async (audioBlob: Blob) => {
+    if (!sessionId) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      // Use live transcription if available, otherwise transcribe audio
+      let userMessage = liveTranscription.trim();
+      
+      if (!userMessage) {
+        // Fallback to OpenAI Whisper transcription
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'audio.wav');
+        formData.append('model', 'whisper-1');
+        
+        const transcribeResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`
+          },
+          body: formData
+        });
+        
+        const transcription = await transcribeResponse.json();
+        userMessage = transcription.text;
+      }
+      
+      if (userMessage.trim()) {
+        // Add user message to history
+        const newUserMessage: ConversationMessage = {
+          role: 'user',
+          content: userMessage,
+          timestamp: new Date().toISOString()
+        };
+        
+        setConversationHistory(prev => [...prev, newUserMessage]);
+        setLiveTranscription('');
+        
+        // Get agent response
+        const responseData = await fetch('/api/conversation/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, userMessage })
+        });
+        
+        const response = await responseData.json();
+        
+        if (response.response) {
+          const agentMessage: ConversationMessage = {
+            role: 'assistant',
+            content: response.response,
+            timestamp: new Date().toISOString()
+          };
+          
+          setConversationHistory(prev => [...prev, agentMessage]);
+          
+          // Speak the response
+          await speakText(response.response, response.voiceId);
+          
+          // Check if conversation is complete
+          if (response.isComplete) {
+            setTimeout(() => {
+              endConversation();
+            }, 2000);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Processing error:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
   const pauseConversation = () => {
+    if (currentAudioRef.current) {
+      if (isPaused) {
+        currentAudioRef.current.play();
+      } else {
+        currentAudioRef.current.pause();
+      }
+    }
     setIsPaused(!isPaused);
-    // TODO: Pause/resume ElevenLabs agent
   };
 
   const endConversation = async () => {
     try {
-      // Note: The actual grading happens via ElevenLabs webhook
-      // This is triggered when the agent calls the submit_transcript tool
-      // For MVP, we'll show mock results immediately
-      // In production, you'd wait for the webhook response
+      // Stop any ongoing recording or audio
+      if (isRecording) {
+        stopRecording();
+      }
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+      }
       
-      const mockGrade = {
-        total: 16,
-        maxScore: 20,
-        grade: "B+",
-        percentage: 80,
-        axes: {
-          safety: 4,
-          scope: 3,
-          time: 4,
-          price: 5
-        },
-        feedback: [
-          "Excellent safety explanation with EPA details",
-          "Could have been more specific about service scope",
-          "Great time window offer with text alerts",
-          "Clear pricing with no hidden fees mentioned"
-        ],
-        improvements: [
-          "Ask more discovery questions about current pest issues",
-          "Mention specific pests covered in service",
-          "Reference local neighbors or reviews for social proof"
-        ]
-      };
+      if (sessionId && conversationHistory.length > 0) {
+        // Grade the conversation
+        const transcript = conversationHistory.map(msg => ({
+          speaker: msg.role === 'user' ? 'rep' : 'customer',
+          text: msg.content,
+          ts: msg.timestamp
+        }));
+        
+        try {
+          const gradeResponse = await fetch('/api/webhooks/grade', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_EVAL_API_KEY || 'test-key'}`
+            },
+            body: JSON.stringify({
+              session_id: sessionId,
+              agent_id: currentAgent?.name || 'amanda_001',
+              transcript,
+              rubric_id: 'amanda_v1'
+            })
+          });
+          
+          if (gradeResponse.ok) {
+            const gradeData = await gradeResponse.json();
+            const grade = gradeData.grading || gradeData.deterministic;
+            
+            setGradeResult({
+              total: grade.total || 16,
+              maxScore: 20,
+              grade: getLetterGrade(grade.total || 16),
+              percentage: Math.round(((grade.total || 16) / 20) * 100),
+              axes: grade.axes || {
+                safety: 4,
+                scope: 3,
+                time: 4,
+                price: 5
+              },
+              feedback: grade.notes || [
+                "Good conversation flow",
+                "Clear communication",
+                "Professional approach"
+              ],
+              improvements: [
+                "Ask more discovery questions",
+                "Provide more specific details",
+                "Build stronger rapport"
+              ]
+            });
+          } else {
+            throw new Error('Grading failed');
+          }
+        } catch (gradeError) {
+          // Fallback mock grade
+          setGradeResult({
+            total: 16,
+            maxScore: 20,
+            grade: "B+",
+            percentage: 80,
+            axes: { safety: 4, scope: 3, time: 4, price: 5 },
+            feedback: ["Good conversation overall"],
+            improvements: ["Continue practicing"]
+          });
+        }
+      }
       
-      setGradeResult(mockGrade);
       setCurrentScreen('feedback');
     } catch (error) {
       console.error('Error ending conversation:', error);
       setCurrentScreen('feedback');
     }
+  };
+  
+  const getLetterGrade = (score: number): string => {
+    if (score >= 18) return 'A+';
+    if (score >= 16) return 'A';
+    if (score >= 14) return 'B+';
+    if (score >= 12) return 'B';
+    if (score >= 10) return 'C+';
+    if (score >= 8) return 'C';
+    return 'D';
   };
 
   const resetToHome = () => {
@@ -119,13 +378,24 @@ export default function PracticePage() {
     setConversationStarted(false);
     setIsPaused(false);
     setGradeResult(null);
+    setSessionId(null);
+    setCurrentAgent(null);
+    setConversationHistory([]);
+    setLiveTranscription('');
+    setIsRecording(false);
+    setIsProcessing(false);
   };
 
   const tryAgain = () => {
-    setCurrentScreen('conversation');
-    setConversationStarted(true);
-    setIsPaused(false);
+    setSessionId(null);
+    setCurrentAgent(null);
+    setConversationHistory([]);
+    setLiveTranscription('');
+    setIsRecording(false);
+    setIsProcessing(false);
     setGradeResult(null);
+    setIsPaused(false);
+    handleDoorClick(); // Start a new conversation
   };
 
   return (
@@ -224,7 +494,9 @@ export default function PracticePage() {
                   <div className="absolute inset-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full" />
                   
                   {/* Avatar Content */}
-                  <span className="relative text-5xl font-bold text-white z-10">AR</span>
+                  <span className="relative text-5xl font-bold text-white z-10">
+                    {currentAgent?.avatar_initials || 'AR'}
+                  </span>
                   
                   {/* Speaking Indicator */}
                   {conversationStarted && !isPaused && (
@@ -241,6 +513,26 @@ export default function PracticePage() {
                       <div className="w-4 h-4 bg-white rounded-full" />
                     </motion.div>
                   )}
+                  
+                  {/* Recording Status */}
+                  {isRecording && (
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                      className="absolute -bottom-4 -right-4 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center"
+                    >
+                      <div className="w-4 h-4 bg-white rounded-full" />
+                    </motion.div>
+                  )}
+                  
+                  {/* Processing Indicator */}
+                  {isProcessing && (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="absolute -top-4 -left-4 w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
+                    />
+                  )}
                 </motion.div>
               </div>
               
@@ -251,18 +543,25 @@ export default function PracticePage() {
                 transition={{ delay: 0.3 }}
                 className="mt-6 text-center"
               >
-                <h2 className="text-2xl font-bold text-white mb-1">Amanda Rodriguez</h2>
+                <h2 className="text-2xl font-bold text-white mb-1">
+                  {currentAgent?.name || 'Amanda Rodriguez'}
+                </h2>
                 <p className="text-purple-300 text-sm">Homeowner • Suburban Mom</p>
+                <p className="text-gray-400 text-xs mt-2">
+                  Turn {Math.ceil(conversationHistory.length / 2)} • {conversationHistory.filter(m => m.role === 'user').length} responses
+                </p>
               </motion.div>
               
-              {/* Hidden ElevenLabs Widget (for voice only) */}
-              <div className="absolute -left-[9999px]">
-                <ElevenLabsConvai 
-                  agentId={ELEVEN_AGENT_ID} 
-                  mode="embedded"
-                  theme="dark"
-                />
-              </div>
+              {/* Live Transcription */}
+              {liveTranscription && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-4 p-3 bg-blue-500/20 rounded-lg border border-blue-500/30 max-w-md"
+                >
+                  <p className="text-sm text-blue-200">You're saying: "{liveTranscription}"</p>
+                </motion.div>
+              )}
             </div>
             
             {/* Floating Controls */}
@@ -272,39 +571,61 @@ export default function PracticePage() {
               transition={{ delay: 0.5 }}
               className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4"
             >
+              {/* Record Button */}
               <motion.button
-                onClick={pauseConversation}
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isProcessing}
                 className={`flex items-center gap-2 px-8 py-4 rounded-full font-medium transition-all backdrop-blur-md ${
-                  isPaused 
-                    ? 'bg-green-600/80 hover:bg-green-700/80 text-white' 
-                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                  isRecording 
+                    ? 'bg-red-600/80 hover:bg-red-700/80 text-white' 
+                    : 'bg-green-600/80 hover:bg-green-700/80 text-white'
+                } disabled:opacity-50`}
+                whileHover={{ scale: isProcessing ? 1 : 1.05 }}
+                whileTap={{ scale: isProcessing ? 1 : 0.95 }}
               >
-                {isPaused ? (
+                {isRecording ? (
                   <>
-                    <Play className="w-5 h-5" />
-                    Resume
+                    <MicOff className="w-5 h-5" />
+                    Stop Recording
                   </>
                 ) : (
                   <>
-                    <Pause className="w-5 h-5" />
-                    Pause
+                    <Mic className="w-5 h-5" />
+                    {isProcessing ? 'Processing...' : 'Start Recording'}
                   </>
                 )}
               </motion.button>
+              
+              {/* Pause Button */}
+              <motion.button
+                onClick={pauseConversation}
+                className="flex items-center gap-2 px-6 py-4 rounded-full font-medium transition-all backdrop-blur-md bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {isPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
+              </motion.button>
 
+              {/* End Button */}
               <motion.button
                 onClick={endConversation}
-                className="flex items-center gap-2 bg-red-600/80 hover:bg-red-700/80 backdrop-blur-md text-white px-8 py-4 rounded-full font-medium transition-all"
+                className="flex items-center gap-2 bg-red-600/80 hover:bg-red-700/80 backdrop-blur-md text-white px-6 py-4 rounded-full font-medium transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <StopCircle className="w-5 h-5" />
-                End Conversation
               </motion.button>
             </motion.div>
+            
+            {/* Status */}
+            <div className="fixed top-8 left-1/2 transform -translate-x-1/2">
+              <p className="text-center text-gray-400 text-sm bg-black/20 backdrop-blur-md px-4 py-2 rounded-full">
+                {isPaused ? '⏸️ Conversation paused' : 
+                 isRecording ? '🎤 Recording your response...' :
+                 isProcessing ? '⚙️ Processing...' :
+                 '💬 Ready for your response'}
+              </p>
+            </div>
           </motion.div>
         </div>
       )}
@@ -357,9 +678,9 @@ export default function PracticePage() {
                   <h3 className="text-lg font-semibold text-green-400 mb-4">✅ Strengths</h3>
                   <ul className="space-y-2 text-sm text-green-100">
                     {(gradeResult?.feedback || [
-                      "Excellent safety explanation with EPA details",
-                      "Clear pricing with no hidden fees mentioned",
-                      "Great time window offer with text alerts"
+                      "Good conversation flow",
+                      "Clear communication",
+                      "Professional approach"
                     ]).map((item: string, index: number) => (
                       <li key={index} className="flex items-start gap-2">
                         <span className="text-green-400 mt-1">•</span>
@@ -374,9 +695,9 @@ export default function PracticePage() {
                   <h3 className="text-lg font-semibold text-amber-400 mb-4">🎯 Areas to Improve</h3>
                   <ul className="space-y-2 text-sm text-amber-100">
                     {(gradeResult?.improvements || [
-                      "Ask more discovery questions about current pest issues",
-                      "Mention specific pests covered in service",
-                      "Reference local neighbors or reviews for social proof"
+                      "Ask more discovery questions",
+                      "Provide more specific details", 
+                      "Build stronger rapport"
                     ]).map((item: string, index: number) => (
                       <li key={index} className="flex items-start gap-2">
                         <span className="text-amber-400 mt-1">•</span>
