@@ -1,0 +1,39 @@
+id: amanda_v1
+axes:
+  safety:
+    max: 5
+    required_phrases:
+      - "epa"
+      - "kid"
+      - "pet"
+    optional_patterns:
+      - "/re[- ]?entry|dry(ing)? (time|\\d+ ?min)/"
+      - "low odor"
+      - "non-staining"
+  time:
+    max: 5
+    required_phrases:
+      - "text before"
+      - "window"
+    optional_patterns:
+      - "/\\b(30 ?min|45 ?min|1 ?hour)\\b/"
+      - "wednesday"
+  price:
+    max: 5
+    required_phrases:
+      - "price"
+      - "monthly"
+    optional_patterns:
+      - "one-time"
+      - "includes"
+      - "no hidden fees"
+  value:
+    max: 5
+    required_phrases:
+      - "covers"
+      - "guarantee"
+    optional_patterns:
+      - "ants"
+      - "spiders"
+      - "mice"
+pass_threshold: 12
