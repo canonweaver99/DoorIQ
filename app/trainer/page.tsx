@@ -173,10 +173,8 @@ export default function Trainer() {
     setIsProcessing(true);
     
     try {
-      // Stop any ongoing capture
-      if (isRecording) {
-        await stopRecording();
-      }
+      // Stop recognition while grading
+      try { recognitionRef.current?.stop(); setIsListening(false); } catch {}
       const res = await fetch('/api/session/end', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -287,7 +285,7 @@ export default function Trainer() {
             {/* Pulsing ring effect */}
             <div className={`absolute inset-0 rounded-full ${
               isPlaying ? 'animate-pulse bg-purple-500/30' : 
-              isRecording ? 'animate-pulse bg-green-500/30' :
+              isListening ? 'animate-pulse bg-green-500/30' :
               'bg-purple-500/10'
             } blur-xl`}></div>
             
@@ -318,7 +316,7 @@ export default function Trainer() {
                 </div>
               )}
               
-              {isRecording && (
+              {isListening && (
                 <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
                   <div className="w-6 h-6 bg-red-500 rounded-full animate-pulse"></div>
                 </div>
