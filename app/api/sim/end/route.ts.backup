@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { callEvaluatorLLM } from "@/lib/llm";
 import { EVALUATOR_SYSTEM } from "@/lib/prompts";
-import { PDFTrainingProcessor } from "@/lib/pdf-processor";
 import type { EvalReport } from "@/lib/types";
 
 export async function POST(req: Request) {
@@ -44,37 +43,18 @@ export async function POST(req: Request) {
       cta: { weight: 0.25, criteria: "Clear next steps and scheduling" }
     };
     
-    // Get relevant training data for enhanced grading
-    const trainingContext = await PDFTrainingProcessor.getRelevantTraining(transcript);
-    
-    // Create enhanced evaluator prompt with training context
-    let enhancedSystem = EVALUATOR_SYSTEM;
-    if (trainingContext.length > 0) {
-      const trainingText = trainingContext.map(doc => 
-        `Training Reference - ${doc.title} (${doc.category}):\n${doc.content.substring(0, 300)}...`
-      ).join('\n\n---\n\n');
-      
-      enhancedSystem += `\n\nTRAINING CONTEXT FOR REFERENCE:\n${trainingText}\n\nUse this training context to provide more specific, actionable feedback that references best practices from the training materials.`;
-    }
-    
-    // Generate evaluation with training context
+    // Generate evaluation
     const evaluation: EvalReport = await callEvaluatorLLM({
-      system: enhancedSystem,
+      system: EVALUATOR_SYSTEM,
       transcript,
       rubric
     });
-    
-    // Enhance evaluation with training-specific insights
-    const enhancedEvaluation = await PDFTrainingProcessor.enhanceGradingWithTraining(
-      transcript,
-      evaluation
-    );
     
     // Update attempt with evaluation and completion time
     const { error: updateError } = await supabaseAdmin
       .from('attempts')
       .update({
-        evaluation: enhancedEvaluation,
+        evaluation: evaluation,
         completed_at: new Date().toISOString()
       })
       .eq('id', attemptId);
@@ -85,10 +65,9 @@ export async function POST(req: Request) {
     
     return NextResponse.json({
       attemptId,
-      eval: enhancedEvaluation,
+      eval: evaluation,
       transcript,
-      turns: turns?.length || 0,
-      training_references: trainingContext.length
+      turns: turns?.length || 0
     });
     
   } catch (error) {
