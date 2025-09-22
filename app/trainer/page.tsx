@@ -255,6 +255,10 @@ export default function Trainer() {
             }
           });
         }
+      } else {
+        const err = await res.json().catch(() => ({} as any));
+        console.error('TTS error:', err);
+        setIsPlaying(false);
       }
     } catch (error) {
       console.error('Speech error:', error);

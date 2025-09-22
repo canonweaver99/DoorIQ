@@ -28,6 +28,10 @@ Keep replies short and natural (1-3 sentences). You're considering pest control 
       messages
     })
   });
+  if (!r.ok) {
+    const err = await r.text();
+    throw new Error(`OpenAI error: ${err}`);
+  }
   const data = await r.json();
   const reply = data.choices?.[0]?.message?.content?.trim() || "Hmm.";
   return reply;
