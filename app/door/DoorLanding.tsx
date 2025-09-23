@@ -47,9 +47,7 @@ export default function DoorLanding({ nextPath = "/trainer", label = "Click to k
                      will-change-transform"
           style={{
             transformOrigin: "left center",
-            backgroundImage: "url(/door.jpg)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            background: "linear-gradient(145deg, #8B4513, #A0522D)",
             transformStyle: "preserve-3d",
           }}
           initial={{ rotateY: 0, x: 0, opacity: 1 }}
@@ -63,16 +61,34 @@ export default function DoorLanding({ nextPath = "/trainer", label = "Click to k
             if (opening) router.push(nextPath);
           }}
         >
-          {/* Subtle knob */}
+          {/* Door panels */}
+          <div className="absolute inset-4 grid grid-rows-2 gap-3">
+            <div className="bg-amber-900/30 rounded-lg shadow-inner border border-amber-800/50" />
+            <div className="bg-amber-900/30 rounded-lg shadow-inner border border-amber-800/50" />
+          </div>
+
+          {/* Door knob */}
           <div
             className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full
-                       bg-amber-400/90 shadow-[inset_0_0_6px_rgba(0,0,0,0.4),0_6px_20px_rgba(0,0,0,0.35)]"
+                       bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-lg"
             style={{ transform: "translateZ(2px)" }}
           />
 
-          {/* Soft inner gradient for depth */}
+          {/* Wood grain texture overlay */}
+          <div className="absolute inset-0 rounded-[18px] pointer-events-none opacity-20"
+               style={{
+                 backgroundImage: `repeating-linear-gradient(
+                   90deg,
+                   transparent,
+                   transparent 2px,
+                   rgba(139, 69, 19, 0.1) 2px,
+                   rgba(139, 69, 19, 0.1) 4px
+                 )`
+               }} />
+
+          {/* Soft inner shadow for depth */}
           <div className="absolute inset-0 rounded-[18px] pointer-events-none
-                          bg-gradient-to-br from-black/10 via-transparent to-black/25" />
+                          shadow-[inset_0_4px_8px_rgba(0,0,0,0.3)]" />
         </motion.div>
       </div>
     </main>

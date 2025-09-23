@@ -5,17 +5,8 @@ export async function GET() {
   const k = process.env.OPENAI_API_KEY;
   if (!k) return NextResponse.json({ error: "OPENAI_API_KEY missing" }, { status: 500 });
 
-  // Pull random scenario/persona from Supabase
-  let personaInstructions = '';
-  try {
-    const base = process.env.NEXT_PUBLIC_SITE_URL || '';
-    const r = await fetch(base + '/api/scenario?random=1', { cache: 'no-store' }).then(r => r.json());
-    const sc = r?.scenario;
-    if (sc?.persona) {
-      const p = sc.persona;
-      personaInstructions = `\n\n[Persona]\nName: ${p.name || 'Amanda Rodriguez'}\nFamily: ${p.family || ''}\nValues: ${(p.values || []).join(', ')}\nPain points: ${(p.pain_points || []).join(', ')}\n`;
-    }
-  } catch {}
+  // Simple persona instructions (removed external fetch to fix token issues)
+  const personaInstructions = `\n\n[Persona]\nName: Amanda Rodriguez\nFamily: Married to David; kids Sofia (6) and Lucas (3); Goldendoodle Bailey\nValues: Child & pet safety, predictable pricing, on-time techs\nPain points: Late techs, vague pricing, hidden fees, chemical jargon\n`;
 
   const r = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
     method: "POST",
