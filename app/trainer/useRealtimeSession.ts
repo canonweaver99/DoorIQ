@@ -263,7 +263,11 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
         dc.send(JSON.stringify({
           type: "session.update",
           session: {
+            modalities: ["text", "audio"],
             instructions: scenarioInstructions,
+            voice: "alloy",
+            input_audio_format: "pcm16",
+            output_audio_format: "pcm16",
             input_audio_transcription: {
               model: "whisper-1"
             },
@@ -272,7 +276,11 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
               threshold: 0.5,
               prefix_padding_ms: 300,
               silence_duration_ms: 500
-            }
+            },
+            tools: [],
+            tool_choice: "auto",
+            temperature: 0.8,
+            max_response_output_tokens: "inf"
           }
         }));
         
