@@ -2,7 +2,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from "next/navigation";
 import { Mic, PhoneOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import StatusChip from './StatusChip';
 import { useRealtimeSession } from './useRealtimeSession';
 import type { Status, Turn } from './types';
@@ -74,9 +73,9 @@ function TrainerInner() {
         </div>
         <StatusChip status={(status as Status)} />
         {error && (
-          <Button variant="ghost" size="sm" onClick={start} className="text-red-200 hover:bg-red-500/30">
+          <button onClick={start} className="text-sm px-3 py-1 rounded-lg text-red-200 border border-red-500/40 hover:bg-red-500/20 transition">
             Retry
-          </Button>
+          </button>
         )}
       </div>
 
@@ -137,7 +136,7 @@ function TrainerInner() {
 
         {/* Controls */}
         <div className="flex items-center gap-6">
-          <Button
+          <button
             className={`relative w-20 h-20 rounded-full transition-all duration-200 ${
               connected && status === 'listening'
                 ? 'bg-green-600 hover:bg-green-700 shadow-lg animate-pulse-mic'
@@ -153,15 +152,15 @@ function TrainerInner() {
             ) : (
               <PhoneOff className="h-8 w-8 text-gray-300" />
             )}
-          </Button>
+          </button>
           
-          <Button
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-semibold text-lg"
+          <button
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50"
             onClick={stop}
             disabled={!connected}
           >
             End & Grade
-          </Button>
+          </button>
         </div>
 
         <p className="text-xs text-gray-500 mt-6">
