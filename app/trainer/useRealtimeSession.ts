@@ -8,7 +8,7 @@ export function useRealtimeSession() {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // Ephemeral-only flow: no persistent sessionId
   const [transcript, setTranscript] = useState<Turn[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const startTimeRef = useRef<number | null>(null);
@@ -36,8 +36,7 @@ export function useRealtimeSession() {
       setError(null);
       setStatus('connecting');
 
-      const s = await fetch('/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({}) }).then(r => r.json());
-      setSessionId(s.sessionId);
+      // Ephemeral-only: no /api/session call
 
       const tok = await fetch('/api/rt/token', { cache: 'no-store' }).then(r => r.json());
       const clientSecret = tok?.client_secret?.value || tok?.client_secret?.secret || tok?.client_secret?.token || tok?.client_secret?.key || tok?.client_secret?.data || tok?.client_secret?.Value || tok?.client_secret?.VALUE || tok?.client_secret?.value; // resilient
@@ -68,20 +67,12 @@ export function useRealtimeSession() {
             setTranscript(prev => [...prev.slice(-19), t]);
             setIsSpeaking(false);
             assistantBuf = '';
-            if (sessionId) {
-              try { await fetch('/api/turns', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId, speaker: 'homeowner', text: t.text, ts: new Date(t.ts).toISOString() }) }); } catch {}
-            }
           }
           if ((msg.type === 'input_audio_transcription.completed' || msg.type === 'conversation.item.input_audio_transcription.completed') && typeof msg.transcript === 'string' && msg.transcript.trim().length > 0) {
             const t: Turn = { id: crypto.randomUUID(), speaker: 'rep', text: msg.transcript, ts: Date.now() };
             setTranscript(prev => [...prev.slice(-19), t]);
-            if (sessionId) {
-              try { await fetch('/api/turns', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId, speaker: 'rep', text: t.text, ts: new Date(t.ts).toISOString() }) }); } catch {}
-            }
           }
-          if ((msg.type === 'conversation.session.ended' || msg.type === 'session.ended') && sessionId) {
-            try { await fetch('/api/session/end', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId }) }); } catch {}
-          }
+          // No server calls on end; ephemeral-only
         } catch {}
       };
 
@@ -108,15 +99,22 @@ export function useRealtimeSession() {
       setConnected(true);
       setStatus('listening');
 
-      // Seed and auto-turn-taking
+      // Seed and auto-turn-taking (local only)
       const seed = (role: 'user'|'assistant', text: string) => ({
         type: 'conversation.item.create',
         item: { type: 'message', role, content: [{ type: 'input_text', text }] }
       });
 
       try {
-        const sc = await fetch('/api/scenario?agent=amanda_001', { cache: 'no-store' }).then(r => r.json());
-        const opening = sc?.scenario?.script?.opening || sc?.scenario?.opening || "Hey—quick heads up, my 3-year-old naps soon. Is this safe around kids and the dog?";
+        const openings = [
+          'Hey—quick heads up, my 3-year-old naps soon. Is this safe around kids and the dog?',
+          'We had a company last year—communication was awful. What’s different with you?',
+          'End of the month here—what’s the one-time price and what’s included?',
+          'Our Goldendoodle lives in the yard—how does that work with treatments?',
+          'We just moved in—can you do preventive without tearing the house apart?',
+          'Spiders collect on the eaves—do you brush webs or just spray?'
+        ];
+        const opening = openings[Math.floor(Math.random() * openings.length)];
 
         // Few-shot to stabilize tone
         dc.send(JSON.stringify(seed('user', 'Is this safe around kids and pets?')));
@@ -150,7 +148,7 @@ export function useRealtimeSession() {
       setError(e?.message || 'connect_failed');
       setStatus('error');
     }
-  }, [sessionId]);
+  }, []);
 
   const disconnect = useCallback(async () => {
     try {
@@ -167,7 +165,6 @@ export function useRealtimeSession() {
     status,
     error,
     connected,
-    sessionId,
     transcript,
     isSpeaking,
     elapsedSeconds,
