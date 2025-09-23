@@ -57,7 +57,7 @@ export default function TrainerRealtime() {
       setSessionId(sessionData.sessionId);
 
       // Get realtime token
-      const tokenRes = await fetch('/api/realtime/token');
+      const tokenRes = await fetch('/api/realtime/token', { cache: 'no-store' });
       const tokenData = await tokenRes.json();
       if (!tokenData?.token) { 
         setError('No realtime token'); 
