@@ -5,9 +5,12 @@ export const runtime = 'edge';
 
 export async function POST(req: Request) {
   try {
+    const body = await req.json().catch(() => ({}));
+    const scenarioId = body?.scenarioId || null;
+
     const { data: session, error } = await supabaseAdmin
       .from('sessions')
-      .insert([{ user_id: null }]) // Add real user_id when auth is ready
+      .insert([{ user_id: null, scenario_id: scenarioId }])
       .select()
       .single();
 
@@ -15,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ sessionId: session.id });
+    return NextResponse.json({ sessionId: session.id, scenarioId: session.scenario_id });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
   }

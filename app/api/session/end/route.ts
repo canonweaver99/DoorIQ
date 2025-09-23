@@ -82,13 +82,17 @@ export async function POST(req: Request) {
     // Grade the conversation
     const grading = await gradeConversation(turns || []);
 
-    // Update session with end time and grading
+    // Write score row and end the session
+    const { error: scoreErr } = await supabaseAdmin
+      .from('scores')
+      .insert([{ session_id: sessionId, rubric: grading.breakdown, total: grading.total, notes: (grading.strengths || []).join('; ') }]);
+    if (scoreErr) {
+      return NextResponse.json({ error: scoreErr.message }, { status: 500 });
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('sessions')
-      .update({
-        ended_at: new Date().toISOString(),
-        grading: grading
-      })
+      .update({ ended_at: new Date().toISOString() })
       .eq('id', sessionId);
 
     if (updateError) {

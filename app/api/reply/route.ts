@@ -63,7 +63,7 @@ export async function POST(req: Request) {
   // Log the rep turn
   const { data: repTurn, error: repErr } = await supabaseAdmin
     .from('turns')
-    .insert([{ session_id: sessionId, speaker: 'rep', text: userText }])
+    .insert([{ session_id: sessionId, speaker: 'rep', text: userText, ts: new Date().toISOString(), latency_ms: null, asr_confidence: null }])
     .select()
     .single();
 
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
   // Log homeowner turn
   const { data: aiTurn, error: aiErr } = await supabaseAdmin
     .from('turns')
-    .insert([{ session_id: sessionId, speaker: 'homeowner', text: replyText }])
+    .insert([{ session_id: sessionId, speaker: 'homeowner', text: replyText, ts: new Date().toISOString() }])
     .select()
     .single();
 
