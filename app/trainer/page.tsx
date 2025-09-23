@@ -1,7 +1,12 @@
 'use client';
-import { Suspense } from 'react';
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from "next/navigation";
+import PersonaCard from './PersonaCard';
+import StatusChip from './StatusChip';
+import TranscriptList from './TranscriptList';
+import ControlsBar from './ControlsBar';
+import { useRealtimeSession } from './useRealtimeSession';
+import type { Status } from './types';
 
 export default function Trainer() {
   return (
@@ -12,110 +17,14 @@ export default function Trainer() {
 }
 
 function TrainerInner() {
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [connected, setConnected] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const search = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
+  const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, connect, disconnect } = useRealtimeSession();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  async function start() {
-    try {
-      // Load homeowner avatar (from Supabase agents or scenarios)
-      try {
-        const agent = await fetch('/api/agent', { cache: 'no-store' }).then(r => r.json());
-        setAvatarUrl(agent?.avatar_url || null);
-      } catch {}
-
-      // Create DB session for logging
-      try {
-        const s = await fetch('/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({}) }).then(r => r.json());
-        setSessionId(s.sessionId);
-      } catch {}
-
-      // 1) Get ephemeral token
-      const tokRes = await fetch("/api/rt/token", { cache: 'no-store' });
-      const tok = await tokRes.json();
-      if (!tok?.client_secret?.value) throw new Error('No realtime token');
-
-      // 2) WebRTC peer connection
-      const pc = new RTCPeerConnection();
-      pcRef.current = pc;
-
-      // 3) Remote audio
-      const remoteStream = new MediaStream();
-      if (audioRef.current) audioRef.current.srcObject = remoteStream;
-      pc.ontrack = (e) => remoteStream.addTrack(e.track);
-
-      // 4) Data channel for events
-      const dc = pc.createDataChannel("oai-events");
-      let assistantBuffer = '';
-      dc.onmessage = async (evt) => {
-        try {
-          const msg = JSON.parse(evt.data);
-          // assistant stream
-          if (msg.type === 'response.output_text.delta' && typeof msg.delta === 'string') {
-            assistantBuffer += msg.delta;
-          }
-          if ((msg.type === 'response.output_text.done' || msg.type === 'response.completed') && assistantBuffer.trim().length > 0) {
-            if (sessionId) {
-              try { await fetch('/api/turns/add', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId, speaker: 'homeowner', text: assistantBuffer, ts: new Date().toISOString() }) }); } catch {}
-            }
-            assistantBuffer = '';
-          }
-          // user transcript
-          if ((msg.type === 'input_audio_transcription.completed' || msg.type === 'conversation.item.input_audio_transcription.completed') && typeof msg.transcript === 'string' && msg.transcript.trim().length > 0) {
-            if (sessionId) {
-              try { await fetch('/api/turns/add', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId, speaker: 'rep', text: msg.transcript, ts: new Date().toISOString() }) }); } catch {}
-            }
-          }
-        } catch {}
-      };
-
-      // 5) Mic
-      const media = await navigator.mediaDevices.getUserMedia({ audio: true });
-      media.getTracks().forEach((t) => pc.addTrack(t, media));
-
-      // 6) Offer
-      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
-      await pc.setLocalDescription(offer);
-
-      // 7) Exchange SDP
-      const sdpRes = await fetch(
-        "https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${tok.client_secret.value}`,
-            "Content-Type": "application/sdp",
-            "openai-beta": "realtime=v1",
-          },
-          body: offer.sdp || ''
-        }
-      );
-
-      if (!sdpRes.ok) {
-        const err = await sdpRes.text();
-        throw new Error(`SDP exchange failed: ${err}`);
-      }
-
-      const answer = { type: "answer", sdp: await sdpRes.text() } as RTCSessionDescriptionInit;
-      await pc.setRemoteDescription(answer);
-
-      setConnected(true);
-    } catch (e: any) {
-      setError(e?.message || 'start_failed');
-    }
-  }
+  async function start() { await connect(); }
 
   async function stop() {
-    try {
-      pcRef.current?.getSenders().forEach(s => s.track?.stop());
-      pcRef.current?.close();
-    } catch {}
-    pcRef.current = null;
-    setConnected(false);
+    await disconnect();
   }
 
   // Auto-start if ?autostart=1
@@ -127,29 +36,43 @@ function TrainerInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-center">
-        {/* Large Centered Avatar Only */}
-        <div className="relative w-48 h-48 rounded-full overflow-hidden mx-auto mb-6 border-4 border-white/20 shadow-2xl">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Homeowner" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600" />
-          )}
-        </div>
+  // Keyboard shortcuts: space toggles mic; esc ends session
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'Space') { e.preventDefault(); if (!connected) start().catch(() => {}); }
+      if (e.code === 'Escape') { e.preventDefault(); if (connected) stop().catch(() => {}); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [connected]);
 
-        {/* Minimal controls */}
-        <div className="space-x-3">
-          {!connected ? (
-            <button className="px-6 py-3 bg-white text-black rounded" onClick={start}>Start Conversation</button>
-          ) : (
-            <button className="px-6 py-3 bg-white/10 text-white rounded border border-white/20" onClick={stop}>End</button>
-          )}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#0b1020] via-[#0c0f17] to-[#0b1020] text-white">
+      <div className="max-w-6xl mx-auto p-4 md:p-8 grid md:grid-cols-2 gap-6">
+        <div className="space-y-4 order-2 md:order-1">
+          <PersonaCard name="Amanda" avatarUrl={avatarUrl || undefined} />
         </div>
-        {error && <p className="text-red-400 mt-3">{error}</p>}
+        <div className="order-1 md:order-2">
+          <div className="rounded-2xl bg-white/5 border border-white/10 shadow-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm opacity-70">Live Conversation</div>
+              <StatusChip status={(status as Status)} />
+            </div>
+            <div className="bg-gradient-to-r from-white/5 to-white/0 rounded-xl p-3 mb-3" />
+            {error && (
+              <div className="mb-3 rounded-lg border border-red-500/30 bg-red-600/10 text-red-300 px-3 py-2 text-sm flex items-center justify-between">
+                <span>{error}</span>
+                <button onClick={start} className="underline">Retry</button>
+              </div>
+            )}
+            <TranscriptList turns={transcript as any} speaking={isSpeaking} />
+            <div className="mt-4">
+              <ControlsBar connected={connected} onMic={start} onEnd={stop} elapsed={elapsedSeconds} audioRef={audioRef as any} />
+            </div>
+          </div>
+        </div>
       </div>
-      <audio ref={audioRef} autoPlay />
+      <audio ref={audioRef as any} autoPlay />
     </div>
   );
 }

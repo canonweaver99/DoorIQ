@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     // Fetch all turns for this session
     const { data: turns, error: turnsError } = await supabaseAdmin
       .from('turns')
-      .select('speaker, text')
+      .select('speaker, text, ts')
       .eq('session_id', sessionId)
       .order('id', { ascending: true });
 
@@ -112,17 +112,58 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: turnsError.message }, { status: 500 });
     }
 
-    // Grade the conversation
-    const grading = gradeConversation(turns || []);
+    // Build transcript payload
+    const transcript = (turns || []).map(t => ({ speaker: t.speaker, text: t.text, ts: t.ts }));
+
+    // Try external webhook first (preferred), fallback to internal grading
+    let grading: any = null;
+    const webhookUrl = process.env.WEBHOOK_URL;
+    const evalKey = process.env.EVAL_API_KEY;
+    if (webhookUrl) {
+      try {
+        const wr = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            ...(evalKey ? { authorization: `Bearer ${evalKey}` } : {})
+          },
+          body: JSON.stringify({ session_id: sessionId, transcript })
+        });
+        const wjson = await wr.json().catch(() => ({}));
+        // Expect { total, max, notes, axes? } or our deterministic structure
+        if (wr.ok && (wjson.total !== undefined)) {
+          grading = {
+            total: Number(wjson.total) || 0,
+            max: Number(wjson.max) || 6,
+            percentage: Math.round(((Number(wjson.total) || 0) / (Number(wjson.max) || 6)) * 100),
+            grade: 'B',
+            breakdown: wjson.axes || wjson.rubric || {},
+            notes: wjson.notes || []
+          };
+        }
+      } catch {}
+    }
+
+    if (!grading) {
+      const det = gradeConversation(transcript as any);
+      grading = {
+        total: det.total,
+        max: det.max,
+        percentage: Math.round((det.total / det.max) * 100),
+        grade: 'B',
+        breakdown: det.rubric,
+        notes: det.notes
+      };
+    }
 
     // Save score to database
     const { error: scoreErr } = await supabaseAdmin
       .from('scores')
       .insert([{ 
         session_id: sessionId, 
-        rubric: grading.rubric, 
+        rubric: grading.breakdown || {}, 
         total: grading.total, 
-        notes: grading.notes.join('; ') 
+        notes: (grading.notes || []).join('; ') 
       }]);
 
     if (scoreErr) {
@@ -140,7 +181,7 @@ export async function POST(req: Request) {
     }
 
     // Return formatted grading
-    const percentage = Math.round((grading.total / grading.max) * 100);
+    const percentage = grading.percentage || Math.round((grading.total / (grading.max || 6)) * 100);
     let grade = 'D';
     if (percentage >= 90) grade = 'A+';
     else if (percentage >= 85) grade = 'A';
@@ -153,15 +194,16 @@ export async function POST(req: Request) {
       sessionId,
       grading: {
         total: grading.total,
-        max: grading.max,
+        max: grading.max || 6,
         percentage,
         grade,
-        breakdown: grading.rubric,
+        breakdown: grading.breakdown || {},
         notes: grading.notes,
-        strengths: grading.notes.filter(n => n.startsWith('✅')),
-        improvements: grading.notes.filter(n => n.startsWith('❌') || n.startsWith('⚠️') || n.startsWith('🚨'))
+        strengths: (grading.notes || []).filter((n: string) => n.startsWith('✅')),
+        improvements: (grading.notes || []).filter((n: string) => n.startsWith('❌') || n.startsWith('⚠️') || n.startsWith('🚨'))
       },
-      turnCount: turns?.length || 0
+      turnCount: turns?.length || 0,
+      transcript
     });
 
   } catch (error) {
