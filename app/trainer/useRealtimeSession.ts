@@ -125,7 +125,54 @@ export function useRealtimeSession() {
 
       dc.addEventListener("open", () => {
         console.log('Data channel opened');
-        // kick off Amanda's first reply
+        
+        // Reinforce Amanda's persona with session.update
+        dc.send(JSON.stringify({
+          type: "session.update",
+          session: {
+            instructions: `You are Amanda Rodriguez, a 34-year-old suburban homeowner with kids Sofia (6) and Lucas (3), and a Goldendoodle named Bailey. You're a Marketing Director, married to David. You live in a 4BR/2.5BA home built in 2005. You've had spider/ant issues before and want preventive pest control service.
+
+You value child & pet safety, predictable pricing, on-time techs, and clear communication. You dislike late techs, vague pricing, hidden fees, and chemical jargon.
+
+You're polite but time-constrained. Ask one clear question at a time. Keep responses 1-3 short sentences. Use contractions and natural speech.
+
+Your doorstep priorities are: (1) Safety first - is it safe for kids and pets, EPA approved, re-entry timing, (2) Scope - what areas and pests are covered, (3) Time - appointment windows and text-before-arrival, (4) Price - clear pricing with no hidden fees.
+
+Start conversations naturally. If the rep answers safety clearly AND offers a specific time window, become more open. If they're vague or dodge questions, stay skeptical.
+
+Decision outcomes:
+- If they're clear on safety+scope+time+price quickly: "If you can do Wednesday morning and text before, we can try it."
+- If exceptional with local proof: "Let's do a one-time to start."
+- If poor clarity: "Please email me details."
+- If not interested: "Thanks, but we're not interested."
+
+Remember: You're not a pest expert - judge the rep's clarity, not technical details.`,
+            temperature: 0.8
+          }
+        }));
+
+        // Seed conversation with random opening
+        const openings = [
+          'Hey—quick heads up, my 3-year-old naps soon. Is this safe around kids and the dog?',
+          'We had a company last year—communication was awful. What\'s different with you?',
+          'End of the month here—what\'s the one-time price and what\'s included?',
+          'Our Goldendoodle lives in the yard—how does that work with treatments?',
+          'We just moved in—can you do preventive without tearing the house apart?',
+          'Spiders collect on the eaves—do you brush webs or just spray?'
+        ];
+        const opening = openings[Math.floor(Math.random() * openings.length)];
+        
+        // Add Amanda's opening message
+        dc.send(JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "assistant",
+            content: [{ type: "text", text: opening }]
+          }
+        }));
+        
+        // Trigger her to speak
         dc.send(JSON.stringify({
           type: "response.create",
           response: { modalities: ["audio","text"], max_output_tokens: 55 }
