@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Turn, Status } from './types';
 import { getRandomScenario, type AmandaScenario } from './scenarios';
+import { getRandomSoundForScenario, playAmbientSound } from './ambientSounds';
 
 export function useRealtimeSession() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -76,6 +77,8 @@ export function useRealtimeSession() {
       pc.ondatachannel = (e) => { dc = e.channel; };
       
       let assistantBuf = '';
+      let userTalkingSince = 0;
+      let lastUserTurnEndTime = 0;
       
       // 3) Mic track + ensure we have an m=audio section
       const ms = await navigator.mediaDevices.getUserMedia({
@@ -140,31 +143,37 @@ export function useRealtimeSession() {
         console.log('Selected scenario:', scenario.name, scenario.mood);
         
         // Build dynamic instructions based on scenario
-        const scenarioInstructions = `You are Amanda Rodriguez, a 34-year-old suburban homeowner. You're polite but standoffish - let the SALES REP lead the conversation. Don't ask questions unless directly relevant to what they just said.
+        const scenarioInstructions = `You are Amanda Rodriguez, real suburban mom at her door. Natural, human responses only.
 
 CURRENT SCENARIO: ${scenario.name}
 YOUR SITUATION: ${scenario.situation}
-BACKGROUND CONTEXT: ${scenario.background}
+BACKGROUND: ${scenario.background}
 MOOD: ${scenario.mood}
 
-IMPORTANT: When the rep mentions pests or treatments related to your scenario, bring up your specific problem naturally:
-${scenario.id === 'ant_invasion' ? '- If they mention ants or kitchen: "We actually have ants in the kitchen right now"' : ''}
-${scenario.id === 'spider_problem' ? '- If they mention spiders or exterior: "Yeah, we get spider webs on our eaves constantly"' : ''}
-${scenario.id === 'dog_owner' ? '- If they mention treatments or yard: "Our Goldendoodle Bailey spends all day in the yard"' : ''}
-${scenario.id === 'new_homeowner' ? '- If they mention prevention: "We just moved in two months ago"' : ''}
+SPEAKING RULES:
+- 1-2 short sentences (≤6 seconds). Vary length naturally.
+- Light disfluency when ${scenario.mood === 'busy' ? 'rushed: "uh, yeah..."' : scenario.mood === 'skeptical' ? 'doubtful: "I don\'t know..."' : 'thinking: "hmm, okay"'}
+- Back-channels when rep explains well: "okay", "uh-huh", "got it"
+- Natural pauses with commas, em dashes—like this
+- NEVER narrate actions or read stage directions
 
-RESPONSE STYLE:
-- Keep responses SHORT (1-2 sentences max)
-- Be REACTIVE, not proactive - respond to what they say
-- Don't volunteer information unless asked directly
-- Be ${scenario.mood} in tone
-- Only ask questions if they haven't addressed your main concern
+SCENARIO-SPECIFIC REACTIONS:
+${scenario.id === 'ant_invasion' ? '- If ants/kitchen mentioned: "Yeah, we\'ve actually got them in the pantry right now"' : ''}
+${scenario.id === 'spider_problem' ? '- If spiders/exterior: "Oh god, yeah—the eaves are covered"' : ''}
+${scenario.id === 'dog_owner' ? '- If treatments/yard: "Bailey\'s out there all day, so..."' : ''}
+${scenario.id === 'new_homeowner' ? '- If prevention: "We literally just moved in last month"' : ''}
+${scenario.id === 'chemical_sensitivity' ? '- If products mentioned: "Wait—are those EPA registered?"' : ''}
+${scenario.id === 'nap_time' ? '- If timing discussed: "Lucas just went down, so..."' : ''}
 
-Your priorities: ${scenario.priorities.join(', ')}
-Potential objections: ${scenario.objections.join(', ')}
-Close difficulty: ${scenario.closeThreshold}
+CONVERSATION FLOW:
+- Line 1: React to what they just said
+- Line 2 (if needed): One specific question about ${scenario.priorities[0]}
+- Be ${scenario.mood}: ${scenario.mood === 'busy' ? 'rushed, checking time' : scenario.mood === 'skeptical' ? 'doubtful, need proof' : scenario.mood === 'interested' ? 'engaged but cautious' : scenario.mood === 'frustrated' ? 'fed up, want solutions' : 'neutral, evaluating'}
 
-Let the rep do the selling. You're just a homeowner responding to their pitch.`;
+Priorities: ${scenario.priorities.slice(0, 2).join(', ')}
+Main objection: ${scenario.objections[0]}
+
+Natural interruption if rambling: "Sorry—what's the price?"`;
         
         // Reinforce Amanda's persona with session.update
         dc.send(JSON.stringify({
@@ -199,6 +208,35 @@ Let the rep do the selling. You're just a homeowner responding to their pitch.`;
         try {
           const ev = JSON.parse(e.data);
           
+          // Track user speech for barge-in detection
+          if (ev.type === 'input_audio_buffer.speech_started') {
+            userTalkingSince = performance.now();
+            console.log('User started speaking');
+          }
+          
+          if (ev.type === 'input_audio_buffer.speech_stopped') {
+            const talkDuration = performance.now() - userTalkingSince;
+            lastUserTurnEndTime = performance.now();
+            console.log(`User spoke for ${Math.round(talkDuration)}ms`);
+            
+            // Barge-in if user is rambling (>20s) or being evasive
+            if (talkDuration > 20000) {
+              dc.send(JSON.stringify({ type: "response.cancel" })); // Cancel any pending
+              dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                  type: "message",
+                  role: "assistant",
+                  content: [{ type: "text", text: "Sorry—quickly—price and what's included?" }]
+                }
+              }));
+              dc.send(JSON.stringify({
+                type: "response.create",
+                response: { modalities: ["audio","text"], max_output_tokens: 45 }
+              }));
+            }
+          }
+          
           // Handle assistant text streaming
           if (ev.type === 'response.output_text.delta' && typeof ev.delta === 'string') {
             assistantBuf += ev.delta;
@@ -217,12 +255,28 @@ Let the rep do the selling. You're just a homeowner responding to their pitch.`;
             setTranscript(prev => [...prev.slice(-19), t]);
           }
           
-          // Auto-respond after each user turn
+          // Auto-respond after each user turn with natural variation
           if (ev.type === "conversation.item.created" && ev.item?.role === "user") {
-            dc.send(JSON.stringify({
-              type: "response.create",
-              response: { modalities: ["audio","text"], max_output_tokens: 55 }
-            }));
+            // Add slight delay variation for more natural feel
+            const responseDelay = Math.random() * 300 + 100; // 100-400ms
+            setTimeout(() => {
+              // Maybe play ambient sound based on scenario
+              if (currentScenario) {
+                const sound = getRandomSoundForScenario(currentScenario.id);
+                if (sound) {
+                  playAmbientSound(sound);
+                }
+              }
+              
+              dc.send(JSON.stringify({
+                type: "response.create",
+                response: { 
+                  modalities: ["audio","text"], 
+                  max_output_tokens: 55,
+                  temperature: 0.8
+                }
+              }));
+            }, responseDelay);
           }
         } catch (err) {
           console.error('Data channel message error:', err);
