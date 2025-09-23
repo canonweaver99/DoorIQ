@@ -1,8 +1,17 @@
 'use client';
+import { Suspense } from 'react';
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 export default function Trainer() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Loading…</div>}>
+      <TrainerInner />
+    </Suspense>
+  );
+}
+
+function TrainerInner() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [connected, setConnected] = useState(false);
