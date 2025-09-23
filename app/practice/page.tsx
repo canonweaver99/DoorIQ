@@ -7,8 +7,8 @@ export default function PracticePage() {
   const router = useRouter();
   
   useEffect(() => {
-    // Redirect to the new trainer page
-    router.push('/trainer');
+    // Redirect to realtime trainer
+    router.push('/trainer-realtime');
   }, [router]);
 
   return (
