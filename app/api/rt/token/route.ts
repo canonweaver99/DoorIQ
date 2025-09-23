@@ -48,9 +48,29 @@ Keep responses conversational, human, varied.`;
         session: {
           type: "realtime",
           model: "gpt-4o-realtime-preview-2024-12-17",
-          audio: { output: { voice: "alloy" } },
+          audio: { 
+            input: {
+              format: { type: "audio/pcm", rate: 24000 },
+              transcription: { model: "whisper-1" }
+            },
+            output: { 
+              voice: "alloy",
+              format: { type: "audio/pcm", rate: 24000 }
+            } 
+          },
           temperature: 0.8,  // Natural variation for human-like responses
           instructions,
+          tools: [],
+          tool_choice: "none",
+          turn_detection: {
+            type: "server_vad",
+            threshold: 0.5,
+            prefix_padding_ms: 300,
+            silence_duration_ms: 500
+          },
+          input_audio_transcription: {
+            model: "whisper-1"
+          }
         }
       }),
     });

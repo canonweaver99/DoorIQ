@@ -43,10 +43,27 @@ export function useRealtimeSession() {
 
       // 1) Fresh ephemeral (fetch it right before SDP)
       const tokRes = await fetch("/api/rt/token", { cache: "no-store" });
-      if (!tokRes.ok) throw new Error(`token route ${tokRes.status}: ${await tokRes.text()}`);
-      const tokenData = await tokRes.json();
+      const tokText = await tokRes.text();
+      console.log('Token response:', tokRes.status, tokText);
+      
+      if (!tokRes.ok) {
+        console.error('Token fetch failed:', tokRes.status, tokText);
+        throw new Error(`token route ${tokRes.status}: ${tokText}`);
+      }
+      
+      let tokenData;
+      try {
+        tokenData = JSON.parse(tokText);
+      } catch (e) {
+        console.error('Failed to parse token response:', tokText);
+        throw new Error('Invalid token response format');
+      }
+      
       const EPHEMERAL = tokenData?.value || tokenData?.client_secret?.value;
-      if (!EPHEMERAL) throw new Error("no client_secret.value in token response");
+      if (!EPHEMERAL) {
+        console.error('No token value in response:', tokenData);
+        throw new Error("no client_secret.value in token response");
+      }
 
       // 2) PeerConnection + audio sink
       const pc = new RTCPeerConnection({
@@ -180,7 +197,16 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
           type: "session.update",
           session: {
             instructions: scenarioInstructions,
-            temperature: 0.8
+            temperature: 0.8,
+            input_audio_transcription: {
+              model: "whisper-1"
+            },
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.5,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 500
+            }
           }
         }));
         
@@ -207,6 +233,7 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
       dc.addEventListener("message", (e) => {
         try {
           const ev = JSON.parse(e.data);
+          console.log('Realtime event:', ev.type, ev);
           
           // Track user speech for barge-in detection
           if (ev.type === 'input_audio_buffer.speech_started') {
@@ -238,20 +265,24 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
           }
           
           // Handle assistant text streaming
-          if (ev.type === 'response.output_text.delta' && typeof ev.delta === 'string') {
+          if (ev.type === 'response.text.delta' && ev.delta) {
             assistantBuf += ev.delta;
             setIsSpeaking(true);
           }
-          if ((ev.type === 'response.output_text.done' || ev.type === 'response.completed') && assistantBuf.trim().length > 0) {
-            const t: Turn = { id: crypto.randomUUID(), speaker: 'homeowner', text: assistantBuf, ts: Date.now() };
+          if (ev.type === 'response.text.done' && ev.text) {
+            // Full text is provided in done event
+            assistantBuf = ev.text;
+          }
+          if ((ev.type === 'response.done' || ev.type === 'response.text.done') && assistantBuf.trim().length > 0) {
+            const t: Turn = { id: crypto.randomUUID(), speaker: 'homeowner', text: assistantBuf.trim(), ts: Date.now() };
             setTranscript(prev => [...prev.slice(-19), t]);
             setIsSpeaking(false);
             assistantBuf = '';
           }
           
           // Handle user transcription
-          if ((ev.type === 'input_audio_transcription.completed' || ev.type === 'conversation.item.input_audio_transcription.completed') && typeof ev.transcript === 'string' && ev.transcript.trim().length > 0) {
-            const t: Turn = { id: crypto.randomUUID(), speaker: 'rep', text: ev.transcript, ts: Date.now() };
+          if (ev.type === 'conversation.item.input_audio_transcription.completed' && ev.transcript) {
+            const t: Turn = { id: crypto.randomUUID(), speaker: 'rep', text: ev.transcript.trim(), ts: Date.now() };
             setTranscript(prev => [...prev.slice(-19), t]);
           }
           
