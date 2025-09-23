@@ -10,15 +10,13 @@ interface AgentData {
 
 interface Grading {
   total: number;
-  breakdown: {
-    safety: number;
-    value: number;
-    timing: number;
-    pricing: number;
-  };
-  strengths: string[];
-  improvements: string[];
+  max?: number;
+  percentage?: number;
   grade: string;
+  breakdown?: any;
+  notes?: string[];
+  strengths?: string[];
+  improvements?: string[];
 }
 
 export default function TrainerRealtime() {
@@ -169,16 +167,18 @@ If they address safety clearly and offer a specific time window, you become more
           {/* Overall Grade */}
           <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-8 text-center border border-purple-500/30">
             <div className="text-6xl font-bold text-white mb-4">{grading.grade}</div>
-            <div className="text-2xl text-purple-200 mb-2">{grading.total}/20 Points</div>
-            <div className="text-gray-400">{Math.round((grading.total / 20) * 100)}% Score</div>
+            <div className="text-2xl text-purple-200 mb-2">{grading.total}/{grading.max || 6} Points</div>
+            <div className="text-gray-400">{grading.percentage || 0}% Score</div>
           </div>
 
           {/* Breakdown */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(grading.breakdown).map(([category, score]) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {Object.entries(grading.breakdown || {}).map(([category, score]) => (
               <div key={category} className="bg-white/10 backdrop-blur-lg rounded-lg p-4 text-center border border-white/20">
-                <div className="text-2xl font-bold text-purple-400 mb-2">{score}/5</div>
-                <div className="text-sm text-gray-300 capitalize">{category}</div>
+                <div className={`text-2xl font-bold mb-2 ${score === 1 ? 'text-green-400' : 'text-red-400'}`}>
+                  {score === 1 ? '✅' : '❌'}
+                </div>
+                <div className="text-xs text-gray-300 capitalize">{category.replace(/_/g, ' ')}</div>
               </div>
             ))}
           </div>
@@ -190,7 +190,7 @@ If they address safety clearly and offer a specific time window, you become more
                 ✅ Strengths
               </h3>
               <ul className="space-y-2">
-                {grading.strengths.map((strength, i) => (
+                {(grading.strengths || grading.notes?.filter((n: string) => n.startsWith('✅')) || []).map((strength: string, i: number) => (
                   <li key={i} className="text-green-100 text-sm flex items-start gap-2">
                     <span className="text-green-400 mt-1">•</span>
                     <span>{strength}</span>
@@ -204,7 +204,7 @@ If they address safety clearly and offer a specific time window, you become more
                 🎯 Areas to Improve
               </h3>
               <ul className="space-y-2">
-                {grading.improvements.map((improvement, i) => (
+                {(grading.improvements || grading.notes?.filter((n: string) => n.startsWith('❌') || n.startsWith('⚠️') || n.startsWith('🚨')) || []).map((improvement: string, i: number) => (
                   <li key={i} className="text-amber-100 text-sm flex items-start gap-2">
                     <span className="text-amber-400 mt-1">•</span>
                     <span>{improvement}</span>

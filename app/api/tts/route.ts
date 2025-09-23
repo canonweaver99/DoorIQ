@@ -32,9 +32,14 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_monolingual_v1',
-        optimize_streaming_latency: 3,  // 0..3 (lower = faster)
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        model_id: 'eleven_turbo_v2_5', // Faster model
+        optimize_streaming_latency: 3,  // Maximum optimization
+        voice_settings: { 
+          stability: 0.5, 
+          similarity_boost: 0.75,
+          style: 0.0,
+          use_speaker_boost: true
+        }
       })
     });
 

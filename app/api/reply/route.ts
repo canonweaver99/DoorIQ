@@ -12,7 +12,7 @@ Keep replies short and natural (1-3 sentences). You're considering pest control 
 
   const messages = [
     { role: 'system', content: system },
-    ...history.map(t => ({ role: t.speaker === 'rep' ? 'user' : 'assistant', content: t.text })),
+    ...history.reverse().map(t => ({ role: t.speaker === 'rep' ? 'user' : 'assistant', content: t.text })),
     { role: 'user', content: userText }
   ];
 
@@ -52,13 +52,13 @@ async function postToWebhook(payload: any) {
 export async function POST(req: Request) {
   const { sessionId, userText } = await req.json();
 
-  // Fetch light history for the LLM (optional: limit last N).
+  // Fetch last 6-8 turns only for speed
   const { data: historyRows } = await supabaseAdmin
     .from('turns')
     .select('speaker,text')
     .eq('session_id', sessionId)
-    .order('id', { ascending: true })
-    .limit(20);
+    .order('id', { ascending: false })
+    .limit(8);
 
   // Log the rep turn
   const { data: repTurn, error: repErr } = await supabaseAdmin

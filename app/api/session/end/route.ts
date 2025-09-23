@@ -3,65 +3,98 @@ import { supabaseAdmin } from '@/app/lib/server/supabase';
 
 export const runtime = 'edge';
 
-async function gradeConversation(transcript: Array<{speaker: string, text: string}>) {
-  const conversationText = transcript
-    .map(t => `${t.speaker.toUpperCase()}: ${t.text}`)
-    .join('\n');
+function gradeConversation(transcript: Array<{speaker: string, text: string}>) {
+  const repText = transcript
+    .filter(t => t.speaker === 'rep')
+    .map(t => t.text.toLowerCase())
+    .join(' ');
 
-  const gradingPrompt = `You are grading a door-to-door pest control sales conversation. 
-The sales rep is talking to Amanda Rodriguez, a suburban mom who values child/pet safety and clear pricing.
+  const homeownerText = transcript
+    .filter(t => t.speaker === 'homeowner')  
+    .map(t => t.text.toLowerCase())
+    .join(' ');
 
-Rate the conversation on these 4 criteria (0-5 points each):
-1. SAFETY: Did they address child/pet safety concerns clearly?
-2. VALUE: Did they explain the service value and what's included?
-3. TIMING: Did they offer specific scheduling and respect her time?
-4. PRICING: Did they provide clear, transparent pricing?
+  // Boolean rubric (0 or 1 each)
+  const rubric = {
+    safety_clarity: (
+      repText.includes('epa') || 
+      repText.includes('safe') || 
+      repText.includes('kid') || 
+      repText.includes('pet')
+    ) ? 1 : 0,
 
-Conversation:
-${conversationText}
+    reentry_time_mentioned: (
+      repText.includes('re-entry') ||
+      repText.includes('dry') ||
+      repText.includes('30 min') ||
+      repText.includes('hour')
+    ) ? 1 : 0,
 
-Respond with JSON only:
-{
-  "total": number (0-20),
-  "breakdown": {
-    "safety": number (0-5),
-    "value": number (0-5), 
-    "timing": number (0-5),
-    "pricing": number (0-5)
-  },
-  "strengths": ["strength 1", "strength 2"],
-  "improvements": ["improvement 1", "improvement 2"],
-  "grade": "A+/A/B+/B/C+/C/D"
-}`;
+    scope_covered: (
+      repText.includes('cover') ||
+      repText.includes('include') ||
+      repText.includes('ant') ||
+      repText.includes('spider') ||
+      repText.includes('mouse')
+    ) ? 1 : 0,
 
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: gradingPrompt }],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      })
-    });
+    time_window_offered: (
+      repText.includes('wednesday') ||
+      repText.includes('morning') ||
+      repText.includes('afternoon') ||
+      repText.includes('window') ||
+      repText.includes('between')
+    ) ? 1 : 0,
 
-    const data = await response.json();
-    const grading = JSON.parse(data.choices[0].message.content);
-    return grading;
-  } catch (error) {
-    console.error('Grading error:', error);
-    return {
-      total: 12,
-      breakdown: { safety: 3, value: 3, timing: 3, pricing: 3 },
-      strengths: ["Professional approach"],
-      improvements: ["Continue practicing"],
-      grade: "B"
-    };
+    price_tier_clear: (
+      repText.includes('$') ||
+      repText.includes('month') ||
+      repText.includes('price') ||
+      repText.includes('cost')
+    ) ? 1 : 0,
+
+    local_proof: (
+      repText.includes('neighbor') ||
+      repText.includes('review') ||
+      repText.includes('referral') ||
+      repText.includes('local')
+    ) ? 1 : 0
+  };
+
+  const total = Object.values(rubric).reduce((sum, val) => sum + val, 0);
+  const max = 6;
+
+  // Generate notes
+  const notes = [];
+  if (rubric.safety_clarity) notes.push('✅ Addressed safety concerns');
+  if (rubric.reentry_time_mentioned) notes.push('✅ Mentioned re-entry timing');
+  if (rubric.scope_covered) notes.push('✅ Explained service scope');
+  if (rubric.time_window_offered) notes.push('✅ Offered specific time window');
+  if (rubric.price_tier_clear) notes.push('✅ Discussed pricing clearly');
+  if (rubric.local_proof) notes.push('✅ Provided local social proof');
+
+  // Missing items
+  if (!rubric.safety_clarity) notes.push('❌ Need to address child/pet safety');
+  if (!rubric.reentry_time_mentioned) notes.push('❌ Should mention re-entry timing');
+  if (!rubric.scope_covered) notes.push('❌ Explain what pests are covered');
+  if (!rubric.time_window_offered) notes.push('❌ Offer a specific appointment window');
+  if (!rubric.price_tier_clear) notes.push('❌ Provide clear pricing information');
+  if (!rubric.local_proof) notes.push('❌ Share neighbor references or reviews');
+
+  // Auto-flags
+  const repMessages = transcript.filter(t => t.speaker === 'rep');
+  const longMessages = repMessages.filter(t => t.text.length > 200); // ~20s of speech
+  if (longMessages.length > 0) {
+    notes.push('⚠️ Some responses were too long - keep it concise');
   }
+
+  // Check if safety questions were dodged
+  const safetyQuestions = homeownerText.includes('safe') || homeownerText.includes('kid') || homeownerText.includes('pet');
+  if (safetyQuestions && !rubric.safety_clarity) {
+    notes.push('🚨 Safety question asked but not answered clearly');
+  }
+
+  return { total, max, notes: notes.slice(0, 8), rubric }; // Limit to 8 notes
 }
 
 export async function POST(req: Request) {
@@ -80,16 +113,23 @@ export async function POST(req: Request) {
     }
 
     // Grade the conversation
-    const grading = await gradeConversation(turns || []);
+    const grading = gradeConversation(turns || []);
 
-    // Write score row and end the session
+    // Save score to database
     const { error: scoreErr } = await supabaseAdmin
       .from('scores')
-      .insert([{ session_id: sessionId, rubric: grading.breakdown, total: grading.total, notes: (grading.strengths || []).join('; ') }]);
+      .insert([{ 
+        session_id: sessionId, 
+        rubric: grading.rubric, 
+        total: grading.total, 
+        notes: grading.notes.join('; ') 
+      }]);
+
     if (scoreErr) {
       return NextResponse.json({ error: scoreErr.message }, { status: 500 });
     }
 
+    // End the session
     const { error: updateError } = await supabaseAdmin
       .from('sessions')
       .update({ ended_at: new Date().toISOString() })
@@ -99,9 +139,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
+    // Return formatted grading
+    const percentage = Math.round((grading.total / grading.max) * 100);
+    let grade = 'D';
+    if (percentage >= 90) grade = 'A+';
+    else if (percentage >= 85) grade = 'A';
+    else if (percentage >= 80) grade = 'B+';
+    else if (percentage >= 75) grade = 'B';
+    else if (percentage >= 70) grade = 'C+';
+    else if (percentage >= 65) grade = 'C';
+
     return NextResponse.json({
       sessionId,
-      grading,
+      grading: {
+        total: grading.total,
+        max: grading.max,
+        percentage,
+        grade,
+        breakdown: grading.rubric,
+        notes: grading.notes,
+        strengths: grading.notes.filter(n => n.startsWith('✅')),
+        improvements: grading.notes.filter(n => n.startsWith('❌') || n.startsWith('⚠️') || n.startsWith('🚨'))
+      },
       turnCount: turns?.length || 0
     });
 
