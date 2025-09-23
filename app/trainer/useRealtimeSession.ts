@@ -196,7 +196,7 @@ export function useRealtimeSession() {
       if (!finalSDP) throw new Error("No localDescription.sdp after ICE gathering");
 
       // 5) POST the **final** SDP to the correct endpoint with model in query
-      const MODEL = "gpt-realtime"; // GA model name; works with WebRTC
+      const MODEL = "gpt-4o-realtime-preview-2024-12-17"; // Full model name for WebRTC
       const sdpRes = await fetch(`https://api.openai.com/v1/realtime?model=${MODEL}`, {
         method: "POST",
         headers: {

@@ -60,7 +60,6 @@ Keep responses conversational, human, varied.`;
         "OpenAI-Beta": "realtime=v1"
       },
       body: JSON.stringify({
-        model: "gpt-realtime",
         voice: "alloy"
       }),
     });
