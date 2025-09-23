@@ -67,11 +67,8 @@ Keep responses conversational, human, varied.`;
             input: {
               format: { type: "audio/pcm", rate: 24000 },
               transcription: { model: "whisper-1" }
-            },
-            output: { 
-              voice: "alloy",
-              format: { type: "audio/pcm", rate: 24000 }
-            } 
+            }
+            // NO output audio - we'll use ElevenLabs for speech
           },
           temperature: 0.8,  // Natural variation for human-like responses
           instructions,

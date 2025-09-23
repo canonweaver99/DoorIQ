@@ -4,6 +4,39 @@ import type { Turn, Status } from './types';
 import { getRandomScenario, type AmandaScenario } from './scenarios';
 import { getRandomSoundForScenario, playAmbientSound } from './ambientSounds';
 
+// ElevenLabs TTS helper function
+async function speakWithElevenLabs(text: string): Promise<void> {
+  try {
+    const response = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+
+    if (!response.ok) {
+      console.error('TTS failed:', await response.text());
+      return;
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+    const audioBlob = new Blob([audioBuffer], { type: "audio/mpeg" });
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    const audio = new Audio(audioUrl);
+    audio.volume = 0.9;
+    
+    // Play and clean up
+    await audio.play().catch(err => console.error('Audio play failed:', err));
+    
+    // Clean up blob URL after playing
+    audio.addEventListener('ended', () => {
+      URL.revokeObjectURL(audioUrl);
+    });
+  } catch (error) {
+    console.error('ElevenLabs TTS error:', error);
+  }
+}
+
 export function useRealtimeSession() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -81,21 +114,22 @@ export function useRealtimeSession() {
         console.log('WebRTC ICE connection state:', pc.iceConnectionState);
       };
 
-      const remote = new MediaStream();
-      if (audioRef.current) {
-        audioRef.current.srcObject = remote;
-        audioRef.current.autoplay = true;
-        (audioRef.current as any).playsInline = true;
-      }
-      pc.ontrack = (e) => remote.addTrack(e.track);
+      // We're not using OpenAI audio output anymore - ElevenLabs will handle speech
+      // const remote = new MediaStream();
+      // if (audioRef.current) {
+      //   audioRef.current.srcObject = remote;
+      //   audioRef.current.autoplay = true;
+      //   (audioRef.current as any).playsInline = true;
+      // }
+      // pc.ontrack = (e) => remote.addTrack(e.track);
 
       // Data channel (for response.create etc.)
       let dc = pc.createDataChannel("oai-events");
       pc.ondatachannel = (e) => { dc = e.channel; };
       
-      let assistantBuf = '';
       let userTalkingSince = 0;
       let lastUserTurnEndTime = 0;
+      let currentAssistantText = '';
       
       // 3) Mic track + ensure we have an m=audio section
       const ms = await navigator.mediaDevices.getUserMedia({
@@ -224,7 +258,7 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
           // Trigger her to speak immediately
           dc.send(JSON.stringify({
             type: "response.create",
-            response: { modalities: ["audio","text"], max_output_tokens: 55 }
+            response: { modalities: ["text"], max_output_tokens: 55 }
           }));
         }, 500);
       });
@@ -259,25 +293,40 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
               }));
               dc.send(JSON.stringify({
                 type: "response.create",
-                response: { modalities: ["audio","text"], max_output_tokens: 45 }
+                response: { modalities: ["text"], max_output_tokens: 45 }
               }));
             }
           }
           
           // Handle assistant text streaming
           if (ev.type === 'response.text.delta' && ev.delta) {
-            assistantBuf += ev.delta;
+            currentAssistantText += ev.delta;
             setIsSpeaking(true);
           }
           if (ev.type === 'response.text.done' && ev.text) {
             // Full text is provided in done event
-            assistantBuf = ev.text;
+            currentAssistantText = ev.text;
           }
-          if ((ev.type === 'response.done' || ev.type === 'response.text.done') && assistantBuf.trim().length > 0) {
-            const t: Turn = { id: crypto.randomUUID(), speaker: 'homeowner', text: assistantBuf.trim(), ts: Date.now() };
+          
+          // When response is complete, speak with ElevenLabs
+          if (ev.type === 'response.done' && currentAssistantText.trim().length > 0) {
+            const textToSpeak = currentAssistantText.trim();
+            
+            // Add to transcript
+            const t: Turn = { 
+              id: crypto.randomUUID(), 
+              speaker: 'homeowner', 
+              text: textToSpeak, 
+              ts: Date.now() 
+            };
             setTranscript(prev => [...prev.slice(-19), t]);
+            
+            // Speak with ElevenLabs
+            speakWithElevenLabs(textToSpeak);
+            
+            // Reset
+            currentAssistantText = '';
             setIsSpeaking(false);
-            assistantBuf = '';
           }
           
           // Handle user transcription
@@ -302,9 +351,8 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
               dc.send(JSON.stringify({
                 type: "response.create",
                 response: { 
-                  modalities: ["audio","text"], 
-                  max_output_tokens: 55,
-                  temperature: 0.8
+                  modalities: ["text"], // TEXT ONLY - no audio
+                  max_output_tokens: 55
                 }
               }));
             }, responseDelay);

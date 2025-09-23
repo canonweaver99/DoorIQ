@@ -246,6 +246,19 @@ Realtime Console example app — https://github.com/openai/openai-realtime-conso
 - Every conversation must mint a new ephemeral token (short-lived).
 - When updating token logic or WebRTC flow, reference this document.
 
+### Hybrid OpenAI + ElevenLabs Approach
+
+As of latest update, we use a hybrid approach:
+- **OpenAI Realtime**: Handles speech recognition, conversation flow, turn-taking, interruptions
+- **ElevenLabs**: Provides high-quality voice synthesis for Amanda's responses
+
+Key implementation details:
+1. Token route disables OpenAI audio output (`audio.output` removed)
+2. WebRTC still sends user audio to OpenAI for transcription
+3. Text responses from OpenAI are sent to ElevenLabs TTS API
+4. Response modalities set to `["text"]` only
+5. ElevenLabs voice ID: `21m00Tcm4TlvDq8ikWAM` (Rachel voice)
+
 ---
 
 ## OpenAI Realtime Console — Installation & Usage
