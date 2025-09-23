@@ -107,6 +107,45 @@ export function useRealtimeSession() {
       startTimeRef.current = Date.now();
       setConnected(true);
       setStatus('listening');
+
+      // Seed and auto-turn-taking
+      const seed = (role: 'user'|'assistant', text: string) => ({
+        type: 'conversation.item.create',
+        item: { type: 'message', role, content: [{ type: 'input_text', text }] }
+      });
+
+      try {
+        const sc = await fetch('/api/scenario?agent=amanda_001', { cache: 'no-store' }).then(r => r.json());
+        const opening = sc?.scenario?.script?.opening || sc?.scenario?.opening || "Hey—quick heads up, my 3-year-old naps soon. Is this safe around kids and the dog?";
+
+        // Few-shot to stabilize tone
+        dc.send(JSON.stringify(seed('user', 'Is this safe around kids and pets?')));
+        dc.send(JSON.stringify(seed('assistant', 'Yes—kid and pet safe when used as labeled. Keep them out until dry—usually ~30–45 minutes.')));
+
+        // Amanda opens
+        dc.send(JSON.stringify(seed('assistant', opening)));
+        dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'], max_output_tokens: 55 } }));
+
+        // Auto-poke after each user utterance and gentle cut-in if rambling
+        dc.addEventListener('message', (e) => {
+          try {
+            const ev = JSON.parse((e as MessageEvent).data);
+            if (ev.type === 'conversation.item.created' && ev.item?.role === 'user') {
+              dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'], max_output_tokens: 55 } }));
+            }
+            if (ev.type === 'input_audio_buffer.speech_started') {
+              (window as any).__talkingSince = performance.now();
+            }
+            if (ev.type === 'input_audio_buffer.speech_stopped') {
+              const dur = performance.now() - ((window as any).__talkingSince || performance.now());
+              if (dur > 20000) {
+                dc.send(JSON.stringify(seed('assistant', 'Sorry—quickly—price and what’s included?')));
+                dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'], max_output_tokens: 55 } }));
+              }
+            }
+          } catch {}
+        });
+      } catch {}
     } catch (e: any) {
       setError(e?.message || 'connect_failed');
       setStatus('error');
