@@ -4,8 +4,18 @@ export const runtime = "edge";
 
 export async function GET() {
   const apiKey = process.env.OPENAI_API_KEY;
+  console.log('Token route called, API key present:', !!apiKey);
+  
   if (!apiKey) {
-    return NextResponse.json({ error: "OPENAI_API_KEY missing" }, { status: 500, headers: { "Cache-Control": "no-store" } });
+    console.error('OPENAI_API_KEY is not set in environment variables');
+    return NextResponse.json(
+      { 
+        error: "OPENAI_API_KEY missing",
+        detail: "Please set OPENAI_API_KEY in your .env.local file",
+        help: "Create a .env.local file in the root directory with: OPENAI_API_KEY=sk-proj-..."
+      }, 
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
   }
 
   const instructions = `You are Amanda Rodriguez, a real suburban homeowner answering her door.
@@ -41,9 +51,14 @@ Keep responses conversational, human, varied.`;
 
   let r: Response;
   try {
+    console.log('Calling OpenAI client_secrets endpoint...');
     r = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: { 
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "OpenAI-Beta": "realtime=v1"
+      },
       body: JSON.stringify({
         session: {
           type: "realtime",
@@ -82,10 +97,28 @@ Keep responses conversational, human, varied.`;
   }
 
   const text = await r.text();
+  console.log('OpenAI response status:', r.status);
+  
   if (!r.ok) {
     console.error('OpenAI client_secrets failed:', r.status, text);
-    return new NextResponse(text, { status: r.status, headers: { "Cache-Control": "no-store" } });
+    let errorDetail;
+    try {
+      errorDetail = JSON.parse(text);
+    } catch {
+      errorDetail = { raw: text };
+    }
+    
+    return NextResponse.json(
+      { 
+        error: "OpenAI API error",
+        status: r.status,
+        detail: errorDetail,
+        help: r.status === 401 ? "Check your OPENAI_API_KEY is valid" : "Check OpenAI API status"
+      },
+      { status: r.status, headers: { "Cache-Control": "no-store" } }
+    );
   }
 
+  console.log('Token generated successfully');
   return new NextResponse(text, { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 }
