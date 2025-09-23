@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Turn, Status } from './types';
+import { getRandomScenario, type AmandaScenario } from './scenarios';
 
 export function useRealtimeSession() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -16,6 +17,7 @@ export function useRealtimeSession() {
   const [audioSeconds, setAudioSeconds] = useState(0);
   const tokensInRef = useRef(0);
   const tokensOutRef = useRef(0);
+  const [currentScenario, setCurrentScenario] = useState<AmandaScenario | null>(null);
 
   // timer
   useEffect(() => {
@@ -126,49 +128,57 @@ export function useRealtimeSession() {
       dc.addEventListener("open", () => {
         console.log('Data channel opened');
         
-        // Reinforce Amanda's persona with session.update
-        dc.send(JSON.stringify({
-          type: "session.update",
-          session: {
-            instructions: `You are Amanda Rodriguez, a 34-year-old suburban homeowner with kids Sofia (6) and Lucas (3), and a Goldendoodle named Bailey. You're a Marketing Director, married to David. You live in a 4BR/2.5BA home built in 2005. You've had spider/ant issues before and want preventive pest control service.
+        // Select random scenario for this conversation
+        const scenario = getRandomScenario();
+        setCurrentScenario(scenario);
+        console.log('Selected scenario:', scenario.name, scenario.mood);
+        
+        // Build dynamic instructions based on scenario
+        const scenarioInstructions = `You are Amanda Rodriguez, a 34-year-old suburban homeowner with kids Sofia (6) and Lucas (3), and a Goldendoodle named Bailey. You're a Marketing Director, married to David. You live in a 4BR/2.5BA home built in 2005.
 
-You value child & pet safety, predictable pricing, on-time techs, and clear communication. You dislike late techs, vague pricing, hidden fees, and chemical jargon.
+CURRENT SCENARIO: ${scenario.name}
+MOOD: ${scenario.mood} 
+SITUATION: ${scenario.situation}
+BACKGROUND: ${scenario.background}
+
+Your current priorities for this conversation: ${scenario.priorities.join(', ')}
+Potential objections you might raise: ${scenario.objections.join(', ')}
+Close threshold: ${scenario.closeThreshold} (how easy you are to convince)
 
 You're polite but time-constrained. Ask one clear question at a time. Keep responses 1-3 short sentences. Use contractions and natural speech.
 
 Your doorstep priorities are: (1) Safety first - is it safe for kids and pets, EPA approved, re-entry timing, (2) Scope - what areas and pests are covered, (3) Time - appointment windows and text-before-arrival, (4) Price - clear pricing with no hidden fees.
 
-Start conversations naturally. If the rep answers safety clearly AND offers a specific time window, become more open. If they're vague or dodge questions, stay skeptical.
+Adjust your responses based on your current mood:
+- Neutral: Standard homeowner responses, moderate skepticism
+- Skeptical: Question everything, need lots of proof and guarantees  
+- Busy: Very short responses, want quick answers, easily frustrated by long explanations
+- Interested: More open to hearing details, ask follow-up questions
+- Frustrated: Impatient, had bad experiences, need convincing this will be different
 
-Decision outcomes:
-- If they're clear on safety+scope+time+price quickly: "If you can do Wednesday morning and text before, we can try it."
-- If exceptional with local proof: "Let's do a one-time to start."
-- If poor clarity: "Please email me details."
-- If not interested: "Thanks, but we're not interested."
+Decision outcomes based on close threshold:
+- Low threshold: Easy to convince with basic safety + price clarity
+- Medium threshold: Need safety + scope + time + price all covered well
+- High threshold: Need exceptional clarity + local proof + guarantees
 
-Remember: You're not a pest expert - judge the rep's clarity, not technical details.`,
+Remember: You're not a pest expert - judge the rep's clarity, not technical details.`;
+        
+        // Reinforce Amanda's persona with session.update
+        dc.send(JSON.stringify({
+          type: "session.update",
+          session: {
+            instructions: scenarioInstructions,
             temperature: 0.8
           }
         }));
-
-        // Seed conversation with random opening
-        const openings = [
-          'Hey—quick heads up, my 3-year-old naps soon. Is this safe around kids and the dog?',
-          'We had a company last year—communication was awful. What\'s different with you?',
-          'End of the month here—what\'s the one-time price and what\'s included?',
-          'Our Goldendoodle lives in the yard—how does that work with treatments?',
-          'We just moved in—can you do preventive without tearing the house apart?',
-          'Spiders collect on the eaves—do you brush webs or just spray?'
-        ];
-        const opening = openings[Math.floor(Math.random() * openings.length)];
         
-        // Add Amanda's opening message
+        // Add Amanda's scenario-specific opening message
         dc.send(JSON.stringify({
           type: "conversation.item.create",
           item: {
             type: "message",
             role: "assistant",
-            content: [{ type: "text", text: opening }]
+            content: [{ type: "text", text: scenario.opening }]
           }
         }));
         
@@ -242,6 +252,7 @@ Remember: You're not a pest expert - judge the rep's clarity, not technical deta
     audioSeconds,
     tokensIn: tokensInRef.current,
     tokensOut: tokensOutRef.current,
+    currentScenario,
     setAudioElement,
     connect,
     disconnect

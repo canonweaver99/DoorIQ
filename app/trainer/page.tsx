@@ -36,7 +36,7 @@ export default function Trainer() {
 
 function TrainerInner() {
   const search = useSearchParams();
-  const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, connect, disconnect } = useRealtimeSession();
+  const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, currentScenario, connect, disconnect } = useRealtimeSession();
 
   async function start() { 
     await connect(); 
@@ -108,7 +108,13 @@ function TrainerInner() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-semibold mb-8">Amanda Rodriguez</h2>
+        <h2 className="text-2xl font-semibold mb-2">Amanda Rodriguez</h2>
+        {currentScenario && (
+          <div className="text-center mb-6">
+            <p className="text-lg text-purple-300 font-medium">{currentScenario.name}</p>
+            <p className="text-sm text-gray-400 capitalize">Mood: {currentScenario.mood}</p>
+          </div>
+        )}
 
         {/* Live Transcript */}
         <div className="w-full max-w-3xl bg-white/5 border border-white/10 rounded-xl p-6 max-h-80 overflow-y-auto custom-scrollbar mb-8">
