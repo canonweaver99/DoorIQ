@@ -59,9 +59,7 @@ Keep responses conversational, human, varied.`;
         "Content-Type": "application/json",
         "OpenAI-Beta": "realtime=v1"
       },
-      body: JSON.stringify({
-        voice: "alloy"
-      }),
+      body: JSON.stringify({}),
     });
   } catch (e: any) {
     return NextResponse.json(

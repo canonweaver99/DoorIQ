@@ -275,28 +275,25 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
               silence_duration_ms: 500
             },
             tools: [],
-            tool_choice: "auto",
+            tool_choice: "none",
             temperature: 0.8,
             max_response_output_tokens: 120
           }
         }));
         
-        // Wait a moment for connection to stabilize, then have Amanda speak her opening
+        // Wait a moment for connection to stabilize, then have Amanda speak her opening directly
         setTimeout(() => {
-          dc.send(JSON.stringify({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "assistant",
-              content: [{ type: "text", text: scenario.opening }]
-            }
-          }));
+          // Add Amanda's opening to transcript
+          const openingTurn: Turn = { 
+            id: crypto.randomUUID(), 
+            speaker: 'homeowner', 
+            text: scenario.opening, 
+            ts: Date.now() 
+          };
+          setTranscript(prev => [...prev.slice(-19), openingTurn]);
           
-          // Trigger her to speak immediately
-          dc.send(JSON.stringify({
-            type: "response.create",
-            response: { modalities: ["text"], max_output_tokens: 55 }
-          }));
+          // Speak directly with ElevenLabs (no OpenAI generation needed)
+          speakWithElevenLabs(scenario.opening);
         }, 500);
       });
 
