@@ -97,7 +97,20 @@ function TrainerInner() {
         {/* Floating Avatar */}
         <div className="relative mb-8">
           <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-purple-500/30 shadow-2xl relative">
-            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+              alt="Amanda Rodriguez" 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback to initials if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 items-center justify-center" style={{display: 'none'}}>
               <span className="text-6xl font-bold text-white">AR</span>
             </div>
             

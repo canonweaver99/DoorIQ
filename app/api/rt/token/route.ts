@@ -32,7 +32,7 @@ Keep latency low; keep answers crisp. Vary cadence with commas and em dashes.`;
       session: {
         type: "realtime",
         model: "gpt-4o-realtime-preview-2024-12-17", // dated model name = safer
-        audio: { output: { voice: "marin" } },       // voice config lives here
+        audio: { output: { voice: "nova" } },        // voice config lives here
         instructions,                                // ✅ allowed
         // temperature is optional; you can keep it or set later via session.update
         // temperature: 0.8,
