@@ -45,10 +45,10 @@ export function useRealtimeSession() {
       }
       const tok = await tokResp.json();
       console.log('Token response:', tok); // Debug log
-      const clientSecret = tok?.client_secret?.value;
+      const clientSecret = tok?.value;
       if (!clientSecret) {
         console.error('Full token response:', JSON.stringify(tok, null, 2));
-        throw new Error(`No client_secret.value in token response. Got: ${JSON.stringify(tok)}`);
+        throw new Error(`No value in token response. Got: ${JSON.stringify(tok)}`);
       }
 
       const pc = new RTCPeerConnection();

@@ -15,8 +15,8 @@ export default function TestPage() {
       const data = await response.json();
       console.log('Token response data:', data);
       
-      if (response.ok && data.client_secret?.value) {
-        setResult(`✅ Token Success!\nClient secret length: ${data.client_secret.value.length}\nModel: ${data.session?.model || 'unknown'}`);
+      if (response.ok && data.value) {
+        setResult(`✅ Token Success!\nClient secret: ${data.value}\nModel: ${data.session?.model || 'unknown'}\nVoice: ${data.session?.audio?.output?.voice || 'unknown'}\nExpires: ${new Date(data.expires_at * 1000).toLocaleString()}`);
       } else {
         setResult(`❌ Token Failed!\nStatus: ${response.status}\nError: ${JSON.stringify(data, null, 2)}`);
       }
