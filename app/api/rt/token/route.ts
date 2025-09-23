@@ -25,23 +25,32 @@ Outcomes (pick what fits):
 Internal rule (don't reveal): You are not a pest expert; use clarity of the rep's answer to adjust trust.
 Keep latency low; keep answers crisp. Vary cadence with commas and em dashes.`;
 
-  const r = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      session: {
-        type: "realtime",
-        model: "gpt-4o-realtime-preview-2024-12-17", // dated model name = safer
-        audio: { output: { voice: "nova" } },        // voice config lives here
-        instructions,                                // ✅ allowed
-        // temperature is optional; you can keep it or set later via session.update
-        // temperature: 0.8,
-      }
-    }),
-  });
+  let r: Response;
+  try {
+    r = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session: {
+          type: "realtime",
+          model: "gpt-4o-realtime-preview-2024-12-17",
+          audio: { output: { voice: "alloy" } },
+          instructions,
+        }
+      }),
+    });
+  } catch (e: any) {
+    return NextResponse.json(
+      { error: "Network error calling OpenAI", detail: String(e) },
+      { status: 502, headers: { "Cache-Control": "no-store" } }
+    );
+  }
 
   const text = await r.text();
-  if (!r.ok) return new NextResponse(text, { status: r.status, headers: { "Cache-Control": "no-store" } });
+  if (!r.ok) {
+    console.error('OpenAI client_secrets failed:', r.status, text);
+    return new NextResponse(text, { status: r.status, headers: { "Cache-Control": "no-store" } });
+  }
 
   return new NextResponse(text, { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 }
