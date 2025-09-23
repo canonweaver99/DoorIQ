@@ -8,8 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
-    "@openai/agents": "^0.0.7",
     "@clerk/nextjs": "^6.32.2",
+    "@openai/agents": "^0.0.7",
     "@prisma/client": "^6.16.2",
     "@supabase/supabase-js": "^2.57.4",
     "@types/js-yaml": "^4.0.9",
