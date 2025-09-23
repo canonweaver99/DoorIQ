@@ -57,7 +57,7 @@ Close rule: If 1–4 are answered clearly, offer: "If you can do Wednesday 9–1
       body: JSON.stringify({
         session: {
           type: "realtime",
-          model: "gpt-4o-realtime-preview-2024-12-17",
+          model: "gpt-4o-realtime-preview",
           modalities: ["audio", "text"],
           audio: { output: { voice: "marin" } },
           temperature: 0.8,

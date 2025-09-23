@@ -53,6 +53,14 @@ export function useRealtimeSession() {
 
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
+      
+      // Add connection state logging
+      pc.onconnectionstatechange = () => {
+        console.log('WebRTC connection state:', pc.connectionState);
+      };
+      pc.oniceconnectionstatechange = () => {
+        console.log('WebRTC ICE connection state:', pc.iceConnectionState);
+      };
 
       const remote = new MediaStream();
       if (audioRef.current) {
@@ -91,7 +99,7 @@ export function useRealtimeSession() {
       const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
       await pc.setLocalDescription(offer);
 
-      const sdpRes = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17', {
+      const sdpRes = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${clientSecret}`,
@@ -100,7 +108,11 @@ export function useRealtimeSession() {
         },
         body: offer.sdp || ''
       });
-      if (!sdpRes.ok) throw new Error(await sdpRes.text());
+      if (!sdpRes.ok) {
+        const errorText = await sdpRes.text();
+        console.error('SDP exchange failed:', sdpRes.status, errorText);
+        throw new Error(`SDP exchange failed (${sdpRes.status}): ${errorText}`);
+      }
       const answer = { type: 'answer', sdp: await sdpRes.text() } as RTCSessionDescriptionInit;
       await pc.setRemoteDescription(answer);
 
