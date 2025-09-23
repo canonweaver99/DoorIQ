@@ -36,7 +36,7 @@ export default function Trainer() {
 
 function TrainerInner() {
   const search = useSearchParams();
-  const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, currentScenario, connect, disconnect } = useRealtimeSession();
+  const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, currentScenario, micEnabled, connect, disconnect, toggleMic } = useRealtimeSession();
 
   async function start() { 
     await connect(); 
@@ -60,7 +60,11 @@ function TrainerInner() {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Space') { 
         e.preventDefault(); 
-        if (!connected) start().catch(() => {}); 
+        if (connected) {
+          toggleMic();
+        } else {
+          start().catch(() => {});
+        }
       }
       if (e.code === 'Escape') { 
         e.preventDefault(); 
@@ -69,7 +73,7 @@ function TrainerInner() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [connected]);
+  }, [connected, toggleMic]);
 
   const formatTime = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60);
@@ -165,17 +169,20 @@ function TrainerInner() {
           <div className="flex items-center gap-6">
             <button
               className={`relative w-20 h-20 rounded-full transition-all duration-200 ${
-                connected && status === 'listening'
+                connected && micEnabled
                   ? 'bg-green-600 hover:bg-green-700 shadow-lg animate-pulse-mic'
+                  : connected && !micEnabled
+                  ? 'bg-yellow-600 hover:bg-yellow-700 shadow-md'
                   : 'bg-gray-700 hover:bg-gray-600 shadow-md'
               }`}
-              onClick={connected ? () => {} : start}
+              onClick={connected ? toggleMic : start}
               disabled={status === 'connecting'}
+              title={connected ? (micEnabled ? 'Mute microphone' : 'Unmute microphone') : 'Start conversation'}
             >
               {status === 'connecting' ? (
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
               ) : connected ? (
-                <Mic className="h-8 w-8 text-white" />
+                micEnabled ? <Mic className="h-8 w-8 text-white" /> : <Mic className="h-8 w-8 text-white opacity-50" />
               ) : (
                 <PhoneOff className="h-8 w-8 text-gray-300" />
               )}
@@ -191,8 +198,17 @@ function TrainerInner() {
           </div>
 
           <p className="text-xs text-gray-500 text-center">
-            Press Space to start • Press Escape to end
+            {connected ? 'Press Space to toggle mic • Press Escape to end' : 'Press Space to start • Press Escape to end'}
           </p>
+          
+          {connected && (
+            <div className="flex items-center gap-2 text-sm">
+              <div className={`w-3 h-3 rounded-full ${micEnabled ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'}`} />
+              <span className="text-gray-400">
+                Microphone: {micEnabled ? 'LIVE' : 'MUTED'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
       

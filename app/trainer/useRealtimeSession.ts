@@ -6,6 +6,7 @@ import { getRandomScenario, type AmandaScenario } from './scenarios';
 export function useRealtimeSession() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const micTrackRef = useRef<MediaStreamTrack | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
@@ -18,6 +19,7 @@ export function useRealtimeSession() {
   const tokensInRef = useRef(0);
   const tokensOutRef = useRef(0);
   const [currentScenario, setCurrentScenario] = useState<AmandaScenario | null>(null);
+  const [micEnabled, setMicEnabled] = useState(true);
 
   // timer
   useEffect(() => {
@@ -80,7 +82,11 @@ export function useRealtimeSession() {
         audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
       });
       pc.addTransceiver("audio", { direction: "sendrecv" }); // makes the m=audio regardless
-      pc.addTrack(ms.getTracks()[0]);
+      const micTrack = ms.getTracks()[0];
+      pc.addTrack(micTrack);
+      
+      // Store mic track for toggling
+      micTrackRef.current = micTrack;
 
       // 4) Create offer, setLocalDescription, **wait for ICE complete**
       const offer = await pc.createOffer({ offerToReceiveAudio: true });
@@ -169,21 +175,23 @@ Let the rep do the selling. You're just a homeowner responding to their pitch.`;
           }
         }));
         
-        // Add Amanda's scenario-specific opening message
-        dc.send(JSON.stringify({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "assistant",
-            content: [{ type: "text", text: scenario.opening }]
-          }
-        }));
-        
-        // Trigger her to speak
-        dc.send(JSON.stringify({
-          type: "response.create",
-          response: { modalities: ["audio","text"], max_output_tokens: 55 }
-        }));
+        // Wait a moment for connection to stabilize, then have Amanda speak her opening
+        setTimeout(() => {
+          dc.send(JSON.stringify({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "assistant",
+              content: [{ type: "text", text: scenario.opening }]
+            }
+          }));
+          
+          // Trigger her to speak immediately
+          dc.send(JSON.stringify({
+            type: "response.create",
+            response: { modalities: ["audio","text"], max_output_tokens: 55 }
+          }));
+        }, 500);
       });
 
       // Handle messages and transcript
@@ -228,12 +236,24 @@ Let the rep do the selling. You're just a homeowner responding to their pitch.`;
     }
   }, []);
 
+  const toggleMic = useCallback(() => {
+    if (micTrackRef.current) {
+      const track = micTrackRef.current;
+      track.enabled = !track.enabled;
+      setMicEnabled(track.enabled);
+      console.log('Mic toggled:', track.enabled ? 'ON' : 'OFF');
+    }
+  }, []);
+
   const disconnect = useCallback(async () => {
     try {
+      micTrackRef.current?.stop();
       pcRef.current?.getSenders().forEach(s => s.track?.stop());
       pcRef.current?.close();
       setConnected(false);
       setStatus('idle');
+      setMicEnabled(true); // Reset for next connection
+      micTrackRef.current = null;
     } catch {}
   }, []);
 
@@ -250,9 +270,11 @@ Let the rep do the selling. You're just a homeowner responding to their pitch.`;
     tokensIn: tokensInRef.current,
     tokensOut: tokensOutRef.current,
     currentScenario,
+    micEnabled,
     setAudioElement,
     connect,
-    disconnect
+    disconnect,
+    toggleMic
   };
 }
 
