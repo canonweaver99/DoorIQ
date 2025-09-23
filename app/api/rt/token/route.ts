@@ -51,8 +51,8 @@ Keep responses conversational, human, varied.`;
 
   let r: Response;
   try {
-    console.log('Calling OpenAI client_secrets endpoint...');
-    r = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
+    console.log('Calling OpenAI realtime/sessions endpoint...');
+    r = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
       headers: { 
         "Authorization": `Bearer ${apiKey}`,
@@ -60,7 +60,7 @@ Keep responses conversational, human, varied.`;
         "OpenAI-Beta": "realtime=v1"
       },
       body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
+        model: "gpt-realtime",
         voice: "alloy"
       }),
     });

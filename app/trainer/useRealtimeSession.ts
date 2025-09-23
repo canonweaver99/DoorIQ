@@ -125,7 +125,7 @@ export function useRealtimeSession() {
         throw new Error('Invalid token response format');
       }
       
-      const EPHEMERAL = tokenData?.value || tokenData?.client_secret?.value;
+      const EPHEMERAL = tokenData?.client_secret?.value;
       if (!EPHEMERAL) {
         console.error('No token value in response:', tokenData);
         throw new Error("no client_secret.value in token response");
@@ -195,8 +195,9 @@ export function useRealtimeSession() {
       const finalSDP = pc.localDescription?.sdp;
       if (!finalSDP) throw new Error("No localDescription.sdp after ICE gathering");
 
-      // 5) POST the **final** SDP to the correct endpoint
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+      // 5) POST the **final** SDP to the correct endpoint with model in query
+      const MODEL = "gpt-realtime"; // GA model name; works with WebRTC
+      const sdpRes = await fetch(`https://api.openai.com/v1/realtime?model=${MODEL}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${EPHEMERAL}`,
@@ -263,11 +264,7 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
         dc.send(JSON.stringify({
           type: "session.update",
           session: {
-            modalities: ["text", "audio"],
             instructions: scenarioInstructions,
-            voice: "alloy",
-            input_audio_format: "pcm16",
-            output_audio_format: "pcm16",
             input_audio_transcription: {
               model: "whisper-1"
             },
@@ -280,7 +277,7 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
             tools: [],
             tool_choice: "auto",
             temperature: 0.8,
-            max_response_output_tokens: "inf"
+            max_response_output_tokens: 120
           }
         }));
         
