@@ -72,6 +72,19 @@ export function useRealtimeSession() {
 
       const dc = pc.createDataChannel('oai-events');
       let assistantBuf = '';
+      
+      dc.onerror = (error) => {
+        console.error('Data channel error:', error);
+      };
+      
+      dc.onopen = () => {
+        console.log('Data channel opened');
+      };
+      
+      dc.onclose = () => {
+        console.log('Data channel closed');
+      };
+      
       dc.onmessage = async (evt) => {
         try {
           const msg = JSON.parse(evt.data);
@@ -143,14 +156,14 @@ export function useRealtimeSession() {
 
         // Amanda opens
         dc.send(JSON.stringify(seed('assistant', opening)));
-        dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'], max_output_tokens: 55 } }));
+        dc.send(JSON.stringify({ type: 'response.create', response: { max_output_tokens: 55 } }));
 
         // Auto-poke after each user utterance and gentle cut-in if rambling
         dc.addEventListener('message', (e) => {
           try {
             const ev = JSON.parse((e as MessageEvent).data);
             if (ev.type === 'conversation.item.created' && ev.item?.role === 'user') {
-              dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'], max_output_tokens: 55 } }));
+              dc.send(JSON.stringify({ type: 'response.create', response: { max_output_tokens: 55 } }));
             }
             if (ev.type === 'input_audio_buffer.speech_started') {
               (window as any).__talkingSince = performance.now();
@@ -158,14 +171,15 @@ export function useRealtimeSession() {
             if (ev.type === 'input_audio_buffer.speech_stopped') {
               const dur = performance.now() - ((window as any).__talkingSince || performance.now());
               if (dur > 20000) {
-                dc.send(JSON.stringify(seed('assistant', 'Sorry—quickly—price and what’s included?')));
-                dc.send(JSON.stringify({ type: 'response.create', response: { modalities: ['audio','text'], max_output_tokens: 55 } }));
+                dc.send(JSON.stringify(seed('assistant', 'Sorry—quickly—price and what\'s included?')));
+                dc.send(JSON.stringify({ type: 'response.create', response: { max_output_tokens: 55 } }));
               }
             }
           } catch {}
         });
       } catch {}
     } catch (e: any) {
+      console.error('Connection failed:', e);
       setError(e?.message || 'connect_failed');
       setStatus('error');
     }
