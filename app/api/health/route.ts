@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/app/lib/server/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +57,7 @@ export async function GET() {
     try {
       // Try to list tables or do a simple query
       const { error } = await supabaseAdmin
-        .from('attempts')
+        .from('sessions')
         .select('count')
         .limit(1)
         .single();
