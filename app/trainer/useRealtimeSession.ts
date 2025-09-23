@@ -38,9 +38,18 @@ export function useRealtimeSession() {
 
       // Ephemeral-only: no /api/session call
 
-      const tok = await fetch('/api/rt/token', { cache: 'no-store' }).then(r => r.json());
-      const clientSecret = tok?.client_secret?.value || tok?.client_secret?.secret || tok?.client_secret?.token || tok?.client_secret?.key || tok?.client_secret?.data || tok?.client_secret?.Value || tok?.client_secret?.VALUE || tok?.client_secret?.value; // resilient
-      if (!clientSecret) throw new Error('No realtime token');
+      const tokResp = await fetch('/api/rt/token', { cache: 'no-store' });
+      if (!tokResp.ok) {
+        const errorText = await tokResp.text();
+        throw new Error(`Token fetch failed (${tokResp.status}): ${errorText}`);
+      }
+      const tok = await tokResp.json();
+      console.log('Token response:', tok); // Debug log
+      const clientSecret = tok?.client_secret?.value;
+      if (!clientSecret) {
+        console.error('Full token response:', JSON.stringify(tok, null, 2));
+        throw new Error(`No client_secret.value in token response. Got: ${JSON.stringify(tok)}`);
+      }
 
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
