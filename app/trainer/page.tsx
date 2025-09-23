@@ -2,9 +2,29 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from "next/navigation";
 import { Mic, PhoneOff } from 'lucide-react';
-import StatusChip from './StatusChip';
 import { useRealtimeSession } from './useRealtimeSession';
 import type { Status, Turn } from './types';
+
+// Inline StatusChip component
+function StatusChip({ status }: { status: Status }) {
+  const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ');
+  
+  const map: Record<Status, { label: string; cls: string }> = {
+    idle: { label: 'Idle', cls: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
+    connecting: { label: 'Connecting', cls: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
+    listening: { label: 'Listening', cls: 'bg-green-500/20 text-green-300 border-green-500/30' },
+    speaking: { label: 'Speaking', cls: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+    error: { label: 'Error', cls: 'bg-red-500/20 text-red-300 border-red-500/30' },
+  };
+  
+  const m = map[status];
+  return (
+    <div className={cn('inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm', m.cls)}>
+      <div className={cn('w-2 h-2 rounded-full', status === 'error' ? 'bg-red-400' : 'bg-current')} />
+      {m.label}
+    </div>
+  );
+}
 
 export default function Trainer() {
   return (
@@ -17,16 +37,9 @@ export default function Trainer() {
 function TrainerInner() {
   const search = useSearchParams();
   const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, connect, disconnect } = useRealtimeSession();
-  const [agent, setAgent] = useState<any>(null);
 
   async function start() { 
     await connect(); 
-    // Fetch agent data
-    try {
-      const res = await fetch('/api/agent');
-      const data = await res.json();
-      setAgent(data);
-    } catch {}
   }
 
   async function stop() {
@@ -84,14 +97,9 @@ function TrainerInner() {
         {/* Floating Avatar */}
         <div className="relative mb-8">
           <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-purple-500/30 shadow-2xl relative">
-            {agent?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={agent.avatar_url} alt={agent.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                <span className="text-6xl font-bold text-white">AR</span>
-              </div>
-            )}
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+              <span className="text-6xl font-bold text-white">AR</span>
+            </div>
             
             {/* Speaking indicator */}
             {isSpeaking && (
@@ -100,7 +108,7 @@ function TrainerInner() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-semibold mb-8">{agent?.name || 'Amanda Rodriguez'}</h2>
+        <h2 className="text-2xl font-semibold mb-8">Amanda Rodriguez</h2>
 
         {/* Live Transcript */}
         <div className="w-full max-w-3xl bg-white/5 border border-white/10 rounded-xl p-6 max-h-80 overflow-y-auto custom-scrollbar mb-8">
