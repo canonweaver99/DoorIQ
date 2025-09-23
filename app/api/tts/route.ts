@@ -7,6 +7,8 @@ const AMANDA_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel voice (clear, professi
 // Alternative voices:
 // "EXAVITQu4vr4xnSDxMaL" - Bella (warm, friendly)
 // "pNInz6obpgDQGcFmaJgB" - Adam (if you want male)
+// "ThT5KcBeYPX3keUQqHPh" - Dorothy (mature, trustworthy)
+// "MF3mGyEYCl7XYWbV9V6O" - Emily (youthful, energetic)
 
 export async function POST(req: Request) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -29,6 +31,8 @@ export async function POST(req: Request) {
     }
 
     console.log('Generating ElevenLabs speech for:', text.substring(0, 50) + '...');
+    console.log('Using voice ID:', AMANDA_VOICE_ID);
+    console.log('API Key present:', !!apiKey);
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${AMANDA_VOICE_ID}`,
@@ -55,8 +59,22 @@ export async function POST(req: Request) {
     if (!response.ok) {
       const error = await response.text();
       console.error('ElevenLabs API error:', response.status, error);
+      
+      // Try to parse error for better debugging
+      let errorDetail;
+      try {
+        errorDetail = JSON.parse(error);
+      } catch {
+        errorDetail = error;
+      }
+      
       return NextResponse.json(
-        { error: "TTS generation failed", detail: error },
+        { 
+          error: "TTS generation failed", 
+          status: response.status,
+          detail: errorDetail,
+          voice_id: AMANDA_VOICE_ID
+        },
         { status: response.status }
       );
     }

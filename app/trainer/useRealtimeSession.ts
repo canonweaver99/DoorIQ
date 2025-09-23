@@ -7,6 +7,8 @@ import { getRandomSoundForScenario, playAmbientSound } from './ambientSounds';
 // ElevenLabs TTS helper function
 async function speakWithElevenLabs(text: string): Promise<void> {
   try {
+    console.log('Speaking with ElevenLabs:', text);
+    
     const response = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -14,24 +16,55 @@ async function speakWithElevenLabs(text: string): Promise<void> {
     });
 
     if (!response.ok) {
-      console.error('TTS failed:', await response.text());
+      const errorText = await response.text();
+      console.error('TTS API failed:', response.status, errorText);
+      
+      // Try to parse error details
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error('TTS Error details:', errorData);
+      } catch {
+        console.error('TTS Error text:', errorText);
+      }
       return;
     }
 
     const audioBuffer = await response.arrayBuffer();
+    console.log('Audio received, size:', audioBuffer.byteLength);
+    
+    if (audioBuffer.byteLength === 0) {
+      console.error('Received empty audio buffer');
+      return;
+    }
+    
     const audioBlob = new Blob([audioBuffer], { type: "audio/mpeg" });
     const audioUrl = URL.createObjectURL(audioBlob);
     
     const audio = new Audio(audioUrl);
     audio.volume = 0.9;
     
-    // Play and clean up
-    await audio.play().catch(err => console.error('Audio play failed:', err));
-    
-    // Clean up blob URL after playing
-    audio.addEventListener('ended', () => {
+    // Add error handling for audio playback
+    audio.addEventListener('error', (e) => {
+      console.error('Audio playback error:', e);
       URL.revokeObjectURL(audioUrl);
     });
+    
+    audio.addEventListener('ended', () => {
+      console.log('Audio playback completed');
+      URL.revokeObjectURL(audioUrl);
+    });
+    
+    // Play with promise handling
+    try {
+      await audio.play();
+      console.log('Audio playback started');
+    } catch (err) {
+      console.error('Audio play failed:', err);
+      // Retry with user interaction if needed
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        console.log('Audio blocked - user interaction required');
+      }
+    }
   } catch (error) {
     console.error('ElevenLabs TTS error:', error);
   }
@@ -231,7 +264,6 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
           type: "session.update",
           session: {
             instructions: scenarioInstructions,
-            temperature: 0.8,
             input_audio_transcription: {
               model: "whisper-1"
             },

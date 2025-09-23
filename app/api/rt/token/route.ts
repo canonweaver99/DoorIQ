@@ -70,7 +70,6 @@ Keep responses conversational, human, varied.`;
             }
             // NO output audio - we'll use ElevenLabs for speech
           },
-          temperature: 0.8,  // Natural variation for human-like responses
           instructions,
           tools: [],
           tool_choice: "none",
