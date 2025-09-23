@@ -100,8 +100,7 @@ function TrainerInner() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-semibold mb-2">{agent?.name || 'Amanda Rodriguez'}</h2>
-        <p className="text-gray-400 mb-8">{agent?.persona_description || 'Suburban Mom'}</p>
+        <h2 className="text-2xl font-semibold mb-8">{agent?.name || 'Amanda Rodriguez'}</h2>
 
         {/* Live Transcript */}
         <div className="w-full max-w-3xl bg-white/5 border border-white/10 rounded-xl p-6 max-h-80 overflow-y-auto custom-scrollbar mb-8">
@@ -135,37 +134,39 @@ function TrainerInner() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-6">
-          <button
-            className={`relative w-20 h-20 rounded-full transition-all duration-200 ${
-              connected && status === 'listening'
-                ? 'bg-green-600 hover:bg-green-700 shadow-lg animate-pulse-mic'
-                : 'bg-gray-700 hover:bg-gray-600 shadow-md'
-            }`}
-            onClick={connected ? () => {} : start}
-            disabled={status === 'connecting'}
-          >
-            {status === 'connecting' ? (
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
-            ) : connected ? (
-              <Mic className="h-8 w-8 text-white" />
-            ) : (
-              <PhoneOff className="h-8 w-8 text-gray-300" />
-            )}
-          </button>
-          
-          <button
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50"
-            onClick={stop}
-            disabled={!connected}
-          >
-            End & Grade
-          </button>
-        </div>
+        <div className="flex flex-col items-center gap-6">
+          <div className="flex items-center gap-6">
+            <button
+              className={`relative w-20 h-20 rounded-full transition-all duration-200 ${
+                connected && status === 'listening'
+                  ? 'bg-green-600 hover:bg-green-700 shadow-lg animate-pulse-mic'
+                  : 'bg-gray-700 hover:bg-gray-600 shadow-md'
+              }`}
+              onClick={connected ? () => {} : start}
+              disabled={status === 'connecting'}
+            >
+              {status === 'connecting' ? (
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+              ) : connected ? (
+                <Mic className="h-8 w-8 text-white" />
+              ) : (
+                <PhoneOff className="h-8 w-8 text-gray-300" />
+              )}
+            </button>
+            
+            <button
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50"
+              onClick={stop}
+              disabled={!connected}
+            >
+              End & Grade
+            </button>
+          </div>
 
-        <p className="text-xs text-gray-500 mt-6">
-          Press Space to start • Press Escape to end
-        </p>
+          <p className="text-xs text-gray-500 text-center">
+            Press Space to start • Press Escape to end
+          </p>
+        </div>
       </div>
       
       <audio ref={audioRef as any} autoPlay />
