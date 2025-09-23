@@ -1,14 +1,30 @@
 'use client';
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function Trainer() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [connected, setConnected] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const search = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
   async function start() {
     try {
+      // Load homeowner avatar (from Supabase agents or scenarios)
+      try {
+        const agent = await fetch('/api/agent', { cache: 'no-store' }).then(r => r.json());
+        setAvatarUrl(agent?.avatar_url || null);
+      } catch {}
+
+      // Create DB session for logging
+      try {
+        const s = await fetch('/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({}) }).then(r => r.json());
+        setSessionId(s.sessionId);
+      } catch {}
+
       // 1) Get ephemeral token
       const tokRes = await fetch("/api/rt/token", { cache: 'no-store' });
       const tok = await tokRes.json();
@@ -25,10 +41,26 @@ export default function Trainer() {
 
       // 4) Data channel for events
       const dc = pc.createDataChannel("oai-events");
-      dc.onmessage = (evt) => {
+      let assistantBuffer = '';
+      dc.onmessage = async (evt) => {
         try {
           const msg = JSON.parse(evt.data);
-          // TODO: log to Supabase turns if desired
+          // assistant stream
+          if (msg.type === 'response.output_text.delta' && typeof msg.delta === 'string') {
+            assistantBuffer += msg.delta;
+          }
+          if ((msg.type === 'response.output_text.done' || msg.type === 'response.completed') && assistantBuffer.trim().length > 0) {
+            if (sessionId) {
+              try { await fetch('/api/turns/add', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId, speaker: 'homeowner', text: assistantBuffer, ts: new Date().toISOString() }) }); } catch {}
+            }
+            assistantBuffer = '';
+          }
+          // user transcript
+          if ((msg.type === 'input_audio_transcription.completed' || msg.type === 'conversation.item.input_audio_transcription.completed') && typeof msg.transcript === 'string' && msg.transcript.trim().length > 0) {
+            if (sessionId) {
+              try { await fetch('/api/turns/add', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId, speaker: 'rep', text: msg.transcript, ts: new Date().toISOString() }) }); } catch {}
+            }
+          }
         } catch {}
       };
 
@@ -77,17 +109,37 @@ export default function Trainer() {
     setConnected(false);
   }
 
+  // Auto-start if ?autostart=1
+  useEffect(() => {
+    const a = search?.get('autostart');
+    if (a === '1' && !connected) {
+      start().catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div className="max-w-xl mx-auto p-6 space-y-4 text-white">
-      <h1 className="text-xl font-semibold">DoorIQ Trainer (WebRTC)</h1>
-      <div className="flex gap-2">
-        {!connected ? (
-          <button className="px-4 py-2 bg-blue-600 rounded" onClick={start}>Start</button>
-        ) : (
-          <button className="px-4 py-2 bg-gray-600 rounded" onClick={stop}>End</button>
-        )}
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="text-center">
+        {/* Large Centered Avatar Only */}
+        <div className="relative w-48 h-48 rounded-full overflow-hidden mx-auto mb-6 border-4 border-white/20 shadow-2xl">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Homeowner" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600" />
+          )}
+        </div>
+
+        {/* Minimal controls */}
+        <div className="space-x-3">
+          {!connected ? (
+            <button className="px-6 py-3 bg-white text-black rounded" onClick={start}>Start Conversation</button>
+          ) : (
+            <button className="px-6 py-3 bg-white/10 text-white rounded border border-white/20" onClick={stop}>End</button>
+          )}
+        </div>
+        {error && <p className="text-red-400 mt-3">{error}</p>}
       </div>
-      {error && <p className="text-red-400">{error}</p>}
       <audio ref={audioRef} autoPlay />
     </div>
   );

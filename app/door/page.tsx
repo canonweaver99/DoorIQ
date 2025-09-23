@@ -20,7 +20,7 @@ export default function DoorPage() {
       osc.start(t); osc.stop(t + 0.1);
     } catch {}
 
-    setTimeout(() => router.push('/trainer-realtime'), 400);
+    setTimeout(() => router.push('/trainer?autostart=1'), 400);
   };
 
   return (
