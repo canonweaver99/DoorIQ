@@ -41,12 +41,12 @@ export function LoginClient() {
         <div className="bg-white shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p className="text-gray-600">Sign in to DoorIQ Training</p>
+            <p className="text-gray-700">Sign in to DoorIQ Training</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-2">
                 Email Address
               </label>
               <input
@@ -61,7 +61,7 @@ export function LoginClient() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-800 mb-2">
                 Password
               </label>
               <input
@@ -76,7 +76,7 @@ export function LoginClient() {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
             )}
@@ -91,7 +91,7 @@ export function LoginClient() {
           </form>
 
           <div className="mt-6 text-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-700">
               Don&apos;t have an account?{' '}
               <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-500">
                 Sign up

@@ -30,18 +30,18 @@ export function SignUpClient() {
       if (authError) throw authError
 
       if (authData.user) {
-        const newUser: Database['public']['Tables']['users']['Insert'] = {
-          id: authData.user.id,
-          email,
-          full_name: fullName,
-          rep_id: repId,
-        }
-
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert(newUser as any)
-
-        if (profileError) throw profileError
+        const res = await fetch('/api/users/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: authData.user.id,
+            email,
+            full_name: fullName,
+            rep_id: repId,
+          })
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error || 'Failed to create profile')
       }
 
       router.push('/trainer')
@@ -59,12 +59,12 @@ export function SignUpClient() {
         <div className="bg-white shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Get Started</h1>
-            <p className="text-gray-600">Create your DoorIQ Training account</p>
+            <p className="text-gray-700">Create your DoorIQ Training account</p>
           </div>
 
           <form onSubmit={handleSignUp} className="space-y-6">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-800 mb-2">
                 Full Name
               </label>
               <input
@@ -79,7 +79,7 @@ export function SignUpClient() {
             </div>
 
             <div>
-              <label htmlFor="repId" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="repId" className="block text-sm font-medium text-gray-800 mb-2">
                 Rep ID
               </label>
               <input
@@ -94,7 +94,7 @@ export function SignUpClient() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-2">
                 Email Address
               </label>
               <input
@@ -109,7 +109,7 @@ export function SignUpClient() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-800 mb-2">
                 Password
               </label>
               <input
@@ -126,7 +126,7 @@ export function SignUpClient() {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
             )}
