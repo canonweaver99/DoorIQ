@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from "next/navigation";
 import { Mic, PhoneOff } from 'lucide-react';
 import { useRealtimeSession } from './useRealtimeSession';
@@ -39,18 +39,18 @@ function TrainerInner() {
   const router = useRouter();
   const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, currentScenario, micEnabled, connect, disconnect, toggleMic } = useRealtimeSession();
 
-  async function start() { 
+  const start = useCallback(async () => { 
     await connect(); 
-  }
+  }, [connect]);
 
-  async function stop() {
+  const stop = useCallback(async () => {
     await disconnect();
     
     // Navigate to feedback page with conversation data
     const duration = formatTime(elapsedSeconds);
     const transcriptData = encodeURIComponent(JSON.stringify(transcript));
     router.push(`/feedback?duration=${duration}&transcript=${transcriptData}`);
-  }
+  }, [disconnect, elapsedSeconds, transcript, router]);
 
   // Auto-start if ?autostart=1
   useEffect(() => {
@@ -58,8 +58,7 @@ function TrainerInner() {
     if (a === '1' && !connected) {
       start().catch(() => {});
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [search, connected, start]);
 
   // Keyboard shortcuts
   useEffect(() => {

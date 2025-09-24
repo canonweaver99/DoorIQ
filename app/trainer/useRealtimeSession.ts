@@ -7,7 +7,13 @@ import { selectFewShotSubset } from './trainingSamples';
 
 // Audio controller for barge-in prevention
 let speaking = false;
-const audioEl = new Audio();
+let audioEl: HTMLAudioElement | null = null;
+
+function ensureAudioEl(): HTMLAudioElement | null {
+  if (typeof window === 'undefined') return null;
+  if (!audioEl) audioEl = new Audio();
+  return audioEl;
+}
 
 // Enhanced TTS processing with turn limiting
 function tidyForTTS(text: string): string {
@@ -18,17 +24,22 @@ function tidyForTTS(text: string): string {
 
 // Play TTS with barge-in control
 export function playTTS(arrayBuffer: ArrayBuffer) {
+  if (typeof window === 'undefined') return;
+  const el = ensureAudioEl();
+  if (!el) return;
   speaking = true;
   const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
-  audioEl.src = URL.createObjectURL(blob);
-  audioEl.play().catch(() => {});
+  el.src = URL.createObjectURL(blob);
+  el.play().catch(() => {});
 }
 
 // Stop TTS immediately
 export function stopTTS() {
-  if (!speaking) return;
-  audioEl.pause();
-  audioEl.currentTime = 0;
+  if (typeof window === 'undefined') return;
+  const el = audioEl;
+  if (!speaking || !el) return;
+  el.pause();
+  el.currentTime = 0;
   speaking = false;
 }
 
@@ -99,7 +110,7 @@ export function useRealtimeSession() {
   }, []);
 
   // Speech queue processing function
-  const processSpeechQueue = useCallback(async () => {
+  async function processSpeechQueue(): Promise<void> {
     if (isPlayingSpeechRef.current || speechQueueRef.current.length === 0) {
       return;
     }
@@ -110,7 +121,6 @@ export function useRealtimeSession() {
 
     try {
       console.log('Processing speech queue item:', item.text.substring(0, 50) + '...');
-      
       const response = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -126,19 +136,18 @@ export function useRealtimeSession() {
       }
 
       const audioBuffer = await response.arrayBuffer();
-      
       // Use enhanced playTTS function
       playTTS(audioBuffer);
       markSpoke(); // Track speaking time
-      
+
       // Set up event listeners for our global audio element
       const handleEnded = () => {
         console.log('Audio playback completed for:', item.text.substring(0, 30));
         isPlayingSpeechRef.current = false;
         setIsSpeaking(false);
-        audioEl.removeEventListener('ended', handleEnded);
-        audioEl.removeEventListener('error', handleError);
-        
+        const el = ensureAudioEl();
+        el?.removeEventListener('ended', handleEnded);
+        el?.removeEventListener('error', handleError);
         // Process next item in queue
         setTimeout(() => processSpeechQueue(), 100);
         // After agent stops speaking, expect user input - arm silence prompt
@@ -149,16 +158,16 @@ export function useRealtimeSession() {
         console.error('Audio playback error:', e);
         isPlayingSpeechRef.current = false;
         setIsSpeaking(false);
-        audioEl.removeEventListener('ended', handleEnded);
-        audioEl.removeEventListener('error', handleError);
-        
+        const el = ensureAudioEl();
+        el?.removeEventListener('ended', handleEnded);
+        el?.removeEventListener('error', handleError);
         // Process next item in queue even after error
         setTimeout(() => processSpeechQueue(), 100);
       };
 
-      audioEl.addEventListener('ended', handleEnded);
-      audioEl.addEventListener('error', handleError);
-      
+      const el = ensureAudioEl();
+      el?.addEventListener('ended', handleEnded);
+      el?.addEventListener('error', handleError);
       console.log('Audio playback started for:', item.text.substring(0, 30));
 
     } catch (error) {
@@ -166,14 +175,13 @@ export function useRealtimeSession() {
       isPlayingSpeechRef.current = false;
       setIsSpeaking(false);
       currentAudioRef.current = null;
-      
       // Continue with next item
       setTimeout(() => processSpeechQueue(), 100);
     }
-  }, []);
+  }
 
   // Add speech to queue
-  const queueSpeech = useCallback((text: string, voiceSettings: any, isApology: boolean = false, preempt: boolean = false) => {
+  function queueSpeech(text: string, voiceSettings: any, isApology: boolean = false, preempt: boolean = false) {
     const item: SpeechQueueItem = {
       id: crypto.randomUUID(),
       text: text.trim(),
@@ -214,7 +222,7 @@ export function useRealtimeSession() {
 
     // Start processing queue
     processSpeechQueue();
-  }, [processSpeechQueue]);
+  }
 
   // Detect interruptions - simplified version
   const checkForInterruption = useCallback(() => {
@@ -622,7 +630,7 @@ export function useRealtimeSession() {
       setError(e?.message || 'connect_failed');
       setStatus('error');
     }
-  }, []);
+  }, [queueSpeech, checkForInterruption, resetSilenceTimeout, getSimpleFallback, currentScenario?.mood]);
 
   const toggleMic = useCallback(() => {
     if (micTrackRef.current) {
