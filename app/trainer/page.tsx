@@ -220,7 +220,7 @@ function TrainerInner() {
         </div>
       </div>
       
-      <audio ref={api.audioRef as any} autoPlay />
+      {/* Removed unused audio element to support both engines */}
     </div>
   );
 }
