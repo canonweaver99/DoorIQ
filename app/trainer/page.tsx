@@ -30,6 +30,8 @@ export default function TrainerPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [micPermissionGranted, setMicPermissionGranted] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(false)
   const [user, setUser] = useState<any>(null)
 
   const router = useRouter()
@@ -45,7 +47,7 @@ export default function TrainerPage() {
     
     // Auto-start if coming from pre-session
     if (searchParams.get('autostart') === 'true') {
-      setTimeout(() => startSession(), 500)
+      setTimeout(() => initializeSession(), 500)
     }
     
     return () => {
@@ -73,14 +75,20 @@ export default function TrainerPage() {
     }
   }
 
-  const initializeElevenLabs = async () => {
+  const initializeSession = async () => {
+    setIsInitializing(true)
     try {
-      // Get microphone access
+      // Request microphone permission
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaStream.current = stream
+      setMicPermissionGranted(true)
 
       // Initialize audio context
       audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+
+      // Play door sounds
+      await playAudio('/sounds/knock.mp3')
+      await playAudio('/sounds/door_open.mp3')
 
       // Connect to ElevenLabs
       elevenLabsWs.current = new ElevenLabsWebSocket({
@@ -89,18 +97,37 @@ export default function TrainerPage() {
       })
 
       elevenLabsWs.current.connect({
-        onConnect: () => {
+        onConnect: async () => {
           console.log('Connected to Austin!')
+          
+          // Create session record
+          const sessionId = await createSessionRecord()
+          setSessionId(sessionId)
+          
           setIsRecording(true)
+          setSessionActive(true)
+          setIsInitializing(false)
+          
+          // Start session timer
+          durationInterval.current = setInterval(() => {
+            setMetrics(prev => ({ ...prev, duration: prev.duration + 1 }))
+          }, 1000)
         },
         onMessage: (message) => {
           console.log('Austin message:', message)
-          if (message.type === 'audio' && message.data) {
-            // Play Austin's audio response
-            playAudioFromBase64(message.data)
+          
+          // Handle different message types from ElevenLabs
+          if (message.type === 'audio_chunk' && message.audio_chunk) {
+            playAudioFromBase64(message.audio_chunk)
           }
-          if (message.type === 'transcript' && message.text) {
-            addToTranscript('austin', message.text)
+          if (message.type === 'agent_response_audio_chunk' && message.audio_chunk) {
+            playAudioFromBase64(message.audio_chunk)
+          }
+          if (message.type === 'user_transcript' && message.user_transcript) {
+            addToTranscript('user', message.user_transcript)
+          }
+          if (message.type === 'agent_response' && message.agent_response) {
+            addToTranscript('austin', message.agent_response)
           }
         },
         onDisconnect: () => {
@@ -112,8 +139,19 @@ export default function TrainerPage() {
       // Start capturing and sending audio
       startAudioCapture(stream)
     } catch (error) {
-      console.error('Error initializing ElevenLabs:', error)
+      console.error('Error initializing session:', error)
+      setIsInitializing(false)
     }
+  }
+
+  const playAudio = (src: string) => {
+    return new Promise<void>((resolve) => {
+      const audio = new Audio(src)
+      audio.autoplay = true
+      audio.onended = () => resolve()
+      audio.onerror = () => resolve()
+      audio.play().catch(() => resolve())
+    })
   }
 
   const startAudioCapture = (stream: MediaStream) => {
@@ -134,12 +172,37 @@ export default function TrainerPage() {
     processor.connect(audioContext.current.destination)
   }
 
-  const playAudioFromBase64 = (base64Audio: string) => {
+  const playAudioFromBase64 = async (base64Audio: string) => {
     try {
-      const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`)
-      audio.play()
+      if (!audioContext.current) return
+      
+      // Decode base64 to array buffer
+      const binaryString = atob(base64Audio)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      
+      // Decode audio data
+      const audioBuffer = await audioContext.current.decodeAudioData(bytes.buffer)
+      
+      // Create and play audio source
+      const source = audioContext.current.createBufferSource()
+      source.buffer = audioBuffer
+      source.connect(audioContext.current.destination)
+      source.start()
+      
+      console.log('Playing Austin audio')
     } catch (error) {
       console.error('Error playing audio:', error)
+      // Fallback to simple audio element
+      try {
+        const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`)
+        audio.volume = 0.8
+        await audio.play()
+      } catch (fallbackError) {
+        console.error('Fallback audio also failed:', fallbackError)
+      }
     }
   }
 
@@ -153,10 +216,8 @@ export default function TrainerPage() {
     setTranscript(prev => [...prev, entry])
   }
 
-  const startSession = async () => {
-    setLoading(true)
+  const createSessionRecord = async () => {
     try {
-      let createdSessionId: string | null = null
       if (user?.id) {
         const { data: session, error } = await (supabase as any)
           .from('training_sessions')
@@ -167,26 +228,15 @@ export default function TrainerPage() {
           .select()
           .single()
         if (error) throw error
-        createdSessionId = (session as any).id
+        return (session as any).id
       } else {
-        createdSessionId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+        return (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
           ? (crypto as any).randomUUID()
           : `${Date.now()}`
       }
-
-      setSessionId(createdSessionId)
-      setSessionActive(true)
-
-      durationInterval.current = setInterval(() => {
-        setMetrics(prev => ({ ...prev, duration: prev.duration + 1 }))
-      }, 1000)
-
-      // Initialize ElevenLabs connection
-      await initializeElevenLabs()
     } catch (error) {
-      console.error('Error starting session:', error)
-    } finally {
-      setLoading(false)
+      console.error('Error creating session:', error)
+      return null
     }
   }
 
@@ -226,6 +276,28 @@ export default function TrainerPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Loading screen for microphone permissions
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center mb-6 mx-auto animate-pulse">
+            <Mic className="w-16 h-16 text-blue-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Setting Up Your Session</h1>
+          <p className="text-xl text-gray-600 mb-4">
+            {!micPermissionGranted ? 'Please allow microphone access to continue' : 'Connecting to Austin...'}
+          </p>
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!sessionActive) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
@@ -233,7 +305,7 @@ export default function TrainerPage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Sales Training Session</h1>
           <p className="text-xl text-gray-600 mb-8">Practice your pitch with Austin</p>
           <button
-            onClick={startSession}
+            onClick={initializeSession}
             disabled={loading}
             className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 disabled:opacity-50"
           >
