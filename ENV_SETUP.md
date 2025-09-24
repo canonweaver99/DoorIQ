@@ -10,6 +10,10 @@ OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # ElevenLabs API Key (REQUIRED for Amanda's voice)
 ELEVENLABS_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# (Optional) ElevenLabs Voice ID override
+# Defaults to Rachel (21m00Tcm4TlvDq8ikWAM) if not set
+ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM
 ```
 
 ## How to get your API Keys:

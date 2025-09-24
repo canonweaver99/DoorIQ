@@ -2,8 +2,9 @@
 import { NextResponse } from "next/server";
 export const runtime = "edge";
 
-// ElevenLabs voice ID for Amanda using Hope voice
-const AMANDA_VOICE_ID = "s3PiYuC5HiHvQEG4SjzO"; // Hope voice (natural, conversational)
+// ElevenLabs voice ID for Amanda
+// Use env ELEVENLABS_VOICE_ID if provided; default to Rachel (public voice)
+const AMANDA_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Rachel
 
 export async function POST(req: Request) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
