@@ -91,6 +91,11 @@ export function useRealtimeSession() {
   const userSpeakingRef = useRef(false);
   const lastResponseStartTime = useRef<number>(0);
   
+  // Conversation flow guards
+  const seedingRef = useRef(false);
+  const awaitingReplyRef = useRef(false);
+  const lastUtteranceRef = useRef<{ text: string; ts: number } | null>(null);
+  
   // Always respond functionality - track silence and prompt user
   const lastUserActivityRef = useRef<number>(Date.now());
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -182,14 +187,22 @@ export function useRealtimeSession() {
 
   // Add speech to queue
   function queueSpeech(text: string, voiceSettings: any, isApology: boolean = false, preempt: boolean = false) {
+    const cleaned = text.trim();
+
+    // Suppress immediate duplicates (accidental double-queue)
+    if (lastUtteranceRef.current && lastUtteranceRef.current.text === cleaned && Date.now() - lastUtteranceRef.current.ts < 2000) {
+      console.log('Skipping duplicate utterance:', cleaned);
+      return;
+    }
+
     const item: SpeechQueueItem = {
       id: crypto.randomUUID(),
-      text: text.trim(),
+      text: cleaned,
       voiceSettings,
       isApology
     };
 
-    console.log('Queueing speech:', text.substring(0, 50) + '...', 'isApology:', isApology);
+    console.log('Queueing speech:', cleaned.substring(0, 50) + '...', 'isApology:', isApology);
     
     // If it's an apology, prioritize it by adding to front of queue
     if (isApology) {
@@ -211,11 +224,14 @@ export function useRealtimeSession() {
       speechQueueRef.current.push(item);
     }
 
+    // Remember last utterance
+    lastUtteranceRef.current = { text: cleaned, ts: Date.now() };
+
     // Add to transcript immediately
     const transcriptTurn: Turn = { 
       id: crypto.randomUUID(), 
       speaker: 'homeowner', 
-      text: text.trim(), 
+      text: cleaned, 
       ts: Date.now() 
     };
     setTranscript(prev => [...prev.slice(-19), transcriptTurn]);
@@ -436,6 +452,7 @@ export function useRealtimeSession() {
 
         // Seed 2–3 few-shot examples into the conversation as context
         const seedPairs = selectFewShotSubset(3);
+        seedingRef.current = true;
         for (const pair of seedPairs) {
           // Add user example
           dc.send(JSON.stringify({
@@ -456,6 +473,7 @@ export function useRealtimeSession() {
             }
           }));
         }
+        setTimeout(() => { seedingRef.current = false; }, 300);
         
         // Wait a moment for connection to stabilize, then have Amanda give a simple greeting
         setTimeout(() => {
@@ -550,6 +568,9 @@ export function useRealtimeSession() {
           if (ev.type === 'response.done') {
             let textToSpeak = currentAssistantText.trim();
             
+            // Clear pending flag when model finishes
+            awaitingReplyRef.current = false;
+            
             // Always respond - if we got empty or very short text, generate fallback
             if (!textToSpeak || textToSpeak.length < 2) {
               console.log('Empty or very short response, generating fallback');
@@ -608,6 +629,12 @@ export function useRealtimeSession() {
           
           // Auto-respond after each user turn with natural variation
           if (ev.type === "conversation.item.created" && ev.item?.role === "user") {
+            // Ignore seeded examples
+            if (seedingRef.current) return;
+            // Prevent duplicate response.create while one is pending
+            if (awaitingReplyRef.current) return;
+            awaitingReplyRef.current = true;
+            
             // Add slight delay variation for more natural feel
             const responseDelay = Math.random() * 300 + 100; // 100-400ms
             setTimeout(() => {              
