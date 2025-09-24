@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Turn, Status } from './types';
 import { scenarioInstructions } from './scenarioInstructions';
 import { getObjection, type ObjectionCategory } from './objections';
+import { playSfx, playSfxSequence } from './sfx';
 
 // Audio controller for barge-in prevention
 let speaking = false;
@@ -448,10 +449,17 @@ export function useRealtimeSession() {
           }
         }));
 
-        // Wait a moment for connection to stabilize, then have Amanda give a simple greeting
-        setTimeout(() => {
+        // Wait a moment for connection to stabilize, then play SFX and greet
+        setTimeout(async () => {
+          try {
+            // Try to play knock then door open if present in /public/sounds
+            await playSfxSequence([
+              '/sounds/knock.mp3',
+              '/sounds/door_open.mp3'
+            ], 120, 0.9);
+          } catch {}
+
           const greeting = "Hi there—can I help you?";
-          
           // Queue the greeting with friendly neutral voice settings
           const greetingVoiceSettings = {
             stability: 0.30,
@@ -459,7 +467,6 @@ export function useRealtimeSession() {
             style: 0.55,
             use_speaker_boost: true
           };
-          
           queueSpeech(greeting, greetingVoiceSettings);
           markSpoke(); // Track speaking time
         }, 500);
