@@ -4,6 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
+function play(src: string, volume = 0.9) {
+  try {
+    const a = new Audio(src);
+    a.volume = volume;
+    a.play().catch(() => {});
+    return a;
+  } catch { return null; }
+}
+
+function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+
 type Props = {
   nextPath?: string;       // default "/trainer"
   label?: string;          // default "Click to knock"
@@ -13,9 +24,13 @@ export default function DoorLanding({ nextPath = "/trainer", label = "Click to k
   const router = useRouter();
   const [opening, setOpening] = useState(false);
 
-  const handleOpen = () => {
+  const handleOpen = async () => {
     if (opening) return;
     setOpening(true);
+    // Play knock then door open SFX before route
+    play('/sounds/knock.mp3', 0.95);
+    await delay(350);
+    play('/sounds/door_open.mp3', 0.95);
   };
 
   return (
