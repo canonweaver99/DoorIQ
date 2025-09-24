@@ -156,9 +156,9 @@ export default function TrainerPage() {
 
           <div className="flex-1 bg-gray-100 relative">
             <iframe
-              src="https://elevenlabs.io/app/agents/agent_7001k5jqfjmtejvs77jvhjf254tz"
+              src="https://elevenlabs.io/app/agents/agent_7001k5jqfjmtejvs77jvhjf254tz/embed"
               className="w-full h-full"
-              allow="microphone"
+              allow="autoplay; microphone; clipboard-read; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
               style={{ border: 'none' }}
             />
           </div>
