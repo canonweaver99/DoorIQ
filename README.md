@@ -1,137 +1,194 @@
-# DoorIQ - AI-Powered Door-to-Door Sales Training Platform
+# DoorIQ - AI-Powered Sales Training Platform
 
-DoorIQ is an innovative training platform that helps door-to-door sales professionals improve their skills through realistic AI-powered voice interactions.
+<div align="center">
+  
+  [![Next.js](https://img.shields.io/badge/Next.js-15.5-black)](https://nextjs.org/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC)](https://tailwindcss.com/)
+  [![Supabase](https://img.shields.io/badge/Supabase-Database-green)](https://supabase.com/)
+</div>
 
-## Features
+## 🎯 Overview
 
-- 🎙️ **Voice Interactions**: Practice with realistic AI-powered customer conversations
-- 🎯 **Scenario Training**: Handle skeptical, busy, and friendly customer personalities
-- 📊 **Performance Analytics**: Track your progress with detailed metrics and insights
-- ⚡ **Instant Feedback**: Get AI-powered analysis and tips after each session
-- 🚪 **Interactive Door**: Click to knock and start practicing immediately
+DoorIQ is a comprehensive sales training platform that helps door-to-door pest control sales representatives master their pitch through realistic AI-powered conversations. Practice with Amanda Rodriguez, a skeptical suburban mom voiced by ElevenLabs AI, and receive real-time feedback to improve your sales performance.
 
-## Tech Stack
+## ✨ Key Features
 
-- **Frontend**: Next.js 14 with App Router, TypeScript, Tailwind CSS
-- **UI Components**: Framer Motion for animations, Recharts for data visualization
-- **Database**: MongoDB with Prisma ORM
-- **AI Integration**: ElevenLabs API for voice generation and speech-to-text
-- **Analysis**: Claude 3 API for conversation analysis
-- **Icons**: Lucide React
+### 🎙️ Voice-to-Voice Training
+- Natural conversations with ElevenLabs AI agent (Amanda)
+- Real-time speech recognition and response
+- Realistic interruptions and objections
+- Embedded agent interface with microphone support
 
-## Getting Started
+### 📊 Live Performance Metrics
+- Sentiment tracking (hostile → neutral → interested)
+- Objection counting and analysis
+- Key moment detection (price, safety, close attempts)
+- Real-time conversation timer
 
-### Prerequisites
+### 📈 Comprehensive Analytics
+- Detailed post-session performance breakdown
+- Score breakdown: Rapport, Objection Handling, Safety, Close Effectiveness
+- Improvement tracking over time
+- Specific timing feedback
 
-- Node.js 18+ 
-- MongoDB database
-- ElevenLabs API key
-- Claude API key (optional for advanced analysis)
+### 🏆 Gamification
+- Achievement badges:
+  - First Success - Got Amanda to say yes
+  - Speed Runner - Closed in under 3 minutes
+  - Trust Builder - No interruptions full session
+  - Safety Star - Addressed all safety concerns
+- Team leaderboards
+- Daily challenges
+- Practice streak tracking
 
-### Installation
+### 👥 Team Management
+- Admin dashboard for managers
+- Team performance analytics
+- Individual progress tracking
+- Export capabilities for reporting
 
-1. Clone the repository:
+## 🚀 Quick Start
+
 ```bash
+# Clone the repository
 git clone https://github.com/yourusername/dooriq.git
 cd dooriq
-```
 
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
-```
 
-3. Set up environment variables:
-Create a `.env.local` file in the root directory:
-```env
-DATABASE_URL="your_mongodb_connection_string"
-ELEVENLABS_API_KEY="your_elevenlabs_api_key"
-CLAUDE_API_KEY="your_claude_api_key"
-NEXTAUTH_SECRET="generate_random_string_here"
-NEXTAUTH_URL="http://localhost:3000"
-```
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your credentials
 
-4. Set up the database:
-```bash
-npx prisma generate
-npx prisma db push
-```
+# Run database migrations
+# (Run the SQL from lib/supabase/schema.sql in your Supabase dashboard)
 
-5. Run the development server:
-```bash
+# Start the development server
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
+Visit [http://localhost:3000](http://localhost:3000) to start training!
 
-## Usage
+## 📖 Documentation
 
-1. **Home Page**: Start from the landing page to learn about DoorIQ
-2. **Practice**: Click "Start Practicing" to begin a training session
-3. **Knock on the Door**: Click the virtual door to initiate a conversation
-4. **Speak Naturally**: Use your microphone to respond to the AI customer
-5. **Get Feedback**: Receive instant analysis and tips after each session
-6. **Track Progress**: View your performance metrics on the dashboard
+- [Setup Guide](./SETUP_GUIDE.md) - Detailed installation and configuration
+- [API Documentation](./Documentation.md) - Technical implementation details
+- [Environment Setup](./ENV_SETUP.md) - Environment variable configuration
 
-## Project Structure
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15.5, React 19, TypeScript
+- **Styling**: Tailwind CSS, Framer Motion
+- **Database**: Supabase (PostgreSQL)
+- **Voice AI**: ElevenLabs Conversational AI (embedded agent)
+- **Authentication**: Supabase Auth
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Deployment**: Vercel
+
+## 👤 Meet Amanda Rodriguez
+
+Your AI training partner:
+- 38-year-old suburban mom
+- Lives in a nice neighborhood
+- Has 2 kids, 1 dog, and 2 cats
+- Skeptical of door-to-door sales
+- Had bad experiences before
+- Price-conscious but values quality
+- Will interrupt if you're vague or take too long
+
+**ElevenLabs Agent**: https://elevenlabs.io/app/agents/agent_7001k5jqfjmtejvs77jvhjf254tz
+
+## 📱 Application Flow
+
+1. **Landing Page** (`/`) - Learn about DoorIQ and sign up
+2. **Authentication** (`/auth/login`, `/auth/signup`) - Create account or sign in
+3. **Pre-Session** (`/trainer/pre-session`) - Review coaching tips
+4. **Training Session** (`/trainer`) - Practice with Amanda
+5. **Analytics** (`/trainer/analytics/[id]`) - Review your performance
+6. **History** (`/trainer/history`) - Track all sessions
+7. **Leaderboard** (`/trainer/leaderboard`) - Compete with team
+8. **Admin** (`/admin`) - Manage team (managers only)
+
+## 🎮 How to Use
+
+1. **Sign Up**: Create your account with name and Rep ID
+2. **Review Tips**: Read coaching tips before each session
+3. **Start Session**: Click "Start Training Session"
+4. **Practice**: Speak naturally with Amanda through the embedded agent
+5. **Monitor Metrics**: Watch real-time sentiment and key moments
+6. **End Session**: Click "End Session" when done
+7. **Review Analytics**: See detailed breakdown and feedback
+8. **Track Progress**: Monitor improvement over time
+
+## 📊 Scoring System
+
+- **Overall Score** (0-100): Composite performance metric
+- **Rapport Score**: Quality of relationship building
+- **Objection Handling**: How well objections are addressed
+- **Safety Score**: Addressing pet/child safety concerns
+- **Close Effectiveness**: Success in attempting to close
+
+## 🏗️ Project Structure
 
 ```
 /app
-  /api           # API routes for practice sessions and AI integration
-  /(auth)        # Authentication pages
-  /dashboard     # Performance analytics dashboard
-  /practice      # Main practice interface
-  layout.tsx     # Root layout
-  page.tsx       # Landing page
+  /auth              # Login and signup pages
+  /trainer           # Main training interface
+    /pre-session     # Coaching tips
+    /analytics       # Post-session analysis
+    /history         # Session history
+    /leaderboard     # Team rankings
+  /admin             # Team management dashboard
 
-/components      # Reusable React components
-/lib            # Utility functions and API clients
-/prisma         # Database schema and configuration
-/public         # Static assets
+/components
+  /layout            # Navigation and layout components
+  /trainer           # Training-specific components
+
+/lib
+  /supabase          # Database client and types
+  /trainer           # Training logic and types
 ```
 
-## Features in Detail
+## 🚀 Deployment
 
-### Practice Sessions
-- Realistic door-knocking animation
-- Multiple customer personalities (skeptical, friendly, busy professional)
-- Real-time voice transcription
-- Natural conversation flow with AI responses
-
-### Performance Tracking
-- Session history and scores
-- Performance trends over time
-- Scenario distribution analytics
-- Strengths and improvement areas
-
-### AI Integration
-- ElevenLabs for natural voice synthesis
-- Speech-to-text for user input
-- Claude API for advanced conversation analysis (optional)
-- Context-aware responses based on conversation history
-
-## Deployment
-
-The application is ready for deployment on Vercel:
+Deploy to Vercel:
 
 ```bash
 npm run build
+vercel
 ```
 
-Configure your environment variables in your Vercel project settings.
+Add these environment variables to your Vercel project:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `OPENAI_API_KEY` (optional)
+- `ELEVEN_LABS_API_KEY` (optional)
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License.
 
-## Support
+## 🙏 Acknowledgments
 
-For support, email support@dooriq.com or join our Discord community.
+- ElevenLabs for providing the conversational AI technology
+- Supabase for the backend infrastructure
+- The sales training community for valuable feedback
 
 ---
 
-Built with ❤️ by the DoorIQ team
+<div align="center">
+  <p>Built with ❤️ for sales professionals everywhere</p>
+</div>
