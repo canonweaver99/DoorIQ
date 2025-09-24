@@ -2,13 +2,8 @@
 import { NextResponse } from "next/server";
 export const runtime = "edge";
 
-// ElevenLabs voice IDs for Amanda - choose one that fits
-const AMANDA_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel voice (clear, professional)
-// Alternative voices:
-// "EXAVITQu4vr4xnSDxMaL" - Bella (warm, friendly)
-// "pNInz6obpgDQGcFmaJgB" - Adam (if you want male)
-// "ThT5KcBeYPX3keUQqHPh" - Dorothy (mature, trustworthy)
-// "MF3mGyEYCl7XYWbV9V6O" - Emily (youthful, energetic)
+// ElevenLabs voice ID for Amanda using Hope voice
+const AMANDA_VOICE_ID = "s3PiYuC5HiHvQEG4SjzO"; // Hope voice (natural, conversational)
 
 export async function POST(req: Request) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
