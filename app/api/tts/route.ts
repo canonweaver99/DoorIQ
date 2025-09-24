@@ -2,9 +2,15 @@
 import { NextResponse } from "next/server";
 export const runtime = "edge";
 
-// ElevenLabs voice ID for Amanda
-// Use env ELEVENLABS_VOICE_ID if provided; default to Rachel (public voice)
+// ElevenLabs voice configuration for Amanda
+// Voice can be overridden via env ELEVENLABS_VOICE_ID; defaults to Rachel (public voice)
 const AMANDA_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Rachel
+
+// Tunable voice settings with sensible defaults for a warm, conversational tone
+const VOICE_STABILITY = Number.parseFloat(process.env.ELEVENLABS_STABILITY || "0.30");
+const VOICE_SIMILARITY = Number.parseFloat(process.env.ELEVENLABS_SIMILARITY || "0.90");
+const VOICE_STYLE = Number.parseFloat(process.env.ELEVENLABS_STYLE || "0.50");
+const VOICE_SPEAKER_BOOST = (process.env.ELEVENLABS_SPEAKER_BOOST || "true").toLowerCase() !== "false";
 
 export async function POST(req: Request) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -43,10 +49,10 @@ export async function POST(req: Request) {
           text,
           model_id: "eleven_multilingual_v2",
           voice_settings: {
-            stability: 0.45,        // Lower = more expressive
-            similarity_boost: 0.85, // Higher = more consistent
-            style: 0.3,            // Conversational style
-            use_speaker_boost: true
+            stability: VOICE_STABILITY,
+            similarity_boost: VOICE_SIMILARITY,
+            style: VOICE_STYLE,
+            use_speaker_boost: VOICE_SPEAKER_BOOST
           }
         })
       }
