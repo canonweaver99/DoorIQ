@@ -171,7 +171,7 @@ export default function AnalyticsPage() {
               label="Rapport Building" 
               score={session.rapport_score || 0} 
               color="blue"
-              feedback="Focus on mirroring Amanda's energy level and finding common ground early in the conversation."
+              feedback="Focus on mirroring Austin's energy level and finding common ground early in the conversation."
             />
             <ScoreBar 
               label="Objection Handling" 
@@ -208,7 +208,7 @@ export default function AnalyticsPage() {
             <InsightCard
               title="Interruption Management"
               icon={<MessageSquare className="w-5 h-5" />}
-              content={`Amanda interrupted ${session.sentiment_data?.interruption_count || 0} times`}
+              content={`Austin interrupted ${session.sentiment_data?.interruption_count || 0} times`}
               status={(session.sentiment_data?.interruption_count || 0) <= 2 ? 'good' : 'improve'}
             />
             <InsightCard

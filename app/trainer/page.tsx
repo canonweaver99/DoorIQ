@@ -121,7 +121,7 @@ export default function TrainerPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Sales Training Session</h1>
-          <p className="text-xl text-gray-600 mb-8">Practice your pitch with Amanda</p>
+          <p className="text-xl text-gray-600 mb-8">Practice your pitch with Austin</p>
           <button
             onClick={startSession}
             disabled={loading}
@@ -142,8 +142,8 @@ export default function TrainerPage() {
           <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold">Amanda Rodriguez</h2>
-                <p className="text-sm opacity-90">Suburban Mom</p>
+                <h2 className="text-xl font-semibold">Austin Rodriguez</h2>
+                <p className="text-sm opacity-90">Suburban Homeowner</p>
               </div>
               <button
                 onClick={() => setIsMuted(!isMuted)}
@@ -215,7 +215,7 @@ export default function TrainerPage() {
 
           <div className="flex-1 p-4 overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Session Active</h3>
-            <p className="text-gray-600">Speak naturally with Amanda. Your conversation is being analyzed in real-time.</p>
+            <p className="text-gray-600">Speak naturally with Austin. Your conversation is being analyzed in real-time.</p>
           </div>
         </div>
       </div>

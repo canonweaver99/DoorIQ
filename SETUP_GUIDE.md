@@ -1,10 +1,10 @@
 # DoorIQ Sales Training Platform - Setup Guide
 
 ## Overview
-DoorIQ is a professional sales training application that uses an ElevenLabs voice agent (Amanda) to help door-to-door pest control sales representatives practice their pitch in realistic scenarios.
+DoorIQ is a professional sales training application that uses an ElevenLabs voice agent (Austin) to help door-to-door pest control sales representatives practice their pitch in realistic scenarios.
 
 ## Features
-- **Real-time Voice Conversations**: Practice with Amanda, an AI-powered skeptical suburban mom
+- **Real-time Voice Conversations**: Practice with Austin, an AI-powered skeptical suburban homeowner
 - **Live Performance Metrics**: Track sentiment, objections, and key moments during conversations
 - **Comprehensive Analytics**: Get detailed feedback on your performance after each session
 - **Gamification**: Earn badges, climb leaderboards, and maintain practice streaks
@@ -106,7 +106,7 @@ Visit http://localhost:3000 to see the application.
 
 ### Training Session Flow
 1. User logs in and views coaching tips
-2. Starts session with ElevenLabs Amanda agent
+2. Starts session with ElevenLabs Austin agent
 3. Real-time metrics track performance
 4. Session ends and analytics are generated
 5. User reviews detailed feedback and scores

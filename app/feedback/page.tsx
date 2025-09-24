@@ -95,7 +95,7 @@ function FeedbackInner() {
       const specificTips = [];
 
       if (scores.rapport >= 70) {
-        strengths.push("Excellent rapport building - you made Amanda feel comfortable");
+        strengths.push("Excellent rapport building - you made Austin feel comfortable");
       } else {
         improvements.push("Work on building rapport before introducing business topics");
         specificTips.push("Try asking 'How are you doing today?' or commenting on the weather first");
@@ -109,10 +109,10 @@ function FeedbackInner() {
       }
 
       if (scores.listening >= 70) {
-        strengths.push("Good active listening - you let Amanda respond naturally");
+        strengths.push("Good active listening - you let Austin respond naturally");
       } else {
         improvements.push("Listen more and ask follow-up questions");
-        specificTips.push("When Amanda mentions something, ask 'Can you tell me more about that?' or 'How long has that been going on?'");
+        specificTips.push("When Austin mentions something, ask 'Can you tell me more about that?' or 'How long has that been going on?'");
       }
 
       setFeedbackData({
@@ -179,7 +179,7 @@ function FeedbackInner() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Conversation Analysis</h1>
-          <p className="text-gray-400">Here&#39;s how you did with Amanda Rodriguez</p>
+          <p className="text-gray-400">Here&#39;s how you did with Austin Rodriguez</p>
         </div>
 
         {/* Overall Score */}

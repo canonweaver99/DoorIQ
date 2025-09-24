@@ -80,7 +80,7 @@ export default function PreSessionPage() {
               Ready to Practice?
             </h1>
             <p className="text-xl text-gray-600">
-              You&apos;ll be speaking with Amanda, a skeptical suburban mom who needs pest control services.
+              You&apos;ll be speaking with Austin, a skeptical suburban homeowner who needs pest control services.
             </p>
           </div>
 
@@ -118,13 +118,13 @@ export default function PreSessionPage() {
 
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-8">
             <h3 className="font-semibold text-amber-900 mb-2">
-              Remember: Amanda is Skeptical
+              Remember: Austin is Skeptical
             </h3>
             <ul className="space-y-2 text-amber-800">
-              <li>• She&apos;s had bad experiences with door-to-door sales before</li>
-              <li>• She&apos;s concerned about safety for her kids and pets</li>
-              <li>• She&apos;s price-conscious but values quality service</li>
-              <li>• She will interrupt if you&apos;re not clear or take too long</li>
+              <li>• He&apos;s had bad experiences with door-to-door sales before</li>
+              <li>• He&apos;s concerned about safety for his kids and pets</li>
+              <li>• He&apos;s price-conscious but values quality service</li>
+              <li>• He will interrupt if you&apos;re not clear or take too long</li>
             </ul>
           </div>
 
@@ -140,8 +140,8 @@ export default function PreSessionPage() {
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-gray-600">
-            Goal: Get Amanda to agree to a pest control service consultation
+            <p className="text-gray-600">
+            Goal: Get Austin to agree to a pest control service consultation
           </p>
         </div>
       </div>

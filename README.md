@@ -10,12 +10,12 @@
 
 ## 🎯 Overview
 
-DoorIQ is a comprehensive sales training platform that helps door-to-door pest control sales representatives master their pitch through realistic AI-powered conversations. Practice with Amanda Rodriguez, a skeptical suburban mom voiced by ElevenLabs AI, and receive real-time feedback to improve your sales performance.
+DoorIQ is a comprehensive sales training platform that helps door-to-door pest control sales representatives master their pitch through realistic AI-powered conversations. Practice with Austin Rodriguez, a skeptical suburban homeowner voiced by ElevenLabs AI, and receive real-time feedback to improve your sales performance.
 
 ## ✨ Key Features
 
 ### 🎙️ Voice-to-Voice Training
-- Natural conversations with ElevenLabs AI agent (Amanda)
+- Natural conversations with ElevenLabs AI agent (Austin)
 - Real-time speech recognition and response
 - Realistic interruptions and objections
 - Embedded agent interface with microphone support
@@ -34,7 +34,7 @@ DoorIQ is a comprehensive sales training platform that helps door-to-door pest c
 
 ### 🏆 Gamification
 - Achievement badges:
-  - First Success - Got Amanda to say yes
+  - First Success - Got Austin to say yes
   - Speed Runner - Closed in under 3 minutes
   - Trust Builder - No interruptions full session
   - Safety Star - Addressed all safety concerns
@@ -88,10 +88,10 @@ Visit [http://localhost:3000](http://localhost:3000) to start training!
 - **Icons**: Lucide React
 - **Deployment**: Vercel
 
-## 👤 Meet Amanda Rodriguez
+## 👤 Meet Austin Rodriguez
 
 Your AI training partner:
-- 38-year-old suburban mom
+- 38-year-old suburban homeowner
 - Lives in a nice neighborhood
 - Has 2 kids, 1 dog, and 2 cats
 - Skeptical of door-to-door sales
@@ -106,7 +106,7 @@ Your AI training partner:
 1. **Landing Page** (`/`) - Learn about DoorIQ and sign up
 2. **Authentication** (`/auth/login`, `/auth/signup`) - Create account or sign in
 3. **Pre-Session** (`/trainer/pre-session`) - Review coaching tips
-4. **Training Session** (`/trainer`) - Practice with Amanda
+4. **Training Session** (`/trainer`) - Practice with Austin
 5. **Analytics** (`/trainer/analytics/[id]`) - Review your performance
 6. **History** (`/trainer/history`) - Track all sessions
 7. **Leaderboard** (`/trainer/leaderboard`) - Compete with team
@@ -117,7 +117,7 @@ Your AI training partner:
 1. **Sign Up**: Create your account with name and Rep ID
 2. **Review Tips**: Read coaching tips before each session
 3. **Start Session**: Click "Start Training Session"
-4. **Practice**: Speak naturally with Amanda through the embedded agent
+4. **Practice**: Speak naturally with Austin through the embedded agent
 5. **Monitor Metrics**: Watch real-time sentiment and key moments
 6. **End Session**: Click "End Session" when done
 7. **Review Analytics**: See detailed breakdown and feedback

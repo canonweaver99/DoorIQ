@@ -47,7 +47,7 @@ export default function Home() {
               Why Top Sales Teams Choose DoorIQ
             </h2>
             <p className="text-xl text-gray-600">
-              Practice with Amanda, our AI-powered skeptical homeowner
+              Practice with Austin, our AI-powered skeptical homeowner
             </p>
           </div>
 
