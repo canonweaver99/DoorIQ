@@ -120,7 +120,26 @@ export default function PreSessionPage() {
 
           <div className="text-center">
             <button
-              onClick={() => router.push('/trainer')}
+              onClick={() => {
+                // Play sounds then go directly to active session
+                const playAudio = (src: string) => {
+                  return new Promise<void>((resolve) => {
+                    const audio = new Audio(src)
+                    audio.autoplay = true
+                    audio.onended = () => resolve()
+                    audio.onerror = () => resolve()
+                    audio.play().catch(() => resolve())
+                  })
+                }
+                
+                Promise.resolve()
+                  .then(() => playAudio('/sounds/knock.mp3'))
+                  .then(() => playAudio('/sounds/door_open.mp3'))
+                  .then(() => {
+                    // Navigate to trainer with auto-start flag
+                    router.push('/trainer?autostart=true')
+                  })
+              }}
               className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:scale-105"
             >
               Start Practice Session

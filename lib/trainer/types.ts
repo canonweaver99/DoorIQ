@@ -1,5 +1,5 @@
 export interface TranscriptEntry {
-  speaker: 'user' | 'amanda'
+  speaker: 'user' | 'austin'
   text: string
   timestamp: Date
   sentiment?: 'positive' | 'neutral' | 'negative'
