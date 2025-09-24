@@ -28,14 +28,24 @@ export function useElevenAgentSession(agentId?: string) {
   const connect = useCallback(async () => {
     try {
       setStatus('connecting'); setError(null);
+      
+      // Get connection info from our secure endpoint
+      const infoRes = await fetch(`/api/eleven/proxy?agent_id=${encodeURIComponent(agentId || '')}`);
+      if (!infoRes.ok) {
+        throw new Error('Failed to get connection info');
+      }
+      const { websocket_url, api_key } = await infoRes.json();
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
       micStreamRef.current = stream;
 
       const rec = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = rec;
 
-      const url = `/api/eleven/proxy?agent_id=${encodeURIComponent(agentId || '')}`;
-      const ws = new WebSocket(url);
+      // Connect directly to ElevenLabs with the provided auth
+      // Note: Browser WebSocket doesn't support headers, so we'll include auth in URL
+      const authUrl = `${websocket_url}&authorization=${encodeURIComponent(api_key)}`;
+      const ws = new WebSocket(authUrl);
       wsRef.current = ws;
 
       ws.binaryType = 'arraybuffer';

@@ -285,7 +285,7 @@ export function useRealtimeSession() {
     
     // Reset the timeout for another longer period
     resetSilenceTimeout(20000); // 20 seconds for follow-up
-  }, [connected, queueSpeech]);
+  }, [connected]);
 
   // Reset silence timeout
   const resetSilenceTimeout = useCallback((delayMs: number = 8000) => {
@@ -623,7 +623,7 @@ export function useRealtimeSession() {
       setError(e?.message || 'connect_failed');
       setStatus('error');
     }
-  }, [queueSpeech, checkForInterruption, resetSilenceTimeout, getSimpleFallback, currentScenario?.mood]);
+  }, [checkForInterruption, resetSilenceTimeout, getSimpleFallback, currentScenario?.mood]);
 
   const toggleMic = useCallback(() => {
     if (micTrackRef.current) {
