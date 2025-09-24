@@ -116,17 +116,7 @@ export default function PreSessionPage() {
             )}
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-8">
-            <h3 className="font-semibold text-amber-900 mb-2">
-              Remember: Austin is Skeptical
-            </h3>
-            <ul className="space-y-2 text-amber-800">
-              <li>• He&apos;s had bad experiences with door-to-door sales before</li>
-              <li>• He&apos;s concerned about safety for his kids and pets</li>
-              <li>• He&apos;s price-conscious but values quality service</li>
-              <li>• He will interrupt if you&apos;re not clear or take too long</li>
-            </ul>
-          </div>
+          {/* Removed the reminder block per request */}
 
           <div className="text-center">
             <button
@@ -139,11 +129,7 @@ export default function PreSessionPage() {
           </div>
         </div>
 
-        <div className="mt-8 text-center">
-            <p className="text-gray-600">
-            Goal: Get Austin to agree to a pest control service consultation
-          </p>
-        </div>
+        
       </div>
     </div>
   )

@@ -34,6 +34,7 @@ export default function TrainerPage() {
   const router = useRouter()
   const supabase = createClient()
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
     fetchUser()
@@ -56,27 +57,51 @@ export default function TrainerPage() {
     }
   }
 
+  const playAudio = (src: string) => {
+    return new Promise<void>((resolve) => {
+      const audio = new Audio(src)
+      audio.autoplay = true
+      audio.onended = () => resolve()
+      audio.onerror = () => resolve()
+      audio.play().catch(() => resolve())
+    })
+  }
+
   const startSession = async () => {
     setLoading(true)
     try {
-      const { data: session, error } = await (supabase as any)
-        .from('training_sessions')
-        .insert({
-          user_id: user.id,
-          scenario_type: 'standard',
-        } as any)
-        .select()
-        .single()
+      let createdSessionId: string | null = null
+      if (user?.id) {
+        const { data: session, error } = await (supabase as any)
+          .from('training_sessions')
+          .insert({
+            user_id: user.id,
+            scenario_type: 'standard',
+          } as any)
+          .select()
+          .single()
+        if (error) throw error
+        createdSessionId = (session as any).id
+      } else {
+        createdSessionId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+          ? (crypto as any).randomUUID()
+          : `${Date.now()}`
+      }
 
-      if (error) throw error
-
-      setSessionId((session as any).id)
+      setSessionId(createdSessionId)
       setSessionActive(true)
       setIsRecording(true)
 
       durationInterval.current = setInterval(() => {
         setMetrics(prev => ({ ...prev, duration: prev.duration + 1 }))
       }, 1000)
+
+      // Play knock and door open before Austin speaks
+      await playAudio('/sounds/knock.mp3')
+      await playAudio('/sounds/door_open.mp3')
+      if (iframeRef.current) {
+        try { iframeRef.current.focus() } catch {}
+      }
     } catch (error) {
       console.error('Error starting session:', error)
     } finally {
@@ -92,17 +117,21 @@ export default function TrainerPage() {
     }
 
     try {
-      await (supabase as any)
-        .from('training_sessions')
-        .update({
-          ended_at: new Date().toISOString(),
-          duration_seconds: metrics.duration,
-          overall_score: 75,
-          transcript: transcript,
-        } as any)
-        .eq('id', sessionId as string)
+      if (user?.id && sessionId) {
+        await (supabase as any)
+          .from('training_sessions')
+          .update({
+            ended_at: new Date().toISOString(),
+            duration_seconds: metrics.duration,
+            overall_score: 75,
+            transcript: transcript,
+          } as any)
+          .eq('id', sessionId as string)
 
-      router.push(`/trainer/analytics/${sessionId}`)
+        router.push(`/trainer/analytics/${sessionId}`)
+      } else {
+        router.push('/trainer/pre-session')
+      }
     } catch (error) {
       console.error('Error ending session:', error)
     } finally {
@@ -156,6 +185,7 @@ export default function TrainerPage() {
 
           <div className="flex-1 bg-gray-100 relative">
             <iframe
+              ref={iframeRef}
               src="https://elevenlabs.io/app/agents/agent_7001k5jqfjmtejvs77jvhjf254tz/embed"
               className="w-full h-full"
               allow="autoplay; microphone; clipboard-read; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
