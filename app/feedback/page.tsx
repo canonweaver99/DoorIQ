@@ -179,7 +179,7 @@ function FeedbackInner() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Conversation Analysis</h1>
-          <p className="text-gray-400">Here's how you did with Amanda Rodriguez</p>
+          <p className="text-gray-400">Here&#39;s how you did with Amanda Rodriguez</p>
         </div>
 
         {/* Overall Score */}

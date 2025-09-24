@@ -79,7 +79,7 @@ function TrainerInner() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [connected, toggleMic]);
+  }, [connected, toggleMic, start, stop]);
 
   const formatTime = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60);
