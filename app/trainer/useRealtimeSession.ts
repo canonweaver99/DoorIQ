@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Turn, Status } from './types';
 import { scenarioInstructions } from './scenarioInstructions';
 import { getObjection, type ObjectionCategory } from './objections';
-import { selectFewShotSubset } from './trainingSamples';
 
 // Audio controller for barge-in prevention
 let speaking = false;
@@ -92,7 +91,6 @@ export function useRealtimeSession() {
   const lastResponseStartTime = useRef<number>(0);
   
   // Conversation flow guards
-  const seedingRef = useRef(false);
   const awaitingReplyRef = useRef(false);
   const lastUtteranceRef = useRef<{ text: string; ts: number } | null>(null);
   
@@ -446,35 +444,10 @@ export function useRealtimeSession() {
             tools: [],
             tool_choice: "none",
             temperature: 0.65,
-            max_response_output_tokens: 80
+            max_response_output_tokens: 60
           }
         }));
 
-        // Seed 2–3 few-shot examples into the conversation as context
-        const seedPairs = selectFewShotSubset(3);
-        seedingRef.current = true;
-        for (const pair of seedPairs) {
-          // Add user example
-          dc.send(JSON.stringify({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "user",
-              content: [{ type: "input_text", text: pair.user }]
-            }
-          }));
-          // Add assistant example
-          dc.send(JSON.stringify({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "assistant",
-              content: [{ type: "output_text", text: pair.assistant }]
-            }
-          }));
-        }
-        setTimeout(() => { seedingRef.current = false; }, 300);
-        
         // Wait a moment for connection to stabilize, then have Amanda give a simple greeting
         setTimeout(() => {
           const greeting = "Hi there—can I help you?";
@@ -559,11 +532,6 @@ export function useRealtimeSession() {
             currentAssistantText = ev.text;
           }
           
-          // Handle partial transcription for barge-in
-          if (ev.type === 'input_audio_transcription.partial') {
-            stopTTS();
-          }
-          
           // When response is complete, enhance and queue speech
           if (ev.type === 'response.done') {
             let textToSpeak = currentAssistantText.trim();
@@ -621,7 +589,7 @@ export function useRealtimeSession() {
                 type: "response.create",
                 response: { 
                   modalities: ["text"],
-                  max_output_tokens: 80
+                  max_output_tokens: 60
                 }
               }));
             }, 200);
@@ -629,8 +597,6 @@ export function useRealtimeSession() {
           
           // Auto-respond after each user turn with natural variation
           if (ev.type === "conversation.item.created" && ev.item?.role === "user") {
-            // Ignore seeded examples
-            if (seedingRef.current) return;
             // Prevent duplicate response.create while one is pending
             if (awaitingReplyRef.current) return;
             awaitingReplyRef.current = true;
@@ -642,7 +608,7 @@ export function useRealtimeSession() {
                 type: "response.create",
                 response: { 
                   modalities: ["text"], // TEXT ONLY - no audio
-                  max_output_tokens: 80
+                  max_output_tokens: 60
                 }
               }));
             }, responseDelay);
