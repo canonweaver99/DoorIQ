@@ -1,71 +1,58 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Turn, Status } from './types';
+import { scenarioInstructions } from './scenarioInstructions';
+import { getObjection, type ObjectionCategory } from './objections';
+import { selectFewShotSubset } from './trainingSamples';
 
-// ElevenLabs TTS helper function
-async function speakWithElevenLabs(text: string): Promise<void> {
-  try {
-    console.log('Speaking with ElevenLabs:', text);
-    
-    const response = await fetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    });
+// Audio controller for barge-in prevention
+let speaking = false;
+const audioEl = new Audio();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('TTS API failed:', response.status, errorText);
-      
-      // Try to parse error details
-      try {
-        const errorData = JSON.parse(errorText);
-        console.error('TTS Error details:', errorData);
-      } catch {
-        console.error('TTS Error text:', errorText);
-      }
-      return;
-    }
+// Enhanced TTS processing with turn limiting
+function tidyForTTS(text: string): string {
+  const clean = text.trim();
+  const sentences = clean.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ');
+  return /[.!?]$/.test(sentences) ? sentences : sentences + '.';
+}
 
-    const audioBuffer = await response.arrayBuffer();
-    console.log('Audio received, size:', audioBuffer.byteLength);
-    
-    if (audioBuffer.byteLength === 0) {
-      console.error('Received empty audio buffer');
-      return;
-    }
-    
-    const audioBlob = new Blob([audioBuffer], { type: "audio/mpeg" });
-    const audioUrl = URL.createObjectURL(audioBlob);
-    
-    const audio = new Audio(audioUrl);
-    audio.volume = 0.9;
-    
-    // Add error handling for audio playback
-    audio.addEventListener('error', (e) => {
-      console.error('Audio playback error:', e);
-      URL.revokeObjectURL(audioUrl);
-    });
-    
-    audio.addEventListener('ended', () => {
-      console.log('Audio playback completed');
-      URL.revokeObjectURL(audioUrl);
-    });
-    
-    // Play with promise handling
-    try {
-      await audio.play();
-      console.log('Audio playback started');
-    } catch (err) {
-      console.error('Audio play failed:', err);
-      // Retry with user interaction if needed
-      if (err instanceof DOMException && err.name === 'NotAllowedError') {
-        console.log('Audio blocked - user interaction required');
-      }
-    }
-  } catch (error) {
-    console.error('ElevenLabs TTS error:', error);
+// Play TTS with barge-in control
+export function playTTS(arrayBuffer: ArrayBuffer) {
+  speaking = true;
+  const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+  audioEl.src = URL.createObjectURL(blob);
+  audioEl.play().catch(() => {});
+}
+
+// Stop TTS immediately
+export function stopTTS() {
+  if (!speaking) return;
+  audioEl.pause();
+  audioEl.currentTime = 0;
+  speaking = false;
+}
+
+// Track speaking state for interruption detection
+let lastSpeakTs = 0;
+function markSpoke() { lastSpeakTs = Date.now(); }
+function maybeYieldLine(queueSpeech: (text: string, voiceSettings: any, isApology?: boolean) => void) {
+  if (Date.now() - lastSpeakTs < 1200) {
+    const apologyVoiceSettings = {
+      stability: 0.40,
+      similarity_boost: 0.90,
+      style: 0.30,
+      use_speaker_boost: true
+    };
+    queueSpeech("Oh—sorry, you go ahead.", apologyVoiceSettings, true);
   }
+}
+
+// Speech queue system for preventing overlapping audio
+interface SpeechQueueItem {
+  id: string;
+  text: string;
+  voiceSettings: any;
+  isApology?: boolean;
 }
 
 export function useRealtimeSession() {
@@ -86,6 +73,17 @@ export function useRealtimeSession() {
   const [currentScenario, setCurrentScenario] = useState<{id: string, name: string, mood: string} | null>(null);
   const [micEnabled, setMicEnabled] = useState(true);
 
+  // Speech queue and interruption handling
+  const speechQueueRef = useRef<SpeechQueueItem[]>([]);
+  const isPlayingSpeechRef = useRef(false);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const userSpeakingRef = useRef(false);
+  const lastResponseStartTime = useRef<number>(0);
+  
+  // Always respond functionality - track silence and prompt user
+  const lastUserActivityRef = useRef<number>(Date.now());
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // timer
   useEffect(() => {
     const id = setInterval(() => {
@@ -99,6 +97,183 @@ export function useRealtimeSession() {
   const setAudioElement = useCallback((el: HTMLAudioElement | null) => {
     audioRef.current = el;
   }, []);
+
+  // Speech queue processing function
+  const processSpeechQueue = useCallback(async () => {
+    if (isPlayingSpeechRef.current || speechQueueRef.current.length === 0) {
+      return;
+    }
+
+    const item = speechQueueRef.current.shift()!;
+    isPlayingSpeechRef.current = true;
+    setIsSpeaking(true);
+
+    try {
+      console.log('Processing speech queue item:', item.text.substring(0, 50) + '...');
+      
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: item.text,
+          voice_settings: item.voiceSettings
+        })
+      });
+
+      if (!response.ok) {
+        console.error('TTS failed for queued item');
+        return;
+      }
+
+      const audioBuffer = await response.arrayBuffer();
+      
+      // Use enhanced playTTS function
+      playTTS(audioBuffer);
+      markSpoke(); // Track speaking time
+      
+      // Set up event listeners for our global audio element
+      const handleEnded = () => {
+        console.log('Audio playback completed for:', item.text.substring(0, 30));
+        isPlayingSpeechRef.current = false;
+        setIsSpeaking(false);
+        audioEl.removeEventListener('ended', handleEnded);
+        audioEl.removeEventListener('error', handleError);
+        
+        // Process next item in queue
+        setTimeout(() => processSpeechQueue(), 100);
+        // After agent stops speaking, expect user input - arm silence prompt
+        resetSilenceTimeout();
+      };
+
+      const handleError = (e: any) => {
+        console.error('Audio playback error:', e);
+        isPlayingSpeechRef.current = false;
+        setIsSpeaking(false);
+        audioEl.removeEventListener('ended', handleEnded);
+        audioEl.removeEventListener('error', handleError);
+        
+        // Process next item in queue even after error
+        setTimeout(() => processSpeechQueue(), 100);
+      };
+
+      audioEl.addEventListener('ended', handleEnded);
+      audioEl.addEventListener('error', handleError);
+      
+      console.log('Audio playback started for:', item.text.substring(0, 30));
+
+    } catch (error) {
+      console.error('Speech queue processing error:', error);
+      isPlayingSpeechRef.current = false;
+      setIsSpeaking(false);
+      currentAudioRef.current = null;
+      
+      // Continue with next item
+      setTimeout(() => processSpeechQueue(), 100);
+    }
+  }, []);
+
+  // Add speech to queue
+  const queueSpeech = useCallback((text: string, voiceSettings: any, isApology: boolean = false, preempt: boolean = false) => {
+    const item: SpeechQueueItem = {
+      id: crypto.randomUUID(),
+      text: text.trim(),
+      voiceSettings,
+      isApology
+    };
+
+    console.log('Queueing speech:', text.substring(0, 50) + '...', 'isApology:', isApology);
+    
+    // If it's an apology, prioritize it by adding to front of queue
+    if (isApology) {
+      // Stop current audio if playing
+      stopTTS();
+      
+      // Clear queue and add apology to front
+      speechQueueRef.current.unshift(item);
+      isPlayingSpeechRef.current = false;
+      setIsSpeaking(false);
+    } else if (preempt) {
+      // Preempt current speech with latest response
+      stopTTS();
+      speechQueueRef.current = [];
+      speechQueueRef.current.unshift(item);
+      isPlayingSpeechRef.current = false;
+      setIsSpeaking(false);
+    } else {
+      speechQueueRef.current.push(item);
+    }
+
+    // Add to transcript immediately
+    const transcriptTurn: Turn = { 
+      id: crypto.randomUUID(), 
+      speaker: 'homeowner', 
+      text: text.trim(), 
+      ts: Date.now() 
+    };
+    setTranscript(prev => [...prev.slice(-19), transcriptTurn]);
+
+    // Start processing queue
+    processSpeechQueue();
+  }, [processSpeechQueue]);
+
+  // Detect interruptions - simplified version
+  const checkForInterruption = useCallback(() => {
+    if (isPlayingSpeechRef.current) {
+      console.log('User interrupted Amanda - stopping speech');
+      stopTTS();
+    }
+  }, []);
+
+
+  // Simple fallback responses in Amanda's natural style
+  const getSimpleFallback = useCallback((): string => {
+    const fallbacks = [
+      "Sorry, what was that?",
+      "Come again?",
+      "I didn't catch that.",
+      "What'd you say?",
+      "Hm?"
+    ];
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  }, []);
+
+  // Handle prolonged silence by prompting the user
+  const handleSilenceTimeout = useCallback(() => {
+    if (!connected || isPlayingSpeechRef.current) return;
+    
+    console.log('Silence timeout - prompting user to continue conversation');
+    
+    const silencePrompts = [
+      "You still there?",
+      "Everything okay?",
+      "Hello?",
+      "Did I lose you?",
+      "What do you think?"
+    ];
+    
+    const prompt = silencePrompts[Math.floor(Math.random() * silencePrompts.length)];
+    const neutralVoiceSettings = {
+      stability: 0.35,
+      similarity_boost: 0.90,
+      style: 0.45,
+      use_speaker_boost: true
+    };
+    
+    queueSpeech(prompt, neutralVoiceSettings);
+    
+    // Reset the timeout for another longer period
+    resetSilenceTimeout(20000); // 20 seconds for follow-up
+  }, [connected, queueSpeech]);
+
+  // Reset silence timeout
+  const resetSilenceTimeout = useCallback((delayMs: number = 8000) => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    
+    silenceTimeoutRef.current = setTimeout(handleSilenceTimeout, delayMs);
+    lastUserActivityRef.current = Date.now();
+  }, [handleSilenceTimeout]);
 
   const connect = useCallback(async () => {
     try {
@@ -220,53 +395,17 @@ export function useRealtimeSession() {
       dc.addEventListener("open", () => {
         console.log('Data channel opened');
         
-        // Simple scenario - just rapport building Amanda
+        // Simple scenario - Amanda with new personality
         const scenario = {
           id: 'rapport_building',
-          name: 'Friendly Homeowner',
+          name: 'Suburban Homeowner',
           mood: 'neutral' as const,
           situation: 'At home, unknown visitor at door'
         };
         setCurrentScenario(scenario);
-        console.log('Starting conversation as rapport-building Amanda');
+        console.log('Starting conversation as natural Amanda');
         
-        // Use the simpler instructions that focus on rapport first
-        const scenarioInstructions = `You are Amanda Rodriguez, a friendly suburban homeowner who just answered her door. A sales representative is at your door, but you don't know who they are or what they're selling yet.
-
-PERSONALITY:
-- Warm, friendly, and naturally curious about people
-- Suburban homeowner who likes getting to know her neighbors
-- Polite but cautious when strangers come to the door
-- Values building rapport before discussing business
-
-CONVERSATION FLOW - FOLLOW THIS SEQUENCE:
-1. GREETING PHASE: Be friendly but uncertain who they are
-   - "Hi there! Can I help you?"
-   - Ask who they are, what company they're with
-   - Show interest in getting to know them as a person
-
-2. RAPPORT BUILDING PHASE: Get to know them personally
-   - Ask how long they've been with the company
-   - Comment on the weather, neighborhood, their day
-   - Share a bit about yourself (kids, work, neighborhood)
-   - Be genuinely curious about them as a person
-   - "Have you been doing this long?" "How do you like working in this area?"
-
-3. BUSINESS TRANSITION: Only after rapport is built
-   - Let them explain what they do and why they're here
-   - Show genuine interest in learning about their services
-   - Ask questions that a real homeowner would ask
-
-CONVERSATION STYLE:
-- Speak naturally in 1-2 sentences at a time
-- Use everyday language like a real person would
-- Show genuine interest: "Oh really?", "That's interesting!", "How nice!"
-- Build natural conversation flow - don't rush to business
-- Be conversational, not robotic
-
-IMPORTANT: DO NOT jump straight into pest control topics. First build a human connection, then let the sales rep introduce their business naturally. Act like you're meeting a new neighbor, not conducting a business transaction.`;
-        
-        // Reinforce Amanda's persona with session.update
+        // Configure Amanda's new personality and session settings
         dc.send(JSON.stringify({
           type: "session.update",
           session: {
@@ -276,53 +415,54 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
             },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.5,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 500
+              threshold: 0.62,
+              prefix_padding_ms: 180,
+              silence_duration_ms: 320
             },
             tools: [],
             tool_choice: "none",
-            temperature: 0.8,
-            max_response_output_tokens: 120
+            temperature: 0.65,
+            max_response_output_tokens: 80
           }
         }));
+
+        // Seed 2–3 few-shot examples into the conversation as context
+        const seedPairs = selectFewShotSubset(3);
+        for (const pair of seedPairs) {
+          // Add user example
+          dc.send(JSON.stringify({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "user",
+              content: [{ type: "input_text", text: pair.user }]
+            }
+          }));
+          // Add assistant example
+          dc.send(JSON.stringify({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "assistant",
+              content: [{ type: "output_text", text: pair.assistant }]
+            }
+          }));
+        }
         
         // Wait a moment for connection to stabilize, then have Amanda give a simple greeting
         setTimeout(() => {
-          const greeting = "Hi there! Can I help you?";
+          const greeting = "Hi there—can I help you?";
           
-          // Add Amanda's opening to transcript
-          const openingTurn: Turn = { 
-            id: crypto.randomUUID(), 
-            speaker: 'homeowner', 
-            text: greeting, 
-            ts: Date.now() 
+          // Queue the greeting with friendly neutral voice settings
+          const greetingVoiceSettings = {
+            stability: 0.30,
+            similarity_boost: 0.92,
+            style: 0.55,
+            use_speaker_boost: true
           };
-          setTranscript(prev => [...prev.slice(-19), openingTurn]);
           
-          // Speak directly with ElevenLabs with a friendly neutral style
-          fetch('/api/tts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              text: greeting,
-              voiceId: undefined,
-              voice_settings: {
-                stability: 0.30,
-                similarity_boost: 0.92,
-                style: 0.55,
-                use_speaker_boost: true
-              }
-            })
-          }).then(async (res) => {
-            if (!res.ok) return;
-            const audioBuffer = await res.arrayBuffer();
-            const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
-            const url = URL.createObjectURL(audioBlob);
-            const audio = new Audio(url);
-            audio.volume = 0.9;
-            audio.play().finally(() => URL.revokeObjectURL(url));
-          }).catch(() => {});
+          queueSpeech(greeting, greetingVoiceSettings);
+          markSpoke(); // Track speaking time
         }, 500);
       });
 
@@ -343,15 +483,27 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
             });
           }
           
-          // Track user speech for barge-in detection
+          // Track user speech for barge-in detection and interruptions
           if (ev.type === 'input_audio_buffer.speech_started') {
             userTalkingSince = performance.now();
+            userSpeakingRef.current = true;
             console.log('User started speaking');
+            
+            // Stop TTS immediately and potentially yield
+            stopTTS();
+            maybeYieldLine(queueSpeech);
+            
+            // Reset silence timeout since user is active
+            resetSilenceTimeout();
+            
+            // Check for interruption
+            checkForInterruption();
           }
           
           if (ev.type === 'input_audio_buffer.speech_stopped') {
             const talkDuration = performance.now() - userTalkingSince;
             lastUserTurnEndTime = performance.now();
+            userSpeakingRef.current = false;
             console.log(`User spoke for ${Math.round(talkDuration)}ms`);
             
             // Barge-in if user is rambling (>20s) or being evasive
@@ -375,25 +527,32 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
           // Handle assistant text streaming
           if (ev.type === 'response.text.delta' && ev.delta) {
             currentAssistantText += ev.delta;
-            setIsSpeaking(true);
           }
           if (ev.type === 'response.text.done' && ev.text) {
             // Full text is provided in done event
             currentAssistantText = ev.text;
           }
           
-          // When response is complete, speak with ElevenLabs using scenario-based tone
-          if (ev.type === 'response.done' && currentAssistantText.trim().length > 0) {
-            const textToSpeak = currentAssistantText.trim();
-
-            // Add to transcript
-            const t: Turn = { 
-              id: crypto.randomUUID(), 
-              speaker: 'homeowner', 
-              text: textToSpeak, 
-              ts: Date.now() 
-            };
-            setTranscript(prev => [...prev.slice(-19), t]);
+          // Handle partial transcription for barge-in
+          if (ev.type === 'input_audio_transcription.partial') {
+            stopTTS();
+          }
+          
+          // When response is complete, enhance and queue speech
+          if (ev.type === 'response.done') {
+            let textToSpeak = currentAssistantText.trim();
+            
+            // Always respond - if we got empty or very short text, generate fallback
+            if (!textToSpeak || textToSpeak.length < 2) {
+              console.log('Empty or very short response, generating fallback');
+              textToSpeak = getSimpleFallback();
+            }
+            
+            // Apply turn pacing and cleanup
+            textToSpeak = tidyForTTS(textToSpeak);
+            
+            // Track when response started for interruption detection
+            lastResponseStartTime.current = performance.now();
 
             // Map scenario mood to TTS style settings
             const mood = currentScenario?.mood || 'neutral';
@@ -406,32 +565,19 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
             };
             const s = styleMap[mood] || styleMap.neutral;
 
-            // Speak with ElevenLabs via our API with overrides
-            fetch('/api/tts', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                text: textToSpeak,
-                voice_settings: {
-                  stability: s.stability,
-                  similarity_boost: s.similarity,
-                  style: s.style,
-                  use_speaker_boost: true
-                }
-              })
-            }).then(async (res) => {
-              if (!res.ok) return;
-              const audioBuffer = await res.arrayBuffer();
-              const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
-              const url = URL.createObjectURL(audioBlob);
-              const audio = new Audio(url);
-              audio.volume = 0.9;
-              audio.play().finally(() => URL.revokeObjectURL(url));
-            }).catch(() => {});
+            const voiceSettings = {
+              stability: s.stability,
+              similarity_boost: s.similarity,
+              style: s.style,
+              use_speaker_boost: true
+            };
+
+            // Queue the enhanced speech, preempting if currently speaking
+            queueSpeech(textToSpeak, voiceSettings, false, isPlayingSpeechRef.current);
+            markSpoke(); // Track when we start speaking
 
             // Reset
             currentAssistantText = '';
-            setIsSpeaking(false);
           }
           
           // Handle user transcription
@@ -446,7 +592,7 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
                 type: "response.create",
                 response: { 
                   modalities: ["text"],
-                  max_output_tokens: 55
+                  max_output_tokens: 80
                 }
               }));
             }, 200);
@@ -461,7 +607,7 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
                 type: "response.create",
                 response: { 
                   modalities: ["text"], // TEXT ONLY - no audio
-                  max_output_tokens: 55
+                  max_output_tokens: 80
                 }
               }));
             }, responseDelay);
@@ -516,7 +662,28 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
     setAudioElement,
     connect,
     disconnect,
-    toggleMic
+    toggleMic,
+    playObjection: (category?: ObjectionCategory) => {
+      const { text } = getObjection(category);
+      const mood = currentScenario?.mood || 'neutral';
+      const styleMap: Record<string, { stability: number; similarity: number; style: number; } > = {
+        neutral: { stability: 0.30, similarity: 0.92, style: 0.50 },
+        interested: { stability: 0.28, similarity: 0.92, style: 0.60 },
+        busy: { stability: 0.35, similarity: 0.90, style: 0.40 },
+        skeptical: { stability: 0.38, similarity: 0.90, style: 0.35 },
+        frustrated: { stability: 0.40, similarity: 0.88, style: 0.30 }
+      };
+      const s = styleMap[mood] || styleMap.neutral;
+      const voiceSettings = {
+        stability: s.stability,
+        similarity_boost: s.similarity,
+        style: s.style,
+        use_speaker_boost: true
+      };
+      const line = tidyForTTS(text);
+      queueSpeech(line, voiceSettings, false, true);
+      markSpoke();
+    }
   };
 }
 
