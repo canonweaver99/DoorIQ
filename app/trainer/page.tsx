@@ -1,8 +1,9 @@
 'use client';
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from "next/navigation";
 import { Mic, PhoneOff } from 'lucide-react';
 import { useRealtimeSession } from './useRealtimeSession';
+import { useElevenAgentSession } from './useElevenAgentSession';
 import type { Status, Turn } from './types';
 
 // Inline StatusChip component
@@ -37,27 +38,29 @@ export default function Trainer() {
 function TrainerInner() {
   const search = useSearchParams();
   const router = useRouter();
-  const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, currentScenario, micEnabled, connect, disconnect, toggleMic } = useRealtimeSession();
+  const [engine, setEngine] = useState<'openai' | 'eleven'>((search?.get('engine') as any) === 'eleven' ? 'eleven' : 'openai');
 
-  const start = useCallback(async () => { 
-    await connect(); 
-  }, [connect]);
+  const openai = useRealtimeSession();
+  const eleven = useElevenAgentSession(search?.get('agent_id') || undefined);
 
+  const api = useMemo(() => engine === 'eleven' ? eleven : openai, [engine, eleven, openai]);
+  const { status, error, connected, transcript, isSpeaking, elapsedSeconds, currentScenario, micEnabled } = api as any;
+
+  const connect = (api as any).connect as () => Promise<void>;
+  const disconnect = (api as any).disconnect as () => Promise<void>;
+  const toggleMic = (api as any).toggleMic as () => void;
+
+  const start = useCallback(async () => { await connect(); }, [connect]);
   const stop = useCallback(async () => {
     await disconnect();
-    
-    // Navigate to feedback page with conversation data
     const duration = formatTime(elapsedSeconds);
     const transcriptData = encodeURIComponent(JSON.stringify(transcript));
     router.push(`/feedback?duration=${duration}&transcript=${transcriptData}`);
   }, [disconnect, elapsedSeconds, transcript, router]);
 
-  // Auto-start if ?autostart=1
   useEffect(() => {
     const a = search?.get('autostart');
-    if (a === '1' && !connected) {
-      start().catch(() => {});
-    }
+    if (a === '1' && !connected) { start().catch(() => {}); }
   }, [search, connected, start]);
 
   // Keyboard shortcuts
@@ -217,7 +220,7 @@ function TrainerInner() {
         </div>
       </div>
       
-      <audio ref={audioRef as any} autoPlay />
+      <audio ref={api.audioRef as any} autoPlay />
     </div>
   );
 }
