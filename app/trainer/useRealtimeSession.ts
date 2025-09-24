@@ -300,8 +300,29 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
           };
           setTranscript(prev => [...prev.slice(-19), openingTurn]);
           
-          // Speak directly with ElevenLabs
-          speakWithElevenLabs(greeting);
+          // Speak directly with ElevenLabs with a friendly neutral style
+          fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: greeting,
+              voiceId: undefined,
+              voice_settings: {
+                stability: 0.30,
+                similarity_boost: 0.92,
+                style: 0.55,
+                use_speaker_boost: true
+              }
+            })
+          }).then(async (res) => {
+            if (!res.ok) return;
+            const audioBuffer = await res.arrayBuffer();
+            const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+            const url = URL.createObjectURL(audioBlob);
+            const audio = new Audio(url);
+            audio.volume = 0.9;
+            audio.play().finally(() => URL.revokeObjectURL(url));
+          }).catch(() => {});
         }, 500);
       });
 
@@ -361,10 +382,10 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
             currentAssistantText = ev.text;
           }
           
-          // When response is complete, speak with ElevenLabs
+          // When response is complete, speak with ElevenLabs using scenario-based tone
           if (ev.type === 'response.done' && currentAssistantText.trim().length > 0) {
             const textToSpeak = currentAssistantText.trim();
-            
+
             // Add to transcript
             const t: Turn = { 
               id: crypto.randomUUID(), 
@@ -373,10 +394,41 @@ IMPORTANT: DO NOT jump straight into pest control topics. First build a human co
               ts: Date.now() 
             };
             setTranscript(prev => [...prev.slice(-19), t]);
-            
-            // Speak with ElevenLabs
-            speakWithElevenLabs(textToSpeak);
-            
+
+            // Map scenario mood to TTS style settings
+            const mood = currentScenario?.mood || 'neutral';
+            const styleMap: Record<string, { stability: number; similarity: number; style: number; } > = {
+              neutral: { stability: 0.30, similarity: 0.92, style: 0.50 },
+              interested: { stability: 0.28, similarity: 0.92, style: 0.60 },
+              busy: { stability: 0.35, similarity: 0.90, style: 0.40 },
+              skeptical: { stability: 0.38, similarity: 0.90, style: 0.35 },
+              frustrated: { stability: 0.40, similarity: 0.88, style: 0.30 }
+            };
+            const s = styleMap[mood] || styleMap.neutral;
+
+            // Speak with ElevenLabs via our API with overrides
+            fetch('/api/tts', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: textToSpeak,
+                voice_settings: {
+                  stability: s.stability,
+                  similarity_boost: s.similarity,
+                  style: s.style,
+                  use_speaker_boost: true
+                }
+              })
+            }).then(async (res) => {
+              if (!res.ok) return;
+              const audioBuffer = await res.arrayBuffer();
+              const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+              const url = URL.createObjectURL(audioBlob);
+              const audio = new Audio(url);
+              audio.volume = 0.9;
+              audio.play().finally(() => URL.revokeObjectURL(url));
+            }).catch(() => {});
+
             // Reset
             currentAssistantText = '';
             setIsSpeaking(false);

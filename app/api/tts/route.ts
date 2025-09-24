@@ -23,7 +23,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { text } = await req.json();
+    const body = await req.json();
+    const text: string | undefined = body?.text;
+    const overrideVoiceId: string | undefined = body?.voiceId;
+    const overrideSettings = body?.voice_settings as {
+      stability?: number;
+      similarity_boost?: number;
+      style?: number;
+      use_speaker_boost?: boolean;
+    } | undefined;
     
     if (!text || typeof text !== 'string') {
       return NextResponse.json(
@@ -33,11 +41,12 @@ export async function POST(req: Request) {
     }
 
     console.log('Generating ElevenLabs speech for:', text.substring(0, 50) + '...');
-    console.log('Using voice ID:', AMANDA_VOICE_ID);
+    const voiceId = (overrideVoiceId && typeof overrideVoiceId === 'string' ? overrideVoiceId : AMANDA_VOICE_ID).trim();
+    console.log('Using voice ID:', voiceId);
     console.log('API Key present:', !!apiKey);
 
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${AMANDA_VOICE_ID}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       {
         method: "POST",
         headers: {
@@ -49,10 +58,10 @@ export async function POST(req: Request) {
           text,
           model_id: "eleven_multilingual_v2",
           voice_settings: {
-            stability: VOICE_STABILITY,
-            similarity_boost: VOICE_SIMILARITY,
-            style: VOICE_STYLE,
-            use_speaker_boost: VOICE_SPEAKER_BOOST
+            stability: overrideSettings?.stability ?? VOICE_STABILITY,
+            similarity_boost: overrideSettings?.similarity_boost ?? VOICE_SIMILARITY,
+            style: overrideSettings?.style ?? VOICE_STYLE,
+            use_speaker_boost: overrideSettings?.use_speaker_boost ?? VOICE_SPEAKER_BOOST
           }
         })
       }
@@ -75,7 +84,7 @@ export async function POST(req: Request) {
           error: "TTS generation failed", 
           status: response.status,
           detail: errorDetail,
-          voice_id: AMANDA_VOICE_ID
+          voice_id: voiceId
         },
         { status: response.status }
       );
