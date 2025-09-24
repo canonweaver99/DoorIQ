@@ -303,6 +303,17 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
           const ev = JSON.parse(e.data);
           console.log('Realtime event:', ev.type, ev);
           
+          // Debug: Log important events
+          if (ev.type.includes('conversation') || ev.type.includes('response') || ev.type.includes('transcription')) {
+            console.log('🔍 Key event details:', {
+              type: ev.type,
+              item: ev.item,
+              transcript: ev.transcript,
+              text: ev.text,
+              delta: ev.delta
+            });
+          }
+          
           // Track user speech for barge-in detection
           if (ev.type === 'input_audio_buffer.speech_started') {
             userTalkingSince = performance.now();
@@ -367,6 +378,18 @@ Natural interruption if rambling: "Sorry—what's the price?"`;
           if (ev.type === 'conversation.item.input_audio_transcription.completed' && ev.transcript) {
             const t: Turn = { id: crypto.randomUUID(), speaker: 'rep', text: ev.transcript.trim(), ts: Date.now() };
             setTranscript(prev => [...prev.slice(-19), t]);
+            
+            // Trigger response after transcription (fallback if conversation.item.created doesn't fire)
+            console.log('User transcription completed, triggering response...');
+            setTimeout(() => {
+              dc.send(JSON.stringify({
+                type: "response.create",
+                response: { 
+                  modalities: ["text"],
+                  max_output_tokens: 55
+                }
+              }));
+            }, 200);
           }
           
           // Auto-respond after each user turn with natural variation
