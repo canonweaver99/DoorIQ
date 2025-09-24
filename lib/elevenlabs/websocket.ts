@@ -35,10 +35,20 @@ export class ElevenLabsWebSocket {
 
     this.ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data)
-        this.onMessage?.(data)
+        // ElevenLabs can send either JSON strings or binary audio chunks
+        if (typeof event.data === 'string') {
+          const data = JSON.parse(event.data)
+          this.onMessage?.(data)
+        } else if (event.data instanceof ArrayBuffer) {
+          // Binary audio - convert to base64 and emit as audio_chunk
+          const bytes = new Uint8Array(event.data)
+          let binary = ''
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
+          const base64 = btoa(binary)
+          this.onMessage?.({ type: 'audio_chunk', audio_chunk: base64 })
+        }
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error)
+        console.error('Error handling WebSocket message:', error)
       }
     }
 

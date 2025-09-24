@@ -86,9 +86,7 @@ export default function TrainerPage() {
       // Initialize audio context
       audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)()
 
-      // Play door sounds
-      await playAudio('/sounds/knock.mp3')
-      await playAudio('/sounds/door_open.mp3')
+      // Removed knock/door sounds for faster start
 
       // Connect to ElevenLabs
       elevenLabsWs.current = new ElevenLabsWebSocket({
