@@ -1,8 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Turn, Status } from './types';
-import { getRandomScenario, type AmandaScenario } from './scenarios';
-import { getRandomSoundForScenario, playAmbientSound } from './ambientSounds';
 
 // ElevenLabs TTS helper function
 async function speakWithElevenLabs(text: string): Promise<void> {
@@ -85,7 +83,7 @@ export function useRealtimeSession() {
   const [audioSeconds, setAudioSeconds] = useState(0);
   const tokensInRef = useRef(0);
   const tokensOutRef = useRef(0);
-  const [currentScenario, setCurrentScenario] = useState<AmandaScenario | null>(null);
+  const [currentScenario, setCurrentScenario] = useState<{id: string, name: string, mood: string} | null>(null);
   const [micEnabled, setMicEnabled] = useState(true);
 
   // timer
@@ -222,38 +220,51 @@ export function useRealtimeSession() {
       dc.addEventListener("open", () => {
         console.log('Data channel opened');
         
-        // Select random scenario for this conversation
-        const scenario = getRandomScenario();
+        // Simple scenario - just rapport building Amanda
+        const scenario = {
+          id: 'rapport_building',
+          name: 'Friendly Homeowner',
+          mood: 'neutral' as const,
+          situation: 'At home, unknown visitor at door'
+        };
         setCurrentScenario(scenario);
-        console.log('Selected scenario:', scenario.name, scenario.mood);
+        console.log('Starting conversation as rapport-building Amanda');
         
-        // Build dynamic instructions based on scenario
-        const scenarioInstructions = `You are Amanda Rodriguez, a friendly suburban homeowner having a natural conversation with a pest control sales rep at your door.
+        // Use the simpler instructions that focus on rapport first
+        const scenarioInstructions = `You are Amanda Rodriguez, a friendly suburban homeowner who just answered her door. A sales representative is at your door, but you don't know who they are or what they're selling yet.
 
-CURRENT SITUATION: ${scenario.situation}
-YOUR MOOD: ${scenario.mood}
-BACKGROUND: ${scenario.background}
+PERSONALITY:
+- Warm, friendly, and naturally curious about people
+- Suburban homeowner who likes getting to know her neighbors
+- Polite but cautious when strangers come to the door
+- Values building rapport before discussing business
 
-CONVERSATION APPROACH:
-- Speak naturally like you're chatting with a neighbor
-- Be genuinely interested in learning about pest control
-- Ask questions that a real homeowner would ask
-- React authentically to what they tell you
-- Keep responses conversational and brief (1-2 sentences)
+CONVERSATION FLOW - FOLLOW THIS SEQUENCE:
+1. GREETING PHASE: Be friendly but uncertain who they are
+   - "Hi there! Can I help you?"
+   - Ask who they are, what company they're with
+   - Show interest in getting to know them as a person
 
-SPECIFIC TO YOUR SITUATION:
-${scenario.id === 'ant_invasion' ? '- You have an active ant problem in your kitchen pantry' : ''}
-${scenario.id === 'spider_problem' ? '- You\'ve noticed lots of spiders around your house exterior' : ''}
-${scenario.id === 'dog_owner' ? '- You have a dog named Bailey who spends time in the yard' : ''}
-${scenario.id === 'new_homeowner' ? '- You just moved in last month and want to prevent problems' : ''}
-${scenario.id === 'chemical_sensitivity' ? '- You\'re concerned about chemical safety for your family' : ''}
-${scenario.id === 'nap_time' ? '- Your child Lucas is napping, so you need to keep things brief' : ''}
+2. RAPPORT BUILDING PHASE: Get to know them personally
+   - Ask how long they've been with the company
+   - Comment on the weather, neighborhood, their day
+   - Share a bit about yourself (kids, work, neighborhood)
+   - Be genuinely curious about them as a person
+   - "Have you been doing this long?" "How do you like working in this area?"
 
-YOUR MAIN INTERESTS:
-1. ${scenario.priorities[0]}
-2. ${scenario.priorities[1] || 'Overall effectiveness'}
+3. BUSINESS TRANSITION: Only after rapport is built
+   - Let them explain what they do and why they're here
+   - Show genuine interest in learning about their services
+   - Ask questions that a real homeowner would ask
 
-Be authentic and ${scenario.mood} - just have a normal conversation like any homeowner would when learning about pest control services.`;
+CONVERSATION STYLE:
+- Speak naturally in 1-2 sentences at a time
+- Use everyday language like a real person would
+- Show genuine interest: "Oh really?", "That's interesting!", "How nice!"
+- Build natural conversation flow - don't rush to business
+- Be conversational, not robotic
+
+IMPORTANT: DO NOT jump straight into pest control topics. First build a human connection, then let the sales rep introduce their business naturally. Act like you're meeting a new neighbor, not conducting a business transaction.`;
         
         // Reinforce Amanda's persona with session.update
         dc.send(JSON.stringify({
@@ -276,19 +287,21 @@ Be authentic and ${scenario.mood} - just have a normal conversation like any hom
           }
         }));
         
-        // Wait a moment for connection to stabilize, then have Amanda speak her opening directly
+        // Wait a moment for connection to stabilize, then have Amanda give a simple greeting
         setTimeout(() => {
+          const greeting = "Hi there! Can I help you?";
+          
           // Add Amanda's opening to transcript
           const openingTurn: Turn = { 
             id: crypto.randomUUID(), 
             speaker: 'homeowner', 
-            text: scenario.opening, 
+            text: greeting, 
             ts: Date.now() 
           };
           setTranscript(prev => [...prev.slice(-19), openingTurn]);
           
-          // Speak directly with ElevenLabs (no OpenAI generation needed)
-          speakWithElevenLabs(scenario.opening);
+          // Speak directly with ElevenLabs
+          speakWithElevenLabs(greeting);
         }, 500);
       });
 
@@ -391,15 +404,7 @@ Be authentic and ${scenario.mood} - just have a normal conversation like any hom
           if (ev.type === "conversation.item.created" && ev.item?.role === "user") {
             // Add slight delay variation for more natural feel
             const responseDelay = Math.random() * 300 + 100; // 100-400ms
-            setTimeout(() => {
-              // Maybe play ambient sound based on scenario
-              if (currentScenario) {
-                const sound = getRandomSoundForScenario(currentScenario.id);
-                if (sound) {
-                  playAmbientSound(sound);
-                }
-              }
-              
+            setTimeout(() => {              
               dc.send(JSON.stringify({
                 type: "response.create",
                 response: { 

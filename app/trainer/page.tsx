@@ -1,6 +1,6 @@
 'use client';
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Mic, PhoneOff } from 'lucide-react';
 import { useRealtimeSession } from './useRealtimeSession';
 import type { Status, Turn } from './types';
@@ -36,6 +36,7 @@ export default function Trainer() {
 
 function TrainerInner() {
   const search = useSearchParams();
+  const router = useRouter();
   const { audioRef, status, error, connected, transcript, isSpeaking, elapsedSeconds, currentScenario, micEnabled, connect, disconnect, toggleMic } = useRealtimeSession();
 
   async function start() { 
@@ -44,6 +45,11 @@ function TrainerInner() {
 
   async function stop() {
     await disconnect();
+    
+    // Navigate to feedback page with conversation data
+    const duration = formatTime(elapsedSeconds);
+    const transcriptData = encodeURIComponent(JSON.stringify(transcript));
+    router.push(`/feedback?duration=${duration}&transcript=${transcriptData}`);
   }
 
   // Auto-start if ?autostart=1
