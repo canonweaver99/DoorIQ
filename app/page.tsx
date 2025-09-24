@@ -18,17 +18,11 @@ export default function Home() {
             </p>
             <div className="flex justify-center space-x-4">
               <Link
-                href="/auth/signup"
+                href="/trainer/pre-session"
                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all"
               >
-                Get Started Free
+                Start Practicing
                 <ChevronRight className="ml-2 w-5 h-5" />
-              </Link>
-              <Link
-                href="/auth/login"
-                className="inline-flex items-center px-8 py-4 bg-white text-gray-900 font-semibold rounded-lg shadow-lg hover:bg-gray-50 border border-gray-200"
-              >
-                Sign In
               </Link>
             </div>
           </div>
