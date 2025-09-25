@@ -6,9 +6,10 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { 
   Trophy, TrendingUp, Clock, MessageSquare, Shield, 
-  Target, ChevronRight, Download, Share2
+  Target, ChevronRight, Download, Share2, FileText, BarChart3
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { TranscriptAnalysis } from '@/components/trainer/TranscriptAnalysis'
 
 interface SessionData {
   id: string
@@ -30,6 +31,7 @@ export default function AnalyticsPage() {
   const router = useRouter()
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'overview' | 'transcript'>('transcript')
   const supabase = createClient()
 
   useEffect(() => {
@@ -103,7 +105,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
@@ -162,8 +164,56 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Detailed Scores */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-6">
+          <div className="bg-gray-100 rounded-lg p-1 inline-flex">
+            <button
+              onClick={() => setActiveTab('transcript')}
+              className={`px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+                activeTab === 'transcript' 
+                  ? 'bg-white text-gray-900 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              Transcript Analysis
+            </button>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+                activeTab === 'overview' 
+                  ? 'bg-white text-gray-900 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Performance Metrics
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'transcript' ? (
+          <>
+            {/* Transcript Analysis */}
+            {session.transcript && session.transcript.length > 0 ? (
+              <TranscriptAnalysis 
+                transcript={session.transcript.map(t => ({
+                  speaker: t.speaker || (t as any).role || 'unknown',
+                  text: t.text || (t as any).content || '',
+                  timestamp: (t as any).timestamp
+                }))}
+                duration={formatDuration(session.duration_seconds || 0)}
+              />
+            ) : (
+              <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+                <p className="text-gray-600">No transcript available for this session</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Detailed Scores */}
+            <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Performance Breakdown</h2>
           
           <div className="space-y-6">
@@ -224,10 +274,11 @@ export default function AnalyticsPage() {
               status={session.analytics?.key_moments?.closeAttempted ? 'good' : 'improve'}
             />
           </div>
-        </div>
+          </>
+        )}
 
         {/* Action Buttons */}
-        <div className="flex justify-center space-x-4">
+        <div className="flex justify-center space-x-4 mt-8">
           <button
             onClick={() => router.push('/trainer')}
             className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center"

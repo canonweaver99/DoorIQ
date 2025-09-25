@@ -6,10 +6,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
 import { Mic, MicOff, Clock, Volume2, VolumeX } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { MetricCard } from '@/components/trainer/MetricCard'
 import { KeyMomentFlag } from '@/components/trainer/KeyMomentFlag'
+import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { TranscriptEntry, SessionMetrics } from '@/lib/trainer/types'
+import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 import { AlertCircle, MessageSquare, Target, TrendingUp } from 'lucide-react'
 // ElevenLabs ConvAI widget will be embedded directly in the left panel
 
@@ -41,6 +43,7 @@ export default function TrainerPage() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const audioContext = useRef<AudioContext | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
+  const transcriptEndRef = useRef<HTMLDivElement>(null)
   // elevenLabsWs removed in favor of @elevenlabs/react; guard audio capture
 
   useEffect(() => {
@@ -139,13 +142,30 @@ export default function TrainerPage() {
   // Removed custom audio/WebSocket playback in favor of official embed
 
   const addToTranscript = (speaker: 'user' | 'austin', text: string) => {
-    const entry: TranscriptEntry = {
-      speaker,
-      text,
-      timestamp: new Date(),
-      sentiment: 'neutral'
-    }
-    setTranscript(prev => [...prev, entry])
+    // Don't add empty or duplicate entries
+    if (!text.trim()) return
+    
+    setTranscript(prev => {
+      // Check if this is a duplicate of the last entry
+      const lastEntry = prev[prev.length - 1]
+      if (lastEntry && lastEntry.speaker === speaker && lastEntry.text === text) {
+        return prev
+      }
+      
+      const entry: TranscriptEntry = {
+        speaker,
+        text: text.trim(),
+        timestamp: new Date(),
+        sentiment: 'neutral'
+      }
+      
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+      
+      return [...prev, entry]
+    })
   }
 
   const createSessionRecord = async () => {
@@ -182,14 +202,23 @@ export default function TrainerPage() {
     try {
       // Stop Austin conversation if running
       try { (window as any).stopAustin?.() } catch {}
+      
+      // Analyze the conversation
+      const analysis = analyzeConversation(transcript)
+      
       if (user?.id && sessionId) {
         await (supabase as any)
           .from('training_sessions')
           .update({
             ended_at: new Date().toISOString(),
             duration_seconds: metrics.duration,
-            overall_score: 75,
+            overall_score: analysis.overallScore,
+            rapport_score: analysis.scores.rapport,
+            objection_handling_score: analysis.scores.listening,
+            safety_score: analysis.keyMoments.safetyAddressed ? 85 : 40,
+            close_effectiveness_score: analysis.scores.closing,
             transcript: transcript,
+            analytics: analysis,
           } as any)
           .eq('id', sessionId as string)
         const durationStr = formatDuration(metrics.duration)
@@ -197,6 +226,7 @@ export default function TrainerPage() {
         const mapped = transcript.map(t => ({
           speaker: t.speaker === 'user' ? 'rep' : 'homeowner',
           text: t.text,
+          timestamp: t.timestamp.toISOString()
         }))
         const q = new URLSearchParams({
           duration: durationStr,
@@ -208,6 +238,7 @@ export default function TrainerPage() {
         const mapped = transcript.map(t => ({
           speaker: t.speaker === 'user' ? 'rep' : 'homeowner',
           text: t.text,
+          timestamp: t.timestamp.toISOString()
         }))
         const q = new URLSearchParams({
           duration: durationStr,
@@ -305,6 +336,66 @@ export default function TrainerPage() {
                 let isStarting = false;
                 let state = { status: 'disconnected', mode: 'idle' };
 
+                function extractTexts(msg) {
+                  // Try to extract text for both user and agent, covering several payload shapes
+                  let userText = '';
+                  let agentText = '';
+
+                  try {
+                    // Explicit fields
+                    if (msg?.type === 'user_transcript') {
+                      userText = typeof msg.user_transcript === 'string' ? msg.user_transcript : (msg.user_transcript?.text || '');
+                    }
+                    if (msg?.type === 'agent_response') {
+                      const ar = msg.agent_response;
+                      if (typeof ar === 'string') agentText = ar;
+                      else if (ar?.text) agentText = ar.text;
+                      else if (ar?.content) agentText = ar.content;
+                      else if (Array.isArray(ar?.messages)) agentText = ar.messages.map(m => m?.text).filter(Boolean).join(' ');
+                    }
+                    
+                    // Handle conversation_updated messages
+                    if (msg?.type === 'conversation_updated') {
+                      const messages = msg?.conversation?.messages || [];
+                      if (messages.length > 0) {
+                        const lastMsg = messages[messages.length - 1];
+                        if (lastMsg?.role === 'user' && lastMsg?.content) userText = lastMsg.content;
+                        else if (lastMsg?.role === 'assistant' && lastMsg?.content) agentText = lastMsg.content;
+                      }
+                    }
+
+                    // Generic fields
+                    if (!userText && (msg?.user || msg?.speaker === 'user')) {
+                      const u = msg.user;
+                      if (typeof u === 'string') userText = u;
+                      else if (u?.text) userText = u.text;
+                      else if (u?.transcript) userText = u.transcript;
+                    }
+                    if (!agentText && (msg?.agent || msg?.speaker === 'agent' || msg?.role === 'assistant')) {
+                      const a = msg.agent || msg;
+                      if (typeof a === 'string') agentText = a;
+                      else if (a?.text) agentText = a.text;
+                      else if (a?.response) agentText = a.response;
+                    }
+
+                    // Conversation update style: messages array with role/content
+                    const messages = msg?.messages || msg?.conversation?.messages || [];
+                    if (Array.isArray(messages) && messages.length) {
+                      const uParts = messages.filter(m => (m?.role === 'user' || m?.speaker === 'user')).map(m => m?.text || m?.content || '').filter(Boolean);
+                      const aParts = messages.filter(m => (m?.role === 'assistant' || m?.speaker === 'agent' || m?.role === 'agent')).map(m => m?.text || m?.content || '').filter(Boolean);
+                      if (!userText && uParts.length) userText = uParts.join(' ');
+                      if (!agentText && aParts.length) agentText = aParts.join(' ');
+                    }
+
+                    // Fallback single text field
+                    if (!userText && !agentText && msg?.text) {
+                      if (msg?.role === 'user') userText = msg.text; else agentText = msg.text;
+                    }
+                  } catch {}
+
+                  return { userText, agentText };
+                }
+
                 function render() {
                   const { status, mode } = state;
                   const active = status === 'connected' || status === 'connecting';
@@ -329,13 +420,10 @@ export default function TrainerPage() {
                       onModeChange:   (m) => { state.mode = m; render(); },
                       onMessage: (msg) => {
                         try {
-                          if (msg?.type === 'user_transcript' && msg.user_transcript) {
-                            window.dispatchEvent(new CustomEvent('austin:user', { detail: msg.user_transcript }))
-                          }
-                          if (msg?.type === 'agent_response' && msg.agent_response) {
-                            window.dispatchEvent(new CustomEvent('austin:agent', { detail: msg.agent_response }))
-                          }
-                        } catch {}
+                          const { userText, agentText } = extractTexts(msg);
+                          if (userText) window.dispatchEvent(new CustomEvent('austin:user', { detail: userText }));
+                          if (agentText) window.dispatchEvent(new CustomEvent('austin:agent', { detail: agentText }));
+                        } catch (e) { console.debug('Austin onMessage parse error', e); }
                       },
                       onError: (err) => { console.error('ElevenLabs error:', err); stopSession(true); },
                     });
@@ -419,16 +507,34 @@ export default function TrainerPage() {
             <div className="absolute left-0 right-0 bottom-0 top-[55%] overflow-y-auto p-4">
               <div className="space-y-3 max-w-md mx-auto">
                 {transcript.length === 0 ? (
-                  <p className="text-gray-500 text-center">Conversation will appear here...</p>
+                  <p className="text-gray-500 text-center text-sm">Conversation will appear here...</p>
                 ) : (
-                  transcript.map((entry, idx) => (
-                    <div key={idx} className={`flex ${entry.speaker === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-xs px-4 py-2 rounded-lg ${entry.speaker === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}`}>
-                        <p className="text-sm">{entry.text}</p>
-                        <p className="text-xs opacity-70 mt-1">{new Date(entry.timestamp).toLocaleTimeString()}</p>
-                      </div>
-                    </div>
-                  ))
+                  <>
+                    <p className="text-center text-xs text-gray-500 mb-2">Live Transcript</p>
+                    {transcript.map((entry, idx) => (
+                      <motion.div 
+                        key={idx} 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className={`flex ${entry.speaker === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[80%] px-4 py-2 rounded-lg shadow-sm ${
+                          entry.speaker === 'user' 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-white text-gray-900 border border-gray-200'
+                        }`}>
+                          <p className="text-sm leading-relaxed">{entry.text}</p>
+                          <p className={`text-xs mt-1 ${
+                            entry.speaker === 'user' ? 'text-blue-100' : 'text-gray-500'
+                          }`}>
+                            {new Date(entry.timestamp).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                    <div ref={transcriptEndRef} />
+                  </>
                 )}
               </div>
             </div>
@@ -455,32 +561,64 @@ export default function TrainerPage() {
             </div>
           </div>
 
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <div className="grid grid-cols-4 gap-4">
-              <MetricCard
-                title="Interruptions"
-                value={metrics.interruptionCount}
-                icon={<AlertCircle className="w-5 h-5" />}
-                color="green"
-              />
-              <MetricCard
-                title="Objections"
-                value={metrics.objectionCount}
-                icon={<MessageSquare className="w-5 h-5" />}
-                color="yellow"
-              />
-              <MetricCard
-                title="Key Moments"
-                value="0/3"
-                icon={<Target className="w-5 h-5" />}
-                color="yellow"
-              />
-              <MetricCard
-                title="Trend"
-                value="Neutral"
-                icon={<TrendingUp className="w-5 h-5" />}
-                color="yellow"
-              />
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Left Column - Metrics */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <MetricCard
+                    title="Interruptions"
+                    value={metrics.interruptionCount}
+                    icon={<AlertCircle className="w-5 h-5" />}
+                    color="green"
+                  />
+                  <MetricCard
+                    title="Objections"
+                    value={metrics.objectionCount}
+                    icon={<MessageSquare className="w-5 h-5" />}
+                    color="yellow"
+                  />
+                  <MetricCard
+                    title="Key Moments"
+                    value="0/3"
+                    icon={<Target className="w-5 h-5" />}
+                    color="yellow"
+                  />
+                  <MetricCard
+                    title="Trend"
+                    value="Neutral"
+                    icon={<TrendingUp className="w-5 h-5" />}
+                    color="yellow"
+                  />
+                </div>
+                
+                {/* Conversation Status */}
+                <ConversationStatus 
+                  transcript={transcript} 
+                  duration={metrics.duration}
+                />
+              </div>
+              
+              {/* Right Column - Tips and Coaching */}
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-blue-900 mb-2">Quick Tips</h3>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Build rapport before discussing business</li>
+                    <li>• Ask about pest problems they've experienced</li>
+                    <li>• Mention safety for pets and children</li>
+                    <li>• Create urgency with seasonal offers</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-yellow-900 mb-2">Austin's Profile</h3>
+                  <p className="text-sm text-yellow-800">
+                    Suburban homeowner, married with 2 kids and a dog. Concerned about safety 
+                    but price-conscious. Prefers eco-friendly solutions.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

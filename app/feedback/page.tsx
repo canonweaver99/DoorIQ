@@ -2,12 +2,13 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
-import { Star, RotateCcw, Home } from 'lucide-react';
+import { Star, RotateCcw, Home, FileText, BarChart3 } from 'lucide-react';
+import { TranscriptAnalysis } from '@/components/trainer/TranscriptAnalysis';
 
 interface FeedbackData {
   overallScore: number;
   duration: string;
-  transcript: Array<{speaker: string, text: string}>;
+  transcript: Array<{speaker: string, text: string, timestamp?: string}>;
   scores: {
     rapport: number;
     introduction: number;
@@ -20,6 +21,7 @@ interface FeedbackData {
     improvements: string[];
     specificTips: string[];
   };
+  transcriptAnalysis?: any;
 }
 
 function FeedbackInner() {
@@ -27,6 +29,7 @@ function FeedbackInner() {
   const router = useRouter();
   const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'transcript'>('transcript');
 
   useEffect(() => {
     // Get conversation data from URL params or localStorage
@@ -47,84 +50,26 @@ function FeedbackInner() {
   }, [searchParams]);
 
   const generateFeedback = (transcript: any[], duration: string) => {
-    // Simulate AI analysis - in a real app this would call an AI service
-    setTimeout(() => {
-      // Analyze conversation quality
-      const hasRapport = transcript.some(turn => 
-        turn.speaker === 'rep' && (
-          turn.text.toLowerCase().includes('how are you') ||
-          turn.text.toLowerCase().includes('nice weather') ||
-          turn.text.toLowerCase().includes('how long') ||
-          turn.text.toLowerCase().includes('tell me about')
-        )
-      );
-
-      const hasIntroduction = transcript.some(turn =>
-        turn.speaker === 'rep' && (
-          turn.text.toLowerCase().includes('my name') ||
-          turn.text.toLowerCase().includes('i\'m from') ||
-          turn.text.toLowerCase().includes('company') ||
-          turn.text.toLowerCase().includes('pest control')
-        )
-      );
-
-      const hasListening = transcript.filter(turn => turn.speaker === 'homeowner').length > 2;
+    // Use the conversation analyzer for consistent analysis
+    setTimeout(async () => {
+      const { analyzeConversation } = await import('@/lib/trainer/conversationAnalyzer')
+      // Map transcript speakers to the format the analyzer expects
+      const mappedTranscript = transcript.map(t => ({
+        speaker: t.speaker === 'rep' ? 'user' : 'austin',
+        text: t.text,
+        timestamp: t.timestamp
+      }));
       
-      const hasSalesTalk = transcript.some(turn =>
-        turn.speaker === 'rep' && (
-          turn.text.toLowerCase().includes('service') ||
-          turn.text.toLowerCase().includes('treatment') ||
-          turn.text.toLowerCase().includes('price') ||
-          turn.text.toLowerCase().includes('schedule')
-        )
-      );
-
-      // Calculate scores
-      const scores = {
-        rapport: hasRapport ? 85 + Math.floor(Math.random() * 15) : 40 + Math.floor(Math.random() * 30),
-        introduction: hasIntroduction ? 80 + Math.floor(Math.random() * 20) : 30 + Math.floor(Math.random() * 40),
-        listening: hasListening ? 75 + Math.floor(Math.random() * 25) : 45 + Math.floor(Math.random() * 35),
-        salesTechnique: hasSalesTalk ? 70 + Math.floor(Math.random() * 30) : 35 + Math.floor(Math.random() * 35),
-        closing: Math.floor(Math.random() * 40) + 50
-      };
-
-      const overallScore = Math.round((scores.rapport + scores.introduction + scores.listening + scores.salesTechnique + scores.closing) / 5);
-
-      const strengths = [];
-      const improvements = [];
-      const specificTips = [];
-
-      if (scores.rapport >= 70) {
-        strengths.push("Excellent rapport building - you made Austin feel comfortable");
-      } else {
-        improvements.push("Work on building rapport before introducing business topics");
-        specificTips.push("Try asking 'How are you doing today?' or commenting on the weather first");
-      }
-
-      if (scores.introduction >= 70) {
-        strengths.push("Clear introduction of yourself and your company");
-      } else {
-        improvements.push("Introduce yourself and your company early in the conversation");
-        specificTips.push("Say something like 'Hi! I'm [Name] from [Company]. We provide pest control services in the area.'");
-      }
-
-      if (scores.listening >= 70) {
-        strengths.push("Good active listening - you let Austin respond naturally");
-      } else {
-        improvements.push("Listen more and ask follow-up questions");
-        specificTips.push("When Austin mentions something, ask 'Can you tell me more about that?' or 'How long has that been going on?'");
-      }
-
+      // Analyze the conversation using the shared analyzer
+      const analysis = analyzeConversation(mappedTranscript);
+      
       setFeedbackData({
-        overallScore,
+        overallScore: analysis.overallScore,
         duration,
         transcript,
-        scores,
-        feedback: {
-          strengths: strengths.length ? strengths : ["You completed the conversation - that's a great start!"],
-          improvements: improvements.length ? improvements : ["Keep practicing to build confidence"],
-          specificTips: specificTips.length ? specificTips : ["Focus on building genuine connections with potential customers"]
-        }
+        scores: analysis.scores,
+        feedback: analysis.feedback,
+        transcriptAnalysis: analysis
       });
       setLoading(false);
     }, 1500);
@@ -175,15 +120,55 @@ function FeedbackInner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0b1020] via-[#0c0f17] to-[#0b1020] text-white">
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Conversation Analysis</h1>
           <p className="text-gray-400">Here&#39;s how you did with Austin Rodriguez</p>
         </div>
 
-        {/* Overall Score */}
-        <div className="bg-white/5 rounded-xl p-6 border border-white/10 mb-8 text-center">
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white/10 rounded-lg p-1 inline-flex">
+            <button
+              onClick={() => setActiveTab('transcript')}
+              className={`px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+                activeTab === 'transcript' 
+                  ? 'bg-white text-gray-900' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              Transcript Analysis
+            </button>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+                activeTab === 'overview' 
+                  ? 'bg-white text-gray-900' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Score Overview
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'transcript' ? (
+          <div className="mb-8">
+            <TranscriptAnalysis 
+              transcript={feedbackData.transcript} 
+              duration={feedbackData.duration}
+              onAnalysisComplete={(analysis) => {
+                setFeedbackData(prev => prev ? { ...prev, transcriptAnalysis: analysis } : null)
+              }}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Overall Score */}
+            <div className="bg-white/5 rounded-xl p-6 border border-white/10 mb-8 text-center">
           <div className="flex items-center justify-center mb-4">
             <div className={`text-6xl font-bold ${
               feedbackData.overallScore >= 80 ? 'text-green-400' : 
@@ -275,6 +260,9 @@ function FeedbackInner() {
             ))}
           </ul>
         </div>
+
+          </>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
