@@ -2,12 +2,14 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback, Suspense } from 'react';
-import { Star, RotateCcw, Home, BarChart3 } from 'lucide-react';
+import { Star, RotateCcw, Home, FileText, BarChart3 } from 'lucide-react';
+import { TranscriptAnalysis } from '@/components/trainer/TranscriptAnalysis';
 import { createClient } from '@/lib/supabase/client';
 
 interface FeedbackData {
   overallScore: number;
   duration: string;
+  transcript: Array<{speaker: string, text: string, timestamp?: string}>;
   scores: {
     rapport: number;
     introduction: number;
@@ -20,6 +22,7 @@ interface FeedbackData {
     improvements: string[];
     specificTips: string[];
   };
+  transcriptAnalysis?: any;
 }
 
 function FeedbackInner() {
@@ -27,105 +30,93 @@ function FeedbackInner() {
   const router = useRouter();
   const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'transcript'>('transcript');
 
   const loadSessionData = useCallback(async (sessionId: string, duration: string) => {
     try {
+      console.log('🔍 LOADING SESSION DATA:', { sessionId, duration });
       const supabase = createClient();
       const { data, error } = await supabase
         .from('training_sessions')
-        .select('id, duration_seconds, analytics, overall_score, rapport_score, introduction_score, listening_score, objection_handling_score, close_effectiveness_score')
+        .select('id, transcript, duration_seconds, analytics, overall_score')
         .eq('id', sessionId)
         .single();
 
       if (error) throw error;
+      console.log('📊 SESSION DATA FROM DB:', data);
 
-      // Use saved scores or generate basic feedback
-      generateFeedback(data, duration);
+      const transcript = (data as any)?.transcript || [];
+      console.log('📝 EXTRACTED TRANSCRIPT:', { transcript, length: transcript.length });
+      generateFeedback(transcript, duration);
     } catch (error) {
-      console.error('Error loading session:', error);
-      generateBasicFeedback(duration);
+      console.error('❌ Error loading session:', error);
+      generateFeedback([], duration);
     }
   }, []);
 
   useEffect(() => {
+    // Get conversation data from URL params or localStorage
     const duration = searchParams?.get('duration') || '0:00';
     const sessionId = searchParams?.get('session');
+    const transcriptData = searchParams?.get('transcript');
+    
+    console.log('🚀 FEEDBACK PAGE INIT:', { duration, sessionId, transcriptData });
 
+    let transcript = [];
+    if (transcriptData) {
+      try {
+        transcript = JSON.parse(decodeURIComponent(transcriptData));
+        console.log('📋 TRANSCRIPT FROM URL:', { transcript, length: transcript.length });
+      } catch {
+        console.log('❌ Failed to parse transcript from URL');
+        transcript = [];
+      }
+    }
+
+    // If we have a session ID, fetch from database instead
     if (sessionId) {
+      console.log('🔄 Using session ID, loading from DB');
       loadSessionData(sessionId, duration);
     } else {
-      generateBasicFeedback(duration);
+      console.log('📝 Using URL transcript data');
+      // Generate AI-powered feedback based on the conversation
+      generateFeedback(transcript, duration);
     }
   }, [searchParams, loadSessionData]);
 
-  const generateFeedback = (sessionData: any, duration: string) => {
-    const scores = {
-      rapport: sessionData.rapport_score || 75,
-      introduction: sessionData.introduction_score || 80,
-      listening: sessionData.listening_score || 75,
-      salesTechnique: sessionData.objection_handling_score || 70,
-      closing: sessionData.close_effectiveness_score || 75
-    };
+  
 
-    const overallScore = sessionData.overall_score || Math.round(
-      Object.values(scores).reduce((sum, score) => sum + score, 0) / Object.values(scores).length
-    );
-
-    setFeedbackData({
-      overallScore,
-      duration,
-      scores,
-      feedback: {
-        strengths: [
-          "Maintained professional demeanor throughout",
-          "Successfully engaged with the homeowner",
-          "Demonstrated product knowledge"
-        ],
-        improvements: [
-          "Focus on building stronger rapport early",
-          "Ask more discovery questions",
-          "Practice objection handling techniques"
-        ],
-        specificTips: [
-          "Start with a friendly greeting and compliment",
-          "Ask about their current pest concerns",
-          "Address safety for pets and children upfront"
-        ]
-      }
-    });
-    setLoading(false);
-  };
-
-  const generateBasicFeedback = (duration: string) => {
-    setFeedbackData({
-      overallScore: 75,
-      duration,
-      scores: {
-        rapport: 70,
-        introduction: 80,
-        listening: 75,
-        salesTechnique: 70,
-        closing: 75
-      },
-      feedback: {
-        strengths: [
-          "Completed the training session",
-          "Practiced with Austin",
-          "Engaged in conversation"
-        ],
-        improvements: [
-          "Continue practicing to improve scores",
-          "Focus on key sales techniques",
-          "Work on building rapport"
-        ],
-        specificTips: [
-          "Practice your opening more",
-          "Listen actively to customer needs",
-          "Close with confidence"
-        ]
-      }
-    });
-    setLoading(false);
+  const generateFeedback = (transcript: any[], duration: string) => {
+    console.log('🎯 GENERATING FEEDBACK:', { transcript, duration, length: transcript.length });
+    // Use the conversation analyzer for consistent analysis
+    setTimeout(async () => {
+      const { analyzeConversation } = await import('@/lib/trainer/conversationAnalyzer')
+      // Map transcript speakers to the format the analyzer expects
+      const mappedTranscript = transcript.map(t => ({
+        speaker: t.speaker === 'rep' ? 'user' : 'austin',
+        text: t.text,
+        timestamp: t.timestamp
+      }));
+      
+      console.log('🔄 MAPPED TRANSCRIPT FOR ANALYSIS:', mappedTranscript);
+      
+      // Analyze the conversation using the shared analyzer
+      const analysis = analyzeConversation(mappedTranscript);
+      console.log('📈 ANALYSIS RESULTS:', analysis);
+      
+      const feedbackResult = {
+        overallScore: analysis.overallScore,
+        duration,
+        transcript,
+        scores: analysis.scores,
+        feedback: analysis.feedback,
+        transcriptAnalysis: analysis
+      };
+      
+      console.log('✅ SETTING FEEDBACK DATA:', feedbackResult);
+      setFeedbackData(feedbackResult);
+      setLoading(false);
+    }, 1500);
   };
 
   const ScoreCard = ({ title, score, description }: { title: string; score: number; description: string }) => (
@@ -148,8 +139,8 @@ function FeedbackInner() {
       <div className="min-h-screen bg-gradient-to-br from-[#0b1020] via-[#0c0f17] to-[#0b1020] text-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-lg font-medium">Analyzing your session...</p>
-          <p className="text-sm text-gray-400 mt-2">Generating feedback</p>
+          <p className="text-lg font-medium">Analyzing your conversation...</p>
+          <p className="text-sm text-gray-400 mt-2">Generating personalized feedback</p>
         </div>
       </div>
     );
@@ -176,12 +167,52 @@ function FeedbackInner() {
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Session Analysis</h1>
-          <p className="text-gray-400">Here's how you did with Austin Rodriguez</p>
+          <h1 className="text-3xl font-bold mb-2">Conversation Analysis</h1>
+          <p className="text-gray-400">Here&#39;s how you did with Austin Rodriguez</p>
         </div>
 
-        {/* Overall Score */}
-        <div className="bg-white/5 rounded-xl p-6 border border-white/10 mb-8 text-center">
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white/10 rounded-lg p-1 inline-flex">
+            <button
+              onClick={() => setActiveTab('transcript')}
+              className={`px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+                activeTab === 'transcript' 
+                  ? 'bg-white text-gray-900' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              Transcript Analysis
+            </button>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+                activeTab === 'overview' 
+                  ? 'bg-white text-gray-900' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Score Overview
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'transcript' ? (
+          <div className="mb-8">
+            <TranscriptAnalysis 
+              transcript={feedbackData.transcript} 
+              duration={feedbackData.duration}
+              onAnalysisComplete={(analysis) => {
+                setFeedbackData(prev => prev ? { ...prev, transcriptAnalysis: analysis } : null)
+              }}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Overall Score */}
+            <div className="bg-white/5 rounded-xl p-6 border border-white/10 mb-8 text-center">
           <div className="flex items-center justify-center mb-4">
             <div className={`text-6xl font-bold ${
               feedbackData.overallScore >= 80 ? 'text-green-400' : 
@@ -196,7 +227,7 @@ function FeedbackInner() {
              feedbackData.overallScore >= 60 ? 'Good Job!' : 'Keep Practicing!'}
           </p>
           <p className="text-sm text-gray-400">
-            Session Duration: {feedbackData.duration}
+            Conversation Duration: {feedbackData.duration}
           </p>
         </div>
 
@@ -278,6 +309,9 @@ function FeedbackInner() {
             ))}
           </ul>
         </div>
+
+          </>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
