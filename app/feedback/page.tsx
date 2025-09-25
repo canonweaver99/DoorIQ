@@ -34,6 +34,7 @@ function FeedbackInner() {
 
   const loadSessionData = useCallback(async (sessionId: string, duration: string) => {
     try {
+      console.log('🔍 LOADING SESSION DATA:', { sessionId, duration });
       const supabase = createClient();
       const { data, error } = await supabase
         .from('training_sessions')
@@ -42,11 +43,13 @@ function FeedbackInner() {
         .single();
 
       if (error) throw error;
+      console.log('📊 SESSION DATA FROM DB:', data);
 
       const transcript = (data as any)?.transcript || [];
+      console.log('📝 EXTRACTED TRANSCRIPT:', { transcript, length: transcript.length });
       generateFeedback(transcript, duration);
     } catch (error) {
-      console.error('Error loading session:', error);
+      console.error('❌ Error loading session:', error);
       generateFeedback([], duration);
     }
   }, []);
@@ -57,19 +60,25 @@ function FeedbackInner() {
     const sessionId = searchParams?.get('session');
     const transcriptData = searchParams?.get('transcript');
     
+    console.log('🚀 FEEDBACK PAGE INIT:', { duration, sessionId, transcriptData });
+
     let transcript = [];
     if (transcriptData) {
       try {
         transcript = JSON.parse(decodeURIComponent(transcriptData));
+        console.log('📋 TRANSCRIPT FROM URL:', { transcript, length: transcript.length });
       } catch {
+        console.log('❌ Failed to parse transcript from URL');
         transcript = [];
       }
     }
 
     // If we have a session ID, fetch from database instead
     if (sessionId) {
+      console.log('🔄 Using session ID, loading from DB');
       loadSessionData(sessionId, duration);
     } else {
+      console.log('📝 Using URL transcript data');
       // Generate AI-powered feedback based on the conversation
       generateFeedback(transcript, duration);
     }
@@ -78,6 +87,7 @@ function FeedbackInner() {
   
 
   const generateFeedback = (transcript: any[], duration: string) => {
+    console.log('🎯 GENERATING FEEDBACK:', { transcript, duration, length: transcript.length });
     // Use the conversation analyzer for consistent analysis
     setTimeout(async () => {
       const { analyzeConversation } = await import('@/lib/trainer/conversationAnalyzer')
@@ -88,17 +98,23 @@ function FeedbackInner() {
         timestamp: t.timestamp
       }));
       
+      console.log('🔄 MAPPED TRANSCRIPT FOR ANALYSIS:', mappedTranscript);
+      
       // Analyze the conversation using the shared analyzer
       const analysis = analyzeConversation(mappedTranscript);
+      console.log('📈 ANALYSIS RESULTS:', analysis);
       
-      setFeedbackData({
+      const feedbackResult = {
         overallScore: analysis.overallScore,
         duration,
         transcript,
         scores: analysis.scores,
         feedback: analysis.feedback,
         transcriptAnalysis: analysis
-      });
+      };
+      
+      console.log('✅ SETTING FEEDBACK DATA:', feedbackResult);
+      setFeedbackData(feedbackResult);
       setLoading(false);
     }, 1500);
   };

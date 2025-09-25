@@ -71,6 +71,7 @@ export default function TrainerPage() {
     const onUser = (e: any) => {
       try {
         const payload = e?.detail ?? '';
+        console.log('🎤 USER EVENT:', { payload, event: e });
         if (payload) addToTranscript('user', String(payload));
       } catch {}
     };
@@ -85,13 +86,16 @@ export default function TrainerPage() {
         else if (Array.isArray(d?.messages)) {
           text = d.messages.map((m: any) => m?.text).filter(Boolean).join(' ');
         }
+        console.log('🤖 AGENT EVENT:', { detail: d, extractedText: text, event: e });
         if (text) addToTranscript('austin', String(text));
       } catch {}
     };
 
+    console.log('🔌 Setting up transcript event listeners');
     window.addEventListener('austin:user', onUser as any);
     window.addEventListener('austin:agent', onAgent as any);
     return () => {
+      console.log('🔌 Removing transcript event listeners');
       window.removeEventListener('austin:user', onUser as any);
       window.removeEventListener('austin:agent', onAgent as any);
     };
@@ -174,12 +178,19 @@ export default function TrainerPage() {
   // === COPY: addToTranscript fix ===
   const addToTranscript = (speaker: 'user' | 'austin', raw: string) => {
     const text = String(raw ?? '').trim();
-    if (!text) return;
+    console.log('📝 ADD TO TRANSCRIPT:', { speaker, text, raw });
+    if (!text) {
+      console.log('⚠️ Empty text, skipping transcript entry');
+      return;
+    }
 
     setTranscript(prev => {
       // prevent immediate duplicates from same speaker
       const last = prev[prev.length - 1];
-      if (last && last.speaker === speaker && last.text === text) return prev;
+      if (last && last.speaker === speaker && last.text === text) {
+        console.log('🔄 Duplicate detected, skipping:', { speaker, text });
+        return prev;
+      }
 
       const entry: TranscriptEntry = {
         id: safeId(),
@@ -190,6 +201,9 @@ export default function TrainerPage() {
         confidence: 0.8,
         grading: null,
       };
+
+      console.log('✅ Adding transcript entry:', entry);
+      console.log('📊 Current transcript length:', prev.length + 1);
 
       // scroll after paint
       requestAnimationFrame(() => {
@@ -243,12 +257,14 @@ export default function TrainerPage() {
       try { (window as any).stopAustin?.(); } catch {}
 
       const analysis = analyzeConversation(transcript);
+      console.log('🧠 CONVERSATION ANALYSIS:', { transcript, analysis });
 
       // ✅ FIX: objection handling score based on keyMoments.objectionHandled
       // Since the analyzer doesn't have objectionHandling in scores, we derive it from keyMoments
       const objectionScore = analysis?.keyMoments?.objectionHandled ? 85 : 40;
 
       if (user?.id && sessionId) {
+        console.log('💾 SAVING SESSION TO DB:', { sessionId, transcriptLength: transcript.length });
         await (supabase as any)
           .from('training_sessions')
           .update({
