@@ -61,6 +61,35 @@ export default function TrainerPage() {
     }
   }, [])
 
+  // Wire up live transcript events from the embedded ElevenLabs client script
+  useEffect(() => {
+    const onUser = (e: any) => {
+      try {
+        if (e?.detail) addToTranscript('user', String(e.detail))
+      } catch {}
+    }
+    const onAgent = (e: any) => {
+      try {
+        let text = ''
+        const d = e?.detail
+        if (typeof d === 'string') text = d
+        else if (d?.text) text = d.text
+        else if (d?.content) text = d.content
+        else if (Array.isArray(d?.messages)) {
+          text = d.messages.map((m: any) => m?.text).filter(Boolean).join(' ')
+        }
+        if (text) addToTranscript('austin', String(text))
+      } catch {}
+    }
+
+    window.addEventListener('austin:user', onUser as any)
+    window.addEventListener('austin:agent', onAgent as any)
+    return () => {
+      window.removeEventListener('austin:user', onUser as any)
+      window.removeEventListener('austin:agent', onAgent as any)
+    }
+  }, [])
+
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
@@ -151,6 +180,8 @@ export default function TrainerPage() {
     }
 
     try {
+      // Stop Austin conversation if running
+      try { (window as any).stopAustin?.() } catch {}
       if (user?.id && sessionId) {
         await (supabase as any)
           .from('training_sessions')
@@ -161,10 +192,28 @@ export default function TrainerPage() {
             transcript: transcript,
           } as any)
           .eq('id', sessionId as string)
-
-        router.push(`/trainer/analytics/${sessionId}`)
+        const durationStr = formatDuration(metrics.duration)
+        // Map transcript speakers to feedback page expectations
+        const mapped = transcript.map(t => ({
+          speaker: t.speaker === 'user' ? 'rep' : 'homeowner',
+          text: t.text,
+        }))
+        const q = new URLSearchParams({
+          duration: durationStr,
+          transcript: encodeURIComponent(JSON.stringify(mapped)),
+        })
+        router.push(`/feedback?${q.toString()}`)
       } else {
-        router.push('/trainer/pre-session')
+        const durationStr = formatDuration(metrics.duration)
+        const mapped = transcript.map(t => ({
+          speaker: t.speaker === 'user' ? 'rep' : 'homeowner',
+          text: t.text,
+        }))
+        const q = new URLSearchParams({
+          duration: durationStr,
+          transcript: encodeURIComponent(JSON.stringify(mapped)),
+        })
+        router.push(`/feedback?${q.toString()}`)
       }
     } catch (error) {
       console.error('Error ending session:', error)
@@ -223,7 +272,7 @@ export default function TrainerPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen">
         {/* Left Panel - ElevenLabs Agent */}
-        <div className="w-2/5 bg-white border-r border-gray-200 flex flex-col">
+        <div className="w-2/5 bg-white border-r border-gray-200 flex flex-col relative">
           <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
             <div className="flex items-center justify-between">
               <div>
@@ -239,7 +288,7 @@ export default function TrainerPage() {
             </div>
           </div>
 
-          <div className="flex-1 bg-gray-100 relative">
+          <div className="flex-1 bg-gray-100 relative overflow-hidden">
             {/* Custom Floating Orb that controls ElevenLabs Conversation */}
             <button id="austin-orb" aria-label="Talk to Austin"></button>
             <div id="austin-status">tap to talk</div>
@@ -253,6 +302,7 @@ export default function TrainerPage() {
                 const statusEl = document.getElementById('austin-status');
 
                 let convo = null;
+                let isStarting = false;
                 let state = { status: 'disconnected', mode: 'idle' };
 
                 function render() {
@@ -267,6 +317,9 @@ export default function TrainerPage() {
 
                 async function startSession() {
                   try {
+                    // Guard: ensure only one active/connecting session at a time
+                    if (convo || isStarting || state.status === 'connected' || state.status === 'connecting') return;
+                    isStarting = true;
                     state.status = 'connecting'; render();
                     try { await navigator.mediaDevices.getUserMedia({ audio: true }); } catch {}
                     convo = await Conversation.startSession({
@@ -274,19 +327,32 @@ export default function TrainerPage() {
                       connectionType: 'webrtc',
                       onStatusChange: (s) => { state.status = s; render(); },
                       onModeChange:   (m) => { state.mode = m; render(); },
+                      onMessage: (msg) => {
+                        try {
+                          if (msg?.type === 'user_transcript' && msg.user_transcript) {
+                            window.dispatchEvent(new CustomEvent('austin:user', { detail: msg.user_transcript }))
+                          }
+                          if (msg?.type === 'agent_response' && msg.agent_response) {
+                            window.dispatchEvent(new CustomEvent('austin:agent', { detail: msg.agent_response }))
+                          }
+                        } catch {}
+                      },
                       onError: (err) => { console.error('ElevenLabs error:', err); stopSession(true); },
                     });
+                    isStarting = false;
                   } catch (err) {
                     console.error(err);
                     state.status = 'disconnected';
                     state.mode = 'idle';
                     render();
+                    isStarting = false;
                   }
                 }
 
                 async function stopSession(silent = false) {
                   try { await convo?.endSession(); } catch {}
                   convo = null;
+                  isStarting = false;
                   state.status = 'disconnected';
                   state.mode = 'idle';
                   render();
@@ -296,6 +362,9 @@ export default function TrainerPage() {
                   const isActive = state.status === 'connected' || state.status === 'connecting';
                   if (isActive) stopSession(); else startSession();
                 });
+
+                // Expose a global stopper so the End Session button can end the call
+                window.stopAustin = () => stopSession(true);
 
                 document.addEventListener('visibilitychange', () => {
                   if (document.hidden && (state.status === 'connected' || state.status === 'connecting')) {
@@ -308,44 +377,61 @@ export default function TrainerPage() {
             </Script>
 
             <style jsx global>{`
-              /* Hide any legacy widget if present */
-              elevenlabs-convai { display: none !important; }
-              /* Orb styles */
+              /* Make the orb large and centered in the left column */
               #austin-orb {
-                position: fixed;
-                right: 24px;
-                bottom: 28px;
-                width: 108px;
-                height: 108px;
+                position: absolute;
+                left: 50%;
+                top: 34%;
+                transform: translate(-50%, -50%);
+                width: 220px;
+                height: 220px;
                 border-radius: 9999px;
                 border: 0;
                 outline: none;
                 cursor: pointer;
                 background: radial-gradient(circle at 30% 30%, #6AA8FF, #3CE2D3);
-                box-shadow: 0 14px 44px rgba(20, 180, 255, 0.45);
-                z-index: 999999;
+                box-shadow: 0 18px 56px rgba(20, 180, 255, 0.45);
                 transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
                 animation: floaty 4.6s ease-in-out infinite;
+                z-index: 10;
               }
-              #austin-orb:hover { transform: scale(1.03); filter: saturate(1.07); }
-              #austin-orb:active { transform: scale(0.97); }
+              #austin-orb:hover { transform: translate(-50%, -50%) scale(1.03); filter: saturate(1.07); }
+              #austin-orb:active { transform: translate(-50%, -50%) scale(0.97); }
               #austin-orb.active {
-                box-shadow: 0 14px 46px rgba(20,180,255,.55), 0 0 0 10px rgba(60,226,211,.18), 0 0 0 20px rgba(106,168,255,.12);
+                box-shadow: 0 18px 58px rgba(20,180,255,.55), 0 0 0 14px rgba(60,226,211,.18), 0 0 0 24px rgba(106,168,255,.12);
               }
               #austin-status {
-                position: fixed;
-                right: 28px;
-                bottom: 148px;
+                position: absolute;
+                left: 50%;
+                top: calc(34% + 150px);
+                transform: translateX(-50%);
                 font: 600 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-                color: #cfd8dc;
-                text-shadow: 0 1px 2px rgba(0,0,0,.4);
+                color: #5f6b73;
                 user-select: none;
                 pointer-events: none;
-                z-index: 999999;
+                z-index: 10;
                 opacity: .9;
               }
-              @keyframes floaty { 0% { transform: translateY(0) } 50% { transform: translateY(-7px) } 100% { transform: translateY(0) } }
+              @keyframes floaty { 0% { transform: translate(-50%, -50%) } 50% { transform: translate(-50%, calc(-50% - 7px)) } 100% { transform: translate(-50%, -50%) } }
             `}</style>
+
+            {/* Live transcript under orb (left column) */}
+            <div className="absolute left-0 right-0 bottom-0 top-[55%] overflow-y-auto p-4">
+              <div className="space-y-3 max-w-md mx-auto">
+                {transcript.length === 0 ? (
+                  <p className="text-gray-500 text-center">Conversation will appear here...</p>
+                ) : (
+                  transcript.map((entry, idx) => (
+                    <div key={idx} className={`flex ${entry.speaker === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-xs px-4 py-2 rounded-lg ${entry.speaker === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}`}>
+                        <p className="text-sm">{entry.text}</p>
+                        <p className="text-xs opacity-70 mt-1">{new Date(entry.timestamp).toLocaleTimeString()}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -395,42 +481,6 @@ export default function TrainerPage() {
                 icon={<TrendingUp className="w-5 h-5" />}
                 color="yellow"
               />
-            </div>
-          </div>
-
-          <div className="flex-1 p-4 overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Transcript</h3>
-            <div className="space-y-3">
-              <AnimatePresence>
-                {transcript.map((entry, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className={`flex ${entry.speaker === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-xs px-4 py-2 rounded-lg ${
-                        entry.speaker === 'user'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-200 text-gray-900'
-                      }`}
-                    >
-                      <p className="text-sm">{entry.text}</p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {new Date(entry.timestamp).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {transcript.length === 0 && sessionActive && (
-                <p className="text-gray-500 text-center">Conversation will appear here...</p>
-              )}
-              {!sessionActive && (
-                <p className="text-gray-500 text-center">Start a session to see the conversation</p>
-              )}
             </div>
           </div>
         </div>
