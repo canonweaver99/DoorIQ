@@ -239,41 +239,112 @@ export default function TrainerPage() {
             </div>
           </div>
 
-          <div className="flex-1 bg-gray-100 relative flex items-center justify-center">
-            {/* ElevenLabs ConvAI Widget via HTML injection to support custom element */}
-            <div id="ela-container" className="pointer-events-auto" />
-            <Script id="ela-embed" strategy="afterInteractive">
+          <div className="flex-1 bg-gray-100 relative">
+            {/* Custom Floating Orb that controls ElevenLabs Conversation */}
+            <button id="austin-orb" aria-label="Talk to Austin"></button>
+            <div id="austin-status">tap to talk</div>
+
+            <Script id="austin-orb-client" type="module" strategy="afterInteractive">
               {`
-                (function(){
-                  const mount = () => {
-                    const container = document.getElementById('ela-container');
-                    if (!container) return;
-                    if (container.dataset.mounted === '1') return;
-                    container.dataset.mounted = '1';
-                    container.innerHTML = ` +
-                    "`<elevenlabs-convai agent-id=\"agent_7001k5jqfjmtejvs77jvhjf254tz\" variant=\"tiny\" expandable=\"never\" action-text=\"\" start-call-text=\"\" end-call-text=\"\" expand-text=\"\" listening-text=\"\" speaking-text=\"\" avatar-orb-color-1=\"#4D9CFF\" avatar-orb-color-2=\"#9CE6E6\" id=\"ela-orb\"></elevenlabs-convai>`" + `;
-                  };
-                  const ready = () => {
-                    mount();
-                    setTimeout(mount, 300);
-                  };
-                  if (!window.__ela_loaded) {
-                    const s = document.createElement('script');
-                    s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
-                    s.async = true;
-                    s.onload = ready;
-                    document.body.appendChild(s);
-                    window.__ela_loaded = true;
-                  } else {
-                    ready();
+                import { Conversation } from 'https://esm.sh/@elevenlabs/client';
+                const AGENT_ID = 'agent_7001k5jqfjmtejvs77jvhjf254tz';
+
+                const orb = document.getElementById('austin-orb');
+                const statusEl = document.getElementById('austin-status');
+
+                let convo = null;
+                let state = { status: 'disconnected', mode: 'idle' };
+
+                function render() {
+                  const { status, mode } = state;
+                  const active = status === 'connected' || status === 'connecting';
+                  if (active) orb.classList.add('active'); else orb.classList.remove('active');
+                  statusEl.textContent =
+                    status === 'connecting' ? 'connecting…' :
+                    status === 'connected' ? (mode === 'speaking' ? 'speaking' : 'listening') :
+                    'tap to talk';
+                }
+
+                async function startSession() {
+                  try {
+                    state.status = 'connecting'; render();
+                    try { await navigator.mediaDevices.getUserMedia({ audio: true }); } catch {}
+                    convo = await Conversation.startSession({
+                      agentId: AGENT_ID,
+                      connectionType: 'webrtc',
+                      onStatusChange: (s) => { state.status = s; render(); },
+                      onModeChange:   (m) => { state.mode = m; render(); },
+                      onError: (err) => { console.error('ElevenLabs error:', err); stopSession(true); },
+                    });
+                  } catch (err) {
+                    console.error(err);
+                    state.status = 'disconnected';
+                    state.mode = 'idle';
+                    render();
                   }
-                })();
+                }
+
+                async function stopSession(silent = false) {
+                  try { await convo?.endSession(); } catch {}
+                  convo = null;
+                  state.status = 'disconnected';
+                  state.mode = 'idle';
+                  render();
+                }
+
+                orb.addEventListener('click', () => {
+                  const isActive = state.status === 'connected' || state.status === 'connecting';
+                  if (isActive) stopSession(); else startSession();
+                });
+
+                document.addEventListener('visibilitychange', () => {
+                  if (document.hidden && (state.status === 'connected' || state.status === 'connecting')) {
+                    stopSession(true);
+                  }
+                });
+
+                render();
               `}
             </Script>
+
             <style jsx global>{`
-              #ela-orb { position: static; transform: scale(1.6); transform-origin: center; animation: ela-float 4.5s ease-in-out infinite; }
-              #ela-orb:focus { outline: none; }
-              @keyframes ela-float { 0%{transform: scale(1.6) translateY(0);} 50%{transform: scale(1.6) translateY(-6px);} 100%{transform: scale(1.6) translateY(0);} }
+              /* Hide any legacy widget if present */
+              elevenlabs-convai { display: none !important; }
+              /* Orb styles */
+              #austin-orb {
+                position: fixed;
+                right: 24px;
+                bottom: 28px;
+                width: 108px;
+                height: 108px;
+                border-radius: 9999px;
+                border: 0;
+                outline: none;
+                cursor: pointer;
+                background: radial-gradient(circle at 30% 30%, #6AA8FF, #3CE2D3);
+                box-shadow: 0 14px 44px rgba(20, 180, 255, 0.45);
+                z-index: 999999;
+                transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+                animation: floaty 4.6s ease-in-out infinite;
+              }
+              #austin-orb:hover { transform: scale(1.03); filter: saturate(1.07); }
+              #austin-orb:active { transform: scale(0.97); }
+              #austin-orb.active {
+                box-shadow: 0 14px 46px rgba(20,180,255,.55), 0 0 0 10px rgba(60,226,211,.18), 0 0 0 20px rgba(106,168,255,.12);
+              }
+              #austin-status {
+                position: fixed;
+                right: 28px;
+                bottom: 148px;
+                font: 600 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+                color: #cfd8dc;
+                text-shadow: 0 1px 2px rgba(0,0,0,.4);
+                user-select: none;
+                pointer-events: none;
+                z-index: 999999;
+                opacity: .9;
+              }
+              @keyframes floaty { 0% { transform: translateY(0) } 50% { transform: translateY(-7px) } 100% { transform: translateY(0) } }
             `}</style>
           </div>
         </div>
