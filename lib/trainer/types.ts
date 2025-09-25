@@ -1,8 +1,24 @@
+export interface TranscriptEntryGradingCriteria {
+  rapportBuilding: number
+  objectionHandling: number
+  clarity: number
+  effectiveness: number
+}
+
+export interface TranscriptEntryGrading {
+  score: number
+  criteria: TranscriptEntryGradingCriteria
+  feedback: string
+}
+
 export interface TranscriptEntry {
   speaker: 'user' | 'austin'
   text: string
   timestamp: Date
   sentiment?: 'positive' | 'neutral' | 'negative'
+  confidence?: number
+  grading?: TranscriptEntryGrading | null
+  id?: string
 }
 
 export interface SessionMetrics {

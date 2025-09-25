@@ -11,6 +11,7 @@ import { MetricCard } from '@/components/trainer/MetricCard'
 import { KeyMomentFlag } from '@/components/trainer/KeyMomentFlag'
 import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { TranscriptEntry, SessionMetrics } from '@/lib/trainer/types'
+import { ElevenLabsTranscriptManager } from '@/lib/trainer/transcriptManager'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 import { AlertCircle, MessageSquare, Target, TrendingUp } from 'lucide-react'
 // ElevenLabs ConvAI widget will be embedded directly in the left panel
@@ -44,6 +45,7 @@ export default function TrainerPage() {
   const audioContext = useRef<AudioContext | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
+  const transcriptManagerRef = useRef<ElevenLabsTranscriptManager | null>(null)
   // elevenLabsWs removed in favor of @elevenlabs/react; guard audio capture
 
   useEffect(() => {
@@ -90,6 +92,20 @@ export default function TrainerPage() {
     return () => {
       window.removeEventListener('austin:user', onUser as any)
       window.removeEventListener('austin:agent', onAgent as any)
+    }
+  }, [])
+
+  // Optional: initialize internal transcript manager for grading UI only
+  useEffect(() => {
+    const mgr = new ElevenLabsTranscriptManager()
+    transcriptManagerRef.current = mgr
+    // We won't open a second websocket; we just reuse our addToTranscript pipeline
+    mgr.onTranscriptUpdate = () => {}
+    mgr.onGradingUpdate = (entryId, grading) => {
+      setTranscript(prev => prev.map(e => (e as any).id === entryId ? { ...e, grading } : e))
+    }
+    return () => {
+      transcriptManagerRef.current = null
     }
   }, [])
 
@@ -153,7 +169,10 @@ export default function TrainerPage() {
         speaker,
         text: text.trim(),
         timestamp: new Date(),
-        sentiment: 'neutral'
+        sentiment: 'neutral',
+        confidence: 0.8,
+        grading: null,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       }
       
       // Auto-scroll to bottom
@@ -161,6 +180,8 @@ export default function TrainerPage() {
         transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
       }, 100)
       
+      // Kick off grading via local manager
+      try { transcriptManagerRef.current?.gradeTranscriptEntry({ id: entry.id, text: entry.text, confidence: entry.confidence }) } catch {}
       return [...prev, entry]
     })
   }
@@ -506,7 +527,9 @@ export default function TrainerPage() {
                           entry.speaker === 'user' 
                             ? 'bg-blue-500 text-white' 
                             : 'bg-white text-gray-900 border border-gray-200'
-                        }`}>
+                        }`} style={{
+                          backgroundColor: entry.grading ? (entry.grading.score > 0.7 ? 'rgba(34,197,94,0.18)' : entry.grading.score > 0.5 ? 'rgba(251,191,36,0.18)' : 'rgba(239,68,68,0.14)') : undefined
+                        }}>
                           <p className="text-sm leading-relaxed">{entry.text}</p>
                           <p className={`text-xs mt-1 ${
                             entry.speaker === 'user' ? 'text-blue-100' : 'text-gray-500'
