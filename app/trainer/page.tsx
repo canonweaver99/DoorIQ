@@ -605,14 +605,14 @@ export default function TrainerPage() {
                   <h3 className="text-sm font-semibold text-blue-900 mb-2">Quick Tips</h3>
                   <ul className="text-sm text-blue-800 space-y-1">
                     <li>• Build rapport before discussing business</li>
-                    <li>• Ask about pest problems they've experienced</li>
+                    <li>• Ask about pest problems they&apos;ve experienced</li>
                     <li>• Mention safety for pets and children</li>
                     <li>• Create urgency with seasonal offers</li>
                   </ul>
                 </div>
                 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-yellow-900 mb-2">Austin's Profile</h3>
+                  <h3 className="text-sm font-semibold text-yellow-900 mb-2">Austin&apos;s Profile</h3>
                   <p className="text-sm text-yellow-800">
                     Suburban homeowner, married with 2 kids and a dog. Concerned about safety 
                     but price-conscious. Prefers eco-friendly solutions.
