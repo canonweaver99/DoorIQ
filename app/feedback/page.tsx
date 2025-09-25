@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { Star, RotateCcw, Home, FileText, BarChart3 } from 'lucide-react';
 import { TranscriptAnalysis } from '@/components/trainer/TranscriptAnalysis';
+import { createClient } from '@/lib/supabase/client';
 
 interface FeedbackData {
   overallScore: number;
@@ -34,6 +35,7 @@ function FeedbackInner() {
   useEffect(() => {
     // Get conversation data from URL params or localStorage
     const duration = searchParams?.get('duration') || '0:00';
+    const sessionId = searchParams?.get('session');
     const transcriptData = searchParams?.get('transcript');
     
     let transcript = [];
@@ -45,9 +47,33 @@ function FeedbackInner() {
       }
     }
 
-    // Generate AI-powered feedback based on the conversation
-    generateFeedback(transcript, duration);
+    // If we have a session ID, fetch from database instead
+    if (sessionId) {
+      loadSessionData(sessionId, duration);
+    } else {
+      // Generate AI-powered feedback based on the conversation
+      generateFeedback(transcript, duration);
+    }
   }, [searchParams]);
+
+  const loadSessionData = async (sessionId: string, duration: string) => {
+    try {
+      const supabase = createClient();
+      const { data: session, error } = await supabase
+        .from('training_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
+
+      if (error) throw error;
+
+      const transcript = session.transcript || [];
+      generateFeedback(transcript, duration);
+    } catch (error) {
+      console.error('Error loading session:', error);
+      generateFeedback([], duration);
+    }
+  };
 
   const generateFeedback = (transcript: any[], duration: string) => {
     // Use the conversation analyzer for consistent analysis

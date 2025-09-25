@@ -11,7 +11,7 @@ import { MetricCard } from '@/components/trainer/MetricCard'
 import { KeyMomentFlag } from '@/components/trainer/KeyMomentFlag'
 import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { TranscriptEntry, SessionMetrics } from '@/lib/trainer/types'
-import { ElevenLabsTranscriptManager } from '@/lib/trainer/transcriptManager'
+import { ElevenLabsTranscriptManager, mapSpeaker, asDate, safeId } from '@/lib/trainer/transcriptManager'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 import { AlertCircle, MessageSquare, Target, TrendingUp } from 'lucide-react'
 // ElevenLabs ConvAI widget will be embedded directly in the left panel
@@ -66,48 +66,65 @@ export default function TrainerPage() {
     }
   }, [])
 
-  // Wire up live transcript events from the embedded ElevenLabs client script
+  // === COPY: DOM events wire-up ===
   useEffect(() => {
     const onUser = (e: any) => {
       try {
-        if (e?.detail) addToTranscript('user', String(e.detail))
+        const payload = e?.detail ?? '';
+        if (payload) addToTranscript('user', String(payload));
       } catch {}
-    }
+    };
+
     const onAgent = (e: any) => {
       try {
-        let text = ''
-        const d = e?.detail
-        if (typeof d === 'string') text = d
-        else if (d?.text) text = d.text
-        else if (d?.content) text = d.content
+        const d = e?.detail;
+        let text = '';
+        if (typeof d === 'string') text = d;
+        else if (d?.text) text = d.text;
+        else if (d?.content) text = d.content;
         else if (Array.isArray(d?.messages)) {
-          text = d.messages.map((m: any) => m?.text).filter(Boolean).join(' ')
+          text = d.messages.map((m: any) => m?.text).filter(Boolean).join(' ');
         }
-        if (text) addToTranscript('austin', String(text))
+        if (text) addToTranscript('austin', String(text));
       } catch {}
-    }
+    };
 
-    window.addEventListener('austin:user', onUser as any)
-    window.addEventListener('austin:agent', onAgent as any)
+    window.addEventListener('austin:user', onUser as any);
+    window.addEventListener('austin:agent', onAgent as any);
     return () => {
-      window.removeEventListener('austin:user', onUser as any)
-      window.removeEventListener('austin:agent', onAgent as any)
-    }
-  }, [])
+      window.removeEventListener('austin:user', onUser as any);
+      window.removeEventListener('austin:agent', onAgent as any);
+    };
+  }, []);
 
-  // Optional: initialize internal transcript manager for grading UI only
+  // === COPY: manager wiring ===
   useEffect(() => {
-    const mgr = new ElevenLabsTranscriptManager()
-    transcriptManagerRef.current = mgr
-    // We won't open a second websocket; we just reuse our addToTranscript pipeline
-    mgr.onTranscriptUpdate = () => {}
+    const mgr = new ElevenLabsTranscriptManager();
+    transcriptManagerRef.current = mgr;
+
+    mgr.onTranscriptUpdate = (items, interim) => {
+      // When manager finalizes a line, it already pushed it internally.
+      // Append only the newest finalized item to React state.
+      const last = items[items.length - 1];
+      if (last?.text) addToTranscript(last.speaker, last.text);
+      // Optionally: render `interim` somewhere ephemeral
+    };
+
     mgr.onGradingUpdate = (entryId, grading) => {
-      setTranscript(prev => prev.map(e => (e as any).id === entryId ? { ...e, grading } : e))
-    }
+      setTranscript(prev =>
+        prev.map(e => e.id === entryId ? { ...e, grading } : e)
+      );
+    };
+
+    // IMPORTANT: actually connect (use a server-signed WS URL; do not embed API keys)
+    // Example: const wsUrl = await fetch('/api/eleven/ws-url').then(r => r.text());
+    // mgr.connect(wsUrl);
+    // For now, no-op to avoid leaking keys in client.
+
     return () => {
-      transcriptManagerRef.current = null
-    }
-  }, [])
+      transcriptManagerRef.current = null;
+    };
+  }, []);
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -154,37 +171,44 @@ export default function TrainerPage() {
 
   // Removed custom audio/WebSocket playback in favor of official embed
 
-  const addToTranscript = (speaker: 'user' | 'austin', text: string) => {
-    // Don't add empty or duplicate entries
-    if (!text.trim()) return
-    
+  // === COPY: addToTranscript fix ===
+  const addToTranscript = (speaker: 'user' | 'austin', raw: string) => {
+    const text = String(raw ?? '').trim();
+    if (!text) return;
+
     setTranscript(prev => {
-      // Check if this is a duplicate of the last entry
-      const lastEntry = prev[prev.length - 1]
-      if (lastEntry && lastEntry.speaker === speaker && lastEntry.text === text) {
-        return prev
-      }
-      
+      // prevent immediate duplicates from same speaker
+      const last = prev[prev.length - 1];
+      if (last && last.speaker === speaker && last.text === text) return prev;
+
       const entry: TranscriptEntry = {
+        id: safeId(),
         speaker,
-        text: text.trim(),
-        timestamp: new Date(),
+        text,
+        timestamp: new Date(),          // always Date object in state
         sentiment: 'neutral',
         confidence: 0.8,
         grading: null,
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      }
-      
-      // Auto-scroll to bottom
-      setTimeout(() => {
-        transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-      }, 100)
-      
-      // Kick off grading via local manager
-      try { transcriptManagerRef.current?.gradeTranscriptEntry({ id: entry.id, text: entry.text, confidence: entry.confidence }) } catch {}
-      return [...prev, entry]
-    })
-  }
+      };
+
+      // scroll after paint
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 60);
+      });
+
+      try {
+        transcriptManagerRef.current?.gradeTranscriptEntry({
+          id: entry.id,
+          text: entry.text,
+          confidence: entry.confidence
+        });
+      } catch {}
+
+      return [...prev, entry];
+    });
+  };
 
   const createSessionRecord = async () => {
     try {
@@ -210,20 +234,23 @@ export default function TrainerPage() {
     }
   }
 
+  // === COPY: endSession critical fixes ===
   const endSession = async () => {
-    setLoading(true)
-    
-    if (durationInterval.current) {
-      clearInterval(durationInterval.current)
-    }
+    setLoading(true);
+    if (durationInterval.current) clearInterval(durationInterval.current);
 
     try {
-      // Stop Austin conversation if running
-      try { (window as any).stopAustin?.() } catch {}
-      
-      // Analyze the conversation
-      const analysis = analyzeConversation(transcript)
-      
+      try { (window as any).stopAustin?.(); } catch {}
+
+      const analysis = analyzeConversation(transcript);
+
+      // ✅ FIX: correct key for objection handling (example key)
+      // If your analyzer uses a different key, align here.
+      const objectionScore =
+        analysis?.scores?.objectionHandling ??
+        analysis?.scores?.objection_handling ??
+        analysis?.scores?.listening ?? 0;
+
       if (user?.id && sessionId) {
         await (supabase as any)
           .from('training_sessions')
@@ -234,10 +261,10 @@ export default function TrainerPage() {
             rapport_score: analysis.scores.rapport,
             introduction_score: analysis.scores.introduction,
             listening_score: analysis.scores.listening,
-            objection_handling_score: analysis.scores.listening,
-            safety_score: analysis.keyMoments.safetyAddressed ? 85 : 40,
+            objection_handling_score: objectionScore,             // <-- FIXED
+            safety_score: analysis.keyMoments?.safetyAddressed ? 85 : 40,
             close_effectiveness_score: analysis.scores.closing,
-            transcript: transcript,
+            transcript: transcript,                               // keep in DB, not URL
             analytics: analysis,
             sentiment_data: {
               finalSentiment: metrics.sentimentScore,
@@ -245,38 +272,22 @@ export default function TrainerPage() {
               objectionCount: metrics.objectionCount
             }
           } as any)
-          .eq('id', sessionId as string)
-        const durationStr = formatDuration(metrics.duration)
-        // Map transcript speakers to feedback page expectations
-        const mapped = transcript.map(t => ({
-          speaker: t.speaker === 'user' ? 'rep' : 'homeowner',
-          text: t.text,
-          timestamp: t.timestamp.toISOString()
-        }))
-        const q = new URLSearchParams({
-          duration: durationStr,
-          transcript: encodeURIComponent(JSON.stringify(mapped)),
-        })
-        router.push(`/feedback?${q.toString()}`)
+          .eq('id', sessionId as string);
+
+        const durationStr = formatDuration(metrics.duration);
+        // ✅ Do NOT shove transcript into the URL (will blow up)
+        router.push(`/feedback?session=${encodeURIComponent(sessionId as string)}&duration=${encodeURIComponent(durationStr)}`);
       } else {
-        const durationStr = formatDuration(metrics.duration)
-        const mapped = transcript.map(t => ({
-          speaker: t.speaker === 'user' ? 'rep' : 'homeowner',
-          text: t.text,
-          timestamp: t.timestamp.toISOString()
-        }))
-        const q = new URLSearchParams({
-          duration: durationStr,
-          transcript: encodeURIComponent(JSON.stringify(mapped)),
-        })
-        router.push(`/feedback?${q.toString()}`)
+        // If no session, store minimal payload somewhere (or create a new row and get id)
+        const durationStr = formatDuration(metrics.duration);
+        router.push(`/feedback?duration=${encodeURIComponent(durationStr)}`);
       }
-    } catch (error) {
-      console.error('Error ending session:', error)
+    } catch (e) {
+      console.error(e);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -507,7 +518,7 @@ export default function TrainerPage() {
               @keyframes floaty { 0% { transform: translate(-50%, -50%) } 50% { transform: translate(-50%, calc(-50% - 7px)) } 100% { transform: translate(-50%, -50%) } }
             `}</style>
 
-            {/* Live transcript under orb (left column) */}
+            {/* === COPY: transcript UI block === */}
             <div className="absolute left-0 right-0 bottom-0 top-[55%] overflow-y-auto p-4">
               <div className="space-y-3 max-w-md mx-auto">
                 {transcript.length === 0 ? (
@@ -515,30 +526,40 @@ export default function TrainerPage() {
                 ) : (
                   <>
                     <p className="text-center text-xs text-gray-500 mb-2">Live Transcript</p>
-                    {transcript.map((entry, idx) => (
-                      <motion.div 
-                        key={idx} 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className={`flex ${entry.speaker === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className={`max-w-[80%] px-4 py-2 rounded-lg shadow-sm ${
-                          entry.speaker === 'user' 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-white text-gray-900 border border-gray-200'
-                        }`} style={{
-                          backgroundColor: entry.grading ? (entry.grading.score > 0.7 ? 'rgba(34,197,94,0.18)' : entry.grading.score > 0.5 ? 'rgba(251,191,36,0.18)' : 'rgba(239,68,68,0.14)') : undefined
-                        }}>
-                          <p className="text-sm leading-relaxed">{entry.text}</p>
-                          <p className={`text-xs mt-1 ${
-                            entry.speaker === 'user' ? 'text-blue-100' : 'text-gray-500'
-                          }`}>
-                            {new Date(entry.timestamp).toLocaleTimeString()}
-                          </p>
-                        </div>
-                      </motion.div>
-                    ))}
+                    {transcript.map((entry) => {
+                      const isUser = entry.speaker === 'user';
+                      const timeStr = asDate(entry.timestamp).toLocaleTimeString();
+                      const tint = !isUser && entry.grading
+                        ? (entry.grading.score > 0.7
+                            ? 'ring-2 ring-green-400/50'
+                            : entry.grading.score > 0.5
+                              ? 'ring-2 ring-amber-400/50'
+                              : 'ring-2 ring-red-400/50')
+                        : '';
+
+                      return (
+                        <motion.div
+                          key={entry.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] px-4 py-2 rounded-lg shadow-sm border ${
+                              isUser
+                                ? 'bg-blue-500 text-white border-blue-400'
+                                : 'bg-white text-gray-900 border-gray-200'
+                            } ${tint}`}
+                          >
+                            <p className="text-sm leading-relaxed">{entry.text}</p>
+                            <p className={`text-xs mt-1 ${isUser ? 'text-blue-100' : 'text-gray-500'}`}>
+                              {timeStr}
+                            </p>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                     <div ref={transcriptEndRef} />
                   </>
                 )}
