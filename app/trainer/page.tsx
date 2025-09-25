@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
 import { Mic, MicOff, Clock, Volume2, VolumeX } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,7 +11,7 @@ import { MetricCard } from '@/components/trainer/MetricCard'
 import { KeyMomentFlag } from '@/components/trainer/KeyMomentFlag'
 import { TranscriptEntry, SessionMetrics } from '@/lib/trainer/types'
 import { AlertCircle, MessageSquare, Target, TrendingUp } from 'lucide-react'
-import { ElevenLabsWebSocket } from '@/lib/elevenlabs/websocket'
+// ElevenLabs ConvAI widget will be embedded directly in the left panel
 
 export default function TrainerPage() {
   const [sessionActive, setSessionActive] = useState(false)
@@ -38,9 +39,9 @@ export default function TrainerPage() {
   const searchParams = useSearchParams()
   const supabase = createClient()
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
-  const elevenLabsWs = useRef<ElevenLabsWebSocket | null>(null)
   const audioContext = useRef<AudioContext | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
+  // elevenLabsWs removed in favor of @elevenlabs/react; guard audio capture
 
   useEffect(() => {
     fetchUser()
@@ -53,9 +54,6 @@ export default function TrainerPage() {
     return () => {
       if (durationInterval.current) {
         clearInterval(durationInterval.current)
-      }
-      if (elevenLabsWs.current) {
-        elevenLabsWs.current.disconnect()
       }
       if (mediaStream.current) {
         mediaStream.current.getTracks().forEach(track => track.stop())
@@ -78,64 +76,21 @@ export default function TrainerPage() {
   const initializeSession = async () => {
     setIsInitializing(true)
     try {
-      // Request microphone permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaStream.current = stream
-      setMicPermissionGranted(true)
+      // Request microphone permission early for smoother widget experience
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        mediaStream.current = stream
+        setMicPermissionGranted(true)
+      } catch {}
 
-      // Initialize audio context
-      audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)()
-
-      // Removed knock/door sounds for faster start
-
-      // Connect to ElevenLabs
-      elevenLabsWs.current = new ElevenLabsWebSocket({
-        agentId: 'agent_7001k5jqfjmtejvs77jvhjf254tz',
-        apiKey: 'sk_2780613e5cc01420407c1aeb054ee19d285752d379046ff2'
-      })
-
-      elevenLabsWs.current.connect({
-        onConnect: async () => {
-          console.log('Connected to Austin!')
-          
-          // Create session record
-          const sessionId = await createSessionRecord()
-          setSessionId(sessionId)
-          
-          setIsRecording(true)
-          setSessionActive(true)
-          setIsInitializing(false)
-          
-          // Start session timer
-          durationInterval.current = setInterval(() => {
-            setMetrics(prev => ({ ...prev, duration: prev.duration + 1 }))
-          }, 1000)
-        },
-        onMessage: (message) => {
-          console.log('Austin message:', message)
-          
-          // Handle different message types from ElevenLabs
-          if (message.type === 'audio_chunk' && message.audio_chunk) {
-            playAudioFromBase64(message.audio_chunk)
-          }
-          if (message.type === 'agent_response_audio_chunk' && message.audio_chunk) {
-            playAudioFromBase64(message.audio_chunk)
-          }
-          if (message.type === 'user_transcript' && message.user_transcript) {
-            addToTranscript('user', message.user_transcript)
-          }
-          if (message.type === 'agent_response' && message.agent_response) {
-            addToTranscript('austin', message.agent_response)
-          }
-        },
-        onDisconnect: () => {
-          console.log('Austin disconnected')
-          setIsRecording(false)
-        }
-      })
-
-      // Start capturing and sending audio
-      startAudioCapture(stream)
+      // Create session record and show conversation UI (metrics timer)
+      const newId = await createSessionRecord()
+      setSessionId(newId)
+      setSessionActive(true)
+      setIsInitializing(false)
+      durationInterval.current = setInterval(() => {
+        setMetrics(prev => ({ ...prev, duration: prev.duration + 1 }))
+      }, 1000)
     } catch (error) {
       console.error('Error initializing session:', error)
       setIsInitializing(false)
@@ -152,57 +107,7 @@ export default function TrainerPage() {
     })
   }
 
-  const startAudioCapture = (stream: MediaStream) => {
-    if (!audioContext.current) return
-
-    const source = audioContext.current.createMediaStreamSource(stream)
-    const processor = audioContext.current.createScriptProcessor(4096, 1, 1)
-
-    processor.onaudioprocess = (event) => {
-      if (elevenLabsWs.current && isRecording) {
-        const inputData = event.inputBuffer.getChannelData(0)
-        const audioData = new Float32Array(inputData)
-        elevenLabsWs.current.sendAudio(audioData.buffer)
-      }
-    }
-
-    source.connect(processor)
-    processor.connect(audioContext.current.destination)
-  }
-
-  const playAudioFromBase64 = async (base64Audio: string) => {
-    try {
-      if (!audioContext.current) return
-      
-      // Decode base64 to array buffer
-      const binaryString = atob(base64Audio)
-      const bytes = new Uint8Array(binaryString.length)
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-      }
-      
-      // Decode audio data
-      const audioBuffer = await audioContext.current.decodeAudioData(bytes.buffer)
-      
-      // Create and play audio source
-      const source = audioContext.current.createBufferSource()
-      source.buffer = audioBuffer
-      source.connect(audioContext.current.destination)
-      source.start()
-      
-      console.log('Playing Austin audio')
-    } catch (error) {
-      console.error('Error playing audio:', error)
-      // Fallback to simple audio element
-      try {
-        const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`)
-        audio.volume = 0.8
-        await audio.play()
-      } catch (fallbackError) {
-        console.error('Fallback audio also failed:', fallbackError)
-      }
-    }
-  }
+  // Removed custom audio/WebSocket playback in favor of official embed
 
   const addToTranscript = (speaker: 'user' | 'austin', text: string) => {
     const entry: TranscriptEntry = {
@@ -335,30 +240,41 @@ export default function TrainerPage() {
           </div>
 
           <div className="flex-1 bg-gray-100 relative flex items-center justify-center">
-            {sessionActive ? (
-              <div className="text-center">
-                <div className="w-32 h-32 bg-blue-500 rounded-full flex items-center justify-center mb-4 mx-auto">
-                  <div className={`w-24 h-24 bg-white rounded-full flex items-center justify-center ${isRecording ? 'animate-pulse' : ''}`}>
-                    {isRecording ? (
-                      <Mic className="w-12 h-12 text-blue-500" />
-                    ) : (
-                      <MicOff className="w-12 h-12 text-gray-400" />
-                    )}
-                  </div>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">Austin Rodriguez</h3>
-                <p className="text-gray-500">
-                  {isRecording ? 'Listening...' : 'Connection ready'}
-                </p>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500">
-                <div className="w-32 h-32 bg-gray-300 rounded-full flex items-center justify-center mb-4 mx-auto">
-                  <Volume2 className="w-12 h-12" />
-                </div>
-                <p>Click Start to begin conversation</p>
-              </div>
-            )}
+            {/* ElevenLabs ConvAI Widget via HTML injection to support custom element */}
+            <div id="ela-container" className="pointer-events-auto" />
+            <Script id="ela-embed" strategy="afterInteractive">
+              {`
+                (function(){
+                  const mount = () => {
+                    const container = document.getElementById('ela-container');
+                    if (!container) return;
+                    if (container.dataset.mounted === '1') return;
+                    container.dataset.mounted = '1';
+                    container.innerHTML = ` +
+                    "`<elevenlabs-convai agent-id=\"agent_7001k5jqfjmtejvs77jvhjf254tz\" variant=\"tiny\" expandable=\"never\" action-text=\"\" start-call-text=\"\" end-call-text=\"\" expand-text=\"\" listening-text=\"\" speaking-text=\"\" avatar-orb-color-1=\"#4D9CFF\" avatar-orb-color-2=\"#9CE6E6\" id=\"ela-orb\"></elevenlabs-convai>`" + `;
+                  };
+                  const ready = () => {
+                    mount();
+                    setTimeout(mount, 300);
+                  };
+                  if (!window.__ela_loaded) {
+                    const s = document.createElement('script');
+                    s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+                    s.async = true;
+                    s.onload = ready;
+                    document.body.appendChild(s);
+                    window.__ela_loaded = true;
+                  } else {
+                    ready();
+                  }
+                })();
+              `}
+            </Script>
+            <style jsx global>{`
+              #ela-orb { position: static; transform: scale(1.6); transform-origin: center; animation: ela-float 4.5s ease-in-out infinite; }
+              #ela-orb:focus { outline: none; }
+              @keyframes ela-float { 0%{transform: scale(1.6) translateY(0);} 50%{transform: scale(1.6) translateY(-6px);} 100%{transform: scale(1.6) translateY(0);} }
+            `}</style>
           </div>
         </div>
 
