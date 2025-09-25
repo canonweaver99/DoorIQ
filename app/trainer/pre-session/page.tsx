@@ -30,7 +30,7 @@ export default function PreSessionPage() {
         .select('*')
         .eq('is_active', true)
         .order('order_index', { ascending: true })
-        .limit(6)
+        .limit(3)
 
       if (error) throw error
       setTips(data || [])

@@ -106,7 +106,6 @@ export default function TrainerPage() {
   }
 
   const initializeSession = async () => {
-    setIsInitializing(true)
     try {
       // Request microphone permission early for smoother widget experience
       try {
@@ -119,13 +118,11 @@ export default function TrainerPage() {
       const newId = await createSessionRecord()
       setSessionId(newId)
       setSessionActive(true)
-      setIsInitializing(false)
       durationInterval.current = setInterval(() => {
         setMetrics(prev => ({ ...prev, duration: prev.duration + 1 }))
       }, 1000)
     } catch (error) {
       console.error('Error initializing session:', error)
-      setIsInitializing(false)
     }
   }
 
@@ -214,11 +211,18 @@ export default function TrainerPage() {
             duration_seconds: metrics.duration,
             overall_score: analysis.overallScore,
             rapport_score: analysis.scores.rapport,
+            introduction_score: analysis.scores.introduction,
+            listening_score: analysis.scores.listening,
             objection_handling_score: analysis.scores.listening,
             safety_score: analysis.keyMoments.safetyAddressed ? 85 : 40,
             close_effectiveness_score: analysis.scores.closing,
             transcript: transcript,
             analytics: analysis,
+            sentiment_data: {
+              finalSentiment: metrics.sentimentScore,
+              interruptionCount: metrics.interruptionCount,
+              objectionCount: metrics.objectionCount
+            }
           } as any)
           .eq('id', sessionId as string)
         const durationStr = formatDuration(metrics.duration)
@@ -259,27 +263,6 @@ export default function TrainerPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Loading screen for microphone permissions
-  if (isInitializing) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center mb-6 mx-auto animate-pulse">
-            <Mic className="w-16 h-16 text-blue-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Setting Up Your Session</h1>
-          <p className="text-xl text-gray-600 mb-4">
-            {!micPermissionGranted ? 'Please allow microphone access to continue' : 'Connecting to Austin...'}
-          </p>
-          <div className="flex items-center justify-center space-x-2">
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   if (!sessionActive) {
     return (
@@ -562,62 +545,22 @@ export default function TrainerPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Left Column - Metrics */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <MetricCard
-                    title="Interruptions"
-                    value={metrics.interruptionCount}
-                    icon={<AlertCircle className="w-5 h-5" />}
-                    color="green"
-                  />
-                  <MetricCard
-                    title="Objections"
-                    value={metrics.objectionCount}
-                    icon={<MessageSquare className="w-5 h-5" />}
-                    color="yellow"
-                  />
-                  <MetricCard
-                    title="Key Moments"
-                    value="0/3"
-                    icon={<Target className="w-5 h-5" />}
-                    color="yellow"
-                  />
-                  <MetricCard
-                    title="Trend"
-                    value="Neutral"
-                    icon={<TrendingUp className="w-5 h-5" />}
-                    color="yellow"
-                  />
-                </div>
-                
-                {/* Conversation Status */}
-                <ConversationStatus 
-                  transcript={transcript} 
-                  duration={metrics.duration}
-                />
-              </div>
+            <div className="space-y-4 max-w-2xl mx-auto">
+              {/* Conversation Status */}
+              <ConversationStatus 
+                transcript={transcript} 
+                duration={metrics.duration}
+              />
               
-              {/* Right Column - Tips and Coaching */}
-              <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-blue-900 mb-2">Quick Tips</h3>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Build rapport before discussing business</li>
-                    <li>• Ask about pest problems they&apos;ve experienced</li>
-                    <li>• Mention safety for pets and children</li>
-                    <li>• Create urgency with seasonal offers</li>
-                  </ul>
-                </div>
-                
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-yellow-900 mb-2">Austin&apos;s Profile</h3>
-                  <p className="text-sm text-yellow-800">
-                    Suburban homeowner, married with 2 kids and a dog. Concerned about safety 
-                    but price-conscious. Prefers eco-friendly solutions.
-                  </p>
-                </div>
+              {/* Quick Tips */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2">Quick Tips</h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Build rapport before discussing business</li>
+                  <li>• Ask about pest problems they&apos;ve experienced</li>
+                  <li>• Mention safety for pets and children</li>
+                  <li>• Create urgency with seasonal offers</li>
+                </ul>
               </div>
             </div>
           </div>

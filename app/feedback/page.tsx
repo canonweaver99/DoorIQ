@@ -211,8 +211,13 @@ function FeedbackInner() {
           />
           <ScoreCard 
             title="Conversation Flow" 
-            score={feedbackData.scores.closing}
+            score={Math.round((feedbackData.scores.rapport + feedbackData.scores.listening) / 2)}
             description="Natural conversation management"
+          />
+          <ScoreCard 
+            title="Close Effectiveness" 
+            score={feedbackData.scores.closing}
+            description="Converting interest to commitment"
           />
         </div>
 
