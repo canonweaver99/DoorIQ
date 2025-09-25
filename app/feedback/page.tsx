@@ -32,6 +32,25 @@ function FeedbackInner() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'transcript'>('transcript');
 
+  const loadSessionData = useCallback(async (sessionId: string, duration: string) => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('training_sessions')
+        .select('id, transcript, duration_seconds, analytics, overall_score')
+        .eq('id', sessionId)
+        .single();
+
+      if (error) throw error;
+
+      const transcript = (data as any)?.transcript || [];
+      generateFeedback(transcript, duration);
+    } catch (error) {
+      console.error('Error loading session:', error);
+      generateFeedback([], duration);
+    }
+  }, []);
+
   useEffect(() => {
     // Get conversation data from URL params or localStorage
     const duration = searchParams?.get('duration') || '0:00';
@@ -56,24 +75,7 @@ function FeedbackInner() {
     }
   }, [searchParams, loadSessionData]);
 
-  const loadSessionData = useCallback(async (sessionId: string, duration: string) => {
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('training_sessions')
-        .select('id, transcript, duration_seconds, analytics, overall_score')
-        .eq('id', sessionId)
-        .single();
-
-      if (error) throw error;
-
-      const transcript = (data as any)?.transcript || [];
-      generateFeedback(transcript, duration);
-    } catch (error) {
-      console.error('Error loading session:', error);
-      generateFeedback([], duration);
-    }
-  }, []);
+  
 
   const generateFeedback = (transcript: any[], duration: string) => {
     // Use the conversation analyzer for consistent analysis
