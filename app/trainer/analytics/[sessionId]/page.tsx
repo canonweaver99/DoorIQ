@@ -274,6 +274,7 @@ export default function AnalyticsPage() {
               status={session.analytics?.key_moments?.closeAttempted ? 'good' : 'improve'}
             />
           </div>
+        </div>
           </>
         )}
 
