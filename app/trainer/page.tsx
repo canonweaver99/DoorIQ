@@ -244,12 +244,9 @@ export default function TrainerPage() {
 
       const analysis = analyzeConversation(transcript);
 
-      // ✅ FIX: correct key for objection handling (example key)
-      // If your analyzer uses a different key, align here.
-      const objectionScore =
-        analysis?.scores?.objectionHandling ??
-        analysis?.scores?.objection_handling ??
-        analysis?.scores?.listening ?? 0;
+      // ✅ FIX: objection handling score based on keyMoments.objectionHandled
+      // Since the analyzer doesn't have objectionHandling in scores, we derive it from keyMoments
+      const objectionScore = analysis?.keyMoments?.objectionHandled ? 85 : 40;
 
       if (user?.id && sessionId) {
         await (supabase as any)
