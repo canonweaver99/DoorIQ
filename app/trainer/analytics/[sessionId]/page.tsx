@@ -9,7 +9,7 @@ import {
   Target, ChevronRight, Download, Share2, FileText, BarChart3
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { TranscriptAnalysis } from '@/components/trainer/TranscriptAnalysis'
+// Transcript analysis removed during transcript system reset
 
 interface SessionData {
   id: string
@@ -194,21 +194,9 @@ export default function AnalyticsPage() {
 
         {activeTab === 'transcript' ? (
           <>
-            {/* Transcript Analysis */}
-            {session.transcript && session.transcript.length > 0 ? (
-              <TranscriptAnalysis 
-                transcript={session.transcript.map(t => ({
-                  speaker: t.speaker || (t as any).role || 'unknown',
-                  text: t.text || (t as any).content || '',
-                  timestamp: (t as any).timestamp
-                }))}
-                duration={formatDuration(session.duration_seconds || 0)}
-              />
-            ) : (
-              <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-                <p className="text-gray-600">No transcript available for this session</p>
-              </div>
-            )}
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+              <p className="text-gray-600">Transcript analysis is currently disabled.</p>
+            </div>
           </>
         ) : (
           <>
