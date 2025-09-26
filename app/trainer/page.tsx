@@ -143,6 +143,11 @@ export default function TrainerPage() {
               pushFinal(lastMsg.content, 'austin')
             }
           }
+        } else if (typeof msg?.message === 'string') {
+          // Fallback shape seen in console: { source: 'user'|'a', message: '...' }
+          const speaker = msg?.source === 'user' ? 'user' : 'austin'
+          console.log('🧩 Fallback message shape → final:', { speaker, text: msg.message })
+          pushFinal(msg.message, speaker)
         } else {
           console.log('❓ Unknown message type:', msg?.type)
         }
