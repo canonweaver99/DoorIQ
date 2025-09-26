@@ -7,12 +7,13 @@ import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
 import { Clock, Volume2, VolumeX } from 'lucide-react'
 import { ConversationStatus } from '@/components/trainer/ConversationStatus'
-import { SessionMetrics } from '@/lib/trainer/types'
+import { SessionMetrics, TranscriptEntry } from '@/lib/trainer/types'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 
 export default function TrainerPage() {
   const [sessionActive, setSessionActive] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [metrics, setMetrics] = useState<SessionMetrics>({
     duration: 0,
     sentimentScore: 50,
@@ -34,6 +35,7 @@ export default function TrainerPage() {
   const supabase = createClient()
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
+  const transcriptEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchUser()
@@ -50,6 +52,69 @@ export default function TrainerPage() {
       if (mediaStream.current) {
         mediaStream.current.getTracks().forEach(track => track.stop())
       }
+    }
+  }, [])
+
+  // Add transcript entry
+  const addToTranscript = (speaker: 'user' | 'austin', text: string) => {
+    if (!text.trim()) return
+
+    const entry: TranscriptEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      speaker,
+      text: text.trim(),
+      timestamp: new Date()
+    }
+
+    setTranscript(prev => {
+      // Avoid duplicates
+      const lastEntry = prev[prev.length - 1]
+      if (lastEntry && lastEntry.speaker === speaker && lastEntry.text === text) {
+        return prev
+      }
+      return [...prev, entry]
+    })
+
+    // Auto-scroll to bottom
+    setTimeout(() => {
+      transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 100)
+  }
+
+  // Listen for ElevenLabs conversation events
+  useEffect(() => {
+    const handleUserSpeech = (event: any) => {
+      const text = event?.detail
+      if (text && typeof text === 'string') {
+        console.log('👤 User said:', text)
+        addToTranscript('user', text)
+      }
+    }
+
+    const handleAustinResponse = (event: any) => {
+      const detail = event?.detail
+      let text = ''
+      
+      if (typeof detail === 'string') {
+        text = detail
+      } else if (detail?.text) {
+        text = detail.text
+      } else if (detail?.content) {
+        text = detail.content
+      }
+      
+      if (text) {
+        console.log('🤖 Austin said:', text)
+        addToTranscript('austin', text)
+      }
+    }
+
+    window.addEventListener('austin:user', handleUserSpeech)
+    window.addEventListener('austin:agent', handleAustinResponse)
+
+    return () => {
+      window.removeEventListener('austin:user', handleUserSpeech)
+      window.removeEventListener('austin:agent', handleAustinResponse)
     }
   }, [])
 
@@ -121,8 +186,8 @@ export default function TrainerPage() {
       // Stop Austin conversation if running
       try { (window as any).stopAustin?.() } catch {}
       
-      // Simple analysis without transcript
-      const basicAnalysis = {
+      // Analyze the conversation with transcript
+      const analysis = transcript.length > 0 ? analyzeConversation(transcript) : {
         overallScore: 75,
         scores: {
           rapport: 70,
@@ -143,14 +208,15 @@ export default function TrainerPage() {
           .update({
             ended_at: new Date().toISOString(),
             duration_seconds: metrics.duration,
-            overall_score: basicAnalysis.overallScore,
-            rapport_score: basicAnalysis.scores.rapport,
-            introduction_score: basicAnalysis.scores.introduction,
-            listening_score: basicAnalysis.scores.listening,
-            objection_handling_score: 70,
-            safety_score: basicAnalysis.keyMoments.safetyAddressed ? 85 : 40,
-            close_effectiveness_score: basicAnalysis.scores.closing,
-            analytics: basicAnalysis,
+            overall_score: analysis.overallScore,
+            rapport_score: analysis.scores.rapport,
+            introduction_score: analysis.scores.introduction,
+            listening_score: analysis.scores.listening,
+            objection_handling_score: analysis.keyMoments?.objectionHandled ? 85 : 40,
+            safety_score: analysis.keyMoments?.safetyAddressed ? 85 : 40,
+            close_effectiveness_score: analysis.scores.closing,
+            transcript: transcript,
+            analytics: analysis,
             sentiment_data: {
               finalSentiment: metrics.sentimentScore,
               interruptionCount: metrics.interruptionCount,
@@ -255,8 +321,43 @@ export default function TrainerPage() {
                       onStatusChange: (s) => { state.status = s; render(); },
                       onModeChange:   (m) => { state.mode = m; render(); },
                       onMessage: (msg) => {
-                        // Message handling removed - no transcript capture
-                        console.log('Austin message:', msg);
+                        console.log('ElevenLabs message:', msg);
+                        
+                        // Extract text from different message types and dispatch events
+                        try {
+                          if (msg?.type === 'user_transcript') {
+                            const text = msg.user_transcript || msg.text || '';
+                            if (text) {
+                              window.dispatchEvent(new CustomEvent('austin:user', { detail: text }));
+                            }
+                          } else if (msg?.type === 'agent_response') {
+                            const response = msg.agent_response;
+                            let text = '';
+                            if (typeof response === 'string') {
+                              text = response;
+                            } else if (response?.text) {
+                              text = response.text;
+                            } else if (response?.content) {
+                              text = response.content;
+                            }
+                            if (text) {
+                              window.dispatchEvent(new CustomEvent('austin:agent', { detail: text }));
+                            }
+                          } else if (msg?.type === 'conversation_updated') {
+                            // Handle conversation updates with messages array
+                            const messages = msg?.conversation?.messages || [];
+                            if (messages.length > 0) {
+                              const lastMsg = messages[messages.length - 1];
+                              if (lastMsg?.role === 'user' && lastMsg?.content) {
+                                window.dispatchEvent(new CustomEvent('austin:user', { detail: lastMsg.content }));
+                              } else if (lastMsg?.role === 'assistant' && lastMsg?.content) {
+                                window.dispatchEvent(new CustomEvent('austin:agent', { detail: lastMsg.content }));
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          console.error('Error processing ElevenLabs message:', e);
+                        }
                       },
                       onError: (err) => { console.error('ElevenLabs error:', err); stopSession(true); },
                     });
@@ -300,10 +401,10 @@ export default function TrainerPage() {
               #austin-orb {
                 position: absolute;
                 left: 50%;
-                top: 50%;
+                top: 35%;
                 transform: translate(-50%, -50%);
-                width: 220px;
-                height: 220px;
+                width: 200px;
+                height: 200px;
                 border-radius: 9999px;
                 border: 0;
                 outline: none;
@@ -322,7 +423,7 @@ export default function TrainerPage() {
               #austin-status {
                 position: absolute;
                 left: 50%;
-                top: calc(50% + 150px);
+                top: calc(35% + 120px);
                 transform: translateX(-50%);
                 font: 600 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
                 color: #5f6b73;
@@ -333,6 +434,41 @@ export default function TrainerPage() {
               }
               @keyframes floaty { 0% { transform: translate(-50%, -50%) } 50% { transform: translate(-50%, calc(-50% - 7px)) } 100% { transform: translate(-50%, -50%) } }
             `}</style>
+
+            {/* Live Transcript */}
+            <div className="absolute left-0 right-0 bottom-0 top-[60%] overflow-y-auto p-4">
+              <div className="space-y-3 max-w-sm mx-auto">
+                {transcript.length === 0 ? (
+                  <p className="text-gray-500 text-center text-sm">Conversation will appear here...</p>
+                ) : (
+                  <>
+                    <p className="text-center text-xs text-gray-500 mb-2">Live Transcript</p>
+                    {transcript.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className={`flex ${entry.speaker === 'user' ? 'justify-end' : 'justify-start'} mb-2`}
+                      >
+                        <div
+                          className={`max-w-[85%] px-3 py-2 rounded-lg shadow-sm ${
+                            entry.speaker === 'user'
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white text-gray-900 border border-gray-200'
+                          }`}
+                        >
+                          <p className="text-sm leading-relaxed">{entry.text}</p>
+                          <p className={`text-xs mt-1 ${
+                            entry.speaker === 'user' ? 'text-blue-100' : 'text-gray-500'
+                          }`}>
+                            {entry.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={transcriptEndRef} />
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -360,7 +496,7 @@ export default function TrainerPage() {
             <div className="space-y-4 max-w-2xl mx-auto">
               {/* Conversation Status */}
               <ConversationStatus 
-                transcript={[]} 
+                transcript={transcript} 
                 duration={metrics.duration}
               />
               

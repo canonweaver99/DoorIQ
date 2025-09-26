@@ -1,3 +1,10 @@
+export interface TranscriptEntry {
+  id: string
+  speaker: 'user' | 'austin'
+  text: string
+  timestamp: Date
+}
+
 export interface SessionMetrics {
   duration: number
   sentimentScore: number
