@@ -226,22 +226,18 @@ export default function TrainerPage() {
 
   const createSessionRecord = async () => {
     try {
-      if (user?.id) {
-        const { data: session, error } = await (supabase as any)
-          .from('training_sessions')
-          .insert({
-            user_id: user.id,
-            scenario_type: 'standard',
-          } as any)
-          .select()
-          .single()
-        if (error) throw error
-        return (session as any).id
-      } else {
-        return (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
-          ? (crypto as any).randomUUID()
-          : `${Date.now()}`
+      // Always create a session record, even if user is not logged in
+      const payload: any = {
+        user_id: user?.id || null,
+        scenario_type: 'standard',
       }
+      const { data: session, error } = await (supabase as any)
+        .from('training_sessions')
+        .insert(payload)
+        .select()
+        .single()
+      if (error) throw error
+      return (session as any).id
     } catch (error) {
       console.error('Error creating session:', error)
       return null
@@ -288,7 +284,7 @@ export default function TrainerPage() {
         }
       }
 
-      if (user?.id && sessionId) {
+      if (sessionId) {
         await (supabase as any)
           .from('training_sessions')
           .update({
@@ -311,8 +307,8 @@ export default function TrainerPage() {
           } as any)
           .eq('id', sessionId as string)
 
-        const durationStr = formatDuration(metrics.duration)
-        router.push(`/feedback?session=${encodeURIComponent(sessionId as string)}&duration=${encodeURIComponent(durationStr)}`)
+        // Redirect to enhanced analytics page
+        router.push(`/trainer/analytics/${encodeURIComponent(sessionId as string)}`)
       } else {
         const durationStr = formatDuration(metrics.duration)
         router.push(`/feedback?duration=${encodeURIComponent(durationStr)}`)
