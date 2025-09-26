@@ -307,7 +307,18 @@ export default function TrainerPage() {
           } as any)
           .eq('id', sessionId as string)
 
-        // Redirect to enhanced analytics page
+        // Trigger AI grading immediately if transcript exists, then redirect
+        try {
+          if (transcript.length > 0) {
+            await fetch('/api/grade/session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sessionId })
+            })
+          }
+        } catch (e) {
+          console.error('AI grading after session failed (will still redirect):', e)
+        }
         router.push(`/trainer/analytics/${encodeURIComponent(sessionId as string)}`)
       } else {
         const durationStr = formatDuration(metrics.duration)

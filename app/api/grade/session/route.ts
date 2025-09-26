@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 })
     }
 
-    const systemPrompt = `You are a door-to-door sales performance judge. Grade a sales conversation transcript with extremely high standards. A score of 100/100 requires a perfect pitch: flawless introduction, genuine rapport, masterful discovery (quality questions and follow-ups), comprehensive value presentation (features/benefits/proof, safety discussed), professional objection handling with empathy, and an assumptive close with urgency and next-step clarity. Penalize filler words, tentative language, poor sequencing, or missed opportunities. Return ONLY JSON in the following schema.
+    const systemPrompt = `You are a door-to-door sales performance judge. Grade a sales conversation transcript with extremely high standards. A score of 100/100 requires a perfect pitch: flawless introduction, genuine rapport, masterful discovery (quality questions and follow-ups), comprehensive value presentation (features/benefits/proof, safety discussed), professional objection handling with empathy, and an assumptive close with urgency and next-step clarity. Penalize filler words, tentative language, poor sequencing, or missed opportunities. Return ONLY JSON in the following schema. Also produce per-line ratings for the SALES REP lines only (speaker \"user\" or \"rep\").
 
 Schema:
 {
@@ -63,7 +63,13 @@ Schema:
     "strengths": string[],
     "improvements": string[],
     "specificTips": string[]
-  }
+  },
+  "lineRatings": Array<{
+    "idx": number,                   // 0-based index in provided transcript
+    "speaker": string,               // user|rep
+    "label": "excellent"|"good"|"average"|"poor",
+    "rationale": string
+  }>
 }`
 
     const { choices } = await openai.chat.completions.create({
@@ -99,6 +105,7 @@ Schema:
         scores: result.scores,
         key_moments: result.keyMoments,
         feedback: result.feedback,
+        line_ratings: Array.isArray(result.lineRatings) ? result.lineRatings : [],
         graded_at: new Date().toISOString(),
       },
     }

@@ -38,6 +38,28 @@ export default function AnalyticsPage() {
     fetchSessionData()
   }, [params.sessionId])
 
+  // Auto-grade if transcript exists but no AI feedback yet
+  useEffect(() => {
+    const run = async () => {
+      if (!session?.id) return
+      const hasTranscript = Array.isArray(session.transcript) && session.transcript.length > 0
+      const hasAIFeedback = Boolean(session.analytics?.feedback)
+      if (hasTranscript && !hasAIFeedback) {
+        try {
+          await fetch('/api/grade/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId: session.id })
+          })
+          fetchSessionData()
+        } catch (e) {
+          console.error('AI grading failed:', e)
+        }
+      }
+    }
+    run()
+  }, [session?.id, Array.isArray(session?.transcript) ? session?.transcript?.length : 0, Boolean(session?.analytics?.feedback)])
+
   const fetchSessionData = async () => {
     try {
       const sessionId = Array.isArray(params.sessionId)
@@ -206,25 +228,6 @@ export default function AnalyticsPage() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <button
-                onClick={async () => {
-                  try {
-                    if (!session?.id) return
-                    await fetch('/api/grade/session', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ sessionId: session.id })
-                    })
-                    // refresh view
-                    fetchSessionData()
-                  } catch (e) {
-                    console.error(e)
-                  }
-                }}
-                className="px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md border border-yellow-200 hover:bg-yellow-200 text-sm"
-              >
-                Regrade with AI
-              </button>
               <button className="p-2 text-gray-600 hover:text-gray-900">
                 <Download className="w-5 h-5" />
               </button>
@@ -328,7 +331,13 @@ export default function AnalyticsPage() {
                 <div className="max-w-4xl mx-auto space-y-3 max-h-[60vh] overflow-y-auto border border-gray-200 rounded-lg p-4">
                   {session.transcript.map((entry: any, idx: number) => {
                     const isUser = entry.speaker === 'user' || entry.speaker === 'rep';
-                    const lineScore = analyzeLineEffectiveness(entry, idx, session.transcript);
+                    // Prefer AI line ratings if present, else fallback to heuristic
+                    let lineScore = analyzeLineEffectiveness(entry, idx, session.transcript);
+                    try {
+                      const ratings = session.analytics?.line_ratings || []
+                      const ai = ratings.find((r: any) => r.idx === idx && (entry.speaker === 'user' || entry.speaker === 'rep'))
+                      if (ai?.label) lineScore = ai.label
+                    } catch {}
                     
                     return (
                       <div
