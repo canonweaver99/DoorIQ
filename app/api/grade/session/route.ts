@@ -101,7 +101,7 @@ export async function POST(req: Request) {
       close_effectiveness_score: (() => {
         const durationMs = (gTranscript.turns.at(-1)?.endMs ?? 0) - (gTranscript.turns[0]?.startMs ?? 0)
         const attempts = packet.objective.closeAttempts || 0
-        const assumptive = (packet.objective.closePhrases || []).some((p: string) => /which works better|two appointments|when would you prefer/i.test(p || ''))
+        const assumptive = gTranscript.turns.some(t => t.speaker === 'rep' && /which works better|two appointments|when would you prefer|let'?s get started/i.test(t.text || ''))
         if (attempts === 0) return durationMs < 20000 ? 0 : 40
         let base = assumptive ? 70 : 40
         base += Math.min(20, Math.max(0, attempts - 1) * 10)
