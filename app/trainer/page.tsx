@@ -10,6 +10,13 @@ import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { SessionMetrics, TranscriptEntry } from '@/lib/trainer/types'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 
+const BASE_TIPS = [
+  'Build rapport before discussing business',
+  "Ask about pest problems they've experienced",
+  'Mention safety for pets and children',
+  'Create urgency with seasonal offers',
+]
+
 export default function TrainerPage() {
   const [sessionActive, setSessionActive] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -38,6 +45,16 @@ export default function TrainerPage() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
+
+  // Shuffle tips once per load
+  const shuffledTips = useMemo(() => {
+    const arr = [...BASE_TIPS]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  }, [])
 
   useEffect(() => {
     fetchUser()
@@ -608,29 +625,11 @@ export default function TrainerPage() {
               {/* Quick Tips */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-blue-900 mb-2">Quick Tips</h3>
-                {(() => {
-                  const baseTips = [
-                    'Build rapport before discussing business',
-                    "Ask about pest problems they've experienced",
-                    'Mention safety for pets and children',
-                    'Create urgency with seasonal offers',
-                  ]
-                  const tips = useMemo(() => {
-                    const arr = [...baseTips]
-                    for (let i = arr.length - 1; i > 0; i--) {
-                      const j = Math.floor(Math.random() * (i + 1))
-                      ;[arr[i], arr[j]] = [arr[j], arr[i]]
-                    }
-                    return arr
-                  }, [])
-                  return (
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      {tips.map((t, idx) => (
-                        <li key={idx}>• {t}</li>
-                      ))}
-                    </ul>
-                  )
-                })()}
+                <ul className="text-sm text-blue-800 space-y-1">
+                  {shuffledTips.map((t, idx) => (
+                    <li key={idx}>• {t}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
