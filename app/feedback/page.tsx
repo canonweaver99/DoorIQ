@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 interface FeedbackData {
   overallScore: number;
   duration: string;
+  transcript: Array<{ speaker: string; text: string; timestamp?: string | Date }>;
   scores: {
     rapport: number;
     introduction: number;
@@ -33,14 +34,15 @@ function FeedbackInner() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('training_sessions')
-        .select('id, duration_seconds, analytics, overall_score, rapport_score, introduction_score, listening_score, objection_handling_score, close_effectiveness_score')
+        .select('id, transcript, duration_seconds, analytics, overall_score, rapport_score, introduction_score, listening_score, objection_handling_score, close_effectiveness_score')
         .eq('id', sessionId)
         .single();
 
       if (error) throw error;
 
       // Use saved scores or generate basic feedback
-      generateFeedback(data, duration);
+      const transcript = Array.isArray((data as any)?.transcript) ? (data as any).transcript : [];
+      generateFeedback(data, duration, transcript);
     } catch (error) {
       console.error('Error loading session:', error);
       generateBasicFeedback(duration);
@@ -58,7 +60,7 @@ function FeedbackInner() {
     }
   }, [searchParams, loadSessionData]);
 
-  const generateFeedback = (sessionData: any, duration: string) => {
+  const generateFeedback = (sessionData: any, duration: string, transcript: Array<{ speaker: string; text: string; timestamp?: string | Date }>) => {
     const scores = {
       rapport: sessionData.rapport_score || 75,
       introduction: sessionData.introduction_score || 80,
@@ -74,6 +76,7 @@ function FeedbackInner() {
     setFeedbackData({
       overallScore,
       duration,
+      transcript,
       scores,
       feedback: {
         strengths: [
@@ -100,6 +103,7 @@ function FeedbackInner() {
     setFeedbackData({
       overallScore: 75,
       duration,
+      transcript: [],
       scores: {
         rapport: 70,
         introduction: 80,
@@ -178,6 +182,37 @@ function FeedbackInner() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Session Analysis</h1>
           <p className="text-gray-400">Here&#39;s how you did with Austin Rodriguez</p>
+        </div>
+
+        {/* Full Transcript - Center Stage */}
+        <div className="bg-white/5 rounded-xl p-6 border border-white/10 mb-8">
+          <h2 className="text-lg font-semibold text-gray-200 mb-4 text-center">Full Transcript</h2>
+          {feedbackData.transcript && feedbackData.transcript.length > 0 ? (
+            <div className="max-w-2xl mx-auto space-y-2 max-h-[50vh] overflow-y-auto p-2">
+              {feedbackData.transcript.map((t, idx) => {
+                const speaker = (t.speaker === 'user' || t.speaker === 'rep') ? 'user' : 'austin';
+                const isUser = speaker === 'user';
+                const text = t.text;
+                return (
+                  <div
+                    key={idx}
+                    className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[85%] px-3 py-2 rounded-lg shadow-sm text-sm ${
+                      isUser ? 'bg-blue-500 text-white' : 'bg-white text-gray-900 border border-gray-200'
+                    }`}>
+                      {text}
+                      <div className={`text-[10px] mt-1 ${isUser ? 'text-blue-100' : 'text-gray-500'}`}>
+                        {t.timestamp ? new Date(t.timestamp as any).toLocaleTimeString() : ''}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center text-gray-400">No transcript captured for this session.</div>
+          )}
         </div>
 
         {/* Overall Score */}
