@@ -95,7 +95,16 @@ export async function POST(req: Request) {
       introduction_score: clamp((packet.objective.stepCoverage.opener ? 85 : 40), 0, 100),
       listening_score: clamp(Math.round(packet.objective.questionRate * 100), 0, 100),
       objection_handling_score: clamp(packet.llm?.objection_handling?.overall ?? 0, 0, 100),
-      safety_score: clamp((packet.objective.stepCoverage.value ? 75 : 40), 0, 100),
+      // Safety score: 0 if rep never mentions safety-related concepts; 60 for basic mention; 85 for detailed (pets/kids)
+      safety_score: (() => {
+        const repTurns = gTranscript.turns.filter(t => t.speaker === 'rep')
+        const safetyRegex = /(safe|safety|non[-\s]?toxic|eco|chemical|chemicals|harm|exposure|residual)/i
+        const detailedRegex = /(pets?|children|kids|family)/i
+        const anyMention = repTurns.some(t => safetyRegex.test(t.text || ''))
+        if (!anyMention) return 0
+        const detailed = repTurns.some(t => detailedRegex.test(t.text || ''))
+        return detailed ? 85 : 60
+      })(),
       // More conservative closing score: 0 if convo < 20s and no clear close;
       // base 40 for any close attempt, 70 for assumptive close, +10 per extra attempt up to 90
       close_effectiveness_score: (() => {
