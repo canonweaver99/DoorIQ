@@ -5,11 +5,13 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { 
-  Trophy, TrendingUp, Clock, MessageSquare, Shield, 
-  Target, ChevronRight, Download, Share2, FileText, BarChart3
+  Trophy, Target, ChevronRight, Download, Share2, FileText, BarChart3
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { Star } from 'lucide-react'
+import AnimatedScore from '@/components/analytics/AnimatedScore'
+import TranscriptView from '@/components/analytics/TranscriptView'
+import PerformanceMetrics from '@/components/analytics/PerformanceMetrics'
+import AICoach from '@/components/analytics/AICoach'
 
 interface SessionData {
   id: string
@@ -86,107 +88,6 @@ export default function AnalyticsPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Harsh grading system - 100 requires perfection
-  const getScoreColor = (score: number) => {
-    if (score >= 95) return 'text-green-600'
-    if (score >= 80) return 'text-yellow-600'
-    return 'text-red-600'
-  }
-
-  const getScoreEmoji = (score: number) => {
-    if (score >= 95) return '🌟'
-    if (score >= 80) return '👍'
-    return '💪'
-  }
-
-  // Convert score to star rating (1-5 stars)
-  const getStarRating = (score: number) => {
-    if (score >= 95) return 5
-    if (score >= 85) return 4
-    if (score >= 70) return 3
-    if (score >= 55) return 2
-    return 1
-  }
-
-  // Line effectiveness analysis for intelligent highlighting
-  const analyzeLineEffectiveness = (entry: any, idx: number, transcript: any[]) => {
-    if (entry.speaker !== 'user' && entry.speaker !== 'rep') return 'neutral'
-    
-    const text = entry.text.toLowerCase()
-    const prevEntry = idx > 0 ? transcript[idx - 1] : null
-    const nextEntry = idx < transcript.length - 1 ? transcript[idx + 1] : null
-    
-    // Excellent moves (green)
-    if (
-      text.includes('understand how you feel') ||
-      text.includes('many homeowners have told me') ||
-      text.includes('what if i could show you') ||
-      text.includes('safe for pets and children') ||
-      text.includes('i have two appointments available') ||
-      text.includes('which works better for you') ||
-      text.includes('let me ask you this') ||
-      (text.includes('?') && (text.includes('pest') || text.includes('concern') || text.includes('issue')))
-    ) return 'excellent'
-    
-    // Good moves (yellow)
-    if (
-      text.includes('great question') ||
-      text.includes('i appreciate') ||
-      text.includes('let me explain') ||
-      text.includes('what we do is') ||
-      text.includes('our service includes') ||
-      text.includes('schedule') ||
-      text.includes('appointment')
-    ) return 'good'
-    
-    // Poor moves (red) 
-    if (
-      text.includes('um') || text.includes('uh') ||
-      text.includes('i think') || text.includes('maybe') ||
-      text.includes('probably') || text.includes('i guess') ||
-      text.length < 10 || // Too short responses
-      (prevEntry?.speaker === 'austin' && text.includes('price') && !text.includes('value')) ||
-      (text.includes('sorry') && text.length < 20)
-    ) return 'poor'
-    
-    return 'average'
-  }
-
-  const getLineHighlightColor = (score: string) => {
-    switch (score) {
-      case 'excellent': return 'bg-green-50'
-      case 'good': return 'bg-yellow-50'  
-      case 'poor': return 'bg-red-50'
-      default: return 'bg-blue-50'
-    }
-  }
-
-  const getLineHighlightBorder = (score: string) => {
-    switch (score) {
-      case 'excellent': return 'border-green-400'
-      case 'good': return 'border-yellow-400'
-      case 'poor': return 'border-red-400'
-      default: return 'border-blue-400'
-    }
-  }
-
-  const getLineScoreColor = (score: string) => {
-    switch (score) {
-      case 'excellent': return 'text-green-600'
-      case 'good': return 'text-yellow-600'
-      case 'poor': return 'text-red-600'
-      default: return 'text-blue-600'
-    }
-  }
-
-  const getLineScoreText = (score: string) => {
-    switch (score) {
-      case 'excellent': return 'Excellent - Advanced the sale'
-      case 'good': return 'Good - Adequate response'
-      case 'poor': return 'Poor - Missed opportunity'
-      default: return 'Average response'
-    }
-  }
 
   if (loading) {
     return (
@@ -215,6 +116,53 @@ export default function AnalyticsPage() {
     )
   }
 
+  const [selectedTranscriptLine, setSelectedTranscriptLine] = useState<number | null>(null)
+
+  const scrollToTranscriptLine = (lineNumber: number) => {
+    setActiveTab('transcript')
+    setSelectedTranscriptLine(lineNumber)
+    // Scroll to transcript section
+    setTimeout(() => {
+      const transcriptSection = document.getElementById('transcript-section')
+      transcriptSection?.scrollIntoView({ behavior: 'smooth' })
+    }, 100)
+  }
+
+  const metricsData = [
+    {
+      label: 'Rapport Building',
+      score: session.rapport_score || 0,
+      color: 'blue' as const,
+      feedback: (session.rapport_score || 0) >= 85 ? "Outstanding rapport building - genuine connection established" :
+                (session.rapport_score || 0) >= 70 ? "Good rapport foundation, but use more personalized language" :
+                "Focus on building trust through active listening and empathy"
+    },
+    {
+      label: 'Objection Handling',
+      score: session.objection_handling_score || 0,
+      color: 'green' as const,
+      feedback: (session.objection_handling_score || 0) >= 85 ? "Professional objection handling with empathy and expertise" :
+                (session.objection_handling_score || 0) >= 70 ? "Good objection handling, but use more empathetic responses" :
+                "Learn to acknowledge concerns before addressing them"
+    },
+    {
+      label: 'Safety Discussion',
+      score: session.safety_score || 0,
+      color: 'yellow' as const,
+      feedback: (session.safety_score || 0) >= 85 ? "Excellent safety discussion - builds trust and confidence" :
+                (session.safety_score || 0) >= 70 ? "Good safety mention, but be more comprehensive" :
+                "Always address safety concerns - essential for pest control"
+    },
+    {
+      label: 'Close Effectiveness',
+      score: session.close_effectiveness_score || 0,
+      color: 'purple' as const,
+      feedback: (session.close_effectiveness_score || 0) >= 85 ? "Excellent closing technique - assumptive and confident" :
+                (session.close_effectiveness_score || 0) >= 70 ? "Good closing attempt, but be more assumptive" :
+                "Practice assumptive closes and create urgency"
+    }
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
@@ -237,60 +185,15 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Overall Score with Star Rating */}
-          <motion.div 
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-center py-8"
-          >
-            {/* Star Rating */}
-            <div className="flex justify-center mb-4">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-8 h-8 mx-1 ${
-                    i < getStarRating(session.overall_score || 0)
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            
-            <div className={`text-6xl font-bold ${getScoreColor(session.overall_score || 0)}`}>
-              {session.overall_score || 0}<span className="text-2xl text-gray-400">/100</span>
-            </div>
-            <div className="text-xl text-gray-600 mt-2">
-              {session.overall_score >= 95 ? 'Perfect Pitch!' : 
-               session.overall_score >= 80 ? 'Good Job!' :
-               'Needs Improvement'}
-            </div>
-            <div className="text-lg text-gray-500 mt-1">Session Duration: {formatDuration(session.duration_seconds || 0)}</div>
-          </motion.div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-4 gap-4 mt-8">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <Clock className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-              <div className="text-2xl font-semibold">{formatDuration(session.duration_seconds || 0)}</div>
-              <div className="text-sm text-gray-600">Duration</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <MessageSquare className="w-8 h-8 text-green-500 mx-auto mb-2" />
-              <div className="text-2xl font-semibold">{session.sentiment_data?.objection_count || 0}</div>
-              <div className="text-sm text-gray-600">Objections Handled</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <Shield className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-              <div className="text-2xl font-semibold">{session.safety_score || 0}%</div>
-              <div className="text-sm text-gray-600">Safety Score</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <Target className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-              <div className="text-2xl font-semibold">{session.close_effectiveness_score || 0}%</div>
-              <div className="text-sm text-gray-600">Close Effectiveness</div>
-            </div>
+          {/* Animated Score Display */}
+          <AnimatedScore 
+            score={session.overall_score || 0}
+            className="py-8"
+          />
+          
+          {/* Session Duration */}
+          <div className="text-center text-lg text-gray-500 -mt-4 mb-6">
+            Session Duration: {formatDuration(session.duration_seconds || 0)}
           </div>
         </div>
 
@@ -323,384 +226,90 @@ export default function AnalyticsPage() {
         </div>
 
         {activeTab === 'transcript' ? (
-          <>
-            {/* Full Transcript Display */}
-            <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Conversation Transcript</h2>
-              {session.transcript && Array.isArray(session.transcript) && session.transcript.length > 0 ? (
-                <div className="max-w-4xl mx-auto space-y-3 max-h-[60vh] overflow-y-auto border border-gray-200 rounded-lg p-4">
-                  {session.transcript.map((entry: any, idx: number) => {
-                    const isUser = entry.speaker === 'user' || entry.speaker === 'rep';
-                    // Prefer AI line ratings if present, else fallback to heuristic
-                    let lineScore = analyzeLineEffectiveness(entry, idx, session.transcript);
-                    try {
-                      const ratings = session.analytics?.line_ratings || []
-                      const ai = ratings.find((r: any) => r.idx === idx && (entry.speaker === 'user' || entry.speaker === 'rep'))
-                      if (ai?.label) lineScore = ai.label
-                    } catch {}
-                    
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}
-                      >
-                        <div className={`max-w-[85%] px-4 py-3 rounded-lg shadow-sm ${
-                          isUser 
-                            ? `${getLineHighlightColor(lineScore)} text-gray-900 border-l-4 ${getLineHighlightBorder(lineScore)}`
-                            : 'bg-gray-100 text-gray-900 border border-gray-200'
-                        }`}>
-                          <div className="text-sm font-medium">
-                            {isUser ? 'Sales Rep' : 'Austin Rodriguez'}
-                          </div>
-                          <div className="mt-1">{entry.text}</div>
-                          {entry.timestamp && (
-                            <div className="text-xs text-gray-500 mt-2">
-                              {new Date(entry.timestamp).toLocaleTimeString()}
-                            </div>
-                          )}
-                          {isUser && (
-                            <div className={`text-xs mt-2 font-medium ${getLineScoreColor(lineScore)}`}>
-                              {getLineScoreText(lineScore)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-12">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>No transcript captured for this session.</p>
-                </div>
-              )}
-            </div>
-          </>
+          <div id="transcript-section">
+            <TranscriptView 
+              transcript={session.transcript || []}
+              analytics={session.analytics}
+              className="mb-6"
+            />
+          </div>
         ) : (
           <>
-            {/* Detailed Scores */}
+            {/* Performance Breakdown */}
+            <PerformanceMetrics 
+              metrics={metricsData}
+              transcript={session.transcript}
+              onLineClick={scrollToTranscriptLine}
+              className="mb-6"
+            />
+
+            {/* Simplified Expert Feedback */}
             <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Performance Breakdown</h2>
-          
-          <div className="space-y-6">
-            <ScoreBar 
-              label="Rapport Building" 
-              score={session.rapport_score || 0} 
-              color="blue"
-              feedback={
-                (session.rapport_score || 0) >= 85 ? "Outstanding rapport building - genuine connection established" :
-                (session.rapport_score || 0) >= 70 ? "Good rapport foundation, but use more personalized language over generic responses" :
-                "CRITICAL: Poor rapport building - customers buy from people they trust"
-              }
-            />
-            <ScoreBar 
-              label="Objection Handling" 
-              score={session.objection_handling_score || 0} 
-              color="green"
-              feedback={
-                (session.objection_handling_score || 0) >= 85 ? "Professional objection handling with empathy and expertise" :
-                (session.objection_handling_score || 0) >= 70 ? "Good objection handling, but work on more empathetic responses" :
-                "CRITICAL: Poor objection handling - learn to acknowledge and address concerns properly"
-              }
-            />
-            <ScoreBar 
-              label="Safety Concerns" 
-              score={session.safety_score || 0} 
-              color="yellow"
-              feedback={
-                (session.safety_score || 0) >= 85 ? "Excellent safety discussion - builds trust and confidence" :
-                (session.safety_score || 0) >= 70 ? "Good safety mention, but be more comprehensive about pet and child protection" :
-                "CRITICAL: Must address safety concerns - this is essential for pest control sales"
-              }
-            />
-            <ScoreBar 
-              label="Close Effectiveness" 
-              score={session.close_effectiveness_score || 0} 
-              color="purple"
-              feedback={
-                (session.close_effectiveness_score || 0) >= 85 ? "Excellent closing technique - assumptive and confident" :
-                (session.close_effectiveness_score || 0) >= 70 ? "Good closing attempt, but be more assumptive and create urgency" :
-                "CRITICAL: Weak or no closing attempt - you cannot make sales without asking for them"
-              }
-            />
-          </div>
-        </div>
-
-        {/* Detailed Feedback */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Expert Feedback</h2>
-          
-          {session.analytics?.feedback && (
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Strengths */}
-              {session.analytics.feedback.strengths && session.analytics.feedback.strengths.length > 0 && (
-                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-                  <h3 className="font-semibold text-green-800 mb-4 flex items-center">
-                    <Trophy className="w-5 h-5 mr-2" />
-                    What You Did Well
-                  </h3>
-                  <ul className="space-y-2">
-                    {session.analytics.feedback.strengths.map((strength: string, idx: number) => (
-                      <li key={idx} className="text-green-700 text-sm flex items-start">
-                        <span className="text-green-500 mr-2">✓</span>
-                        {strength}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Expert Feedback</h2>
               
-              {/* Areas for Improvement */}
-              {session.analytics?.feedback?.improvements && session.analytics.feedback.improvements.length > 0 && (
-                <div className="bg-red-50 p-6 rounded-lg border border-red-200">
-                  <h3 className="font-semibold text-red-800 mb-4 flex items-center">
-                    <Target className="w-5 h-5 mr-2" />
-                    Areas for Improvement
-                  </h3>
-                  <ul className="space-y-2">
-                    {session.analytics.feedback.improvements.map((improvement: string, idx: number) => (
-                      <li key={idx} className="text-red-700 text-sm flex items-start">
-                        <span className="text-red-500 mr-2">!</span>
-                        {improvement}
-                      </li>
-                    ))}
-                  </ul>
+              {session.analytics?.feedback ? (
+                <div className="space-y-6">
+                  {/* What You Did Well */}
+                  {session.analytics.feedback.strengths && session.analytics.feedback.strengths.length > 0 && (
+                    <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                      <h3 className="font-semibold text-green-800 mb-4 flex items-center">
+                        <Trophy className="w-5 h-5 mr-2" />
+                        What You Did Well
+                      </h3>
+                      <ul className="space-y-3">
+                        {session.analytics.feedback.strengths.map((strength: string, idx: number) => (
+                          <li key={idx} className="text-green-700 flex items-start">
+                            <span className="text-green-500 mr-3 text-lg">✓</span>
+                            <span>{strength}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Areas for Improvement */}
+                  {session.analytics?.feedback?.improvements && session.analytics.feedback.improvements.length > 0 && (
+                    <div className="bg-amber-50 p-6 rounded-lg border border-amber-200">
+                      <h3 className="font-semibold text-amber-800 mb-4 flex items-center">
+                        <Target className="w-5 h-5 mr-2" />
+                        Areas for Improvement
+                      </h3>
+                      <ul className="space-y-3">
+                        {session.analytics.feedback.improvements.map((improvement: string, idx: number) => (
+                          <li key={idx} className="text-amber-700 flex items-start">
+                            <span className="text-amber-500 mr-3 text-lg">⚠</span>
+                            <span>{improvement}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Next Time, Try This */}
+                  {session.analytics?.feedback?.specificTips && session.analytics.feedback.specificTips.length > 0 && (
+                    <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                      <h3 className="font-semibold text-blue-800 mb-4 flex items-center">
+                        <FileText className="w-5 h-5 mr-2" />
+                        Next Time, Try This:
+                      </h3>
+                      <div className="space-y-4">
+                        {session.analytics.feedback.specificTips.map((tip: string, idx: number) => (
+                          <div key={idx} className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                            <p className="text-blue-800 italic font-medium">&ldquo;{tip}&rdquo;</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>AI feedback will appear here once the session is processed.</p>
                 </div>
               )}
             </div>
-          )}
-          
-          {/* Specific Tips */}
-          {session.analytics?.feedback?.specificTips && session.analytics.feedback.specificTips.length > 0 && (
-            <div className="mt-6 bg-blue-50 p-6 rounded-lg border border-blue-200">
-              <h3 className="font-semibold text-blue-800 mb-4 flex items-center">
-                <MessageSquare className="w-5 h-5 mr-2" />
-                Next Time, Try This:
-              </h3>
-              <div className="space-y-3">
-                {session.analytics.feedback.specificTips.map((tip: string, idx: number) => (
-                  <div key={idx} className="bg-white p-4 rounded border border-blue-100">
-                    <p className="text-blue-800 text-sm italic">&ldquo;{tip}&rdquo;</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Pest Control Power Metrics */}
-        {session.analytics?.objective?.pestControlMetrics && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">🎯 Pest Control Power Metrics</h2>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-blue-900">Problem Discovery Rate</h3>
-                  <span className="text-2xl font-bold text-blue-600">
-                    {Math.round((session.analytics.objective.pestControlMetrics.problemDiscoveryRate || 0) * 100)}%
-                  </span>
-                </div>
-                <p className="text-blue-700 text-sm">THE MONEY METRIC - Did you uncover specific pest issues?</p>
-                {session.analytics.objective.pestControlMetrics.specificPestsIdentified?.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-xs text-blue-600">Pests identified: {session.analytics.objective.pestControlMetrics.specificPestsIdentified.join(', ')}</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-green-900">Safety & Family Angle</h3>
-                  <span className="text-2xl font-bold text-green-600">
-                    {session.analytics.objective.pestControlMetrics.safetyFamilyAngle ? '✓' : '✗'}
-                  </span>
-                </div>
-                <p className="text-green-700 text-sm">THE CLOSER - Connected pests to family safety?</p>
-              </div>
-              
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-purple-900">DIY Education</h3>
-                  <span className="text-2xl font-bold text-purple-600">
-                    {session.analytics.objective.pestControlMetrics.vsDiyPositioning ? '✓' : '✗'}
-                  </span>
-                </div>
-                <p className="text-purple-700 text-sm">THE DIFFERENTIATOR - Explained why DIY fails?</p>
-              </div>
-              
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-yellow-900">Local Credibility</h3>
-                  <span className="text-2xl font-bold text-yellow-600">
-                    {session.analytics.objective.pestControlMetrics.localCredibility ? '✓' : '✗'}
-                  </span>
-                </div>
-                <p className="text-yellow-700 text-sm">THE TRUST BUILDER - Mentioned neighborhood patterns?</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Moment of Death Analysis */}
-        {session.analytics?.moment_of_death?.detected && (
-          <div className="bg-red-50 rounded-xl shadow-lg p-8 mb-6 border border-red-200">
-            <h2 className="text-2xl font-semibold text-red-900 mb-6">💀 Moment of Death Analysis</h2>
-            
-            <div className="bg-white p-6 rounded-lg border border-red-200">
-              <div className="flex items-center mb-4">
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  session.analytics.moment_of_death.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                  session.analytics.moment_of_death.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                  'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {session.analytics.moment_of_death.severity.toUpperCase()}
-                </div>
-                <span className="ml-3 font-semibold text-gray-900">{session.analytics.moment_of_death.label}</span>
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded mb-4">
-                <p className="text-gray-700 italic">&ldquo;{session.analytics.moment_of_death.deathSignal}&rdquo;</p>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Recovery Attempted?</h4>
-                  <p className={`text-sm ${session.analytics.moment_of_death.recoveryAttempted ? 'text-green-600' : 'text-red-600'}`}>
-                    {session.analytics.moment_of_death.recoveryAttempted ? '✓ Yes - Good effort' : '✗ No - Missed opportunity'}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">What Could Have Saved It:</h4>
-                  <p className="text-sm text-blue-600 italic">
-                    &ldquo;{session.analytics.moment_of_death.alternativeResponse}&rdquo;
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Difficulty Context */}
-        {session.analytics?.difficulty_analysis && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">⚖️ Customer Difficulty Context</h2>
-            
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className={`px-4 py-2 rounded-full font-semibold ${
-                  session.analytics.difficulty_analysis.level === 'impossible' ? 'bg-red-100 text-red-800' :
-                  session.analytics.difficulty_analysis.level === 'hostile' ? 'bg-red-100 text-red-700' :
-                  session.analytics.difficulty_analysis.level === 'skeptical' ? 'bg-yellow-100 text-yellow-800' :
-                  session.analytics.difficulty_analysis.level === 'neutral' ? 'bg-gray-100 text-gray-800' :
-                  session.analytics.difficulty_analysis.level === 'warm' ? 'bg-green-100 text-green-700' :
-                  'bg-green-100 text-green-800'
-                }`}>
-                  {session.analytics.difficulty_analysis.level.toUpperCase()} Customer
-                </div>
-                <span className="ml-3 text-lg font-semibold">
-                  Score Multiplier: {session.analytics.difficulty_analysis.multiplier}x
-                </span>
-              </div>
-            </div>
-            
-            <p className="text-gray-700 mb-4">{session.analytics.difficulty_analysis.justification}</p>
-            
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Difficulty Indicators:</h4>
-              <div className="flex flex-wrap gap-2">
-                {session.analytics.difficulty_analysis.indicators.map((indicator: string, idx: number) => (
-                  <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                    {indicator}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Objection Intelligence */}
-        {session.analytics?.pest_control_objections && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">🧠 Objection Intelligence</h2>
-            
-            {session.analytics.pest_control_objections.falseObjections?.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-red-700 mb-3">False Objections (Polite Rejections)</h3>
-                <div className="space-y-3">
-                  {session.analytics.pest_control_objections.falseObjections.map((obj: any, idx: number) => (
-                    <div key={idx} className="bg-red-50 p-4 rounded-lg border border-red-200">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="font-semibold text-red-800">{obj.type.replace('_', ' ').toUpperCase()}</span>
-                          <p className="text-red-700 text-sm">Real meaning: {obj.realMeaning}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          obj.properlyHandled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {obj.properlyHandled ? '+3 pts' : '-5 pts'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {session.analytics.pest_control_objections.buyingSignals?.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-green-700 mb-3">Buying Signals (Disguised Interest)</h3>
-                <div className="space-y-3">
-                  {session.analytics.pest_control_objections.buyingSignals.map((signal: any, idx: number) => (
-                    <div key={idx} className="bg-green-50 p-4 rounded-lg border border-green-200">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="font-semibold text-green-800">{signal.type.replace('_', ' ').toUpperCase()}</span>
-                          <p className="text-green-700 text-sm">This indicates buying interest!</p>
-                        </div>
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
-                          +{signal.scoreAdjustment} pts
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Traditional Key Insights */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Key Insights</h2>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            <InsightCard
-              title="Time to Value"
-              icon={<Clock className="w-5 h-5" />}
-              content={`You mentioned pricing at ${session.analytics?.time_to_price ? formatDuration(session.analytics.time_to_price) : 'N/A'}`}
-              status={session.analytics?.time_to_price && session.analytics.time_to_price < 120 ? 'good' : 'improve'}
-            />
-            <InsightCard
-              title="Interruption Management"
-              icon={<MessageSquare className="w-5 h-5" />}
-              content={`Austin interrupted ${session.sentiment_data?.interruption_count || 0} times`}
-              status={(session.sentiment_data?.interruption_count || 0) <= 2 ? 'good' : 'improve'}
-            />
-            <InsightCard
-              title="Safety Discussion"
-              icon={<Shield className="w-5 h-5" />}
-              content={session.analytics?.key_moments?.safetyAddressed ? 'Safety concerns addressed' : 'Safety not discussed'}
-              status={session.analytics?.key_moments?.safetyAddressed ? 'good' : 'improve'}
-            />
-            <InsightCard
-              title="Close Attempt"
-              icon={<Target className="w-5 h-5" />}
-              content={session.analytics?.key_moments?.closeAttempted ? 'Close attempted successfully' : 'No clear close attempt'}
-              status={session.analytics?.key_moments?.closeAttempted ? 'good' : 'improve'}
-            />
-          </div>
-        </div>
           </>
         )}
 
@@ -720,55 +329,11 @@ export default function AnalyticsPage() {
             View All Sessions
           </button>
         </div>
+
+        {/* AI Coach */}
+        <AICoach sessionData={session} />
       </div>
     </div>
   )
 }
 
-function ScoreBar({ label, score, color, feedback }: { label: string; score: number; color: string; feedback: string }) {
-  const colorClasses = {
-    blue: 'bg-blue-500',
-    green: 'bg-green-500',
-    yellow: 'bg-yellow-500',
-    purple: 'bg-purple-500',
-  }
-
-  return (
-    <div>
-      <div className="flex justify-between mb-2">
-        <span className="font-medium text-gray-700">{label}</span>
-        <span className={`font-semibold ${score >= 95 ? 'text-green-600' : score >= 80 ? 'text-yellow-600' : 'text-red-600'}`}>
-          {score}%
-        </span>
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${score}%` }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className={`h-3 rounded-full ${colorClasses[color as keyof typeof colorClasses]}`}
-        />
-      </div>
-      <p className="text-sm text-gray-600">{feedback}</p>
-    </div>
-  )
-}
-
-function InsightCard({ title, icon, content, status }: { 
-  title: string; 
-  icon: React.ReactNode; 
-  content: string; 
-  status: 'good' | 'improve' 
-}) {
-  return (
-    <div className={`p-4 rounded-lg border-2 ${status === 'good' ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}`}>
-      <div className="flex items-center mb-2">
-        <div className={`p-2 rounded-full ${status === 'good' ? 'bg-green-200' : 'bg-yellow-200'} mr-3`}>
-          {icon}
-        </div>
-        <h3 className="font-semibold text-gray-900">{title}</h3>
-      </div>
-      <p className={`text-sm ${status === 'good' ? 'text-green-700' : 'text-yellow-700'}`}>{content}</p>
-    </div>
-  )
-}
