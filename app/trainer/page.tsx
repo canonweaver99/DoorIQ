@@ -11,10 +11,20 @@ import { SessionMetrics, TranscriptEntry } from '@/lib/trainer/types'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 
 const BASE_TIPS = [
+  'Smile before you knock - it comes through in your voice!',
   'Build rapport before discussing business',
   "Ask about pest problems they've experienced",
   'Mention safety for pets and children',
   'Create urgency with seasonal offers',
+  'Listen for buying signals disguised as objections',
+  'Use assumptive closing techniques',
+  'Address safety concerns early in the conversation',
+  'Find common ground with the homeowner',
+  'Ask follow-up questions to understand their needs',
+  'Explain why DIY solutions have limitations',
+  'Mention local pest patterns in their area',
+  'Create value before discussing price',
+  'Handle objections with empathy and expertise',
 ]
 
 export default function TrainerPage() {
@@ -38,6 +48,8 @@ export default function TrainerPage() {
   const [micPermissionGranted, setMicPermissionGranted] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isMuted, setIsMuted] = useState(false)
+  const [preparingSession, setPreparingSession] = useState(true)
+  const [currentTipIndex, setCurrentTipIndex] = useState(0)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -56,11 +68,32 @@ export default function TrainerPage() {
     return arr
   }, [])
 
+  // Auto-rotate tips during preparation phase
+  useEffect(() => {
+    if (!preparingSession) return
+
+    const tipRotationInterval = setInterval(() => {
+      setCurrentTipIndex((prev) => (prev + 1) % shuffledTips.length)
+    }, 3000) // Rotate every 3 seconds
+
+    // Auto-start session after 12 seconds (4 tips shown)
+    const autoStartTimer = setTimeout(() => {
+      setPreparingSession(false)
+      setTimeout(() => initializeSession(), 500)
+    }, 12000)
+
+    return () => {
+      clearInterval(tipRotationInterval)
+      clearTimeout(autoStartTimer)
+    }
+  }, [preparingSession, shuffledTips.length])
+
   useEffect(() => {
     fetchUser()
     
-    // Auto-start if coming from pre-session
+    // Auto-start if coming from pre-session - skip preparation phase
     if (searchParams.get('autostart') === 'true') {
+      setPreparingSession(false)
       setTimeout(() => initializeSession(), 500)
     }
     
@@ -354,6 +387,60 @@ export default function TrainerPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Show preparation phase with rotating tips
+  if (preparingSession) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Ready to Practice?
+              </h1>
+              <p className="text-xl text-gray-600">
+                You&apos;ll be speaking with Austin, a skeptical suburban homeowner who needs pest control services.
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 mb-8 min-h-[200px] flex items-center justify-center">
+              <div className="text-center max-w-2xl">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+                  💡 Coaching Tip
+                </h2>
+                <div className="bg-white rounded-lg p-6 shadow-sm border border-blue-100">
+                  <p className="text-lg text-gray-700 leading-relaxed">
+                    {shuffledTips[currentTipIndex]}
+                  </p>
+                </div>
+                <div className="flex justify-center mt-6 space-x-2">
+                  {shuffledTips.slice(0, 4).map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                        index === currentTipIndex % 4 ? 'bg-blue-500' : 'bg-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <div className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                Preparing your session...
+              </div>
+              <p className="text-sm text-gray-500 mt-4">
+                Starting automatically in a few seconds
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading state before session starts
   if (!sessionActive) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
