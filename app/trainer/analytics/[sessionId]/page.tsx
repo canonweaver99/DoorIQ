@@ -488,7 +488,189 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* Key Insights */}
+        {/* Pest Control Power Metrics */}
+        {session.analytics?.objective?.pestControlMetrics && (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">🎯 Pest Control Power Metrics</h2>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-blue-900">Problem Discovery Rate</h3>
+                  <span className="text-2xl font-bold text-blue-600">
+                    {Math.round((session.analytics.objective.pestControlMetrics.problemDiscoveryRate || 0) * 100)}%
+                  </span>
+                </div>
+                <p className="text-blue-700 text-sm">THE MONEY METRIC - Did you uncover specific pest issues?</p>
+                {session.analytics.objective.pestControlMetrics.specificPestsIdentified?.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-blue-600">Pests identified: {session.analytics.objective.pestControlMetrics.specificPestsIdentified.join(', ')}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-green-900">Safety & Family Angle</h3>
+                  <span className="text-2xl font-bold text-green-600">
+                    {session.analytics.objective.pestControlMetrics.safetyFamilyAngle ? '✓' : '✗'}
+                  </span>
+                </div>
+                <p className="text-green-700 text-sm">THE CLOSER - Connected pests to family safety?</p>
+              </div>
+              
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-purple-900">DIY Education</h3>
+                  <span className="text-2xl font-bold text-purple-600">
+                    {session.analytics.objective.pestControlMetrics.vsDiyPositioning ? '✓' : '✗'}
+                  </span>
+                </div>
+                <p className="text-purple-700 text-sm">THE DIFFERENTIATOR - Explained why DIY fails?</p>
+              </div>
+              
+              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-yellow-900">Local Credibility</h3>
+                  <span className="text-2xl font-bold text-yellow-600">
+                    {session.analytics.objective.pestControlMetrics.localCredibility ? '✓' : '✗'}
+                  </span>
+                </div>
+                <p className="text-yellow-700 text-sm">THE TRUST BUILDER - Mentioned neighborhood patterns?</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Moment of Death Analysis */}
+        {session.analytics?.moment_of_death?.detected && (
+          <div className="bg-red-50 rounded-xl shadow-lg p-8 mb-6 border border-red-200">
+            <h2 className="text-2xl font-semibold text-red-900 mb-6">💀 Moment of Death Analysis</h2>
+            
+            <div className="bg-white p-6 rounded-lg border border-red-200">
+              <div className="flex items-center mb-4">
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  session.analytics.moment_of_death.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                  session.analytics.moment_of_death.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {session.analytics.moment_of_death.severity.toUpperCase()}
+                </div>
+                <span className="ml-3 font-semibold text-gray-900">{session.analytics.moment_of_death.label}</span>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded mb-4">
+                <p className="text-gray-700 italic">&ldquo;{session.analytics.moment_of_death.deathSignal}&rdquo;</p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Recovery Attempted?</h4>
+                  <p className={`text-sm ${session.analytics.moment_of_death.recoveryAttempted ? 'text-green-600' : 'text-red-600'}`}>
+                    {session.analytics.moment_of_death.recoveryAttempted ? '✓ Yes - Good effort' : '✗ No - Missed opportunity'}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">What Could Have Saved It:</h4>
+                  <p className="text-sm text-blue-600 italic">
+                    &ldquo;{session.analytics.moment_of_death.alternativeResponse}&rdquo;
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Difficulty Context */}
+        {session.analytics?.difficulty_analysis && (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">⚖️ Customer Difficulty Context</h2>
+            
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className={`px-4 py-2 rounded-full font-semibold ${
+                  session.analytics.difficulty_analysis.level === 'impossible' ? 'bg-red-100 text-red-800' :
+                  session.analytics.difficulty_analysis.level === 'hostile' ? 'bg-red-100 text-red-700' :
+                  session.analytics.difficulty_analysis.level === 'skeptical' ? 'bg-yellow-100 text-yellow-800' :
+                  session.analytics.difficulty_analysis.level === 'neutral' ? 'bg-gray-100 text-gray-800' :
+                  session.analytics.difficulty_analysis.level === 'warm' ? 'bg-green-100 text-green-700' :
+                  'bg-green-100 text-green-800'
+                }`}>
+                  {session.analytics.difficulty_analysis.level.toUpperCase()} Customer
+                </div>
+                <span className="ml-3 text-lg font-semibold">
+                  Score Multiplier: {session.analytics.difficulty_analysis.multiplier}x
+                </span>
+              </div>
+            </div>
+            
+            <p className="text-gray-700 mb-4">{session.analytics.difficulty_analysis.justification}</p>
+            
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-2">Difficulty Indicators:</h4>
+              <div className="flex flex-wrap gap-2">
+                {session.analytics.difficulty_analysis.indicators.map((indicator: string, idx: number) => (
+                  <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    {indicator}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Objection Intelligence */}
+        {session.analytics?.pest_control_objections && (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">🧠 Objection Intelligence</h2>
+            
+            {session.analytics.pest_control_objections.falseObjections?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-red-700 mb-3">False Objections (Polite Rejections)</h3>
+                <div className="space-y-3">
+                  {session.analytics.pest_control_objections.falseObjections.map((obj: any, idx: number) => (
+                    <div key={idx} className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="font-semibold text-red-800">{obj.type.replace('_', ' ').toUpperCase()}</span>
+                          <p className="text-red-700 text-sm">Real meaning: {obj.realMeaning}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          obj.properlyHandled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {obj.properlyHandled ? '+3 pts' : '-5 pts'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {session.analytics.pest_control_objections.buyingSignals?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-green-700 mb-3">Buying Signals (Disguised Interest)</h3>
+                <div className="space-y-3">
+                  {session.analytics.pest_control_objections.buyingSignals.map((signal: any, idx: number) => (
+                    <div key={idx} className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="font-semibold text-green-800">{signal.type.replace('_', ' ').toUpperCase()}</span>
+                          <p className="text-green-700 text-sm">This indicates buying interest!</p>
+                        </div>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+                          +{signal.scoreAdjustment} pts
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Traditional Key Insights */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Key Insights</h2>
           
