@@ -500,9 +500,17 @@ export default function TrainerPage() {
           </div>
 
           <div className="flex-1 bg-slate-900 relative overflow-hidden">
-            {/* Custom Floating Orb that controls ElevenLabs Conversation */}
-            <button id="austin-orb" aria-label="Talk to Austin"></button>
-            <div id="austin-status">tap to talk</div>
+            {/* Austin's Door Interface */}
+            <div id="austin-door-container">
+              <div id="austin-door" aria-label="Knock on Austin's door">
+                <div id="door-frame"></div>
+                <div id="door-panel"></div>
+                <div id="door-handle"></div>
+                <div id="door-knocker">🚪</div>
+              </div>
+              <button id="austin-orb" aria-label="Talk to Austin"></button>
+            </div>
+            <div id="austin-status">knock on door</div>
 
             <Script id="austin-orb-client" type="module" strategy="afterInteractive">
               {`
@@ -510,27 +518,54 @@ export default function TrainerPage() {
                 const AGENT_ID = 'agent_7001k5jqfjmtejvs77jvhjf254tz';
 
                 const orb = document.getElementById('austin-orb');
+                const door = document.getElementById('austin-door');
+                const doorContainer = document.getElementById('austin-door-container');
                 const statusEl = document.getElementById('austin-status');
 
                 let convo = null;
                 let isStarting = false;
-                let state = { status: 'disconnected', mode: 'idle' };
+                let state = { status: 'disconnected', mode: 'idle', doorOpen: false };
 
                 function render() {
-                  const { status, mode } = state;
+                  const { status, mode, doorOpen } = state;
                   const active = status === 'connected' || status === 'connecting';
+                  
+                  // Door state management
+                  if (doorOpen) {
+                    door.classList.add('open');
+                    orb.style.display = 'block';
+                    setTimeout(() => {
+                      orb.classList.add('visible');
+                    }, 100);
+                  } else {
+                    door.classList.remove('open');
+                    orb.classList.remove('visible');
+                    setTimeout(() => {
+                      if (!state.doorOpen) orb.style.display = 'none';
+                    }, 400);
+                  }
+                  
+                  // Orb active state
                   if (active) orb.classList.add('active'); else orb.classList.remove('active');
-                  statusEl.textContent =
-                    status === 'connecting' ? 'connecting…' :
-                    status === 'connected' ? (mode === 'speaking' ? 'speaking' : 'listening') :
-                    'tap to talk';
+                  
+                  // Status text
+                  statusEl.textContent = doorOpen ?
+                    (status === 'connecting' ? 'connecting to Austin…' :
+                     status === 'connected' ? (mode === 'speaking' ? 'Austin is speaking' : 'Austin is listening') :
+                     'tap orb to end conversation') :
+                    'knock on door to start';
                 }
 
                 async function startSession() {
                   try {
                     if (convo || isStarting || state.status === 'connected' || state.status === 'connecting') return;
                     isStarting = true;
-                    state.status = 'connecting'; render();
+                    
+                    // Open door with animation
+                    state.doorOpen = true;
+                    state.status = 'connecting'; 
+                    render();
+                    
                     try { await navigator.mediaDevices.getUserMedia({ audio: true }); } catch {}
                     convo = await Conversation.startSession({
                       agentId: AGENT_ID,
@@ -539,6 +574,42 @@ export default function TrainerPage() {
                       onModeChange:   (m) => { state.mode = m; render(); },
                       onMessage: (msg) => {
                         console.log('ElevenLabs raw message:', msg);
+                        
+                        // Check for conversation end signals
+                        if (msg?.type === 'agent_response') {
+                          const response = msg.agent_response;
+                          let text = '';
+                          if (typeof response === 'string') {
+                            text = response;
+                          } else if (response?.text) {
+                            text = response.text;
+                          } else if (response?.content) {
+                            text = response.content;
+                          }
+                          
+                          // Close door on rejection or successful close
+                          if (text && (
+                            text.toLowerCase().includes('not interested') ||
+                            text.toLowerCase().includes('no thank you') ||
+                            text.toLowerCase().includes('not right now') ||
+                            text.toLowerCase().includes('schedule') ||
+                            text.toLowerCase().includes('appointment') ||
+                            text.toLowerCase().includes('see you then')
+                          )) {
+                            setTimeout(() => {
+                              // Animate door closing
+                              orb.classList.remove('visible');
+                              door.style.display = 'block';
+                              door.classList.add('closing');
+                              setTimeout(() => {
+                                state.doorOpen = false;
+                                door.classList.remove('closing');
+                                render();
+                                setTimeout(() => stopSession(true), 500);
+                              }, 800);
+                            }, 2000);
+                          }
+                        }
                         
                         // Dispatch the raw message for transcript handling
                         window.dispatchEvent(new CustomEvent('austin:message', { detail: msg }));
@@ -585,6 +656,7 @@ export default function TrainerPage() {
                     console.error(err);
                     state.status = 'disconnected';
                     state.mode = 'idle';
+                    state.doorOpen = false;
                     render();
                     isStarting = false;
                   }
@@ -596,19 +668,74 @@ export default function TrainerPage() {
                   isStarting = false;
                   state.status = 'disconnected';
                   state.mode = 'idle';
+                  state.doorOpen = false;
                   render();
                 }
 
-                orb.addEventListener('click', () => {
-                  const isActive = state.status === 'connected' || state.status === 'connecting';
-                  if (isActive) stopSession(); else startSession();
+                // Door click handler (starts conversation)
+                door.addEventListener('click', () => {
+                  if (!state.doorOpen) {
+                    // Play knock sound
+                    try {
+                      const knockSound = new Audio('/sounds/knock.mp3');
+                      knockSound.volume = 0.3;
+                      knockSound.play();
+                    } catch (e) {
+                      console.log('Could not play knock sound:', e);
+                    }
+                    
+                    // Brief delay then open door with sound
+                    setTimeout(() => {
+                      try {
+                        const doorSound = new Audio('/sounds/door_open.mp3');
+                        doorSound.volume = 0.2;
+                        doorSound.play();
+                      } catch (e) {
+                        console.log('Could not play door sound:', e);
+                      }
+                      startSession();
+                    }, 800);
+                  }
                 });
 
-                window.stopAustin = () => stopSession(true);
+                // Orb click handler (stops conversation)
+                orb.addEventListener('click', () => {
+                  const isActive = state.status === 'connected' || state.status === 'connecting';
+                  if (isActive) {
+                    // Animate door closing
+                    orb.classList.remove('visible');
+                    door.style.display = 'block';
+                    door.classList.add('closing');
+                    setTimeout(() => {
+                      state.doorOpen = false;
+                      door.classList.remove('closing');
+                      render();
+                      setTimeout(() => stopSession(), 200);
+                    }, 800);
+                  }
+                });
+
+                window.stopAustin = () => {
+                  if (state.doorOpen) {
+                    orb.classList.remove('visible');
+                    door.style.display = 'block';
+                    door.classList.add('closing');
+                    setTimeout(() => {
+                      state.doorOpen = false;
+                      door.classList.remove('closing');
+                      render();
+                      setTimeout(() => stopSession(true), 200);
+                    }, 800);
+                  } else {
+                    stopSession(true);
+                  }
+                };
 
                 document.addEventListener('visibilitychange', () => {
                   if (document.hidden && (state.status === 'connected' || state.status === 'connecting')) {
-                    stopSession(true);
+                    state.doorOpen = false;
+                    render();
+                    setTimeout(() => stopSession(true), 500);
                   }
                 });
 
@@ -617,10 +744,91 @@ export default function TrainerPage() {
             </Script>
 
             <style jsx global>{`
-              #austin-orb {
+              #austin-door-container {
                 position: absolute;
                 left: 50%;
                 top: 35%;
+                transform: translate(-50%, -50%);
+                width: 240px;
+                height: 320px;
+                z-index: 10;
+              }
+              
+              #austin-door {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                cursor: pointer;
+                transition: transform 0.3s ease;
+                display: block;
+              }
+              
+              #austin-door:hover {
+                transform: scale(1.02);
+              }
+              
+              #door-frame {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 200px;
+                height: 280px;
+                background: linear-gradient(145deg, #8B4513, #A0522D);
+                border-radius: 12px;
+                border: 4px solid #654321;
+                box-shadow: 
+                  0 10px 30px rgba(0,0,0,0.3),
+                  inset 0 2px 8px rgba(139,69,19,0.8),
+                  inset 0 -2px 8px rgba(101,67,33,0.8);
+              }
+              
+              #door-panel {
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 160px;
+                height: 240px;
+                background: linear-gradient(145deg, #A0522D, #CD853F);
+                border-radius: 8px;
+                border: 2px solid #8B4513;
+                box-shadow: inset 0 2px 4px rgba(160,82,45,0.8);
+              }
+              
+              #door-handle {
+                position: absolute;
+                top: 50%;
+                right: 30px;
+                transform: translateY(-50%);
+                width: 12px;
+                height: 12px;
+                background: radial-gradient(circle, #FFD700, #DAA520);
+                border-radius: 50%;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              }
+              
+              #door-knocker {
+                position: absolute;
+                top: 35%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 32px;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                animation: knock-hint 4s ease-in-out infinite;
+                pointer-events: none;
+              }
+              
+              @keyframes knock-hint {
+                0%, 90%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+                92%, 94% { transform: translate(-50%, -50%) scale(1.1) rotate(-5deg); }
+                96% { transform: translate(-50%, -50%) scale(1.1) rotate(5deg); }
+              }
+              
+              #austin-orb {
+                position: absolute;
+                left: 50%;
+                top: 50%;
                 transform: translate(-50%, -50%);
                 width: 200px;
                 height: 200px;
@@ -630,28 +838,88 @@ export default function TrainerPage() {
                 cursor: pointer;
                 background: radial-gradient(circle at 30% 30%, #6AA8FF, #3CE2D3);
                 box-shadow: 0 18px 56px rgba(20, 180, 255, 0.45);
-                transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+                transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, opacity .3s ease;
                 animation: floaty 4.6s ease-in-out infinite;
-                z-index: 10;
+                z-index: 15;
+                display: none;
               }
-              #austin-orb:hover { transform: translate(-50%, -50%) scale(1.03); filter: saturate(1.07); }
-              #austin-orb:active { transform: translate(-50%, -50%) scale(0.97); }
+              
+              #austin-orb:hover { 
+                transform: translate(-50%, -50%) scale(1.03); 
+                filter: saturate(1.07); 
+              }
+              
+              #austin-orb:active { 
+                transform: translate(-50%, -50%) scale(0.97); 
+              }
+              
               #austin-orb.active {
                 box-shadow: 0 18px 58px rgba(20,180,255,.55), 0 0 0 14px rgba(60,226,211,.18), 0 0 0 24px rgba(106,168,255,.12);
               }
+              
               #austin-status {
                 position: absolute;
                 left: 50%;
-                top: calc(35% + 120px);
+                top: calc(35% + 180px);
                 transform: translateX(-50%);
                 font: 600 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-                color: #5f6b73;
+                color: #94a3b8;
                 user-select: none;
                 pointer-events: none;
                 z-index: 10;
                 opacity: .9;
+                text-align: center;
               }
-              @keyframes floaty { 0% { transform: translate(-50%, -50%) } 50% { transform: translate(-50%, calc(-50% - 7px)) } 100% { transform: translate(-50%, -50%) } }
+              
+              @keyframes floaty { 
+                0% { transform: translate(-50%, -50%) } 
+                50% { transform: translate(-50%, calc(-50% - 7px)) } 
+                100% { transform: translate(-50%, -50%) } 
+              }
+              
+              /* Door opening animation */
+              #austin-door.open {
+                opacity: 0;
+                transform: scale(0.8) rotateY(20deg);
+                transition: opacity 0.6s ease, transform 0.6s ease;
+              }
+              
+              /* Door panel opening effect */
+              #austin-door.open #door-panel {
+                transform: translateX(-50%) rotateY(-60deg);
+                transition: transform 0.6s ease;
+                transform-origin: left center;
+              }
+              
+              /* Enhanced door interaction */
+              #austin-door:active {
+                transform: scale(0.98);
+              }
+              
+              /* Reset orb initial state */
+              #austin-orb {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+                display: none;
+              }
+              
+              /* Orb entrance animation */
+              #austin-orb.visible {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+                transition: opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s;
+                animation: floaty 4.6s ease-in-out infinite 0.7s;
+              }
+              
+              /* Door closing animation when conversation ends */
+              #austin-door.closing {
+                animation: door-close 0.8s ease-in-out forwards;
+              }
+              
+              @keyframes door-close {
+                0% { opacity: 1; transform: scale(0.8) rotateY(20deg); }
+                100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+              }
             `}</style>
 
             {/* Live Transcript - Delta + Final */}
