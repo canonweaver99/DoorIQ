@@ -68,6 +68,20 @@ export default function TrainerPage() {
     return arr
   }, [])
 
+  // Request mic permission while the Preparing screen is visible
+  useEffect(() => {
+    if (!preparingSession || micPermissionGranted) return
+    ;(async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        mediaStream.current = stream
+        setMicPermissionGranted(true)
+      } catch (_) {
+        // leave as not granted; user can accept later
+      }
+    })()
+  }, [preparingSession, micPermissionGranted])
+
   // Auto-rotate tips during preparation phase
   useEffect(() => {
     if (!preparingSession) return
@@ -440,23 +454,9 @@ export default function TrainerPage() {
     )
   }
 
-  // Show loading state before session starts
-  if (!sessionActive) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Sales Training Session</h1>
-          <p className="text-xl text-gray-600 mb-8">Practice your pitch with Austin</p>
-          <button
-            onClick={initializeSession}
-            disabled={loading}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 disabled:opacity-50"
-          >
-            {loading ? 'Starting...' : 'Start Training Session'}
-          </button>
-        </div>
-      </div>
-    )
+  // When not preparing and session is not yet active, immediately initialize
+  if (!preparingSession && !sessionActive) {
+    initializeSession()
   }
 
   return (
