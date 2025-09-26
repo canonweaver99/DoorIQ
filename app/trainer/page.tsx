@@ -9,6 +9,7 @@ import { Clock, Volume2, VolumeX } from 'lucide-react'
 import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { SessionMetrics, TranscriptEntry } from '@/lib/trainer/types'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
+import CalculatingScore from '@/components/analytics/CalculatingScore'
 
 const BASE_TIPS = [
   'Smile before you knock - it comes through in your voice!',
@@ -49,6 +50,7 @@ export default function TrainerPage() {
   const [user, setUser] = useState<any>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [preparingSession, setPreparingSession] = useState(true)
+  const [calculatingScore, setCalculatingScore] = useState(false)
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
 
   const router = useRouter()
@@ -319,6 +321,10 @@ export default function TrainerPage() {
       // Stop Austin conversation if running
       try { (window as any).stopAustin?.() } catch {}
       
+      // Show calculating screen immediately
+      setCalculatingScore(true)
+      setLoading(false) // Remove loading state so calculating screen shows
+      
       // Analyze the conversation with transcript
       const analysis = transcript.length > 0 ? analyzeConversation(transcript) : {
         overallScore: 75,
@@ -371,7 +377,7 @@ export default function TrainerPage() {
           } as any)
           .eq('id', sessionId as string)
 
-        // Trigger AI grading immediately if transcript exists, then redirect
+        // Trigger AI grading in background while calculating screen shows
         try {
           if (transcript.length > 0) {
             await fetch('/api/grade/session', {
@@ -383,15 +389,19 @@ export default function TrainerPage() {
         } catch (e) {
           console.error('AI grading after session failed (will still redirect):', e)
         }
-        router.push(`/trainer/analytics/${encodeURIComponent(sessionId as string)}`)
-      } else {
-        const durationStr = formatDuration(metrics.duration)
-        router.push(`/feedback?duration=${encodeURIComponent(durationStr)}`)
       }
     } catch (e) {
       console.error(e)
-    } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCalculationComplete = () => {
+    if (sessionId) {
+      router.push(`/trainer/analytics/${encodeURIComponent(sessionId as string)}`)
+    } else {
+      const durationStr = formatDuration(metrics.duration)
+      router.push(`/feedback?duration=${encodeURIComponent(durationStr)}`)
     }
   }
 
@@ -451,6 +461,16 @@ export default function TrainerPage() {
           </div>
         </div>
       </div>
+    )
+  }
+
+  // Show calculating score screen after session ends
+  if (calculatingScore) {
+    return (
+      <CalculatingScore 
+        sessionId={sessionId || 'unknown'}
+        onComplete={handleCalculationComplete}
+      />
     )
   }
 
