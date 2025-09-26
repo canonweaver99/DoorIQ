@@ -197,8 +197,21 @@ export default function TrainerPage() {
           closing: 75
         },
         keyMoments: {
+          priceDiscussed: false,
           safetyAddressed: true,
-          closeAttempted: true
+          closeAttempted: true,
+          objectionHandled: false
+        },
+        feedback: {
+          strengths: [],
+          improvements: [],
+          specificTips: []
+        },
+        transcriptSections: {
+          introduction: { startIdx: 0, endIdx: -1 },
+          discovery: { startIdx: -1, endIdx: -1 },
+          presentation: { startIdx: -1, endIdx: -1 },
+          closing: { startIdx: -1, endIdx: -1 }
         }
       }
 
