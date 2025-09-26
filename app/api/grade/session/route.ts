@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { gradeSession, Transcript as GTranscript } from '@/lib/grader'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -30,82 +31,58 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No transcript available to grade' }, { status: 400 })
     }
 
-    const transcriptText = transcript
-      .map((t) => `${t.speaker || 'unknown'}: ${t.text}`)
-      .join('\n')
-
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
     if (!openai.apiKey) {
       return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 })
     }
 
-    const systemPrompt = `You are a door-to-door sales performance judge. Grade a sales conversation transcript with extremely high standards. A score of 100/100 requires a perfect pitch: flawless introduction, genuine rapport, masterful discovery (quality questions and follow-ups), comprehensive value presentation (features/benefits/proof, safety discussed), professional objection handling with empathy, and an assumptive close with urgency and next-step clarity. Penalize filler words, tentative language, poor sequencing, or missed opportunities. Return ONLY JSON in the following schema. Also produce per-line ratings for the SALES REP lines only (speaker \"user\" or \"rep\").
-
-Schema:
-{
-  "overallScore": number (0-100),
-  "scores": {
-    "introduction": number,
-    "rapport": number,
-    "listening": number,
-    "salesTechnique": number,
-    "closing": number,
-    "objectionHandling": number,
-    "safety": number
-  },
-  "keyMoments": {
-    "priceDiscussed": boolean,
-    "safetyAddressed": boolean,
-    "closeAttempted": boolean,
-    "objectionHandled": boolean
-  },
-  "feedback": {
-    "strengths": string[],
-    "improvements": string[],
-    "specificTips": string[]
-  },
-  "lineRatings": Array<{
-    "idx": number,                   // 0-based index in provided transcript
-    "speaker": string,               // user|rep
-    "label": "excellent"|"good"|"average"|"poor",
-    "rationale": string
-  }>
-}`
-
-    const { choices } = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Transcript (speaker: text):\n\n${transcriptText}` }
-      ],
-      temperature: 0.2,
-    })
-
-    const content = choices?.[0]?.message?.content || '{}'
-    let result: any
-    try {
-      result = JSON.parse(content)
-    } catch {
-      return NextResponse.json({ error: 'Failed to parse grading response' }, { status: 502 })
+    // Map to structured transcript for deterministic + LLM rubric grader
+    const gTranscript: GTranscript = {
+      sessionId,
+      turns: transcript.map((t, i) => ({
+        id: i,
+        speaker: (t.speaker === 'user' || t.speaker === 'rep') ? 'rep' : 'homeowner',
+        startMs: typeof t.timestamp === 'number' ? t.timestamp : i * 4000,
+        endMs: typeof t.timestamp === 'number' ? (Number(t.timestamp) + Math.max(1500, t.text?.length * 30)) : i * 4000 + Math.max(1500, (t.text?.length || 10) * 30),
+        text: String(t.text || '')
+      }))
     }
+
+    const packet = await gradeSession(gTranscript, async (prompt: string) => {
+      const r = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'Return strict JSON only. No prose.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0,
+        response_format: { type: 'json_object' },
+      })
+      return r.choices?.[0]?.message?.content || '{}'
+    })
 
     // Persist results to Supabase
     const updatePayload: any = {
-      overall_score: clamp(result.overallScore, 0, 100),
-      rapport_score: clamp(result.scores?.rapport, 0, 100),
-      introduction_score: clamp(result.scores?.introduction, 0, 100),
-      listening_score: clamp(result.scores?.listening, 0, 100),
-      objection_handling_score: clamp(result.scores?.objectionHandling, 0, 100),
-      safety_score: clamp(result.scores?.safety, 0, 100),
-      close_effectiveness_score: clamp(result.scores?.closing, 0, 100),
+      overall_score: clamp(packet.components.final, 0, 100),
+      rapport_score: clamp((packet.llm?.clarity_empathy?.score ?? 0) * 10, 0, 100),
+      introduction_score: clamp((packet.objective.stepCoverage.opener ? 85 : 40), 0, 100),
+      listening_score: clamp(Math.round(packet.objective.questionRate * 100), 0, 100),
+      objection_handling_score: clamp(packet.llm?.objection_handling?.overall ?? 0, 0, 100),
+      safety_score: clamp((packet.objective.stepCoverage.value ? 75 : 40), 0, 100),
+      close_effectiveness_score: clamp((packet.objective.closeAttempts > 0 ? 70 + Math.min(30, packet.objective.closeAttempts * 10) : 40), 0, 100),
       analytics: {
         ...(session.analytics || {}),
-        aiGrader: 'openai',
-        scores: result.scores,
-        key_moments: result.keyMoments,
-        feedback: result.feedback,
-        line_ratings: Array.isArray(result.lineRatings) ? result.lineRatings : [],
+        aiGrader: 'openai+rule',
+        objective: packet.objective,
+        objection_cases: packet.objectionCases,
+        feedback: {
+          strengths: packet.llm?.top_wins ?? [],
+          improvements: packet.llm?.top_fixes ?? [],
+          specificTips: (packet.llm?.drills ?? []).map(d => `${d.skill}: ${d.microplay}`)
+        },
+        line_ratings: gTranscript.turns
+          .filter(t => t.speaker === 'rep')
+          .map(t => ({ idx: t.id, speaker: 'rep', label: 'average', rationale: '' })),
         graded_at: new Date().toISOString(),
       },
     }
