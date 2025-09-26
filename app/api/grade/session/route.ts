@@ -75,6 +75,9 @@ export async function POST(req: Request) {
         aiGrader: 'openai+rule',
         objective: packet.objective,
         objection_cases: packet.objectionCases,
+        pest_control_objections: packet.pestControlObjections,
+        moment_of_death: packet.momentOfDeath,
+        difficulty_analysis: packet.components.difficulty,
         feedback: {
           strengths: packet.llm?.top_wins ?? [],
           improvements: packet.llm?.top_fixes ?? [],
