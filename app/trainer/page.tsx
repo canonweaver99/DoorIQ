@@ -98,17 +98,22 @@ export default function TrainerPage() {
 
   // Listen for ElevenLabs conversation events
   useEffect(() => {
+    console.log('🔌 Setting up transcript event listeners')
+    
     const handleMessage = (event: any) => {
       try {
         const msg = event?.detail
-        console.log('📨 ElevenLabs message:', msg)
+        console.log('📨 Processing message for transcript:', msg)
         
         // Handle different message types
         if (msg?.type === 'transcript.delta') {
+          console.log('🔄 Setting delta text:', msg.text)
           setDelta(msg.text || '', msg.speaker || 'austin')
         } else if (msg?.type === 'transcript.final') {
+          console.log('✅ Finalizing text:', msg.text)
           pushFinal(msg.text || '', msg.speaker || 'austin')
         } else if (msg?.type === 'user_transcript') {
+          console.log('👤 User transcript:', msg.user_transcript || msg.text)
           pushFinal(msg.user_transcript || msg.text || '', 'user')
         } else if (msg?.type === 'agent_response') {
           const response = msg.agent_response
@@ -120,37 +125,52 @@ export default function TrainerPage() {
           } else if (response?.content) {
             text = response.content
           }
-          if (text) pushFinal(text, 'austin')
+          if (text) {
+            console.log('🤖 Agent response:', text)
+            pushFinal(text, 'austin')
+          }
         } else if (msg?.type === 'conversation_updated') {
           // Handle conversation updates
           const messages = msg?.conversation?.messages || []
+          console.log('💬 Conversation updated, messages:', messages)
           if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1]
             if (lastMsg?.role === 'user' && lastMsg?.content) {
+              console.log('👤 User from conversation_updated:', lastMsg.content)
               pushFinal(lastMsg.content, 'user')
             } else if (lastMsg?.role === 'assistant' && lastMsg?.content) {
+              console.log('🤖 Austin from conversation_updated:', lastMsg.content)
               pushFinal(lastMsg.content, 'austin')
             }
           }
+        } else {
+          console.log('❓ Unknown message type:', msg?.type)
         }
       } catch (e) {
         console.error('Error processing transcript message:', e)
       }
     }
 
+    const handleUserEvent = (e: any) => {
+      console.log('👤 Direct user event:', e?.detail)
+      if (e?.detail) pushFinal(e.detail, 'user')
+    }
+
+    const handleAgentEvent = (e: any) => {
+      console.log('🤖 Direct agent event:', e?.detail)
+      if (e?.detail) pushFinal(e.detail, 'austin')
+    }
+
     // Listen for custom events from ElevenLabs script
     window.addEventListener('austin:message', handleMessage)
-    window.addEventListener('austin:user', (e: any) => {
-      if (e?.detail) pushFinal(e.detail, 'user')
-    })
-    window.addEventListener('austin:agent', (e: any) => {
-      if (e?.detail) pushFinal(e.detail, 'austin')
-    })
+    window.addEventListener('austin:user', handleUserEvent)
+    window.addEventListener('austin:agent', handleAgentEvent)
 
     return () => {
+      console.log('🔌 Removing transcript event listeners')
       window.removeEventListener('austin:message', handleMessage)
-      window.removeEventListener('austin:user', handleMessage)
-      window.removeEventListener('austin:agent', handleMessage)
+      window.removeEventListener('austin:user', handleUserEvent)
+      window.removeEventListener('austin:agent', handleAgentEvent)
     }
   }, [])
 
@@ -489,13 +509,30 @@ export default function TrainerPage() {
             {/* Live Transcript - Delta + Final */}
             <div className="absolute left-0 right-0 bottom-0 top-[60%] overflow-y-auto p-4">
               <div className="space-y-2 max-w-sm mx-auto">
+                {/* Debug Info */}
+                <div className="text-xs text-gray-400 mb-2 p-2 bg-gray-50 rounded">
+                  <div>Delta: "{deltaText}"</div>
+                  <div>Finals: {finalizedLines.length}</div>
+                  <div>Transcript: {transcript.length}</div>
+                </div>
+                
                 {finalizedLines.length === 0 && !deltaText ? (
                   <p className="text-gray-500 text-center text-sm">Conversation will appear here...</p>
                 ) : (
                   <>
-                    <p className="text-center text-xs text-gray-500 mb-2">
-                      Live Transcript ({finalizedLines.length} lines)
-                    </p>
+                    <div className="text-center text-xs text-gray-500 mb-2 flex items-center justify-between">
+                      <span>Live Transcript ({finalizedLines.length} lines)</span>
+                      <button 
+                        onClick={() => {
+                          console.log('🧪 Testing transcript UI')
+                          pushFinal('This is a test message from Austin', 'austin')
+                          setTimeout(() => pushFinal('This is a test response from you', 'user'), 1000)
+                        }}
+                        className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+                      >
+                        Test
+                      </button>
+                    </div>
                     
                     {/* Finalized Lines */}
                     {finalizedLines.map((line, idx) => {
