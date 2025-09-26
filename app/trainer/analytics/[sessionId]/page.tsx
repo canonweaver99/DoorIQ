@@ -206,6 +206,25 @@ export default function AnalyticsPage() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={async () => {
+                  try {
+                    if (!session?.id) return
+                    await fetch('/api/grade/session', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ sessionId: session.id })
+                    })
+                    // refresh view
+                    fetchSessionData()
+                  } catch (e) {
+                    console.error(e)
+                  }
+                }}
+                className="px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md border border-yellow-200 hover:bg-yellow-200 text-sm"
+              >
+                Regrade with AI
+              </button>
               <button className="p-2 text-gray-600 hover:text-gray-900">
                 <Download className="w-5 h-5" />
               </button>
