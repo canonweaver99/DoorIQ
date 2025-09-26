@@ -82,26 +82,26 @@ export default function TranscriptView({ transcript, analytics, className = "" }
       case 'excellent':
         return {
           border: 'border-l-4 border-green-500',
-          background: 'bg-green-50',
-          textColor: 'text-green-900'
+          background: 'bg-green-900/20',
+          textColor: 'text-green-100'
         }
       case 'good':
         return {
           border: 'border-l-4 border-yellow-500',
-          background: 'bg-yellow-50',
-          textColor: 'text-yellow-900'
+          background: 'bg-yellow-900/20',
+          textColor: 'text-yellow-100'
         }
       case 'poor':
         return {
           border: 'border-l-4 border-red-500',
-          background: 'bg-red-50',
-          textColor: 'text-red-900'
+          background: 'bg-red-900/20',
+          textColor: 'text-red-100'
         }
       default:
         return {
           border: 'border-l-4 border-blue-500',
-          background: 'bg-blue-50',
-          textColor: 'text-blue-900'
+          background: 'bg-blue-900/20',
+          textColor: 'text-blue-100'
         }
     }
   }
@@ -152,10 +152,10 @@ export default function TranscriptView({ transcript, analytics, className = "" }
 
   if (!transcript || !Array.isArray(transcript) || transcript.length === 0) {
     return (
-      <div className={`bg-white rounded-xl shadow-lg p-8 ${className}`}>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-6">Conversation Transcript</h2>
-        <div className="text-center text-gray-500 py-12">
-          <Bot className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+      <div className={`bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-700 ${className}`}>
+        <h2 className="text-2xl font-semibold text-slate-100 mb-6">Conversation Transcript</h2>
+        <div className="text-center text-slate-400 py-12">
+          <Bot className="w-12 h-12 mx-auto mb-4 text-slate-500" />
           <p>No transcript available for this session.</p>
         </div>
       </div>
@@ -163,13 +163,13 @@ export default function TranscriptView({ transcript, analytics, className = "" }
   }
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg p-8 ${className}`}>
-      <h2 className="text-2xl font-semibold text-gray-900 mb-6">Conversation Transcript</h2>
-      <div className="max-w-4xl mx-auto space-y-3 max-h-[70vh] overflow-y-auto border border-gray-200 rounded-lg p-4">
+    <div className={`bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-700 ${className}`}>
+      <h2 className="text-2xl font-semibold text-slate-100 mb-6">Conversation Transcript</h2>
+      <div className="max-w-4xl mx-auto space-y-3 max-h-[70vh] overflow-y-auto border border-slate-600 rounded-lg p-4 bg-slate-900">
         {transcript.map((entry, idx) => {
           const isRep = entry.speaker === 'user' || entry.speaker === 'rep'
           const effectiveness = isRep ? analyzeLineEffectiveness(entry, idx, transcript) : 'neutral'
-          const styles = isRep ? getLineStyles(effectiveness) : { border: '', background: 'bg-gray-100', textColor: 'text-gray-900' }
+          const styles = isRep ? getLineStyles(effectiveness) : { border: '', background: 'bg-slate-700', textColor: 'text-slate-100' }
           const explanation = isRep ? getHoverExplanation(entry, idx, effectiveness) : ''
           
           return (
@@ -185,8 +185,8 @@ export default function TranscriptView({ transcript, analytics, className = "" }
                   className={`px-4 py-3 rounded-lg shadow-sm cursor-pointer transition-all duration-200 ${
                     isRep 
                       ? `${styles.background} ${styles.textColor} ${styles.border} hover:shadow-md` 
-                      : 'bg-gray-100 text-gray-900 border border-gray-200 hover:bg-gray-50'
-                  } ${selectedLine === idx ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}`}
+                      : 'bg-slate-700 text-slate-100 border border-slate-600 hover:bg-slate-600'
+                  } ${selectedLine === idx ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}`}
                   onMouseEnter={() => setHoveredLine(idx)}
                   onMouseLeave={() => setHoveredLine(null)}
                   onClick={() => setSelectedLine(selectedLine === idx ? null : idx)}
@@ -207,13 +207,13 @@ export default function TranscriptView({ transcript, analytics, className = "" }
                     </div>
                     <div className="flex items-center space-x-2">
                       {entry.timestamp && (
-                        <div className="text-xs text-gray-500 flex items-center">
+                        <div className="text-xs text-slate-400 flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
                           {formatTime(entry.timestamp)}
                         </div>
                       )}
                       {isRep && explanation && (
-                        <Info className="w-4 h-4 text-gray-400" />
+                        <Info className="w-4 h-4 text-slate-400" />
                       )}
                     </div>
                   </div>
@@ -262,15 +262,15 @@ export default function TranscriptView({ transcript, analytics, className = "" }
         <div className="flex space-x-6 text-sm">
           <div className="flex items-center">
             <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
-            <span>Excellent (Advances Sale)</span>
+            <span className="text-slate-300">Excellent (Advances Sale)</span>
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
-            <span>Good (Adequate)</span>
+            <span className="text-slate-300">Good (Adequate)</span>
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
-            <span>Poor (Missed Opportunity)</span>
+            <span className="text-slate-300">Poor (Missed Opportunity)</span>
           </div>
         </div>
       </div>

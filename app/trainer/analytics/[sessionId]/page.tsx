@@ -92,10 +92,10 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="animate-pulse">
-          <div className="h-8 w-48 bg-gray-300 rounded mb-4"></div>
-          <div className="h-64 w-96 bg-gray-200 rounded"></div>
+          <div className="h-8 w-48 bg-slate-700 rounded mb-4"></div>
+          <div className="h-64 w-96 bg-slate-800 rounded"></div>
         </div>
       </div>
     )
@@ -103,12 +103,12 @@ export default function AnalyticsPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Session not found</h2>
+          <h2 className="text-2xl font-semibold text-slate-100 mb-4">Session not found</h2>
           <button
             onClick={() => router.push('/trainer')}
-            className="text-blue-600 hover:text-blue-700"
+            className="text-blue-400 hover:text-blue-300 transition-colors"
           >
             Back to training
           </button>
@@ -163,22 +163,22 @@ export default function AnalyticsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-slate-900 py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+        <div className="bg-slate-800 rounded-xl shadow-xl p-8 mb-6 border border-slate-700">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Session Analysis</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-slate-100">Session Analysis</h1>
+              <p className="text-slate-400 mt-1">
                 {new Date(session.started_at).toLocaleDateString()} at {new Date(session.started_at).toLocaleTimeString()}
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-600 hover:text-gray-900">
+              <button className="p-2 text-slate-400 hover:text-slate-100 transition-colors">
                 <Download className="w-5 h-5" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900">
+              <button className="p-2 text-slate-400 hover:text-slate-100 transition-colors">
                 <Share2 className="w-5 h-5" />
               </button>
             </div>
@@ -191,20 +191,20 @@ export default function AnalyticsPage() {
           />
           
           {/* Session Duration */}
-          <div className="text-center text-lg text-gray-500 -mt-4 mb-6">
+          <div className="text-center text-lg text-slate-400 -mt-4 mb-6">
             Session Duration: {formatDuration(session.duration_seconds || 0)}
           </div>
         </div>
 
         {/* Tab Navigation */}
         <div className="flex justify-center mb-6">
-          <div className="bg-gray-100 rounded-lg p-1 inline-flex">
+          <div className="bg-slate-800 rounded-lg p-1 inline-flex border border-slate-700">
             <button
               onClick={() => setActiveTab('transcript')}
               className={`px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
                 activeTab === 'transcript' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-slate-700 text-slate-100 shadow-sm' 
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -214,8 +214,8 @@ export default function AnalyticsPage() {
               onClick={() => setActiveTab('overview')}
               className={`px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
                 activeTab === 'overview' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-slate-700 text-slate-100 shadow-sm' 
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <BarChart3 className="w-4 h-4" />
@@ -243,22 +243,22 @@ export default function AnalyticsPage() {
             />
 
             {/* Simplified Expert Feedback */}
-            <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Expert Feedback</h2>
+            <div className="bg-slate-800 rounded-xl shadow-xl p-8 mb-6 border border-slate-700">
+              <h2 className="text-2xl font-semibold text-slate-100 mb-6">Expert Feedback</h2>
               
               {session.analytics?.feedback ? (
                 <div className="space-y-6">
                   {/* What You Did Well */}
                   {session.analytics.feedback.strengths && session.analytics.feedback.strengths.length > 0 && (
-                    <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-                      <h3 className="font-semibold text-green-800 mb-4 flex items-center">
+                    <div className="bg-green-900/30 p-6 rounded-lg border border-green-700/50">
+                      <h3 className="font-semibold text-green-300 mb-4 flex items-center">
                         <Trophy className="w-5 h-5 mr-2" />
                         What You Did Well
                       </h3>
                       <ul className="space-y-3">
                         {session.analytics.feedback.strengths.map((strength: string, idx: number) => (
-                          <li key={idx} className="text-green-700 flex items-start">
-                            <span className="text-green-500 mr-3 text-lg">✓</span>
+                          <li key={idx} className="text-green-200 flex items-start">
+                            <span className="text-green-400 mr-3 text-lg">✓</span>
                             <span>{strength}</span>
                           </li>
                         ))}
@@ -268,15 +268,15 @@ export default function AnalyticsPage() {
                   
                   {/* Areas for Improvement */}
                   {session.analytics?.feedback?.improvements && session.analytics.feedback.improvements.length > 0 && (
-                    <div className="bg-amber-50 p-6 rounded-lg border border-amber-200">
-                      <h3 className="font-semibold text-amber-800 mb-4 flex items-center">
+                    <div className="bg-amber-900/30 p-6 rounded-lg border border-amber-700/50">
+                      <h3 className="font-semibold text-amber-300 mb-4 flex items-center">
                         <Target className="w-5 h-5 mr-2" />
                         Areas for Improvement
                       </h3>
                       <ul className="space-y-3">
                         {session.analytics.feedback.improvements.map((improvement: string, idx: number) => (
-                          <li key={idx} className="text-amber-700 flex items-start">
-                            <span className="text-amber-500 mr-3 text-lg">⚠</span>
+                          <li key={idx} className="text-amber-200 flex items-start">
+                            <span className="text-amber-400 mr-3 text-lg">⚠</span>
                             <span>{improvement}</span>
                           </li>
                         ))}
@@ -286,15 +286,15 @@ export default function AnalyticsPage() {
 
                   {/* Next Time, Try This */}
                   {session.analytics?.feedback?.specificTips && session.analytics.feedback.specificTips.length > 0 && (
-                    <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                      <h3 className="font-semibold text-blue-800 mb-4 flex items-center">
+                    <div className="bg-blue-900/30 p-6 rounded-lg border border-blue-700/50">
+                      <h3 className="font-semibold text-blue-300 mb-4 flex items-center">
                         <FileText className="w-5 h-5 mr-2" />
                         Next Time, Try This:
                       </h3>
                       <div className="space-y-4">
                         {session.analytics.feedback.specificTips.map((tip: string, idx: number) => (
-                          <div key={idx} className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
-                            <p className="text-blue-800 italic font-medium">&ldquo;{tip}&rdquo;</p>
+                          <div key={idx} className="bg-slate-700 p-4 rounded-lg border border-slate-600 shadow-sm">
+                            <p className="text-blue-200 italic font-medium">&ldquo;{tip}&rdquo;</p>
                           </div>
                         ))}
                       </div>
@@ -302,8 +302,8 @@ export default function AnalyticsPage() {
                   )}
                 </div>
               ) : (
-                <div className="text-center text-gray-500 py-8">
-                  <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <div className="text-center text-slate-400 py-8">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-slate-500" />
                   <p>AI feedback will appear here once the session is processed.</p>
                 </div>
               )}
@@ -323,7 +323,7 @@ export default function AnalyticsPage() {
           </button>
           <button
             onClick={() => router.push('/trainer/history')}
-            className="px-6 py-3 bg-gray-200 text-gray-900 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+            className="px-6 py-3 bg-slate-700 text-slate-100 font-semibold rounded-lg hover:bg-slate-600 transition-colors border border-slate-600"
           >
             View All Sessions
           </button>

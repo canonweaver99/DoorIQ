@@ -24,9 +24,9 @@ export default function AnimatedScore({
   
   // Color coding based on score
   const getScoreColor = (score: number) => {
-    if (score >= 71) return { text: 'text-green-500', ring: '#10b981', bg: 'bg-green-50' }
-    if (score >= 41) return { text: 'text-yellow-500', ring: '#eab308', bg: 'bg-yellow-50' }
-    return { text: 'text-red-500', ring: '#ef4444', bg: 'bg-red-50' }
+    if (score >= 71) return { text: 'text-green-400', ring: '#22c55e', bg: 'bg-green-900/20' }
+    if (score >= 41) return { text: 'text-yellow-400', ring: '#eab308', bg: 'bg-yellow-900/20' }
+    return { text: 'text-red-400', ring: '#ef4444', bg: 'bg-red-900/20' }
   }
 
   const getScoreLabel = (score: number) => {
@@ -108,7 +108,7 @@ export default function AnimatedScore({
             fill="transparent"
             stroke="currentColor"
             strokeWidth="8"
-            className="text-gray-200"
+            className="text-slate-700"
           />
           {/* Progress ring */}
           <motion.circle
@@ -135,7 +135,7 @@ export default function AnimatedScore({
               transition={{ duration: 0.5, delay: duration }}
             >
               {currentScore}
-              <span className="text-3xl text-gray-400">/{maxScore}</span>
+              <span className="text-3xl text-slate-500">/{maxScore}</span>
             </motion.div>
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function AnimatedScore({
               className={`w-10 h-10 mx-1 ${
                 i < getStarRating(score)
                   ? 'text-yellow-400 fill-current'
-                  : 'text-gray-300'
+                  : 'text-slate-600'
               }`}
             />
           </motion.div>
@@ -163,7 +163,7 @@ export default function AnimatedScore({
       
       {/* Score Label */}
       <motion.div 
-        className="text-2xl font-semibold text-gray-700 mb-2"
+        className="text-2xl font-semibold text-slate-200 mb-2"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: duration + 0.5, duration: 0.5 }}
@@ -173,7 +173,7 @@ export default function AnimatedScore({
 
       {/* Motivational Message */}
       <motion.div 
-        className="text-lg text-gray-500"
+        className="text-lg text-slate-400"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: duration + 0.7, duration: 0.5 }}

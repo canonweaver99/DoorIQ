@@ -51,13 +51,13 @@ export default function PreSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
       <div className="text-center">
         <div className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg">
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
           Preparing your session...
         </div>
-        <p className="text-sm text-gray-500 mt-4">Redirecting</p>
+        <p className="text-sm text-slate-400 mt-4">Redirecting</p>
       </div>
     </div>
   )

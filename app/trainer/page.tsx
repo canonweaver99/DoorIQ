@@ -404,25 +404,25 @@ export default function TrainerPage() {
   // Show preparation phase with rotating tips
   if (preparingSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-700">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              <h1 className="text-4xl font-bold text-slate-100 mb-4">
                 Ready to Practice?
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-slate-300">
                 You&apos;ll be speaking with Austin, a skeptical suburban homeowner who needs pest control services.
               </p>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 mb-8 min-h-[200px] flex items-center justify-center">
+            <div className="bg-gradient-to-r from-slate-700/50 to-slate-700/30 rounded-lg p-8 mb-8 min-h-[200px] flex items-center justify-center border border-slate-600/50">
               <div className="text-center max-w-2xl">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+                <h2 className="text-2xl font-semibold text-slate-100 mb-6">
                   💡 Coaching Tip
                 </h2>
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-blue-100">
-                  <p className="text-lg text-gray-700 leading-relaxed">
+                <div className="bg-slate-700 rounded-lg p-6 shadow-lg border border-slate-600">
+                  <p className="text-lg text-slate-200 leading-relaxed">
                     {shuffledTips[currentTipIndex]}
                   </p>
                 </div>
@@ -431,7 +431,7 @@ export default function TrainerPage() {
                     <div
                       key={index}
                       className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                        index === currentTipIndex % 4 ? 'bg-blue-500' : 'bg-gray-300'
+                        index === currentTipIndex % 4 ? 'bg-blue-500' : 'bg-slate-500'
                       }`}
                     />
                   ))}
@@ -444,7 +444,7 @@ export default function TrainerPage() {
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                 Preparing your session...
               </div>
-              <p className="text-sm text-gray-500 mt-4">
+              <p className="text-sm text-slate-400 mt-4">
                 Starting automatically in a few seconds
               </p>
             </div>
@@ -460,10 +460,10 @@ export default function TrainerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-900">
       <div className="flex h-screen">
         {/* Left Panel - ElevenLabs Agent */}
-        <div className="w-2/5 bg-white border-r border-gray-200 flex flex-col relative">
+        <div className="w-2/5 bg-slate-800 border-r border-slate-700 flex flex-col relative">
           <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
             <div className="flex items-center justify-between">
               <div>
@@ -479,7 +479,7 @@ export default function TrainerPage() {
             </div>
           </div>
 
-          <div className="flex-1 bg-gray-100 relative overflow-hidden">
+          <div className="flex-1 bg-slate-900 relative overflow-hidden">
             {/* Custom Floating Orb that controls ElevenLabs Conversation */}
             <button id="austin-orb" aria-label="Talk to Austin"></button>
             <div id="austin-status">tap to talk</div>
@@ -638,7 +638,7 @@ export default function TrainerPage() {
             <div className="absolute left-0 right-0 bottom-0 top-[60%] overflow-y-auto p-4">
               <div className="space-y-2 max-w-sm mx-auto">
                 {finalizedLines.length === 0 && !deltaText ? (
-                  <p className="text-gray-500 text-center text-sm">Conversation will appear here...</p>
+                  <p className="text-slate-400 text-center text-sm">Conversation will appear here...</p>
                 ) : (
                   <>
                     {/* Finalized Lines */}
@@ -654,8 +654,8 @@ export default function TrainerPage() {
                           <div
                             className={`max-w-[85%] px-3 py-2 rounded-lg shadow-sm text-sm ${
                               isUser
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white text-gray-900 border border-gray-200'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-700 text-slate-100 border border-slate-600'
                             }`}
                           >
                             {text}
@@ -667,7 +667,7 @@ export default function TrainerPage() {
                     {/* Delta (Interim) Text */}
                     {deltaText && (
                       <div className="flex justify-start mb-1">
-                        <div className="max-w-[85%] px-3 py-2 rounded-lg shadow-sm text-sm bg-gray-100 text-gray-700 border border-gray-300 opacity-75">
+                        <div className="max-w-[85%] px-3 py-2 rounded-lg shadow-sm text-sm bg-slate-700/50 text-slate-300 border border-slate-600 opacity-75">
                           <span className="italic">{deltaText}...</span>
                         </div>
                       </div>
@@ -683,25 +683,25 @@ export default function TrainerPage() {
 
         {/* Right Panel - Metrics */}
         <div className="flex-1 flex flex-col">
-          <div className="p-4 bg-white border-b border-gray-200">
+          <div className="p-4 bg-slate-800 border-b border-slate-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-gray-500" />
-                  <span className="text-2xl font-mono font-semibold">{formatDuration(metrics.duration)}</span>
+                  <Clock className="w-5 h-5 text-slate-400" />
+                  <span className="text-2xl font-mono font-semibold text-slate-100">{formatDuration(metrics.duration)}</span>
                 </div>
               </div>
               <button
                 onClick={endSession}
                 disabled={loading}
-                className="px-6 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 {loading ? 'Ending...' : 'End Session'}
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4 bg-slate-900">
             <div className="space-y-4 max-w-2xl mx-auto">
               {/* Conversation Status */}
               <ConversationStatus 
@@ -710,9 +710,9 @@ export default function TrainerPage() {
               />
               
               {/* Quick Tips */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-blue-900 mb-2">Quick Tips</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-blue-400 mb-2">Quick Tips</h3>
+                <ul className="text-sm text-slate-300 space-y-1">
                   {shuffledTips.slice(0, 3).map((t, idx) => (
                     <li key={idx}>• {t}</li>
                   ))}

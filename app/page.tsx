@@ -5,15 +5,15 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-6xl font-bold text-slate-100 mb-6">
               DoorIQ Training
             </h1>
-            <p className="text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="text-2xl text-slate-300 mb-8 max-w-3xl mx-auto">
               Master door-to-door pest control sales with AI-powered practice sessions
             </p>
             <div className="flex justify-center space-x-4">
@@ -29,18 +29,18 @@ export default function Home() {
         </div>
 
         {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-64 h-64 bg-blue-200 rounded-full filter blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-200 rounded-full filter blur-3xl opacity-30 translate-x-1/2 translate-y-1/2"></div>
+        <div className="absolute top-0 left-0 w-64 h-64 bg-blue-600 rounded-full filter blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-600 rounded-full filter blur-3xl opacity-20 translate-x-1/2 translate-y-1/2"></div>
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-white">
+      <div className="py-20 bg-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-slate-100 mb-4">
               Why Top Sales Teams Choose DoorIQ
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-slate-300">
               Practice with Austin, our AI-powered skeptical homeowner
             </p>
           </div>
@@ -104,12 +104,12 @@ export default function Home() {
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="bg-gray-50 rounded-xl p-8 hover:shadow-lg transition-shadow">
-      <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-4">
+    <div className="bg-slate-700/50 backdrop-blur-sm rounded-xl p-8 hover:shadow-xl hover:bg-slate-700/70 transition-all duration-200 border border-slate-600/50">
+      <div className="w-16 h-16 bg-blue-600/20 rounded-lg flex items-center justify-center text-blue-400 mb-4">
         {icon}
       </div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
+      <h3 className="text-xl font-semibold text-slate-100 mb-2">{title}</h3>
+      <p className="text-slate-300">{description}</p>
     </div>
   );
 }

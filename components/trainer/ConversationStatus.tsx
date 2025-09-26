@@ -57,11 +57,11 @@ export function ConversationStatus({ transcript, duration }: ConversationStatusP
   const getSentimentColor = () => {
     switch (sentiment) {
       case 'positive':
-        return 'text-green-600 bg-green-50 border-green-200'
+        return 'text-green-300 bg-green-900/30 border-green-700/50'
       case 'negative':
-        return 'text-red-600 bg-red-50 border-red-200'
+        return 'text-red-300 bg-red-900/30 border-red-700/50'
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-200'
+        return 'text-slate-300 bg-slate-700/50 border-slate-600/50'
     }
   }
 
@@ -72,8 +72,8 @@ export function ConversationStatus({ transcript, duration }: ConversationStatusP
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+    <div className="bg-slate-800 rounded-lg shadow-sm border border-slate-700 p-4">
+      <h3 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
         <MessageSquare className="w-4 h-4" />
         Live Conversation Status
       </h3>
@@ -81,7 +81,7 @@ export function ConversationStatus({ transcript, duration }: ConversationStatusP
       <div className="space-y-3">
         {/* Sentiment Indicator */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Current Sentiment</span>
+          <span className="text-sm text-slate-400">Current Sentiment</span>
           <AnimatePresence mode="wait">
             <motion.div
               key={sentiment}
@@ -98,16 +98,16 @@ export function ConversationStatus({ transcript, duration }: ConversationStatusP
 
         {/* Conversation Phase */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Phase</span>
-          <span className="text-sm font-medium text-gray-900 bg-blue-50 px-3 py-1 rounded-full">
+          <span className="text-sm text-slate-400">Phase</span>
+          <span className="text-sm font-medium text-slate-100 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-700/50">
             {conversationPhase}
           </span>
         </div>
 
         {/* Duration */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Duration</span>
-          <span className="text-sm font-mono text-gray-900 flex items-center gap-1">
+          <span className="text-sm text-slate-400">Duration</span>
+          <span className="text-sm font-mono text-slate-100 flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {formatDuration(duration)}
           </span>
@@ -115,14 +115,14 @@ export function ConversationStatus({ transcript, duration }: ConversationStatusP
 
         {/* Exchange Count */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Exchanges</span>
-          <span className="text-sm font-medium text-gray-900">{transcript.length}</span>
+          <span className="text-sm text-slate-400">Exchanges</span>
+          <span className="text-sm font-medium text-slate-100">{transcript.length}</span>
         </div>
       </div>
 
       {lastUpdate && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-xs text-gray-500 text-center">
+        <div className="mt-3 pt-3 border-t border-slate-700">
+          <p className="text-xs text-slate-400 text-center">
             Last updated: {lastUpdate}
           </p>
         </div>

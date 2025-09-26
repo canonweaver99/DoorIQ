@@ -36,17 +36,17 @@ export function LoginClient() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="w-full max-w-md">
-        <div className="bg-white shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4">
+        <div className="bg-slate-800 shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4 border border-slate-700">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p className="text-gray-700">Sign in to DoorIQ Training</p>
+            <h1 className="text-3xl font-bold text-slate-100 mb-2">Welcome Back</h1>
+            <p className="text-slate-300">Sign in to DoorIQ Training</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-200 mb-2">
                 Email Address
               </label>
               <input
@@ -55,13 +55,13 @@ export function LoginClient() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-700 text-slate-100 placeholder-slate-400"
                 placeholder="you@company.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-800 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-200 mb-2">
                 Password
               </label>
               <input
@@ -70,13 +70,13 @@ export function LoginClient() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-700 text-slate-100 placeholder-slate-400"
                 placeholder="••••••••"
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-md text-sm">
+              <div className="bg-red-900/30 border border-red-700/50 text-red-300 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
             )}
@@ -91,9 +91,9 @@ export function LoginClient() {
           </form>
 
           <div className="mt-6 text-center">
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-slate-300">
               Don&apos;t have an account?{' '}
-              <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/auth/signup" className="font-medium text-blue-400 hover:text-blue-300">
                 Sign up
               </Link>
             </span>

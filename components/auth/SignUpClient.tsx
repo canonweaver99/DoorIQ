@@ -54,17 +54,17 @@ export function SignUpClient() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="w-full max-w-md">
-        <div className="bg-white shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4">
+        <div className="bg-slate-800 shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4 border border-slate-700">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Get Started</h1>
-            <p className="text-gray-700">Create your DoorIQ Training account</p>
+            <h1 className="text-3xl font-bold text-slate-100 mb-2">Get Started</h1>
+            <p className="text-slate-300">Create your DoorIQ Training account</p>
           </div>
 
           <form onSubmit={handleSignUp} className="space-y-6">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-800 mb-2">
+              <label htmlFor="fullName" className="block text-sm font-medium text-slate-200 mb-2">
                 Full Name
               </label>
               <input
@@ -73,13 +73,13 @@ export function SignUpClient() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-700 text-slate-100 placeholder-slate-400"
                 placeholder="John Doe"
               />
             </div>
 
             <div>
-              <label htmlFor="repId" className="block text-sm font-medium text-gray-800 mb-2">
+              <label htmlFor="repId" className="block text-sm font-medium text-slate-200 mb-2">
                 Rep ID
               </label>
               <input
@@ -88,13 +88,13 @@ export function SignUpClient() {
                 value={repId}
                 onChange={(e) => setRepId(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-700 text-slate-100 placeholder-slate-400"
                 placeholder="REP-001"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-200 mb-2">
                 Email Address
               </label>
               <input
@@ -103,13 +103,13 @@ export function SignUpClient() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-700 text-slate-100 placeholder-slate-400"
                 placeholder="you@company.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-800 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-200 mb-2">
                 Password
               </label>
               <input
@@ -119,14 +119,14 @@ export function SignUpClient() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-700 text-slate-100 placeholder-slate-400"
                 placeholder="••••••••"
               />
-              <p className="mt-1 text-xs text-gray-500">Minimum 6 characters</p>
+              <p className="mt-1 text-xs text-slate-400">Minimum 6 characters</p>
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-md text-sm">
+              <div className="bg-red-900/30 border border-red-700/50 text-red-300 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
             )}
@@ -141,9 +141,9 @@ export function SignUpClient() {
           </form>
 
           <div className="mt-6 text-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-slate-300">
               Already have an account?{' '}
-              <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/auth/login" className="font-medium text-blue-400 hover:text-blue-300">
                 Sign in
               </Link>
             </span>
