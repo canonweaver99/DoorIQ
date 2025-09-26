@@ -63,34 +63,46 @@ export default function TrainerPage() {
     console.log(`🔄 Delta (${speaker}):`, text)
   }
 
-  // Push finalized transcript line
-  const pushFinal = (text: string, speaker: 'user' | 'austin' = 'austin') => {
+  // Push finalized transcript line (with optional typing for Austin)
+  const pushFinal = async (text: string, speaker: 'user' | 'austin' = 'austin') => {
     if (!text?.trim()) return
-    
+
+    // If Austin is speaking, simulate a simple typing animation in the delta line
+    if (speaker === 'austin') {
+      try {
+        const full = text.trim()
+        let i = 0
+        const perCharMs = 18
+        await new Promise<void>((resolve) => {
+          const iv = setInterval(() => {
+            i++
+            setDelta(full.slice(0, i), 'austin')
+            if (i >= full.length) {
+              clearInterval(iv)
+              resolve()
+            }
+          }, perCharMs)
+        })
+        // Clear delta once typed out
+        setDeltaText('')
+      } catch {}
+    }
+
     const finalText = `${speaker === 'user' ? 'You' : 'Austin'}: ${text.trim()}`
-    
     setFinalizedLines(prev => {
       const newLines = [...prev, finalText]
-      // Keep only last 100 lines to prevent memory issues
       return newLines.length > 100 ? newLines.slice(-100) : newLines
     })
 
-    // Also add to transcript for analysis
     const entry: TranscriptEntry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       speaker,
       text: text.trim(),
       timestamp: new Date()
     }
-    
     setTranscript(prev => [...prev, entry])
-    
-    // Clear delta after finalizing
-    setDeltaText('')
-    
+
     console.log(`✅ Final (${speaker}):`, text)
-    
-    // Auto-scroll
     setTimeout(() => {
       transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, 100)
@@ -514,31 +526,10 @@ export default function TrainerPage() {
             {/* Live Transcript - Delta + Final */}
             <div className="absolute left-0 right-0 bottom-0 top-[60%] overflow-y-auto p-4">
               <div className="space-y-2 max-w-sm mx-auto">
-                {/* Debug Info */}
-                <div className="text-xs text-gray-400 mb-2 p-2 bg-gray-50 rounded">
-                  <div>Delta: &quot;{deltaText}&quot;</div>
-                  <div>Finals: {finalizedLines.length}</div>
-                  <div>Transcript: {transcript.length}</div>
-                </div>
-                
                 {finalizedLines.length === 0 && !deltaText ? (
                   <p className="text-gray-500 text-center text-sm">Conversation will appear here...</p>
                 ) : (
                   <>
-                    <div className="text-center text-xs text-gray-500 mb-2 flex items-center justify-between">
-                      <span>Live Transcript ({finalizedLines.length} lines)</span>
-                      <button 
-                        onClick={() => {
-                          console.log('🧪 Testing transcript UI')
-                          pushFinal('This is a test message from Austin', 'austin')
-                          setTimeout(() => pushFinal('This is a test response from you', 'user'), 1000)
-                        }}
-                        className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
-                      >
-                        Test
-                      </button>
-                    </div>
-                    
                     {/* Finalized Lines */}
                     {finalizedLines.map((line, idx) => {
                       const isUser = line.startsWith('You:')
