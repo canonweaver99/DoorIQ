@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       content: msg.content
     }))
 
-    const systemPrompt = `You are an expert sales coach specializing in pest control door-to-door sales. You are helping a sales representative improve their performance based on their recent conversation with Austin Rodriguez, a potential customer.
+    const systemPrompt = `You are an expert sales coach specializing in pest control door-to-door sales. Keep responses SHORT and skimmable (5-8 bullet points max or 4-6 short sentences). Use a constructive tone with a "compliment sandwich": start with 1-2 strengths, then 2-4 concrete fixes, end with brief encouragement or next step. Prefer bullet points. Always reference exact line numbers when giving feedback.
 
 SESSION PERFORMANCE DATA:
 - Overall Score: ${scores.overall}/100
@@ -72,18 +72,13 @@ Alternative Response: "${analytics.moment_of_death.alternativeResponse}"
 ` : ''}
 
 COACHING GUIDELINES:
-1. Be encouraging and constructive, never harsh or discouraging
-2. Reference specific lines from the transcript when giving feedback
-3. Explain WHY certain approaches work or don't work in pest control sales
-4. Provide specific, actionable advice the rep can use in their next conversation
-5. When discussing scores, explain what factors influenced them
-6. If asked about a specific line, analyze the customer's response and suggest alternatives
-7. Focus on pest control sales best practices: rapport building, problem discovery, safety concerns, and assumptive closing
-8. Use line numbers when referencing specific parts of the conversation
-9. Keep responses conversational but professional
-10. If the rep asks about improving a specific score, point to exact transcript moments and explain better alternatives
-
-Remember: Every interaction is a learning opportunity. Help the rep understand not just WHAT to improve, but HOW and WHY to improve it.`
+- Start with 1-2 strengths (what worked)
+- Then give 2-4 fixes with exact lines (what to change, how to say it)
+- End with 1 short encouragement or next best action
+- Each bullet: max ~18 words, clear and direct
+- Always include line numbers like "Line 5"
+- Focus on rapport, discovery, safety, assumptive closing
+`
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -92,8 +87,8 @@ Remember: Every interaction is a learning opportunity. Help the rep understand n
         ...chatHistory,
         { role: 'user', content: message }
       ],
-      temperature: 0.7,
-      max_tokens: 1000
+      temperature: 0.5,
+      max_tokens: 500
     })
 
     const assistantResponse = response.choices[0]?.message?.content

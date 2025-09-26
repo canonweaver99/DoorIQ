@@ -62,6 +62,33 @@ export async function POST(req: Request) {
     })
 
     // Persist results to Supabase
+    // Heuristic line-level ratings (override average labels)
+    const lineRatings = gTranscript.turns
+      .filter(t => t.speaker === 'rep')
+      .map(t => {
+        const text = t.text.toLowerCase()
+        let label: 'excellent' | 'good' | 'average' | 'poor' = 'average'
+        let rationale = ''
+        if (
+          text.includes('understand how you feel') ||
+          text.includes('which works better') ||
+          text.includes('i have two appointments') ||
+          (text.includes('?') && (text.includes('pest') || text.includes('issue') || text.includes('concern')))
+        ) {
+          label = 'excellent'; rationale = 'Advanced sale with empathy, assumptive close or quality discovery.'
+        } else if (
+          text.includes('great question') || text.includes('let me explain') || text.includes('our service includes')
+        ) {
+          label = 'good'; rationale = 'Adequate response that moves conversation forward.'
+        } else if (
+          text.includes('um') || text.includes('uh') || text.includes('i think') || text.includes('maybe') || text.length < 8 ||
+          (text.includes('price') && !text.includes('value')) || text.includes("i don't know") || text.includes('not sure')
+        ) {
+          label = 'poor'; rationale = 'Weak/hesitant language or missed value framing.'
+        }
+        return { idx: t.id, speaker: 'rep', label, rationale }
+      })
+
     const updatePayload: any = {
       overall_score: clamp(packet.components.final, 0, 100),
       rapport_score: clamp((packet.llm?.clarity_empathy?.score ?? 0) * 10, 0, 100),
@@ -69,7 +96,17 @@ export async function POST(req: Request) {
       listening_score: clamp(Math.round(packet.objective.questionRate * 100), 0, 100),
       objection_handling_score: clamp(packet.llm?.objection_handling?.overall ?? 0, 0, 100),
       safety_score: clamp((packet.objective.stepCoverage.value ? 75 : 40), 0, 100),
-      close_effectiveness_score: clamp((packet.objective.closeAttempts > 0 ? 70 + Math.min(30, packet.objective.closeAttempts * 10) : 40), 0, 100),
+      // More conservative closing score: 0 if convo < 20s and no clear close;
+      // base 40 for any close attempt, 70 for assumptive close, +10 per extra attempt up to 90
+      close_effectiveness_score: (() => {
+        const durationMs = (gTranscript.turns.at(-1)?.endMs ?? 0) - (gTranscript.turns[0]?.startMs ?? 0)
+        const attempts = packet.objective.closeAttempts || 0
+        const assumptive = (packet.objective.closePhrases || []).some((p: string) => /which works better|two appointments|when would you prefer/i.test(p || ''))
+        if (attempts === 0) return durationMs < 20000 ? 0 : 40
+        let base = assumptive ? 70 : 40
+        base += Math.min(20, Math.max(0, attempts - 1) * 10)
+        return clamp(base, 0, 100)
+      })(),
       analytics: {
         ...(session.analytics || {}),
         aiGrader: 'openai+rule',
@@ -83,9 +120,7 @@ export async function POST(req: Request) {
           improvements: packet.llm?.top_fixes ?? [],
           specificTips: (packet.llm?.drills ?? []).map(d => `${d.skill}: ${d.microplay}`)
         },
-        line_ratings: (gTranscript.turns.some(t => t.speaker === 'rep')
-          ? gTranscript.turns.filter(t => t.speaker === 'rep').map(t => ({ idx: t.id, speaker: 'rep', label: 'average', rationale: '' }))
-          : []),
+        line_ratings: lineRatings,
         graded_at: new Date().toISOString(),
       },
     }
