@@ -143,7 +143,7 @@ function MetricBar({ label, score, color, relatedLines = [], feedback, onLineCli
                       </div>
                       
                       <div className="text-sm text-gray-700 italic mb-2 line-clamp-2">
-                        "{line.text}"
+                        &ldquo;{line.text}&rdquo;
                       </div>
                       
                       <div className="text-xs text-gray-600">
@@ -224,7 +224,7 @@ export default function PerformanceMetrics({
               lineNumber,
               text: entry.text,
               impact: 'negative',
-              explanation: 'Used "but" which can sound dismissive - try "and" instead'
+              explanation: 'Used &quot;but&quot; which can sound dismissive - try &quot;and&quot; instead'
             })
           }
           break

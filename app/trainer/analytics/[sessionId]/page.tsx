@@ -34,6 +34,7 @@ export default function AnalyticsPage() {
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'transcript'>('transcript')
+  const [selectedTranscriptLine, setSelectedTranscriptLine] = useState<number | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -115,8 +116,6 @@ export default function AnalyticsPage() {
       </div>
     )
   }
-
-  const [selectedTranscriptLine, setSelectedTranscriptLine] = useState<number | null>(null)
 
   const scrollToTranscriptLine = (lineNumber: number) => {
     setActiveTab('transcript')
