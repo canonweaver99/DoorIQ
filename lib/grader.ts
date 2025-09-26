@@ -410,6 +410,10 @@ export function aggregate(
   m: ObjectiveMetrics,
   llm: LlmRubricOutput | null
 ): ComponentScores {
+  // If the rep never spoke, return a hard 0 to avoid misleading partial points
+  if (!m._repTurns || !m._repWords) {
+    return { objective: 0, llm: 0, penalties: 0, final: 0, band: 'Rework' };
+  }
   // base
   let objective_total = obj60;            // 0..60
   let llm_total = Math.max(0, Math.min(40, Math.round(llm40)));

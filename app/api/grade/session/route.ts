@@ -80,9 +80,9 @@ export async function POST(req: Request) {
           improvements: packet.llm?.top_fixes ?? [],
           specificTips: (packet.llm?.drills ?? []).map(d => `${d.skill}: ${d.microplay}`)
         },
-        line_ratings: gTranscript.turns
-          .filter(t => t.speaker === 'rep')
-          .map(t => ({ idx: t.id, speaker: 'rep', label: 'average', rationale: '' })),
+        line_ratings: (gTranscript.turns.some(t => t.speaker === 'rep')
+          ? gTranscript.turns.filter(t => t.speaker === 'rep').map(t => ({ idx: t.id, speaker: 'rep', label: 'average', rationale: '' }))
+          : []),
         graded_at: new Date().toISOString(),
       },
     }

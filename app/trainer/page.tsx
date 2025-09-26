@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
@@ -608,12 +608,29 @@ export default function TrainerPage() {
               {/* Quick Tips */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-blue-900 mb-2">Quick Tips</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Build rapport before discussing business</li>
-                  <li>• Ask about pest problems they&apos;ve experienced</li>
-                  <li>• Mention safety for pets and children</li>
-                  <li>• Create urgency with seasonal offers</li>
-                </ul>
+                {(() => {
+                  const baseTips = [
+                    'Build rapport before discussing business',
+                    "Ask about pest problems they've experienced",
+                    'Mention safety for pets and children',
+                    'Create urgency with seasonal offers',
+                  ]
+                  const tips = useMemo(() => {
+                    const arr = [...baseTips]
+                    for (let i = arr.length - 1; i > 0; i--) {
+                      const j = Math.floor(Math.random() * (i + 1))
+                      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+                    }
+                    return arr
+                  }, [])
+                  return (
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      {tips.map((t, idx) => (
+                        <li key={idx}>• {t}</li>
+                      ))}
+                    </ul>
+                  )
+                })()}
               </div>
             </div>
           </div>
