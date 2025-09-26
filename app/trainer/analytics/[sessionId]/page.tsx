@@ -9,7 +9,7 @@ import {
   Target, ChevronRight, Download, Share2, FileText, BarChart3
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-// Transcript analysis removed during transcript system reset
+import { Star } from 'lucide-react'
 
 interface SessionData {
   id: string
@@ -64,16 +64,106 @@ export default function AnalyticsPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Harsh grading system - 100 requires perfection
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600'
-    if (score >= 60) return 'text-yellow-600'
+    if (score >= 95) return 'text-green-600'
+    if (score >= 80) return 'text-yellow-600'
     return 'text-red-600'
   }
 
   const getScoreEmoji = (score: number) => {
-    if (score >= 80) return '🌟'
-    if (score >= 60) return '👍'
+    if (score >= 95) return '🌟'
+    if (score >= 80) return '👍'
     return '💪'
+  }
+
+  // Convert score to star rating (1-5 stars)
+  const getStarRating = (score: number) => {
+    if (score >= 95) return 5
+    if (score >= 85) return 4
+    if (score >= 70) return 3
+    if (score >= 55) return 2
+    return 1
+  }
+
+  // Line effectiveness analysis for intelligent highlighting
+  const analyzeLineEffectiveness = (entry: any, idx: number, transcript: any[]) => {
+    if (entry.speaker !== 'user' && entry.speaker !== 'rep') return 'neutral'
+    
+    const text = entry.text.toLowerCase()
+    const prevEntry = idx > 0 ? transcript[idx - 1] : null
+    const nextEntry = idx < transcript.length - 1 ? transcript[idx + 1] : null
+    
+    // Excellent moves (green)
+    if (
+      text.includes('understand how you feel') ||
+      text.includes('many homeowners have told me') ||
+      text.includes('what if i could show you') ||
+      text.includes('safe for pets and children') ||
+      text.includes('i have two appointments available') ||
+      text.includes('which works better for you') ||
+      text.includes('let me ask you this') ||
+      (text.includes('?') && (text.includes('pest') || text.includes('concern') || text.includes('issue')))
+    ) return 'excellent'
+    
+    // Good moves (yellow)
+    if (
+      text.includes('great question') ||
+      text.includes('i appreciate') ||
+      text.includes('let me explain') ||
+      text.includes('what we do is') ||
+      text.includes('our service includes') ||
+      text.includes('schedule') ||
+      text.includes('appointment')
+    ) return 'good'
+    
+    // Poor moves (red) 
+    if (
+      text.includes('um') || text.includes('uh') ||
+      text.includes('i think') || text.includes('maybe') ||
+      text.includes('probably') || text.includes('i guess') ||
+      text.length < 10 || // Too short responses
+      (prevEntry?.speaker === 'austin' && text.includes('price') && !text.includes('value')) ||
+      (text.includes('sorry') && text.length < 20)
+    ) return 'poor'
+    
+    return 'average'
+  }
+
+  const getLineHighlightColor = (score: string) => {
+    switch (score) {
+      case 'excellent': return 'bg-green-50'
+      case 'good': return 'bg-yellow-50'  
+      case 'poor': return 'bg-red-50'
+      default: return 'bg-blue-50'
+    }
+  }
+
+  const getLineHighlightBorder = (score: string) => {
+    switch (score) {
+      case 'excellent': return 'border-green-400'
+      case 'good': return 'border-yellow-400'
+      case 'poor': return 'border-red-400'
+      default: return 'border-blue-400'
+    }
+  }
+
+  const getLineScoreColor = (score: string) => {
+    switch (score) {
+      case 'excellent': return 'text-green-600'
+      case 'good': return 'text-yellow-600'
+      case 'poor': return 'text-red-600'
+      default: return 'text-blue-600'
+    }
+  }
+
+  const getLineScoreText = (score: string) => {
+    switch (score) {
+      case 'excellent': return 'Excellent - Advanced the sale'
+      case 'good': return 'Good - Adequate response'
+      case 'poor': return 'Poor - Missed opportunity'
+      default: return 'Average response'
+    }
   }
 
   if (loading) {
@@ -125,18 +215,36 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Overall Score */}
+          {/* Overall Score with Star Rating */}
           <motion.div 
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.5 }}
             className="text-center py-8"
           >
-            <div className={`text-6xl font-bold ${getScoreColor(session.overall_score || 0)}`}>
-              {session.overall_score || 0}
+            {/* Star Rating */}
+            <div className="flex justify-center mb-4">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-8 h-8 mx-1 ${
+                    i < getStarRating(session.overall_score || 0)
+                      ? 'text-yellow-400 fill-current'
+                      : 'text-gray-300'
+                  }`}
+                />
+              ))}
             </div>
-            <div className="text-xl text-gray-600 mt-2">Overall Score</div>
-            <div className="text-3xl mt-2">{getScoreEmoji(session.overall_score || 0)}</div>
+            
+            <div className={`text-6xl font-bold ${getScoreColor(session.overall_score || 0)}`}>
+              {session.overall_score || 0}<span className="text-2xl text-gray-400">/100</span>
+            </div>
+            <div className="text-xl text-gray-600 mt-2">
+              {session.overall_score >= 95 ? 'Perfect Pitch!' : 
+               session.overall_score >= 80 ? 'Good Job!' :
+               'Needs Improvement'}
+            </div>
+            <div className="text-lg text-gray-500 mt-1">Session Duration: {formatDuration(session.duration_seconds || 0)}</div>
           </motion.div>
 
           {/* Quick Stats */}
@@ -194,8 +302,50 @@ export default function AnalyticsPage() {
 
         {activeTab === 'transcript' ? (
           <>
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-              <p className="text-gray-600">Transcript analysis is currently disabled.</p>
+            {/* Full Transcript Display */}
+            <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Conversation Transcript</h2>
+              {session.transcript && Array.isArray(session.transcript) && session.transcript.length > 0 ? (
+                <div className="max-w-4xl mx-auto space-y-3 max-h-[60vh] overflow-y-auto border border-gray-200 rounded-lg p-4">
+                  {session.transcript.map((entry: any, idx: number) => {
+                    const isUser = entry.speaker === 'user' || entry.speaker === 'rep';
+                    const lineScore = analyzeLineEffectiveness(entry, idx, session.transcript);
+                    
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}
+                      >
+                        <div className={`max-w-[85%] px-4 py-3 rounded-lg shadow-sm ${
+                          isUser 
+                            ? `${getLineHighlightColor(lineScore)} text-gray-900 border-l-4 ${getLineHighlightBorder(lineScore)}`
+                            : 'bg-gray-100 text-gray-900 border border-gray-200'
+                        }`}>
+                          <div className="text-sm font-medium">
+                            {isUser ? 'Sales Rep' : 'Austin Rodriguez'}
+                          </div>
+                          <div className="mt-1">{entry.text}</div>
+                          {entry.timestamp && (
+                            <div className="text-xs text-gray-500 mt-2">
+                              {new Date(entry.timestamp).toLocaleTimeString()}
+                            </div>
+                          )}
+                          {isUser && (
+                            <div className={`text-xs mt-2 font-medium ${getLineScoreColor(lineScore)}`}>
+                              {getLineScoreText(lineScore)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-12">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>No transcript captured for this session.</p>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -209,27 +359,105 @@ export default function AnalyticsPage() {
               label="Rapport Building" 
               score={session.rapport_score || 0} 
               color="blue"
-              feedback="Focus on mirroring Austin's energy level and finding common ground early in the conversation."
+              feedback={
+                (session.rapport_score || 0) >= 85 ? "Outstanding rapport building - genuine connection established" :
+                (session.rapport_score || 0) >= 70 ? "Good rapport foundation, but use more personalized language over generic responses" :
+                "CRITICAL: Poor rapport building - customers buy from people they trust"
+              }
             />
             <ScoreBar 
               label="Objection Handling" 
               score={session.objection_handling_score || 0} 
               color="green"
-              feedback="Remember to acknowledge concerns before addressing them. Use 'I understand' more frequently."
+              feedback={
+                (session.objection_handling_score || 0) >= 85 ? "Professional objection handling with empathy and expertise" :
+                (session.objection_handling_score || 0) >= 70 ? "Good objection handling, but work on more empathetic responses" :
+                "CRITICAL: Poor objection handling - learn to acknowledge and address concerns properly"
+              }
             />
             <ScoreBar 
               label="Safety Concerns" 
               score={session.safety_score || 0} 
               color="yellow"
-              feedback={session.safety_score >= 70 ? "Good job addressing safety!" : "Mention pet and child safety earlier in the conversation."}
+              feedback={
+                (session.safety_score || 0) >= 85 ? "Excellent safety discussion - builds trust and confidence" :
+                (session.safety_score || 0) >= 70 ? "Good safety mention, but be more comprehensive about pet and child protection" :
+                "CRITICAL: Must address safety concerns - this is essential for pest control sales"
+              }
             />
             <ScoreBar 
               label="Close Effectiveness" 
               score={session.close_effectiveness_score || 0} 
               color="purple"
-              feedback="Create urgency without being pushy. Offer multiple service options to give choice."
+              feedback={
+                (session.close_effectiveness_score || 0) >= 85 ? "Excellent closing technique - assumptive and confident" :
+                (session.close_effectiveness_score || 0) >= 70 ? "Good closing attempt, but be more assumptive and create urgency" :
+                "CRITICAL: Weak or no closing attempt - you cannot make sales without asking for them"
+              }
             />
           </div>
+        </div>
+
+        {/* Detailed Feedback */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Expert Feedback</h2>
+          
+          {session.analytics?.feedback && (
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Strengths */}
+              {session.analytics.feedback.strengths && session.analytics.feedback.strengths.length > 0 && (
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h3 className="font-semibold text-green-800 mb-4 flex items-center">
+                    <Trophy className="w-5 h-5 mr-2" />
+                    What You Did Well
+                  </h3>
+                  <ul className="space-y-2">
+                    {session.analytics.feedback.strengths.map((strength: string, idx: number) => (
+                      <li key={idx} className="text-green-700 text-sm flex items-start">
+                        <span className="text-green-500 mr-2">✓</span>
+                        {strength}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Areas for Improvement */}
+              {session.analytics?.feedback?.improvements && session.analytics.feedback.improvements.length > 0 && (
+                <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+                  <h3 className="font-semibold text-red-800 mb-4 flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    Areas for Improvement
+                  </h3>
+                  <ul className="space-y-2">
+                    {session.analytics.feedback.improvements.map((improvement: string, idx: number) => (
+                      <li key={idx} className="text-red-700 text-sm flex items-start">
+                        <span className="text-red-500 mr-2">!</span>
+                        {improvement}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Specific Tips */}
+          {session.analytics?.feedback?.specificTips && session.analytics.feedback.specificTips.length > 0 && (
+            <div className="mt-6 bg-blue-50 p-6 rounded-lg border border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-4 flex items-center">
+                <MessageSquare className="w-5 h-5 mr-2" />
+                Next Time, Try This:
+              </h3>
+              <div className="space-y-3">
+                {session.analytics.feedback.specificTips.map((tip: string, idx: number) => (
+                  <div key={idx} className="bg-white p-4 rounded border border-blue-100">
+                    <p className="text-blue-800 text-sm italic">"{tip}"</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Key Insights */}
@@ -299,7 +527,7 @@ function ScoreBar({ label, score, color, feedback }: { label: string; score: num
     <div>
       <div className="flex justify-between mb-2">
         <span className="font-medium text-gray-700">{label}</span>
-        <span className={`font-semibold ${score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
+        <span className={`font-semibold ${score >= 95 ? 'text-green-600' : score >= 80 ? 'text-yellow-600' : 'text-red-600'}`}>
           {score}%
         </span>
       </div>
