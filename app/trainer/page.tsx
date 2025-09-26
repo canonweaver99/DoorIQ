@@ -511,7 +511,7 @@ export default function TrainerPage() {
               <div className="space-y-2 max-w-sm mx-auto">
                 {/* Debug Info */}
                 <div className="text-xs text-gray-400 mb-2 p-2 bg-gray-50 rounded">
-                  <div>Delta: "{deltaText}"</div>
+                  <div>Delta: &quot;{deltaText}&quot;</div>
                   <div>Finals: {finalizedLines.length}</div>
                   <div>Transcript: {transcript.length}</div>
                 </div>
