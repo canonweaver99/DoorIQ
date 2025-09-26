@@ -265,13 +265,13 @@ const CONFIRM_RX = /\b(does that help|make sense|how does that sound|would that 
 export function scoreObjectionCase(span: ObjectionSpan, transcript: Transcript): ObjectionCaseScore {
   const window = transcript.turns.filter(t => t.id >= span.startTurnId && t.id <= span.endTurnId);
   const repOnly = window.filter(t => t.speaker === 'rep').map(t => t.text).join(' ');
-  const steps = {
-    ack: ACK_RX.test(repOnly) ? 1 : 0,
-    clarify: CLARIFY_RX.test(repOnly) ? 1 : 0,
-    address: ADDRESS_RX.test(repOnly) ? 1 : 0,
-    confirm: CONFIRM_RX.test(repOnly) ? 1 : 0,
+  const steps: { ack: 0|1; clarify: 0|1; address: 0|1; confirm: 0|1 } = {
+    ack: (ACK_RX.test(repOnly) ? 1 : 0) as 0|1,
+    clarify: (CLARIFY_RX.test(repOnly) ? 1 : 0) as 0|1,
+    address: (ADDRESS_RX.test(repOnly) ? 1 : 0) as 0|1,
+    confirm: (CONFIRM_RX.test(repOnly) ? 1 : 0) as 0|1,
   };
-  let score = (steps.ack + steps.clarify + steps.address + steps.confirm) * 5;
+  let score = (Number(steps.ack) + Number(steps.clarify) + Number(steps.address) + Number(steps.confirm)) * 5;
   if (!steps.confirm) score -= 3; // loop not closed penalty
   score = Math.max(0, score);
   return {
