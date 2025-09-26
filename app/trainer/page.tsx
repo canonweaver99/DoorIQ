@@ -13,6 +13,8 @@ import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 export default function TrainerPage() {
   const [sessionActive, setSessionActive] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [deltaText, setDeltaText] = useState<string>('')
+  const [finalizedLines, setFinalizedLines] = useState<string[]>([])
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [metrics, setMetrics] = useState<SessionMetrics>({
     duration: 0,
@@ -55,27 +57,40 @@ export default function TrainerPage() {
     }
   }, [])
 
-  // Add transcript entry
-  const addToTranscript = (speaker: 'user' | 'austin', text: string) => {
-    if (!text.trim()) return
+  // Handle delta (interim) transcript updates
+  const setDelta = (text: string, speaker: 'user' | 'austin' = 'austin') => {
+    setDeltaText(text || '')
+    console.log(`🔄 Delta (${speaker}):`, text)
+  }
 
+  // Push finalized transcript line
+  const pushFinal = (text: string, speaker: 'user' | 'austin' = 'austin') => {
+    if (!text?.trim()) return
+    
+    const finalText = `${speaker === 'user' ? 'You' : 'Austin'}: ${text.trim()}`
+    
+    setFinalizedLines(prev => {
+      const newLines = [...prev, finalText]
+      // Keep only last 100 lines to prevent memory issues
+      return newLines.length > 100 ? newLines.slice(-100) : newLines
+    })
+
+    // Also add to transcript for analysis
     const entry: TranscriptEntry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       speaker,
       text: text.trim(),
       timestamp: new Date()
     }
-
-    setTranscript(prev => {
-      // Avoid duplicates
-      const lastEntry = prev[prev.length - 1]
-      if (lastEntry && lastEntry.speaker === speaker && lastEntry.text === text) {
-        return prev
-      }
-      return [...prev, entry]
-    })
-
-    // Auto-scroll to bottom
+    
+    setTranscript(prev => [...prev, entry])
+    
+    // Clear delta after finalizing
+    setDeltaText('')
+    
+    console.log(`✅ Final (${speaker}):`, text)
+    
+    // Auto-scroll
     setTimeout(() => {
       transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, 100)
@@ -83,38 +98,59 @@ export default function TrainerPage() {
 
   // Listen for ElevenLabs conversation events
   useEffect(() => {
-    const handleUserSpeech = (event: any) => {
-      const text = event?.detail
-      if (text && typeof text === 'string') {
-        console.log('👤 User said:', text)
-        addToTranscript('user', text)
+    const handleMessage = (event: any) => {
+      try {
+        const msg = event?.detail
+        console.log('📨 ElevenLabs message:', msg)
+        
+        // Handle different message types
+        if (msg?.type === 'transcript.delta') {
+          setDelta(msg.text || '', msg.speaker || 'austin')
+        } else if (msg?.type === 'transcript.final') {
+          pushFinal(msg.text || '', msg.speaker || 'austin')
+        } else if (msg?.type === 'user_transcript') {
+          pushFinal(msg.user_transcript || msg.text || '', 'user')
+        } else if (msg?.type === 'agent_response') {
+          const response = msg.agent_response
+          let text = ''
+          if (typeof response === 'string') {
+            text = response
+          } else if (response?.text) {
+            text = response.text
+          } else if (response?.content) {
+            text = response.content
+          }
+          if (text) pushFinal(text, 'austin')
+        } else if (msg?.type === 'conversation_updated') {
+          // Handle conversation updates
+          const messages = msg?.conversation?.messages || []
+          if (messages.length > 0) {
+            const lastMsg = messages[messages.length - 1]
+            if (lastMsg?.role === 'user' && lastMsg?.content) {
+              pushFinal(lastMsg.content, 'user')
+            } else if (lastMsg?.role === 'assistant' && lastMsg?.content) {
+              pushFinal(lastMsg.content, 'austin')
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error processing transcript message:', e)
       }
     }
 
-    const handleAustinResponse = (event: any) => {
-      const detail = event?.detail
-      let text = ''
-      
-      if (typeof detail === 'string') {
-        text = detail
-      } else if (detail?.text) {
-        text = detail.text
-      } else if (detail?.content) {
-        text = detail.content
-      }
-      
-      if (text) {
-        console.log('🤖 Austin said:', text)
-        addToTranscript('austin', text)
-      }
-    }
-
-    window.addEventListener('austin:user', handleUserSpeech)
-    window.addEventListener('austin:agent', handleAustinResponse)
+    // Listen for custom events from ElevenLabs script
+    window.addEventListener('austin:message', handleMessage)
+    window.addEventListener('austin:user', (e: any) => {
+      if (e?.detail) pushFinal(e.detail, 'user')
+    })
+    window.addEventListener('austin:agent', (e: any) => {
+      if (e?.detail) pushFinal(e.detail, 'austin')
+    })
 
     return () => {
-      window.removeEventListener('austin:user', handleUserSpeech)
-      window.removeEventListener('austin:agent', handleAustinResponse)
+      window.removeEventListener('austin:message', handleMessage)
+      window.removeEventListener('austin:user', handleMessage)
+      window.removeEventListener('austin:agent', handleMessage)
     }
   }, [])
 
@@ -334,9 +370,12 @@ export default function TrainerPage() {
                       onStatusChange: (s) => { state.status = s; render(); },
                       onModeChange:   (m) => { state.mode = m; render(); },
                       onMessage: (msg) => {
-                        console.log('ElevenLabs message:', msg);
+                        console.log('ElevenLabs raw message:', msg);
                         
-                        // Extract text from different message types and dispatch events
+                        // Dispatch the raw message for transcript handling
+                        window.dispatchEvent(new CustomEvent('austin:message', { detail: msg }));
+                        
+                        // Also handle legacy events for backward compatibility
                         try {
                           if (msg?.type === 'user_transcript') {
                             const text = msg.user_transcript || msg.text || '';
@@ -357,7 +396,6 @@ export default function TrainerPage() {
                               window.dispatchEvent(new CustomEvent('austin:agent', { detail: text }));
                             }
                           } else if (msg?.type === 'conversation_updated') {
-                            // Handle conversation updates with messages array
                             const messages = msg?.conversation?.messages || [];
                             if (messages.length > 0) {
                               const lastMsg = messages[messages.length - 1];
@@ -448,35 +486,49 @@ export default function TrainerPage() {
               @keyframes floaty { 0% { transform: translate(-50%, -50%) } 50% { transform: translate(-50%, calc(-50% - 7px)) } 100% { transform: translate(-50%, -50%) } }
             `}</style>
 
-            {/* Live Transcript */}
+            {/* Live Transcript - Delta + Final */}
             <div className="absolute left-0 right-0 bottom-0 top-[60%] overflow-y-auto p-4">
-              <div className="space-y-3 max-w-sm mx-auto">
-                {transcript.length === 0 ? (
+              <div className="space-y-2 max-w-sm mx-auto">
+                {finalizedLines.length === 0 && !deltaText ? (
                   <p className="text-gray-500 text-center text-sm">Conversation will appear here...</p>
                 ) : (
                   <>
-                    <p className="text-center text-xs text-gray-500 mb-2">Live Transcript</p>
-                    {transcript.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className={`flex ${entry.speaker === 'user' ? 'justify-end' : 'justify-start'} mb-2`}
-                      >
+                    <p className="text-center text-xs text-gray-500 mb-2">
+                      Live Transcript ({finalizedLines.length} lines)
+                    </p>
+                    
+                    {/* Finalized Lines */}
+                    {finalizedLines.map((line, idx) => {
+                      const isUser = line.startsWith('You:')
+                      const text = line.replace(/^(You|Austin): /, '')
+                      
+                      return (
                         <div
-                          className={`max-w-[85%] px-3 py-2 rounded-lg shadow-sm ${
-                            entry.speaker === 'user'
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-white text-gray-900 border border-gray-200'
-                          }`}
+                          key={idx}
+                          className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-1`}
                         >
-                          <p className="text-sm leading-relaxed">{entry.text}</p>
-                          <p className={`text-xs mt-1 ${
-                            entry.speaker === 'user' ? 'text-blue-100' : 'text-gray-500'
-                          }`}>
-                            {entry.timestamp.toLocaleTimeString()}
-                          </p>
+                          <div
+                            className={`max-w-[85%] px-3 py-2 rounded-lg shadow-sm text-sm ${
+                              isUser
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-900 border border-gray-200'
+                            }`}
+                          >
+                            {text}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    
+                    {/* Delta (Interim) Text */}
+                    {deltaText && (
+                      <div className="flex justify-start mb-1">
+                        <div className="max-w-[85%] px-3 py-2 rounded-lg shadow-sm text-sm bg-gray-100 text-gray-700 border border-gray-300 opacity-75">
+                          <span className="italic">{deltaText}...</span>
                         </div>
                       </div>
-                    ))}
+                    )}
+                    
                     <div ref={transcriptEndRef} />
                   </>
                 )}
