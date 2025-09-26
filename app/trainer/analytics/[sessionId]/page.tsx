@@ -452,7 +452,7 @@ export default function AnalyticsPage() {
               <div className="space-y-3">
                 {session.analytics.feedback.specificTips.map((tip: string, idx: number) => (
                   <div key={idx} className="bg-white p-4 rounded border border-blue-100">
-                    <p className="text-blue-800 text-sm italic">"{tip}"</p>
+                    <p className="text-blue-800 text-sm italic">&ldquo;{tip}&rdquo;</p>
                   </div>
                 ))}
               </div>
