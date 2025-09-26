@@ -14,32 +14,11 @@ interface CoachingTip {
 }
 
 export default function PreSessionPage() {
-  const [tips, setTips] = useState<CoachingTip[]>([])
-  const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
-
+  // Immediately redirect to rotating Preparing screen (trainer autostart)
   useEffect(() => {
-    fetchCoachingTips()
-  }, [])
-
-  const fetchCoachingTips = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('coaching_tips')
-        .select('*')
-        .eq('is_active', true)
-        .order('order_index', { ascending: true })
-        .limit(3)
-
-      if (error) throw error
-      setTips(data || [])
-    } catch (error) {
-      console.error('Error fetching tips:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+    router.replace('/trainer?autostart=true')
+  }, [router])
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -72,67 +51,13 @@ export default function PreSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Ready to Practice?
-            </h1>
-            <p className="text-xl text-gray-600">
-              You&apos;ll be speaking with Austin, a skeptical suburban homeowner who needs pest control services.
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              Today&apos;s Coaching Tips
-            </h2>
-            {loading ? (
-              <div className="animate-pulse space-y-3">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {tips.map((tip) => (
-                  <div
-                    key={tip.id}
-                    className="flex items-start space-x-3 bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <div className={`p-2 rounded-full ${getCategoryColor(tip.category)}`}>
-                      {getCategoryIcon(tip.category)}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-gray-700">{tip.tip}</p>
-                      <span className="text-xs text-gray-500 mt-1 inline-block capitalize">
-                        {tip.category}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Removed the reminder block per request */}
-
-          <div className="text-center">
-            <button
-              onClick={() => {
-                // Navigate to trainer with auto-start flag (no door sounds)
-                router.push('/trainer?autostart=true')
-              }}
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:scale-105"
-            >
-              Start Practice Session
-              <ChevronRight className="ml-2 w-5 h-5" />
-            </button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+          Preparing your session...
         </div>
-
-        
+        <p className="text-sm text-gray-500 mt-4">Redirecting</p>
       </div>
     </div>
   )

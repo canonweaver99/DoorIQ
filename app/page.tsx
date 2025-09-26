@@ -18,7 +18,7 @@ export default function Home() {
             </p>
             <div className="flex justify-center space-x-4">
               <Link
-                href="/trainer/pre-session"
+                href="/trainer?autostart=true"
                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all"
               >
                 Start Practicing
