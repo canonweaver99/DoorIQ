@@ -250,7 +250,7 @@ Realtime Console example app - https://github.com/openai/openai-realtime-console
 
 As of latest update, we use a hybrid approach:
 - **OpenAI Realtime**: Handles speech recognition, conversation flow, turn-taking, interruptions
-- **ElevenLabs**: Provides high-quality voice synthesis for Amanda's responses
+- **ElevenLabs**: Provides high-quality voice synthesis for Austin's responses
 
 Key implementation details:
 1. Token route disables OpenAI audio output (`audio.output` removed)
