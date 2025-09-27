@@ -18,12 +18,15 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private mediaStream: MediaStream | null = null;
   private connected = false;
-  private originalCreatePeerConnection: typeof RTCPeerConnection.prototype.constructor;
+  private originalPeerConnectionCtor: typeof RTCPeerConnection | null = null;
   private peerConnections = new Set<RTCPeerConnection>();
 
   constructor(buses: AudioBuses) {
     this.buses = buses;
-    this.originalCreatePeerConnection = window.RTCPeerConnection;
+    // Guard for SSR/non-browser environments
+    if (typeof window !== 'undefined' && 'RTCPeerConnection' in window) {
+      this.originalPeerConnectionCtor = window.RTCPeerConnection;
+    }
   }
 
   async connect(): Promise<void> {
@@ -40,7 +43,9 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
     if (!this.connected) return;
 
     // Restore original RTCPeerConnection
-    window.RTCPeerConnection = this.originalCreatePeerConnection;
+    if (typeof window !== 'undefined' && this.originalPeerConnectionCtor) {
+      window.RTCPeerConnection = this.originalPeerConnectionCtor;
+    }
 
     // Cleanup existing connections
     this.cleanupAudioNodes();
@@ -58,6 +63,8 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
     const self = this;
 
     // Create a proxy for RTCPeerConnection
+    if (typeof window === 'undefined' || !('RTCPeerConnection' in window)) return;
+
     window.RTCPeerConnection = class extends RTCPeerConnection {
       constructor(configuration?: RTCConfiguration) {
         super(configuration);
@@ -83,19 +90,30 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
 
         // Also hook addEventListener for 'track' events
         const originalAddEventListener = this.addEventListener;
-        this.addEventListener = function(type: string, listener: any, options?: any) {
+        this.addEventListener = function(
+          type: string,
+          listener: EventListenerOrEventListenerObject,
+          options?: boolean | AddEventListenerOptions
+        ): void {
           if (type === 'track') {
-            const wrappedListener = (event: RTCTrackEvent) => {
-              if (event.track.kind === 'audio' && event.streams.length > 0) {
-                self.routeAudioThroughBus(event.streams[0]);
+            const wrappedListener: EventListener = (event: Event) => {
+              const rtcEvent = event as unknown as RTCTrackEvent;
+              if (
+                rtcEvent &&
+                (rtcEvent as any).track &&
+                (rtcEvent as any).streams &&
+                rtcEvent.track.kind === 'audio' &&
+                rtcEvent.streams.length > 0
+              ) {
+                self.routeAudioThroughBus(rtcEvent.streams[0]);
               }
               if (typeof listener === 'function') {
-                listener(event);
-              } else if (listener.handleEvent) {
-                listener.handleEvent(event);
+                (listener as EventListener)(event);
+              } else if ((listener as EventListenerObject).handleEvent) {
+                (listener as EventListenerObject).handleEvent(event);
               }
             };
-            originalAddEventListener.call(this, type, wrappedListener, options);
+            originalAddEventListener.call(this, type, wrappedListener as EventListener, options);
           } else {
             originalAddEventListener.call(this, type, listener, options);
           }
@@ -103,11 +121,11 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
       }
     } as any;
 
-    // Copy static methods and properties
-    Object.setPrototypeOf(window.RTCPeerConnection, this.originalCreatePeerConnection);
-    Object.defineProperty(window.RTCPeerConnection, 'prototype', {
-      value: this.originalCreatePeerConnection.prototype
-    });
+    // Copy static methods and set prototype so static helpers like generateCertificate remain available
+    if (this.originalPeerConnectionCtor) {
+      Object.setPrototypeOf(window.RTCPeerConnection, this.originalPeerConnectionCtor);
+      Object.assign(window.RTCPeerConnection, this.originalPeerConnectionCtor);
+    }
   }
 
   private routeAudioThroughBus(stream: MediaStream): void {
