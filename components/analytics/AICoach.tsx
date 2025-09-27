@@ -210,8 +210,32 @@ export default function AICoach({ sessionData, className = "" }: AICoachProps) {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
+              {/* Preset prompts + Input */}
               <div className="p-4 border-t border-slate-700 bg-slate-800">
+                {/* Preset buttons */}
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {[
+                    "What could I have done better?",
+                    "How could I have closed sooner?",
+                    "Which part hurt my score most?"
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      onClick={() => {
+                        if (!isLoading) {
+                          setInputValue(preset)
+                          setTimeout(() => sendMessage(), 0)
+                        }
+                      }}
+                      className="px-3 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isLoading}
+                      type="button"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="flex space-x-2">
                   <input
                     ref={inputRef}
