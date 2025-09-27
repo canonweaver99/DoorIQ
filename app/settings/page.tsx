@@ -3,16 +3,21 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
-import { User, Mail, Shield, Bell, Save, LogOut } from 'lucide-react'
+import { User, Mail, Shield, Bell, Save, LogOut, Trophy, CheckCircle2, Circle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type UserData = Database['public']['Tables']['users']['Row']
+type Achievement = Database['public']['Tables']['achievements']['Row']
+type UserAchievement = Database['public']['Tables']['user_achievements']['Row']
 
 export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userData, setUserData] = useState<UserData | null>(null)
+  const [achievements, setAchievements] = useState<Achievement[]>([])
+  const [earnedIds, setEarnedIds] = useState<Set<string>>(new Set())
+  const [achievementsLoading, setAchievementsLoading] = useState(true)
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -48,9 +53,28 @@ export default function SettingsPage() {
         rep_id: data.rep_id,
         notifications: true, // Default value, you can store this in user preferences
       })
+
+      // Load achievements in parallel
+      void fetchAchievements(user.id)
     }
     
     setLoading(false)
+  }
+
+  const fetchAchievements = async (uid: string) => {
+    const supabase = createClient()
+    try {
+      const [{ data: allAchievements }, { data: userAch }] = await Promise.all([
+        supabase.from('achievements').select('*'),
+        supabase.from('user_achievements').select('achievement_id').eq('user_id', uid),
+      ])
+
+      setAchievements(allAchievements ?? [])
+      const earned = new Set<string>((userAch as Pick<UserAchievement, 'achievement_id'>[] | null)?.map(a => a.achievement_id) ?? [])
+      setEarnedIds(earned)
+    } finally {
+      setAchievementsLoading(false)
+    }
   }
 
   const handleSave = async () => {
@@ -99,8 +123,8 @@ export default function SettingsPage() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-slate-400">Manage your account and preferences</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Profile</h1>
+          <p className="text-slate-400">Manage your account, achievements, and preferences</p>
         </div>
 
         {/* Profile Section */}
@@ -187,6 +211,60 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Achievements Section */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
+              <h2 className="text-xl font-semibold text-white">Achievements</h2>
+            </div>
+            {!achievementsLoading && (
+              <span className="text-sm text-slate-400">
+                {Array.from(earnedIds).length}/{achievements.length} completed
+              </span>
+            )}
+          </div>
+
+          {achievementsLoading ? (
+            <div className="text-slate-400">Loading achievements...</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {achievements.map((ach) => {
+                const completed = earnedIds.has(ach.id as string)
+                return (
+                  <div
+                    key={ach.id}
+                    className={`flex items-start gap-4 p-4 rounded-lg border ${completed ? 'bg-green-900/20 border-green-700/40' : 'bg-slate-900/40 border-slate-700'} ${completed ? '' : ''}`}
+                  >
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${completed ? 'bg-green-600/20' : 'bg-slate-700/50'}`}>
+                      <span className="text-xl" aria-hidden>
+                        {ach.icon ?? '🏆'}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white font-medium leading-none">{ach.name}</p>
+                          {ach.description && (
+                            <p className="text-sm text-slate-400 mt-1">{ach.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs ${completed ? 'bg-green-600/20 text-green-400' : 'bg-slate-700 text-slate-300'}`}>
+                            {completed ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                            {completed ? 'Completed' : 'Incomplete'}
+                          </span>
+                          <span className="text-xs text-yellow-400">+{ach.points ?? 0} pts</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Notifications Section */}

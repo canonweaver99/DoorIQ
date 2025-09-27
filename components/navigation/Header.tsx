@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Mic, FileText, Trophy, Settings, Menu, X } from 'lucide-react'
+import { Home, Mic, FileText, Trophy, User as UserIcon, Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
@@ -38,7 +38,7 @@ export default function Header() {
     { name: 'Practice', href: '/trainer', icon: Mic },
     { name: 'Sessions', href: '/sessions', icon: FileText },
     { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Profile', href: '/settings', icon: UserIcon },
   ]
 
   // Add manager panel link if user is a manager or admin
