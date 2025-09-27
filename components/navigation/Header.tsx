@@ -58,56 +58,48 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">D</span>
+        <div className="flex items-center justify-center h-16">
+          {/* Centered bar */}
+          <div className="hidden md:flex items-center space-x-6 rounded-full border border-slate-800 bg-slate-900/70 px-4 py-2 shadow-sm">
+            <Link href="/" className="flex items-center space-x-2 pr-2 mr-2 border-r border-slate-800">
+              <div className="w-7 h-7 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-md flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">D</span>
               </div>
-              <span className="text-xl font-bold text-white hidden sm:block">DoorIQ</span>
+              <span className="text-base font-semibold text-white tracking-tight">DoorIQ</span>
             </Link>
-          </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-4">
             {navigation.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
-              
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`
-                    flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                    ${active
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'
-                    }
-                  `}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors
+                    ${active ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'}`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{item.name}</span>
+                  <span className="tracking-tight">{item.name}</span>
                 </Link>
               )
             })}
+
+            {user && (
+              <div className="ml-2 pl-2 border-l border-slate-800">
+                <p className="text-xs text-slate-400 leading-4">{user.full_name}</p>
+                <p className="text-[11px] text-slate-500">${user.virtual_earnings.toFixed(2)} earned</p>
+              </div>
+            )}
           </div>
 
-          {/* User Info */}
-          {user && (
-            <div className="hidden md:flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-white">{user.full_name}</p>
-                <p className="text-xs text-slate-400">
-                  ${user.virtual_earnings.toFixed(2)} earned
-                </p>
+          {/* Mobile header */}
+          <div className="flex md:hidden items-center justify-between w-full">
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="w-7 h-7 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-md flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">D</span>
               </div>
-            </div>
-          )}
-
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+              <span className="text-lg font-semibold text-white tracking-tight">DoorIQ</span>
+            </Link>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-slate-300 hover:text-white p-2"
@@ -123,33 +115,23 @@ export default function Header() {
             {navigation.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
-              
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`
-                    flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all
-                    ${active
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'
-                    }
-                  `}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all
+                    ${active ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'}`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span>{item.name}</span>
+                  <span className="tracking-tight">{item.name}</span>
                 </Link>
               )
             })}
-            
-            {/* Mobile User Info */}
             {user && (
               <div className="px-4 py-3 border-t border-slate-800">
                 <p className="text-sm font-medium text-white">{user.full_name}</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  ${user.virtual_earnings.toFixed(2)} earned
-                </p>
+                <p className="text-xs text-slate-400 mt-1">${user.virtual_earnings.toFixed(2)} earned</p>
               </div>
             )}
           </div>
