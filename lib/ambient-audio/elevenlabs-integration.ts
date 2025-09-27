@@ -17,7 +17,7 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
   private buses: AudioBuses;
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private mediaStream: MediaStream | null = null;
-  private isConnected = false;
+  private connected = false;
   private originalCreatePeerConnection: typeof RTCPeerConnection.prototype.constructor;
   private peerConnections = new Set<RTCPeerConnection>();
 
@@ -27,17 +27,17 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
   }
 
   async connect(): Promise<void> {
-    if (this.isConnected) return;
+    if (this.connected) return;
 
     // Hook into RTCPeerConnection creation to intercept ElevenLabs streams
     this.interceptWebRTC();
-    this.isConnected = true;
+    this.connected = true;
 
     console.log('🎙️ ElevenLabs WebRTC audio hook connected');
   }
 
   disconnect(): void {
-    if (!this.isConnected) return;
+    if (!this.connected) return;
 
     // Restore original RTCPeerConnection
     window.RTCPeerConnection = this.originalCreatePeerConnection;
@@ -46,12 +46,12 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
     this.cleanupAudioNodes();
     this.peerConnections.clear();
 
-    this.isConnected = false;
+    this.connected = false;
     console.log('🎙️ ElevenLabs WebRTC audio hook disconnected');
   }
 
   get isConnected(): boolean {
-    return this.isConnected;
+    return this.connected;
   }
 
   private interceptWebRTC(): void {
@@ -153,14 +153,14 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
 export class ElevenLabsWebSocketIntegration implements ElevenLabsIntegration {
   private buses: AudioBuses;
   private websocket: WebSocket | null = null;
-  private isConnected = false;
+  private connected = false;
   
   constructor(buses: AudioBuses) {
     this.buses = buses;
   }
 
   async connect(): Promise<void> {
-    if (this.isConnected) return;
+    if (this.connected) return;
 
     // This would need the WebSocket URL from your existing API
     // Implementation would be similar to your archived WebSocket code
@@ -175,11 +175,11 @@ export class ElevenLabsWebSocketIntegration implements ElevenLabsIntegration {
       this.websocket.close();
       this.websocket = null;
     }
-    this.isConnected = false;
+    this.connected = false;
   }
 
   get isConnected(): boolean {
-    return this.isConnected;
+    return this.connected;
   }
 }
 
@@ -192,25 +192,25 @@ export class ElevenLabsAudioElementHook implements ElevenLabsIntegration {
   private sourceNode: MediaElementAudioSourceNode | null = null;
   private audioElement: HTMLAudioElement | null = null;
   private observer: MutationObserver | null = null;
-  private isConnected = false;
+  private connected = false;
 
   constructor(buses: AudioBuses) {
     this.buses = buses;
   }
 
   async connect(): Promise<void> {
-    if (this.isConnected) return;
+    if (this.connected) return;
 
     // Look for audio elements that might be created by ElevenLabs
     this.findAndHookAudioElements();
     this.observeForNewAudioElements();
     
-    this.isConnected = true;
+    this.connected = true;
     console.log('🎵 Audio element hook connected');
   }
 
   disconnect(): void {
-    if (!this.isConnected) return;
+    if (!this.connected) return;
 
     if (this.observer) {
       this.observer.disconnect();
@@ -218,12 +218,12 @@ export class ElevenLabsAudioElementHook implements ElevenLabsIntegration {
     }
 
     this.cleanupAudioNodes();
-    this.isConnected = false;
+    this.connected = false;
     console.log('🎵 Audio element hook disconnected');
   }
 
   get isConnected(): boolean {
-    return this.isConnected;
+    return this.connected;
   }
 
   private findAndHookAudioElements(): void {
