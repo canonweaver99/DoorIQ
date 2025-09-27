@@ -17,6 +17,7 @@ export interface Database {
           rep_id: string
           team_id: string | null
           role: 'rep' | 'manager' | 'admin'
+          virtual_earnings: number
           created_at: string
           updated_at: string
         }
@@ -27,6 +28,7 @@ export interface Database {
           rep_id: string
           team_id?: string | null
           role?: 'rep' | 'manager' | 'admin'
+          virtual_earnings?: number
           created_at?: string
           updated_at?: string
         }
@@ -37,6 +39,7 @@ export interface Database {
           rep_id?: string
           team_id?: string | null
           role?: 'rep' | 'manager' | 'admin'
+          virtual_earnings?: number
           created_at?: string
           updated_at?: string
         }
@@ -75,6 +78,7 @@ export interface Database {
           audio_url: string | null
           analytics: Json | null
           sentiment_data: Json | null
+          virtual_earnings: number | null
           created_at: string
         }
         Insert: {
@@ -93,6 +97,7 @@ export interface Database {
           audio_url?: string | null
           analytics?: Json | null
           sentiment_data?: Json | null
+          virtual_earnings?: number | null
           created_at?: string
         }
         Update: {
@@ -111,6 +116,7 @@ export interface Database {
           audio_url?: string | null
           analytics?: Json | null
           sentiment_data?: Json | null
+          virtual_earnings?: number | null
           created_at?: string
         }
       }
@@ -256,6 +262,55 @@ export interface Database {
           order_index?: number
           is_active?: boolean
           created_at?: string
+        }
+      }
+      messages: {
+        Row: {
+          id: string
+          sender_id: string
+          recipient_id: string
+          session_id: string
+          message: string
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sender_id: string
+          recipient_id: string
+          session_id: string
+          message: string
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          sender_id?: string
+          recipient_id?: string
+          session_id?: string
+          message?: string
+          is_read?: boolean
+          created_at?: string
+        }
+      }
+      manager_rep_assignments: {
+        Row: {
+          id: string
+          manager_id: string
+          rep_id: string
+          assigned_at: string
+        }
+        Insert: {
+          id?: string
+          manager_id: string
+          rep_id: string
+          assigned_at?: string
+        }
+        Update: {
+          id?: string
+          manager_id?: string
+          rep_id?: string
+          assigned_at?: string
         }
       }
     }

@@ -1,0 +1,290 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Database } from '@/lib/supabase/database.types'
+import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award } from 'lucide-react'
+
+type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
+  rank: number
+  previousRank?: number
+  sessionsCount: number
+  avgScore: number
+}
+
+export default function LeaderboardPage() {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('month')
+  const [currentUserId, setCurrentUserId] = useState<string>('')
+
+  useEffect(() => {
+    fetchLeaderboard()
+  }, [timeframe])
+
+  const fetchLeaderboard = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      setCurrentUserId(user.id)
+    }
+
+    // Fetch all users with their earnings
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', 'rep')
+      .order('virtual_earnings', { ascending: false })
+
+    if (error || !users) {
+      console.error('Error fetching leaderboard:', error)
+      setLoading(false)
+      return
+    }
+
+    const usersList = (users ?? []) as any[]
+
+    // Fetch session stats for each user
+    const leaderboardData = await Promise.all(
+      usersList.map(async (u: any, index: number) => {
+        let sessionsQuery = supabase
+          .from('training_sessions')
+          .select('overall_score')
+          .eq('user_id', u.id as string)
+          .not('overall_score', 'is', null)
+
+        // Apply timeframe filter
+        if (timeframe === 'week') {
+          const weekAgo = new Date()
+          weekAgo.setDate(weekAgo.getDate() - 7)
+          sessionsQuery = sessionsQuery.gte('created_at', weekAgo.toISOString())
+        } else if (timeframe === 'month') {
+          const monthAgo = new Date()
+          monthAgo.setMonth(monthAgo.getMonth() - 1)
+          sessionsQuery = sessionsQuery.gte('created_at', monthAgo.toISOString())
+        }
+
+        const { data: sessions } = await sessionsQuery
+
+        const sessionRows = (sessions ?? []) as { overall_score: number | null }[]
+        const sessionsCount = sessionRows.length || 0
+        const avgScore = sessionsCount > 0
+          ? Math.round(
+              sessionRows.reduce((sum, s) => sum + (s.overall_score ?? 0), 0) / sessionsCount
+            )
+          : 0
+
+        return {
+          ...(u as any),
+          rank: index + 1,
+          sessionsCount,
+          avgScore
+        } as LeaderboardUser
+      })
+    )
+
+    setLeaderboard(leaderboardData as LeaderboardUser[])
+    setLoading(false)
+  }
+
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return <Crown className="w-6 h-6 text-yellow-500" />
+      case 2:
+        return <Medal className="w-6 h-6 text-slate-400" />
+      case 3:
+        return <Award className="w-6 h-6 text-orange-600" />
+      default:
+        return (
+          <div className="w-6 h-6 flex items-center justify-center text-slate-400 font-bold">
+            {rank}
+          </div>
+        )
+    }
+  }
+
+  const getRankChange = (user: LeaderboardUser) => {
+    // For now, we'll just show static indicators
+    // In a real app, you'd compare with previous period's rankings
+    if (user.rank <= 3) {
+      return <TrendingUp className="w-4 h-4 text-green-500" />
+    } else if (user.rank > 5) {
+      return <TrendingDown className="w-4 h-4 text-red-500" />
+    }
+    return <Minus className="w-4 h-4 text-slate-500" />
+  }
+
+  const getRowStyles = (rank: number, userId: string) => {
+    if (userId === currentUserId) {
+      return 'bg-blue-600/20 border-blue-600/50'
+    }
+    if (rank === 1) {
+      return 'bg-yellow-600/10 border-yellow-600/30'
+    }
+    if (rank === 2) {
+      return 'bg-slate-600/10 border-slate-600/30'
+    }
+    if (rank === 3) {
+      return 'bg-orange-600/10 border-orange-600/30'
+    }
+    return 'bg-slate-800/50 border-slate-700'
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Leaderboard</h1>
+          <p className="text-slate-400">See how you rank against your team</p>
+        </div>
+
+        {/* Timeframe Selector */}
+        <div className="flex justify-center space-x-4 mb-8">
+          {(['week', 'month', 'all'] as const).map((period) => (
+            <button
+              key={period}
+              onClick={() => setTimeframe(period)}
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                timeframe === period
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              {period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'All Time'}
+            </button>
+          ))}
+        </div>
+
+        {/* Top 3 Podium */}
+        {leaderboard.length >= 3 && (
+          <div className="grid grid-cols-3 gap-4 mb-12 max-w-3xl mx-auto">
+            {/* 2nd Place */}
+            <div className="order-1 md:order-1">
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-600 text-center transform translate-y-8">
+                <Medal className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                <h3 className="font-bold text-white mb-1">{leaderboard[1].full_name}</h3>
+                <p className="text-2xl font-bold text-slate-300 mb-1">
+                  ${leaderboard[1].virtual_earnings.toFixed(2)}
+                </p>
+                <p className="text-sm text-slate-400">2nd Place</p>
+              </div>
+            </div>
+
+            {/* 1st Place */}
+            <div className="order-2 md:order-2">
+              <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/20 backdrop-blur-sm rounded-lg p-6 border border-yellow-600/50 text-center transform scale-110">
+                <Crown className="w-16 h-16 text-yellow-500 mx-auto mb-3" />
+                <h3 className="font-bold text-white text-lg mb-1">{leaderboard[0].full_name}</h3>
+                <p className="text-3xl font-bold text-yellow-400 mb-1">
+                  ${leaderboard[0].virtual_earnings.toFixed(2)}
+                </p>
+                <p className="text-sm text-yellow-400">1st Place</p>
+              </div>
+            </div>
+
+            {/* 3rd Place */}
+            <div className="order-3 md:order-3">
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-orange-600/50 text-center transform translate-y-8">
+                <Award className="w-12 h-12 text-orange-600 mx-auto mb-3" />
+                <h3 className="font-bold text-white mb-1">{leaderboard[2].full_name}</h3>
+                <p className="text-2xl font-bold text-orange-400 mb-1">
+                  ${leaderboard[2].virtual_earnings.toFixed(2)}
+                </p>
+                <p className="text-sm text-orange-400">3rd Place</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Full Leaderboard Table */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-900/50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Rank
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Sales Rep
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Earnings
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Sessions
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Avg Score
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Trend
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700">
+                {leaderboard.map((user) => (
+                  <tr
+                    key={user.id}
+                    className={`${getRowStyles(user.rank, user.id)} transition-colors`}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {getRankIcon(user.rank)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-white">
+                          {user.full_name}
+                          {user.id === currentUserId && (
+                            <span className="ml-2 text-xs text-blue-400">(You)</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-400">{user.email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-lg font-bold text-green-400">
+                        ${user.virtual_earnings.toFixed(2)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-slate-300">{user.sessionsCount}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-slate-300">
+                        {user.avgScore > 0 ? `${user.avgScore}%` : '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getRankChange(user)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Motivational Message */}
+        <div className="mt-8 text-center">
+          <p className="text-slate-400">
+            Keep practicing to climb the ranks and earn more virtual cash!
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

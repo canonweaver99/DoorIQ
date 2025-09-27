@@ -12,6 +12,7 @@ export interface ConversationAnalysis {
     safetyAddressed: boolean
     closeAttempted: boolean
     objectionHandled: boolean
+    dealClosed: boolean
   }
   feedback: {
     strengths: string[]
@@ -24,6 +25,7 @@ export interface ConversationAnalysis {
     presentation: { startIdx: number; endIdx: number }
     closing: { startIdx: number; endIdx: number }
   }
+  virtualEarnings: number
 }
 
 export function analyzeConversation(
@@ -42,7 +44,8 @@ export function analyzeConversation(
       priceDiscussed: false,
       safetyAddressed: false,
       closeAttempted: false,
-      objectionHandled: false
+      objectionHandled: false,
+      dealClosed: false
     },
     feedback: {
       strengths: [],
@@ -54,7 +57,8 @@ export function analyzeConversation(
       discovery: { startIdx: -1, endIdx: -1 },
       presentation: { startIdx: -1, endIdx: -1 },
       closing: { startIdx: -1, endIdx: -1 }
-    }
+    },
+    virtualEarnings: 0
   }
 
   if (transcript.length === 0) return analysis
@@ -555,6 +559,76 @@ export function analyzeConversation(
 
   if (analysis.keyMoments.objectionHandled && analysis.scores.salesTechnique >= 80) {
     analysis.feedback.strengths.push("Professional objection handling with empathy and expertise")
+  }
+
+  // Check if deal was closed (homeowner agreed to schedule)
+  analysis.keyMoments.dealClosed = transcript.some((t, idx) => {
+    if (t.speaker === 'austin' || t.speaker === 'homeowner') {
+      const text = t.text.toLowerCase()
+      return (
+        text.includes('yes') ||
+        text.includes('okay') ||
+        text.includes('sounds good') ||
+        text.includes("let's do it") ||
+        text.includes('schedule') ||
+        text.includes('appointment') ||
+        text.includes('sign me up') ||
+        text.includes('when can you come')
+      ) && idx > transcript.length * 0.6 // In the latter part of conversation
+    }
+    return false
+  })
+
+  // Calculate virtual earnings based on performance and deal closure
+  let baseEarnings = 0
+  
+  if (analysis.keyMoments.dealClosed) {
+    // Base commission for closing a deal
+    baseEarnings = 50 // $50 base for any close
+    
+    // Performance multipliers
+    if (analysis.overallScore >= 90) {
+      baseEarnings *= 2.0 // Double for exceptional performance
+    } else if (analysis.overallScore >= 80) {
+      baseEarnings *= 1.5 // 50% bonus for great performance
+    } else if (analysis.overallScore >= 70) {
+      baseEarnings *= 1.2 // 20% bonus for good performance
+    }
+    
+    // Bonus for smooth close (no major objections)
+    const smoothClose = objections.length === 0 || 
+      (objections.length === 1 && analysis.keyMoments.objectionHandled)
+    if (smoothClose) {
+      baseEarnings += 25 // $25 bonus for smooth close
+    }
+    
+    // Bonus for addressing all key points
+    if (analysis.keyMoments.priceDiscussed && 
+        analysis.keyMoments.safetyAddressed && 
+        analysis.scores.introduction >= 80) {
+      baseEarnings += 15 // $15 bonus for comprehensive presentation
+    }
+    
+    // Cap at reasonable maximum
+    baseEarnings = Math.min(baseEarnings, 150)
+  } else {
+    // Small participation reward even without closing
+    if (analysis.overallScore >= 80) {
+      baseEarnings = 5 // $5 for excellent attempt
+    } else if (analysis.overallScore >= 70) {
+      baseEarnings = 3 // $3 for good attempt
+    } else if (analysis.overallScore >= 60) {
+      baseEarnings = 1 // $1 for decent attempt
+    }
+  }
+  
+  analysis.virtualEarnings = Math.round(baseEarnings * 100) / 100 // Round to cents
+
+  // Add earnings feedback
+  if (analysis.keyMoments.dealClosed) {
+    analysis.feedback.strengths.push(`Excellent close! You earned $${analysis.virtualEarnings.toFixed(2)} in virtual commission!`)
+  } else if (analysis.keyMoments.closeAttempted) {
+    analysis.feedback.specificTips.push("Keep practicing your closing technique to convert attempts into sales and earn virtual commissions!")
   }
 
   return analysis

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import GlobalNav from "@/components/layout/GlobalNav";
+import Header from "@/components/navigation/Header";
 
 export const dynamic = 'force-dynamic'
 
@@ -28,10 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100`}>
-        {/* Global navigation with Home + leave-confirmation */}
-        <GlobalNav />
-        {/* Spacer to avoid content under fixed nav (approx 44px) */}
-        <div style={{ height: 44 }} />
+        <Header />
+        {/* Spacer to avoid content under fixed nav (approx 64px for new header) */}
+        <div style={{ height: 64 }} />
         {children}
       </body>
     </html>

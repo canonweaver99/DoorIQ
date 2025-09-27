@@ -10,6 +10,7 @@ import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { SessionMetrics, TranscriptEntry } from '@/lib/trainer/types'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 import CalculatingScore from '@/components/analytics/CalculatingScore'
+import { useSessionRecording } from '@/hooks/useSessionRecording'
 
 const BASE_TIPS = [
   'Smile before you knock - it comes through in your voice!',
@@ -56,6 +57,9 @@ export default function TrainerPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  
+  // Audio recording hook
+  const { isRecording, startRecording, stopRecording } = useSessionRecording(sessionId)
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
@@ -248,12 +252,24 @@ export default function TrainerPage() {
     window.addEventListener('austin:message', handleMessage)
     window.addEventListener('austin:user', handleUserEvent)
     window.addEventListener('austin:agent', handleAgentEvent)
+    
+    // Expose recording functions to window for Austin integration
+    ;(window as any).startSessionRecording = () => {
+      console.log('🎙️ Starting recording from Austin')
+      startRecording()
+    }
+    ;(window as any).stopSessionRecording = () => {
+      console.log('🛑 Stopping recording from Austin')
+      stopRecording()
+    }
 
     return () => {
       console.log('🔌 Removing transcript event listeners')
       window.removeEventListener('austin:message', handleMessage)
       window.removeEventListener('austin:user', handleUserEvent)
       window.removeEventListener('austin:agent', handleAgentEvent)
+      delete (window as any).startSessionRecording
+      delete (window as any).stopSessionRecording
     }
   }, [])
 
@@ -321,6 +337,9 @@ export default function TrainerPage() {
       // Stop Austin conversation if running
       try { (window as any).stopAustin?.() } catch {}
       
+      // Stop recording
+      stopRecording()
+      
       // Show calculating screen immediately
       setCalculatingScore(true)
       setLoading(false) // Remove loading state so calculating screen shows
@@ -339,7 +358,8 @@ export default function TrainerPage() {
           priceDiscussed: false,
           safetyAddressed: true,
           closeAttempted: true,
-          objectionHandled: false
+          objectionHandled: false,
+          dealClosed: false
         },
         feedback: {
           strengths: [],
@@ -351,7 +371,8 @@ export default function TrainerPage() {
           discovery: { startIdx: -1, endIdx: -1 },
           presentation: { startIdx: -1, endIdx: -1 },
           closing: { startIdx: -1, endIdx: -1 }
-        }
+        },
+        virtualEarnings: 0
       }
 
       if (sessionId) {
@@ -373,7 +394,8 @@ export default function TrainerPage() {
               finalSentiment: metrics.sentimentScore,
               interruptionCount: metrics.interruptionCount,
               objectionCount: metrics.objectionCount
-            }
+            },
+            virtual_earnings: analysis.virtualEarnings || 0
           } as any)
           .eq('id', sessionId as string)
 
@@ -388,6 +410,17 @@ export default function TrainerPage() {
           }
         } catch (e) {
           console.error('AI grading after session failed (will still redirect):', e)
+        }
+        
+        // Send notifications to managers
+        try {
+          await fetch('/api/notifications/session-complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+          })
+        } catch (e) {
+          console.error('Manager notification failed:', e)
         }
       }
     } catch (e) {
@@ -561,6 +594,11 @@ export default function TrainerPage() {
                     if (convo || isStarting || state.status === 'connected' || state.status === 'connecting') return;
                     isStarting = true;
                     
+                    // Start recording if available
+                    if (window.startSessionRecording) {
+                      window.startSessionRecording();
+                    }
+                    
                     // Open door with animation
                     state.doorOpen = true;
                     state.status = 'connecting'; 
@@ -670,6 +708,11 @@ export default function TrainerPage() {
                   state.mode = 'idle';
                   state.doorOpen = false;
                   render();
+                  
+                  // Stop recording if available
+                  if (window.stopSessionRecording) {
+                    window.stopSessionRecording();
+                  }
                 }
 
                 // Door click handler (starts conversation)
