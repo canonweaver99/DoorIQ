@@ -10,6 +10,7 @@ import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { SessionMetrics, TranscriptEntry } from '@/lib/trainer/types'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 import CalculatingScore from '@/components/analytics/CalculatingScore'
+import MoneyNotification from '@/components/trainer/MoneyNotification'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
 
 const BASE_TIPS = [
@@ -53,6 +54,8 @@ export default function TrainerPage() {
   const [preparingSession, setPreparingSession] = useState(true)
   const [calculatingScore, setCalculatingScore] = useState(false)
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
+  const [showMoneyNotification, setShowMoneyNotification] = useState(false)
+  const [earningsAmount, setEarningsAmount] = useState(0)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -340,10 +343,6 @@ export default function TrainerPage() {
       // Stop recording
       stopRecording()
       
-      // Show calculating screen immediately
-      setCalculatingScore(true)
-      setLoading(false) // Remove loading state so calculating screen shows
-      
       // Analyze the conversation with transcript
       const analysis = transcript.length > 0 ? analyzeConversation(transcript) : {
         overallScore: 75,
@@ -373,6 +372,19 @@ export default function TrainerPage() {
           closing: { startIdx: -1, endIdx: -1 }
         },
         virtualEarnings: 0
+      }
+
+      // Check if deal was closed and show money notification first
+      const hasEarnings = analysis.virtualEarnings && analysis.virtualEarnings > 0
+      if (hasEarnings) {
+        setEarningsAmount(analysis.virtualEarnings)
+        setShowMoneyNotification(true)
+        setLoading(false) // Remove loading state
+        // Don't show calculating screen yet - wait for money notification to complete
+      } else {
+        // Show calculating screen immediately if no earnings
+        setCalculatingScore(true)
+        setLoading(false) // Remove loading state so calculating screen shows
       }
 
       if (sessionId) {
@@ -438,6 +450,11 @@ export default function TrainerPage() {
     }
   }
 
+  const handleMoneyNotificationComplete = () => {
+    setShowMoneyNotification(false)
+    setCalculatingScore(true) // Now show the calculating screen
+  }
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -494,6 +511,28 @@ export default function TrainerPage() {
           </div>
         </div>
       </div>
+    )
+  }
+
+  // Show money notification when deal is closed
+  if (showMoneyNotification) {
+    return (
+      <>
+        <MoneyNotification 
+          amount={earningsAmount}
+          show={showMoneyNotification}
+          onComplete={handleMoneyNotificationComplete}
+        />
+        {/* Keep the main interface in background */}
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
+          <div className="max-w-4xl mx-auto p-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">Session Complete</h1>
+              <p className="text-slate-400">Processing your results...</p>
+            </div>
+          </div>
+        </div>
+      </>
     )
   }
 
