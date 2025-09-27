@@ -61,7 +61,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-5xl sm:text-6xl font-bold text-slate-100 mb-6">
-              Train Like the Top 1% — Before You Knock.
+              Train Like the Top 1% - Before You Knock.
             </h1>
             <p className="text-xl sm:text-2xl text-slate-300 mb-10 max-w-3xl mx-auto">
               DoorIQ turns real door-to-door moments into safe, repeatable reps. Talk to a lifelike AI homeowner, get instant feedback, and watch your close rate climb.
@@ -124,7 +124,7 @@ function SocialProofSection() {
           Trusted by High-Performing Sales Teams
         </h3>
         <p className="text-center text-slate-400 mt-2">
-          From solo reps to national crews — teams level up faster on DoorIQ.
+          From solo reps to national crews - teams level up faster on DoorIQ.
         </p>
 
         <div className="mt-8 overflow-hidden relative">
@@ -174,7 +174,7 @@ function HowItWorksSection() {
             },
             {
               title: "Get Instant Feedback", 
-              body: "Objective scoring on tone, pace, discovery, and objection handling — with concrete next steps."
+              body: "Objective scoring on tone, pace, discovery, and objection handling - with concrete next steps."
             },
             {
               title: "Make Virtual Money",
@@ -238,7 +238,7 @@ function ResultsSection() {
           />
         </div>
         <p className={`text-center text-slate-300 mt-10 max-w-3xl mx-auto transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '800ms' }}>
-          Give your team the reps that actually matter — the hard ones.
+          Give your team the reps that actually matter - the hard ones.
         </p>
       </div>
     </section>
@@ -255,7 +255,7 @@ function EmotionalStorySection() {
           From Slammed Doors to Second Chances
         </h2>
         <p className={`mt-6 text-lg text-slate-300 transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '300ms' }}>
-          Every rep remembers that first brush-off. The awkward pause. The rush to recover. DoorIQ turns those moments into a safe arena to practice under pressure — real voices, real emotions, real objections — until confidence feels automatic.
+          Every rep remembers that first brush-off. The awkward pause. The rush to recover. DoorIQ turns those moments into a safe arena to practice under pressure - real voices, real emotions, real objections - until confidence feels automatic.
         </p>
         <p className={`mt-4 text-lg text-slate-300 transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '600ms' }}>
           Train the nerves. Keep the edge. Win the door.

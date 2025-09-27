@@ -1,4 +1,4 @@
-# Realtime API with WebRTC — Project Documentation
+# Realtime API with WebRTC - Project Documentation
 
 This document is a canonical reference for connecting our app to OpenAI’s Realtime API. Always consult this file when working on ephemeral token minting, session initialization, or WebRTC client connections.
 
@@ -233,9 +233,9 @@ const event = {
 dc.send(JSON.stringify(event));
 ```
 
-More: Realtime conversations guide — https://platform.openai.com/docs/guides/realtime-conversations
+More: Realtime conversations guide - https://platform.openai.com/docs/guides/realtime-conversations
 
-Realtime Console example app — https://github.com/openai/openai-realtime-console/
+Realtime Console example app - https://github.com/openai/openai-realtime-console/
 
 ---
 
@@ -261,7 +261,7 @@ Key implementation details:
 
 ---
 
-## OpenAI Realtime Console — Installation & Usage
+## OpenAI Realtime Console - Installation & Usage
 
 This is an example application showing how to use the OpenAI Realtime API with WebRTC. It’s a minimal template that uses Express to serve a React frontend, with Vite to build the frontend.
 

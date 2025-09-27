@@ -13,7 +13,7 @@ npm run dev
 
 ### ✅ Core Behavior Tests
 
-1. **Interrupt Amanda mid-word** → TTS stops immediately; she yields with "Oh—sorry, you go ahead."
+1. **Interrupt Amanda mid-word** -> TTS stops immediately; she yields with "Oh-sorry, you go ahead."
 2. **Amanda never talks >2 sentences** → Responses are snappy and neighborly (5-12 words typically)
 3. **Rapport comes before business every time** → She asks about you before letting you pitch
 4. **Rep friendliness response** → If rep is friendly, Amanda warms up; if pushy, she becomes cautious (shorter replies)
@@ -44,7 +44,7 @@ If Amanda still barges in or doesn't respond properly:
 
 ### ✅ Personality Checks
 
-- **Greeting Phase:** "Hi there—can I help you?" (friendly but uncertain)
+- **Greeting Phase:** "Hi there-can I help you?" (friendly but uncertain)
 - **Rapport Building:** Asks about weather, neighborhood, rep's day before business
 - **Small Life Details:** May mention kids, dog, errands naturally
 - **Business Transition:** Only after rapport is established

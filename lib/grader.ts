@@ -529,7 +529,7 @@ export function objectiveToSixty(m: ObjectiveMetrics): number {
   const confProb = Math.min(4, Math.max(0, (1 - Math.abs(m.talkRatioRep - 0.5)) * 8)); // 0..4
   pts += discBase + discQ + confProb;
 
-  // Objection Handling (20) — placeholder until LLM: use stepCoverage + close attempts as weak signal
+  // Objection Handling (20) - placeholder until LLM: use stepCoverage + close attempts as weak signal
   const objProxy = Math.min(20, (m.stepCoverage.value ? 8 : 0) + (m.closeAttempts > 0 ? 6 : 0) + (m.stepCoverage.price ? 6 : 0));
   pts += objProxy;
 
