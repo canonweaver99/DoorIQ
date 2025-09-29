@@ -12,6 +12,7 @@ import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 import CalculatingScore from '@/components/analytics/CalculatingScore'
 import MoneyNotification from '@/components/trainer/MoneyNotification'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
+import { useAmbientAudio } from '@/hooks/useAmbientAudio'
 
 const BASE_TIPS = [
   'Smile before you knock - it comes through in your voice!',
@@ -66,6 +67,39 @@ export default function TrainerPage() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
+  
+  // Ambient audio system - adds realistic background sounds
+  const [ambientState, ambientControls] = useAmbientAudio({
+    assets: {
+      ambience: {
+        suburban: '/sounds/kids-background.mp3',
+        suburban2: '/sounds/kids-background-2.mp3'
+      },
+      sfx: {
+        doorKnock: '/sounds/knock.mp3',
+        doorOpen: '/sounds/door_open.mp3',
+        doorOpen2: '/sounds/door-open-2.mp3',
+        dogBark1: '/sounds/dog-bark-distant-1.mp3',
+        dogBark2: '/sounds/dog-bark-2.mp3',
+        doorClose: '/sounds/door_close.mp3',
+        doorSlam: '/sounds/door_slam.mp3'
+      }
+    },
+    levels: {
+      ambience: 0.10,  // Very subtle background
+      sfx: 0.30,        // Moderate sound effects
+      voice: 1.0        // Full voice volume
+    },
+    scheduling: {
+      enabled: true,
+      assetKeys: ['dogBark1', 'dogBark2'], // Randomly play dog barks during conversation
+      baseInterval: [20, 50] // Random dog bark every 20-50 seconds
+    },
+    integration: {
+      enableElevenLabs: true,
+      autoConnect: sessionActive // Connect when session starts
+    }
+  })
 
   // Shuffle tips once per load
   const shuffledTips = useMemo(() => {
@@ -129,6 +163,33 @@ export default function TrainerPage() {
       }
     }
   }, [])
+  
+  // Manage ambient audio during session
+  useEffect(() => {
+    if (sessionActive && ambientState.isInitialized) {
+      console.log('🎵 Starting ambient audio for session')
+      
+      // Start background ambience
+      const randomAmbience = Math.random() > 0.5 ? 'suburban' : 'suburban2'
+      ambientControls.startAmbience(randomAmbience)
+      
+      // Start random SFX scheduler (dog barks)
+      ambientControls.startScheduler()
+      
+      // Play door knock and open sounds at start
+      setTimeout(async () => {
+        await ambientControls.playSfx('doorKnock', 0.4)
+        setTimeout(async () => {
+          await ambientControls.playSfx('doorOpen', 0.3)
+        }, 1200)
+      }, 500)
+      
+    } else if (!sessionActive && ambientState.isInitialized) {
+      console.log('🔇 Stopping ambient audio')
+      ambientControls.stopAmbience()
+      ambientControls.stopScheduler()
+    }
+  }, [sessionActive, ambientState.isInitialized, ambientControls])
 
   // Handle delta (interim) transcript updates
   const setDelta = (text: string, speaker: 'user' | 'austin' = 'austin') => {
