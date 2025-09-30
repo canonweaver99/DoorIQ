@@ -26,7 +26,7 @@ export function LoginClient() {
 
       if (error) throw error
 
-      router.push('/trainer')
+      router.push('/trainer/select-homeowner')
       router.refresh()
     } catch (error: any) {
       setError(error.message)

@@ -44,7 +44,7 @@ export function SignUpClient() {
         if (!res.ok) throw new Error(json.error || 'Failed to create profile')
       }
 
-      router.push('/trainer')
+      router.push('/trainer/select-homeowner')
       router.refresh()
     } catch (error: any) {
       setError(error.message)
