@@ -56,15 +56,19 @@ function useCountUp(end: number, duration = 2000, startWhen = false) {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* 1) Hero */}
-      <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <section className="relative overflow-hidden min-h-screen flex items-center">
+        {/* Animated Shader Background */}
+        <AnimatedShaderBackground />
+        
+        {/* Content overlay */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-5xl sm:text-6xl font-bold text-slate-100 mb-6">
+            <h1 className="text-5xl sm:text-6xl font-bold text-white mb-6 drop-shadow-lg">
               Train Like the Top 1% - Before You Knock.
             </h1>
-            <p className="text-xl sm:text-2xl text-slate-300 mb-10 max-w-3xl mx-auto">
+            <p className="text-xl sm:text-2xl text-white/90 mb-10 max-w-3xl mx-auto drop-shadow-md">
               DoorIQ turns real door-to-door moments into safe, repeatable reps. Talk to a lifelike AI homeowner, get instant feedback, and watch your close rate climb.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -76,18 +80,14 @@ export default function Home() {
               </Link>
               <Link
                 href="#demo"
-                className="inline-flex items-center px-7 py-4 rounded-lg bg-slate-800 text-slate-100 border border-slate-700 hover:bg-slate-700/70 transition"
+                className="inline-flex items-center px-7 py-4 rounded-lg bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition"
               >
                 Watch 30-sec Demo
               </Link>
             </div>
-            <p className="mt-6 text-sm text-slate-400">Powered by enterprise-grade speech + realtime AI.</p>
+            <p className="mt-6 text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
           </div>
         </div>
-
-        {/* soft blobs */}
-        <div className="pointer-events-none absolute top-0 left-0 w-64 h-64 bg-blue-600 rounded-full filter blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="pointer-events-none absolute bottom-0 right-0 w-96 h-96 bg-indigo-600 rounded-full filter blur-3xl opacity-20 translate-x-1/2 translate-y-1/2"></div>
       </section>
 
       {/* 2) Social Proof */}
