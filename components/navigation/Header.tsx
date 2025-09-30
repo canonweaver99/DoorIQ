@@ -61,11 +61,8 @@ export default function Header() {
         <div className="flex items-center justify-center h-16">
           {/* Centered bar */}
           <div className="hidden md:flex items-center space-x-6 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10">
-            <Link href="/" className="flex items-center space-x-2 pr-2 mr-2 border-r border-white/10">
-              <div className="w-7 h-7 bg-gradient-to-r from-purple-600 to-pink-600 rounded-md flex items-center justify-center shadow-lg shadow-purple-500/50">
-                <span className="text-white font-semibold text-sm">D</span>
-              </div>
-              <span className="text-base font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">DoorIQ</span>
+            <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10">
+              <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">DoorIQ</span>
             </Link>
 
             {navigation.map((item) => {
@@ -94,11 +91,8 @@ export default function Header() {
 
           {/* Mobile header */}
           <div className="flex md:hidden items-center justify-between w-full">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-7 h-7 bg-gradient-to-r from-purple-600 to-pink-600 rounded-md flex items-center justify-center shadow-lg shadow-purple-500/50">
-                <span className="text-white font-semibold text-sm">D</span>
-              </div>
-              <span className="text-lg font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">DoorIQ</span>
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">DoorIQ</span>
             </Link>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
