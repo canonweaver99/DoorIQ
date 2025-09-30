@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { BackgroundCircles } from '@/components/ui/background-circles'
 import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
+import { FaqSection } from '@/components/ui/faq-section'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {
@@ -96,6 +97,18 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <FaqSection
+        title="Frequently Asked Questions"
+        description="Get quick answers as you evaluate DoorIQ for your team."
+        items={faqItems}
+        contactInfo={{
+          title: 'Still need help?',
+          description: 'Reach out and our crew will walk you through a live session.',
+          buttonText: 'Contact Support',
+          onContact: () => window.open('mailto:hello@dooriq.com', '_blank')
+        }}
+      />
     </div>
   );
 }
@@ -305,3 +318,26 @@ function AnimatedStatCard({
     </GlowCard>
   )
 }
+
+const faqItems = [
+  {
+    question: 'How quickly can we get reps practicing?',
+    answer:
+      'Most teams run their first session in under 15 minutes. Invite reps, pick a homeowner persona, and start holding real-feel conversations immediately.',
+  },
+  {
+    question: 'Does DoorIQ replace live manager coaching?',
+    answer:
+      'DoorIQ gives managers leverage—reps can practice high-frequency reps independently while leaders review the tough moments together.',
+  },
+  {
+    question: 'Can new hires ramp with guided scenarios?',
+    answer:
+      'Yes. New teammates get curated objection flows and pacing tips that match their experience level so confidence builds from day one.',
+  },
+  {
+    question: 'How do we track improvement over time?',
+    answer:
+      'You’ll see trends for objection handling, tone, discovery depth, and more. Scores roll into the leaderboard so progress stays visible.',
+  },
+]
