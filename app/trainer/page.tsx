@@ -316,22 +316,30 @@ export default function TrainerPage() {
     }
 
     // Listen for custom events from ElevenLabs script
+    window.addEventListener('agent:message', handleMessage)
+    window.addEventListener('agent:user', handleUserEvent)
+    window.addEventListener('agent:response', handleAgentEvent)
+    
+    // Also listen for legacy austin: events for backward compatibility
     window.addEventListener('austin:message', handleMessage)
     window.addEventListener('austin:user', handleUserEvent)
     window.addEventListener('austin:agent', handleAgentEvent)
     
-    // Expose recording functions to window for Austin integration
+    // Expose recording functions to window for agent integration
     ;(window as any).startSessionRecording = () => {
-      console.log('🎙️ Starting recording from Austin')
+      console.log('🎙️ Starting recording from agent')
       startRecording()
     }
     ;(window as any).stopSessionRecording = () => {
-      console.log('🛑 Stopping recording from Austin')
+      console.log('🛑 Stopping recording from agent')
       stopRecording()
     }
 
     return () => {
       console.log('🔌 Removing transcript event listeners')
+      window.removeEventListener('agent:message', handleMessage)
+      window.removeEventListener('agent:user', handleUserEvent)
+      window.removeEventListener('agent:response', handleAgentEvent)
       window.removeEventListener('austin:message', handleMessage)
       window.removeEventListener('austin:user', handleUserEvent)
       window.removeEventListener('austin:agent', handleAgentEvent)
@@ -798,14 +806,14 @@ export default function TrainerPage() {
                         }
                         
                         // Dispatch the raw message for transcript handling
-                        window.dispatchEvent(new CustomEvent('austin:message', { detail: msg }));
+                        window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }));
                         
-                        // Also handle legacy events for backward compatibility
+                        // Process and dispatch specific message types
                         try {
                           if (msg?.type === 'user_transcript') {
                             const text = msg.user_transcript || msg.text || '';
                             if (text) {
-                              window.dispatchEvent(new CustomEvent('austin:user', { detail: text }));
+                              window.dispatchEvent(new CustomEvent('agent:user', { detail: text }));
                             }
                           } else if (msg?.type === 'agent_response') {
                             const response = msg.agent_response;
@@ -818,16 +826,16 @@ export default function TrainerPage() {
                               text = response.content;
                             }
                             if (text) {
-                              window.dispatchEvent(new CustomEvent('austin:agent', { detail: text }));
+                              window.dispatchEvent(new CustomEvent('agent:response', { detail: text }));
                             }
                           } else if (msg?.type === 'conversation_updated') {
                             const messages = msg?.conversation?.messages || [];
                             if (messages.length > 0) {
                               const lastMsg = messages[messages.length - 1];
                               if (lastMsg?.role === 'user' && lastMsg?.content) {
-                                window.dispatchEvent(new CustomEvent('austin:user', { detail: lastMsg.content }));
+                                window.dispatchEvent(new CustomEvent('agent:user', { detail: lastMsg.content }));
                               } else if (lastMsg?.role === 'assistant' && lastMsg?.content) {
-                                window.dispatchEvent(new CustomEvent('austin:agent', { detail: lastMsg.content }));
+                                window.dispatchEvent(new CustomEvent('agent:response', { detail: lastMsg.content }));
                               }
                             }
                           }

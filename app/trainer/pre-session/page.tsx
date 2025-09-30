@@ -92,7 +92,7 @@ export default function PreSessionPage() {
   }, {} as Record<string, CoachingTip[]>)
 
   const handleStartSession = () => {
-    router.push('/trainer?autostart=true')
+    router.push('/trainer/select-homeowner')
   }
 
   if (loading) {
@@ -115,7 +115,7 @@ export default function PreSessionPage() {
             Review these coaching tips before your session
           </p>
           <p className="text-sm text-slate-400">
-            These strategies will help you close more deals with Austin
+            These strategies will help you close more deals
           </p>
         </div>
 
