@@ -12,6 +12,7 @@ export interface ConversationAnalysis {
     safetyAddressed: boolean
     closeAttempted: boolean
     objectionHandled: boolean
+    dealClosed: boolean
   }
   feedback: {
     strengths: string[]
@@ -24,6 +25,74 @@ export interface ConversationAnalysis {
     presentation: { startIdx: number; endIdx: number }
     closing: { startIdx: number; endIdx: number }
   }
+  virtualEarnings: number
+}
+
+// Helper functions for virtual cash earning
+function extractPriceFromText(text: string): number | null {
+  // Match various price formats: $100, 100 dollars, one hundred, etc.
+  const pricePatterns = [
+    /\$(\d+(?:,\d{3})*(?:\.\d{2})?)/g,  // $100, $1,500, $99.99
+    /(\d+(?:,\d{3})*(?:\.\d{2})?)\s*dollars?/gi,  // 100 dollars, 1500 dollars
+    /(\d+(?:,\d{3})*)\s*bucks?/gi,  // 100 bucks
+  ]
+  
+  for (const pattern of pricePatterns) {
+    const matches = text.match(pattern)
+    if (matches) {
+      for (const match of matches) {
+        const numberStr = match.replace(/[^\d.,]/g, '').replace(',', '')
+        const price = parseFloat(numberStr)
+        if (price > 0 && price < 100000) { // Reasonable price range
+          return price
+        }
+      }
+    }
+  }
+  
+  return null
+}
+
+function detectAgreement(transcript: Array<{ speaker: string; text: string; timestamp?: any }>): boolean {
+  // Look for AI homeowner agreement patterns
+  const agreementPatterns = [
+    /\b(yes|yeah|okay|ok|sure|sounds good|that works|let's do it|i'll take it|sign me up|when can you start)\b/i,
+    /\b(that sounds (good|great|perfect|fine))\b/i,
+    /\b(i'm interested|count me in|let's go ahead)\b/i,
+    /\b(schedule|book|appointment|when)\b/i,
+  ]
+  
+  // Check the last few AI responses for agreement
+  const aiResponses = transcript
+    .filter(t => t.speaker === 'austin' || t.speaker === 'homeowner')
+    .slice(-5) // Check last 5 AI responses
+  
+  return aiResponses.some(response => 
+    agreementPatterns.some(pattern => pattern.test(response.text))
+  )
+}
+
+function calculateVirtualEarnings(transcript: Array<{ speaker: string; text: string; timestamp?: any }>): number {
+  // Find the last price quoted by the rep
+  let lastQuotedPrice = 0
+  
+  for (let i = transcript.length - 1; i >= 0; i--) {
+    const entry = transcript[i]
+    if (entry.speaker === 'user') {
+      const price = extractPriceFromText(entry.text)
+      if (price) {
+        lastQuotedPrice = price
+        break
+      }
+    }
+  }
+  
+  // Only award earnings if there was a price quoted AND the AI agreed
+  if (lastQuotedPrice > 0 && detectAgreement(transcript)) {
+    return lastQuotedPrice
+  }
+  
+  return 0
 }
 
 export function analyzeConversation(
@@ -42,7 +111,8 @@ export function analyzeConversation(
       priceDiscussed: false,
       safetyAddressed: false,
       closeAttempted: false,
-      objectionHandled: false
+      objectionHandled: false,
+      dealClosed: false
     },
     feedback: {
       strengths: [],
@@ -54,7 +124,8 @@ export function analyzeConversation(
       discovery: { startIdx: -1, endIdx: -1 },
       presentation: { startIdx: -1, endIdx: -1 },
       closing: { startIdx: -1, endIdx: -1 }
-    }
+    },
+    virtualEarnings: 0
   }
 
   if (transcript.length === 0) return analysis
@@ -555,6 +626,17 @@ export function analyzeConversation(
 
   if (analysis.keyMoments.objectionHandled && analysis.scores.salesTechnique >= 80) {
     analysis.feedback.strengths.push("Professional objection handling with empathy and expertise")
+  }
+
+  // Calculate virtual earnings using simple system: quoted price + agreement = earnings
+  analysis.virtualEarnings = calculateVirtualEarnings(transcript)
+  analysis.keyMoments.dealClosed = analysis.virtualEarnings > 0
+
+  // Add earnings feedback
+  if (analysis.keyMoments.dealClosed) {
+    analysis.feedback.strengths.push(`Excellent close! You earned $${analysis.virtualEarnings.toFixed(2)} in virtual commission!`)
+  } else {
+    analysis.feedback.specificTips.push("Quote a price and get the homeowner to agree to earn virtual commission.")
   }
 
   return analysis

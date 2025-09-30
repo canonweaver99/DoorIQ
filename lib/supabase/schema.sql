@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS coaching_tips (
 
 -- Insert default achievements
 INSERT INTO achievements (name, description, icon, points, criteria) VALUES
-  ('First Success', 'Got Amanda to say yes', '🎯', 50, '{"close_success": true}'),
+  ('First Success', 'Got Austin to say yes', '🎯', 50, '{"close_success": true}'),
   ('Speed Runner', 'Closed in under 3 minutes', '⚡', 30, '{"max_duration": 180}'),
   ('Trust Builder', 'No interruptions full session', '🤝', 40, '{"interruptions": 0}'),
   ('Safety Star', 'Addressed all safety concerns', '🛡️', 25, '{"safety_concerns_addressed": true}'),

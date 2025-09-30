@@ -10,6 +10,9 @@ import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { SessionMetrics, TranscriptEntry } from '@/lib/trainer/types'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 import CalculatingScore from '@/components/analytics/CalculatingScore'
+import MoneyNotification from '@/components/trainer/MoneyNotification'
+import { useSessionRecording } from '@/hooks/useSessionRecording'
+import { useAmbientAudio } from '@/hooks/useAmbientAudio'
 
 const BASE_TIPS = [
   'Smile before you knock - it comes through in your voice!',
@@ -52,13 +55,53 @@ export default function TrainerPage() {
   const [preparingSession, setPreparingSession] = useState(true)
   const [calculatingScore, setCalculatingScore] = useState(false)
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
+  const [showMoneyNotification, setShowMoneyNotification] = useState(false)
+  const [earningsAmount, setEarningsAmount] = useState(0)
+  const [selectedAgent, setSelectedAgent] = useState<any>(null)
+  const [loadingAgent, setLoadingAgent] = useState(true)
 
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  
+  // Audio recording hook
+  const { isRecording, startRecording, stopRecording } = useSessionRecording(sessionId)
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
+  
+  // Ambient audio system - adds realistic background sounds
+  const [ambientState, ambientControls] = useAmbientAudio({
+    assets: {
+      ambience: {
+        suburban: '/sounds/kids-background.mp3',
+        suburban2: '/sounds/kids-background-2.mp3'
+      },
+      sfx: {
+        doorKnock: '/sounds/knock.mp3',
+        doorOpen: '/sounds/door_open.mp3',
+        doorOpen2: '/sounds/door-open-2.mp3',
+        dogBark1: '/sounds/dog-bark-distant-1.mp3',
+        dogBark2: '/sounds/dog-bark-2.mp3',
+        doorClose: '/sounds/door_close.mp3',
+        doorSlam: '/sounds/door_slam.mp3'
+      }
+    },
+    levels: {
+      ambience: 0.10,  // Very subtle background
+      sfx: 0.30,        // Moderate sound effects
+      voice: 1.0        // Full voice volume
+    },
+    scheduling: {
+      enabled: true,
+      assetKeys: ['dogBark1', 'dogBark2'], // Randomly play dog barks during conversation
+      baseInterval: [20, 50] // Random dog bark every 20-50 seconds
+    },
+    integration: {
+      enableElevenLabs: true,
+      autoConnect: sessionActive // Connect when session starts
+    }
+  })
 
   // Shuffle tips once per load
   const shuffledTips = useMemo(() => {
@@ -106,6 +149,7 @@ export default function TrainerPage() {
 
   useEffect(() => {
     fetchUser()
+    fetchAgent()
     
     // Auto-start if coming from pre-session - skip preparation phase
     if (searchParams.get('autostart') === 'true') {
@@ -122,6 +166,33 @@ export default function TrainerPage() {
       }
     }
   }, [])
+  
+  // Manage ambient audio during session
+  useEffect(() => {
+    if (sessionActive && ambientState.isInitialized) {
+      console.log('🎵 Starting ambient audio for session')
+      
+      // Start background ambience
+      const randomAmbience = Math.random() > 0.5 ? 'suburban' : 'suburban2'
+      ambientControls.startAmbience(randomAmbience)
+      
+      // Start random SFX scheduler (dog barks)
+      ambientControls.startScheduler()
+      
+      // Play door knock and open sounds at start
+      setTimeout(async () => {
+        await ambientControls.playSfx('doorKnock', 0.4)
+        setTimeout(async () => {
+          await ambientControls.playSfx('doorOpen', 0.3)
+        }, 1200)
+      }, 500)
+      
+    } else if (!sessionActive && ambientState.isInitialized) {
+      console.log('🔇 Stopping ambient audio')
+      ambientControls.stopAmbience()
+      ambientControls.stopScheduler()
+    }
+  }, [sessionActive, ambientState.isInitialized, ambientControls])
 
   // Handle delta (interim) transcript updates
   const setDelta = (text: string, speaker: 'user' | 'austin' = 'austin') => {
@@ -248,12 +319,24 @@ export default function TrainerPage() {
     window.addEventListener('austin:message', handleMessage)
     window.addEventListener('austin:user', handleUserEvent)
     window.addEventListener('austin:agent', handleAgentEvent)
+    
+    // Expose recording functions to window for Austin integration
+    ;(window as any).startSessionRecording = () => {
+      console.log('🎙️ Starting recording from Austin')
+      startRecording()
+    }
+    ;(window as any).stopSessionRecording = () => {
+      console.log('🛑 Stopping recording from Austin')
+      stopRecording()
+    }
 
     return () => {
       console.log('🔌 Removing transcript event listeners')
       window.removeEventListener('austin:message', handleMessage)
       window.removeEventListener('austin:user', handleUserEvent)
       window.removeEventListener('austin:agent', handleAgentEvent)
+      delete (window as any).startSessionRecording
+      delete (window as any).stopSessionRecording
     }
   }, [])
 
@@ -266,6 +349,49 @@ export default function TrainerPage() {
         .eq('id', user.id)
         .single()
       setUser(profile)
+    }
+  }
+
+  const fetchAgent = async () => {
+    try {
+      // Get agent ID from URL param (ElevenLabs agent ID, not DB ID)
+      const agentParam = searchParams.get('agent')
+      
+      if (agentParam) {
+        // Fetch agent details from database by ElevenLabs agent ID
+        const { data, error } = await supabase
+          .from('agents')
+          .select('*')
+          .eq('eleven_agent_id', agentParam)
+          .eq('is_active', true)
+          .single()
+
+        if (!error && data) {
+          setSelectedAgent(data)
+        } else {
+          // Fallback to Austin if agent not found
+          const { data: austinData } = await supabase
+            .from('agents')
+            .select('*')
+            .eq('name', 'Austin')
+            .eq('is_active', true)
+            .single()
+          setSelectedAgent(austinData)
+        }
+      } else {
+        // Default to Austin if no agent specified
+        const { data: austinData } = await supabase
+          .from('agents')
+          .select('*')
+          .eq('name', 'Austin')
+          .eq('is_active', true)
+          .single()
+        setSelectedAgent(austinData)
+      }
+    } catch (error) {
+      console.error('Error fetching agent:', error)
+    } finally {
+      setLoadingAgent(false)
     }
   }
 
@@ -295,6 +421,7 @@ export default function TrainerPage() {
       // Always create a session record, even if user is not logged in
       const payload: any = {
         user_id: user?.id || null,
+        agent_id: selectedAgent?.id || null,
         scenario_type: 'standard',
       }
       const { data: session, error } = await (supabase as any)
@@ -321,9 +448,8 @@ export default function TrainerPage() {
       // Stop Austin conversation if running
       try { (window as any).stopAustin?.() } catch {}
       
-      // Show calculating screen immediately
-      setCalculatingScore(true)
-      setLoading(false) // Remove loading state so calculating screen shows
+      // Stop recording
+      stopRecording()
       
       // Analyze the conversation with transcript
       const analysis = transcript.length > 0 ? analyzeConversation(transcript) : {
@@ -339,7 +465,8 @@ export default function TrainerPage() {
           priceDiscussed: false,
           safetyAddressed: true,
           closeAttempted: true,
-          objectionHandled: false
+          objectionHandled: false,
+          dealClosed: false
         },
         feedback: {
           strengths: [],
@@ -351,7 +478,21 @@ export default function TrainerPage() {
           discovery: { startIdx: -1, endIdx: -1 },
           presentation: { startIdx: -1, endIdx: -1 },
           closing: { startIdx: -1, endIdx: -1 }
-        }
+        },
+        virtualEarnings: 0
+      }
+
+      // Check if deal was closed and show money notification first
+      const hasEarnings = analysis.virtualEarnings && analysis.virtualEarnings > 0
+      if (hasEarnings) {
+        setEarningsAmount(analysis.virtualEarnings)
+        setShowMoneyNotification(true)
+        setLoading(false) // Remove loading state
+        // Don't show calculating screen yet - wait for money notification to complete
+      } else {
+        // Show calculating screen immediately if no earnings
+        setCalculatingScore(true)
+        setLoading(false) // Remove loading state so calculating screen shows
       }
 
       if (sessionId) {
@@ -373,7 +514,8 @@ export default function TrainerPage() {
               finalSentiment: metrics.sentimentScore,
               interruptionCount: metrics.interruptionCount,
               objectionCount: metrics.objectionCount
-            }
+            },
+            virtual_earnings: analysis.virtualEarnings || 0
           } as any)
           .eq('id', sessionId as string)
 
@@ -389,6 +531,17 @@ export default function TrainerPage() {
         } catch (e) {
           console.error('AI grading after session failed (will still redirect):', e)
         }
+        
+        // Send notifications to managers
+        try {
+          await fetch('/api/notifications/session-complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+          })
+        } catch (e) {
+          console.error('Manager notification failed:', e)
+        }
       }
     } catch (e) {
       console.error(e)
@@ -403,6 +556,11 @@ export default function TrainerPage() {
       const durationStr = formatDuration(metrics.duration)
       router.push(`/feedback?duration=${encodeURIComponent(durationStr)}`)
     }
+  }
+
+  const handleMoneyNotificationComplete = () => {
+    setShowMoneyNotification(false)
+    setCalculatingScore(true) // Now show the calculating screen
   }
 
   const formatDuration = (seconds: number) => {
@@ -464,6 +622,28 @@ export default function TrainerPage() {
     )
   }
 
+  // Show money notification when deal is closed
+  if (showMoneyNotification) {
+    return (
+      <>
+        <MoneyNotification 
+          amount={earningsAmount}
+          show={showMoneyNotification}
+          onComplete={handleMoneyNotificationComplete}
+        />
+        {/* Keep the main interface in background */}
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
+          <div className="max-w-4xl mx-auto p-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">Session Complete</h1>
+              <p className="text-slate-400">Processing your results...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   // Show calculating score screen after session ends
   if (calculatingScore) {
     return (
@@ -515,7 +695,7 @@ export default function TrainerPage() {
             <Script id="austin-orb-client" type="module" strategy="afterInteractive">
               {`
                 import { Conversation } from 'https://esm.sh/@elevenlabs/client';
-                const AGENT_ID = 'agent_7001k5jqfjmtejvs77jvhjf254tz';
+                const AGENT_ID = '${selectedAgent?.eleven_agent_id || 'agent_7001k5jqfjmtejvs77jvhjf254tz'}';
 
                 const orb = document.getElementById('austin-orb');
                 const door = document.getElementById('austin-door');
@@ -549,9 +729,10 @@ export default function TrainerPage() {
                   if (active) orb.classList.add('active'); else orb.classList.remove('active');
                   
                   // Status text
+                  const agentName = '${selectedAgent?.name || 'Austin'}';
                   statusEl.textContent = doorOpen ?
-                    (status === 'connecting' ? 'connecting to Austin…' :
-                     status === 'connected' ? (mode === 'speaking' ? 'Austin is speaking' : 'Austin is listening') :
+                    (status === 'connecting' ? \`connecting to \${agentName}…\` :
+                     status === 'connected' ? (mode === 'speaking' ? \`\${agentName} is speaking\` : \`\${agentName} is listening\`) :
                      'tap orb to end conversation') :
                     'knock on door to start';
                 }
@@ -560,6 +741,11 @@ export default function TrainerPage() {
                   try {
                     if (convo || isStarting || state.status === 'connected' || state.status === 'connecting') return;
                     isStarting = true;
+                    
+                    // Start recording if available
+                    if (window.startSessionRecording) {
+                      window.startSessionRecording();
+                    }
                     
                     // Open door with animation
                     state.doorOpen = true;
@@ -670,6 +856,11 @@ export default function TrainerPage() {
                   state.mode = 'idle';
                   state.doorOpen = false;
                   render();
+                  
+                  // Stop recording if available
+                  if (window.stopSessionRecording) {
+                    window.stopSessionRecording();
+                  }
                 }
 
                 // Door click handler (starts conversation)

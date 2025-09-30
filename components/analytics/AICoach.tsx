@@ -8,6 +8,7 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  citations?: { line: number, speaker: string, text: string }[]
 }
 
 interface AICoachProps {
@@ -48,6 +49,31 @@ export default function AICoach({ sessionData, className = "" }: AICoachProps) {
     }
   }, [isOpen])
 
+  const extractCitations = (text: string): { line: number, speaker: string, text: string }[] => {
+    try {
+      const refs = new Set<number>()
+      const regex = /Line\s+(\d+)/gi
+      let match
+      while ((match = regex.exec(text)) !== null) {
+        const n = parseInt(match[1], 10)
+        if (!isNaN(n)) refs.add(n)
+      }
+      const transcript: any[] = Array.isArray((sessionData as any)?.transcript) ? (sessionData as any).transcript : []
+      const out: { line: number, speaker: string, text: string }[] = []
+      for (const lineNum of Array.from(refs).sort((a, b) => a - b)) {
+        const idx = lineNum - 1
+        if (idx >= 0 && idx < transcript.length) {
+          const entry = transcript[idx]
+          const speaker = (entry?.speaker === 'user' || entry?.speaker === 'rep') ? 'Sales Rep' : 'Austin Rodriguez'
+          out.push({ line: lineNum, speaker, text: String(entry?.text || '') })
+        }
+      }
+      return out
+    } catch {
+      return []
+    }
+  }
+
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return
 
@@ -79,11 +105,12 @@ export default function AICoach({ sessionData, className = "" }: AICoachProps) {
       }
 
       const data = await response.json()
-      
+      const citations = extractCitations(String(data.response || ''))
       const assistantMessage: Message = {
         role: 'assistant',
         content: data.response,
-        timestamp: new Date()
+        timestamp: new Date(),
+        citations
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -185,6 +212,23 @@ export default function AICoach({ sessionData, className = "" }: AICoachProps) {
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
                         {message.content}
                       </p>
+                      {message.role === 'assistant' && message.citations && message.citations.length > 0 && (
+                        <div className="mt-3">
+                          <details className="bg-slate-800 border border-slate-600 rounded-md p-3">
+                            <summary className="cursor-pointer text-sm text-slate-200">
+                              Referenced transcript lines ({message.citations.length})
+                            </summary>
+                            <div className="mt-2 space-y-2">
+                              {message.citations.map((c) => (
+                                <div key={c.line} className="text-sm bg-slate-900 border border-slate-700 rounded p-2">
+                                  <div className="text-slate-400 mb-1">Line {c.line} • {c.speaker}</div>
+                                  <blockquote className="text-slate-100">“{c.text}”</blockquote>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -210,8 +254,32 @@ export default function AICoach({ sessionData, className = "" }: AICoachProps) {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
+              {/* Preset prompts + Input */}
               <div className="p-4 border-t border-slate-700 bg-slate-800">
+                {/* Preset buttons */}
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {[
+                    "What could I have done better?",
+                    "How could I have closed sooner?",
+                    "Which part hurt my score most?"
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      onClick={() => {
+                        if (!isLoading) {
+                          setInputValue(preset)
+                          setTimeout(() => sendMessage(), 0)
+                        }
+                      }}
+                      className="px-3 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isLoading}
+                      type="button"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="flex space-x-2">
                   <input
                     ref={inputRef}

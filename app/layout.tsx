@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Header from "@/components/navigation/Header";
 
 export const dynamic = 'force-dynamic'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: 'swap'
 });
 
 const geistMono = Geist_Mono({
@@ -26,7 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100`}>
+      <body className={`${inter.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100` }>
+        <Header />
+        {/* Spacer to avoid content under fixed nav (approx 64px for new header) */}
+        <div style={{ height: 64 }} />
         {children}
       </body>
     </html>
