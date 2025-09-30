@@ -6,7 +6,7 @@ import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
-import { BackgroundCircles } from '@/components/ui/background-circles'
+import { BackgroundCirclesBg } from '@/components/ui/background-circles-bg'
 
 type Session = Database['public']['Tables']['training_sessions']['Row'] & {
   users: {
@@ -131,7 +131,7 @@ export default function SessionsPage() {
     return (
       <div className="min-h-screen relative flex items-center justify-center p-4">
         <div className="absolute inset-0 -z-10">
-          <BackgroundCircles />
+          <BackgroundCirclesBg />
         </div>
         <div className="relative z-10 max-w-md w-full bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-700 p-8 text-center shadow-2xl">
           <div className="mb-6">
@@ -172,7 +172,7 @@ export default function SessionsPage() {
     return (
       <div className="min-h-screen relative flex items-center justify-center">
         <div className="absolute inset-0 -z-10">
-          <BackgroundCircles />
+          <BackgroundCirclesBg />
         </div>
         <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>

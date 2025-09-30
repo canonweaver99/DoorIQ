@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { User, Mail, Shield, Bell, Save, LogOut, Trophy, CheckCircle2, Circle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { BackgroundCircles } from '@/components/ui/background-circles'
+import { BackgroundCirclesBg } from '@/components/ui/background-circles-bg'
 
 type UserData = Database['public']['Tables']['users']['Row']
 type Achievement = Database['public']['Tables']['achievements']['Row']
@@ -115,7 +115,7 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen relative flex items-center justify-center">
         <div className="absolute inset-0 -z-10">
-          <BackgroundCircles />
+          <BackgroundCirclesBg />
         </div>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>

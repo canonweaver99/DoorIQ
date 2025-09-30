@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award } from 'lucide-react'
-import { BackgroundCircles } from '@/components/ui/background-circles'
+import { BackgroundCirclesBg } from '@/components/ui/background-circles-bg'
 
 type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
   rank: number
@@ -137,7 +137,7 @@ export default function LeaderboardPage() {
     return (
       <div className="min-h-screen relative flex items-center justify-center">
         <div className="absolute inset-0 -z-10">
-          <BackgroundCircles />
+          <BackgroundCirclesBg />
         </div>
         <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>

@@ -1,22 +1,28 @@
-"use client";
-import React from "react";
-import { Boxes } from "@/components/ui/background-boxes";
-import { cn } from "@/lib/utils";
+import { GlowCard } from "@/components/ui/spotlight-card";
 
-export function BackgroundBoxesDemo() {
+export function Default() {
   return (
-    <div className="min-h-[calc(100vh-64px)] relative w-full overflow-hidden bg-white flex flex-col items-center justify-center rounded-none border-0">
-      <div className="absolute inset-0 w-full h-full bg-white z-20 [mask-image:radial-gradient(transparent,white)] pointer-events-none" />
-
-      <Boxes />
-      <h1 className={cn("md:text-4xl text-xl text-slate-900 relative z-20 font-serif")}>
-        Practice Before You Knock
-      </h1>
-      <p className="text-center mt-2 text-slate-700 relative z-20">
-        Lifelike AI homeowners. Instant feedback. Better reps.
-      </p>
+    <div className="w-screen h-screen flex flex-row items-center justify-center gap-10 bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+      <GlowCard glowColor="blue">
+        <div className="flex flex-col items-center justify-center h-full">
+          <h3 className="text-2xl font-bold text-white">Blue Glow</h3>
+          <p className="text-slate-300 mt-2">Hover to see the effect</p>
+        </div>
+      </GlowCard>
+      
+      <GlowCard glowColor="purple">
+        <div className="flex flex-col items-center justify-center h-full">
+          <h3 className="text-2xl font-bold text-white">Purple Glow</h3>
+          <p className="text-slate-300 mt-2">Move your mouse around</p>
+        </div>
+      </GlowCard>
+      
+      <GlowCard glowColor="green">
+        <div className="flex flex-col items-center justify-center h-full">
+          <h3 className="text-2xl font-bold text-white">Green Glow</h3>
+          <p className="text-slate-300 mt-2">Interactive lighting</p>
+        </div>
+      </GlowCard>
     </div>
   );
 }
-
-

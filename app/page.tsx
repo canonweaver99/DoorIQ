@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { BackgroundCircles } from '@/components/ui/background-circles'
 import { Button } from '@/components/ui/button'
+import { GlowCard } from '@/components/ui/spotlight-card'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {
@@ -167,16 +168,20 @@ function HowItWorksSection() {
               body: "Climb the leaderboard and earn virtual rewards. Compete with teammates and track your ranking as you improve your close rate."
             }
           ].map((item, index) => (
-            <div
+            <GlowCard
               key={index}
-              className={`rounded-xl border border-slate-700 bg-slate-800/50 p-6 transition-all duration-1000 ${
+              glowColor={index === 0 ? 'blue' : index === 1 ? 'purple' : 'green'}
+              customSize
+              className={`transition-all duration-1000 h-full ${
                 isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
-              style={{ transitionDelay: `${index * 200}ms` }}
+              style={{ transitionDelay: `${index * 200}ms` } as React.CSSProperties}
             >
-              <h3 className="text-xl font-semibold text-slate-100">{item.title}</h3>
-              <p className="mt-3 text-slate-300">{item.body}</p>
-            </div>
+              <div className="flex flex-col h-full justify-center">
+                <h3 className="text-xl font-semibold text-slate-100">{item.title}</h3>
+                <p className="mt-3 text-slate-300">{item.body}</p>
+              </div>
+            </GlowCard>
           ))}
         </div>
       </div>
@@ -270,17 +275,29 @@ function AnimatedStatCard({
 }) {
   const animatedValue = useCountUp(value || 0, 2000, startAnimation)
   
+  // Determine glow color based on delay for variety
+  const getGlowColor = () => {
+    if (delay === 0) return 'blue';
+    if (delay === 200) return 'purple';
+    if (delay === 400) return 'green';
+    return 'orange';
+  };
+  
   return (
-    <div 
-      className={`rounded-xl border border-slate-700 bg-slate-800/50 p-6 text-center transition-all duration-1000 ${
+    <GlowCard
+      glowColor={getGlowColor()}
+      customSize
+      className={`text-center transition-all duration-1000 h-full ${
         startAnimation ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{ transitionDelay: `${delay}ms` } as React.CSSProperties}
     >
-      <div className="text-4xl font-bold text-slate-100">
-        {rawValue || `${prefix}${animatedValue}${suffix}`}
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-4xl font-bold text-slate-100">
+          {rawValue || `${prefix}${animatedValue}${suffix}`}
+        </div>
+        <div className="mt-2 text-slate-300 text-sm">{label}</div>
       </div>
-      <div className="mt-2 text-slate-300 text-sm">{label}</div>
-    </div>
+    </GlowCard>
   )
 }
