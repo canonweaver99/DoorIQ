@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
-import { Clock, Volume2, VolumeX } from 'lucide-react'
+import { Clock, Volume2, VolumeX, TrendingUp } from 'lucide-react'
 import { ConversationStatus } from '@/components/trainer/ConversationStatus'
 import { SessionMetrics, TranscriptEntry } from '@/lib/trainer/types'
 import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
@@ -59,6 +59,7 @@ export default function TrainerPage() {
   const [earningsAmount, setEarningsAmount] = useState(0)
   const [selectedAgent, setSelectedAgent] = useState<any>(null)
   const [loadingAgent, setLoadingAgent] = useState(true)
+  const [homeownerName, setHomeownerName] = useState<string>('')
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -150,6 +151,12 @@ export default function TrainerPage() {
   useEffect(() => {
     fetchUser()
     fetchAgent()
+    
+    // Get homeowner name from URL params
+    const nameParam = searchParams.get('name')
+    if (nameParam) {
+      setHomeownerName(nameParam)
+    }
     
     // Auto-start if coming from pre-session - skip preparation phase
     if (searchParams.get('autostart') === 'true') {
@@ -376,6 +383,9 @@ export default function TrainerPage() {
 
         if (!error && data) {
           setSelectedAgent(data)
+          if (!homeownerName) {
+            setHomeownerName(data.name)
+          }
         } else {
           // Fallback to Austin if agent not found
           const { data: austinData } = await supabase
@@ -385,6 +395,9 @@ export default function TrainerPage() {
             .eq('is_active', true)
             .single()
           setSelectedAgent(austinData)
+          if (!homeownerName) {
+            setHomeownerName(austinData?.name || 'Austin')
+          }
         }
       } else {
         // Default to Austin if no agent specified
@@ -395,6 +408,9 @@ export default function TrainerPage() {
           .eq('is_active', true)
           .single()
         setSelectedAgent(austinData)
+        if (!homeownerName) {
+          setHomeownerName(austinData?.name || 'Austin')
+        }
       }
     } catch (error) {
       console.error('Error fetching agent:', error)
@@ -580,34 +596,52 @@ export default function TrainerPage() {
   // Show preparation phase with rotating tips
   if (preparingSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-700">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-slate-100 mb-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+        {/* Animated background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto px-6 py-12 flex items-center min-h-screen">
+          <div className="w-full bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl p-10 border border-slate-700/50">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-6 py-2 mb-6">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                </span>
+                <span className="text-sm font-medium text-indigo-300">Session Initializing</span>
+              </div>
+
+              <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
                 Ready to Practice?
               </h1>
-              <p className="text-xl text-slate-300">
-                You&apos;ll be speaking with Austin, a skeptical suburban homeowner who needs pest control services.
+              <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+                You&apos;ll be speaking with <span className="font-semibold text-indigo-400">{homeownerName || selectedAgent?.name || 'a homeowner'}</span>, 
+                {selectedAgent?.persona_type ? ` ${selectedAgent.persona_type.toLowerCase()}` : ' who needs pest control services'}
               </p>
             </div>
 
-            <div className="bg-gradient-to-r from-slate-700/50 to-slate-700/30 rounded-lg p-8 mb-8 min-h-[200px] flex items-center justify-center border border-slate-600/50">
+            <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm rounded-2xl p-10 mb-8 min-h-[240px] flex items-center justify-center border border-slate-700/50 shadow-xl">
               <div className="text-center max-w-2xl">
-                <h2 className="text-2xl font-semibold text-slate-100 mb-6">
-                  💡 Coaching Tip
+                <div className="mb-6 text-4xl">💡</div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-6">
+                  Pro Tip
                 </h2>
-                <div className="bg-slate-700 rounded-lg p-6 shadow-lg border border-slate-600">
-                  <p className="text-lg text-slate-200 leading-relaxed">
+                <div className="bg-slate-800/60 rounded-xl p-8 shadow-lg border border-slate-700/50 backdrop-blur-sm">
+                  <p className="text-lg text-slate-200 leading-relaxed font-medium">
                     {shuffledTips[currentTipIndex]}
                   </p>
                 </div>
-                <div className="flex justify-center mt-6 space-x-2">
+                <div className="flex justify-center mt-8 space-x-3">
                   {shuffledTips.slice(0, 4).map((_, index) => (
                     <div
                       key={index}
-                      className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                        index === currentTipIndex % 4 ? 'bg-blue-500' : 'bg-slate-500'
+                      className={`h-2 rounded-full transition-all duration-500 ${
+                        index === currentTipIndex % 4 
+                          ? 'bg-gradient-to-r from-indigo-500 to-purple-500 w-8 shadow-lg shadow-indigo-500/50' 
+                          : 'bg-slate-600 w-2'
                       }`}
                     />
                   ))}
@@ -616,13 +650,16 @@ export default function TrainerPage() {
             </div>
 
             <div className="text-center">
-              <div className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                Preparing your session...
+              <div className="inline-flex flex-col items-center gap-4">
+                <div className="inline-flex items-center px-10 py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-bold rounded-2xl shadow-2xl shadow-indigo-500/25">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-4"></div>
+                  Preparing your session...
+                </div>
+                <p className="text-sm text-slate-400 flex items-center gap-2">
+                  <Clock size={16} />
+                  Starting automatically in a few seconds
+                </p>
               </div>
-              <p className="text-sm text-slate-400 mt-4">
-                Starting automatically in a few seconds
-              </p>
             </div>
           </div>
         </div>
@@ -672,33 +709,44 @@ export default function TrainerPage() {
       <div className="flex h-screen">
         {/* Left Panel - ElevenLabs Agent */}
         <div className="w-2/5 bg-slate-800 border-r border-slate-700 flex flex-col relative">
-          <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <div className="p-6 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl">
             <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">Austin Rodriguez</h2>
-                <p className="text-sm opacity-90">Suburban Homeowner</p>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl shadow-lg">
+                  🏡
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight">{homeownerName || selectedAgent?.name || 'Homeowner'}</h2>
+                  <p className="text-sm opacity-90 font-medium">{selectedAgent?.persona_type || 'Homeowner Persona'}</p>
+                </div>
               </div>
               <button
                 onClick={() => setIsMuted(!isMuted)}
-                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                className="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm shadow-lg hover:scale-105"
               >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
               </button>
             </div>
           </div>
 
-          <div className="flex-1 bg-slate-900 relative overflow-hidden">
-            {/* Austin's Door Interface */}
+          <div className="flex-1 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 relative overflow-hidden">
+            {/* Ambient background effects */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
+              <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl" />
+            </div>
+
+            {/* Door Interface */}
             <div id="austin-door-container">
-              <div id="austin-door" aria-label="Knock on Austin's door">
+              <div id="austin-door" aria-label="Knock on door to start conversation">
                 <div id="door-frame"></div>
                 <div id="door-panel"></div>
                 <div id="door-handle"></div>
                 <div id="door-knocker">🚪</div>
               </div>
-              <button id="austin-orb" aria-label="Talk to Austin"></button>
+              <button id="austin-orb" aria-label="End conversation"></button>
             </div>
-            <div id="austin-status">knock on door</div>
+            <div id="austin-status">knock on door to start</div>
 
             <Script id="austin-orb-client" type="module" strategy="afterInteractive">
               {`
@@ -948,9 +996,10 @@ export default function TrainerPage() {
                 left: 50%;
                 top: 35%;
                 transform: translate(-50%, -50%);
-                width: 240px;
-                height: 320px;
+                width: 280px;
+                height: 360px;
                 z-index: 10;
+                filter: drop-shadow(0 25px 50px rgba(0,0,0,0.4));
               }
               
               #austin-door {
@@ -958,12 +1007,13 @@ export default function TrainerPage() {
                 height: 100%;
                 position: relative;
                 cursor: pointer;
-                transition: transform 0.3s ease;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 display: block;
               }
               
               #austin-door:hover {
-                transform: scale(1.02);
+                transform: scale(1.03) translateY(-4px);
+                filter: drop-shadow(0 30px 60px rgba(0,0,0,0.5));
               }
               
               #door-frame {
@@ -971,40 +1021,71 @@ export default function TrainerPage() {
                 top: 0;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 200px;
-                height: 280px;
-                background: linear-gradient(145deg, #8B4513, #A0522D);
-                border-radius: 12px;
-                border: 4px solid #654321;
+                width: 220px;
+                height: 300px;
+                background: linear-gradient(145deg, #6B3410, #8B4513, #A0522D);
+                border-radius: 16px;
+                border: 5px solid #4A2511;
                 box-shadow: 
-                  0 10px 30px rgba(0,0,0,0.3),
-                  inset 0 2px 8px rgba(139,69,19,0.8),
-                  inset 0 -2px 8px rgba(101,67,33,0.8);
+                  0 15px 35px rgba(0,0,0,0.4),
+                  0 5px 15px rgba(0,0,0,0.3),
+                  inset 0 2px 10px rgba(160,82,45,0.6),
+                  inset 0 -2px 10px rgba(74,37,17,0.8);
               }
               
               #door-panel {
                 position: absolute;
-                top: 20px;
+                top: 25px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 160px;
-                height: 240px;
-                background: linear-gradient(145deg, #A0522D, #CD853F);
+                width: 180px;
+                height: 250px;
+                background: linear-gradient(145deg, #A0522D, #CD853F, #DEB887);
+                border-radius: 12px;
+                border: 3px solid #8B4513;
+                box-shadow: 
+                  inset 0 3px 8px rgba(205,133,63,0.9),
+                  inset 0 -3px 8px rgba(139,69,19,0.6),
+                  0 2px 8px rgba(0,0,0,0.2);
+              }
+              
+              #door-panel::before {
+                content: '';
+                position: absolute;
+                top: 20px;
+                left: 15px;
+                width: calc(100% - 30px);
+                height: 90px;
+                background: linear-gradient(135deg, rgba(139,69,19,0.2), transparent);
+                border: 2px solid rgba(139,69,19,0.3);
                 border-radius: 8px;
-                border: 2px solid #8B4513;
-                box-shadow: inset 0 2px 4px rgba(160,82,45,0.8);
+              }
+              
+              #door-panel::after {
+                content: '';
+                position: absolute;
+                bottom: 20px;
+                left: 15px;
+                width: calc(100% - 30px);
+                height: 90px;
+                background: linear-gradient(135deg, rgba(139,69,19,0.2), transparent);
+                border: 2px solid rgba(139,69,19,0.3);
+                border-radius: 8px;
               }
               
               #door-handle {
                 position: absolute;
                 top: 50%;
-                right: 30px;
+                right: 35px;
                 transform: translateY(-50%);
-                width: 12px;
-                height: 12px;
-                background: radial-gradient(circle, #FFD700, #DAA520);
+                width: 16px;
+                height: 16px;
+                background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500, #DAA520);
                 border-radius: 50%;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                box-shadow: 
+                  0 3px 8px rgba(0,0,0,0.4),
+                  inset 0 1px 2px rgba(255,255,255,0.6),
+                  0 0 12px rgba(255,215,0,0.3);
               }
               
               #door-knocker {
@@ -1012,16 +1093,25 @@ export default function TrainerPage() {
                 top: 35%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                font-size: 32px;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-                animation: knock-hint 4s ease-in-out infinite;
+                font-size: 48px;
+                filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+                animation: knock-hint 5s ease-in-out infinite;
                 pointer-events: none;
               }
               
               @keyframes knock-hint {
-                0%, 90%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-                92%, 94% { transform: translate(-50%, -50%) scale(1.1) rotate(-5deg); }
-                96% { transform: translate(-50%, -50%) scale(1.1) rotate(5deg); }
+                0%, 88%, 100% { 
+                  transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+                }
+                90%, 92% { 
+                  transform: translate(-50%, -50%) scale(1.15) rotate(-8deg);
+                  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.6));
+                }
+                94%, 96% { 
+                  transform: translate(-50%, -50%) scale(1.15) rotate(8deg);
+                  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.6));
+                }
               }
               
               #austin-orb {
@@ -1029,45 +1119,81 @@ export default function TrainerPage() {
                 left: 50%;
                 top: 50%;
                 transform: translate(-50%, -50%);
-                width: 200px;
-                height: 200px;
+                width: 220px;
+                height: 220px;
                 border-radius: 9999px;
                 border: 0;
                 outline: none;
                 cursor: pointer;
-                background: radial-gradient(circle at 30% 30%, #6AA8FF, #3CE2D3);
-                box-shadow: 0 18px 56px rgba(20, 180, 255, 0.45);
-                transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, opacity .3s ease;
+                background: radial-gradient(circle at 30% 30%, #818cf8, #6366f1, #4f46e5);
+                box-shadow: 
+                  0 20px 60px rgba(99, 102, 241, 0.5),
+                  0 0 0 4px rgba(99, 102, 241, 0.1),
+                  inset 0 1px 20px rgba(255,255,255,0.2);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 animation: floaty 4.6s ease-in-out infinite;
                 z-index: 15;
                 display: none;
               }
               
               #austin-orb:hover { 
-                transform: translate(-50%, -50%) scale(1.03); 
-                filter: saturate(1.07); 
+                transform: translate(-50%, -50%) scale(1.05); 
+                box-shadow: 
+                  0 25px 70px rgba(99, 102, 241, 0.6),
+                  0 0 0 6px rgba(99, 102, 241, 0.15),
+                  inset 0 1px 20px rgba(255,255,255,0.3);
               }
               
               #austin-orb:active { 
-                transform: translate(-50%, -50%) scale(0.97); 
+                transform: translate(-50%, -50%) scale(0.98); 
               }
               
               #austin-orb.active {
-                box-shadow: 0 18px 58px rgba(20,180,255,.55), 0 0 0 14px rgba(60,226,211,.18), 0 0 0 24px rgba(106,168,255,.12);
+                box-shadow: 
+                  0 20px 60px rgba(99, 102, 241, 0.6),
+                  0 0 0 8px rgba(99, 102, 241, 0.15),
+                  0 0 0 16px rgba(99, 102, 241, 0.1),
+                  0 0 0 24px rgba(99, 102, 241, 0.05),
+                  inset 0 1px 20px rgba(255,255,255,0.2);
+                animation: floaty 4.6s ease-in-out infinite, pulse-ring 2s ease-in-out infinite;
+              }
+              
+              @keyframes pulse-ring {
+                0%, 100% {
+                  box-shadow: 
+                    0 20px 60px rgba(99, 102, 241, 0.6),
+                    0 0 0 8px rgba(99, 102, 241, 0.15),
+                    0 0 0 16px rgba(99, 102, 241, 0.1),
+                    0 0 0 24px rgba(99, 102, 241, 0.05),
+                    inset 0 1px 20px rgba(255,255,255,0.2);
+                }
+                50% {
+                  box-shadow: 
+                    0 20px 60px rgba(99, 102, 241, 0.7),
+                    0 0 0 12px rgba(99, 102, 241, 0.2),
+                    0 0 0 24px rgba(99, 102, 241, 0.15),
+                    0 0 0 36px rgba(99, 102, 241, 0.08),
+                    inset 0 1px 20px rgba(255,255,255,0.3);
+                }
               }
               
               #austin-status {
                 position: absolute;
                 left: 50%;
-                top: calc(35% + 180px);
+                top: calc(35% + 200px);
                 transform: translateX(-50%);
-                font: 600 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-                color: #94a3b8;
+                font: 600 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+                color: #cbd5e1;
                 user-select: none;
                 pointer-events: none;
                 z-index: 10;
-                opacity: .9;
                 text-align: center;
+                background: rgba(15, 23, 42, 0.8);
+                backdrop-filter: blur(8px);
+                padding: 8px 20px;
+                border-radius: 12px;
+                border: 1px solid rgba(148, 163, 184, 0.2);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
               }
               
               @keyframes floaty { 
@@ -1122,10 +1248,14 @@ export default function TrainerPage() {
             `}</style>
 
             {/* Live Transcript - Delta + Final */}
-            <div className="absolute left-0 right-0 bottom-0 top-[60%] overflow-y-auto p-4">
-              <div className="space-y-2 max-w-sm mx-auto">
+            <div className="absolute left-0 right-0 bottom-0 top-[60%] overflow-y-auto p-6 bg-gradient-to-t from-slate-900/95 via-slate-900/50 to-transparent backdrop-blur-sm">
+              <div className="space-y-3 max-w-md mx-auto">
                 {finalizedLines.length === 0 && !deltaText ? (
-                  <p className="text-slate-400 text-center text-sm">Conversation will appear here...</p>
+                  <div className="text-center py-8">
+                    <div className="inline-flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-6 py-3 backdrop-blur-sm">
+                      <span className="text-slate-400 text-sm">Knock on the door to begin...</span>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     {/* Finalized Lines */}
@@ -1136,16 +1266,19 @@ export default function TrainerPage() {
                       return (
                         <div
                           key={idx}
-                          className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-1`}
+                          className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2 animate-fadeIn`}
                         >
                           <div
-                            className={`max-w-[85%] px-3 py-2 rounded-lg shadow-sm text-sm ${
+                            className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-lg text-sm transition-all duration-200 ${
                               isUser
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-slate-700 text-slate-100 border border-slate-600'
+                                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-indigo-500/25'
+                                : 'bg-slate-800/90 text-slate-100 border border-slate-700/50 backdrop-blur-sm'
                             }`}
                           >
-                            {text}
+                            {!isUser && (
+                              <div className="text-xs font-semibold text-indigo-400 mb-1">{homeownerName || 'Homeowner'}</div>
+                            )}
+                            <div className="leading-relaxed">{text}</div>
                           </div>
                         </div>
                       )
@@ -1153,9 +1286,10 @@ export default function TrainerPage() {
                     
                     {/* Delta (Interim) Text */}
                     {deltaText && (
-                      <div className="flex justify-start mb-1">
-                        <div className="max-w-[85%] px-3 py-2 rounded-lg shadow-sm text-sm bg-slate-700/50 text-slate-300 border border-slate-600 opacity-75">
-                          <span className="italic">{deltaText}...</span>
+                      <div className="flex justify-start mb-2 animate-pulse">
+                        <div className="max-w-[85%] px-4 py-3 rounded-2xl shadow-lg text-sm bg-slate-800/60 text-slate-300 border border-slate-700/50 backdrop-blur-sm">
+                          <div className="text-xs font-semibold text-indigo-400 mb-1">{homeownerName || 'Homeowner'}</div>
+                          <span className="italic opacity-75">{deltaText}...</span>
                         </div>
                       </div>
                     )}
@@ -1168,43 +1302,106 @@ export default function TrainerPage() {
           </div>
         </div>
 
-        {/* Right Panel - Metrics */}
-        <div className="flex-1 flex flex-col">
-          <div className="p-4 bg-slate-800 border-b border-slate-700">
+        {/* Right Panel - Live Analytics */}
+        <div className="flex-1 flex flex-col bg-slate-900">
+          {/* Header with Timer and Controls */}
+          <div className="p-6 bg-slate-800/80 backdrop-blur-sm border-b border-slate-700/50 shadow-xl">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-slate-400" />
-                  <span className="text-2xl font-mono font-semibold text-slate-100">{formatDuration(metrics.duration)}</span>
+              <div className="flex items-center space-x-6">
+                {/* Timer */}
+                <div className="flex items-center space-x-3 bg-slate-900/50 rounded-xl px-5 py-3 border border-slate-700/50">
+                  <Clock className="w-5 h-5 text-indigo-400" />
+                  <div className="flex flex-col">
+                    <span className="text-xs text-slate-400 font-medium">Session Time</span>
+                    <span className="text-2xl font-mono font-bold text-white tabular-nums">{formatDuration(metrics.duration)}</span>
+                  </div>
                 </div>
+
+                {/* Recording Indicator */}
+                {isRecording && (
+                  <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                    <span className="text-sm font-medium text-red-400">Recording</span>
+                  </div>
+                )}
               </div>
+
               <button
                 onClick={endSession}
                 disabled={loading}
-                className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="group px-8 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold rounded-xl transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl hover:scale-105 disabled:hover:scale-100"
               >
-                {loading ? 'Ending...' : 'End Session'}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Ending...
+                  </span>
+                ) : (
+                  'End Session'
+                )}
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 bg-slate-900">
-            <div className="space-y-4 max-w-2xl mx-auto">
-              {/* Conversation Status */}
-              <ConversationStatus 
-                transcript={transcript} 
-                duration={metrics.duration}
-              />
+          {/* Analytics Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6 max-w-3xl mx-auto">
+              {/* Live Analytics Card */}
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Live Analytics</h3>
+                    <p className="text-xs text-slate-400">Real-time conversation insights</p>
+                  </div>
+                </div>
+
+                <ConversationStatus 
+                  transcript={transcript} 
+                  duration={metrics.duration}
+                />
+              </div>
               
-              {/* Quick Tips */}
-              <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-blue-400 mb-2">Quick Tips</h3>
-                <ul className="text-sm text-slate-300 space-y-1">
-                  {shuffledTips.slice(0, 3).map((t, idx) => (
-                    <li key={idx}>• {t}</li>
+              {/* Quick Tips Card */}
+              <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-sm border border-indigo-500/20 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="text-2xl">💡</div>
+                  <h3 className="text-lg font-bold text-indigo-300">Context-Aware Tips</h3>
+                </div>
+                <ul className="space-y-3">
+                  {shuffledTips.slice(0, 3).map((tip, idx) => (
+                    <li key={idx} className="flex items-start gap-3 text-sm text-slate-300 leading-relaxed">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold mt-0.5">
+                        {idx + 1}
+                      </span>
+                      <span>{tip}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
+
+              {/* Homeowner Info Card */}
+              {selectedAgent && (
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="text-3xl">🏡</div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{homeownerName || selectedAgent.name}</h3>
+                      <p className="text-sm text-slate-400">{selectedAgent.persona_type || 'Homeowner'}</p>
+                    </div>
+                  </div>
+                  {selectedAgent.description && (
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      {selectedAgent.description}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
