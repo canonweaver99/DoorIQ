@@ -6,6 +6,7 @@ import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
+import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
 
 type Session = Database['public']['Tables']['training_sessions']['Row'] & {
   users: {
@@ -128,8 +129,9 @@ export default function SessionsPage() {
   // Show sign-in prompt if not authenticated
   if (isAuthenticated === false) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-800 rounded-xl border border-slate-700 p-8 text-center">
+      <div className="min-h-screen bg-black relative flex items-center justify-center p-4">
+        <AnimatedShaderBackground />
+        <div className="relative z-10 max-w-md w-full bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-700 p-8 text-center shadow-2xl">
           <div className="mb-6">
             <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8 text-white" />
@@ -166,24 +168,26 @@ export default function SessionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-black relative flex items-center justify-center">
+        <AnimatedShaderBackground />
+        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-black relative py-8">
+      <AnimatedShaderBackground />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Your Training Sessions</h1>
-          <p className="text-slate-400">Review your past sessions and track your improvement</p>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">Your Training Sessions</h1>
+          <p className="text-xl text-white/90 drop-shadow-md">Review your past sessions and track your improvement</p>
         </div>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700">
+          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-400">Average Score</h3>
               <TrendingUp className="w-5 h-5 text-blue-500" />
@@ -194,7 +198,7 @@ export default function SessionsPage() {
             </p>
           </div>
           
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700">
+          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-400">Total Earnings</h3>
               <DollarSign className="w-5 h-5 text-green-500" />
@@ -203,7 +207,7 @@ export default function SessionsPage() {
             <p className="text-sm text-slate-400 mt-1">Virtual cash earned</p>
           </div>
           
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700">
+          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-400">Sessions</h3>
               <Calendar className="w-5 h-5 text-indigo-500" />
@@ -219,10 +223,10 @@ export default function SessionsPage() {
             <button
               key={period}
               onClick={() => setFilter(period)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg ${
                 filter === period
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-indigo-500/50'
+                  : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
               }`}
             >
               {period === 'week' ? 'Past Week' : period === 'month' ? 'Past Month' : 'All Time'}
@@ -233,8 +237,8 @@ export default function SessionsPage() {
         {/* Sessions List */}
         <div className="space-y-4">
           {sessions.length === 0 ? (
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-8 text-center border border-slate-700">
-              <p className="text-slate-400">No sessions found for this period</p>
+            <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-8 text-center border border-slate-700 shadow-xl">
+              <p className="text-white/70">No sessions found for this period</p>
               <Link
                 href="/trainer/select-homeowner"
                 className="inline-flex items-center mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -250,7 +254,7 @@ export default function SessionsPage() {
               return (
                 <div
                   key={session.id}
-                  className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700 hover:border-slate-600 transition-colors"
+                  className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 hover:border-slate-600 transition-colors shadow-xl"
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                     <div>

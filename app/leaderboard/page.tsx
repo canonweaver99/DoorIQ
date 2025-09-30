@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award } from 'lucide-react'
+import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
 
 type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
   rank: number
@@ -134,31 +135,33 @@ export default function LeaderboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-black relative flex items-center justify-center">
+        <AnimatedShaderBackground />
+        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-black relative py-8">
+      <AnimatedShaderBackground />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Leaderboard</h1>
-          <p className="text-slate-400">See how you rank against your team</p>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">Leaderboard</h1>
+          <p className="text-xl text-white/90 drop-shadow-md">See how you rank against your team</p>
         </div>
 
         {/* Timeframe Selector */}
-        <div className="flex justify-center space-x-4 mb-8">
+        <div className="flex justify-center space-x-4 mb-12">
           {(['week', 'month', 'all'] as const).map((period) => (
             <button
               key={period}
               onClick={() => setTimeframe(period)}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+              className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg ${
                 timeframe === period
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-indigo-500/50'
+                  : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
               }`}
             >
               {period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'All Time'}
@@ -171,47 +174,47 @@ export default function LeaderboardPage() {
           <div className="grid grid-cols-3 gap-4 mb-12 max-w-3xl mx-auto">
             {/* 2nd Place */}
             <div className="order-1 md:order-1">
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-600 text-center transform translate-y-8">
-                <Medal className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-                <h3 className="font-bold text-white mb-1">{leaderboard[1].full_name}</h3>
-                <p className="text-2xl font-bold text-slate-300 mb-1">
+              <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border-2 border-slate-600 text-center transform translate-y-8 shadow-2xl">
+                <Medal className="w-12 h-12 text-slate-400 mx-auto mb-3 drop-shadow-lg" />
+                <h3 className="font-bold text-white mb-1 drop-shadow">{leaderboard[1].full_name}</h3>
+                <p className="text-2xl font-bold text-slate-300 mb-1 drop-shadow">
                   ${leaderboard[1].virtual_earnings.toFixed(2)}
                 </p>
-                <p className="text-sm text-slate-400">2nd Place</p>
+                <p className="text-sm text-slate-400 drop-shadow">2nd Place</p>
               </div>
             </div>
 
             {/* 1st Place */}
             <div className="order-2 md:order-2">
-              <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/20 backdrop-blur-sm rounded-lg p-6 border border-yellow-600/50 text-center transform scale-110">
-                <Crown className="w-16 h-16 text-yellow-500 mx-auto mb-3" />
-                <h3 className="font-bold text-white text-lg mb-1">{leaderboard[0].full_name}</h3>
-                <p className="text-3xl font-bold text-yellow-400 mb-1">
+              <div className="bg-gradient-to-br from-yellow-600/30 to-yellow-700/30 backdrop-blur-xl rounded-2xl p-6 border-2 border-yellow-500/70 text-center transform scale-110 shadow-2xl shadow-yellow-500/20">
+                <Crown className="w-16 h-16 text-yellow-400 mx-auto mb-3 drop-shadow-lg" />
+                <h3 className="font-bold text-white text-lg mb-1 drop-shadow">{leaderboard[0].full_name}</h3>
+                <p className="text-3xl font-bold text-yellow-400 mb-1 drop-shadow-lg">
                   ${leaderboard[0].virtual_earnings.toFixed(2)}
                 </p>
-                <p className="text-sm text-yellow-400">1st Place</p>
+                <p className="text-sm text-yellow-400 drop-shadow">1st Place</p>
               </div>
             </div>
 
             {/* 3rd Place */}
             <div className="order-3 md:order-3">
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-orange-600/50 text-center transform translate-y-8">
-                <Award className="w-12 h-12 text-orange-600 mx-auto mb-3" />
-                <h3 className="font-bold text-white mb-1">{leaderboard[2].full_name}</h3>
-                <p className="text-2xl font-bold text-orange-400 mb-1">
+              <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border-2 border-orange-600/70 text-center transform translate-y-8 shadow-2xl shadow-orange-600/10">
+                <Award className="w-12 h-12 text-orange-500 mx-auto mb-3 drop-shadow-lg" />
+                <h3 className="font-bold text-white mb-1 drop-shadow">{leaderboard[2].full_name}</h3>
+                <p className="text-2xl font-bold text-orange-400 mb-1 drop-shadow">
                   ${leaderboard[2].virtual_earnings.toFixed(2)}
                 </p>
-                <p className="text-sm text-orange-400">3rd Place</p>
+                <p className="text-sm text-orange-400 drop-shadow">3rd Place</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Full Leaderboard Table */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden">
+        <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-900/50">
+              <thead className="bg-slate-950/70">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Rank
@@ -279,10 +282,12 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Motivational Message */}
-        <div className="mt-8 text-center">
-          <p className="text-slate-400">
-            Keep practicing to climb the ranks and earn more virtual cash!
-          </p>
+        <div className="mt-12 text-center">
+          <div className="inline-block bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 rounded-2xl px-8 py-6 shadow-xl">
+            <p className="text-white/80 drop-shadow">
+              Keep practicing to climb the ranks and earn more virtual cash! 🚀
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { difficultyThemes } from '@/lib/theme'
+import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
 
 // Homeowner agent data with all details
 const HOMEOWNER_AGENTS = [
@@ -218,14 +219,11 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
     })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-black relative">
+      {/* Animated Shader Background */}
+      <AnimatedShaderBackground />
 
-      <div className="relative max-w-7xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -243,12 +241,12 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
             <span className="text-sm font-medium text-indigo-300">Premium Sales Training</span>
           </motion.div>
 
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight drop-shadow-lg">
             Choose Your
             <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"> Challenge</span>
           </h1>
           
-          <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">
             Select a homeowner persona to practice your sales skills in realistic scenarios
           </p>
 
@@ -265,7 +263,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
             <button
               onMouseEnter={() => setShowTooltip(true)}
               onMouseLeave={() => setShowTooltip(false)}
-              className="inline-flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white px-6 py-3 rounded-xl transition-all duration-200 font-medium"
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 hover:border-white/40 text-white px-6 py-3 rounded-xl transition-all duration-200 font-medium"
             >
               <Info size={18} />
               Difficulty Guide
@@ -279,7 +277,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="inline-block bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl"
+                className="inline-block bg-slate-900/90 backdrop-blur-xl border border-slate-700 rounded-2xl p-6 shadow-2xl"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                   <div className="flex items-center gap-3">
@@ -319,7 +317,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
               placeholder="Search homeowners..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-800/50 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full bg-slate-900/70 backdrop-blur-sm border border-slate-700 hover:border-slate-600 focus:border-indigo-500 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
 
@@ -327,7 +325,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
           <select
             value={filterDifficulty}
             onChange={(e) => setFilterDifficulty(e.target.value)}
-            className="bg-slate-800/50 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 rounded-xl px-4 py-3 text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+            className="bg-slate-900/70 backdrop-blur-sm border border-slate-700 hover:border-slate-600 focus:border-indigo-500 rounded-xl px-4 py-3 text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
           >
             <option value="all">All Difficulties</option>
             <option value="moderate">Moderate</option>
@@ -340,7 +338,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="bg-slate-800/50 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 rounded-xl px-4 py-3 text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+            className="bg-slate-900/70 backdrop-blur-sm border border-slate-700 hover:border-slate-600 focus:border-indigo-500 rounded-xl px-4 py-3 text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
           >
             <option value="recommended">Recommended</option>
             <option value="difficulty">By Difficulty</option>
@@ -370,7 +368,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
               >
                 <div
                   className={cn(
-                    "relative bg-slate-800/50 backdrop-blur-sm rounded-2xl border-2 transition-all duration-300 overflow-hidden h-full",
+                    "relative bg-slate-900/80 backdrop-blur-xl rounded-2xl border-2 transition-all duration-300 overflow-hidden h-full shadow-xl",
                     theme.border,
                     theme.hover,
                     isSelected && "ring-4 ring-indigo-500/50 shadow-2xl"
@@ -495,12 +493,12 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
           transition={{ duration: 0.5, delay: 0.5 }}
           className="mt-16 text-center"
         >
-          <div className="inline-flex flex-col gap-3 bg-slate-800/30 border border-slate-700/50 rounded-2xl px-8 py-6">
-            <p className="text-sm text-slate-400 flex items-center gap-2">
+          <div className="inline-flex flex-col gap-3 bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 rounded-2xl px-8 py-6 shadow-xl">
+            <p className="text-sm text-white/80 flex items-center gap-2 drop-shadow">
               <Sparkles size={16} className="text-indigo-400" />
               New to sales training? Start with Austin to build foundational skills
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-white/60 drop-shadow">
               Each persona is designed to challenge different aspects of your sales technique
             </p>
           </div>
