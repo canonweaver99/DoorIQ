@@ -28,6 +28,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/pdf-parse": "^1.1.5",
     "@types/three": "^0.180.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.22",
