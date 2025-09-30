@@ -172,14 +172,18 @@ function HowItWorksSection() {
               key={index}
               glowColor={index === 0 ? 'blue' : index === 1 ? 'purple' : 'green'}
               customSize
-              className={`transition-all duration-1000 h-full ${
+              className={`transition-all duration-1000 h-full min-h-[240px] md:min-h-[280px] p-6 md:p-8 ${
                 isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
               style={{ transitionDelay: `${index * 200}ms` } as React.CSSProperties}
             >
               <div className="flex flex-col h-full justify-center">
-                <h3 className="text-xl font-semibold text-slate-100">{item.title}</h3>
-                <p className="mt-3 text-slate-300">{item.body}</p>
+                <h3 className="text-2xl md:text-3xl font-semibold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow">
+                  {item.title}
+                </h3>
+                <p className="mt-4 text-base md:text-lg text-slate-200/90 leading-relaxed">
+                  {item.body}
+                </p>
               </div>
             </GlowCard>
           ))}
