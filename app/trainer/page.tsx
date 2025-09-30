@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
-import { analyzeConversation } from '@/lib/trainer/conversationAnalyzer'
 import CalculatingScore from '@/components/analytics/CalculatingScore'
 import MoneyNotification from '@/components/trainer/MoneyNotification'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
@@ -320,82 +319,19 @@ function TrainerPageContent() {
         ambientControls.stopScheduler()
       } catch {}
       
-      const analysis = transcript.length > 0 ? analyzeConversation(transcript) : {
-        overallScore: 75,
-        scores: {
-          rapport: 70,
-          introduction: 80,
-          listening: 75,
-          salesTechnique: 70,
-          closing: 75
-        },
-        keyMoments: {
-          priceDiscussed: false,
-          safetyAddressed: true,
-          closeAttempted: true,
-          objectionHandled: false,
-          dealClosed: false
-        },
-        feedback: {
-          strengths: [],
-          improvements: [],
-          specificTips: []
-        },
-        transcriptSections: {
-          introduction: { startIdx: 0, endIdx: -1 },
-          discovery: { startIdx: -1, endIdx: -1 },
-          presentation: { startIdx: -1, endIdx: -1 },
-          closing: { startIdx: -1, endIdx: -1 }
-        },
-        virtualEarnings: 0
-      }
-
-      const hasEarnings = analysis.virtualEarnings && analysis.virtualEarnings > 0
-      if (hasEarnings) {
-        setEarningsAmount(analysis.virtualEarnings)
-        setShowMoneyNotification(true)
-        setLoading(false)
-      } else {
-        setCalculatingScore(true)
-        setLoading(false)
-      }
-
-      // NEW: stash conversation metadata for post-session analysis
-      if (sessionId) {
-        await (supabase as any)
-          .from('live_sessions')
-          .update({
-            analytics: {
-              ...(analysis || {}),
-              conversation_id: (window as any)?.elevenConversationId || null,
-              homeowner_name: selectedAgent?.name || 'Austin',
-              homeowner_profile: selectedAgent?.description || 'Standard homeowner persona',
-            }
-          } as any)
-          .eq('id', sessionId)
-      }
-
+      // Persist session metadata and transcript
       if (sessionId) {
         await (supabase as any)
           .from('live_sessions')
           .update({
             ended_at: new Date().toISOString(),
             duration_seconds: duration,
-            overall_score: analysis.overallScore,
-            rapport_score: analysis.scores.rapport,
-            introduction_score: analysis.scores.introduction,
-            listening_score: analysis.scores.listening,
-            objection_handling_score: analysis.keyMoments?.objectionHandled ? 85 : 40,
-            safety_score: analysis.keyMoments?.safetyAddressed ? 85 : 40,
-            close_effectiveness_score: analysis.scores.closing,
             full_transcript: transcript as any,
-            analytics: analysis,
-            sentiment_data: {
-              finalSentiment: 50,
-              interruptionCount: 0,
-              objectionCount: 0
-            },
-            virtual_earnings: analysis.virtualEarnings || 0
+            analytics: {
+              conversation_id: (window as any)?.elevenConversationId || null,
+              homeowner_name: selectedAgent?.name || 'Austin',
+              homeowner_profile: selectedAgent?.description || 'Standard homeowner persona',
+            }
           } as any)
           .eq('id', sessionId as string)
 
@@ -421,6 +357,9 @@ function TrainerPageContent() {
           console.error('Manager notification failed:', e)
         }
       }
+
+      setCalculatingScore(true)
+      setLoading(false)
     } catch (e) {
       console.error(e)
       setLoading(false)

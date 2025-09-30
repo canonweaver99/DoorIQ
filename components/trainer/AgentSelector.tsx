@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 
@@ -10,6 +10,30 @@ interface AgentSelectorProps {
   onSelectAgent: (agent: Agent) => void
   selectedAgent: Agent | null
   disabled?: boolean
+}
+
+const REP_NAME_HINTS = ['jake', 'marcus', 'tyler', 'ethan', 'chase']
+
+const isRepPersona = (agent: Agent) => {
+  const name = agent.name.toLowerCase()
+  const persona = (agent.persona ?? '').toLowerCase()
+
+  if (REP_NAME_HINTS.some((hint) => name.includes(hint))) {
+    return true
+  }
+
+  const leaderboardHints = ['sales rep', 'rep style', 'benchmark rep', '@dooriq-agent.ai', 'leaderboard']
+  if (leaderboardHints.some((hint) => persona.includes(hint))) {
+    return true
+  }
+
+  const winRateMatch = persona.match(/(\d+(?:\.\d+)?)%\s*win rate/i)
+  const earningsMatch = persona.match(/\$\s?[\d,]+/)
+  if (winRateMatch && earningsMatch) {
+    return true
+  }
+
+  return false
 }
 
 export default function AgentSelector({ onSelectAgent, selectedAgent, disabled }: AgentSelectorProps) {
@@ -39,15 +63,23 @@ export default function AgentSelector({ onSelectAgent, selectedAgent, disabled }
     setLoading(false)
   }
 
-  // Customer personas (homeowners to practice with)
-  const customerAgents = agents.filter(agent => 
-    ['Austin', 'Decisive Derek', 'Skeptical Sarah', 'Budget-Conscious Bill', 'Analytical Ashley'].includes(agent.name)
-  )
+  const { customerAgents, repAgents } = useMemo(() => {
+    const reps: Agent[] = []
+    const customers: Agent[] = []
 
-  // Sales rep personas (to learn from)
-  const repAgents = agents.filter(agent => 
-    ['College Hustle Jake', 'Smooth Talker Marcus', 'Tech Bro Tyler', 'Earnest Ethan', 'Competitive Chase'].includes(agent.name)
-  )
+    for (const agent of agents) {
+      if (isRepPersona(agent)) {
+        reps.push(agent)
+      } else {
+        customers.push(agent)
+      }
+    }
+
+    return {
+      customerAgents: customers,
+      repAgents: reps,
+    }
+  }, [agents])
 
   const displayAgents = activeTab === 'customers' ? customerAgents : repAgents
 

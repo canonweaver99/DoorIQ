@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -18,9 +18,37 @@ import {
 import { cn } from '@/lib/utils'
 import { difficultyThemes } from '@/lib/theme'
 import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
+import { createClient } from '@/lib/supabase/client'
+import { Database } from '@/lib/supabase/database.types'
 
-// Homeowner agent data with all details
-const HOMEOWNER_AGENTS = [
+type AgentRow = Database['public']['Tables']['agents']['Row']
+type DifficultyKey = 'moderate' | 'hard' | 'veryHard' | 'expert' | 'easy'
+interface HomeownerAgent {
+  id: string
+  name: string
+  agentId: string
+  age?: number
+  occupation?: string
+  location?: string
+  personality?: string
+  challengeLevel: number
+  challengeLabel: string
+  difficulty: DifficultyKey
+  traits: string[]
+  bestFor: string
+  recommended?: boolean
+  mostChallenging?: boolean
+  avatar: string
+  color: string
+  estimatedTime?: string
+  startingScore?: number
+  targetScore?: number
+}
+
+const SUPABASE_COLOR_MAP = ['green', 'yellow', 'red', 'orange', 'purple', 'blue', 'teal', 'emerald', 'pink', 'sky'] as const
+const SUPABASE_AVATARS = ['🏡', '💼', '🔍', '💵', '📊', '🛡️', '🧠', '🏙️', '🎯', '🏠'] as const
+
+const FALLBACK_AGENTS: HomeownerAgent[] = [
   {
     id: 'austin',
     name: 'Austin',
@@ -31,7 +59,7 @@ const HOMEOWNER_AGENTS = [
     personality: 'Skeptical but fair, direct communicator',
     challengeLevel: 2,
     challengeLabel: 'Moderate',
-    difficulty: 'moderate' as const,
+    difficulty: 'moderate',
     startingScore: 50,
     targetScore: 70,
     estimatedTime: '5-8 min',
@@ -39,12 +67,12 @@ const HOMEOWNER_AGENTS = [
       'Asks direct questions',
       'Detects pressure tactics',
       'Terminates after 3 pricing deflections',
-      'Has ants in kitchen'
+      'Has ants in kitchen',
     ],
     bestFor: 'Learning to handle direct questions and build trust',
     recommended: true,
     avatar: '🏡',
-    color: 'green'
+    color: 'green',
   },
   {
     id: 'derek',
@@ -56,7 +84,7 @@ const HOMEOWNER_AGENTS = [
     personality: 'Time-conscious executive, premium buyer',
     challengeLevel: 3,
     challengeLabel: 'Hard',
-    difficulty: 'hard' as const,
+    difficulty: 'hard',
     startingScore: 50,
     targetScore: 70,
     estimatedTime: '8-10 min',
@@ -64,12 +92,11 @@ const HOMEOWNER_AGENTS = [
       '10-minute HARD time limit',
       'Requires termite expertise (CRITICAL)',
       'Wants executive-level service',
-      'Has termite damage and carpenter bees'
+      'Has termite damage and carpenter bees',
     ],
     bestFor: 'Practicing efficiency and executive-level communication',
-    recommended: false,
     avatar: '💼',
-    color: 'yellow'
+    color: 'yellow',
   },
   {
     id: 'sarah',
@@ -81,7 +108,7 @@ const HOMEOWNER_AGENTS = [
     personality: 'Requires extensive verification, extremely cautious',
     challengeLevel: 5,
     challengeLabel: 'Expert',
-    difficulty: 'expert' as const,
+    difficulty: 'expert',
     startingScore: 20,
     targetScore: 120,
     estimatedTime: '12-15 min',
@@ -89,13 +116,13 @@ const HOMEOWNER_AGENTS = [
       'Real-time credential verification required',
       'Needs references and documentation',
       'HIGHEST trust threshold',
-      'Zero tolerance for lies or missing credentials'
+      'Zero tolerance for lies or missing credentials',
     ],
     bestFor: 'Mastering trust-building and credential presentation',
     recommended: false,
     mostChallenging: true,
     avatar: '🔍',
-    color: 'red'
+    color: 'red',
   },
   {
     id: 'bill',
@@ -107,7 +134,7 @@ const HOMEOWNER_AGENTS = [
     personality: 'Price-focused, needs value justification',
     challengeLevel: 3,
     challengeLabel: 'Hard',
-    difficulty: 'hard' as const,
+    difficulty: 'hard',
     startingScore: 50,
     targetScore: 80,
     estimatedTime: '8-12 min',
@@ -115,12 +142,12 @@ const HOMEOWNER_AGENTS = [
       '$25-40/month budget maximum',
       'Requires senior/veteran discount',
       'Currently using $8 Home Depot spray',
-      'Rejects if over budget'
+      'Rejects if over budget',
     ],
     bestFor: 'Learning discount strategies and value communication',
     recommended: false,
     avatar: '💵',
-    color: 'yellow'
+    color: 'yellow',
   },
   {
     id: 'ashley',
@@ -132,7 +159,7 @@ const HOMEOWNER_AGENTS = [
     personality: 'Evidence-based decisions, research-heavy',
     challengeLevel: 4,
     challengeLabel: 'Very Hard',
-    difficulty: 'veryHard' as const,
+    difficulty: 'veryHard',
     startingScore: 40,
     targetScore: 120,
     estimatedTime: '10-15 min',
@@ -140,14 +167,87 @@ const HOMEOWNER_AGENTS = [
       'Asks technical EPA regulation questions',
       'Wants 5-7 days to analyze',
       'Catches made-up data instantly',
-      'Has German cockroaches (difficult pest)'
+      'Has German cockroaches (difficult pest)',
     ],
     bestFor: 'Practicing technical knowledge and documentation skills',
     recommended: false,
     avatar: '📊',
-    color: 'orange'
-  }
+    color: 'orange',
+  },
 ]
+
+const FALLBACK_AGENT_MAP = FALLBACK_AGENTS.reduce<Record<string, HomeownerAgent>>((acc, agent) => {
+  acc[agent.name] = agent
+  return acc
+}, {})
+
+const difficultyLabelMap: Record<DifficultyKey, string> = {
+  easy: 'Easy',
+  moderate: 'Moderate',
+  hard: 'Hard',
+  veryHard: 'Very Hard',
+  expert: 'Expert',
+}
+
+const difficultyLevelMap: Record<DifficultyKey, number> = {
+  easy: 1,
+  moderate: 2,
+  hard: 3,
+  veryHard: 4,
+  expert: 5,
+}
+
+const sanitizePersonaTraits = (persona?: string | null): string[] => {
+  if (!persona) return []
+  const cleaned = persona
+    .split(/\r?\n|\.|•|-|\u2022/)
+    .map((part) => part.replace(/^[•\-\s]+/, '').trim())
+    .filter((part) => part.length > 2)
+  return Array.from(new Set(cleaned)).slice(0, 4)
+}
+
+const parseDifficulty = (persona?: string | null): DifficultyKey | undefined => {
+  const match = persona?.match(/(easy|moderate|very hard|hard|expert)/i)?.[1]?.toLowerCase()
+  if (!match) return undefined
+  if (match === 'very hard') return 'veryHard'
+  if (match === 'hard') return 'hard'
+  if (match === 'moderate') return 'moderate'
+  if (match === 'expert') return 'expert'
+  if (match === 'easy') return 'easy'
+  return undefined
+}
+
+const hydrateAgent = (row: AgentRow, index: number): HomeownerAgent => {
+  const fallback = FALLBACK_AGENT_MAP[row.name]
+  const difficultyFromPersona = parseDifficulty(row.persona) ?? fallback?.difficulty ?? 'moderate'
+  const challengeLabel = fallback?.challengeLabel ?? difficultyLabelMap[difficultyFromPersona]
+  const challengeLevel = fallback?.challengeLevel ?? difficultyLevelMap[difficultyFromPersona]
+  const traits = fallback?.traits ?? sanitizePersonaTraits(row.persona)
+  const avatar = fallback?.avatar ?? SUPABASE_AVATARS[index % SUPABASE_AVATARS.length]
+  const color = fallback?.color ?? SUPABASE_COLOR_MAP[index % SUPABASE_COLOR_MAP.length]
+
+  return {
+    id: row.id,
+    name: row.name,
+    agentId: row.eleven_agent_id,
+    age: fallback?.age,
+    occupation: fallback?.occupation ?? 'Homeowner',
+    location: fallback?.location ?? 'United States',
+    personality: fallback?.personality ?? (row.persona?.split('.').at(0)?.trim() || 'Dynamic homeowner persona'),
+    challengeLevel,
+    challengeLabel,
+    difficulty: difficultyFromPersona,
+    traits: traits.length > 0 ? traits : ['Dynamic objections', 'Authentic reactions', 'Personalized skepticism', 'Realistic scheduling concerns'],
+    bestFor: fallback?.bestFor ?? 'Sharpen diverse objection handling and value delivery',
+    recommended: fallback?.recommended,
+    mostChallenging: fallback?.mostChallenging,
+    avatar,
+    color,
+    estimatedTime: fallback?.estimatedTime ?? '8-12 min',
+    startingScore: fallback?.startingScore ?? 40,
+    targetScore: fallback?.targetScore ?? 90,
+  }
+}
 
 interface HomeownerSelectorProps {
   onSelect?: (agentId: string, agentName: string) => void
@@ -156,15 +256,44 @@ interface HomeownerSelectorProps {
 
 export default function HomeownerSelector({ onSelect, standalone = false }: HomeownerSelectorProps) {
   const router = useRouter()
+  const supabase = createClient()
   const [showTooltip, setShowTooltip] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDifficulty, setFilterDifficulty] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'recommended' | 'difficulty' | 'name'>('recommended')
+  const [agents, setAgents] = useState<HomeownerAgent[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.error('Failed to load homeowner agents:', error)
+        setLoading(false)
+        return
+      }
+
+      if (data) {
+        const hydrated: HomeownerAgent[] = data
+          .filter((agent) => Boolean(agent.eleven_agent_id))
+          .map((agent, index) => hydrateAgent(agent as AgentRow, index))
+        setAgents(hydrated)
+      }
+      setLoading(false)
+    }
+
+    fetchAgents()
+  }, [])
 
   const handleSelectAgent = (agentId: string, agentName: string) => {
     setSelectedAgent(agentId)
-    
+
     // Small delay for visual feedback
     setTimeout(() => {
       if (onSelect) {
@@ -176,9 +305,13 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
   }
 
   const handleRandomSelection = () => {
-    const randomIndex = Math.floor(Math.random() * HOMEOWNER_AGENTS.length)
-    const randomAgent = HOMEOWNER_AGENTS[randomIndex]
-    handleSelectAgent(randomAgent.agentId, randomAgent.name)
+    const collection = agents.length > 0 ? agents : FALLBACK_AGENTS
+    if (collection.length === 0) return
+    const randomIndex = Math.floor(Math.random() * collection.length)
+    const randomAgent = collection[randomIndex]
+    if (randomAgent) {
+      handleSelectAgent(randomAgent.agentId, randomAgent.name)
+    }
   }
 
   const renderStars = (level: number, size: number = 16) => {
@@ -198,12 +331,19 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
     )
   }
 
-  // Filter and sort agents
-  const filteredAgents = HOMEOWNER_AGENTS
-    .filter(agent => {
-      const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           agent.occupation.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesDifficulty = filterDifficulty === 'all' || agent.challengeLabel.toLowerCase() === filterDifficulty.toLowerCase()
+const filteredAgents = useMemo(() => {
+  const list = agents.length > 0 ? agents : FALLBACK_AGENTS
+
+  return [...list]
+    .filter((agent) => {
+      const target = searchQuery.trim().toLowerCase()
+      const matchesSearch =
+        !target ||
+        agent.name.toLowerCase().includes(target) ||
+        (agent.occupation ?? '').toLowerCase().includes(target) ||
+        (agent.personality ?? '').toLowerCase().includes(target)
+      const matchesDifficulty =
+        filterDifficulty === 'all' || agent.difficulty === filterDifficulty
       return matchesSearch && matchesDifficulty
     })
     .sort((a, b) => {
@@ -217,6 +357,9 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
       }
       return a.name.localeCompare(b.name)
     })
+}, [agents, filterDifficulty, searchQuery, sortBy])
+
+  const usingFallback = !loading && agents.length === 0
 
   return (
     <div className="min-h-screen bg-black relative">
@@ -249,6 +392,12 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">
             Select a homeowner persona to practice your sales skills in realistic scenarios
           </p>
+
+          {usingFallback && (
+            <p className="text-sm text-amber-300/90 bg-amber-500/10 border border-amber-400/30 rounded-full inline-block px-4 py-1">
+              Showing default personas while we load your Supabase agents
+            </p>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
@@ -330,7 +479,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
             <option value="all">All Difficulties</option>
             <option value="moderate">Moderate</option>
             <option value="hard">Hard</option>
-            <option value="very hard">Very Hard</option>
+            <option value="veryHard">Very Hard</option>
             <option value="expert">Expert</option>
           </select>
 
@@ -354,7 +503,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {filteredAgents.map((agent, index) => {
-            const theme = difficultyThemes[agent.difficulty]
+            const theme = difficultyThemes[agent.difficulty] ?? difficultyThemes.moderate
             const isSelected = selectedAgent === agent.agentId
 
             return (

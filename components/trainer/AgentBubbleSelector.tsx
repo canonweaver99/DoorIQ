@@ -1,59 +1,103 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { createClient } from '@/lib/supabase/client'
+import { Database } from '@/lib/supabase/database.types'
 
-// Homeowner agent data with bubble colors
-const HOMEOWNER_AGENTS = [
-  {
-    id: 'austin',
-    name: 'Austin',
-    agentId: 'agent_7001k5jqfjmtejvs77jvhjf254tz',
+type AgentRow = Database['public']['Tables']['agents']['Row']
+
+interface HomeownerAgentDisplay {
+  id: string
+  name: string
+  agentId: string
+  subtitle: string
+  difficulty: DifficultyKey
+  color: keyof typeof COLOR_VARIANTS
+  description: string
+}
+const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
+  'primary',
+  'tertiary',
+  'quinary',
+  'secondary',
+  'senary',
+  'quaternary',
+  'septenary',
+  'octonary',
+]
+type DifficultyKey = 'Moderate' | 'Hard' | 'Very Hard' | 'Expert' | 'Easy'
+const DIFFICULTY_BADGES: Record<DifficultyKey, string> = {
+  Easy: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  Moderate: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  Hard: 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
+  'Very Hard': 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  Expert: 'bg-red-500/20 text-red-300 border border-red-500/30',
+}
+const FALLBACK_AGENT_MAP: Record<string, { subtitle: string; description: string; difficulty: DifficultyKey }> = {
+  Austin: {
     subtitle: 'Skeptical but Fair',
     difficulty: 'Moderate',
-    color: 'primary', // emerald/cyan
-    description: 'Direct communicator who asks tough questions'
+    description: 'Direct communicator who asks tough questions',
   },
-  {
-    id: 'derek',
-    name: 'Decisive Derek',
-    agentId: 'agent_5401k6bysxp8frv80yn1p6ecbvb7',
+  'Decisive Derek': {
     subtitle: 'Time-Conscious Executive',
     difficulty: 'Hard',
-    color: 'tertiary', // orange/yellow
-    description: 'Requires executive-level service and efficiency'
+    description: 'Requires executive-level service and efficiency',
   },
-  {
-    id: 'sarah',
-    name: 'Skeptical Sarah',
-    agentId: 'agent_5501k6bys8swf03sqaa13pf1xda5',
+  'Skeptical Sarah': {
     subtitle: 'Trust-Focused',
     difficulty: 'Expert',
-    color: 'quinary', // red/rose
-    description: 'Needs extensive verification and documentation'
+    description: 'Needs extensive verification and documentation',
   },
-  {
-    id: 'bill',
-    name: 'Budget-Conscious Bill',
-    agentId: 'agent_7001k6bynr1sfsvaqkd1a3r9j7j3',
+  'Budget-Conscious Bill': {
     subtitle: 'Price-Focused Veteran',
     difficulty: 'Hard',
-    color: 'secondary', // violet/fuchsia
-    description: 'Fixed income, needs value justification'
+    description: 'Fixed income, needs value justification',
   },
-  {
-    id: 'ashley',
-    name: 'Analytical Ashley',
-    agentId: 'agent_6301k6byn0x4ff3ryjvg3fee6gpg',
+  'Analytical Ashley': {
     subtitle: 'Data-Driven Researcher',
     difficulty: 'Very Hard',
-    color: 'senary', // blue/sky
-    description: 'Evidence-based, catches made-up data instantly'
+    description: 'Evidence-based, catches made-up data instantly',
+  },
+}
+
+const sanitizeDescription = (persona?: string | null): string => {
+  if (!persona) return 'Dynamic AI homeowner with unique objections and goals'
+  return persona.split(/\r?\n|\.|•|-/).map((part) => part.trim()).filter(Boolean)[0] ?? persona
+}
+
+const parseDifficulty = (agentName: string, persona?: string | null): DifficultyKey => {
+  const fallback = FALLBACK_AGENT_MAP[agentName]?.difficulty
+  const match = persona?.match(/(easy|moderate|very hard|hard|expert)/i)?.[1]?.toLowerCase()
+  if (match === 'easy') return 'Easy'
+  if (match === 'moderate') return 'Moderate'
+  if (match === 'very hard') return 'Very Hard'
+  if (match === 'hard') return 'Hard'
+  if (match === 'expert') return 'Expert'
+  return fallback ?? 'Moderate'
+}
+
+const mapAgentToDisplay = (agent: AgentRow, index: number): HomeownerAgentDisplay => {
+  const fallback = FALLBACK_AGENT_MAP[agent.name]
+  const difficulty = parseDifficulty(agent.name, agent.persona)
+  const subtitle = fallback?.subtitle ?? 'Homeowner Persona'
+  const description = fallback?.description ?? sanitizeDescription(agent.persona)
+  const color = COLOR_CYCLE[index % COLOR_CYCLE.length]
+
+  return {
+    id: agent.id,
+    name: agent.name,
+    agentId: agent.eleven_agent_id,
+    subtitle,
+    difficulty,
+    color,
+    description,
   }
-]
+}
 
 interface AgentBubbleSelectorProps {
   onSelect?: (agentId: string, agentName: string) => void
@@ -80,6 +124,27 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   const router = useRouter()
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
+  const supabase = createClient()
+  const [agents, setAgents] = useState<HomeownerAgentDisplay[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+      if (!error && data) {
+        const hydrated = data
+          .filter((agent) => Boolean(agent.eleven_agent_id))
+          .map((agent, index) => mapAgentToDisplay(agent as AgentRow, index))
+        setAgents(hydrated)
+      }
+      setLoading(false)
+    }
+    fetchAgents()
+  }, [])
 
   const handleSelectAgent = (agentId: string, agentName: string) => {
     setSelectedAgent(agentId)
@@ -91,6 +156,29 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         router.push(`/trainer?agent=${agentId}&name=${encodeURIComponent(agentName)}`)
       }
     }, 400)
+  }
+
+  if (loading) {
+    return (
+      <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
+        <AnimatedGrid />
+        <div className="relative z-10 text-white">Loading homeowners…</div>
+      </div>
+    )
+  }
+
+  if (!loading && agents.length === 0) {
+    return (
+      <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
+        <AnimatedGrid />
+        <div className="relative z-10 text-center text-slate-300 space-y-3">
+          <p className="text-xl font-semibold">No homeowner agents found</p>
+          <p className="text-sm text-slate-500 max-w-sm">
+            Add active homeowner personas in Supabase with an ElevenLabs agent ID to see them here.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -115,7 +203,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
         {/* Agent Bubbles Grid */}
         <div className="flex flex-wrap justify-center gap-8 mb-12">
-          {HOMEOWNER_AGENTS.map((agent, index) => {
+          {agents.map((agent, index) => {
             const variantKey = agent.color as keyof typeof COLOR_VARIANTS
             const variantStyles = COLOR_VARIANTS[variantKey]
             const isHovered = hoveredAgent === agent.id
@@ -185,10 +273,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   <p className="text-sm text-slate-400 mb-2">{agent.subtitle}</p>
                   <div className={cn(
                     "inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3",
-                    agent.difficulty === 'Moderate' && 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-                    agent.difficulty === 'Hard' && 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
-                    agent.difficulty === 'Very Hard' && 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-                    agent.difficulty === 'Expert' && 'bg-red-500/20 text-red-300 border border-red-500/30'
+                    DIFFICULTY_BADGES[agent.difficulty] ?? DIFFICULTY_BADGES.Moderate
                   )}>
                     {agent.difficulty}
                   </div>

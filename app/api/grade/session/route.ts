@@ -17,8 +17,8 @@ export async function POST(req: Request) {
 
     const supabase = await createServerSupabaseClient()
     const { data: session, error } = await (supabase as any)
-      .from('training_sessions')
-      .select('id, transcript, analytics')
+      .from('live_sessions')
+      .select('id, full_transcript, analytics')
       .eq('id', sessionId)
       .single()
 
@@ -26,7 +26,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 
-    const transcript: TranscriptEntry[] = Array.isArray(session.transcript) ? session.transcript : []
+    const transcript: TranscriptEntry[] = Array.isArray((session as any).full_transcript)
+      ? (session as any).full_transcript
+      : []
     if (!transcript.length) {
       return NextResponse.json({ error: 'No transcript available to grade' }, { status: 400 })
     }
@@ -135,7 +137,7 @@ export async function POST(req: Request) {
     }
 
     const { error: updateError } = await (supabase as any)
-      .from('training_sessions')
+      .from('live_sessions')
       .update(updatePayload)
       .eq('id', sessionId)
 
