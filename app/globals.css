@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 :root {
+  --destructive-foreground: oklch(1 0 0);
+}
+
+.dark {
+  --destructive-foreground: oklch(1 0 0);
+}
+
+:root {
   --background: #020617;
   --foreground: #f8fafc;
 }

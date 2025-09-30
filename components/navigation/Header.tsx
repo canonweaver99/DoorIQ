@@ -38,6 +38,7 @@ export default function Header() {
     { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
     { name: 'Sessions', href: '/sessions', icon: FileText },
     { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
+    { name: 'Pricing', href: '/pricing', icon: Trophy },
     { name: 'Profile', href: '/settings', icon: UserIcon },
   ]
 
