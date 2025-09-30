@@ -114,7 +114,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         </motion.div>
 
         {/* Agent Bubbles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-12">
+        <div className="flex flex-wrap justify-center gap-8 mb-12">
           {HOMEOWNER_AGENTS.map((agent, index) => {
             const variantKey = agent.color as keyof typeof COLOR_VARIANTS
             const variantStyles = COLOR_VARIANTS[variantKey]
@@ -171,18 +171,6 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </motion.div>
                     ))}
 
-                    {/* Center content */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-6xl mb-2 drop-shadow-lg filter brightness-110">
-                          {agent.id === 'austin' && '🏡'}
-                          {agent.id === 'derek' && '💼'}
-                          {agent.id === 'sarah' && '🔍'}
-                          {agent.id === 'bill' && '💵'}
-                          {agent.id === 'ashley' && '📊'}
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </motion.button>
 
