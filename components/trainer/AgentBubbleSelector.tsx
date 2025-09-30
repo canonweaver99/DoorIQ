@@ -34,6 +34,9 @@ const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
   'quaternary',
   'septenary',
   'octonary',
+  'nonary',
+  'denary',
+  'duodenary',
 ]
 type DifficultyKey = 'Moderate' | 'Hard' | 'Very Hard' | 'Expert'
 const DIFFICULTY_BADGES: Record<DifficultyKey, string> = {
@@ -125,6 +128,12 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     fetchAgents()
   }, [])
 
+  const handleRandomAgent = () => {
+    if (agents.length === 0) return
+    const randomAgent = agents[Math.floor(Math.random() * agents.length)]
+    handleSelectAgent(randomAgent.agentId, randomAgent.name)
+  }
+
   const handleSelectAgent = (agentId: string, agentName: string) => {
     setSelectedAgent(agentId)
     
@@ -170,7 +179,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-16 flex flex-col items-center gap-6"
         >
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4">
             Choose Your Challenge
@@ -178,6 +187,20 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <p className="text-lg text-slate-400">
             Select a homeowner to begin your training session
           </p>
+          <button
+            type="button"
+            onClick={handleRandomAgent}
+            disabled={loading || agents.length === 0}
+            className={cn(
+              "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all",
+              "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white",
+              "hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400",
+              "shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50",
+              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+            )}
+          >
+            🎲 Surprise Me
+          </button>
         </motion.div>
 
         {/* Agent Bubbles Grid */}

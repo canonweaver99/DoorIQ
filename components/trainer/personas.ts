@@ -21,7 +21,18 @@ export const ORDER_LOOKUP = new Map<AllowedAgentName, number>(
 )
 
 type BubbleDifficulty = 'Moderate' | 'Hard' | 'Very Hard' | 'Expert'
-type BubbleColorVariant = 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary' | 'senary' | 'septenary' | 'octonary'
+type BubbleColorVariant =
+  | 'primary'
+  | 'secondary'
+  | 'tertiary'
+  | 'quaternary'
+  | 'quinary'
+  | 'senary'
+  | 'septenary'
+  | 'octonary'
+  | 'nonary'
+  | 'denary'
+  | 'duodenary'
 type CardDifficultyKey = 'moderate' | 'hard' | 'veryHard' | 'expert'
 
 interface PersonaBubbleDetail {
@@ -122,7 +133,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       subtitle: 'Executive Challenger',
       description: 'Operations executive expecting bulletproof process, documentation, and next steps.',
       difficulty: 'Very Hard',
-      color: 'quaternary',
+      color: 'nonary',
     },
     card: {
       age: 52,
@@ -181,7 +192,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       subtitle: 'Family Planner',
       description: 'Schedule-driven parent balancing HOA, carpool, and safety timelines.',
       difficulty: 'Hard',
-      color: 'senary',
+      color: 'secondary',
     },
     card: {
       age: 41,
@@ -210,7 +221,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       subtitle: 'Risk Auditor',
       description: 'Detail-heavy homeowner demanding policy clarity and documentation.',
       difficulty: 'Very Hard',
-      color: 'septenary',
+      color: 'quaternary',
     },
     card: {
       age: 47,
@@ -239,7 +250,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       subtitle: 'Budget Enforcer',
       description: 'Retired veteran with an ironclad budget and loyalty to DIY sprays.',
       difficulty: 'Hard',
-      color: 'octonary',
+      color: 'senary',
     },
     card: {
       age: 60,
@@ -268,7 +279,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       subtitle: 'Numbers Investor',
       description: 'Data-obsessed homeowner requiring multi-year ROI before signing.',
       difficulty: 'Very Hard',
-      color: 'quaternary',
+      color: 'septenary',
     },
     card: {
       age: 57,
@@ -297,7 +308,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       subtitle: 'Commanding Decision Maker',
       description: 'No-nonsense logistics director who expects compliance with her terms.',
       difficulty: 'Expert',
-      color: 'quinary',
+      color: 'octonary',
     },
     card: {
       age: 49,
@@ -327,7 +338,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       subtitle: 'Data-Driven Strategist',
       description: 'Research scientist expecting citations, provenance, and environmental proof.',
       difficulty: 'Expert',
-      color: 'senary',
+      color: 'denary',
     },
     card: {
       age: 48,
@@ -357,7 +368,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       subtitle: 'Night-Shift Analyst',
       description: 'Cybersecurity analyst evaluating risk matrices and fail-safes.',
       difficulty: 'Very Hard',
-      color: 'octonary',
+      color: 'duodenary',
     },
     card: {
       age: 42,
