@@ -35,7 +35,7 @@ export default function Header() {
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'Practice', href: '/trainer', icon: Mic },
+    { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
     { name: 'Sessions', href: '/sessions', icon: FileText },
     { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
     { name: 'Profile', href: '/settings', icon: UserIcon },

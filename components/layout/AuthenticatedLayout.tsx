@@ -46,7 +46,7 @@ export function AuthenticatedLayout({ children }: { children: React.ReactNode })
   }
 
   const navigation = [
-    { name: 'Training', href: '/trainer', icon: Home },
+    { name: 'Training', href: '/trainer/select-homeowner', icon: Home },
     { name: 'History', href: '/trainer/history', icon: History },
     { name: 'Leaderboard', href: '/trainer/leaderboard', icon: Trophy },
   ]
@@ -64,7 +64,7 @@ export function AuthenticatedLayout({ children }: { children: React.ReactNode })
             <div className="flex">
               {/* Logo */}
               <div className="flex-shrink-0 flex items-center">
-                <Link href="/trainer" className="text-2xl font-bold text-blue-600">
+                <Link href="/" className="text-2xl font-bold text-blue-600">
                   DoorIQ
                 </Link>
               </div>
