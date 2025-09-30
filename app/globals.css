@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
+  --background: #020617;
+  --foreground: #f8fafc;
 }
 
 body {
@@ -210,4 +210,31 @@ body {
   50% {
     transform: translateY(-10px);
   }
+}
+
+/* Animated bubble circles */
+@keyframes bubble-float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+.animate-bubble-float {
+  animation: bubble-float 6s ease-in-out infinite;
+}
+
+@keyframes bubble-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 40px currentColor, 0 0 60px currentColor;
+  }
+}
+
+.animate-bubble-glow {
+  animation: bubble-glow 3s ease-in-out infinite;
 }

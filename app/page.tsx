@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
+import { BackgroundCircles } from '@/components/ui/background-circles'
+import { Button } from '@/components/ui/button'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {
@@ -56,36 +57,20 @@ function useCountUp(end: number, duration = 2000, startWhen = false) {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       {/* 1) Hero */}
-      <section className="relative overflow-hidden min-h-screen flex items-center">
-        {/* Animated Shader Background */}
-        <AnimatedShaderBackground />
-        
-        {/* Content overlay */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <h1 className="text-5xl sm:text-6xl font-bold text-white mb-6 drop-shadow-lg">
-              Train Like the Top 1% - Before You Knock.
-            </h1>
-            <p className="text-xl sm:text-2xl text-white/90 mb-10 max-w-3xl mx-auto drop-shadow-md">
-              DoorIQ turns real door-to-door moments into safe, repeatable reps. Talk to a lifelike AI homeowner, get instant feedback, and watch your close rate climb.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/trainer/select-homeowner"
-                className="inline-flex items-center px-7 py-4 rounded-lg bg-white text-slate-900 font-semibold shadow-lg hover:shadow-xl hover:translate-y-[-1px] transition"
-              >
-                Start Training Now
-              </Link>
-              <Link
-                href="#demo"
-                className="inline-flex items-center px-7 py-4 rounded-lg bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition"
-              >
-                Watch 30-sec Demo
-              </Link>
-            </div>
-            <p className="mt-6 text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
+      <section className="relative p-0">
+        <div className="w-full">
+          <BackgroundCircles 
+            title="Practice Before You Knock" 
+            description="Lifelike AI homeowners. Instant feedback. Better reps." 
+            ctaPrimaryHref="/trainer/select-homeowner"
+            ctaPrimaryText="Start Training Now"
+            ctaSecondaryHref="#demo"
+            ctaSecondaryText="Watch 30-sec Demo"
+          />
+          <div className="text-center px-4 sm:px-6 lg:px-8">
+            <p className="mt-4 text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
           </div>
         </div>
       </section>

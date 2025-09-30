@@ -1,7 +1,7 @@
 'use client'
 
-import HomeownerSelector from '@/components/trainer/HomeownerSelector'
+import AgentBubbleSelector from '@/components/trainer/AgentBubbleSelector'
 
 export default function SelectHomeownerPage() {
-  return <HomeownerSelector standalone={true} />
+  return <AgentBubbleSelector standalone={true} />
 }

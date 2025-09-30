@@ -463,6 +463,8 @@ export default function TrainerPage() {
 
   const endSession = async () => {
     setLoading(true)
+    // Ensure session is marked inactive immediately so ambient systems can stop
+    setSessionActive(false)
     
     if (durationInterval.current) {
       clearInterval(durationInterval.current)
@@ -474,6 +476,12 @@ export default function TrainerPage() {
       
       // Stop recording
       stopRecording()
+      
+      // Stop any ambient audio explicitly
+      try {
+        ambientControls.stopAmbience()
+        ambientControls.stopScheduler()
+      } catch {}
       
       // Analyze the conversation with transcript
       const analysis = transcript.length > 0 ? analyzeConversation(transcript) : {
@@ -659,6 +667,13 @@ export default function TrainerPage() {
                   <Clock size={16} />
                   Starting automatically in a few seconds
                 </p>
+                <button
+                  onClick={endSession}
+                  disabled={loading}
+                  className="mt-2 px-6 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-medium rounded-xl transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl"
+                >
+                  {loading ? 'Ending...' : 'End Session'}
+                </button>
               </div>
             </div>
           </div>
