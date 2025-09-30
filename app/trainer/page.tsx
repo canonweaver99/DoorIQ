@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
@@ -31,7 +31,7 @@ const BASE_TIPS = [
   'Handle objections with empathy and expertise',
 ]
 
-export default function TrainerPage() {
+function TrainerPageContent() {
   const [sessionActive, setSessionActive] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [deltaText, setDeltaText] = useState<string>('')
@@ -1435,5 +1435,20 @@ export default function TrainerPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TrainerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading session...</p>
+        </div>
+      </div>
+    }>
+      <TrainerPageContent />
+    </Suspense>
   )
 }
