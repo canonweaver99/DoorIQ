@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award } from 'lucide-react'
-import { BackgroundCirclesBg } from '@/components/ui/background-circles-bg'
 
 type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
   rank: number
@@ -135,21 +134,15 @@ export default function LeaderboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center">
-        <div className="absolute inset-0 -z-10">
-          <BackgroundCirclesBg />
-        </div>
-        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative py-8">
-      <div className="absolute inset-0 -z-10">
-        <BackgroundCircles />
-      </div>
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4 drop-shadow-lg">Leaderboard</h1>

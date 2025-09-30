@@ -6,7 +6,6 @@ import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
-import { BackgroundCirclesBg } from '@/components/ui/background-circles-bg'
 
 type Session = Database['public']['Tables']['training_sessions']['Row'] & {
   users: {
@@ -129,11 +128,8 @@ export default function SessionsPage() {
   // Show sign-in prompt if not authenticated
   if (isAuthenticated === false) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center p-4">
-        <div className="absolute inset-0 -z-10">
-          <BackgroundCirclesBg />
-        </div>
-        <div className="relative z-10 max-w-md w-full bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-700 p-8 text-center shadow-2xl">
+      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-700 p-8 text-center shadow-2xl">
           <div className="mb-6">
             <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/50">
               <AlertCircle className="w-8 h-8 text-white" />
@@ -170,21 +166,15 @@ export default function SessionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center">
-        <div className="absolute inset-0 -z-10">
-          <BackgroundCirclesBg />
-        </div>
-        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative py-8">
-      <div className="absolute inset-0 -z-10">
-        <BackgroundCircles />
-      </div>
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4 drop-shadow-lg">Your Training Sessions</h1>
