@@ -39,19 +39,39 @@ const GlowCard: React.FC<GlowCardProps> = ({
   const innerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const syncPointer = (e: PointerEvent) => {
-      const { clientX: x, clientY: y } = e;
-      
-      if (cardRef.current) {
-        cardRef.current.style.setProperty('--x', x.toFixed(2));
-        cardRef.current.style.setProperty('--xp', (x / window.innerWidth).toFixed(2));
-        cardRef.current.style.setProperty('--y', y.toFixed(2));
-        cardRef.current.style.setProperty('--yp', (y / window.innerHeight).toFixed(2));
-      }
+    const el = cardRef.current;
+    if (!el) return;
+
+    const handleMove = (e: PointerEvent) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      el.style.setProperty('--x', x.toFixed(2));
+      el.style.setProperty('--y', y.toFixed(2));
+      el.style.setProperty('--xp', (x / rect.width).toFixed(3));
+      el.style.setProperty('--yp', (y / rect.height).toFixed(3));
     };
 
-    document.addEventListener('pointermove', syncPointer);
-    return () => document.removeEventListener('pointermove', syncPointer);
+    const handleLeave = () => {
+      // Subtle resting position (center) when cursor leaves the card
+      const rect = el.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      el.style.setProperty('--x', cx.toFixed(2));
+      el.style.setProperty('--y', cy.toFixed(2));
+      el.style.setProperty('--xp', '0.5');
+      el.style.setProperty('--yp', '0.5');
+    };
+
+    el.addEventListener('pointermove', handleMove);
+    el.addEventListener('pointerleave', handleLeave);
+    // Initialize to center
+    handleLeave();
+
+    return () => {
+      el.removeEventListener('pointermove', handleMove);
+      el.removeEventListener('pointerleave', handleLeave);
+    };
   }, []);
 
   const { base, spread } = glowColorMap[glowColor];
@@ -91,7 +111,8 @@ const GlowCard: React.FC<GlowCardProps> = ({
       backgroundColor: 'var(--backdrop, transparent)',
       backgroundSize: 'calc(100% + (2 * var(--border-size))) calc(100% + (2 * var(--border-size)))',
       backgroundPosition: '50% 50%',
-      backgroundAttachment: 'fixed',
+      // Use local attachment to avoid transform/stacking-context issues
+      backgroundAttachment: 'scroll',
       border: 'var(--border-size) solid var(--backup-border)',
       position: 'relative' as const,
       touchAction: 'none' as const,
