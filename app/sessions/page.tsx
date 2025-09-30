@@ -6,7 +6,7 @@ import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
-import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
+import { BackgroundCircles } from '@/components/ui/background-circles'
 
 type Session = Database['public']['Tables']['training_sessions']['Row'] & {
   users: {
@@ -129,8 +129,10 @@ export default function SessionsPage() {
   // Show sign-in prompt if not authenticated
   if (isAuthenticated === false) {
     return (
-      <div className="min-h-screen bg-black relative flex items-center justify-center p-4">
-        <AnimatedShaderBackground />
+      <div className="min-h-screen relative flex items-center justify-center p-4">
+        <div className="absolute inset-0 -z-10">
+          <BackgroundCircles />
+        </div>
         <div className="relative z-10 max-w-md w-full bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-700 p-8 text-center shadow-2xl">
           <div className="mb-6">
             <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/50">
@@ -168,16 +170,20 @@ export default function SessionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black relative flex items-center justify-center">
-        <AnimatedShaderBackground />
+      <div className="min-h-screen relative flex items-center justify-center">
+        <div className="absolute inset-0 -z-10">
+          <BackgroundCircles />
+        </div>
         <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black relative py-8">
-      <AnimatedShaderBackground />
+    <div className="min-h-screen relative py-8">
+      <div className="absolute inset-0 -z-10">
+        <BackgroundCircles />
+      </div>
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">

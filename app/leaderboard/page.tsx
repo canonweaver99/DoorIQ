@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award } from 'lucide-react'
-import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
+import { BackgroundCircles } from '@/components/ui/background-circles'
 
 type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
   rank: number
@@ -135,16 +135,20 @@ export default function LeaderboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black relative flex items-center justify-center">
-        <AnimatedShaderBackground />
+      <div className="min-h-screen relative flex items-center justify-center">
+        <div className="absolute inset-0 -z-10">
+          <BackgroundCircles />
+        </div>
         <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black relative py-8">
-      <AnimatedShaderBackground />
+    <div className="min-h-screen relative py-8">
+      <div className="absolute inset-0 -z-10">
+        <BackgroundCircles />
+      </div>
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
