@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect, useRef, ReactNode } from 'react';
 
 interface GlowCardProps {
@@ -64,17 +66,22 @@ const GlowCard: React.FC<GlowCardProps> = ({
 
   const getInlineStyles = () => {
     const baseStyles = {
-      '--base': base,
-      '--spread': spread,
+      '--base': base as unknown as string,
+      '--spread': spread as unknown as string,
       '--radius': '14',
       '--border': '3',
       '--backdrop': 'hsl(0 0% 60% / 0.12)',
       '--backup-border': 'var(--backdrop)',
-      '--size': '200',
+      '--size': '240',
       '--outer': '1',
       '--border-size': 'calc(var(--border, 2) * 1px)',
       '--spotlight-size': 'calc(var(--size, 150) * 1px)',
       '--hue': 'calc(var(--base) + (var(--xp, 0) * var(--spread, 0)))',
+      '--saturation': '100',
+      '--lightness': '70',
+      '--bg-spot-opacity': '0.22',
+      '--border-spot-opacity': '0.9',
+      '--border-light-opacity': '0.85',
       backgroundImage: `radial-gradient(
         var(--spotlight-size) var(--spotlight-size) at
         calc(var(--x, 0) * 1px)
@@ -124,9 +131,9 @@ const GlowCard: React.FC<GlowCardProps> = ({
         calc(var(--spotlight-size) * 0.75) calc(var(--spotlight-size) * 0.75) at
         calc(var(--x, 0) * 1px)
         calc(var(--y, 0) * 1px),
-        hsl(var(--hue, 210) calc(var(--saturation, 100) * 1%) calc(var(--lightness, 50) * 1%) / var(--border-spot-opacity, 1)), transparent 100%
+        hsl(var(--hue, 210) calc(var(--saturation, 100) * 1%) calc(var(--lightness, 55) * 1%) / var(--border-spot-opacity, 1)), transparent 100%
       );
-      filter: brightness(2);
+      filter: brightness(2.2);
     }
     
     [data-glow]::after {
