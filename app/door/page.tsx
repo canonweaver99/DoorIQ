@@ -1,7 +1,7 @@
 import DoorLanding from './DoorLanding';
 
 export default function Page() {
-  return <DoorLanding nextPath="/trainer?autostart=1" label="Click to knock" />;
+  return <DoorLanding nextPath="/trainer/select-homeowner" label="Click to knock" />;
 }
 
 

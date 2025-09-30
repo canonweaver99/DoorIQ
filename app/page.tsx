@@ -68,10 +68,10 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/trainer?autostart=1"
+                href="/trainer/select-homeowner"
                 className="inline-flex items-center px-7 py-4 rounded-lg bg-white text-slate-900 font-semibold shadow-lg hover:shadow-xl hover:translate-y-[-1px] transition"
               >
-                Try a Free Practice Session
+                Start Training Now
               </Link>
               <Link
                 href="#demo"

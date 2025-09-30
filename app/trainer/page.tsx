@@ -57,6 +57,8 @@ export default function TrainerPage() {
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
   const [showMoneyNotification, setShowMoneyNotification] = useState(false)
   const [earningsAmount, setEarningsAmount] = useState(0)
+  const [selectedAgent, setSelectedAgent] = useState<any>(null)
+  const [loadingAgent, setLoadingAgent] = useState(true)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -147,6 +149,7 @@ export default function TrainerPage() {
 
   useEffect(() => {
     fetchUser()
+    fetchAgent()
     
     // Auto-start if coming from pre-session - skip preparation phase
     if (searchParams.get('autostart') === 'true') {
@@ -349,6 +352,49 @@ export default function TrainerPage() {
     }
   }
 
+  const fetchAgent = async () => {
+    try {
+      // Get agent ID from URL param (ElevenLabs agent ID, not DB ID)
+      const agentParam = searchParams.get('agent')
+      
+      if (agentParam) {
+        // Fetch agent details from database by ElevenLabs agent ID
+        const { data, error } = await supabase
+          .from('agents')
+          .select('*')
+          .eq('eleven_agent_id', agentParam)
+          .eq('is_active', true)
+          .single()
+
+        if (!error && data) {
+          setSelectedAgent(data)
+        } else {
+          // Fallback to Austin if agent not found
+          const { data: austinData } = await supabase
+            .from('agents')
+            .select('*')
+            .eq('name', 'Austin')
+            .eq('is_active', true)
+            .single()
+          setSelectedAgent(austinData)
+        }
+      } else {
+        // Default to Austin if no agent specified
+        const { data: austinData } = await supabase
+          .from('agents')
+          .select('*')
+          .eq('name', 'Austin')
+          .eq('is_active', true)
+          .single()
+        setSelectedAgent(austinData)
+      }
+    } catch (error) {
+      console.error('Error fetching agent:', error)
+    } finally {
+      setLoadingAgent(false)
+    }
+  }
+
   const initializeSession = async () => {
     try {
       // Request microphone permission early for smoother widget experience
@@ -375,6 +421,7 @@ export default function TrainerPage() {
       // Always create a session record, even if user is not logged in
       const payload: any = {
         user_id: user?.id || null,
+        agent_id: selectedAgent?.id || null,
         scenario_type: 'standard',
       }
       const { data: session, error } = await (supabase as any)
@@ -648,7 +695,7 @@ export default function TrainerPage() {
             <Script id="austin-orb-client" type="module" strategy="afterInteractive">
               {`
                 import { Conversation } from 'https://esm.sh/@elevenlabs/client';
-                const AGENT_ID = 'agent_7001k5jqfjmtejvs77jvhjf254tz';
+                const AGENT_ID = '${selectedAgent?.eleven_agent_id || 'agent_7001k5jqfjmtejvs77jvhjf254tz'}';
 
                 const orb = document.getElementById('austin-orb');
                 const door = document.getElementById('austin-door');
@@ -682,9 +729,10 @@ export default function TrainerPage() {
                   if (active) orb.classList.add('active'); else orb.classList.remove('active');
                   
                   // Status text
+                  const agentName = '${selectedAgent?.name || 'Austin'}';
                   statusEl.textContent = doorOpen ?
-                    (status === 'connecting' ? 'connecting to Austin…' :
-                     status === 'connected' ? (mode === 'speaking' ? 'Austin is speaking' : 'Austin is listening') :
+                    (status === 'connecting' ? \`connecting to \${agentName}…\` :
+                     status === 'connected' ? (mode === 'speaking' ? \`\${agentName} is speaking\` : \`\${agentName} is listening\`) :
                      'tap orb to end conversation') :
                     'knock on door to start';
                 }

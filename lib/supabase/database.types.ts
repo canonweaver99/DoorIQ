@@ -65,6 +65,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          agent_id: string | null
           started_at: string
           ended_at: string | null
           duration_seconds: number | null
@@ -84,6 +85,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          agent_id?: string | null
           started_at?: string
           ended_at?: string | null
           duration_seconds?: number | null
@@ -103,6 +105,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          agent_id?: string | null
           started_at?: string
           ended_at?: string | null
           duration_seconds?: number | null
@@ -311,6 +314,32 @@ export interface Database {
           manager_id?: string
           rep_id?: string
           assigned_at?: string
+        }
+      }
+      agents: {
+        Row: {
+          id: string
+          name: string
+          persona: string | null
+          eleven_agent_id: string
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          persona?: string | null
+          eleven_agent_id: string
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          persona?: string | null
+          eleven_agent_id?: string
+          is_active?: boolean
+          created_at?: string
         }
       }
     }
