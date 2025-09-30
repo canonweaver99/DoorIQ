@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/navigation/Header";
+import { Footer } from "@/components/ui/footer-section";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -30,7 +31,14 @@ export default function RootLayout({
         <Header />
         {/* Spacer to avoid content under fixed nav (approx 64px for new header) */}
         <div style={{ height: 64 }} />
-        {children}
+        <div className="min-h-[calc(100svh-64px)] flex flex-col">
+          <div className="flex-1">
+            {children}
+          </div>
+          <div className="px-4 sm:px-6 lg:px-8 pb-10">
+            <Footer />
+          </div>
+        </div>
       </body>
     </html>
   );
