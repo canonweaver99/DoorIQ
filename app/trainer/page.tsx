@@ -709,6 +709,21 @@ function TrainerPageContent() {
                 0%, 100% { transform: translateY(0px); } 
                 50% { transform: translateY(-12px); } 
               }
+              
+              /* Moved from bottom to avoid nested styled-jsx */
+              @keyframes fadeIn {
+                from {
+                  opacity: 0;
+                  transform: translateY(10px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+              .animate-fadeIn {
+                animation: fadeIn 0.3s ease-out;
+              }
             `}</style>
           </div>
 
@@ -787,23 +802,6 @@ function TrainerPageContent() {
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-      `}</style>
     </div>
   )
 }
