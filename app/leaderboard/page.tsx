@@ -119,7 +119,7 @@ export default function LeaderboardPage() {
 
   const getRowStyles = (rank: number, userId: string) => {
     if (userId === currentUserId) {
-      return 'bg-blue-600/20 border-blue-600/50'
+      return 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/50'
     }
     if (rank === 1) {
       return 'bg-yellow-600/10 border-yellow-600/30'
@@ -137,7 +137,7 @@ export default function LeaderboardPage() {
     return (
       <div className="min-h-screen bg-black relative flex items-center justify-center">
         <AnimatedShaderBackground />
-        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
@@ -148,8 +148,8 @@ export default function LeaderboardPage() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">Leaderboard</h1>
-          <p className="text-xl text-white/90 drop-shadow-md">See how you rank against your team</p>
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4 drop-shadow-lg">Leaderboard</h1>
+          <p className="text-xl text-slate-400 drop-shadow-md">See how you rank against your team</p>
         </div>
 
         {/* Timeframe Selector */}
@@ -160,7 +160,7 @@ export default function LeaderboardPage() {
               onClick={() => setTimeframe(period)}
               className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg ${
                 timeframe === period
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-indigo-500/50'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-purple-500/50'
                   : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
               }`}
             >
@@ -252,7 +252,7 @@ export default function LeaderboardPage() {
                         <div className="text-sm font-medium text-white">
                           {user.full_name}
                           {user.id === currentUserId && (
-                            <span className="ml-2 text-xs text-blue-400">(You)</span>
+                            <span className="ml-2 text-xs text-purple-400">(You)</span>
                           )}
                         </div>
                         <div className="text-xs text-slate-400">{user.email}</div>

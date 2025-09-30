@@ -133,10 +133,10 @@ export default function SessionsPage() {
         <AnimatedShaderBackground />
         <div className="relative z-10 max-w-md w-full bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-700 p-8 text-center shadow-2xl">
           <div className="mb-6">
-            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/50">
               <AlertCircle className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Sign In Required</h2>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">Sign In Required</h2>
             <p className="text-slate-400">
               You need to be signed in to view your training sessions
             </p>
@@ -144,13 +144,13 @@ export default function SessionsPage() {
           <div className="flex flex-col gap-3">
             <Link
               href="/auth/login"
-              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/25"
             >
               Sign In
             </Link>
             <Link
               href="/auth/signup"
-              className="w-full px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-colors"
+              className="w-full px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-semibold rounded-lg transition-all"
             >
               Create Account
             </Link>
@@ -170,7 +170,7 @@ export default function SessionsPage() {
     return (
       <div className="min-h-screen bg-black relative flex items-center justify-center">
         <AnimatedShaderBackground />
-        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
@@ -181,8 +181,8 @@ export default function SessionsPage() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">Your Training Sessions</h1>
-          <p className="text-xl text-white/90 drop-shadow-md">Review your past sessions and track your improvement</p>
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4 drop-shadow-lg">Your Training Sessions</h1>
+          <p className="text-xl text-slate-400 drop-shadow-md">Review your past sessions and track your improvement</p>
         </div>
 
         {/* Stats Overview */}
@@ -190,7 +190,7 @@ export default function SessionsPage() {
           <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-400">Average Score</h3>
-              <TrendingUp className="w-5 h-5 text-blue-500" />
+              <TrendingUp className="w-5 h-5 text-purple-400" />
             </div>
             <p className="text-3xl font-bold text-white">{stats.avgScore}%</p>
             <p className="text-sm text-slate-400 mt-1">
@@ -201,7 +201,7 @@ export default function SessionsPage() {
           <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-400">Total Earnings</h3>
-              <DollarSign className="w-5 h-5 text-green-500" />
+              <DollarSign className="w-5 h-5 text-emerald-400" />
             </div>
             <p className="text-3xl font-bold text-white">${stats.totalEarnings.toFixed(2)}</p>
             <p className="text-sm text-slate-400 mt-1">Virtual cash earned</p>
@@ -210,7 +210,7 @@ export default function SessionsPage() {
           <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-400">Sessions</h3>
-              <Calendar className="w-5 h-5 text-indigo-500" />
+              <Calendar className="w-5 h-5 text-pink-400" />
             </div>
             <p className="text-3xl font-bold text-white">{stats.sessionsCount}</p>
             <p className="text-sm text-slate-400 mt-1">Completed this {filter}</p>
@@ -225,7 +225,7 @@ export default function SessionsPage() {
               onClick={() => setFilter(period)}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg ${
                 filter === period
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-indigo-500/50'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-purple-500/50'
                   : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
               }`}
             >
@@ -241,7 +241,7 @@ export default function SessionsPage() {
               <p className="text-white/70">No sessions found for this period</p>
               <Link
                 href="/trainer/select-homeowner"
-                className="inline-flex items-center mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center mt-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg"
               >
                 Start Training
                 <ChevronRight className="ml-2 w-4 h-4" />
@@ -292,7 +292,7 @@ export default function SessionsPage() {
                       
                       <Link
                         href={`/trainer/analytics/${session.id}`}
-                        className="inline-flex items-center px-4 py-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors"
+                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-pink-600/30 transition-all border border-purple-500/20"
                       >
                         View Details
                         <ChevronRight className="ml-2 w-4 h-4" />
