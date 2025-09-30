@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useCallback } from "react";
 
 export interface BackgroundCirclesProps {
   title?: string;
@@ -154,6 +155,20 @@ export function BackgroundCircles({
   const activeVariant = variant ?? autoVariant;
   const variantStyles = COLOR_VARIANTS[activeVariant];
 
+  const handleSecondaryClick = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!ctaSecondaryHref) return;
+      if (!ctaSecondaryHref.startsWith('#')) return;
+
+      event.preventDefault();
+      const targetElement = document.querySelector(ctaSecondaryHref);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+    [ctaSecondaryHref]
+  );
+
   return (
     <div
       className={clsx(
@@ -232,7 +247,7 @@ export function BackgroundCircles({
               </Link>
             )}
             {ctaSecondaryHref && (
-              <Link href={ctaSecondaryHref}>
+              <Link href={ctaSecondaryHref} onClick={handleSecondaryClick}>
                 <Button className="px-7 py-4" size="lg" variant="subtle">
                   {ctaSecondaryText ?? "Learn More"}
                 </Button>

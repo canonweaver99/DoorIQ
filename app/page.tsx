@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import { BackgroundCircles } from '@/components/ui/background-circles'
 import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
+import { FaqSection } from '@/components/ui/faq-section'
+import { TestimonialsColumn, testimonialsData } from '@/components/ui/testimonials-columns-1'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {
@@ -96,6 +98,18 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <FaqSection
+        title="Frequently Asked Questions"
+        description="Get quick answers as you evaluate DoorIQ for your team."
+        items={faqItems}
+        contactInfo={{
+          title: 'Still need help?',
+          description: 'Reach out and our crew will walk you through a live session.',
+          buttonText: 'Contact Support',
+          onContact: () => window.open('mailto:hello@dooriq.com', '_blank')
+        }}
+      />
     </div>
   );
 }
@@ -114,31 +128,7 @@ function SocialProofSection() {
           From solo reps to national crews - teams level up faster on DoorIQ.
         </p>
 
-        <div className="mt-8 overflow-hidden relative">
-          {/* gradient fades left/right */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-slate-900 to-transparent"></div>
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-slate-900 to-transparent"></div>
-
-          {/* marquee container */}
-          <div className="logo-marquee" aria-hidden="true">
-            <div className="logo-track">
-              <img src="/logos/greenshield.svg" alt="GreenShield" />
-              <img src="/logos/clearline.svg" alt="ClearLine" />
-              <img src="/logos/primepest.svg" alt="PrimePest" />
-              <img src="/logos/hawkeye.svg" alt="HawkEye" />
-              <img src="/logos/northstar.svg" alt="NorthStar" />
-              <img src="/logos/atlas.svg" alt="Atlas" />
-            </div>
-            <div className="logo-track" aria-hidden="true">
-              <img src="/logos/greenshield.svg" alt="" />
-              <img src="/logos/clearline.svg" alt="" />
-              <img src="/logos/primepest.svg" alt="" />
-              <img src="/logos/hawkeye.svg" alt="" />
-              <img src="/logos/northstar.svg" alt="" />
-              <img src="/logos/atlas.svg" alt="" />
-            </div>
-          </div>
-        </div>
+        <TestimonialsSection />
       </div>
     </section>
   )
@@ -305,3 +295,66 @@ function AnimatedStatCard({
     </GlowCard>
   )
 }
+
+function TestimonialsSection() {
+  const [ref, isInView] = useInView(0.2)
+
+  const columnSize = Math.ceil(testimonialsData.length / 3)
+  const firstColumn = testimonialsData.slice(0, columnSize)
+  const secondColumn = testimonialsData.slice(columnSize, columnSize * 2)
+  const thirdColumn = testimonialsData.slice(columnSize * 2)
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-1000 mt-12 ${
+        isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+    >
+      <div className="flex justify-center">
+        <div className="border py-1 px-4 rounded-lg">Testimonials</div>
+      </div>
+
+      <h3 className="text-center text-3xl md:text-4xl font-semibold text-white mt-6">
+        What teams say about DoorIQ
+      </h3>
+
+      <p className="text-center text-slate-300 mt-4 max-w-2xl mx-auto">
+        Real feedback from sales teams practicing with AI homeowners every day.
+      </p>
+
+      <div className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden">
+        <TestimonialsColumn testimonials={firstColumn} duration={18} />
+        {secondColumn.length > 0 && (
+          <TestimonialsColumn testimonials={secondColumn} className="hidden md:block" duration={22} />
+        )}
+        {thirdColumn.length > 0 && (
+          <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={20} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+const faqItems = [
+  {
+    question: 'How quickly can we get reps practicing?',
+    answer:
+      'Most teams run their first session in under 15 minutes. Invite reps, pick a homeowner persona, and start holding real-feel conversations immediately.',
+  },
+  {
+    question: 'Does DoorIQ replace live manager coaching?',
+    answer:
+      'DoorIQ gives managers leverage—reps can practice high-frequency reps independently while leaders review the tough moments together.',
+  },
+  {
+    question: 'Can new hires ramp with guided scenarios?',
+    answer:
+      'Yes. New teammates get curated objection flows and pacing tips that match their experience level so confidence builds from day one.',
+  },
+  {
+    question: 'How do we track improvement over time?',
+    answer:
+      'You'll see trends for objection handling, tone, discovery depth, and more. Scores roll into the leaderboard so progress stays visible.',
+  },
+]
