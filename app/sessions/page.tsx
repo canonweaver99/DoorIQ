@@ -18,6 +18,7 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'week' | 'month'>('week')
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
   useEffect(() => {
     fetchSessions()
@@ -27,7 +28,13 @@ export default function SessionsPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) return
+    if (!user) {
+      setIsAuthenticated(false)
+      setLoading(false)
+      return
+    }
+    
+    setIsAuthenticated(true)
 
     let query = supabase
       .from('training_sessions')
@@ -117,6 +124,45 @@ export default function SessionsPage() {
   }
 
   const stats = calculateStats()
+
+  // Show sign-in prompt if not authenticated
+  if (isAuthenticated === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-slate-800 rounded-xl border border-slate-700 p-8 text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Sign In Required</h2>
+            <p className="text-slate-400">
+              You need to be signed in to view your training sessions
+            </p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/auth/login"
+              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="w-full px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-colors"
+            >
+              Create Account
+            </Link>
+            <Link
+              href="/"
+              className="text-sm text-slate-400 hover:text-slate-300 mt-2"
+            >
+              ← Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
