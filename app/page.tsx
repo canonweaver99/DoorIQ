@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {

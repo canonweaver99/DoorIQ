@@ -10,10 +10,7 @@ import {
   CheckCircle, 
   AlertTriangle, 
   TrendingUp, 
-  Target,
-  Clock,
   Award,
-  Filter,
   Search,
   Sparkles,
   ChevronRight
@@ -428,13 +425,8 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
                       </div>
                     </div>
 
-                    {/* Personality */}
-                    <p className="text-sm text-slate-300 mb-4 leading-relaxed">
-                      {agent.personality}
-                    </p>
-
                     {/* Challenge Level */}
-                    <div className={cn("rounded-xl p-4 mb-4", theme.bg)}>
+                    <div className={cn("rounded-xl p-4 mb-6", theme.bg)}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-semibold text-slate-300">Challenge Level</span>
                         <span className={cn("text-sm font-bold", theme.text)}>
@@ -442,37 +434,19 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
                         </span>
                       </div>
                       <div className={theme.text}>
-                        {renderStars(agent.challengeLevel, 14)}
+                        {renderStars(agent.challengeLevel, 16)}
                       </div>
                     </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Target size={14} className="text-slate-400" />
-                          <span className="text-xs text-slate-400">Target Score</span>
-                        </div>
-                        <p className={cn("text-lg font-bold", theme.text)}>{agent.targetScore}+</p>
-                      </div>
-                      <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Clock size={14} className="text-slate-400" />
-                          <span className="text-xs text-slate-400">Est. Time</span>
-                        </div>
-                        <p className="text-lg font-bold text-white">{agent.estimatedTime}</p>
-                      </div>
-                    </div>
-
-                    {/* Key Traits */}
-                    <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
-                        <TrendingUp size={14} />
+                    {/* Key Challenges */}
+                    <div className="mb-6">
+                      <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                        <TrendingUp size={16} />
                         Key Challenges
                       </h3>
-                      <ul className="space-y-1.5">
-                        {agent.traits.slice(0, 3).map((trait, idx) => (
-                          <li key={idx} className="text-xs text-slate-400 flex items-start gap-2">
+                      <ul className="space-y-2">
+                        {agent.traits.map((trait, idx) => (
+                          <li key={idx} className="text-sm text-slate-400 flex items-start gap-2 leading-relaxed">
                             <span className={cn("mt-1 flex-shrink-0", theme.text)}>•</span>
                             <span className="flex-1">{trait}</span>
                           </li>
@@ -481,9 +455,9 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
                     </div>
 
                     {/* Best For */}
-                    <div className="mb-6 p-3 bg-slate-900/30 rounded-lg border border-slate-700/50">
-                      <h3 className="text-xs font-semibold text-slate-400 mb-1">Best For:</h3>
-                      <p className="text-sm text-slate-300">{agent.bestFor}</p>
+                    <div className="mb-6 p-4 bg-slate-900/30 rounded-xl border border-slate-700/50">
+                      <h3 className="text-xs font-semibold text-slate-400 mb-2">Best For:</h3>
+                      <p className="text-sm text-slate-300 leading-relaxed">{agent.bestFor}</p>
                     </div>
 
                     {/* Action Button */}

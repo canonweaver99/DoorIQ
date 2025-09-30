@@ -808,7 +808,20 @@ export default function TrainerPage() {
                     state.status = 'connecting'; 
                     render();
                     
-                    try { await navigator.mediaDevices.getUserMedia({ audio: true }); } catch {}
+                    // Request high-quality audio for better voice clarity
+                    try { 
+                      const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                          echoCancellation: true,
+                          noiseSuppression: true,
+                          autoGainControl: true,
+                          sampleRate: 48000, // Higher sample rate for better quality
+                          sampleSize: 16,
+                          channelCount: 1
+                        } 
+                      });
+                    } catch {}
+                    
                     convo = await Conversation.startSession({
                       agentId: AGENT_ID,
                       connectionType: 'webrtc',

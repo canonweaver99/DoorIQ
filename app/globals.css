@@ -201,3 +201,13 @@ body {
 .animate-scaleIn {
   animation: scaleIn 0.4s ease-out forwards;
 }
+
+/* Float animation for shader background elements */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
