@@ -3,7 +3,8 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Facebook as FacebookIcon, Frame as FrameIcon, Instagram as InstagramIcon, Linkedin as LinkedinIcon, Youtube as YoutubeIcon } from 'lucide-react';
+import Image from 'next/image';
+import { Facebook as FacebookIcon, Instagram as InstagramIcon, Linkedin as LinkedinIcon, Youtube as YoutubeIcon } from 'lucide-react';
 
 interface FooterLink {
   title: string;
@@ -62,9 +63,12 @@ export function Footer() {
 
       <div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-8">
         <AnimatedContainer className="space-y-4">
-          <FrameIcon className="size-8" />
+          <div className="flex items-center gap-2">
+            <Image src="/dooriq-logo.svg" alt="DoorIQ logo" width={32} height={32} priority />
+            <span className="text-base font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">DoorIQ</span>
+          </div>
           <p className="text-muted-foreground mt-8 text-sm md:mt-0">
-            © {new Date().getFullYear()} Asme. All rights reserved.
+            © {new Date().getFullYear()} DoorIQ. All rights reserved.
           </p>
         </AnimatedContainer>
 
