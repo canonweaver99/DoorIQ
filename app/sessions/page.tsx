@@ -190,7 +190,7 @@ export default function SessionsPage() {
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-8 text-center border border-slate-700">
               <p className="text-slate-400">No sessions found for this period</p>
               <Link
-                href="/trainer"
+                href="/trainer/select-homeowner"
                 className="inline-flex items-center mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Start Training
