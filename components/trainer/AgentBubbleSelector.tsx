@@ -7,6 +7,12 @@ import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
+import {
+  ALLOWED_AGENT_SET,
+  ALLOWED_AGENT_ORDER,
+  AllowedAgentName,
+  PERSONA_METADATA,
+} from '@/components/trainer/personas'
 
 type AgentRow = Database['public']['Tables']['agents']['Row']
 
@@ -29,51 +35,22 @@ const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
   'septenary',
   'octonary',
 ]
-type DifficultyKey = 'Moderate' | 'Hard' | 'Very Hard' | 'Expert' | 'Easy'
+type DifficultyKey = 'Moderate' | 'Hard' | 'Very Hard' | 'Expert'
 const DIFFICULTY_BADGES: Record<DifficultyKey, string> = {
-  Easy: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   Moderate: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   Hard: 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
   'Very Hard': 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
   Expert: 'bg-red-500/20 text-red-300 border border-red-500/30',
 }
-const FALLBACK_AGENT_MAP: Record<string, { subtitle: string; description: string; difficulty: DifficultyKey }> = {
-  Austin: {
-    subtitle: 'Skeptical but Fair',
-    difficulty: 'Moderate',
-    description: 'Direct communicator who asks tough questions',
-  },
-  'Decisive Derek': {
-    subtitle: 'Time-Conscious Executive',
-    difficulty: 'Hard',
-    description: 'Requires executive-level service and efficiency',
-  },
-  'Skeptical Sarah': {
-    subtitle: 'Trust-Focused',
-    difficulty: 'Expert',
-    description: 'Needs extensive verification and documentation',
-  },
-  'Budget-Conscious Bill': {
-    subtitle: 'Price-Focused Veteran',
-    difficulty: 'Hard',
-    description: 'Fixed income, needs value justification',
-  },
-  'Analytical Ashley': {
-    subtitle: 'Data-Driven Researcher',
-    difficulty: 'Very Hard',
-    description: 'Evidence-based, catches made-up data instantly',
-  },
-}
-
 const sanitizeDescription = (persona?: string | null): string => {
   if (!persona) return 'Dynamic AI homeowner with unique objections and goals'
   return persona.split(/\r?\n|\.|•|-/).map((part) => part.trim()).filter(Boolean)[0] ?? persona
 }
 
 const parseDifficulty = (agentName: string, persona?: string | null): DifficultyKey => {
-  const fallback = FALLBACK_AGENT_MAP[agentName]?.difficulty
+  const personaMeta = PERSONA_METADATA[agentName as AllowedAgentName]
+  const fallback = personaMeta?.bubble.difficulty
   const match = persona?.match(/(easy|moderate|very hard|hard|expert)/i)?.[1]?.toLowerCase()
-  if (match === 'easy') return 'Easy'
   if (match === 'moderate') return 'Moderate'
   if (match === 'very hard') return 'Very Hard'
   if (match === 'hard') return 'Hard'
@@ -82,11 +59,11 @@ const parseDifficulty = (agentName: string, persona?: string | null): Difficulty
 }
 
 const mapAgentToDisplay = (agent: AgentRow, index: number): HomeownerAgentDisplay => {
-  const fallback = FALLBACK_AGENT_MAP[agent.name]
+  const fallback = PERSONA_METADATA[agent.name as AllowedAgentName]
   const difficulty = parseDifficulty(agent.name, agent.persona)
-  const subtitle = fallback?.subtitle ?? 'Homeowner Persona'
-  const description = fallback?.description ?? sanitizeDescription(agent.persona)
-  const color = COLOR_CYCLE[index % COLOR_CYCLE.length]
+  const subtitle = fallback?.bubble.subtitle ?? 'Homeowner Persona'
+  const description = fallback?.bubble.description ?? sanitizeDescription(agent.persona)
+  const color = fallback?.bubble.color ?? COLOR_CYCLE[index % COLOR_CYCLE.length]
 
   return {
     id: agent.id,
@@ -136,8 +113,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         .eq('is_active', true)
         .order('created_at', { ascending: true })
       if (!error && data) {
-        const hydrated = data
-          .filter((agent) => Boolean(agent.eleven_agent_id))
+        const filtered = data.filter((agent) => Boolean(agent.eleven_agent_id) && ALLOWED_AGENT_SET.has(agent.name as AllowedAgentName))
+        const sorted = filtered.sort((a, b) => ALLOWED_AGENT_ORDER.indexOf(a.name as AllowedAgentName) - ALLOWED_AGENT_ORDER.indexOf(b.name as AllowedAgentName))
+
+        const hydrated = sorted
           .map((agent, index) => mapAgentToDisplay(agent as AgentRow, index))
         setAgents(hydrated)
       }

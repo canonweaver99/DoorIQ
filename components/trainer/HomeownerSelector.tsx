@@ -20,6 +20,12 @@ import { difficultyThemes } from '@/lib/theme'
 import AnimatedShaderBackground from '@/components/ui/animated-shader-background'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
+import {
+  ALLOWED_AGENT_ORDER,
+  ALLOWED_AGENT_SET,
+  AllowedAgentName,
+  PERSONA_METADATA,
+} from '@/components/trainer/personas'
 
 type AgentRow = Database['public']['Tables']['agents']['Row']
 type DifficultyKey = 'moderate' | 'hard' | 'veryHard' | 'expert' | 'easy'
@@ -43,210 +49,47 @@ interface HomeownerAgent {
   estimatedTime?: string
   startingScore?: number
   targetScore?: number
+  bubbleSubtitle?: string
+  bubbleDescription?: string
 }
 
 const SUPABASE_COLOR_MAP = ['green', 'yellow', 'red', 'orange', 'purple', 'blue', 'teal', 'emerald', 'pink', 'sky'] as const
 const SUPABASE_AVATARS = ['🏡', '💼', '🔍', '💵', '📊', '🛡️', '🧠', '🏙️', '🎯', '🏠'] as const
 
-const FALLBACK_AGENTS: HomeownerAgent[] = [
-  {
-    id: 'austin',
-    name: 'Austin',
-    agentId: 'agent_7001k5jqfjmtejvs77jvhjf254tz',
-    age: 38,
-    occupation: 'Works from Home',
-    location: 'Texas',
-    personality: 'Skeptical but fair, direct communicator',
-    challengeLevel: 2,
-    challengeLabel: 'Moderate',
-    difficulty: 'moderate',
-    startingScore: 50,
-    targetScore: 70,
-    estimatedTime: '5-8 min',
-    traits: [
-      'Asks direct questions',
-      'Detects pressure tactics',
-      'Terminates after 3 pricing deflections',
-      'Has ants in kitchen',
-    ],
-    bestFor: 'Learning to handle direct questions and build trust',
-    recommended: true,
-    avatar: '🏡',
-    color: 'green',
-  },
-  {
-    id: 'derek',
-    name: 'Decisive Derek',
-    agentId: 'agent_5401k6bysxp8frv80yn1p6ecbvb7',
-    age: 45,
-    occupation: 'VP of Operations',
-    location: 'Executive',
-    personality: 'Time-conscious executive, premium buyer',
-    challengeLevel: 3,
-    challengeLabel: 'Hard',
-    difficulty: 'hard',
-    startingScore: 50,
-    targetScore: 70,
-    estimatedTime: '8-10 min',
-    traits: [
-      '10-minute HARD time limit',
-      'Requires termite expertise (CRITICAL)',
-      'Wants executive-level service',
-      'Has termite damage and carpenter bees',
-    ],
-    bestFor: 'Practicing efficiency and executive-level communication',
-    avatar: '💼',
-    color: 'yellow',
-  },
-  {
-    id: 'sarah',
-    name: 'Skeptical Sarah',
-    agentId: 'agent_5501k6bys8swf03sqaa13pf1xda5',
-    age: 42,
-    occupation: 'Single Mom',
-    location: 'Previously Scammed',
-    personality: 'Requires extensive verification, extremely cautious',
-    challengeLevel: 5,
-    challengeLabel: 'Expert',
-    difficulty: 'expert',
-    startingScore: 20,
-    targetScore: 120,
-    estimatedTime: '12-15 min',
-    traits: [
-      'Real-time credential verification required',
-      'Needs references and documentation',
-      'HIGHEST trust threshold',
-      'Zero tolerance for lies or missing credentials',
-    ],
-    bestFor: 'Mastering trust-building and credential presentation',
-    recommended: false,
-    mostChallenging: true,
-    avatar: '🔍',
-    color: 'red',
-  },
-  {
-    id: 'bill',
-    name: 'Budget-Conscious Bill',
-    agentId: 'agent_7001k6bynr1sfsvaqkd1a3r9j7j3',
-    age: 62,
-    occupation: 'Retired Veteran',
-    location: 'Fixed Income',
-    personality: 'Price-focused, needs value justification',
-    challengeLevel: 3,
-    challengeLabel: 'Hard',
-    difficulty: 'hard',
-    startingScore: 50,
-    targetScore: 80,
-    estimatedTime: '8-12 min',
-    traits: [
-      '$25-40/month budget maximum',
-      'Requires senior/veteran discount',
-      'Currently using $8 Home Depot spray',
-      'Rejects if over budget',
-    ],
-    bestFor: 'Learning discount strategies and value communication',
-    recommended: false,
-    avatar: '💵',
-    color: 'yellow',
-  },
-  {
-    id: 'ashley',
-    name: 'Analytical Ashley',
-    agentId: 'agent_6301k6byn0x4ff3ryjvg3fee6gpg',
-    age: 38,
-    occupation: 'Data Analyst, PhD',
-    location: 'Research-Focused',
-    personality: 'Evidence-based decisions, research-heavy',
-    challengeLevel: 4,
-    challengeLabel: 'Very Hard',
-    difficulty: 'veryHard',
-    startingScore: 40,
-    targetScore: 120,
-    estimatedTime: '10-15 min',
-    traits: [
-      'Asks technical EPA regulation questions',
-      'Wants 5-7 days to analyze',
-      'Catches made-up data instantly',
-      'Has German cockroaches (difficult pest)',
-    ],
-    bestFor: 'Practicing technical knowledge and documentation skills',
-    recommended: false,
-    avatar: '📊',
-    color: 'orange',
-  },
-]
-
-const FALLBACK_AGENT_MAP = FALLBACK_AGENTS.reduce<Record<string, HomeownerAgent>>((acc, agent) => {
-  acc[agent.name] = agent
-  return acc
-}, {})
-
-const difficultyLabelMap: Record<DifficultyKey, string> = {
-  easy: 'Easy',
-  moderate: 'Moderate',
-  hard: 'Hard',
-  veryHard: 'Very Hard',
-  expert: 'Expert',
-}
-
-const difficultyLevelMap: Record<DifficultyKey, number> = {
-  easy: 1,
-  moderate: 2,
-  hard: 3,
-  veryHard: 4,
-  expert: 5,
-}
-
-const sanitizePersonaTraits = (persona?: string | null): string[] => {
-  if (!persona) return []
-  const cleaned = persona
-    .split(/\r?\n|\.|•|-|\u2022/)
-    .map((part) => part.replace(/^[•\-\s]+/, '').trim())
-    .filter((part) => part.length > 2)
-  return Array.from(new Set(cleaned)).slice(0, 4)
-}
-
-const parseDifficulty = (persona?: string | null): DifficultyKey | undefined => {
-  const match = persona?.match(/(easy|moderate|very hard|hard|expert)/i)?.[1]?.toLowerCase()
-  if (!match) return undefined
-  if (match === 'very hard') return 'veryHard'
-  if (match === 'hard') return 'hard'
-  if (match === 'moderate') return 'moderate'
-  if (match === 'expert') return 'expert'
-  if (match === 'easy') return 'easy'
-  return undefined
-}
-
-const hydrateAgent = (row: AgentRow, index: number): HomeownerAgent => {
-  const fallback = FALLBACK_AGENT_MAP[row.name]
-  const difficultyFromPersona = parseDifficulty(row.persona) ?? fallback?.difficulty ?? 'moderate'
-  const challengeLabel = fallback?.challengeLabel ?? difficultyLabelMap[difficultyFromPersona]
-  const challengeLevel = fallback?.challengeLevel ?? difficultyLevelMap[difficultyFromPersona]
-  const traits = fallback?.traits ?? sanitizePersonaTraits(row.persona)
-  const avatar = fallback?.avatar ?? SUPABASE_AVATARS[index % SUPABASE_AVATARS.length]
-  const color = fallback?.color ?? SUPABASE_COLOR_MAP[index % SUPABASE_COLOR_MAP.length]
-
+const buildPersonaCard = (name: AllowedAgentName, agentIdOverride?: string, databasePersona?: string | null): HomeownerAgent => {
+  const metadata = PERSONA_METADATA[name]
+  const card = metadata.card
+  const personaSnippet = databasePersona?.split('.').at(0)?.trim()
   return {
-    id: row.id,
-    name: row.name,
-    agentId: row.eleven_agent_id,
-    age: fallback?.age,
-    occupation: fallback?.occupation ?? 'Homeowner',
-    location: fallback?.location ?? 'United States',
-    personality: fallback?.personality ?? (row.persona?.split('.').at(0)?.trim() || 'Dynamic homeowner persona'),
-    challengeLevel,
-    challengeLabel,
-    difficulty: difficultyFromPersona,
-    traits: traits.length > 0 ? traits : ['Dynamic objections', 'Authentic reactions', 'Personalized skepticism', 'Realistic scheduling concerns'],
-    bestFor: fallback?.bestFor ?? 'Sharpen diverse objection handling and value delivery',
-    recommended: fallback?.recommended,
-    mostChallenging: fallback?.mostChallenging,
-    avatar,
-    color,
-    estimatedTime: fallback?.estimatedTime ?? '8-12 min',
-    startingScore: fallback?.startingScore ?? 40,
-    targetScore: fallback?.targetScore ?? 90,
+    id: name.toLowerCase().replace(/\s+/g, '-'),
+    name,
+    agentId: agentIdOverride ?? card.elevenAgentId ?? name,
+    age: card.age,
+    occupation: card.occupation,
+    location: card.location,
+    personality: personaSnippet ?? card.personality,
+    challengeLevel: card.challengeLevel,
+    challengeLabel: card.challengeLabel,
+    difficulty: card.difficultyKey,
+    traits: card.traits,
+    bestFor: card.bestFor,
+    recommended: card.recommended,
+    mostChallenging: card.mostChallenging,
+    avatar: card.avatar,
+    color: card.color,
+    estimatedTime: card.estimatedTime,
+    startingScore: card.startingScore,
+    targetScore: card.targetScore,
+    bubbleSubtitle: metadata.bubble.subtitle,
+    bubbleDescription: metadata.bubble.description,
   }
+}
+
+const FALLBACK_AGENTS: HomeownerAgent[] = ALLOWED_AGENT_ORDER.map((name) => buildPersonaCard(name))
+
+const hydrateAgent = (row: AgentRow): HomeownerAgent => {
+  const name = row.name as AllowedAgentName
+  return buildPersonaCard(name, row.eleven_agent_id, row.persona)
 }
 
 interface HomeownerSelectorProps {
@@ -280,9 +123,9 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
       }
 
       if (data) {
-        const hydrated: HomeownerAgent[] = data
-          .filter((agent) => Boolean(agent.eleven_agent_id))
-          .map((agent, index) => hydrateAgent(agent as AgentRow, index))
+        const filtered = data.filter((agent) => Boolean(agent.eleven_agent_id) && ALLOWED_AGENT_SET.has(agent.name as AllowedAgentName))
+        const sorted = filtered.sort((a, b) => ALLOWED_AGENT_ORDER.indexOf(a.name as AllowedAgentName) - ALLOWED_AGENT_ORDER.indexOf(b.name as AllowedAgentName))
+        const hydrated: HomeownerAgent[] = sorted.map((agent) => hydrateAgent(agent as AgentRow))
         setAgents(hydrated)
       }
       setLoading(false)
@@ -293,7 +136,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
 
   const handleSelectAgent = (agentId: string, agentName: string) => {
     setSelectedAgent(agentId)
-
+    
     // Small delay for visual feedback
     setTimeout(() => {
       if (onSelect) {
@@ -310,7 +153,7 @@ export default function HomeownerSelector({ onSelect, standalone = false }: Home
     const randomIndex = Math.floor(Math.random() * collection.length)
     const randomAgent = collection[randomIndex]
     if (randomAgent) {
-      handleSelectAgent(randomAgent.agentId, randomAgent.name)
+    handleSelectAgent(randomAgent.agentId, randomAgent.name)
     }
   }
 
@@ -347,15 +190,20 @@ const filteredAgents = useMemo(() => {
       return matchesSearch && matchesDifficulty
     })
     .sort((a, b) => {
+      const indexA = ALLOWED_AGENT_ORDER.indexOf(a.name as AllowedAgentName)
+      const indexB = ALLOWED_AGENT_ORDER.indexOf(b.name as AllowedAgentName)
+      if (sortBy === 'name') {
+        return indexA - indexB
+      }
       if (sortBy === 'recommended') {
         if (a.recommended && !b.recommended) return -1
         if (!a.recommended && b.recommended) return 1
-        return a.challengeLevel - b.challengeLevel
+        return indexA - indexB
       }
       if (sortBy === 'difficulty') {
         return a.challengeLevel - b.challengeLevel
       }
-      return a.name.localeCompare(b.name)
+      return indexA - indexB
     })
 }, [agents, filterDifficulty, searchQuery, sortBy])
 
