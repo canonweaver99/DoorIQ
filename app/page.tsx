@@ -345,7 +345,7 @@ const faqItems = [
   {
     question: 'Does DoorIQ replace live manager coaching?',
     answer:
-      'DoorIQ gives managers leverage—reps can practice high-frequency reps independently while leaders review the tough moments together.',
+      'DoorIQ gives managers leverage - reps can practice high-frequency reps independently while leaders review the tough moments together.',
   },
   {
     question: 'Can new hires ramp with guided scenarios?',
@@ -355,6 +355,6 @@ const faqItems = [
   {
     question: 'How do we track improvement over time?',
     answer:
-      'You'll see trends for objection handling, tone, discovery depth, and more. Scores roll into the leaderboard so progress stays visible.',
+      'You will see trends for objection handling, tone, discovery depth, and more. Scores roll into the leaderboard so progress stays visible.',
   },
 ]
