@@ -61,66 +61,207 @@ export interface Database {
           created_at?: string
         }
       }
-      training_sessions: {
+      live_sessions: {
         Row: {
           id: string
-          user_id: string
-          agent_id: string | null
+          created_at: string
           started_at: string
           ended_at: string | null
           duration_seconds: number | null
-          scenario_type: string
-          overall_score: number | null
-          rapport_score: number | null
-          objection_handling_score: number | null
-          safety_score: number | null
-          close_effectiveness_score: number | null
-          transcript: Json | null
+          user_id: string
+          agent_id: string | null
+          agent_name: string | null
+          agent_persona: string | null
+          conversation_id: string | null
           audio_url: string | null
+          total_turns: number | null
+          conversation_duration_seconds: number | null
+          questions_asked_by_austin: number | null
+          objections_raised: number | null
+          objections_resolved: number | null
+          austin_response_pattern: string | null
+          austin_first_words: string | null
+          austin_final_words: string | null
+          austin_key_questions: string[] | null
+          sales_rep_energy_level: 'low' | 'moderate' | 'high' | 'too aggressive' | null
+          close_attempted: boolean | null
+          closing_technique: string | null
+          rapport_score: number | null
+          sentiment_progression: string | null
+          time_to_value_seconds: number | null
+          interruptions_count: number | null
+          filler_words_count: number | null
+          conversation_summary: string | null
+          what_worked: string[] | null
+          what_failed: string[] | null
+          key_learnings: string[] | null
+          opening_introduction_score: number | null
+          opening_introduction_reason: string | null
+          rapport_building_score: number | null
+          rapport_building_reason: string | null
+          needs_discovery_score: number | null
+          needs_discovery_reason: string | null
+          value_communication_score: number | null
+          value_communication_reason: string | null
+          objection_handling_score: number | null
+          objection_handling_reason: string | null
+          closing_score: number | null
+          closing_reason: string | null
+          deductions_interruption_count: number | null
+          deductions_pricing_deflections: number | null
+          deductions_pressure_tactics: boolean | null
+          deductions_made_up_info: boolean | null
+          deductions_rude_or_dismissive: boolean | null
+          deductions_total: number | null
+          overall_score: number | null
+          grade_letter: 'A+'|'A'|'B+'|'B'|'C+'|'C'|'D'|'F' | null
+          pass: boolean | null
+          outcome: 'SUCCESS'|'FAILURE'|'PARTIAL' | null
+          sale_closed: boolean | null
+          sale_amount: number | null
+          service_type: string | null
+          service_frequency: string | null
+          total_contract_value: number | null
+          commission_amount: number | null
+          revenue_category: string | null
+          full_transcript: Json | null
           analytics: Json | null
-          sentiment_data: Json | null
-          virtual_earnings: number | null
-          created_at: string
+          device_info: Json | null
+          conversation_metadata: Json | null
         }
         Insert: {
           id?: string
-          user_id: string
-          agent_id?: string | null
+          created_at?: string
           started_at?: string
           ended_at?: string | null
           duration_seconds?: number | null
-          scenario_type?: string
-          overall_score?: number | null
-          rapport_score?: number | null
-          objection_handling_score?: number | null
-          safety_score?: number | null
-          close_effectiveness_score?: number | null
-          transcript?: Json | null
+          user_id: string
+          agent_id?: string | null
+          agent_name?: string | null
+          agent_persona?: string | null
+          conversation_id?: string | null
           audio_url?: string | null
+          total_turns?: number | null
+          conversation_duration_seconds?: number | null
+          questions_asked_by_austin?: number | null
+          objections_raised?: number | null
+          objections_resolved?: number | null
+          austin_response_pattern?: string | null
+          austin_first_words?: string | null
+          austin_final_words?: string | null
+          austin_key_questions?: string[] | null
+          sales_rep_energy_level?: 'low' | 'moderate' | 'high' | 'too aggressive' | null
+          close_attempted?: boolean | null
+          closing_technique?: string | null
+          rapport_score?: number | null
+          sentiment_progression?: string | null
+          time_to_value_seconds?: number | null
+          interruptions_count?: number | null
+          filler_words_count?: number | null
+          conversation_summary?: string | null
+          what_worked?: string[] | null
+          what_failed?: string[] | null
+          key_learnings?: string[] | null
+          opening_introduction_score?: number | null
+          opening_introduction_reason?: string | null
+          rapport_building_score?: number | null
+          rapport_building_reason?: string | null
+          needs_discovery_score?: number | null
+          needs_discovery_reason?: string | null
+          value_communication_score?: number | null
+          value_communication_reason?: string | null
+          objection_handling_score?: number | null
+          objection_handling_reason?: string | null
+          closing_score?: number | null
+          closing_reason?: string | null
+          deductions_interruption_count?: number | null
+          deductions_pricing_deflections?: number | null
+          deductions_pressure_tactics?: boolean | null
+          deductions_made_up_info?: boolean | null
+          deductions_rude_or_dismissive?: boolean | null
+          deductions_total?: number | null
+          overall_score?: number | null
+          grade_letter?: 'A+'|'A'|'B+'|'B'|'C+'|'C'|'D'|'F' | null
+          pass?: boolean | null
+          outcome?: 'SUCCESS'|'FAILURE'|'PARTIAL' | null
+          sale_closed?: boolean | null
+          sale_amount?: number | null
+          service_type?: string | null
+          service_frequency?: string | null
+          total_contract_value?: number | null
+          commission_amount?: number | null
+          revenue_category?: string | null
+          full_transcript?: Json | null
           analytics?: Json | null
-          sentiment_data?: Json | null
-          virtual_earnings?: number | null
-          created_at?: string
+          device_info?: Json | null
+          conversation_metadata?: Json | null
         }
         Update: {
           id?: string
-          user_id?: string
-          agent_id?: string | null
+          created_at?: string
           started_at?: string
           ended_at?: string | null
           duration_seconds?: number | null
-          scenario_type?: string
-          overall_score?: number | null
-          rapport_score?: number | null
-          objection_handling_score?: number | null
-          safety_score?: number | null
-          close_effectiveness_score?: number | null
-          transcript?: Json | null
+          user_id?: string
+          agent_id?: string | null
+          agent_name?: string | null
+          agent_persona?: string | null
+          conversation_id?: string | null
           audio_url?: string | null
+          total_turns?: number | null
+          conversation_duration_seconds?: number | null
+          questions_asked_by_austin?: number | null
+          objections_raised?: number | null
+          objections_resolved?: number | null
+          austin_response_pattern?: string | null
+          austin_first_words?: string | null
+          austin_final_words?: string | null
+          austin_key_questions?: string[] | null
+          sales_rep_energy_level?: 'low' | 'moderate' | 'high' | 'too aggressive' | null
+          close_attempted?: boolean | null
+          closing_technique?: string | null
+          rapport_score?: number | null
+          sentiment_progression?: string | null
+          time_to_value_seconds?: number | null
+          interruptions_count?: number | null
+          filler_words_count?: number | null
+          conversation_summary?: string | null
+          what_worked?: string[] | null
+          what_failed?: string[] | null
+          key_learnings?: string[] | null
+          opening_introduction_score?: number | null
+          opening_introduction_reason?: string | null
+          rapport_building_score?: number | null
+          rapport_building_reason?: string | null
+          needs_discovery_score?: number | null
+          needs_discovery_reason?: string | null
+          value_communication_score?: number | null
+          value_communication_reason?: string | null
+          objection_handling_score?: number | null
+          objection_handling_reason?: string | null
+          closing_score?: number | null
+          closing_reason?: string | null
+          deductions_interruption_count?: number | null
+          deductions_pricing_deflections?: number | null
+          deductions_pressure_tactics?: boolean | null
+          deductions_made_up_info?: boolean | null
+          deductions_rude_or_dismissive?: boolean | null
+          deductions_total?: number | null
+          overall_score?: number | null
+          grade_letter?: 'A+'|'A'|'B+'|'B'|'C+'|'C'|'D'|'F' | null
+          pass?: boolean | null
+          outcome?: 'SUCCESS'|'FAILURE'|'PARTIAL' | null
+          sale_closed?: boolean | null
+          sale_amount?: number | null
+          service_type?: string | null
+          service_frequency?: string | null
+          total_contract_value?: number | null
+          commission_amount?: number | null
+          revenue_category?: string | null
+          full_transcript?: Json | null
           analytics?: Json | null
-          sentiment_data?: Json | null
-          virtual_earnings?: number | null
-          created_at?: string
+          device_info?: Json | null
+          conversation_metadata?: Json | null
         }
       }
       session_events: {

@@ -79,7 +79,7 @@ export function useSessionRecording(sessionId: string | null) {
 
       // Update the session with the audio URL
       await supabase
-        .from('training_sessions')
+        .from('live_sessions')
         .update({ audio_url: publicUrl })
         .eq('id', sessionId)
 

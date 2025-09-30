@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
 
-type Session = Database['public']['Tables']['training_sessions']['Row'] & {
+type Session = Database['public']['Tables']['live_sessions']['Row'] & {
   users: {
     full_name: string
     email: string
@@ -36,8 +36,8 @@ export default function SessionsPage() {
     
     setIsAuthenticated(true)
 
-    let query = supabase
-      .from('training_sessions')
+  let query = supabase
+      .from('live_sessions')
       .select(`
         *,
         users!inner(full_name, email)

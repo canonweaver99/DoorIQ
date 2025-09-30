@@ -8,7 +8,7 @@ import { Users, MessageSquare, TrendingUp, Calendar, ChevronRight, Send, X } fro
 import { format } from 'date-fns'
 
 type User = Database['public']['Tables']['users']['Row']
-type Session = Database['public']['Tables']['training_sessions']['Row']
+type Session = Database['public']['Tables']['live_sessions']['Row']
 type Message = Database['public']['Tables']['messages']['Row'] & {
   sender: { full_name: string }
   recipient: { full_name: string }
@@ -84,7 +84,7 @@ export default function ManagerPage() {
       repsAny.map(async (rep: any) => {
         // Fetch sessions
         const { data: sessions } = await supabase
-          .from('training_sessions')
+          .from('live_sessions')
           .select('*')
           .eq('user_id', rep.id as string)
           .order('created_at', { ascending: false })

@@ -49,7 +49,7 @@ export default function LeaderboardPage() {
     const leaderboardData = await Promise.all(
       usersList.map(async (u: any, index: number) => {
         let sessionsQuery = supabase
-          .from('training_sessions')
+          .from('live_sessions')
           .select('overall_score')
           .eq('user_id', u.id as string)
           .not('overall_score', 'is', null)

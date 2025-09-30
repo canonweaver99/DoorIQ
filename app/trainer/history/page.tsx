@@ -52,7 +52,7 @@ export default function SessionHistoryPage() {
       setIsAuthenticated(true)
 
       let query = supabase
-        .from('training_sessions')
+        .from('live_sessions')
         .select('*', { count: 'exact' })
         .eq('user_id', user.id)
         .order('started_at', { ascending: false })

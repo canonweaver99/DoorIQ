@@ -12,6 +12,7 @@ import AnimatedScore from '@/components/analytics/AnimatedScore'
 import TranscriptView from '@/components/analytics/TranscriptView'
 import PerformanceMetrics from '@/components/analytics/PerformanceMetrics'
 import AICoach from '@/components/analytics/AICoach'
+import ConversationAnalysis from '@/components/ConversationAnalysis'
 
 interface SessionData {
   id: string
@@ -69,7 +70,7 @@ export default function AnalyticsPage() {
         ? params.sessionId[0]
         : params.sessionId
       const { data, error } = await supabase
-        .from('training_sessions')
+        .from('live_sessions')
         .select('*')
         .eq('id', sessionId as string)
         .single()
@@ -227,89 +228,19 @@ export default function AnalyticsPage() {
         {activeTab === 'transcript' ? (
           <div id="transcript-section">
             <TranscriptView 
-              transcript={session.transcript || []}
+              transcript={(session as any).full_transcript || []}
               analytics={session.analytics}
               className="mb-6"
             />
           </div>
         ) : (
-          <>
-            {/* Performance Breakdown */}
-            <PerformanceMetrics 
-              metrics={metricsData}
-              transcript={session.transcript}
-              onLineClick={scrollToTranscriptLine}
-              className="mb-6"
-            />
-
-            {/* Simplified Expert Feedback */}
-            <div className="bg-slate-800 rounded-xl shadow-xl p-8 mb-6 border border-slate-700">
-              <h2 className="text-2xl font-semibold text-slate-100 mb-6">Expert Feedback</h2>
-              
-              {session.analytics?.feedback ? (
-                <div className="space-y-6">
-                  {/* What You Did Well */}
-                  {session.analytics.feedback.strengths && session.analytics.feedback.strengths.length > 0 && (
-                    <div className="bg-green-900/30 p-6 rounded-lg border border-green-700/50">
-                      <h3 className="font-semibold text-green-300 mb-4 flex items-center">
-                        <Trophy className="w-5 h-5 mr-2" />
-                        What You Did Well
-                      </h3>
-                      <ul className="space-y-3">
-                        {session.analytics.feedback.strengths.map((strength: string, idx: number) => (
-                          <li key={idx} className="text-green-200 flex items-start">
-                            <span className="text-green-400 mr-3 text-lg">✓</span>
-                            <span>{strength}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {/* Areas for Improvement */}
-                  {session.analytics?.feedback?.improvements && session.analytics.feedback.improvements.length > 0 && (
-                    <div className="bg-amber-900/30 p-6 rounded-lg border border-amber-700/50">
-                      <h3 className="font-semibold text-amber-300 mb-4 flex items-center">
-                        <Target className="w-5 h-5 mr-2" />
-                        Areas for Improvement
-                      </h3>
-                      <ul className="space-y-3">
-                        {session.analytics.feedback.improvements.map((improvement: string, idx: number) => (
-                          <li key={idx} className="text-amber-200 flex items-start">
-                            <span className="text-amber-400 mr-3 text-lg">⚠</span>
-                            <span>{improvement}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Next Time, Try This */}
-                  {session.analytics?.feedback?.specificTips && session.analytics.feedback.specificTips.length > 0 && (
-                    <div className="bg-blue-900/30 p-6 rounded-lg border border-blue-700/50">
-                      <h3 className="font-semibold text-blue-300 mb-4 flex items-center">
-                        <FileText className="w-5 h-5 mr-2" />
-                        Next Time, Try This:
-                      </h3>
-                      <div className="space-y-4">
-                        {session.analytics.feedback.specificTips.map((tip: string, idx: number) => (
-                          <div key={idx} className="bg-slate-700 p-4 rounded-lg border border-slate-600 shadow-sm">
-                            <p className="text-blue-200 italic font-medium">&ldquo;{tip}&rdquo;</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center text-slate-400 py-8">
-                  <FileText className="w-12 h-12 mx-auto mb-4 text-slate-500" />
-                  <p>AI feedback will appear here once the session is processed.</p>
-                </div>
-              )}
-            </div>
-
-          </>
+          <ConversationAnalysis 
+            conversationId={session?.analytics?.conversation_id || ''}
+            userId={(session as any)?.user_id as any}
+            agentId={(session as any)?.agent_id as any}
+            homeownerName={session?.analytics?.homeowner_name || 'Austin'}
+            homeownerProfile={session?.analytics?.homeowner_profile || 'Standard homeowner persona'}
+          />
         )}
 
         {/* Action Buttons */}

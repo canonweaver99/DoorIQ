@@ -291,7 +291,7 @@ function TrainerPageContent() {
         scenario_type: 'standard',
       }
       const { data: session, error } = await (supabase as any)
-        .from('training_sessions')
+        .from('live_sessions')
         .insert(payload)
         .select()
         .single()
@@ -360,9 +360,24 @@ function TrainerPageContent() {
         setLoading(false)
       }
 
+      // NEW: stash conversation metadata for post-session analysis
       if (sessionId) {
         await (supabase as any)
-          .from('training_sessions')
+          .from('live_sessions')
+          .update({
+            analytics: {
+              ...(analysis || {}),
+              conversation_id: (window as any)?.elevenConversationId || null,
+              homeowner_name: selectedAgent?.name || 'Austin',
+              homeowner_profile: selectedAgent?.description || 'Standard homeowner persona',
+            }
+          } as any)
+          .eq('id', sessionId)
+      }
+
+      if (sessionId) {
+        await (supabase as any)
+          .from('live_sessions')
           .update({
             ended_at: new Date().toISOString(),
             duration_seconds: duration,
@@ -373,7 +388,7 @@ function TrainerPageContent() {
             objection_handling_score: analysis.keyMoments?.objectionHandled ? 85 : 40,
             safety_score: analysis.keyMoments?.safetyAddressed ? 85 : 40,
             close_effectiveness_score: analysis.scores.closing,
-            transcript: transcript,
+            full_transcript: transcript as any,
             analytics: analysis,
             sentiment_data: {
               finalSentiment: 50,

@@ -1,0 +1,98 @@
+import { NextResponse } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { fetchElevenLabsConversation, normalizeTranscriptFromEleven } from '@/api/elevenlabs'
+import { analyzeWithOpenAI } from '@/api/analyzeConversation'
+import { extractBasicMetrics } from '@/utils/conversationAnalyzer'
+import { calculateGrade } from '@/utils/gradeCalculator'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
+export async function POST(req: Request) {
+  try {
+    const { conversationId, agentId, homeownerName, homeownerProfile, userId } = await req.json()
+    if (!conversationId || !userId) {
+      return NextResponse.json({ error: 'conversationId and userId are required' }, { status: 400 })
+    }
+
+    // 1) Retrieve conversation from ElevenLabs
+    const convo = await fetchElevenLabsConversation(conversationId)
+    const simpleTurns = normalizeTranscriptFromEleven(convo)
+
+    // 2) Extract basic metrics
+    const basic = extractBasicMetrics(simpleTurns)
+
+    // 3) Build plain text transcript for AI
+    const transcriptText = simpleTurns.map(t => `${t.speaker === 'rep' ? 'Rep' : 'Homeowner'}: ${t.text}`).join('\n')
+
+    // 4) AI analysis
+    const aiJson = await analyzeWithOpenAI({
+      transcript: transcriptText,
+      homeownerName: homeownerName || 'Austin',
+      homeownerProfile: homeownerProfile || 'Standard homeowner persona',
+    })
+    const ai = JSON.parse(aiJson)
+
+    // 5) Calculate grade
+    const grade = calculateGrade(ai)
+
+    // 6) Determine outcome
+    const outcome = (() => {
+      const score = grade.total
+      const persona = (homeownerName || 'Austin').toLowerCase()
+      const dur = basic.conversation_duration_seconds || 0
+      if (persona.includes('austin')) return score >= 70 ? 'SUCCESS' : 'FAILURE'
+      if (persona.includes('decisive')) return score >= 70 && dur < 600 ? 'SUCCESS' : 'FAILURE'
+      if (persona.includes('skeptical')) return score >= 120 ? 'SUCCESS' : 'FAILURE'
+      if (persona.includes('budget')) return score >= 80 ? 'SUCCESS' : 'FAILURE'
+      if (persona.includes('analytical')) return score >= 120 ? 'SUCCESS' : 'FAILURE'
+      return score >= 70 ? 'SUCCESS' : 'FAILURE'
+    })()
+
+    // 7) Save to Supabase (sales_test_conversations)
+    const supabase = await createServerSupabaseClient()
+    const insertPayload: any = {
+      user_id: userId,
+      conversation_id: conversationId,
+      agent_id: agentId || null,
+      outcome,
+      sale_closed: outcome === 'SUCCESS',
+      total_turns: basic.total_turns,
+      conversation_duration_seconds: basic.conversation_duration_seconds,
+      questions_asked_by_austin: basic.questions_asked_by_austin,
+      austin_first_words: basic.austin_first_words,
+      austin_final_words: basic.austin_final_words,
+      austin_key_questions: basic.austin_key_questions,
+      interruptions_count: basic.interruptions_count,
+      filler_words_count: basic.filler_words_count,
+      time_to_value_seconds: basic.time_to_value_seconds,
+      close_attempted: basic.close_attempted,
+      closing_technique: basic.closing_technique,
+      objections_raised: basic.objections_raised,
+      objections_resolved: basic.objections_resolved,
+      rapport_score: basic.rapport_score,
+      conversation_summary: ai.conversation_summary,
+      what_worked: (ai.what_worked || []).join('\n'),
+      what_failed: (ai.what_failed || []).join('\n'),
+      key_learnings: (ai.key_learnings || []).join('\n'),
+      austin_response_pattern: ai.austin_response_pattern,
+      sales_rep_energy_level: ai.sales_rep_energy_level,
+      sentiment_progression: ai.sentiment_progression,
+      full_transcript: convo as any,
+    }
+
+    const { error: insertErr } = await (supabase as any)
+      .from('sales_test_conversations')
+      .insert(insertPayload)
+
+    if (insertErr) {
+      return NextResponse.json({ error: 'Failed to save analysis' }, { status: 500 })
+    }
+
+    return NextResponse.json({ ok: true, data: { basic, ai, grade, outcome } })
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
+  }
+}
+
+

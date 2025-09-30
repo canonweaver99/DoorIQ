@@ -12,7 +12,7 @@ import {
 import { format } from 'date-fns'
 
 type User = Database['public']['Tables']['users']['Row']
-type Session = Database['public']['Tables']['training_sessions']['Row']
+type Session = Database['public']['Tables']['live_sessions']['Row']
 type Message = Database['public']['Tables']['messages']['Row'] & {
   sender: { full_name: string }
 }
@@ -79,7 +79,7 @@ export default function RepDetailPage() {
     
     // Fetch sessions
     const { data: sessionsData } = await supabase
-      .from('training_sessions')
+      .from('live_sessions')
       .select('*')
       .eq('user_id', repId)
       .order('created_at', { ascending: false })
