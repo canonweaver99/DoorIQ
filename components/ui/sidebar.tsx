@@ -79,12 +79,33 @@ export const Sidebar = ({
   );
 };
 
-export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
+export const SidebarBody = ({
+  children,
+  className,
+  sidebar,
+  ...props
+}: {
+  children: ReactNode
+  className?: string
+  sidebar?: ReactNode
+  open?: boolean
+  setOpen?: Dispatch<SetStateAction<boolean>>
+  animate?: boolean
+}) => {
   return (
-    <>
-      <DesktopSidebar {...props} />
-      <MobileSidebar {...(props as React.ComponentProps<"div">)} />
-    </>
+    <div className="flex min-h-screen">
+      <DesktopSidebar className={className} {...props}>
+        {sidebar}
+      </DesktopSidebar>
+      <div className="flex-1 flex flex-col">
+        <MobileSidebar className={className} {...props}>
+          {sidebar}
+        </MobileSidebar>
+        <div className="flex-1">
+          {children}
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -116,13 +137,14 @@ export const MobileSidebar = ({
   className,
   children,
   ...props
-}: React.ComponentProps<"div">) => {
+}: React.ComponentProps<'div'>) => {
   const { open, setOpen } = useSidebar();
   return (
     <>
       <div
         className={cn(
-          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-neutral-100 dark:bg-neutral-800 w-full"
+          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-neutral-100 dark:bg-neutral-800 w-full",
+          className
         )}
         {...props}
       >

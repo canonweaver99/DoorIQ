@@ -9,6 +9,7 @@ import { TranscriptEntry } from '@/lib/trainer/types'
 import CalculatingScore from '@/components/analytics/CalculatingScore'
 import MoneyNotification from '@/components/trainer/MoneyNotification'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
+import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 
 interface Agent {
   id: string
@@ -16,6 +17,53 @@ interface Agent {
   persona: string | null
   eleven_agent_id: string
   is_active: boolean
+}
+
+const ORB_COLORS: Record<string, {
+  idle: { start: string; mid: string; end: string; shadow: string; ring: string }
+  active: {
+    start: string
+    mid: string
+    end: string
+    shadow: string
+    ring1: string
+    ring2: string
+    ring3: string
+    ring4: string
+    hoverShadow: string
+    hoverRing1: string
+    hoverRing2: string
+    hoverRing3: string
+  }
+}> = {
+  Austin: {
+    idle: {
+      start: '#86efac',
+      mid: '#22c55e',
+      end: '#15803d',
+      shadow: 'rgba(34,197,94,0.6)',
+      ring: 'rgba(34,197,94,0.15)',
+    },
+    active: {
+      start: '#34d399',
+      mid: '#10b981',
+      end: '#059669',
+      shadow: 'rgba(16,185,129,0.6)',
+      ring1: 'rgba(16,185,129,0.15)',
+      ring2: 'rgba(16,185,129,0.1)',
+      ring3: 'rgba(16,185,129,0.05)',
+      ring4: 'rgba(16,185,129,0.03)',
+      hoverShadow: 'rgba(16,185,129,0.7)',
+      hoverRing1: 'rgba(16,185,129,0.2)',
+      hoverRing2: 'rgba(16,185,129,0.15)',
+      hoverRing3: 'rgba(16,185,129,0.08)',
+    },
+  },
+}
+
+const getOrbColors = (name?: string) => {
+  if (!name) return ORB_COLORS.Austin
+  return ORB_COLORS[name] ?? ORB_COLORS.Austin
 }
 
 function TrainerPageContent() {
@@ -34,6 +82,9 @@ function TrainerPageContent() {
   const [loadingAgent, setLoadingAgent] = useState(true)
   const [homeownerName, setHomeownerName] = useState<string>('')
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([])
+  const [signedUrl, setSignedUrl] = useState<string | null>(null)
+
+  const orbColors = getOrbColors(selectedAgent?.name)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -79,6 +130,22 @@ function TrainerPageContent() {
       signedUrlAbortRef.current?.abort()
     }
   }, [])
+
+  useEffect(() => {
+    const handleAgentSelection = (event: CustomEvent<{ agentId: string; agentName: string }>) => {
+      if (!event?.detail?.agentId) return
+      const match = availableAgents.find(agent => agent.eleven_agent_id === event.detail.agentId)
+      if (match) {
+        setSelectedAgent(match)
+        setHomeownerName(match.name)
+      }
+    }
+
+    window.addEventListener('trainer:select-agent', handleAgentSelection as EventListener)
+    return () => {
+      window.removeEventListener('trainer:select-agent', handleAgentSelection as EventListener)
+    }
+  }, [availableAgents])
 
   // Handle transcript updates
   const activeAgentLabel = selectedAgent?.name || 'Homeowner'
@@ -242,7 +309,12 @@ function TrainerPageContent() {
 
     try {
       setLoading(true)
-      const signedUrl = await fetchSignedUrl(selectedAgent.eleven_agent_id)
+      setDeltaText('')
+      setTranscript([])
+      setDuration(0)
+
+      const url = await fetchSignedUrl(selectedAgent.eleven_agent_id)
+      setSignedUrl(url)
       const newId = await createSessionRecord()
       setSessionId(newId)
       setSessionActive(true)
@@ -260,6 +332,7 @@ function TrainerPageContent() {
     } catch (error) {
       console.error('Error starting session:', error)
       setLoading(false)
+      setSignedUrl(null)
     }
   }
 
@@ -292,6 +365,7 @@ function TrainerPageContent() {
   const endSession = async () => {
     setLoading(true)
     setSessionActive(false)
+    setSignedUrl(null)
 
     if (durationInterval.current) {
       clearInterval(durationInterval.current)
@@ -597,10 +671,10 @@ function TrainerPageContent() {
                 border: 0;
                 outline: none;
                 cursor: pointer;
-                background: radial-gradient(circle at 30% 30%, #818cf8, #6366f1, #4f46e5);
+                background: radial-gradient(circle at 30% 30%, ${orbColors.idle.start}, ${orbColors.idle.mid}, ${orbColors.idle.end});
                 box-shadow: 
-                  0 20px 60px rgba(99, 102, 241, 0.6),
-                  0 0 0 4px rgba(99, 102, 241, 0.1),
+                  0 20px 60px ${orbColors.idle.shadow},
+                  0 0 0 4px ${orbColors.idle.ring},
                   inset 0 1px 20px rgba(255,255,255,0.2);
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 animation: floaty 4s ease-in-out infinite;
@@ -625,12 +699,13 @@ function TrainerPageContent() {
               }
               
               #conversation-orb.active {
-                background: radial-gradient(circle at 30% 30%, #34d399, #10b981, #059669);
+                background: radial-gradient(circle at 30% 30%, ${orbColors.active.start}, ${orbColors.active.mid}, ${orbColors.active.end});
                 box-shadow: 
-                  0 20px 60px rgba(16, 185, 129, 0.6),
-                  0 0 0 8px rgba(16, 185, 129, 0.15),
-                  0 0 0 16px rgba(16, 185, 129, 0.1),
-                  0 0 0 24px rgba(16, 185, 129, 0.05),
+                  0 20px 60px ${orbColors.active.shadow},
+                  0 0 0 8px ${orbColors.active.ring1},
+                  0 0 0 16px ${orbColors.active.ring2},
+                  0 0 0 24px ${orbColors.active.ring3},
+                  0 0 0 32px ${orbColors.active.ring4},
                   inset 0 1px 20px rgba(255,255,255,0.2);
                 animation: floaty 4s ease-in-out infinite, pulse-ring 2s ease-in-out infinite;
               }
@@ -638,18 +713,18 @@ function TrainerPageContent() {
               @keyframes pulse-ring {
                 0%, 100% {
                   box-shadow: 
-                    0 20px 60px rgba(16, 185, 129, 0.6),
-                    0 0 0 8px rgba(16, 185, 129, 0.15),
-                    0 0 0 16px rgba(16, 185, 129, 0.1),
-                    0 0 0 24px rgba(16, 185, 129, 0.05),
+                    0 20px 60px ${orbColors.active.shadow},
+                    0 0 0 8px ${orbColors.active.ring1},
+                    0 0 0 16px ${orbColors.active.ring2},
+                    0 0 0 24px ${orbColors.active.ring3},
                     inset 0 1px 20px rgba(255,255,255,0.2);
                 }
                 50% {
                   box-shadow: 
-                    0 20px 60px rgba(16, 185, 129, 0.7),
-                    0 0 0 12px rgba(16, 185, 129, 0.2),
-                    0 0 0 24px rgba(16, 185, 129, 0.15),
-                    0 0 0 36px rgba(16, 185, 129, 0.08),
+                    0 20px 60px ${orbColors.active.hoverShadow},
+                    0 0 0 12px ${orbColors.active.hoverRing1},
+                    0 0 0 24px ${orbColors.active.hoverRing2},
+                    0 0 0 36px ${orbColors.active.hoverRing3},
                     inset 0 1px 20px rgba(255,255,255,0.3);
                 }
               }

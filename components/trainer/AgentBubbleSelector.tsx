@@ -136,6 +136,15 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
   const handleSelectAgent = (agentId: string, agentName: string) => {
     setSelectedAgent(agentId)
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('trainer:select-agent', {
+        detail: {
+          agentId,
+          agentName,
+        },
+      }))
+    }
     
     setTimeout(() => {
       if (onSelect) {
