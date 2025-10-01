@@ -444,61 +444,81 @@ function TrainerPageContent() {
             </div>
 
             {/* ElevenLabs Integration Script */}
-            {sessionActive && (
-              <Script id="elevenlabs-conversation" type="module" strategy="afterInteractive">
+            {sessionActive && signedUrl && (
+              <Script
+                id="elevenlabs-conversation"
+                type="module"
+                strategy="afterInteractive"
+                key={signedUrl}
+              >
                 {`
                   import { Conversation } from 'https://esm.sh/@elevenlabs/client';
-                  const AGENT_ID = '${selectedAgent?.eleven_agent_id || 'agent_7001k5jqfjmtejvs77jvhjf254tz'}';
-
+                  const AGENT_ID = '${selectedAgent?.eleven_agent_id ?? ''}';
+                  const SIGNED_URL = '${signedUrl ?? ''}';
+ 
                   const orb = document.getElementById('conversation-orb');
                   let convo = null;
                   let isStarting = false;
                   let state = { status: 'disconnected', mode: 'idle' };
-
+ 
+                  if (!SIGNED_URL) {
+                    console.error('Missing ElevenLabs signed URL');
+                  }
+ 
                   function render() {
                     const { status } = state;
                     const active = status === 'connected' || status === 'connecting';
-                    
+ 
                     if (active) {
                       orb.classList.add('active');
                     } else {
                       orb.classList.remove('active');
                     }
                   }
-
+ 
                   async function startConversation() {
                     try {
                       if (convo || isStarting || state.status === 'connected') return;
                       isStarting = true;
-                      
+ 
                       if (window.startSessionRecording) {
                         window.startSessionRecording();
                       }
-                      
+ 
                       state.status = 'connecting';
                       render();
-                      
+ 
                       try {
-                        await navigator.mediaDevices.getUserMedia({ 
+                        await navigator.mediaDevices.getUserMedia({
                           audio: {
                             echoCancellation: true,
                             noiseSuppression: true,
                             autoGainControl: true,
                             sampleRate: 48000,
                             sampleSize: 16,
-                            channelCount: 1
-                          } 
+                            channelCount: 1,
+                          },
                         });
                       } catch {}
-                      
+ 
                       convo = await Conversation.startSession({
                         agentId: AGENT_ID,
-                        connectionType: 'webrtc',
-                        onStatusChange: (s) => { state.status = s; render(); },
-                        onModeChange: (m) => { state.mode = m; render(); },
+                        signedUrl: SIGNED_URL,
+                        conversationConfig: {
+                          enable_tts: true,
+                          enable_private_mode: false,
+                        },
+                        onStatusChange: (s) => {
+                          state.status = s;
+                          render();
+                        },
+                        onModeChange: (m) => {
+                          state.mode = m;
+                          render();
+                        },
                         onMessage: (msg) => {
                           window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }));
-                          
+ 
                           try {
                             if (msg?.type === 'user_transcript') {
                               const text = msg.user_transcript || msg.text || '';
@@ -523,7 +543,9 @@ function TrainerPageContent() {
                             console.error('Error processing message:', e);
                           }
                         },
-                        onError: (err) => { console.error('ElevenLabs error:', err); },
+                        onError: (err) => {
+                          console.error('ElevenLabs error:', err);
+                        },
                       });
                       isStarting = false;
                     } catch (err) {
@@ -534,25 +556,26 @@ function TrainerPageContent() {
                       isStarting = false;
                     }
                   }
-
+ 
                   async function stopConversation() {
-                    try { await convo?.endSession(); } catch {}
+                    try {
+                      await convo?.endSession();
+                    } catch {}
                     convo = null;
                     isStarting = false;
                     state.status = 'disconnected';
                     state.mode = 'idle';
                     render();
-                    
+ 
                     if (window.stopSessionRecording) {
                       window.stopSessionRecording();
                     }
                   }
-
+ 
                   window.stopConversation = stopConversation;
-
-                  // Auto-start when script loads
+ 
                   setTimeout(() => startConversation(), 100);
-
+ 
                   render();
                 `}
               </Script>
