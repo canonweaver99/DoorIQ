@@ -59,6 +59,236 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(16,185,129,0.08)',
     },
   },
+  'Tiger Tom': {
+    idle: {
+      start: '#fdba74',
+      mid: '#f97316',
+      end: '#c2410c',
+      shadow: 'rgba(249,115,22,0.6)',
+      ring: 'rgba(249,115,22,0.15)',
+    },
+    active: {
+      start: '#fb923c',
+      mid: '#f97316',
+      end: '#ea580c',
+      shadow: 'rgba(249,115,22,0.6)',
+      ring1: 'rgba(249,115,22,0.15)',
+      ring2: 'rgba(249,115,22,0.1)',
+      ring3: 'rgba(249,115,22,0.05)',
+      ring4: 'rgba(249,115,22,0.03)',
+      hoverShadow: 'rgba(249,115,22,0.7)',
+      hoverRing1: 'rgba(249,115,22,0.2)',
+      hoverRing2: 'rgba(249,115,22,0.15)',
+      hoverRing3: 'rgba(249,115,22,0.08)',
+    },
+  },
+  'Tiger Tony': {
+    idle: {
+      start: '#fcd34d',
+      mid: '#f59e0b',
+      end: '#b45309',
+      shadow: 'rgba(245,158,11,0.6)',
+      ring: 'rgba(245,158,11,0.15)',
+    },
+    active: {
+      start: '#fbbf24',
+      mid: '#f59e0b',
+      end: '#d97706',
+      shadow: 'rgba(245,158,11,0.6)',
+      ring1: 'rgba(245,158,11,0.15)',
+      ring2: 'rgba(245,158,11,0.1)',
+      ring3: 'rgba(245,158,11,0.05)',
+      ring4: 'rgba(245,158,11,0.03)',
+      hoverShadow: 'rgba(245,158,11,0.7)',
+      hoverRing1: 'rgba(245,158,11,0.2)',
+      hoverRing2: 'rgba(245,158,11,0.15)',
+      hoverRing3: 'rgba(245,158,11,0.08)',
+    },
+  },
+  'Sheep Shelley': {
+    idle: {
+      start: '#fca5a5',
+      mid: '#ef4444',
+      end: '#b91c1c',
+      shadow: 'rgba(239,68,68,0.6)',
+      ring: 'rgba(239,68,68,0.15)',
+    },
+    active: {
+      start: '#f87171',
+      mid: '#ef4444',
+      end: '#dc2626',
+      shadow: 'rgba(239,68,68,0.6)',
+      ring1: 'rgba(239,68,68,0.15)',
+      ring2: 'rgba(239,68,68,0.1)',
+      ring3: 'rgba(239,68,68,0.05)',
+      ring4: 'rgba(239,68,68,0.03)',
+      hoverShadow: 'rgba(239,68,68,0.7)',
+      hoverRing1: 'rgba(239,68,68,0.2)',
+      hoverRing2: 'rgba(239,68,68,0.15)',
+      hoverRing3: 'rgba(239,68,68,0.08)',
+    },
+  },
+  'Sheep Sam': {
+    idle: {
+      start: '#c4b5fd',
+      mid: '#8b5cf6',
+      end: '#6d28d9',
+      shadow: 'rgba(139,92,246,0.6)',
+      ring: 'rgba(139,92,246,0.15)',
+    },
+    active: {
+      start: '#a78bfa',
+      mid: '#8b5cf6',
+      end: '#7c3aed',
+      shadow: 'rgba(139,92,246,0.6)',
+      ring1: 'rgba(139,92,246,0.15)',
+      ring2: 'rgba(139,92,246,0.1)',
+      ring3: 'rgba(139,92,246,0.05)',
+      ring4: 'rgba(139,92,246,0.03)',
+      hoverShadow: 'rgba(139,92,246,0.7)',
+      hoverRing1: 'rgba(139,92,246,0.2)',
+      hoverRing2: 'rgba(139,92,246,0.15)',
+      hoverRing3: 'rgba(139,92,246,0.08)',
+    },
+  },
+  'Sheep Sandy': {
+    idle: {
+      start: '#d8b4fe',
+      mid: '#a855f7',
+      end: '#7e22ce',
+      shadow: 'rgba(168,85,247,0.6)',
+      ring: 'rgba(168,85,247,0.15)',
+    },
+    active: {
+      start: '#c084fc',
+      mid: '#a855f7',
+      end: '#9333ea',
+      shadow: 'rgba(168,85,247,0.6)',
+      ring1: 'rgba(168,85,247,0.15)',
+      ring2: 'rgba(168,85,247,0.1)',
+      ring3: 'rgba(168,85,247,0.05)',
+      ring4: 'rgba(168,85,247,0.03)',
+      hoverShadow: 'rgba(168,85,247,0.7)',
+      hoverRing1: 'rgba(168,85,247,0.2)',
+      hoverRing2: 'rgba(168,85,247,0.15)',
+      hoverRing3: 'rgba(168,85,247,0.08)',
+    },
+  },
+  'Bull Brad': {
+    idle: {
+      start: '#93c5fd',
+      mid: '#3b82f6',
+      end: '#1e40af',
+      shadow: 'rgba(59,130,246,0.6)',
+      ring: 'rgba(59,130,246,0.15)',
+    },
+    active: {
+      start: '#60a5fa',
+      mid: '#3b82f6',
+      end: '#2563eb',
+      shadow: 'rgba(59,130,246,0.6)',
+      ring1: 'rgba(59,130,246,0.15)',
+      ring2: 'rgba(59,130,246,0.1)',
+      ring3: 'rgba(59,130,246,0.05)',
+      ring4: 'rgba(59,130,246,0.03)',
+      hoverShadow: 'rgba(59,130,246,0.7)',
+      hoverRing1: 'rgba(59,130,246,0.2)',
+      hoverRing2: 'rgba(59,130,246,0.15)',
+      hoverRing3: 'rgba(59,130,246,0.08)',
+    },
+  },
+  'Bull Barry': {
+    idle: {
+      start: '#d1d5db',
+      mid: '#6b7280',
+      end: '#374151',
+      shadow: 'rgba(107,114,128,0.6)',
+      ring: 'rgba(107,114,128,0.15)',
+    },
+    active: {
+      start: '#9ca3af',
+      mid: '#6b7280',
+      end: '#4b5563',
+      shadow: 'rgba(107,114,128,0.6)',
+      ring1: 'rgba(107,114,128,0.15)',
+      ring2: 'rgba(107,114,128,0.1)',
+      ring3: 'rgba(107,114,128,0.05)',
+      ring4: 'rgba(107,114,128,0.03)',
+      hoverShadow: 'rgba(107,114,128,0.7)',
+      hoverRing1: 'rgba(107,114,128,0.2)',
+      hoverRing2: 'rgba(107,114,128,0.15)',
+      hoverRing3: 'rgba(107,114,128,0.08)',
+    },
+  },
+  'Bull Brenda': {
+    idle: {
+      start: '#fda4af',
+      mid: '#f43f5e',
+      end: '#be123c',
+      shadow: 'rgba(244,63,94,0.6)',
+      ring: 'rgba(244,63,94,0.15)',
+    },
+    active: {
+      start: '#fb7185',
+      mid: '#f43f5e',
+      end: '#e11d48',
+      shadow: 'rgba(244,63,94,0.6)',
+      ring1: 'rgba(244,63,94,0.15)',
+      ring2: 'rgba(244,63,94,0.1)',
+      ring3: 'rgba(244,63,94,0.05)',
+      ring4: 'rgba(244,63,94,0.03)',
+      hoverShadow: 'rgba(244,63,94,0.7)',
+      hoverRing1: 'rgba(244,63,94,0.2)',
+      hoverRing2: 'rgba(244,63,94,0.15)',
+      hoverRing3: 'rgba(244,63,94,0.08)',
+    },
+  },
+  'Owl Olivia': {
+    idle: {
+      start: '#c4b5fd',
+      mid: '#8b5cf6',
+      end: '#6d28d9',
+      shadow: 'rgba(139,92,246,0.6)',
+      ring: 'rgba(139,92,246,0.15)',
+    },
+    active: {
+      start: '#a78bfa',
+      mid: '#8b5cf6',
+      end: '#7c3aed',
+      shadow: 'rgba(139,92,246,0.6)',
+      ring1: 'rgba(139,92,246,0.15)',
+      ring2: 'rgba(139,92,246,0.1)',
+      ring3: 'rgba(139,92,246,0.05)',
+      ring4: 'rgba(139,92,246,0.03)',
+      hoverShadow: 'rgba(139,92,246,0.7)',
+      hoverRing1: 'rgba(139,92,246,0.2)',
+      hoverRing2: 'rgba(139,92,246,0.15)',
+      hoverRing3: 'rgba(139,92,246,0.08)',
+    },
+  },
+  'Owl Oscar': {
+    idle: {
+      start: '#67e8f9',
+      mid: '#06b6d4',
+      end: '#0e7490',
+      shadow: 'rgba(6,182,212,0.6)',
+      ring: 'rgba(6,182,212,0.15)',
+    },
+    active: {
+      start: '#22d3ee',
+      mid: '#06b6d4',
+      end: '#0891b2',
+      shadow: 'rgba(6,182,212,0.6)',
+      ring1: 'rgba(6,182,212,0.15)',
+      ring2: 'rgba(6,182,212,0.1)',
+      ring3: 'rgba(6,182,212,0.05)',
+      ring4: 'rgba(6,182,212,0.03)',
+      hoverShadow: 'rgba(6,182,212,0.7)',
+      hoverRing1: 'rgba(6,182,212,0.2)',
+      hoverRing2: 'rgba(6,182,212,0.15)',
+      hoverRing3: 'rgba(6,182,212,0.08)',
+    },
+  },
 }
 
 const getOrbColors = (name?: string) => {
@@ -83,6 +313,7 @@ function TrainerPageContent() {
   const [homeownerName, setHomeownerName] = useState<string>('')
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([])
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle')
 
   const orbColors = getOrbColors(selectedAgent?.name)
 
@@ -212,9 +443,17 @@ function TrainerPageContent() {
       if (e?.detail) pushFinal(e.detail, 'homeowner')
     }
 
+    const handleConnectionStatus = (e: any) => {
+      if (e?.detail) {
+        setConnectionStatus(e.detail)
+        console.log('🔌 Connection status updated:', e.detail)
+      }
+    }
+
     window.addEventListener('agent:message', handleMessage)
     window.addEventListener('agent:user', handleUserEvent)
     window.addEventListener('agent:response', handleAgentEvent)
+    window.addEventListener('connection:status', handleConnectionStatus)
 
     ;(window as any).startSessionRecording = () => {
       startRecording()
@@ -227,6 +466,7 @@ function TrainerPageContent() {
       window.removeEventListener('agent:message', handleMessage)
       window.removeEventListener('agent:user', handleUserEvent)
       window.removeEventListener('agent:response', handleAgentEvent)
+      window.removeEventListener('connection:status', handleConnectionStatus)
       delete (window as any).startSessionRecording
       delete (window as any).stopSessionRecording
     }
@@ -285,25 +525,49 @@ function TrainerPageContent() {
     const controller = new AbortController()
     signedUrlAbortRef.current = controller
 
-    const response = await fetch('/api/eleven/signed-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent_id: agentId }),
-      signal: controller.signal,
-    })
+    console.log('🔐 Requesting signed URL for agent:', agentId)
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to create signed URL' }))
-      throw new Error(error?.error || 'Failed to create signed URL')
+    try {
+      const response = await fetch('/api/eleven/signed-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent_id: agentId }),
+        signal: controller.signal,
+      })
+
+      console.log('📡 Signed URL API response status:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to create signed URL' }))
+        console.error('❌ Signed URL API error:', error)
+        throw new Error(error?.error || `Failed to create signed URL (${response.status})`)
+      }
+
+      const payload = await response.json()
+      console.log('✅ Signed URL payload received:', { 
+        hasSigned: !!payload?.signed_url,
+        expires_at: payload?.expires_at 
+      })
+      
+      if (!payload?.signed_url) {
+        throw new Error('Signed URL missing from response')
+      }
+      
+      return payload.signed_url as string
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('⚠️ Signed URL request aborted')
+        throw new Error('Request cancelled')
+      }
+      console.error('❌ Error fetching signed URL:', error)
+      throw error
     }
-
-    const payload = await response.json()
-    return payload?.signed_url as string
   }
 
   const startSession = async () => {
     if (!selectedAgent?.eleven_agent_id) {
-      console.error('No agent selected')
+      console.error('❌ No agent selected - cannot start session')
+      alert('Please select an agent first')
       return
     }
 
@@ -313,11 +577,24 @@ function TrainerPageContent() {
       setTranscript([])
       setDuration(0)
 
+      console.log('🎬 Starting training session...')
+      console.log('Selected agent:', selectedAgent.name, selectedAgent.eleven_agent_id)
+
+      console.log('🔑 Fetching signed URL from ElevenLabs...')
       const url = await fetchSignedUrl(selectedAgent.eleven_agent_id)
+      console.log('✅ Signed URL received:', url ? 'Valid' : 'Invalid')
+      
+      if (!url) {
+        throw new Error('Failed to get signed URL from server')
+      }
+      
       setSignedUrl(url)
+      
+      console.log('📝 Creating session record...')
       const newId = await createSessionRecord()
       setSessionId(newId)
       setSessionActive(true)
+      setLoading(false)
 
       durationInterval.current = setInterval(() => {
         setDuration(prev => prev + 1)
@@ -326,13 +603,22 @@ function TrainerPageContent() {
       window.dispatchEvent(new CustomEvent('trainer:start-conversation', {
         detail: {
           agentId: selectedAgent.eleven_agent_id,
-          signedUrl,
+          signedUrl: url,
         },
       }))
+      
+      console.log('✅ Session started successfully')
     } catch (error) {
-      console.error('Error starting session:', error)
+      console.error('❌ Error starting session:', error)
+      console.error('Error details:', {
+        message: error?.message,
+        agent: selectedAgent?.name,
+        agentId: selectedAgent?.eleven_agent_id,
+      })
+      alert(`Failed to start session: ${error?.message || 'Unknown error'}. Please check console for details.`)
       setLoading(false)
       setSignedUrl(null)
+      setSessionActive(false)
     }
   }
 
@@ -478,9 +764,38 @@ function TrainerPageContent() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white mb-1">Training Session</h1>
-            <p className="text-slate-400">
-              {sessionActive ? `Speaking with ${homeownerName || 'Agent'}` : 'Ready to start'}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-slate-400">
+                {sessionActive ? `Speaking with ${homeownerName || 'Agent'}` : 'Ready to start'}
+              </p>
+              {sessionActive && (
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50">
+                  <span className={`relative flex h-2 w-2 ${
+                    connectionStatus === 'connected' ? 'animate-none' : 
+                    connectionStatus === 'connecting' ? 'animate-pulse' : ''
+                  }`}>
+                    <span className={`absolute inline-flex h-full w-full rounded-full ${
+                      connectionStatus === 'connected' ? 'bg-green-400 opacity-75 animate-ping' :
+                      connectionStatus === 'connecting' ? 'bg-yellow-400 opacity-75' :
+                      connectionStatus === 'error' ? 'bg-red-400 opacity-75' :
+                      'bg-gray-400 opacity-75'
+                    }`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                      connectionStatus === 'connected' ? 'bg-green-500' :
+                      connectionStatus === 'connecting' ? 'bg-yellow-500' :
+                      connectionStatus === 'error' ? 'bg-red-500' :
+                      'bg-gray-500'
+                    }`}></span>
+                  </span>
+                  <span className="text-xs font-medium text-slate-300">
+                    {connectionStatus === 'connected' ? 'Connected' :
+                     connectionStatus === 'connecting' ? 'Connecting...' :
+                     connectionStatus === 'error' ? 'Connection Error' :
+                     'Disconnected'}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-4">
             {/* Timer */}
@@ -535,8 +850,16 @@ function TrainerPageContent() {
                   let isStarting = false;
                   let state = { status: 'disconnected', mode: 'idle' };
  
+                  console.log('🎤 ElevenLabs WebSocket Initialization');
+                  console.log('Agent ID:', AGENT_ID);
+                  console.log('Signed URL present:', !!SIGNED_URL);
+                  console.log('Signed URL length:', SIGNED_URL?.length || 0);
+ 
+                  if (!AGENT_ID) {
+                    console.error('❌ Missing Agent ID - cannot initialize conversation');
+                  }
                   if (!SIGNED_URL) {
-                    console.error('Missing ElevenLabs signed URL');
+                    console.error('❌ Missing ElevenLabs signed URL - cannot initialize conversation');
                   }
  
                   function render() {
@@ -552,8 +875,13 @@ function TrainerPageContent() {
  
                   async function startConversation() {
                     try {
-                      if (convo || isStarting || state.status === 'connected') return;
+                      if (convo || isStarting || state.status === 'connected') {
+                        console.log('⚠️ Conversation already active or starting');
+                        return;
+                      }
                       isStarting = true;
+ 
+                      console.log('🚀 Starting ElevenLabs conversation...');
  
                       if (window.startSessionRecording) {
                         window.startSessionRecording();
@@ -563,7 +891,8 @@ function TrainerPageContent() {
                       render();
  
                       try {
-                        await navigator.mediaDevices.getUserMedia({
+                        console.log('🎙️ Requesting microphone permission...');
+                        const stream = await navigator.mediaDevices.getUserMedia({
                           audio: {
                             echoCancellation: true,
                             noiseSuppression: true,
@@ -573,8 +902,12 @@ function TrainerPageContent() {
                             channelCount: 1,
                           },
                         });
-                      } catch {}
+                        console.log('✅ Microphone permission granted');
+                      } catch (micError) {
+                        console.error('❌ Microphone permission denied:', micError);
+                      }
  
+                      console.log('🔌 Connecting to ElevenLabs with Agent ID:', AGENT_ID);
                       convo = await Conversation.startSession({
                         agentId: AGENT_ID,
                         signedUrl: SIGNED_URL,
@@ -583,14 +916,26 @@ function TrainerPageContent() {
                           enable_private_mode: false,
                         },
                         onStatusChange: (s) => {
+                          console.log('📊 Status changed:', s);
                           state.status = s;
                           render();
+                          
+                          // Update connection status in parent component
+                          if (s === 'connected') {
+                            window.dispatchEvent(new CustomEvent('connection:status', { detail: 'connected' }));
+                          } else if (s === 'connecting') {
+                            window.dispatchEvent(new CustomEvent('connection:status', { detail: 'connecting' }));
+                          } else if (s === 'disconnected') {
+                            window.dispatchEvent(new CustomEvent('connection:status', { detail: 'idle' }));
+                          }
                         },
                         onModeChange: (m) => {
+                          console.log('🔄 Mode changed:', m);
                           state.mode = m;
                           render();
                         },
                         onMessage: (msg) => {
+                          console.log('📨 Message received:', msg?.type, msg);
                           window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }));
  
                           try {
@@ -614,27 +959,53 @@ function TrainerPageContent() {
                               }
                             }
                           } catch (e) {
-                            console.error('Error processing message:', e);
+                            console.error('❌ Error processing message:', e);
                           }
                         },
                         onError: (err) => {
-                          console.error('ElevenLabs error:', err);
+                          console.error('❌ ElevenLabs WebSocket error:', err);
+                          console.error('Error details:', {
+                            message: err?.message,
+                            code: err?.code,
+                            type: err?.type,
+                            stack: err?.stack
+                          });
+                          window.dispatchEvent(new CustomEvent('connection:status', { detail: 'error' }));
+                        },
+                        onDisconnect: () => {
+                          console.log('🔌 WebSocket disconnected');
+                          state.status = 'disconnected';
+                          render();
                         },
                       });
+                      console.log('✅ ElevenLabs conversation started successfully');
                       isStarting = false;
                     } catch (err) {
-                      console.error(err);
+                      console.error('❌ Failed to start ElevenLabs conversation:', err);
+                      console.error('Error details:', {
+                        message: err?.message,
+                        code: err?.code,
+                        type: err?.type,
+                        stack: err?.stack,
+                        agentId: AGENT_ID,
+                        hasSignedUrl: !!SIGNED_URL
+                      });
                       state.status = 'disconnected';
                       state.mode = 'idle';
                       render();
                       isStarting = false;
+                      window.dispatchEvent(new CustomEvent('connection:status', { detail: 'error' }));
                     }
                   }
  
                   async function stopConversation() {
+                    console.log('🛑 Stopping conversation...');
                     try {
                       await convo?.endSession();
-                    } catch {}
+                      console.log('✅ Conversation ended');
+                    } catch (err) {
+                      console.error('❌ Error ending conversation:', err);
+                    }
                     convo = null;
                     isStarting = false;
                     state.status = 'disconnected';
@@ -648,7 +1019,10 @@ function TrainerPageContent() {
  
                   window.stopConversation = stopConversation;
  
-                  setTimeout(() => startConversation(), 100);
+                  setTimeout(() => {
+                    console.log('⏱️ Auto-starting conversation in 100ms...');
+                    startConversation();
+                  }, 100);
  
                   render();
                 `}
