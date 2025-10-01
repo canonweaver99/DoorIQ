@@ -7,7 +7,6 @@ import {
   Mic,
   FileText,
   Trophy,
-  User as UserIcon,
   Menu,
   X,
   LayoutDashboard,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 
@@ -96,6 +96,20 @@ export default function Header() {
   }, [isSidebarOpen])
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSidebarOpen(false)
+      }
+    }
+
+    if (isSidebarOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+    }
+
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isSidebarOpen])
+
+  useEffect(() => {
     setIsSidebarOpen(false)
   }, [pathname])
 
@@ -135,16 +149,16 @@ export default function Header() {
               <button
                 ref={sidebarButtonRef}
                 onClick={() => setIsSidebarOpen((prev) => !prev)}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-all border border-white/10 ${
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 transition-all ${
                   isSidebarOpen
-                    ? 'text-white bg-gradient-to-r from-purple-600/20 to-pink-600/20'
+                    ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 shadow-[0px_0px_18px_rgba(168,85,247,0.35)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/5'
                 }`}
                 aria-haspopup="menu"
                 aria-expanded={isSidebarOpen}
+                aria-label="Open account navigation"
               >
-                <UserIcon className="w-4 h-4" />
-                <span className="tracking-tight">Profile</span>
+                <HamburgerIcon open={isSidebarOpen} />
               </button>
             </div>
           </div>
@@ -215,59 +229,93 @@ export default function Header() {
           </div>
         )}
       </nav>
-      {isSidebarOpen && (
-        <div className="hidden md:block">
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsSidebarOpen(false)}
-            aria-hidden="true"
-          />
-          <div
-            ref={sidebarRef}
-            className="fixed top-20 right-6 z-50 w-72 rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl shadow-2xl shadow-purple-500/20 p-6"
-            role="menu"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm uppercase tracking-[0.3em] text-slate-400">Account</span>
-              <button
-                onClick={() => setIsSidebarOpen(false)}
-                className="text-slate-400 hover:text-white"
-                aria-label="Close profile menu"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            {user && (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white leading-5">{user.full_name}</p>
-                <p className="text-xs text-slate-300 leading-4">{user.email}</p>
-                <p className="text-xs text-purple-400 font-semibold mt-2">${user.virtual_earnings.toFixed(2)} earned</p>
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <>
+            <motion.div
+              key="sidebar-backdrop"
+              className="hidden md:block fixed inset-0 z-40 bg-black/60"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.7 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setIsSidebarOpen(false)}
+              aria-hidden="true"
+            />
+            <motion.div
+              key="sidebar-panel"
+              ref={sidebarRef}
+              className="hidden md:block fixed top-20 right-6 z-50 w-80 rounded-3xl border border-white/10 bg-[#09090f]/95 backdrop-blur-2xl shadow-[0_20px_60px_rgba(109,40,217,0.45)] p-6"
+              role="menu"
+              initial={{ opacity: 0, x: 48 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 48 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm uppercase tracking-[0.3em] text-slate-400">Account</span>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="text-slate-400 hover:text-white"
+                  aria-label="Close account navigation"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            )}
-            <nav className="mt-4 space-y-2">
-              {profileNavigation.map((item) => {
-                const Icon = item.icon
-                const active = isActive(item.href)
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all ${
-                      active
-                        ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-white/10 text-white'
-                        : 'text-slate-200 border border-transparent hover:border-white/10 hover:bg-white/5'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="tracking-tight">{item.name}</span>
-                  </Link>
-                )
-              })}
-            </nav>
-          </div>
-        </div>
-      )}
+              {user && (
+                <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner">
+                  <p className="text-sm font-semibold text-white leading-5">{user.full_name}</p>
+                  <p className="text-xs text-slate-300 leading-4">{user.email}</p>
+                  <p className="text-xs text-purple-400 font-semibold mt-2">${user.virtual_earnings.toFixed(2)} earned</p>
+                </div>
+              )}
+              <nav className="mt-4 space-y-2">
+                {profileNavigation.map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href)
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all ${
+                        active
+                          ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-white/10 text-white'
+                          : 'text-slate-200 border border-transparent hover:border-white/10 hover:bg-white/5'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="tracking-tight">{item.name}</span>
+                    </Link>
+                  )
+                })}
+              </nav>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
+  )
+}
+
+const HamburgerIcon = ({ open }: { open: boolean }) => {
+  return (
+    <span className="flex h-4 w-5 flex-col items-center justify-between py-[2px]">
+      <span
+        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
+          open ? 'translate-y-[6px] rotate-45 bg-white' : ''
+        }`}
+      />
+      <span
+        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
+          open ? 'opacity-0' : ''
+        }`}
+      />
+      <span
+        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
+          open ? '-translate-y-[6px] -rotate-45 bg-white' : ''
+        }`}
+      />
+    </span>
   )
 }
