@@ -20,6 +20,11 @@ import {
   ShieldCheck,
   LifeBuoy,
   LogOut,
+  PieChart,
+  NotebookPen,
+  Users,
+  Plug,
+  Bell,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
@@ -71,13 +76,17 @@ export default function Header() {
   const profileNavigation: Array<{ name: string; href: string; icon: LucideIcon }> = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'AI Insights', href: '/insights', icon: PieChart },
+    { name: 'Playbooks', href: '/playbooks', icon: NotebookPen },
+    { name: 'Team', href: '/team', icon: Users },
     { name: 'Documentation', href: '/documentation', icon: BookOpen },
     { name: 'Coaching', href: '/coaching', icon: Sparkles },
     { name: 'Support', href: '/support', icon: LifeBuoy },
+    { name: 'Integrations', href: '/integrations', icon: Plug },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
     { name: 'Settings', href: '/settings', icon: SettingsIcon },
     { name: 'Billing', href: '/billing', icon: CreditCard },
     { name: 'Security', href: '/security', icon: ShieldCheck },
-    { name: 'Integrations', href: '/integrations', icon: MessageCircle },
     { name: 'User Profile', href: '/profile', icon: UserCircle },
   ]
 
