@@ -121,13 +121,6 @@ function SocialProofSection() {
   return (
     <section className="py-16" ref={ref}>
       <div className={`transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <h3 className="text-center text-sm uppercase tracking-wider text-slate-400">
-          Trusted by High-Performing Sales Teams
-        </h3>
-        <p className="text-center text-slate-400 mt-2">
-          From solo reps to national crews - teams level up faster on DoorIQ.
-        </p>
-
         <TestimonialsSection />
       </div>
     </section>
@@ -138,7 +131,7 @@ function HowItWorksSection() {
   const [ref, isInView] = useInView(0.2)
   
   return (
-    <section className="py-20 bg-slate-800/40" ref={ref}>
+    <section className="py-20" ref={ref}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className={`text-4xl font-bold text-slate-100 text-center transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           Your New Training Loop
@@ -234,7 +227,7 @@ function EmotionalStorySection() {
   const [ref, isInView] = useInView(0.2)
   
   return (
-    <section className="py-20 bg-slate-800/40" ref={ref}>
+    <section className="py-20" ref={ref}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className={`text-4xl font-bold text-slate-100 transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           From Slammed Doors to Second Chances
