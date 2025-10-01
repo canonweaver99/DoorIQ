@@ -105,10 +105,24 @@ export default function Header() {
         setUser(userData)
         setAuthMeta(null)
       }
-
     }
 
+    // Initial fetch
     fetchUser()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        fetchUser()
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setAuthMeta(null)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   const navigation = useMemo(() => {

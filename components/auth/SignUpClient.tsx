@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import { User, Hash, Mail, Lock } from 'lucide-react'
+import confetti from 'canvas-confetti'
 
 export function SignUpClient() {
   const [email, setEmail] = useState('')
@@ -45,11 +46,25 @@ export function SignUpClient() {
         if (!res.ok) throw new Error(json.error || 'Failed to create profile')
       }
 
-      router.push('/trainer/select-homeowner')
-      router.refresh()
+      // Celebrate with confetti!
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#8b5cf6', '#ec4899', '#3b82f6', '#06b6d4'],
+        ticks: 300,
+        gravity: 1,
+        decay: 0.94,
+        startVelocity: 30,
+      })
+
+      // Small delay to show confetti before navigation
+      setTimeout(() => {
+        router.push('/trainer/select-homeowner')
+        router.refresh()
+      }, 500)
     } catch (error: any) {
       setError(error.message)
-    } finally {
       setLoading(false)
     }
   }
