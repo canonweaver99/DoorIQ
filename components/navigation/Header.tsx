@@ -31,6 +31,7 @@ import {
   Headphones,
   HelpCircle,
   ArrowRight,
+  Database as DatabaseIcon,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
@@ -87,7 +88,7 @@ export default function Header() {
 
   const sidebarSections: Array<{
     title: string
-    items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string }>
+    items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string; managerOnly?: boolean }>
   }> = [
     {
       title: 'Workspace',
@@ -96,13 +97,13 @@ export default function Header() {
         { name: 'Analytics', href: '/analytics', icon: BarChart3 },
         { name: 'AI Insights', href: '/insights', icon: PieChart },
         { name: 'Playbooks', href: '/playbooks', icon: NotebookPen, badge: 'New' },
+        { name: 'Add Knowledge Base', href: '/knowledge-base', icon: DatabaseIcon, managerOnly: true },
       ],
     },
     {
       title: 'Training',
       items: [
         { name: 'Practice Hub', href: '/trainer', icon: Award },
-        { name: 'Choose Homeowner', href: '/trainer/select-homeowner', icon: Users },
         { name: 'Session History', href: '/trainer/history', icon: ClipboardList },
         { name: 'Leaderboard', href: '/trainer/leaderboard', icon: BarChart2 },
       ],
@@ -110,14 +111,12 @@ export default function Header() {
     {
       title: 'Support & Account',
       items: [
-        { name: 'Coaching', href: '/coaching', icon: Sparkles },
+        { name: 'Messages', href: '/messages', icon: MessageCircle },
         { name: 'Documentation', href: '/documentation', icon: BookOpen },
         { name: 'Help Center', href: '/support', icon: HelpCircle },
-        { name: 'Live Support', href: '/support/live', icon: Headphones },
         { name: 'Notifications', href: '/notifications', icon: Bell },
         { name: 'Settings', href: '/settings', icon: SettingsIcon },
         { name: 'Billing', href: '/billing', icon: CreditCard },
-        { name: 'Security', href: '/security', icon: ShieldCheck },
         { name: 'User Profile', href: '/profile', icon: UserCircle },
       ],
     },
@@ -129,20 +128,20 @@ export default function Header() {
     { label: 'Invite Teammate', href: '/invite', icon: Users },
   ]
 
-  const profileNavigation: Array<{ name: string; href: string; icon: LucideIcon }> = [
+  const profileNavigation: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean }> = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'AI Insights', href: '/insights', icon: PieChart },
     { name: 'Playbooks', href: '/playbooks', icon: NotebookPen },
+    { name: 'Add Knowledge Base', href: '/knowledge-base', icon: DatabaseIcon, managerOnly: true },
     { name: 'Team', href: '/team', icon: Users },
     { name: 'Documentation', href: '/documentation', icon: BookOpen },
-    { name: 'Coaching', href: '/coaching', icon: Sparkles },
+    { name: 'Messages', href: '/messages', icon: MessageCircle },
     { name: 'Support', href: '/support', icon: LifeBuoy },
     { name: 'Integrations', href: '/integrations', icon: Plug },
     { name: 'Notifications', href: '/notifications', icon: Bell },
     { name: 'Settings', href: '/settings', icon: SettingsIcon },
     { name: 'Billing', href: '/billing', icon: CreditCard },
-    { name: 'Security', href: '/security', icon: ShieldCheck },
     { name: 'User Profile', href: '/profile', icon: UserCircle },
   ]
 
@@ -317,44 +316,69 @@ export default function Header() {
                 </Link>
               )
             })}
-            <div className="border-t border-white/10 pt-4 mt-4">
-              <p className="px-4 text-xs uppercase tracking-[0.3em] text-slate-400">Account</p>
-              <div className="mt-2 space-y-2">
-                {profileNavigation.map((item) => {
-                  const Icon = item.icon
-                  const active = isActive(item.href)
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
-                        active
-                          ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 text-white'
-                          : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="tracking-tight">{item.name}</span>
-                    </Link>
-                  )
-                })}
+            {user ? (
+              <div className="border-t border-white/10 pt-4 mt-4">
+                <p className="px-4 text-xs uppercase tracking-[0.3em] text-slate-400">Account</p>
+                <div className="mt-2 space-y-2">
+                  {profileNavigation.filter(item => {
+                    if (item.managerOnly) {
+                      return user && (user.role === 'manager' || user.role === 'admin')
+                    }
+                    return true
+                  }).map((item) => {
+                    const Icon = item.icon
+                    const active = isActive(item.href)
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
+                          active
+                            ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 text-white'
+                            : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="tracking-tight">{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+                <button
+                  onClick={async () => {
+                    setIsMenuOpen(false)
+                    await handleSignOut()
+                  }}
+                  className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
+                </button>
+                <div className="px-4 py-3 border-t border-white/10 mt-4">
+                  <p className="text-sm font-medium text-white">{user.full_name}</p>
+                  <p className="text-xs text-purple-400 font-semibold mt-1">${user.virtual_earnings.toFixed(2)} earned</p>
+                </div>
               </div>
-              <button
-                onClick={async () => {
-                  setIsMenuOpen(false)
-                  await handleSignOut()
-                }}
-                className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
-              </button>
-            </div>
-            {user && (
-              <div className="px-4 py-3 border-t border-white/10">
-                <p className="text-sm font-medium text-white">{user.full_name}</p>
-                <p className="text-xs text-purple-400 font-semibold mt-1">${user.virtual_earnings.toFixed(2)} earned</p>
+            ) : (
+              <div className="border-t border-white/10 pt-4 mt-4 px-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Get Started</p>
+                <div className="space-y-2">
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
               </div>
             )}
           </div>
@@ -400,30 +424,57 @@ export default function Header() {
                   </div>
 
                   <div className="px-6">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 shadow-inner shadow-purple-500/10">
-                      <div className="flex items-center gap-3">
-                        <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
-                          {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                    {user ? (
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 shadow-inner shadow-purple-500/10">
+                        <div className="flex items-center gap-3">
+                          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
+                            {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-white leading-5">{user.full_name ?? 'Sales Pro'}</p>
+                            <p className="text-xs text-slate-300 leading-4">{user.email ?? 'team@dooriq.app'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-white leading-5">{user?.full_name ?? 'Sales Pro'}</p>
-                          <p className="text-xs text-slate-300 leading-4">{user?.email ?? 'team@dooriq.app'}</p>
+                        <div className="mt-4 flex items-center justify-between text-xs text-slate-300">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Earnings</p>
+                            <p className="mt-1 text-base font-semibold text-white">${user.virtual_earnings?.toFixed(2) ?? '0.00'}</p>
+                          </div>
+                          <button
+                            onClick={() => router.push('/leaderboard')}
+                            className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-slate-200 hover:bg-white/10 transition"
+                          >
+                            Leaderboard
+                            <ArrowRight className="h-3 w-3" />
+                          </button>
                         </div>
                       </div>
-                      <div className="mt-4 flex items-center justify-between text-xs text-slate-300">
-                        <div>
-                          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Earnings</p>
-                          <p className="mt-1 text-base font-semibold text-white">${user?.virtual_earnings?.toFixed(2) ?? '0.00'}</p>
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 shadow-inner shadow-purple-500/10">
+                        <p className="text-sm font-semibold text-white mb-3">Get Started with DoorIQ</p>
+                        <p className="text-xs text-slate-300 leading-relaxed mb-4">Sign in to track your progress, compete on the leaderboard, and unlock all features.</p>
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => {
+                              router.push('/auth/login')
+                              setIsSidebarOpen(false)
+                            }}
+                            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
+                          >
+                            Sign In
+                          </button>
+                          <button
+                            onClick={() => {
+                              router.push('/auth/signup')
+                              setIsSidebarOpen(false)
+                            }}
+                            className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                          >
+                            Sign Up
+                          </button>
                         </div>
-                        <button
-                          onClick={() => router.push('/leaderboard')}
-                          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-slate-200 hover:bg-white/10 transition"
-                        >
-                          Leaderboard
-                          <ArrowRight className="h-3 w-3" />
-                        </button>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   <div className="px-6 pt-6">
@@ -451,43 +502,56 @@ export default function Header() {
 
                   <nav className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
                     <div className="space-y-6">
-                      {sidebarSections.map((section) => (
-                        <div key={section.title}>
-                          <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500 mb-3">{section.title}</p>
-                          <div className="space-y-2.5">
-                            {section.items.map((item) => {
-                              const Icon = item.icon
-                              const active = isActive(item.href)
-                              return (
-                                <button
-                                  key={item.name}
-                                  onClick={() => {
-                                    router.push(item.href)
-                                    setIsSidebarOpen(false)
-                                  }}
-                                  className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm transition-all ${
-                                    active
-                                      ? 'border-white/25 bg-white/10 text-white shadow-[0_18px_48px_rgba(109,40,217,0.25)]'
-                                      : 'border-white/5 text-slate-200 hover:border-white/15 hover:bg-white/5'
-                                  }`}
-                                >
-                                  <span className="flex items-center gap-3">
-                                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white">
-                                      <Icon className="h-4 w-4" />
+                      {sidebarSections.map((section) => {
+                        // Filter items based on user role
+                        const visibleItems = section.items.filter(item => {
+                          if (item.managerOnly) {
+                            return user && (user.role === 'manager' || user.role === 'admin')
+                          }
+                          return true
+                        })
+
+                        // Don't render section if it has no visible items
+                        if (visibleItems.length === 0) return null
+
+                        return (
+                          <div key={section.title}>
+                            <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500 mb-3">{section.title}</p>
+                            <div className="space-y-2.5">
+                              {visibleItems.map((item) => {
+                                const Icon = item.icon
+                                const active = isActive(item.href)
+                                return (
+                                  <button
+                                    key={item.name}
+                                    onClick={() => {
+                                      router.push(item.href)
+                                      setIsSidebarOpen(false)
+                                    }}
+                                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm transition-all ${
+                                      active
+                                        ? 'border-white/25 bg-white/10 text-white shadow-[0_18px_48px_rgba(109,40,217,0.25)]'
+                                        : 'border-white/5 text-slate-200 hover:border-white/15 hover:bg-white/5'
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-3">
+                                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white">
+                                        <Icon className="h-4 w-4" />
+                                      </span>
+                                      <span className="text-sm font-medium tracking-tight">{item.name}</span>
                                     </span>
-                                    <span className="text-sm font-medium tracking-tight">{item.name}</span>
-                                  </span>
-                                  {item.badge && (
-                                    <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-purple-200">
-                                      {item.badge}
-                                    </span>
-                                  )}
-                                </button>
-                              )
-                            })}
+                                    {item.badge && (
+                                      <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-purple-200">
+                                        {item.badge}
+                                      </span>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </nav>
 
@@ -506,14 +570,16 @@ export default function Header() {
                         <MessageCircle className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 disabled:cursor-not-allowed disabled:opacity-70"
-                      disabled={signingOut}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
-                    </button>
+                    {user && (
+                      <button
+                        onClick={handleSignOut}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 disabled:cursor-not-allowed disabled:opacity-70"
+                        disabled={signingOut}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               </>
