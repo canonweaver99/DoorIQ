@@ -465,21 +465,21 @@ export default function Header() {
                   </div>
 
                   <div className="px-6">
-                    {user ? (
+                    {isSignedIn ? (
                       <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 shadow-inner shadow-purple-500/10">
                         <div className="flex items-center gap-3">
                           <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
-                            {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                            {profileInitial}
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-white leading-5">{user.full_name ?? 'Sales Pro'}</p>
-                            <p className="text-xs text-slate-300 leading-4">{user.email ?? 'team@dooriq.app'}</p>
+                            <p className="text-sm font-semibold text-white leading-5">{profileName}</p>
+                            <p className="text-xs text-slate-300 leading-4">{profileEmail}</p>
                           </div>
                         </div>
                         <div className="mt-4 flex items-center justify-between text-xs text-slate-300">
                           <div>
                             <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Earnings</p>
-                            <p className="mt-1 text-base font-semibold text-white">${user.virtual_earnings?.toFixed(2) ?? '0.00'}</p>
+                            <p className="mt-1 text-base font-semibold text-white">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                           </div>
                           <button
                             onClick={() => router.push('/leaderboard')}
@@ -547,7 +547,7 @@ export default function Header() {
                         // Filter items based on user role
                         const visibleItems = section.items.filter(item => {
                           if (item.managerOnly) {
-                            return user && (user.role === 'manager' || user.role === 'admin')
+                            return userRole === 'manager' || userRole === 'admin'
                           }
                           return true
                         })
@@ -611,7 +611,7 @@ export default function Header() {
                         <MessageCircle className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    {user && (
+                    {isSignedIn && (
                       <button
                         onClick={handleSignOut}
                         className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 disabled:cursor-not-allowed disabled:opacity-70"
