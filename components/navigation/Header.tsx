@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   Home,
   Mic,
@@ -15,6 +15,11 @@ import {
   Settings as SettingsIcon,
   CreditCard,
   UserCircle,
+  MessageCircle,
+  Sparkles,
+  ShieldCheck,
+  LifeBuoy,
+  LogOut,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
@@ -26,28 +31,32 @@ type User = Database['public']['Tables']['users']['Row']
 
 export default function Header() {
   const pathname = usePathname()
+  const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [signingOut, setSigningOut] = useState(false)
   const sidebarRef = useRef<HTMLDivElement | null>(null)
   const sidebarButtonRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     const fetchUser = async () => {
       const supabase = createClient()
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser()
+
       if (authUser) {
         const { data: userData } = await supabase
           .from('users')
           .select('*')
           .eq('id', authUser.id)
           .single()
-        
+
         setUser(userData)
       }
     }
-    
+
     fetchUser()
   }, [])
 
@@ -63,10 +72,28 @@ export default function Header() {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Documentation', href: '/documentation', icon: BookOpen },
+    { name: 'Coaching', href: '/coaching', icon: Sparkles },
+    { name: 'Support', href: '/support', icon: LifeBuoy },
     { name: 'Settings', href: '/settings', icon: SettingsIcon },
     { name: 'Billing', href: '/billing', icon: CreditCard },
+    { name: 'Security', href: '/security', icon: ShieldCheck },
+    { name: 'Integrations', href: '/integrations', icon: MessageCircle },
     { name: 'User Profile', href: '/profile', icon: UserCircle },
   ]
+
+  const handleSignOut = async () => {
+    try {
+      setSigningOut(true)
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      setIsSidebarOpen(false)
+      router.push('/auth/login')
+    } catch (error) {
+      console.error('Failed to sign out', error)
+    } finally {
+      setSigningOut(false)
+    }
+  }
 
   // Add manager panel link if user is a manager or admin
   if (user && (user.role === 'manager' || user.role === 'admin')) {
@@ -219,6 +246,16 @@ export default function Header() {
                   )
                 })}
               </div>
+              <button
+                onClick={async () => {
+                  setIsMenuOpen(false)
+                  await handleSignOut()
+                }}
+                className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
+              </button>
             </div>
             {user && (
               <div className="px-4 py-3 border-t border-white/10">
@@ -245,51 +282,63 @@ export default function Header() {
             <motion.div
               key="sidebar-panel"
               ref={sidebarRef}
-              className="hidden md:block fixed top-20 right-6 z-50 w-80 rounded-3xl border border-white/10 bg-[#09090f]/95 backdrop-blur-2xl shadow-[0_20px_60px_rgba(109,40,217,0.45)] p-6"
+              className="hidden md:flex fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm flex-col overflow-hidden border-l border-white/10 bg-[#05050c]/95 backdrop-blur-2xl shadow-[0_20px_80px_rgba(109,40,217,0.35)]"
               role="menu"
-              initial={{ opacity: 0, x: 48 }}
+              initial={{ opacity: 0, x: 64 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 48 }}
+              exit={{ opacity: 0, x: 64 }}
               transition={{ type: 'spring', stiffness: 280, damping: 24 }}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-sm uppercase tracking-[0.3em] text-slate-400">Account</span>
+              <div className="flex items-center justify-between px-6 pt-6 pb-4">
+                <span className="text-xs uppercase tracking-[0.35em] text-slate-400">Account</span>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="text-slate-400 hover:text-white"
+                  className="text-slate-400 transition hover:text-white"
                   aria-label="Close account navigation"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
               {user && (
-                <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner">
+                <div className="mx-6 mb-4 rounded-2xl border border-white/10 bg-white/5 p-5 shadow-inner">
                   <p className="text-sm font-semibold text-white leading-5">{user.full_name}</p>
                   <p className="text-xs text-slate-300 leading-4">{user.email}</p>
                   <p className="text-xs text-purple-400 font-semibold mt-2">${user.virtual_earnings.toFixed(2)} earned</p>
                 </div>
               )}
-              <nav className="mt-4 space-y-2">
-                {profileNavigation.map((item) => {
-                  const Icon = item.icon
-                  const active = isActive(item.href)
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all ${
-                        active
-                          ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-white/10 text-white'
-                          : 'text-slate-200 border border-transparent hover:border-white/10 hover:bg-white/5'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="tracking-tight">{item.name}</span>
-                    </Link>
-                  )
-                })}
+              <nav className="flex-1 overflow-y-auto px-4 pb-6">
+                <div className="space-y-1">
+                  {profileNavigation.map((item) => {
+                    const Icon = item.icon
+                    const active = isActive(item.href)
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className={`group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-all ${
+                          active
+                            ? 'border-white/20 bg-gradient-to-r from-purple-600/30 to-pink-600/30 text-white shadow-[0_10px_30px_rgba(147,51,234,0.25)]'
+                            : 'border-transparent text-slate-200 hover:border-white/15 hover:bg-white/5'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="tracking-tight">{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
               </nav>
+              <div className="px-6 pb-6 pt-4">
+                <button
+                  onClick={handleSignOut}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={signingOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
+                </button>
+              </div>
             </motion.div>
           </>
         )}
