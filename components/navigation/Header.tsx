@@ -199,6 +199,35 @@ export default function Header() {
     setIsSidebarOpen(false)
   }, [pathname])
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const root = document.documentElement
+    const bodyEl = document.body
+    const previousRootOverflow = root.style.overflow
+    const previousBodyOverflow = bodyEl.style.overflow
+    const previousPaddingRight = bodyEl.style.paddingRight
+
+    if (isSidebarOpen) {
+      const scrollbarWidth = window.innerWidth - root.clientWidth
+      root.style.overflow = 'hidden'
+      bodyEl.style.overflow = 'hidden'
+      if (scrollbarWidth > 0) {
+        bodyEl.style.paddingRight = `${scrollbarWidth}px`
+      }
+    } else {
+      root.style.overflow = previousRootOverflow
+      bodyEl.style.overflow = previousBodyOverflow
+      bodyEl.style.paddingRight = previousPaddingRight
+    }
+
+    return () => {
+      root.style.overflow = previousRootOverflow
+      bodyEl.style.overflow = previousBodyOverflow
+      bodyEl.style.paddingRight = previousPaddingRight
+    }
+  }, [isSidebarOpen])
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
