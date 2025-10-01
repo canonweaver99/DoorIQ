@@ -33,7 +33,7 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
         )}
         {...props}
       >
-        <div className="container">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
             ) : null}
           </motion.div>
 
-          <div className="max-w-2xl mx-auto space-y-2">
+          <div className="w-full max-w-3xl space-y-3">
             {items.map((item, index) => (
               <FaqItem
                 key={index}

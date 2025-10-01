@@ -87,6 +87,15 @@ export default function Home() {
       {/* 4) Results / ROI */}
       <ResultsSection />
 
+      {/* Demo anchor placeholder */}
+      <section id="demo" className="py-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="aspect-video w-full rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
+            30-sec demo coming soon
+          </div>
+        </div>
+      </section>
+
       <FaqSection
         title="Frequently Asked Questions"
         description="Get quick answers as you evaluate DoorIQ for your team."
