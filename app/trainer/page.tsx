@@ -828,7 +828,13 @@ function TrainerPageContent() {
                 onClick={sessionActive ? endSession : startSession}
                 disabled={loading}
                 aria-label={sessionActive ? "Stop conversation" : "Start conversation"}
-              />
+                className="relative"
+              >
+                {/* Concentric animated circles */}
+                <div id="orb-circle-0" className="orb-circle"></div>
+                <div id="orb-circle-1" className="orb-circle"></div>
+                <div id="orb-circle-2" className="orb-circle"></div>
+              </button>
               <div id="orb-status">{sessionActive ? 'Tap to stop' : 'Tap to start'}</div>
             </div>
 
@@ -1039,32 +1045,22 @@ function TrainerPageContent() {
               }
               
               #conversation-orb {
-                width: 280px;
-                height: 280px;
-                border-radius: 9999px;
+                width: 320px;
+                height: 320px;
                 border: 0;
                 outline: none;
                 cursor: pointer;
-                background: radial-gradient(circle at 30% 30%, ${orbColors.idle.start}, ${orbColors.idle.mid}, ${orbColors.idle.end});
-                box-shadow: 
-                  0 20px 60px ${orbColors.idle.shadow},
-                  0 0 0 4px ${orbColors.idle.ring},
-                  inset 0 1px 20px rgba(255,255,255,0.2);
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                animation: floaty 4s ease-in-out infinite;
+                background: transparent;
                 position: relative;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               }
               
               #conversation-orb:hover { 
-                transform: scale(1.08);
-                box-shadow: 
-                  0 25px 70px rgba(99, 102, 241, 0.7),
-                  0 0 0 6px rgba(99, 102, 241, 0.15),
-                  inset 0 1px 20px rgba(255,255,255,0.3);
+                transform: scale(1.05);
               }
               
               #conversation-orb:active { 
-                transform: scale(0.95);
+                transform: scale(0.97);
               }
 
               #conversation-orb:disabled {
@@ -1072,34 +1068,142 @@ function TrainerPageContent() {
                 cursor: not-allowed;
               }
               
-              #conversation-orb.active {
-                background: radial-gradient(circle at 30% 30%, ${orbColors.active.start}, ${orbColors.active.mid}, ${orbColors.active.end});
-                box-shadow: 
-                  0 20px 60px ${orbColors.active.shadow},
-                  0 0 0 8px ${orbColors.active.ring1},
-                  0 0 0 16px ${orbColors.active.ring2},
-                  0 0 0 24px ${orbColors.active.ring3},
-                  0 0 0 32px ${orbColors.active.ring4},
-                  inset 0 1px 20px rgba(255,255,255,0.2);
-                animation: floaty 4s ease-in-out infinite, pulse-ring 2s ease-in-out infinite;
+              /* Concentric circle layers */
+              .orb-circle {
+                position: absolute;
+                inset: 0;
+                border-radius: 9999px;
+                border: 2px solid;
+                background: linear-gradient(135deg, ${orbColors.idle.start}30 0%, transparent 100%);
+                pointer-events: none;
               }
               
-              @keyframes pulse-ring {
+              #orb-circle-0 {
+                border-color: ${orbColors.idle.start}60;
+                animation: rotate-scale-0 5s ease-in-out infinite;
+                box-shadow: 
+                  0 0 60px ${orbColors.idle.shadow},
+                  inset 0 0 40px ${orbColors.idle.start}10;
+              }
+              
+              #orb-circle-1 {
+                border-color: ${orbColors.idle.mid}50;
+                animation: rotate-scale-1 5s ease-in-out infinite;
+                box-shadow: inset 0 0 30px ${orbColors.idle.mid}10;
+              }
+              
+              #orb-circle-2 {
+                border-color: ${orbColors.idle.end}30;
+                animation: rotate-scale-2 5s ease-in-out infinite;
+                box-shadow: inset 0 0 20px ${orbColors.idle.end}10;
+              }
+              
+              /* Inner glow effect */
+              .orb-circle::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 9999px;
+                background: radial-gradient(ellipse at center, ${orbColors.idle.start}10 0%, transparent 70%);
+                mix-blend-mode: screen;
+              }
+              
+              /* Active state - brighter, faster animation */
+              #conversation-orb.active .orb-circle {
+                background: linear-gradient(135deg, ${orbColors.active.start}40 0%, transparent 100%);
+              }
+              
+              #conversation-orb.active #orb-circle-0 {
+                border-color: ${orbColors.active.start}80;
+                animation: rotate-scale-0-active 3s ease-in-out infinite;
+                box-shadow: 
+                  0 0 80px ${orbColors.active.shadow},
+                  0 0 0 8px ${orbColors.active.ring1},
+                  0 0 0 16px ${orbColors.active.ring2},
+                  inset 0 0 60px ${orbColors.active.start}20;
+              }
+              
+              #conversation-orb.active #orb-circle-1 {
+                border-color: ${orbColors.active.mid}70;
+                animation: rotate-scale-1-active 3s ease-in-out infinite;
+                box-shadow: inset 0 0 40px ${orbColors.active.mid}20;
+              }
+              
+              #conversation-orb.active #orb-circle-2 {
+                border-color: ${orbColors.active.end}50;
+                animation: rotate-scale-2-active 3s ease-in-out infinite;
+                box-shadow: inset 0 0 30px ${orbColors.active.end}20;
+              }
+              
+              #conversation-orb.active .orb-circle::before {
+                background: radial-gradient(ellipse at center, ${orbColors.active.start}20 0%, transparent 70%);
+              }
+              
+              /* Rotation and scale animations - idle state */
+              @keyframes rotate-scale-0 {
                 0%, 100% {
-                  box-shadow: 
-                    0 20px 60px ${orbColors.active.shadow},
-                    0 0 0 8px ${orbColors.active.ring1},
-                    0 0 0 16px ${orbColors.active.ring2},
-                    0 0 0 24px ${orbColors.active.ring3},
-                    inset 0 1px 20px rgba(255,255,255,0.2);
+                  transform: rotate(0deg) scale(1);
+                  opacity: 0.8;
                 }
                 50% {
-                  box-shadow: 
-                    0 20px 60px ${orbColors.active.hoverShadow},
-                    0 0 0 12px ${orbColors.active.hoverRing1},
-                    0 0 0 24px ${orbColors.active.hoverRing2},
-                    0 0 0 36px ${orbColors.active.hoverRing3},
-                    inset 0 1px 20px rgba(255,255,255,0.3);
+                  transform: rotate(360deg) scale(1.05);
+                  opacity: 1;
+                }
+              }
+              
+              @keyframes rotate-scale-1 {
+                0%, 100% {
+                  transform: rotate(0deg) scale(1);
+                  opacity: 0.8;
+                }
+                50% {
+                  transform: rotate(360deg) scale(1.1);
+                  opacity: 1;
+                }
+              }
+              
+              @keyframes rotate-scale-2 {
+                0%, 100% {
+                  transform: rotate(0deg) scale(1);
+                  opacity: 0.8;
+                }
+                50% {
+                  transform: rotate(360deg) scale(1.15);
+                  opacity: 1;
+                }
+              }
+              
+              /* Rotation and scale animations - active state (faster) */
+              @keyframes rotate-scale-0-active {
+                0%, 100% {
+                  transform: rotate(0deg) scale(1);
+                  opacity: 0.9;
+                }
+                50% {
+                  transform: rotate(360deg) scale(1.08);
+                  opacity: 1;
+                }
+              }
+              
+              @keyframes rotate-scale-1-active {
+                0%, 100% {
+                  transform: rotate(0deg) scale(1);
+                  opacity: 0.9;
+                }
+                50% {
+                  transform: rotate(360deg) scale(1.13);
+                  opacity: 1;
+                }
+              }
+              
+              @keyframes rotate-scale-2-active {
+                0%, 100% {
+                  transform: rotate(0deg) scale(1);
+                  opacity: 0.9;
+                }
+                50% {
+                  transform: rotate(360deg) scale(1.18);
+                  opacity: 1;
                 }
               }
               
@@ -1116,12 +1220,7 @@ function TrainerPageContent() {
                 box-shadow: 0 4px 12px rgba(0,0,0,0.3);
               }
               
-              @keyframes floaty { 
-                0%, 100% { transform: translateY(0px); } 
-                50% { transform: translateY(-12px); } 
-              }
-              
-              /* Moved from bottom to avoid nested styled-jsx */
+              /* Fade in animation for transcript */
               @keyframes fadeIn {
                 from {
                   opacity: 0;
