@@ -531,7 +531,7 @@ function TrainerPageContent() {
       const response = await fetch('/api/eleven/signed-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_id: agentId }),
+        body: JSON.stringify({ agentId }),
         signal: controller.signal,
       })
 

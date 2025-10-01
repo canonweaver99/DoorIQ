@@ -17,7 +17,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { agentId } = await request.json();
+    const body = await request.json().catch(() => ({} as any));
+    const agentId = body?.agentId || body?.agent_id;
 
     if (!agentId) {
       return NextResponse.json(
@@ -26,13 +27,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Call ElevenLabs API to get signed URL
+    // Call ElevenLabs API to get signed URL (hyphenated path per docs)
+    const elevenLabsUrl = `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${agentId}`;
+    console.log('📡 Calling ElevenLabs:', elevenLabsUrl);
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
+      elevenLabsUrl,
       {
         method: 'GET',
         headers: {
           'xi-api-key': apiKey, // ElevenLabs uses 'xi-api-key' header
+          'Content-Type': 'application/json',
         },
       }
     );
@@ -46,7 +50,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const data = await response.json();
+    const text = await response.text();
+    console.log('📨 ElevenLabs Response Status:', response.status);
+    const data = JSON.parse(text);
     
     return NextResponse.json({
       signed_url: data.signed_url,
