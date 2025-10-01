@@ -16,7 +16,6 @@ import {
   CreditCard,
   UserCircle,
   MessageCircle,
-  Sparkles,
   ShieldCheck,
   LifeBuoy,
   LogOut,
@@ -34,13 +33,21 @@ import {
   Database as DatabaseIcon,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 
 type User = Database['public']['Tables']['users']['Row']
+type UserRole = User['role']
+
+type AuthMeta = {
+  id: string
+  email?: string | null
+  full_name?: string | null
+  role?: UserRole | null
+}
 
 export default function Header() {
   const pathname = usePathname()
@@ -53,38 +60,77 @@ export default function Header() {
   const sidebarButtonRef = useRef<HTMLButtonElement | null>(null)
   const [portalReady, setPortalReady] = useState(false)
 
+  const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
+
+  const userRole: UserRole | null = user?.role ?? authMeta?.role ?? null
+  const isSignedIn = Boolean(user || authMeta)
+  const profileName = (user?.full_name || authMeta?.full_name || authMeta?.email || 'Sales Pro') as string
+  const profileEmail = user?.email || authMeta?.email || 'team@dooriq.app'
+  const profileInitial = profileName.charAt(0).toUpperCase()
+  const profileEarnings = user?.virtual_earnings
+
   useEffect(() => {
     setPortalReady(true)
   }, [])
 
   useEffect(() => {
+    const supabase = createClient()
+
     const fetchUser = async () => {
-      const supabase = createClient()
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser()
 
-      if (authUser) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authUser.id)
-          .single()
-
-        setUser(userData)
+      if (!authUser) {
+        setUser(null)
+        setAuthMeta(null)
+        return
       }
+
+      // Save auth metadata immediately so we can show a basic profile card
+      setAuthMeta({
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.user_metadata?.full_name,
+        role: authUser.user_metadata?.role,
+      })
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single()
+
+      if (userData) {
+        setUser(userData)
+        setAuthMeta(null)
+      }
+
     }
 
     fetchUser()
   }, [])
 
-  const navigation = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
-    { name: 'Sessions', href: '/sessions', icon: FileText },
-    { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
-    { name: 'Pricing', href: '/pricing', icon: Trophy },
-  ]
+  const navigation = useMemo(() => {
+    const navItems = [
+      { name: 'Home', href: '/', icon: Home },
+      { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
+      { name: 'Sessions', href: '/sessions', icon: FileText },
+      { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
+      { name: 'Pricing', href: '/pricing', icon: Trophy },
+    ]
+
+    if (userRole === 'manager' || userRole === 'admin') {
+      const insertIndex = Math.min(4, navItems.length)
+      navItems.splice(insertIndex, 0, {
+        name: 'Manager Panel',
+        href: '/manager',
+        icon: FileText,
+      })
+    }
+
+    return navItems
+  }, [userRole])
 
   const sidebarSections: Array<{
     title: string
@@ -128,22 +174,24 @@ export default function Header() {
     { label: 'Invite Teammate', href: '/invite', icon: Users },
   ]
 
-  const profileNavigation: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean }> = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-    { name: 'AI Insights', href: '/insights', icon: PieChart },
-    { name: 'Playbooks', href: '/playbooks', icon: NotebookPen },
-    { name: 'Add Knowledge Base', href: '/knowledge-base', icon: DatabaseIcon, managerOnly: true },
-    { name: 'Team', href: '/team', icon: Users },
-    { name: 'Documentation', href: '/documentation', icon: BookOpen },
-    { name: 'Messages', href: '/messages', icon: MessageCircle },
-    { name: 'Support', href: '/support', icon: LifeBuoy },
-    { name: 'Integrations', href: '/integrations', icon: Plug },
-    { name: 'Notifications', href: '/notifications', icon: Bell },
-    { name: 'Settings', href: '/settings', icon: SettingsIcon },
-    { name: 'Billing', href: '/billing', icon: CreditCard },
-    { name: 'User Profile', href: '/profile', icon: UserCircle },
-  ]
+  const profileNavigation = useMemo(() => {
+    return [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+      { name: 'AI Insights', href: '/insights', icon: PieChart },
+      { name: 'Playbooks', href: '/playbooks', icon: NotebookPen },
+      { name: 'Add Knowledge Base', href: '/knowledge-base', icon: DatabaseIcon, managerOnly: true },
+      { name: 'Team', href: '/team', icon: Users },
+      { name: 'Documentation', href: '/documentation', icon: BookOpen },
+      { name: 'Messages', href: '/messages', icon: MessageCircle },
+      { name: 'Support', href: '/support', icon: LifeBuoy },
+      { name: 'Integrations', href: '/integrations', icon: Plug },
+      { name: 'Notifications', href: '/notifications', icon: Bell },
+      { name: 'Settings', href: '/settings', icon: SettingsIcon },
+      { name: 'Billing', href: '/billing', icon: CreditCard },
+      { name: 'User Profile', href: '/profile', icon: UserCircle },
+    ] satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean }>
+  }, [])
 
   const handleSignOut = async () => {
     try {
@@ -157,15 +205,6 @@ export default function Header() {
     } finally {
       setSigningOut(false)
     }
-  }
-
-  // Add manager panel link if user is a manager or admin
-  if (user && (user.role === 'manager' || user.role === 'admin')) {
-    navigation.splice(4, 0, { 
-      name: 'Manager Panel', 
-      href: '/manager', 
-      icon: FileText 
-    })
   }
 
   const isActive = (href: string) => {
@@ -260,10 +299,10 @@ export default function Header() {
             })}
 
             <div className="flex items-center gap-3">
-              {user && (
+              {profileEarnings !== undefined && (
                 <div className="pl-2 border-l border-white/10">
-                  <p className="text-xs text-slate-300 leading-4">{user.full_name}</p>
-                  <p className="text-[11px] text-purple-400 font-semibold">${user.virtual_earnings.toFixed(2)} earned</p>
+                  <p className="text-xs text-slate-300 leading-4">{user?.full_name ?? profileName}</p>
+                  <p className="text-[11px] text-purple-400 font-semibold">${profileEarnings.toFixed(2)} earned</p>
                 </div>
               )}
               <button
@@ -316,13 +355,13 @@ export default function Header() {
                 </Link>
               )
             })}
-            {user ? (
+            {isSignedIn ? (
               <div className="border-t border-white/10 pt-4 mt-4">
                 <p className="px-4 text-xs uppercase tracking-[0.3em] text-slate-400">Account</p>
                 <div className="mt-2 space-y-2">
                   {profileNavigation.filter(item => {
                     if (item.managerOnly) {
-                      return user && (user.role === 'manager' || user.role === 'admin')
+                      return userRole === 'manager' || userRole === 'admin'
                     }
                     return true
                   }).map((item) => {
@@ -355,10 +394,12 @@ export default function Header() {
                   <LogOut className="h-4 w-4" />
                   <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
                 </button>
-                <div className="px-4 py-3 border-t border-white/10 mt-4">
-                  <p className="text-sm font-medium text-white">{user.full_name}</p>
-                  <p className="text-xs text-purple-400 font-semibold mt-1">${user.virtual_earnings.toFixed(2)} earned</p>
-                </div>
+                {user && (
+                  <div className="px-4 py-3 border-t border-white/10 mt-4">
+                    <p className="text-sm font-medium text-white">{profileName}</p>
+                    <p className="text-xs text-purple-400 font-semibold mt-1">${profileEarnings?.toFixed(2) ?? '0.00'} earned</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="border-t border-white/10 pt-4 mt-4 px-4">
