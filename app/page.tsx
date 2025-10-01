@@ -72,8 +72,8 @@ export default function Home() {
             ctaSecondaryHref="#demo"
             ctaSecondaryText="Watch 30-sec Demo"
           />
-          <div className="text-center px-4 sm:px-6 lg:px-8">
-            <p className="mt-4 text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
+          <div className="text-center px-4 sm:px-6 lg:px-8 -mt-24 md:-mt-28 lg:-mt-32">
+            <p className="text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
           </div>
         </div>
       </section>
@@ -86,18 +86,6 @@ export default function Home() {
 
       {/* 4) Results / ROI */}
       <ResultsSection />
-
-      {/* 5) Emotional Story */}
-      <EmotionalStorySection />
-
-      {/* Demo anchor placeholder */}
-      <section id="demo" className="py-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="aspect-video w-full rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
-            30-sec demo coming soon
-          </div>
-        </div>
-      </section>
 
       <FaqSection
         title="Frequently Asked Questions"
@@ -223,26 +211,6 @@ function ResultsSection() {
   )
 }
 
-function EmotionalStorySection() {
-  const [ref, isInView] = useInView(0.2)
-  
-  return (
-    <section className="py-20" ref={ref}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className={`text-4xl font-bold text-slate-100 transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          From Slammed Doors to Second Chances
-        </h2>
-        <p className={`mt-6 text-lg text-slate-300 transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '300ms' }}>
-          Every rep remembers that first brush-off. The awkward pause. The rush to recover. DoorIQ turns those moments into a safe arena to practice under pressure - real voices, real emotions, real objections - until confidence feels automatic.
-        </p>
-        <p className={`mt-4 text-lg text-slate-300 transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '600ms' }}>
-          Train the nerves. Keep the edge. Win the door.
-        </p>
-      </div>
-    </section>
-  )
-}
-
 function AnimatedStatCard({ 
   value, 
   rawValue, 
@@ -312,10 +280,6 @@ function TestimonialsSection() {
         What teams say about DoorIQ
       </h3>
 
-      <p className="text-center text-slate-300 mt-4 max-w-2xl mx-auto">
-        Real feedback from sales teams practicing with AI homeowners every day.
-      </p>
-
       <div className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden">
         <TestimonialsColumn testimonials={firstColumn} duration={18} />
         {secondColumn.length > 0 && (
@@ -349,5 +313,10 @@ const faqItems = [
     question: 'How do we track improvement over time?',
     answer:
       'You will see trends for objection handling, tone, discovery depth, and more. Scores roll into the leaderboard so progress stays visible.',
+  },
+  {
+    question: 'Can DoorIQ plug into our existing tools?',
+    answer:
+      'DoorIQ integrates with the systems sales leaders already use so insights and recordings stay centralized.',
   },
 ]
