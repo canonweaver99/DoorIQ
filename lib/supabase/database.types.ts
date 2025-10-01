@@ -76,13 +76,13 @@ export interface Database {
           audio_url: string | null
           total_turns: number | null
           conversation_duration_seconds: number | null
-          questions_asked_by_austin: number | null
+          questions_asked_by_homeowner: number | null
           objections_raised: number | null
           objections_resolved: number | null
-          austin_response_pattern: string | null
-          austin_first_words: string | null
-          austin_final_words: string | null
-          austin_key_questions: string[] | null
+          homeowner_response_pattern: string | null
+          homeowner_first_words: string | null
+          homeowner_final_words: string | null
+          homeowner_key_questions: string[] | null
           sales_rep_energy_level: 'low' | 'moderate' | 'high' | 'too aggressive' | null
           close_attempted: boolean | null
           closing_technique: string | null
@@ -143,13 +143,13 @@ export interface Database {
           audio_url?: string | null
           total_turns?: number | null
           conversation_duration_seconds?: number | null
-          questions_asked_by_austin?: number | null
+          questions_asked_by_homeowner?: number | null
           objections_raised?: number | null
           objections_resolved?: number | null
-          austin_response_pattern?: string | null
-          austin_first_words?: string | null
-          austin_final_words?: string | null
-          austin_key_questions?: string[] | null
+          homeowner_response_pattern?: string | null
+          homeowner_first_words?: string | null
+          homeowner_final_words?: string | null
+          homeowner_key_questions?: string[] | null
           sales_rep_energy_level?: 'low' | 'moderate' | 'high' | 'too aggressive' | null
           close_attempted?: boolean | null
           closing_technique?: string | null
@@ -210,13 +210,13 @@ export interface Database {
           audio_url?: string | null
           total_turns?: number | null
           conversation_duration_seconds?: number | null
-          questions_asked_by_austin?: number | null
+          questions_asked_by_homeowner?: number | null
           objections_raised?: number | null
           objections_resolved?: number | null
-          austin_response_pattern?: string | null
-          austin_first_words?: string | null
-          austin_final_words?: string | null
-          austin_key_questions?: string[] | null
+          homeowner_response_pattern?: string | null
+          homeowner_first_words?: string | null
+          homeowner_final_words?: string | null
+          homeowner_key_questions?: string[] | null
           sales_rep_energy_level?: 'low' | 'moderate' | 'high' | 'too aggressive' | null
           close_attempted?: boolean | null
           closing_technique?: string | null

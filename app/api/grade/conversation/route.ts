@@ -39,9 +39,8 @@ export async function POST(req: Request) {
     // 6) Determine outcome
     const outcome = (() => {
       const score = grade.total
-      const persona = (homeownerName || 'Austin').toLowerCase()
+      const persona = (homeownerName || 'homeowner').toLowerCase()
       const dur = basic.conversation_duration_seconds || 0
-      if (persona.includes('austin')) return score >= 70 ? 'SUCCESS' : 'FAILURE'
       if (persona.includes('decisive')) return score >= 70 && dur < 600 ? 'SUCCESS' : 'FAILURE'
       if (persona.includes('skeptical')) return score >= 120 ? 'SUCCESS' : 'FAILURE'
       if (persona.includes('budget')) return score >= 80 ? 'SUCCESS' : 'FAILURE'
@@ -59,10 +58,10 @@ export async function POST(req: Request) {
       sale_closed: outcome === 'SUCCESS',
       total_turns: basic.total_turns,
       conversation_duration_seconds: basic.conversation_duration_seconds,
-      questions_asked_by_austin: basic.questions_asked_by_austin,
-      austin_first_words: basic.austin_first_words,
-      austin_final_words: basic.austin_final_words,
-      austin_key_questions: basic.austin_key_questions,
+      questions_asked_by_homeowner: basic.questions_asked_by_homeowner,
+      homeowner_first_words: basic.homeowner_first_words,
+      homeowner_final_words: basic.homeowner_final_words,
+      homeowner_key_questions: basic.homeowner_key_questions,
       interruptions_count: basic.interruptions_count,
       filler_words_count: basic.filler_words_count,
       time_to_value_seconds: basic.time_to_value_seconds,
@@ -75,7 +74,7 @@ export async function POST(req: Request) {
       what_worked: (ai.what_worked || []).join('\n'),
       what_failed: (ai.what_failed || []).join('\n'),
       key_learnings: (ai.key_learnings || []).join('\n'),
-      austin_response_pattern: ai.austin_response_pattern,
+      homeowner_response_pattern: ai.homeowner_response_pattern,
       sales_rep_energy_level: ai.sales_rep_energy_level,
       sentiment_progression: ai.sentiment_progression,
       full_transcript: convo as any,

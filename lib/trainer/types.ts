@@ -1,6 +1,6 @@
 export interface TranscriptEntry {
   id: string
-  speaker: 'user' | 'austin'
+  speaker: 'user' | 'homeowner'
   text: string
   timestamp: Date
 }

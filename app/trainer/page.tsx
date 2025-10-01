@@ -9,7 +9,14 @@ import { TranscriptEntry } from '@/lib/trainer/types'
 import CalculatingScore from '@/components/analytics/CalculatingScore'
 import MoneyNotification from '@/components/trainer/MoneyNotification'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
-import { useAmbientAudio } from '@/hooks/useAmbientAudio'
+
+interface Agent {
+  id: string
+  name: string
+  persona: string | null
+  eleven_agent_id: string
+  is_active: boolean
+}
 
 function TrainerPageContent() {
   const [sessionActive, setSessionActive] = useState(false)
@@ -23,9 +30,10 @@ function TrainerPageContent() {
   const [calculatingScore, setCalculatingScore] = useState(false)
   const [showMoneyNotification, setShowMoneyNotification] = useState(false)
   const [earningsAmount, setEarningsAmount] = useState(0)
-  const [selectedAgent, setSelectedAgent] = useState<any>(null)
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [loadingAgent, setLoadingAgent] = useState(true)
   const [homeownerName, setHomeownerName] = useState<string>('')
+  const [availableAgents, setAvailableAgents] = useState<Agent[]>([])
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -36,40 +44,8 @@ function TrainerPageContent() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
+  const signedUrlAbortRef = useRef<AbortController | null>(null)
   
-  // Ambient audio system
-  const [ambientState, ambientControls] = useAmbientAudio({
-    assets: {
-      ambience: {
-        suburban: '/sounds/kids-background.mp3',
-        suburban2: '/sounds/kids-background-2.mp3'
-      },
-      sfx: {
-        doorKnock: '/sounds/knock.mp3',
-        doorOpen: '/sounds/door_open.mp3',
-        doorOpen2: '/sounds/door-open-2.mp3',
-        dogBark1: '/sounds/dog-bark-distant-1.mp3',
-        dogBark2: '/sounds/dog-bark-2.mp3',
-        doorClose: '/sounds/door_close.mp3',
-        doorSlam: '/sounds/door_slam.mp3'
-      }
-    },
-    levels: {
-      ambience: 0.10,
-      sfx: 0.30,
-      voice: 1.0
-    },
-    scheduling: {
-      enabled: true,
-      assetKeys: ['dogBark1', 'dogBark2'],
-      baseInterval: [20, 50]
-    },
-    integration: {
-      enableElevenLabs: true,
-      autoConnect: sessionActive
-    }
-  })
-
   // Request mic permission early
   useEffect(() => {
     if (micPermissionGranted) return
@@ -86,13 +62,13 @@ function TrainerPageContent() {
 
   useEffect(() => {
     fetchUser()
-    fetchAgent()
-    
+    fetchAgents()
+
     const nameParam = searchParams.get('name')
     if (nameParam) {
       setHomeownerName(nameParam)
     }
-    
+
     return () => {
       if (durationInterval.current) {
         clearInterval(durationInterval.current)
@@ -100,45 +76,28 @@ function TrainerPageContent() {
       if (mediaStream.current) {
         mediaStream.current.getTracks().forEach(track => track.stop())
       }
+      signedUrlAbortRef.current?.abort()
     }
   }, [])
-  
-  // Manage ambient audio during session
-  useEffect(() => {
-    if (sessionActive && ambientState.isInitialized) {
-      console.log('🎵 Starting ambient audio for session')
-      
-      const randomAmbience = Math.random() > 0.5 ? 'suburban' : 'suburban2'
-      ambientControls.startAmbience(randomAmbience)
-      ambientControls.startScheduler()
-      
-      setTimeout(async () => {
-        await ambientControls.playSfx('doorKnock', 0.4)
-        setTimeout(async () => {
-          await ambientControls.playSfx('doorOpen', 0.3)
-        }, 1200)
-      }, 500)
-      
-    } else if (!sessionActive && ambientState.isInitialized) {
-      console.log('🔇 Stopping ambient audio')
-      ambientControls.stopAmbience()
-      ambientControls.stopScheduler()
-    }
-  }, [sessionActive, ambientState.isInitialized, ambientControls])
 
   // Handle transcript updates
-  const setDelta = (text: string, speaker: 'user' | 'austin' = 'austin') => {
+  const activeAgentLabel = selectedAgent?.name || 'Homeowner'
+
+  const setDelta = (text: string, speaker: 'user' | 'homeowner' = 'homeowner') => {
     setDeltaText(text || '')
   }
 
-  const pushFinal = async (text: string, speaker: 'user' | 'austin' = 'austin') => {
+  const pushFinal = async (
+    text: string,
+    speaker: 'user' | 'homeowner' = 'homeowner',
+  ) => {
     if (!text?.trim()) return
 
     const entry: TranscriptEntry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       speaker,
       text: text.trim(),
-      timestamp: new Date()
+      timestamp: new Date(),
     }
     setTranscript(prev => [...prev, entry])
 
@@ -152,11 +111,11 @@ function TrainerPageContent() {
     const handleMessage = (event: any) => {
       try {
         const msg = event?.detail
-        
+
         if (msg?.type === 'transcript.delta') {
-          setDelta(msg.text || '', msg.speaker || 'austin')
+          setDelta(msg.text || '', 'homeowner')
         } else if (msg?.type === 'transcript.final') {
-          pushFinal(msg.text || '', msg.speaker || 'austin')
+          pushFinal(msg.text || '', 'homeowner')
         } else if (msg?.type === 'user_transcript') {
           pushFinal(msg.user_transcript || msg.text || '', 'user')
         } else if (msg?.type === 'agent_response') {
@@ -170,7 +129,7 @@ function TrainerPageContent() {
             text = response.content
           }
           if (text) {
-            pushFinal(text, 'austin')
+            pushFinal(text, 'homeowner')
           }
         }
       } catch (e) {
@@ -183,13 +142,13 @@ function TrainerPageContent() {
     }
 
     const handleAgentEvent = (e: any) => {
-      if (e?.detail) pushFinal(e.detail, 'austin')
+      if (e?.detail) pushFinal(e.detail, 'homeowner')
     }
 
     window.addEventListener('agent:message', handleMessage)
     window.addEventListener('agent:user', handleUserEvent)
     window.addEventListener('agent:response', handleAgentEvent)
-    
+
     ;(window as any).startSessionRecording = () => {
       startRecording()
     }
@@ -218,67 +177,89 @@ function TrainerPageContent() {
     }
   }
 
-  const fetchAgent = async () => {
+  const fetchAgents = async () => {
     try {
       const agentParam = searchParams.get('agent')
-      
-      if (agentParam) {
-        const { data, error } = await supabase
-          .from('agents')
-          .select('*')
-          .eq('eleven_agent_id', agentParam)
-          .eq('is_active', true)
-          .single()
 
-        if (!error && data) {
-          setSelectedAgent(data)
-          if (!homeownerName) {
-            setHomeownerName(data.name)
-          }
-        } else {
-          const { data: austinData } = await supabase
-            .from('agents')
-            .select('*')
-            .eq('name', 'Austin')
-            .eq('is_active', true)
-            .single()
-          setSelectedAgent(austinData)
-          if (!homeownerName) {
-            setHomeownerName(austinData?.name || 'Austin')
-          }
+      const { data: agents, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+
+      if (error) throw error
+
+      setAvailableAgents(Array.isArray(agents) ? agents : [])
+
+      if (agentParam) {
+        const match = agents?.find((agent: Agent) => agent.eleven_agent_id === agentParam)
+        setSelectedAgent(match || agents?.[0] || null)
+        if (match && !homeownerName) {
+          setHomeownerName(match.name)
         }
       } else {
-        const { data: austinData } = await supabase
-          .from('agents')
-          .select('*')
-          .eq('name', 'Austin')
-          .eq('is_active', true)
-          .single()
-        setSelectedAgent(austinData)
-        if (!homeownerName) {
-          setHomeownerName(austinData?.name || 'Austin')
+        const defaultAgent = agents?.[0]
+        setSelectedAgent(defaultAgent || null)
+        if (defaultAgent && !homeownerName) {
+          setHomeownerName(defaultAgent.name || 'Homeowner')
         }
       }
     } catch (error) {
-      console.error('Error fetching agent:', error)
+      console.error('Error fetching agents:', error)
+      setAvailableAgents([])
+      if (!selectedAgent) setSelectedAgent(null)
     } finally {
       setLoadingAgent(false)
     }
   }
 
+  const fetchSignedUrl = async (agentId: string) => {
+    signedUrlAbortRef.current?.abort()
+    const controller = new AbortController()
+    signedUrlAbortRef.current = controller
+
+    const response = await fetch('/api/eleven/signed-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent_id: agentId }),
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to create signed URL' }))
+      throw new Error(error?.error || 'Failed to create signed URL')
+    }
+
+    const payload = await response.json()
+    return payload?.signed_url as string
+  }
+
   const startSession = async () => {
+    if (!selectedAgent?.eleven_agent_id) {
+      console.error('No agent selected')
+      return
+    }
+
     try {
-      // Create session record
+      setLoading(true)
+      const signedUrl = await fetchSignedUrl(selectedAgent.eleven_agent_id)
       const newId = await createSessionRecord()
       setSessionId(newId)
       setSessionActive(true)
-      
-      // Start duration timer
+
       durationInterval.current = setInterval(() => {
         setDuration(prev => prev + 1)
       }, 1000)
+
+      window.dispatchEvent(new CustomEvent('trainer:start-conversation', {
+        detail: {
+          agentId: selectedAgent.eleven_agent_id,
+          signedUrl,
+        },
+      }))
     } catch (error) {
       console.error('Error starting session:', error)
+      setLoading(false)
     }
   }
 
@@ -288,6 +269,12 @@ function TrainerPageContent() {
         user_id: user?.id || null,
         agent_id: selectedAgent?.id || null,
         scenario_type: 'standard',
+        agent_name: selectedAgent?.name || null,
+        agent_persona: selectedAgent?.persona || null,
+        conversation_metadata: {
+          homeowner_agent_id: selectedAgent?.eleven_agent_id || null,
+          homeowner_name: selectedAgent?.name || null,
+        },
       }
       const { data: session, error } = await (supabase as any)
         .from('live_sessions')
@@ -305,7 +292,7 @@ function TrainerPageContent() {
   const endSession = async () => {
     setLoading(true)
     setSessionActive(false)
-    
+
     if (durationInterval.current) {
       clearInterval(durationInterval.current)
     }
@@ -313,13 +300,12 @@ function TrainerPageContent() {
     try {
       try { (window as any).stopConversation?.() } catch {}
       stopRecording()
-      
-      try {
-        ambientControls.stopAmbience()
-        ambientControls.stopScheduler()
-      } catch {}
-      
-      // Persist session metadata and transcript
+
+      if (signedUrlAbortRef.current) {
+        signedUrlAbortRef.current.abort()
+        signedUrlAbortRef.current = null
+      }
+
       if (sessionId) {
         await (supabase as any)
           .from('live_sessions')
@@ -329,9 +315,10 @@ function TrainerPageContent() {
             full_transcript: transcript as any,
             analytics: {
               conversation_id: (window as any)?.elevenConversationId || null,
-              homeowner_name: selectedAgent?.name || 'Austin',
-              homeowner_profile: selectedAgent?.description || 'Standard homeowner persona',
-            }
+              homeowner_name: selectedAgent?.name || homeownerName,
+              homeowner_profile: selectedAgent?.persona || 'Standard homeowner persona',
+              homeowner_agent_id: selectedAgent?.eleven_agent_id || null,
+            },
           } as any)
           .eq('id', sessionId as string)
 
@@ -340,22 +327,20 @@ function TrainerPageContent() {
             await fetch('/api/grade/session', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ sessionId })
+              body: JSON.stringify({ sessionId }),
             })
           }
         } catch (e) {
           console.error('AI grading failed:', e)
         }
-        
-        try {
-          await fetch('/api/notifications/session-complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId })
-          })
-        } catch (e) {
+
+        await fetch('/api/notifications/session-complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        }).catch((e) => {
           console.error('Manager notification failed:', e)
-        }
+        })
       }
 
       setCalculatingScore(true)
@@ -684,13 +669,13 @@ function TrainerPageContent() {
           {/* Live Transcript */}
           <div className="w-full max-w-4xl">
             <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border-b border-slate-700/50 px-6 py-4">
+      <div className="bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border-b border-slate-700/50 px-6 py-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <span className="relative flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                   </span>
-                  Live Transcript
+                  Live Transcript — {selectedAgent?.name || 'Homeowner'}
                 </h2>
               </div>
               

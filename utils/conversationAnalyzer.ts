@@ -3,10 +3,10 @@ export type TranscriptTurn = { speaker: 'rep' | 'homeowner'; text: string; times
 export type BasicMetrics = {
   total_turns: number
   conversation_duration_seconds: number
-  questions_asked_by_austin: number
-  austin_first_words: string
-  austin_final_words: string
-  austin_key_questions: string[]
+  questions_asked_by_homeowner: number
+  homeowner_first_words: string
+  homeowner_final_words: string
+  homeowner_key_questions: string[]
   interruptions_count: number
   filler_words_count: number
   time_to_value_seconds: number
@@ -35,14 +35,14 @@ export function extractBasicMetrics(transcript: TranscriptTurn[]): BasicMetrics 
   })()
 
   const homeownerTurns = transcript.filter(t => t.speaker === 'homeowner')
-  const austin_first_words = homeownerTurns[0]?.text?.slice(0, 120) || ''
-  const austin_final_words = homeownerTurns.at(-1)?.text?.slice(0, 120) || ''
-  const austin_key_questions = homeownerTurns
+  const homeowner_first_words = homeownerTurns[0]?.text?.slice(0, 120) || ''
+  const homeowner_final_words = homeownerTurns.at(-1)?.text?.slice(0, 120) || ''
+  const homeowner_key_questions = homeownerTurns
     .map(t => t.text)
     .filter(Boolean)
     .filter(text => QUESTION_REGEX.test(text))
 
-  const questions_asked_by_austin = austin_key_questions.length
+  const questions_asked_by_homeowner = homeowner_key_questions.length
 
   let interruptions_count = 0
   // Heuristic: consecutive rep turns while homeowner spoke recently
@@ -89,16 +89,16 @@ export function extractBasicMetrics(transcript: TranscriptTurn[]): BasicMetrics 
   // Rapport heuristic 0-20
   const rapport_score = Math.max(0, Math.min(20, Math.round(
     (transcript.filter(t => t.speaker === 'rep' && /(thanks|appreciate|no worries|great question|makes sense|i hear you|understand)/i.test(t.text || '')).length)
-      + (austin_key_questions.length > 2 ? 5 : 0)
+      + (homeowner_key_questions.length > 2 ? 5 : 0)
   )))
 
   return {
     total_turns,
     conversation_duration_seconds: duration,
-    questions_asked_by_austin,
-    austin_first_words,
-    austin_final_words,
-    austin_key_questions,
+    questions_asked_by_homeowner,
+    homeowner_first_words,
+    homeowner_final_words,
+    homeowner_key_questions,
     interruptions_count,
     filler_words_count,
     time_to_value_seconds,

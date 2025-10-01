@@ -260,7 +260,7 @@ export function computeObjectiveMetrics(transcript: Transcript): ObjectiveMetric
         }
         if (apologized) interruptsApologized++;
       }
-    } else { // homeowner/austin speaking
+    } else { // homeowner speaking
       homeWords += words;
       
       // Count problems discovered when homeowner mentions specific pests

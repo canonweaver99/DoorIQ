@@ -18,63 +18,63 @@ export const testimonialsData: Testimonials = [
     image:
       "https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "Lina Marshall",
-    role: "Revenue Enablement Lead",
+    role: "Sales Rep",
   },
   {
     text: "Our entire org trains on DoorIQ. The AI homeowners feel surprisingly real and the feedback is actionable.",
     image:
       "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "James Patel",
-    role: "VP, Growth",
+    role: "Manager",
   },
   {
     text: "The weekly leaderboards keep the team competitive and actually excited about practice reps.",
     image:
       "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "Amina Khan",
-    role: "Sales Manager",
+    role: "Manager",
   },
   {
     text: "We saw deal velocity jump within the first month. DoorIQ turned coaching into a superpower for our managers.",
     image:
       "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "Cameron Lee",
-    role: "Head of Enablement",
+    role: "CEO",
   },
   {
     text: "Scheduling live call reviews used to take hours. Now reps self-correct after every simulated conversation.",
     image:
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "Riya Sharma",
-    role: "Regional Director",
+    role: "Manager",
   },
   {
     text: "DoorIQ keeps our remote team sharp between seasons. It’s the secret sauce behind our record summer.",
     image:
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "Morgan Blake",
-    role: "Field Ops Coach",
+    role: "Sales Rep",
   },
   {
     text: "The integration was painless and the product team helped us tailor scenarios to our buyer profiles.",
     image:
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "Avery Chen",
-    role: "Director of Training",
+    role: "Marketing Head",
   },
   {
     text: "Our reps now request practice time. That never happened before DoorIQ.",
     image:
       "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "Jordan Ruiz",
-    role: "Sales Operations",
+    role: "Sales Rep",
   },
   {
     text: "Every simulated call feels authentic. The AI even handles layered objections like real homeowners do.",
     image:
       "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=facearea&w=200&h=200&q=80",
     name: "Sienna Park",
-    role: "Account Executive",
+    role: "Marketing Head",
   },
 ];
 

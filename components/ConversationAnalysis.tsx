@@ -86,7 +86,7 @@ export default function ConversationAnalysis(props: Props) {
       <MetricsGrid metrics={{
         totalTurns: basic.total_turns,
         durationSeconds: basic.conversation_duration_seconds,
-        questions: basic.questions_asked_by_austin,
+        questions: basic.questions_asked_by_homeowner,
         objections: { raised: basic.objections_raised, resolved: basic.objections_resolved },
         interruptions: basic.interruptions_count,
         fillers: basic.filler_words_count,
@@ -100,7 +100,7 @@ export default function ConversationAnalysis(props: Props) {
 
       <TranscriptViewer 
         transcriptHighlight={{
-          keyQuestions: basic.austin_key_questions,
+          keyQuestions: basic.homeowner_key_questions,
         }}
       />
 
