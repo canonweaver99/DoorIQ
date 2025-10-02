@@ -62,59 +62,148 @@ export default function ElevenLabsConversation({ agentId, signedUrl, autostart =
       }
 
       console.log('🔌 Attempting to connect...')
-      const convo = await Conversation.startSession({
-        ...connectionConfig,
-        onConnect: () => {
-          console.log('✅ Connected to ElevenLabs')
-          setStatus('connected')
-          dispatchStatus('connected')
-          setErrorMessage('')
-        },
-        onDisconnect: () => {
-          console.log('🔌 Disconnected from ElevenLabs')
-          setStatus('disconnected')
-          dispatchStatus('disconnected')
-        },
-        onMessage: (msg: any) => {
-          console.log('📨 Message received:', msg?.type)
-          // Bubble up as window events to integrate with existing page handlers
-          window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
-          try {
-            if (msg?.type === 'user_transcript') {
-              const text = msg.user_transcript || msg.text || ''
-              if (text) {
-                console.log('👤 User said:', text)
-                window.dispatchEvent(new CustomEvent('agent:user', { detail: text }))
-              }
-            } else if (msg?.type === 'agent_response') {
-              const response = msg.agent_response
-              let text = ''
-              if (typeof response === 'string') text = response
-              else if (response?.text) text = response.text
-              else if (response?.content) text = response.content
-              if (text) {
-                console.log('🤖 Agent said:', text)
-                window.dispatchEvent(new CustomEvent('agent:response', { detail: text }))
+      
+      let convo: any = null
+      try {
+        convo = await Conversation.startSession({
+          ...connectionConfig,
+          onConnect: () => {
+            console.log('✅ Connected to ElevenLabs')
+            setStatus('connected')
+            dispatchStatus('connected')
+            setErrorMessage('')
+          },
+          onDisconnect: (reason?: any) => {
+            console.log('🔌 Disconnected from ElevenLabs')
+            console.log('🔌 Disconnect reason:', reason)
+            console.log('🔌 Disconnect reason type:', typeof reason)
+            if (reason) {
+              console.log('🔌 Disconnect reason keys:', Object.keys(reason))
+              try {
+                console.log('🔌 Disconnect reason JSON:', JSON.stringify(reason, null, 2))
+              } catch (e) {
+                console.log('🔌 Could not stringify disconnect reason')
               }
             }
+            setStatus('disconnected')
+            dispatchStatus('disconnected')
+          },
+          onMessage: (msg: any) => {
+            console.log('📨 Message received:', msg?.type)
+            // Bubble up as window events to integrate with existing page handlers
+            window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
+            try {
+              if (msg?.type === 'user_transcript') {
+                const text = msg.user_transcript || msg.text || ''
+                if (text) {
+                  console.log('👤 User said:', text)
+                  window.dispatchEvent(new CustomEvent('agent:user', { detail: text }))
+                }
+              } else if (msg?.type === 'agent_response') {
+                const response = msg.agent_response
+                let text = ''
+                if (typeof response === 'string') text = response
+                else if (response?.text) text = response.text
+                else if (response?.content) text = response.content
+                if (text) {
+                  console.log('🤖 Agent said:', text)
+                  window.dispatchEvent(new CustomEvent('agent:response', { detail: text }))
+                }
+              }
+            } catch (e) {
+              console.error('❌ Error processing message:', e)
+            }
+          },
+          onError: (err: any) => {
+            console.error('❌ ElevenLabs SDK onError callback triggered')
+            console.error('❌ Error type:', typeof err)
+            console.error('❌ Error object:', err)
+            console.error('❌ Error constructor:', err?.constructor?.name)
+            
+            // Try to get keys
+            if (err && typeof err === 'object') {
+              console.error('❌ Error keys:', Object.keys(err))
+              console.error('❌ Error own property names:', Object.getOwnPropertyNames(err))
+              
+              // Try JSON stringify
+              try {
+                console.error('❌ Error JSON:', JSON.stringify(err, null, 2))
+              } catch (e) {
+                console.error('❌ Could not stringify error')
+              }
+              
+              // Try to log all properties
+              for (const key in err) {
+                console.error(`❌ Error.${key}:`, err[key])
+              }
+            }
+            
+            // Try multiple ways to extract error message
+            const errMsg = 
+              err?.message || 
+              err?.error || 
+              err?.detail || 
+              err?.details ||
+              err?.msg ||
+              err?.description ||
+              err?.reason ||
+              err?.code ||
+              (typeof err === 'string' ? err : null) ||
+              'Connection error (no details available)'
+            
+            console.error('❌ Extracted error message:', errMsg)
+            setErrorMessage(errMsg)
+            setStatus('error')
+            dispatchStatus('error')
+          },
+        })
+      } catch (syncErr: any) {
+        console.error('❌ Synchronous error during Conversation.startSession:', syncErr)
+        console.error('❌ Sync error type:', typeof syncErr)
+        console.error('❌ Sync error object:', syncErr)
+        
+        if (syncErr && typeof syncErr === 'object') {
+          console.error('❌ Sync error keys:', Object.keys(syncErr))
+          try {
+            console.error('❌ Sync error JSON:', JSON.stringify(syncErr, null, 2))
           } catch (e) {
-            console.error('❌ Error processing message:', e)
+            console.error('❌ Could not stringify sync error')
           }
-        },
-        onError: (err: any) => {
-          console.error('❌ ElevenLabs SDK error:', err)
-          const errMsg = err?.message || 'Connection error'
-          setErrorMessage(errMsg)
-          setStatus('error')
-          dispatchStatus('error')
-        },
-      })
+        }
+        
+        const errMsg = syncErr?.message || syncErr?.error || syncErr?.detail || 'Failed to start session'
+        setErrorMessage(errMsg)
+        setStatus('error')
+        dispatchStatus('error')
+        return
+      }
+
+      // Log the conversation object
+      console.log('✅ Conversation object returned:', convo)
+      console.log('✅ Conversation object type:', typeof convo)
+      if (convo && typeof convo === 'object') {
+        console.log('✅ Conversation object keys:', Object.keys(convo))
+        console.log('✅ Conversation object constructor:', convo?.constructor?.name)
+      }
 
       conversationRef.current = convo
-      console.log('✅ Conversation session started')
+      console.log('✅ Conversation session started successfully')
     } catch (err: any) {
-      console.error('❌ Failed to start ElevenLabs conversation:', err)
-      const errMsg = err?.message || 'Failed to connect'
+      console.error('❌ Outer catch: Failed to start ElevenLabs conversation')
+      console.error('❌ Outer error type:', typeof err)
+      console.error('❌ Outer error object:', err)
+      
+      if (err && typeof err === 'object') {
+        console.error('❌ Outer error keys:', Object.keys(err))
+        try {
+          console.error('❌ Outer error JSON:', JSON.stringify(err, null, 2))
+        } catch (e) {
+          console.error('❌ Could not stringify outer error')
+        }
+      }
+      
+      const errMsg = err?.message || err?.error || err?.detail || 'Failed to connect'
+      console.error('❌ Final extracted error message:', errMsg)
       setErrorMessage(errMsg)
       setStatus('error')
       dispatchStatus('error')
