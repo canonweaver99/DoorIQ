@@ -353,11 +353,11 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
   const [repCount, setRepCount] = useState(minReps);
 
   const handleCtaClick = () => {
-    // Fire celebration for actions that imply starting a trial or purchasing
-    const isCelebratory = /start free trial|get started|buy|purchase/i.test(
-      plan.buttonText || "",
-    );
-    if (isCelebratory) {
+    // Fire celebration only for sign-up actions (not sign-in)
+    const isSignUp = plan.href?.includes('/signup') || /sign up/i.test(plan.buttonText || "");
+    const isSignIn = plan.href?.includes('/login') || /sign in|log in/i.test(plan.buttonText || "");
+    
+    if (isSignUp && !isSignIn) {
       confetti({
         particleCount: 120,
         spread: 90,
