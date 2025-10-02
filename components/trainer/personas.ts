@@ -116,7 +116,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficultyKey: 'hard',
       traits: [
         'Expects performance stats for every service tier',
-        'Compares you to last year’s premium vendor',
+        'Compares you to last year's premium vendor',
         'Pushes for bundle discounts with ROI proof',
         'Keeps conversations under seven minutes',
       ],
@@ -126,6 +126,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 95,
       avatar: '🐯',
       color: 'orange',
+      elevenAgentId: 'agent_7601k6dtrf5fe0k9dh8kwmkde0ga',
     },
   },
   'Tiger Tony': {
@@ -155,6 +156,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 110,
       avatar: '🐯',
       color: 'amber',
+      elevenAgentId: 'agent_8401k6dv9z2kepw86hhe5bvj4djz',
     },
   },
   'Sheep Shelley': {
@@ -185,6 +187,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       avatar: '🐑',
       color: 'teal',
       recommended: true,
+      elevenAgentId: 'agent_9201k6dts0haecvssk737vwfjy34',
     },
   },
   'Sheep Sam': {
@@ -214,6 +217,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 90,
       avatar: '🐑',
       color: 'emerald',
+      elevenAgentId: 'agent_4801k6dvap8tfnjtgd4f99hhsf10',
     },
   },
   'Sheep Sandy': {
@@ -243,6 +247,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 105,
       avatar: '🐑',
       color: 'blue',
+      elevenAgentId: 'agent_0101k6dvb96zejkv35ncf1zkj88m',
     },
   },
   'Bull Brad': {
@@ -272,6 +277,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 92,
       avatar: '🐂',
       color: 'crimson',
+      elevenAgentId: 'agent_3901k6dtsjyqfvxbxd1pwzzdham0',
     },
   },
   'Bull Barry': {
@@ -301,6 +307,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 108,
       avatar: '🐂',
       color: 'maroon',
+      elevenAgentId: 'agent_9901k6dvcv32embbydd7nn0prdgq',
     },
   },
   'Bull Brenda': {
@@ -331,6 +338,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       avatar: '🐂',
       color: 'scarlet',
       mostChallenging: true,
+      elevenAgentId: 'agent_4601k6dvddj8fp89cey35hdj9ef8',
     },
   },
   'Owl Olivia': {
@@ -361,6 +369,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       avatar: '🦉',
       color: 'indigo',
       mostChallenging: true,
+      elevenAgentId: 'agent_5701k6dtt9p4f8jbk8rs1akqwtmx',
     },
   },
   'Owl Oscar': {
@@ -390,6 +399,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 112,
       avatar: '🦉',
       color: 'navy',
+      elevenAgentId: 'agent_1701k6dvc3nfejmvydkk7r85tqef',
     },
   },
 }

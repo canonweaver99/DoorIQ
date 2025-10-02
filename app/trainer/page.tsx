@@ -313,7 +313,7 @@ function TrainerPageContent() {
   const [loadingAgent, setLoadingAgent] = useState(true)
   const [homeownerName, setHomeownerName] = useState<string>('')
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([])
-  const [signedUrl, setSignedUrl] = useState<string | null>(null)
+  const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle')
 
   const orbColors = getOrbColors(selectedAgent?.name)
@@ -521,54 +521,47 @@ function TrainerPageContent() {
     }
   }
 
-  const fetchSignedUrl = async (agentId: string): Promise<{ signedUrl: string | null; canProceed: boolean; error?: string }> => {
+  const fetchConversationToken = async (agentId: string): Promise<{ conversationToken: string | null; canProceed: boolean; error?: string }> => {
     signedUrlAbortRef.current?.abort()
     const controller = new AbortController()
     signedUrlAbortRef.current = controller
 
-    console.log('🔐 Requesting signed URL for agent:', agentId)
+    console.log('🔐 Requesting WebRTC conversation token for agent:', agentId)
 
     try {
-      const response = await fetch('/api/eleven/signed-url', {
+      const response = await fetch('/api/eleven/conversation-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agentId }),
         signal: controller.signal,
       })
 
-      console.log('📡 Signed URL API response status:', response.status, response.statusText)
+      console.log('📡 Conversation token API response status:', response.status, response.statusText)
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Failed to create signed URL' }))
-        console.error('❌ Signed URL API error:', error)
-        
-        // Handle 406 - agent may be public or not configured for signed URLs
-        if (response.status === 406 && error?.canFallback) {
-          console.warn('⚠️ Agent does not support signed URLs, will attempt public agent connection')
-          return { signedUrl: null, canProceed: true, error: error?.details }
-        }
-        
-        return { signedUrl: null, canProceed: false, error: error?.error || error?.details || 'Failed to get signed URL' }
+        const error = await response.json().catch(() => ({ error: 'Failed to get conversation token' }))
+        console.error('❌ Conversation token API error:', error)
+        return { conversationToken: null, canProceed: false, error: error?.error || error?.details || 'Failed to get conversation token' }
       }
 
       const payload = await response.json()
-      console.log('✅ Signed URL payload received:', { 
-        hasSigned: !!payload?.signed_url,
+      console.log('✅ Conversation token payload received:', { 
+        hasToken: !!payload?.conversation_token,
         expires_at: payload?.expires_at 
       })
       
-      if (!payload?.signed_url) {
-        return { signedUrl: null, canProceed: false, error: 'Signed URL missing from response' }
+      if (!payload?.conversation_token) {
+        return { conversationToken: null, canProceed: false, error: 'Conversation token missing from response' }
       }
       
-      return { signedUrl: payload.signed_url, canProceed: true }
+      return { conversationToken: payload.conversation_token, canProceed: true }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('⚠️ Signed URL request aborted')
-        return { signedUrl: null, canProceed: false, error: 'Request cancelled' }
+        console.log('⚠️ Conversation token request aborted')
+        return { conversationToken: null, canProceed: false, error: 'Request cancelled' }
       }
-      console.error('❌ Error fetching signed URL:', error)
-      return { signedUrl: null, canProceed: false, error: error?.message || 'Network error' }
+      console.error('❌ Error fetching conversation token:', error)
+      return { conversationToken: null, canProceed: false, error: error?.message || 'Network error' }
     }
   }
 
@@ -588,19 +581,18 @@ function TrainerPageContent() {
       console.log('🎬 Starting training session...')
       console.log('Selected agent:', selectedAgent.name, selectedAgent.eleven_agent_id)
 
-      console.log('🔑 Fetching signed URL from ElevenLabs...')
-      const result = await fetchSignedUrl(selectedAgent.eleven_agent_id)
+      console.log('🔑 Fetching WebRTC conversation token from ElevenLabs...')
+      const result = await fetchConversationToken(selectedAgent.eleven_agent_id)
       
       if (!result.canProceed) {
         throw new Error(result.error || 'Failed to initialize connection')
       }
       
-      if (result.signedUrl) {
-        console.log('✅ Signed URL received')
-        setSignedUrl(result.signedUrl)
+      if (result.conversationToken) {
+        console.log('✅ Conversation token received')
+        setConversationToken(result.conversationToken)
       } else {
-        console.log('⚠️ Proceeding without signed URL (public agent mode)')
-        setSignedUrl('') // Empty string to trigger component render but use agentId-only mode
+        throw new Error('No conversation token received')
       }
       
       console.log('📝 Creating session record...')
@@ -616,7 +608,7 @@ function TrainerPageContent() {
       window.dispatchEvent(new CustomEvent('trainer:start-conversation', {
         detail: {
           agentId: selectedAgent.eleven_agent_id,
-          signedUrl: result.signedUrl,
+          conversationToken: result.conversationToken,
         },
       }))
       
@@ -630,7 +622,7 @@ function TrainerPageContent() {
       })
       alert(`Failed to start session: ${error?.message || 'Unknown error'}. Please check console for details.`)
       setLoading(false)
-      setSignedUrl(null)
+      setConversationToken(null)
       setSessionActive(false)
     }
   }
@@ -664,7 +656,7 @@ function TrainerPageContent() {
   const endSession = async () => {
     setLoading(true)
     setSessionActive(false)
-    setSignedUrl(null)
+    setConversationToken(null)
 
     if (durationInterval.current) {
       clearInterval(durationInterval.current)
@@ -852,8 +844,8 @@ function TrainerPageContent() {
             </div>
 
             {/* ElevenLabs SDK Component */}
-            {sessionActive && signedUrl !== null && selectedAgent?.eleven_agent_id && (
-              <ElevenLabsConversation agentId={selectedAgent.eleven_agent_id} signedUrl={signedUrl || ''} autostart />
+            {sessionActive && conversationToken !== null && selectedAgent?.eleven_agent_id && (
+              <ElevenLabsConversation agentId={selectedAgent.eleven_agent_id} conversationToken={conversationToken} autostart />
             )}
 
             <style jsx global>{`

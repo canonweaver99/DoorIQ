@@ -5,11 +5,11 @@ import { Conversation } from '@elevenlabs/client'
 
 type ElevenLabsConversationProps = {
   agentId: string
-  signedUrl: string
+  conversationToken: string
   autostart?: boolean
 }
 
-export default function ElevenLabsConversation({ agentId, signedUrl, autostart = true }: ElevenLabsConversationProps) {
+export default function ElevenLabsConversation({ agentId, conversationToken, autostart = true }: ElevenLabsConversationProps) {
   const conversationRef = useRef<any>(null)
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -51,22 +51,15 @@ export default function ElevenLabsConversation({ agentId, signedUrl, autostart =
         return
       }
 
-      // Try with signed URL first, fallback to agentId only if it fails
-      let connectionConfig: any = { agentId }
-      
-      if (signedUrl) {
-        console.log('🔐 Using signed URL for connection')
-        connectionConfig.signedUrl = signedUrl
-      } else {
-        console.log('⚠️ No signed URL available, connecting with agentId only (public agent mode)')
-      }
-
+      // Use WebRTC with conversation token
+      console.log('🔐 Using WebRTC with conversation token')
       console.log('🔌 Attempting to connect...')
       
       let convo: any = null
       try {
         convo = await Conversation.startSession({
-          ...connectionConfig,
+          conversationToken,
+          connectionType: 'webrtc',
           onConnect: () => {
             console.log('✅ Connected to ElevenLabs')
             setStatus('connected')
