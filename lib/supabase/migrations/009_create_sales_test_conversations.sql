@@ -1,0 +1,100 @@
+-- Create sales_test_conversations table for ElevenLabs conversation analysis
+-- This table stores the detailed performance metrics from ElevenLabs API analysis
+
+CREATE TABLE IF NOT EXISTS sales_test_conversations (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- Reference fields
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  conversation_id TEXT UNIQUE NOT NULL,
+  agent_id UUID REFERENCES agents(id) ON DELETE SET NULL,
+  
+  -- Outcome
+  outcome TEXT CHECK (outcome IN ('SUCCESS', 'FAILURE', 'PARTIAL')),
+  sale_closed BOOLEAN DEFAULT FALSE,
+  
+  -- Basic metrics
+  total_turns INTEGER,
+  conversation_duration_seconds INTEGER,
+  questions_asked_by_homeowner INTEGER,
+  homeowner_first_words TEXT,
+  homeowner_final_words TEXT,
+  homeowner_key_questions TEXT[],
+  interruptions_count INTEGER,
+  filler_words_count INTEGER,
+  time_to_value_seconds INTEGER,
+  close_attempted BOOLEAN,
+  closing_technique TEXT,
+  objections_raised INTEGER,
+  objections_resolved INTEGER,
+  rapport_score INTEGER,
+  
+  -- AI analysis text fields
+  conversation_summary TEXT,
+  what_worked TEXT,
+  what_failed TEXT,
+  key_learnings TEXT,
+  homeowner_response_pattern TEXT,
+  sales_rep_energy_level TEXT CHECK (sales_rep_energy_level IN ('low', 'moderate', 'high', 'too aggressive')),
+  sentiment_progression TEXT,
+  
+  -- Full transcript from ElevenLabs
+  full_transcript JSONB
+);
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_sales_test_user_id ON sales_test_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_sales_test_conversation_id ON sales_test_conversations(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_sales_test_created_at ON sales_test_conversations(created_at);
+CREATE INDEX IF NOT EXISTS idx_sales_test_outcome ON sales_test_conversations(outcome);
+
+-- Enable RLS
+ALTER TABLE sales_test_conversations ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+DROP POLICY IF EXISTS sales_test_select_own ON sales_test_conversations;
+CREATE POLICY sales_test_select_own ON sales_test_conversations
+FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS sales_test_insert_own ON sales_test_conversations;
+CREATE POLICY sales_test_insert_own ON sales_test_conversations
+FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS sales_test_update_own ON sales_test_conversations;
+CREATE POLICY sales_test_update_own ON sales_test_conversations
+FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- Admin policies
+DROP POLICY IF EXISTS sales_test_select_admin ON sales_test_conversations;
+CREATE POLICY sales_test_select_admin ON sales_test_conversations
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid() AND u.role = 'admin'
+  )
+);
+
+DROP POLICY IF EXISTS sales_test_insert_admin ON sales_test_conversations;
+CREATE POLICY sales_test_insert_admin ON sales_test_conversations
+FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid() AND u.role = 'admin'
+  )
+);
+
+DROP POLICY IF EXISTS sales_test_update_admin ON sales_test_conversations;
+CREATE POLICY sales_test_update_admin ON sales_test_conversations
+FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid() AND u.role = 'admin'
+  )
+) WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid() AND u.role = 'admin'
+  )
+);
+
