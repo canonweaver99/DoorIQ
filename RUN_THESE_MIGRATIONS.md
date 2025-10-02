@@ -30,6 +30,8 @@ CREATE INDEX IF NOT EXISTS idx_live_sessions_ended_at ON live_sessions(ended_at)
 
 ## Step 3: Run Migration 009 (Performance Metrics Table)
 
+**IMPORTANT**: This version drops any existing table first, then recreates it cleanly.
+
 Copy and paste this SQL, then click **Run**:
 
 ```sql
@@ -39,11 +41,15 @@ Copy and paste this SQL, then click **Run**:
 -- Ensure UUID extension exists
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS sales_test_conversations (
+-- Drop existing table and policies if they exist (clean slate)
+DROP TABLE IF EXISTS sales_test_conversations CASCADE;
+
+-- Create the table
+CREATE TABLE sales_test_conversations (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   
-  -- Reference fields (remove foreign key constraints to avoid dependency issues)
+  -- Reference fields
   user_id UUID NOT NULL,
   conversation_id TEXT UNIQUE NOT NULL,
   agent_id UUID,
@@ -90,48 +96,43 @@ CREATE INDEX IF NOT EXISTS idx_sales_test_outcome ON sales_test_conversations(ou
 -- Enable RLS
 ALTER TABLE sales_test_conversations ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
-DROP POLICY IF EXISTS sales_test_select_own ON sales_test_conversations;
+-- RLS Policies (use table-qualified column names)
 CREATE POLICY sales_test_select_own ON sales_test_conversations
-FOR SELECT USING (auth.uid() = user_id);
+FOR SELECT USING (auth.uid() = sales_test_conversations.user_id);
 
-DROP POLICY IF EXISTS sales_test_insert_own ON sales_test_conversations;
 CREATE POLICY sales_test_insert_own ON sales_test_conversations
-FOR INSERT WITH CHECK (auth.uid() = user_id);
+FOR INSERT WITH CHECK (auth.uid() = sales_test_conversations.user_id);
 
-DROP POLICY IF EXISTS sales_test_update_own ON sales_test_conversations;
 CREATE POLICY sales_test_update_own ON sales_test_conversations
-FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+FOR UPDATE USING (auth.uid() = sales_test_conversations.user_id) 
+WITH CHECK (auth.uid() = sales_test_conversations.user_id);
 
 -- Admin policies
-DROP POLICY IF EXISTS sales_test_select_admin ON sales_test_conversations;
 CREATE POLICY sales_test_select_admin ON sales_test_conversations
 FOR SELECT USING (
   EXISTS (
-    SELECT 1 FROM users u
+    SELECT 1 FROM public.users u
     WHERE u.id = auth.uid() AND u.role = 'admin'
   )
 );
 
-DROP POLICY IF EXISTS sales_test_insert_admin ON sales_test_conversations;
 CREATE POLICY sales_test_insert_admin ON sales_test_conversations
 FOR INSERT WITH CHECK (
   EXISTS (
-    SELECT 1 FROM users u
+    SELECT 1 FROM public.users u
     WHERE u.id = auth.uid() AND u.role = 'admin'
   )
 );
 
-DROP POLICY IF EXISTS sales_test_update_admin ON sales_test_conversations;
 CREATE POLICY sales_test_update_admin ON sales_test_conversations
 FOR UPDATE USING (
   EXISTS (
-    SELECT 1 FROM users u
+    SELECT 1 FROM public.users u
     WHERE u.id = auth.uid() AND u.role = 'admin'
   )
 ) WITH CHECK (
   EXISTS (
-    SELECT 1 FROM users u
+    SELECT 1 FROM public.users u
     WHERE u.id = auth.uid() AND u.role = 'admin'
   )
 );
@@ -187,3 +188,8 @@ After running these migrations:
 - What worked/failed
 - Key learnings
 
+---
+
+## 🔧 What Changed in This Update
+
+**Fixed**: Removed foreign key constraints and fully qualified column names in RLS policies to avoid "column does not exist" errors.
