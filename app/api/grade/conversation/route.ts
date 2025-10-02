@@ -85,7 +85,13 @@ export async function POST(req: Request) {
       .insert(insertPayload)
 
     if (insertErr) {
-      return NextResponse.json({ error: 'Failed to save analysis' }, { status: 500 })
+      console.error('❌ Failed to save analysis to sales_test_conversations:', insertErr)
+      console.error('❌ Error details:', JSON.stringify(insertErr, null, 2))
+      return NextResponse.json({ 
+        error: 'Failed to save analysis', 
+        details: insertErr.message || insertErr,
+        hint: insertErr.hint || 'Check Supabase logs for details'
+      }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true, data: { basic, ai, grade, outcome } })
