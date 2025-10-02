@@ -597,9 +597,18 @@ function TrainerPageContent() {
       
       console.log('📝 Creating session record...')
       const newId = await createSessionRecord()
+      console.log('📋 Session ID obtained:', newId)
       setSessionId(newId)
       setSessionActive(true)
       setLoading(false)
+      
+      // Start recording after session is active
+      if (newId && !newId.startsWith('temp-session-')) {
+        console.log('🎙️ Starting audio recording...')
+        startRecording()
+      } else {
+        console.warn('⚠️ Skipping recording for temporary session')
+      }
 
       durationInterval.current = setInterval(() => {
         setDuration(prev => prev + 1)
