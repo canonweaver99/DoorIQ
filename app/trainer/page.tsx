@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 import ElevenLabsConversation from '@/components/trainer/ElevenLabsConversation'
@@ -382,11 +382,11 @@ function TrainerPageContent() {
   // Handle transcript updates
   const activeAgentLabel = selectedAgent?.name || 'Homeowner'
 
-  const setDelta = (text: string, speaker: 'user' | 'homeowner' = 'homeowner') => {
+  const setDelta = useCallback((text: string, speaker: 'user' | 'homeowner' = 'homeowner') => {
     setDeltaText(text || '')
-  }
+  }, [])
 
-  const pushFinal = async (
+  const pushFinal = useCallback(async (
     text: string,
     speaker: 'user' | 'homeowner' = 'homeowner',
   ) => {
@@ -415,7 +415,7 @@ function TrainerPageContent() {
     setTimeout(() => {
       transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, 100)
-  }
+  }, [])
 
   // Listen for ElevenLabs conversation events
   useEffect(() => {
@@ -502,7 +502,7 @@ function TrainerPageContent() {
       delete (window as any).startSessionRecording
       delete (window as any).stopSessionRecording
     }
-  }, [])
+  }, [pushFinal, setDelta])
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
