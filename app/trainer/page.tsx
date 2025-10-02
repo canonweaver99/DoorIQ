@@ -480,11 +480,22 @@ function TrainerPageContent() {
       }
     }
 
+    const handleEndCall = (e: any) => {
+      console.log('🛑 EVENT FIRED: agent:end_call', e?.detail)
+      console.log('🛑 Austin called end_call tool! Reason:', e?.detail?.reason)
+      console.log('🛑 Automatically ending session and starting grading...')
+      // Automatically end the session when Austin calls end_call
+      if (sessionActive) {
+        endSession()
+      }
+    }
+
     window.addEventListener('agent:message', handleMessage)
     window.addEventListener('agent:user', handleUserEvent)
     window.addEventListener('agent:response', handleAgentEvent)
     window.addEventListener('agent:delta', handleDeltaEvent)
     window.addEventListener('connection:status', handleConnectionStatus)
+    window.addEventListener('agent:end_call', handleEndCall as EventListener)
 
     ;(window as any).startSessionRecording = () => {
       startRecording()
@@ -499,10 +510,11 @@ function TrainerPageContent() {
       window.removeEventListener('agent:response', handleAgentEvent)
       window.removeEventListener('agent:delta', handleDeltaEvent)
       window.removeEventListener('connection:status', handleConnectionStatus)
+      window.removeEventListener('agent:end_call', handleEndCall as EventListener)
       delete (window as any).startSessionRecording
       delete (window as any).stopSessionRecording
     }
-  }, [pushFinal, setDelta])
+  }, [pushFinal, setDelta, sessionActive, endSession])
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()

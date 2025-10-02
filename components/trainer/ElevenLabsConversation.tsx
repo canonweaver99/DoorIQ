@@ -89,6 +89,43 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           console.log('📨 Message keys:', Object.keys(msg || {}))
           window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
           
+          // Check for end_call tool invocation
+          if (msg?.type === 'tool_call' || msg?.type === 'function_call') {
+            const toolName = msg?.tool_name || msg?.name || msg?.function_name
+            if (toolName === 'end_call') {
+              console.log('🛑 END_CALL TOOL DETECTED! Reason:', msg?.arguments?.reason || msg?.parameters?.reason || 'No reason provided')
+              const endCallData = {
+                reason: msg?.arguments?.reason || msg?.parameters?.reason || 'Agent ended call',
+                notes: msg?.arguments?.notes || msg?.parameters?.notes || ''
+              }
+              // Dispatch event that trainer page can listen for
+              window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+            }
+          }
+          
+          // Also check in conversation_updated messages for tool calls
+          if (msg?.type === 'conversation_updated') {
+            const messages = msg?.conversation?.messages || []
+            const lastMsg = messages[messages.length - 1]
+            if (lastMsg?.role === 'tool_call' || lastMsg?.tool_calls?.length > 0) {
+              const toolCalls = lastMsg?.tool_calls || [lastMsg]
+              toolCalls.forEach((tc: any) => {
+                const toolName = tc?.function?.name || tc?.name || tc?.tool_name
+                if (toolName === 'end_call') {
+                  console.log('🛑 END_CALL TOOL DETECTED in conversation_updated! Reason:', tc?.function?.arguments?.reason)
+                  const args = typeof tc?.function?.arguments === 'string' 
+                    ? JSON.parse(tc.function.arguments) 
+                    : (tc?.function?.arguments || tc?.arguments || {})
+                  const endCallData = {
+                    reason: args?.reason || 'Agent ended call',
+                    notes: args?.notes || ''
+                  }
+                  window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+                }
+              })
+            }
+          }
+          
           // Extract transcript text from various message formats
           const extractTranscripts = (message: any) => {
             let userText = ''
