@@ -84,7 +84,9 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         },
         
         onMessage: (msg: any) => {
-          console.log('📨 Message received:', JSON.stringify(msg, null, 2))
+          console.log('📨 RAW MESSAGE FROM ELEVENLABS:', JSON.stringify(msg, null, 2))
+          console.log('📨 Message type:', msg?.type)
+          console.log('📨 Message keys:', Object.keys(msg || {}))
           window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
           
           // Extract transcript text from various message formats
@@ -196,14 +198,23 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           
           const { userText, agentText } = extractTranscripts(msg)
           
+          console.log('🔍 EXTRACTION RESULT:', { userText, agentText, messageType: msg?.type })
+          
           if (userText) {
-            console.log('👤 User said:', userText)
+            console.log('👤 USER TRANSCRIPT EXTRACTED:', userText)
+            console.log('👤 Dispatching agent:user event with:', userText)
             window.dispatchEvent(new CustomEvent('agent:user', { detail: userText }))
           }
           
           if (agentText) {
-            console.log('🤖 Agent said:', agentText)
+            console.log('🤖 AGENT TRANSCRIPT EXTRACTED:', agentText)
+            console.log('🤖 Dispatching agent:response event with:', agentText)
             window.dispatchEvent(new CustomEvent('agent:response', { detail: agentText }))
+          }
+          
+          if (!userText && !agentText) {
+            console.warn('⚠️ NO TEXT EXTRACTED from message type:', msg?.type)
+            console.warn('⚠️ Full message was:', msg)
           }
           
           // Handle interim/delta transcripts (partial text as it's being spoken)

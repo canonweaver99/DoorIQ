@@ -390,7 +390,11 @@ function TrainerPageContent() {
     text: string,
     speaker: 'user' | 'homeowner' = 'homeowner',
   ) => {
-    if (!text?.trim()) return
+    console.log('📝 pushFinal called with:', { text: text?.substring(0, 50), speaker })
+    if (!text?.trim()) {
+      console.warn('⚠️ pushFinal called with empty text, skipping')
+      return
+    }
 
     const entry: TranscriptEntry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -398,8 +402,13 @@ function TrainerPageContent() {
       text: text.trim(),
       timestamp: new Date(),
     }
-    setTranscript(prev => [...prev, entry])
+    console.log('📝 Adding transcript entry:', entry)
+    setTranscript(prev => {
+      console.log('📝 Current transcript length:', prev.length, '→ New length:', prev.length + 1)
+      return [...prev, entry]
+    })
     if (speaker === 'homeowner') {
+      console.log('📝 Clearing delta text')
       setDeltaText('')
     }
 
@@ -440,16 +449,26 @@ function TrainerPageContent() {
     }
 
     const handleUserEvent = (e: any) => {
-      if (e?.detail) pushFinal(e.detail, 'user')
+      console.log('🎯 EVENT FIRED: agent:user', e?.detail)
+      if (e?.detail) {
+        console.log('🎯 Calling pushFinal with USER text:', e.detail)
+        pushFinal(e.detail, 'user')
+      }
     }
 
     const handleAgentEvent = (e: any) => {
-      if (e?.detail) pushFinal(e.detail, 'homeowner')
+      console.log('🎯 EVENT FIRED: agent:response', e?.detail)
+      if (e?.detail) {
+        console.log('🎯 Calling pushFinal with AGENT text:', e.detail)
+        pushFinal(e.detail, 'homeowner')
+      }
     }
 
     const handleDeltaEvent = (e: any) => {
+      console.log('🎯 EVENT FIRED: agent:delta', e?.detail)
       // Handle interim/delta transcripts (live preview as agent speaks)
       if (e?.detail) {
+        console.log('🎯 Setting delta text:', e.detail)
         setDeltaText(e.detail)
       }
     }
