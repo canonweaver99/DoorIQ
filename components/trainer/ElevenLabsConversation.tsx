@@ -63,20 +63,24 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       // Use WebRTC with conversation token
       console.log('🔐 Using WebRTC with conversation token')
       console.log('🎟️ Token:', conversationToken ? conversationToken.substring(0, 20) + '...' : 'MISSING')
+      console.log('🎟️ Token full length:', conversationToken?.length)
+      console.log('🎟️ Token type:', typeof conversationToken)
       console.log('🤖 Agent ID:', agentId)
       console.log('🔌 Attempting to connect...')
       
-      let convo: any = null
-      try {
-        convo = await Conversation.startSession({
-          conversationToken,
-          connectionType: 'webrtc',
-          onConnect: () => {
-            console.log('✅ Connected to ElevenLabs')
-            setStatus('connected')
-            dispatchStatus('connected')
-            setErrorMessage('')
-          },
+      console.log('📦 Creating session config object...')
+      console.log('📦 conversationToken value:', conversationToken)
+      console.log('📦 conversationToken typeof:', typeof conversationToken)
+      
+      const sessionConfig: any = {
+        conversationToken,
+        connectionType: 'webrtc',
+        onConnect: () => {
+          console.log('✅ Connected to ElevenLabs')
+          setStatus('connected')
+          dispatchStatus('connected')
+          setErrorMessage('')
+        },
           onDisconnect: (reason?: any) => {
             console.log('🔌 Disconnected from ElevenLabs')
             console.log('🔌 Disconnect reason:', reason)
@@ -160,7 +164,18 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             setStatus('error')
             dispatchStatus('error')
           },
-        })
+      }
+      
+      console.log('📦 Final session config:', JSON.stringify({
+        hasToken: !!sessionConfig.conversationToken,
+        tokenLength: sessionConfig.conversationToken?.length,
+        connectionType: sessionConfig.connectionType,
+        hasCallbacks: !!(sessionConfig.onConnect && sessionConfig.onError)
+      }))
+      
+      console.log('🚀 Calling Conversation.startSession...')
+      try {
+        convo = await Conversation.startSession(sessionConfig)
       } catch (syncErr: any) {
         console.error('❌ Synchronous error during Conversation.startSession:', syncErr)
         console.error('❌ Sync error type:', typeof syncErr)
