@@ -413,7 +413,7 @@ function TrainerPageContent() {
     }
 
     setTimeout(() => {
-      transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
     }, 100)
   }, [])
 
