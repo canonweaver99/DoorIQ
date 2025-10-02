@@ -10,9 +10,23 @@ export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
   try {
-    const { conversationId, agentId, homeownerName, homeownerProfile, userId } = await req.json()
-    if (!conversationId || !userId) {
-      return NextResponse.json({ error: 'conversationId and userId are required' }, { status: 400 })
+    const { conversationId, agentId, homeownerName, homeownerProfile, userId: providedUserId } = await req.json()
+    if (!conversationId) {
+      return NextResponse.json({ error: 'conversationId is required' }, { status: 400 })
+    }
+
+    // Get userId from parameter or from Supabase auth
+    const supabase = await createServerSupabaseClient()
+    let userId = providedUserId
+    
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.id) {
+        userId = user.id
+        console.log('📝 Got userId from auth:', userId)
+      } else {
+        return NextResponse.json({ error: 'User not authenticated and no userId provided' }, { status: 401 })
+      }
     }
 
     // 1) Retrieve conversation from ElevenLabs
@@ -49,7 +63,7 @@ export async function POST(req: Request) {
     })()
 
     // 7) Save to Supabase (sales_test_conversations)
-    const supabase = await createServerSupabaseClient()
+    console.log('💾 Preparing to save to sales_test_conversations with userId:', userId)
     const insertPayload: any = {
       user_id: userId,
       conversation_id: conversationId,
