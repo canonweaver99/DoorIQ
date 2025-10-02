@@ -28,3 +28,17 @@ export async function createServerSupabaseClient() {
     }
   )
 }
+
+// Server-only admin client (uses service role). Do NOT import in client code.
+export async function createServiceSupabaseClient() {
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() { return [] },
+        setAll() { /* no-op for service client */ },
+      },
+    }
+  )
+}

@@ -10,6 +10,14 @@
  * 3. Fetch and display the results
  */
 
+// Load env from .env.local (fallback to .env) so this script can run outside Next.js
+import path from 'path'
+import fs from 'fs'
+import dotenv from 'dotenv'
+const envLocalPath = path.resolve(process.cwd(), '.env.local')
+const envPath = fs.existsSync(envLocalPath) ? envLocalPath : path.resolve(process.cwd(), '.env')
+dotenv.config({ path: envPath })
+
 import { createClient } from '@supabase/supabase-js'
 
 // Synthetic transcript that covers all grading categories

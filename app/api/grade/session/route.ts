@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { gradeSession, Transcript as GTranscript } from '@/lib/grader'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'sessionId is required' }, { status: 400 })
     }
 
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createServiceSupabaseClient()
     const { data: session, error } = await (supabase as any)
       .from('live_sessions')
       .select('id, full_transcript, analytics')
@@ -136,16 +136,27 @@ export async function POST(req: Request) {
       },
     }
 
-    const { error: updateError } = await (supabase as any)
+    let { error: updateError } = await (supabase as any)
       .from('live_sessions')
       .update(updatePayload)
       .eq('id', sessionId)
 
     if (updateError) {
-      return NextResponse.json({ error: 'Failed to save grading' }, { status: 500 })
+      console.error('❌ Supabase update error (grading):', updateError)
+      // Fallback: update only analytics if schema is missing score columns
+      const reducedPayload: any = { analytics: updatePayload.analytics }
+      const { error: reducedError } = await (supabase as any)
+        .from('live_sessions')
+        .update(reducedPayload)
+        .eq('id', sessionId)
+      if (reducedError) {
+        console.error('❌ Supabase reduced update error (analytics-only):', reducedError)
+        return NextResponse.json({ error: 'Failed to save grading', details: reducedError?.message || reducedError }, { status: 500 })
+      }
+      return NextResponse.json({ ok: true, data: reducedPayload, downgraded: true })
     }
 
-    return NextResponse.json({ ok: true, data: updatePayload })
+    return NextResponse.json({ ok: true, data: updatePayload, downgraded: false })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
