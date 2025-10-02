@@ -72,23 +72,61 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           dispatchStatus('disconnected')
         },
         
+        onModeChange: (mode: any) => {
+          console.log('🎯 Mode changed:', mode)
+          // Mode can be: 'speaking', 'listening', 'idle', etc.
+          window.dispatchEvent(new CustomEvent('agent:mode', { detail: mode }))
+        },
+        
+        onStatusChange: (status: any) => {
+          console.log('📊 Status changed:', status)
+          window.dispatchEvent(new CustomEvent('agent:status', { detail: status }))
+        },
+        
         onMessage: (msg: any) => {
-          console.log('📨 Message:', msg?.type)
+          console.log('📨 Message received:', JSON.stringify(msg, null, 2))
           window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
           
+          // Handle user transcript (what the user said)
           if (msg?.type === 'user_transcript') {
             const text = msg.user_transcript || msg.text || ''
             if (text) {
-              console.log('👤 User:', text)
+              console.log('👤 User said:', text)
               window.dispatchEvent(new CustomEvent('agent:user', { detail: text }))
             }
-          } else if (msg?.type === 'agent_response') {
+          } 
+          // Handle agent response (what the agent said)
+          else if (msg?.type === 'agent_response') {
             const response = msg.agent_response
             const text = typeof response === 'string' ? response : response?.text || response?.content || ''
             if (text) {
-              console.log('🤖 Agent:', text)
+              console.log('🤖 Agent said:', text)
               window.dispatchEvent(new CustomEvent('agent:response', { detail: text }))
             }
+          }
+          // Handle conversation_initiation_metadata
+          else if (msg?.type === 'conversation_initiation_metadata') {
+            console.log('🎬 Conversation initiated')
+          }
+          // Handle interruption events
+          else if (msg?.type === 'interruption') {
+            console.log('✋ User interrupted agent')
+          }
+          // Handle ping/pong
+          else if (msg?.type === 'ping') {
+            console.log('🏓 Ping received')
+          }
+          // Handle audio events
+          else if (msg?.type === 'audio') {
+            console.log('🔊 Audio chunk received')
+          }
+          // Handle internal_tentative_agent_response (agent is thinking)
+          else if (msg?.type === 'internal_tentative_agent_response') {
+            console.log('💭 Agent is thinking...')
+          }
+          // Catch any other message types
+          else if (msg?.type) {
+            console.log('❓ Unknown message type:', msg.type)
           }
         },
         
