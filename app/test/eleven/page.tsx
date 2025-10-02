@@ -114,7 +114,56 @@ export default function ElevenLabsTestPage() {
       appendLog('❌ Signed URL test failed:', e)
       setStatus('error')
     }
-  }, [Conversation, agentId, appendLog, connectionType])
+  }, [agentId, appendLog, connectionType])
+
+  const testWebRTCToken = useCallback(async () => {
+    appendLog('🧪 Testing WebRTC connection via conversation token...')
+    if (!Conversation) {
+      appendLog('Conversation API not available. Is @elevenlabs/client installed?')
+      return
+    }
+    try {
+      setStatus('connecting')
+      await ensureMicPermission(appendLog)
+
+      const response = await fetch('/api/eleven/conversation-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId }),
+      })
+
+      appendLog('WebRTC Token response status:', response.status)
+      const data = await safeParseJson(response)
+      appendLog('WebRTC Token response body:', data)
+
+      if (!response.ok) {
+        appendLog('❌ WebRTC Token fetch failed')
+        setStatus('error')
+        return
+      }
+
+      if (data?.conversation_token) {
+        const convo = await Conversation.startSession({
+          conversationToken: data.conversation_token,
+          connectionType: 'webrtc',
+          onConnect: () => {
+            appendLog('✅ WebRTC connection successful!')
+            setStatus('connected')
+          },
+          onMessage: (message: any) => appendLog('📨 Message received:', message),
+          onError: (error: unknown) => appendLog('❌ WebRTC connection error:', error),
+          onDisconnect: () => appendLog('🔌 Disconnected'),
+        })
+        appendLog('Conversation object:', convo)
+      } else {
+        appendLog('❌ No conversation_token in response')
+        setStatus('error')
+      }
+    } catch (e) {
+      appendLog('❌ WebRTC Token test failed:', e)
+      setStatus('error')
+    }
+  }, [agentId, appendLog])
 
   const testRawWebSocket = useCallback(async () => {
     appendLog('🧪 Testing raw WebSocket connection via signed URL...')
@@ -237,6 +286,7 @@ export default function ElevenLabsTestPage() {
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '12px 0' }}>
         <button onClick={testDirectConnection} style={btnStyle}>Test Direct Connection</button>
+        <button onClick={testWebRTCToken} style={btnStyle}>Test WebRTC Token</button>
         <button onClick={testSignedUrlConnection} style={btnStyle}>Test Signed URL Connection</button>
         <button onClick={testRawWebSocket} style={btnStyle}>Test Raw WebSocket</button>
         <button onClick={stopRawWebSocket} style={btnStyle}>Stop Raw WebSocket</button>
