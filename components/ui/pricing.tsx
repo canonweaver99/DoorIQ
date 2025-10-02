@@ -273,7 +273,6 @@ export function PricingSection({
 // Pricing Toggle Component
 function PricingToggle() {
   const { isMonthly, setIsMonthly } = useContext(PricingContext);
-  const confettiRef = useRef<HTMLDivElement>(null);
   const monthlyBtnRef = useRef<HTMLButtonElement>(null);
   const annualBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -292,34 +291,11 @@ function PricingToggle() {
   const handleToggle = (monthly: boolean) => {
     if (isMonthly === monthly) return;
     setIsMonthly(monthly);
-
-    if (!monthly && confettiRef.current) {
-      const rect = annualBtnRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const originX = (rect.left + rect.width / 2) / window.innerWidth;
-      const originY = (rect.top + rect.height / 2) / window.innerHeight;
-
-      confetti({
-        particleCount: 80,
-        spread: 80,
-        origin: { x: originX, y: originY },
-        colors: [
-          "hsl(var(--primary))",
-          "hsl(var(--background))",
-          "hsl(var(--accent))",
-        ],
-        ticks: 300,
-        gravity: 1.2,
-        decay: 0.94,
-        startVelocity: 30,
-      });
-    }
   };
 
   return (
     <div className="flex justify-center">
-      <div ref={confettiRef} className="relative flex w-fit items-center rounded-full bg-muted p-1">
+      <div className="relative flex w-fit items-center rounded-full bg-muted p-1">
         <motion.div
           className="absolute left-0 top-0 h-full rounded-full bg-primary p-1"
           style={pillStyle}
@@ -367,6 +343,25 @@ function PricingToggle() {
 function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
   const { isMonthly } = useContext(PricingContext);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+
+  const handleCtaClick = () => {
+    // Fire celebration for actions that imply starting a trial or purchasing
+    const isCelebratory = /start free trial|get started|buy|purchase/i.test(
+      plan.buttonText || "",
+    );
+    if (isCelebratory) {
+      confetti({
+        particleCount: 120,
+        spread: 90,
+        origin: { y: 0.6 },
+        colors: ["#8b5cf6", "#ec4899", "#3b82f6", "#06b6d4"],
+        ticks: 320,
+        gravity: 1,
+        decay: 0.94,
+        startVelocity: 32,
+      });
+    }
+  };
 
   return (
     <motion.div
@@ -452,6 +447,7 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
               }),
               "w-full",
             )}
+            onClick={handleCtaClick}
           >
             {plan.buttonText}
           </Link>
