@@ -521,7 +521,7 @@ function TrainerPageContent() {
     }
   }
 
-  const fetchSignedUrl = async (agentId: string) => {
+  const fetchSignedUrl = async (agentId: string): Promise<{ signedUrl: string | null; canProceed: boolean; error?: string }> => {
     signedUrlAbortRef.current?.abort()
     const controller = new AbortController()
     signedUrlAbortRef.current = controller
@@ -541,7 +541,14 @@ function TrainerPageContent() {
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Failed to create signed URL' }))
         console.error('❌ Signed URL API error:', error)
-        throw new Error(error?.error || `Failed to create signed URL (${response.status})`)
+        
+        // Handle 406 - agent may be public or not configured for signed URLs
+        if (response.status === 406 && error?.canFallback) {
+          console.warn('⚠️ Agent does not support signed URLs, will attempt public agent connection')
+          return { signedUrl: null, canProceed: true, error: error?.details }
+        }
+        
+        return { signedUrl: null, canProceed: false, error: error?.error || error?.details || 'Failed to get signed URL' }
       }
 
       const payload = await response.json()
@@ -551,17 +558,17 @@ function TrainerPageContent() {
       })
       
       if (!payload?.signed_url) {
-        throw new Error('Signed URL missing from response')
+        return { signedUrl: null, canProceed: false, error: 'Signed URL missing from response' }
       }
       
-      return payload.signed_url as string
-    } catch (error) {
+      return { signedUrl: payload.signed_url, canProceed: true }
+    } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log('⚠️ Signed URL request aborted')
-        throw new Error('Request cancelled')
+        return { signedUrl: null, canProceed: false, error: 'Request cancelled' }
       }
       console.error('❌ Error fetching signed URL:', error)
-      throw error
+      return { signedUrl: null, canProceed: false, error: error?.message || 'Network error' }
     }
   }
 
@@ -582,14 +589,19 @@ function TrainerPageContent() {
       console.log('Selected agent:', selectedAgent.name, selectedAgent.eleven_agent_id)
 
       console.log('🔑 Fetching signed URL from ElevenLabs...')
-      const url = await fetchSignedUrl(selectedAgent.eleven_agent_id)
-      console.log('✅ Signed URL received:', url ? 'Valid' : 'Invalid')
+      const result = await fetchSignedUrl(selectedAgent.eleven_agent_id)
       
-      if (!url) {
-        throw new Error('Failed to get signed URL from server')
+      if (!result.canProceed) {
+        throw new Error(result.error || 'Failed to initialize connection')
       }
       
-      setSignedUrl(url)
+      if (result.signedUrl) {
+        console.log('✅ Signed URL received')
+        setSignedUrl(result.signedUrl)
+      } else {
+        console.log('⚠️ Proceeding without signed URL (public agent mode)')
+        setSignedUrl('') // Empty string to trigger component render but use agentId-only mode
+      }
       
       console.log('📝 Creating session record...')
       const newId = await createSessionRecord()
@@ -604,12 +616,12 @@ function TrainerPageContent() {
       window.dispatchEvent(new CustomEvent('trainer:start-conversation', {
         detail: {
           agentId: selectedAgent.eleven_agent_id,
-          signedUrl: url,
+          signedUrl: result.signedUrl,
         },
       }))
       
       console.log('✅ Session started successfully')
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error starting session:', error)
       console.error('Error details:', {
         message: error?.message,
@@ -840,8 +852,8 @@ function TrainerPageContent() {
             </div>
 
             {/* ElevenLabs SDK Component */}
-            {sessionActive && signedUrl && selectedAgent?.eleven_agent_id && (
-              <ElevenLabsConversation agentId={selectedAgent.eleven_agent_id} signedUrl={signedUrl} autostart />
+            {sessionActive && signedUrl !== null && selectedAgent?.eleven_agent_id && (
+              <ElevenLabsConversation agentId={selectedAgent.eleven_agent_id} signedUrl={signedUrl || ''} autostart />
             )}
 
             <style jsx global>{`
