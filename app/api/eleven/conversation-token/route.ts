@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
+    console.log('🎙️ Conversation token endpoint called');
     const body = await request.json().catch(() => ({} as any));
+    console.log('📦 Request body:', JSON.stringify(body));
     const agentId = body?.agentId || body?.agent_id;
     
     if (!agentId) {
@@ -14,6 +16,8 @@ export async function POST(request: Request) {
     }
 
     const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    console.log('🔑 API Key exists:', !!apiKey);
+    console.log('🔑 API Key first 10 chars:', apiKey?.substring(0, 10) + '...');
     
     if (!apiKey) {
       console.error('❌ ELEVEN_LABS_API_KEY is not set in environment variables');

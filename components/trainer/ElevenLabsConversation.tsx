@@ -53,6 +53,8 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
 
       // Use WebRTC with conversation token
       console.log('🔐 Using WebRTC with conversation token')
+      console.log('🎟️ Token:', conversationToken ? conversationToken.substring(0, 20) + '...' : 'MISSING')
+      console.log('🤖 Agent ID:', agentId)
       console.log('🔌 Attempting to connect...')
       
       let convo: any = null
