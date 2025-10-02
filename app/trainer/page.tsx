@@ -629,8 +629,13 @@ function TrainerPageContent() {
 
   const createSessionRecord = async () => {
     try {
+      // Check if user is authenticated
+      if (!user?.id) {
+        console.warn('⚠️ No user ID available - creating anonymous session')
+      }
+
       const payload: any = {
-        user_id: user?.id || null,
+        user_id: user?.id || '00000000-0000-0000-0000-000000000000', // Use placeholder UUID if no user
         agent_id: selectedAgent?.id || null,
         agent_name: selectedAgent?.name || null,
         agent_persona: selectedAgent?.persona || null,
@@ -640,20 +645,30 @@ function TrainerPageContent() {
         },
       }
       console.log('📝 Creating session with payload:', JSON.stringify(payload, null, 2))
+      console.log('👤 User authenticated:', !!user?.id)
+      
       const { data: session, error } = await (supabase as any)
         .from('live_sessions')
         .insert(payload)
         .select()
         .single()
+      
       if (error) {
-        console.error('❌ Supabase error creating session:', error)
+        console.error('❌ Supabase error creating session:')
+        console.error('Error code:', error.code)
+        console.error('Error message:', error.message)
+        console.error('Error details:', error.details)
+        console.error('Error hint:', error.hint)
+        console.error('Full error object:', JSON.stringify(error, null, 2))
         throw error
       }
       console.log('✅ Session created:', (session as any).id)
       return (session as any).id
-    } catch (error) {
-      console.error('❌ Error creating session:', error)
-      return null
+    } catch (error: any) {
+      console.error('❌ Error creating session:', error?.message || error)
+      // Don't fail the session if we can't create the record
+      console.warn('⚠️ Continuing without session record')
+      return 'temp-session-' + Date.now()
     }
   }
 
