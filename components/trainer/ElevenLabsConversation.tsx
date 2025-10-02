@@ -182,6 +182,17 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
                 }
               }
               
+              // Handle source + message format (ElevenLabs specific)
+              if (!userText && !agentText && message?.message) {
+                const text = message.message
+                const source = message.source || message.role || message.speaker || 'ai'
+                if (source === 'user') {
+                  userText = text
+                } else {
+                  agentText = text
+                }
+              }
+              
               // Final fallback: single text field with role
               if (!userText && !agentText && message?.text) {
                 const role = message?.role || message?.speaker || 'assistant'
