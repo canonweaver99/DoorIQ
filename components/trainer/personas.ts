@@ -116,7 +116,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficultyKey: 'hard',
       traits: [
         'Expects performance stats for every service tier',
-        'Compares you to last year's premium vendor',
+        'Compares you to last year\'s premium vendor',
         'Pushes for bundle discounts with ROI proof',
         'Keeps conversations under seven minutes',
       ],
