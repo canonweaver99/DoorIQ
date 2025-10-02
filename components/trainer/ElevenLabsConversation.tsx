@@ -55,12 +55,16 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
 
       console.log('🚀 Calling Conversation.startSession with WebRTC...')
       
+      console.log('🔧 Available callbacks:', Object.keys(Conversation.startSession).length > 0 ? 'Found' : 'None')
+      
       const conversation = await Conversation.startSession({
         conversationToken,
         connectionType: 'webrtc',
         
         onConnect: () => {
           console.log('✅ WebRTC Connected!')
+          console.log('📋 Conversation object:', conversation)
+          console.log('📋 Conversation methods:', conversation ? Object.keys(conversation) : 'none')
           setStatus('connected')
           dispatchStatus('connected')
           setErrorMessage('')
@@ -170,6 +174,18 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
 
       conversationRef.current = conversation
       console.log('✅ Conversation started successfully')
+      console.log('🔍 Checking conversation object for transcript methods...')
+      console.log('🔍 Has getConversation?', typeof (conversation as any)?.getConversation === 'function')
+      console.log('🔍 Has getId?', typeof (conversation as any)?.getId === 'function')
+      
+      // Try to get conversation ID to fetch transcripts
+      if (typeof (conversation as any)?.getId === 'function') {
+        const convId = await (conversation as any).getId()
+        console.log('🆔 Conversation ID:', convId)
+        
+        // Store it globally so we can fetch transcripts
+        ;(window as any).elevenConversationId = convId
+      }
       
     } catch (error: any) {
       console.error('❌ Failed to start conversation:', error)
