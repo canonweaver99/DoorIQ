@@ -87,46 +87,75 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           console.log('📨 Message received:', JSON.stringify(msg, null, 2))
           window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
           
-          // Handle user transcript (what the user said)
-          if (msg?.type === 'user_transcript') {
-            const text = msg.user_transcript || msg.text || ''
-            if (text) {
-              console.log('👤 User said:', text)
-              window.dispatchEvent(new CustomEvent('agent:user', { detail: text }))
+          // Extract transcript text from various message formats
+          const extractTranscripts = (message: any) => {
+            let userText = ''
+            let agentText = ''
+            
+            try {
+              // Handle conversation_updated messages (WebRTC format)
+              if (message?.type === 'conversation_updated') {
+                const messages = message?.conversation?.messages || []
+                if (messages.length > 0) {
+                  const lastMsg = messages[messages.length - 1]
+                  if (lastMsg?.role === 'user' && lastMsg?.content) {
+                    userText = lastMsg.content
+                  } else if (lastMsg?.role === 'assistant' && lastMsg?.content) {
+                    agentText = lastMsg.content
+                  }
+                }
+              }
+              // Handle user_transcript messages
+              else if (message?.type === 'user_transcript') {
+                userText = typeof message.user_transcript === 'string' 
+                  ? message.user_transcript 
+                  : (message.user_transcript?.text || message.text || '')
+              }
+              // Handle agent_response messages
+              else if (message?.type === 'agent_response') {
+                const ar = message.agent_response
+                if (typeof ar === 'string') {
+                  agentText = ar
+                } else if (ar?.text) {
+                  agentText = ar.text
+                } else if (ar?.content) {
+                  agentText = ar.content
+                } else if (Array.isArray(ar?.messages)) {
+                  agentText = ar.messages.map((m: any) => m?.text).filter(Boolean).join(' ')
+                }
+              }
+            } catch (e) {
+              console.error('Error extracting transcripts:', e)
             }
-          } 
-          // Handle agent response (what the agent said)
-          else if (msg?.type === 'agent_response') {
-            const response = msg.agent_response
-            const text = typeof response === 'string' ? response : response?.text || response?.content || ''
-            if (text) {
-              console.log('🤖 Agent said:', text)
-              window.dispatchEvent(new CustomEvent('agent:response', { detail: text }))
+            
+            return { userText, agentText }
+          }
+          
+          const { userText, agentText } = extractTranscripts(msg)
+          
+          if (userText) {
+            console.log('👤 User said:', userText)
+            window.dispatchEvent(new CustomEvent('agent:user', { detail: userText }))
+          }
+          
+          if (agentText) {
+            console.log('🤖 Agent said:', agentText)
+            window.dispatchEvent(new CustomEvent('agent:response', { detail: agentText }))
+          }
+          
+          // Log other message types for debugging
+          if (!userText && !agentText) {
+            if (msg?.type === 'conversation_initiation_metadata') {
+              console.log('🎬 Conversation initiated')
+            } else if (msg?.type === 'interruption') {
+              console.log('✋ User interrupted agent')
+            } else if (msg?.type === 'ping') {
+              console.log('🏓 Ping')
+            } else if (msg?.type === 'audio') {
+              console.log('🔊 Audio chunk')
+            } else if (msg?.type) {
+              console.log('ℹ️  Message type:', msg.type)
             }
-          }
-          // Handle conversation_initiation_metadata
-          else if (msg?.type === 'conversation_initiation_metadata') {
-            console.log('🎬 Conversation initiated')
-          }
-          // Handle interruption events
-          else if (msg?.type === 'interruption') {
-            console.log('✋ User interrupted agent')
-          }
-          // Handle ping/pong
-          else if (msg?.type === 'ping') {
-            console.log('🏓 Ping received')
-          }
-          // Handle audio events
-          else if (msg?.type === 'audio') {
-            console.log('🔊 Audio chunk received')
-          }
-          // Handle internal_tentative_agent_response (agent is thinking)
-          else if (msg?.type === 'internal_tentative_agent_response') {
-            console.log('💭 Agent is thinking...')
-          }
-          // Catch any other message types
-          else if (msg?.type) {
-            console.log('❓ Unknown message type:', msg.type)
           }
         },
         
