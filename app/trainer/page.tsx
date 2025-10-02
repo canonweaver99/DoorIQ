@@ -444,6 +444,13 @@ function TrainerPageContent() {
       if (e?.detail) pushFinal(e.detail, 'homeowner')
     }
 
+    const handleDeltaEvent = (e: any) => {
+      // Handle interim/delta transcripts (live preview as agent speaks)
+      if (e?.detail) {
+        setDeltaText(e.detail)
+      }
+    }
+
     const handleConnectionStatus = (e: any) => {
       if (e?.detail) {
         setConnectionStatus(e.detail)
@@ -454,6 +461,7 @@ function TrainerPageContent() {
     window.addEventListener('agent:message', handleMessage)
     window.addEventListener('agent:user', handleUserEvent)
     window.addEventListener('agent:response', handleAgentEvent)
+    window.addEventListener('agent:delta', handleDeltaEvent)
     window.addEventListener('connection:status', handleConnectionStatus)
 
     ;(window as any).startSessionRecording = () => {
@@ -467,6 +475,7 @@ function TrainerPageContent() {
       window.removeEventListener('agent:message', handleMessage)
       window.removeEventListener('agent:user', handleUserEvent)
       window.removeEventListener('agent:response', handleAgentEvent)
+      window.removeEventListener('agent:delta', handleDeltaEvent)
       window.removeEventListener('connection:status', handleConnectionStatus)
       delete (window as any).startSessionRecording
       delete (window as any).stopSessionRecording

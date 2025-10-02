@@ -93,7 +93,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             let agentText = ''
             
             try {
-              // Handle conversation_updated messages (WebRTC format)
+              // Handle conversation_updated messages (WebRTC format - most common)
               if (message?.type === 'conversation_updated') {
                 const messages = message?.conversation?.messages || []
                 if (messages.length > 0) {
@@ -105,12 +105,21 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
                   }
                 }
               }
-              // Handle user_transcript messages
+              
+              // Handle explicit user_transcript messages
               else if (message?.type === 'user_transcript') {
                 userText = typeof message.user_transcript === 'string' 
                   ? message.user_transcript 
                   : (message.user_transcript?.text || message.text || '')
               }
+              
+              // Handle agent_transcript messages
+              else if (message?.type === 'agent_transcript') {
+                agentText = typeof message.agent_transcript === 'string'
+                  ? message.agent_transcript
+                  : (message.agent_transcript?.text || message.text || '')
+              }
+              
               // Handle agent_response messages
               else if (message?.type === 'agent_response') {
                 const ar = message.agent_response
@@ -124,6 +133,60 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
                   agentText = ar.messages.map((m: any) => m?.text).filter(Boolean).join(' ')
                 }
               }
+              
+              // Handle transcript.final messages
+              else if (message?.type === 'transcript.final') {
+                const text = message?.text || message?.delta || ''
+                if (text) {
+                  // Determine speaker from role or speaker field
+                  const role = message?.role || message?.speaker || 'assistant'
+                  if (role === 'user') {
+                    userText = text
+                  } else {
+                    agentText = text
+                  }
+                }
+              }
+              
+              // Generic fallback: check for user/agent fields
+              if (!userText && (message?.user || message?.speaker === 'user')) {
+                const u = message.user
+                if (typeof u === 'string') userText = u
+                else if (u?.text) userText = u.text
+                else if (u?.transcript) userText = u.transcript
+              }
+              
+              if (!agentText && (message?.agent || message?.speaker === 'agent' || message?.speaker === 'assistant' || message?.role === 'assistant')) {
+                const a = message.agent || message
+                if (typeof a === 'string') agentText = a
+                else if (a?.text) agentText = a.text
+                else if (a?.response) agentText = a.response
+              }
+              
+              // Conversation update style: messages array with role/content
+              if (!userText && !agentText) {
+                const messages = message?.messages || message?.conversation?.messages || []
+                if (Array.isArray(messages) && messages.length) {
+                  const uParts = messages
+                    .filter((m: any) => m?.role === 'user' || m?.speaker === 'user')
+                    .map((m: any) => m?.text || m?.content || '')
+                    .filter(Boolean)
+                  const aParts = messages
+                    .filter((m: any) => m?.role === 'assistant' || m?.speaker === 'agent' || m?.role === 'agent')
+                    .map((m: any) => m?.text || m?.content || '')
+                    .filter(Boolean)
+                  if (uParts.length) userText = uParts.join(' ')
+                  if (aParts.length) agentText = aParts.join(' ')
+                }
+              }
+              
+              // Final fallback: single text field with role
+              if (!userText && !agentText && message?.text) {
+                const role = message?.role || message?.speaker || 'assistant'
+                if (role === 'user') userText = message.text
+                else agentText = message.text
+              }
+              
             } catch (e) {
               console.error('Error extracting transcripts:', e)
             }
@@ -143,6 +206,16 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             window.dispatchEvent(new CustomEvent('agent:response', { detail: agentText }))
           }
           
+          // Handle interim/delta transcripts (partial text as it's being spoken)
+          if (!userText && !agentText && (msg?.type === 'transcript.delta' || msg?.type === 'interim_transcript')) {
+            const interimText = msg?.text || msg?.delta || ''
+            if (interimText) {
+              console.log('📝 Interim text:', interimText)
+              // Dispatch delta event for live preview (optional - shows text as it's being spoken)
+              window.dispatchEvent(new CustomEvent('agent:delta', { detail: interimText }))
+            }
+          }
+          
           // Log other message types for debugging
           if (!userText && !agentText) {
             if (msg?.type === 'conversation_initiation_metadata') {
@@ -153,8 +226,8 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
               console.log('🏓 Ping')
             } else if (msg?.type === 'audio') {
               console.log('🔊 Audio chunk')
-            } else if (msg?.type) {
-              console.log('ℹ️  Message type:', msg.type)
+            } else if (msg?.type !== 'transcript.delta' && msg?.type !== 'interim_transcript' && msg?.type) {
+              console.log('ℹ️  Unhandled message type:', msg.type, '- Consider adding support if this contains transcript data')
             }
           }
         },
