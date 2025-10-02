@@ -484,10 +484,9 @@ function TrainerPageContent() {
       console.log('🛑 EVENT FIRED: agent:end_call', e?.detail)
       console.log('🛑 Austin called end_call tool! Reason:', e?.detail?.reason)
       console.log('🛑 Automatically ending session and starting grading...')
-      // Automatically end the session when Austin calls end_call
-      if (sessionActive) {
-        endSession()
-      }
+      // Trigger the end session via a custom event that will be handled elsewhere
+      // This avoids dependency issues with endSession in useEffect
+      window.dispatchEvent(new CustomEvent('trainer:end-session-requested'))
     }
 
     window.addEventListener('agent:message', handleMessage)
@@ -514,7 +513,22 @@ function TrainerPageContent() {
       delete (window as any).startSessionRecording
       delete (window as any).stopSessionRecording
     }
-  }, [pushFinal, setDelta, sessionActive, endSession])
+  }, [pushFinal, setDelta])
+
+  // Separate effect to handle end-session requests
+  useEffect(() => {
+    const handleEndSessionRequest = () => {
+      if (sessionActive) {
+        console.log('🛑 Ending session due to agent request...')
+        endSession()
+      }
+    }
+
+    window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
+    return () => {
+      window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
+    }
+  }, [sessionActive])
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
