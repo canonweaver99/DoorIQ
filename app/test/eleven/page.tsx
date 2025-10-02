@@ -1,20 +1,8 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
-// Prefer dynamic import for safety; fall back to any if not present
-let Conversation: any = null
-let useConversation: any = null
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const pkg = require('@elevenlabs/client')
-  Conversation = pkg.Conversation || null
-} catch {}
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const reactPkg = require('@elevenlabs/react')
-  useConversation = reactPkg?.useConversation || null
-} catch {}
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { Conversation } from '@elevenlabs/client'
+import { useConversation } from '@elevenlabs/react'
 
 const DEFAULT_AGENT_ID = 'agent_7001k5jqfjmtejvs77jvhjf254tz'
 
@@ -35,15 +23,21 @@ export default function ElevenLabsTestPage() {
   }, [])
 
   useEffect(() => {
-    // Log SDK version
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const v = require('@elevenlabs/client/package.json')?.version
-      if (v) setSdkVersion(v)
-      appendLog(`@elevenlabs/client version: ${v}`)
-    } catch (e) {
-      appendLog('Failed to read @elevenlabs/client version', e)
+    const loadVersion = async () => {
+      try {
+        const res = await fetch('/api/eleven/sdk-version')
+        const data = await res.json().catch(() => ({}))
+        if (data?.version) {
+          setSdkVersion(String(data.version))
+          appendLog(`@elevenlabs/client version: ${data.version}`)
+        } else {
+          appendLog('Failed to get @elevenlabs/client version from API', data)
+        }
+      } catch (e) {
+        appendLog('Failed to fetch @elevenlabs/client version', e)
+      }
     }
+    loadVersion()
   }, [appendLog])
 
   const testDirectConnection = useCallback(async () => {
@@ -178,15 +172,12 @@ export default function ElevenLabsTestPage() {
     }
   }, [appendLog])
 
-  const reactHookConnection = useMemo(() => {
-    if (!useConversation) return null
-    return useConversation({
-      onConnect: () => appendLog('🔗 Hook onConnect'),
-      onDisconnect: () => appendLog('🔌 Hook onDisconnect'),
-      onMessage: (m: unknown) => appendLog('📨 Hook onMessage', m),
-      onError: (e: unknown) => appendLog('❌ Hook onError', e),
-    })
-  }, [appendLog])
+  const reactHookConnection = useConversation({
+    onConnect: () => appendLog('🔗 Hook onConnect'),
+    onDisconnect: () => appendLog('🔌 Hook onDisconnect'),
+    onMessage: (m: unknown) => appendLog('📨 Hook onMessage', m),
+    onError: (e: unknown) => appendLog('❌ Hook onError', e),
+  } as any)
 
   const testHookStart = useCallback(async () => {
     if (!reactHookConnection) {
@@ -249,8 +240,8 @@ export default function ElevenLabsTestPage() {
         <button onClick={testSignedUrlConnection} style={btnStyle}>Test Signed URL Connection</button>
         <button onClick={testRawWebSocket} style={btnStyle}>Test Raw WebSocket</button>
         <button onClick={stopRawWebSocket} style={btnStyle}>Stop Raw WebSocket</button>
-        <button onClick={testHookStart} style={btnStyle} disabled={!reactHookConnection}>Hook Start</button>
-        <button onClick={testHookStop} style={btnStyle} disabled={!reactHookConnection}>Hook Stop</button>
+        <button onClick={testHookStart} style={btnStyle}>Hook Start</button>
+        <button onClick={testHookStop} style={btnStyle}>Hook Stop</button>
       </div>
 
       <details open>
