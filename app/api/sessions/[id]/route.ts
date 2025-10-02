@@ -4,9 +4,10 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-export async function GET(_req: Request, context: { params: { id?: string } }) {
+export async function GET(_req: Request, context: { params: Promise<{ id?: string }> }) {
   try {
-    const id = context?.params?.id
+    const params = await context.params
+    const id = params?.id
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
     const supabase = await createServiceSupabaseClient()
