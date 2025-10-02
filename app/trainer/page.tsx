@@ -669,8 +669,14 @@ function TrainerPageContent() {
 
   const createSessionRecord = async () => {
     try {
+      // Get the current authenticated user ID directly from Supabase auth
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser?.id) {
+        throw new Error('User not authenticated')
+      }
+
       const payload: any = {
-        user_id: user?.id || '00000000-0000-0000-0000-000000000000',
+        user_id: authUser.id, // Use auth user ID directly instead of state
         agent_id: selectedAgent?.id || null,
         agent_name: selectedAgent?.name || null,
         agent_persona: selectedAgent?.persona || null,
