@@ -27,6 +27,14 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       return
     }
 
+    if (!conversationToken) {
+      console.error('❌ No conversation token provided')
+      setErrorMessage('No conversation token provided. Failed to fetch token from server.')
+      setStatus('error')
+      dispatchStatus('error')
+      return
+    }
+
     try {
       if (conversationRef.current) {
         console.log('⚠️ Conversation already exists')
@@ -34,6 +42,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       }
 
       console.log('🚀 Starting ElevenLabs conversation with agent:', agentId)
+      console.log('🎟️ Token length:', conversationToken?.length)
       setStatus('connecting')
       dispatchStatus('connecting')
       setErrorMessage('')
