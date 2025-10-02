@@ -202,6 +202,12 @@ interface PricingPlan {
   buttonText: string;
   href: string;
   isPopular?: boolean;
+  hasRepSelector?: boolean;
+  basePrice?: number;
+  yearlyBasePrice?: number;
+  repPrice?: number;
+  yearlyRepPrice?: number;
+  minReps?: number;
 }
 
 interface PricingSectionProps {
@@ -343,6 +349,8 @@ function PricingToggle() {
 function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
   const { isMonthly } = useContext(PricingContext);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const minReps = plan.minReps || 0;
+  const [repCount, setRepCount] = useState(minReps);
 
   const handleCtaClick = () => {
     // Fire celebration for actions that imply starting a trial or purchasing
@@ -361,6 +369,16 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         startVelocity: 32,
       });
     }
+  };
+
+  // Calculate total price for Manager plan with reps
+  const calculateTotalPrice = () => {
+    if (!plan.hasRepSelector) {
+      return isMonthly ? Number(plan.price) : Number(plan.yearlyPrice);
+    }
+    const base = isMonthly ? (plan.basePrice || 0) : (plan.yearlyBasePrice || 0);
+    const perRep = isMonthly ? (plan.repPrice || 0) : (plan.yearlyRepPrice || 0);
+    return base + (repCount * perRep);
   };
 
   return (
@@ -403,9 +421,7 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         <div className="mt-6 flex items-baseline justify-center gap-x-1">
           <span className="text-5xl font-bold tracking-tight text-foreground">
             <NumberFlow
-              value={
-                isMonthly ? Number(plan.price) : Number(plan.yearlyPrice)
-              }
+              value={calculateTotalPrice()}
               format={{
                 style: "currency",
                 currency: "USD",
@@ -421,6 +437,52 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         <p className="text-xs text-muted-foreground mt-2">
           {isMonthly ? "Billed Monthly" : "Billed Annually"}
         </p>
+
+        {/* Rep Selector for Manager Plan */}
+        {plan.hasRepSelector && (
+          <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
+            <label htmlFor={`rep-count-${index}`} className="block text-sm font-medium text-foreground mb-2">
+              Number of Sales Reps
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setRepCount(Math.max(minReps, repCount - 1))}
+                className="w-10 h-10 rounded-md border border-border bg-background hover:bg-muted transition-colors flex items-center justify-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Decrease rep count"
+                disabled={repCount <= minReps}
+              >
+                −
+              </button>
+              <input
+                id={`rep-count-${index}`}
+                type="number"
+                min={minReps}
+                max="999"
+                value={repCount}
+                onChange={(e) => setRepCount(Math.max(minReps, Math.min(999, parseInt(e.target.value) || minReps)))}
+                className="flex-1 h-10 text-center rounded-md border border-border bg-background px-3 text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                onClick={() => setRepCount(Math.min(999, repCount + 1))}
+                className="w-10 h-10 rounded-md border border-border bg-background hover:bg-muted transition-colors flex items-center justify-center font-semibold"
+                aria-label="Increase rep count"
+              >
+                +
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {repCount > minReps ? (
+                <>
+                  Base: ${isMonthly ? plan.basePrice : plan.yearlyBasePrice} + {repCount} rep{repCount !== 1 ? 's' : ''} × ${isMonthly ? plan.repPrice : plan.yearlyRepPrice}
+                </>
+              ) : (
+                <>
+                  Includes {minReps} rep{minReps !== 1 ? 's' : ''}
+                </>
+              )}
+            </p>
+          </div>
+        )}
 
         <ul
           role="list"
