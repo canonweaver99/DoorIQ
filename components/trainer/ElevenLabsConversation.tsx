@@ -212,7 +212,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       setStatus('error')
       dispatchStatus('error')
     }
-  }, [agentId, signedUrl])
+  }, [agentId, conversationToken])
 
   const stop = useCallback(async () => {
     try {
