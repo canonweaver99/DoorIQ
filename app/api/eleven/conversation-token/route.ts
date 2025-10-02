@@ -86,8 +86,10 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json();
+    console.log('📦 ElevenLabs response data:', JSON.stringify(data));
     console.log('✅ Successfully obtained conversation token');
     console.log('⏰ Expires at:', data.expires_at);
+    console.log('🎟️ Token field:', data.conversation_token ? 'exists' : 'MISSING');
     
     return NextResponse.json({
       conversation_token: data.conversation_token,
