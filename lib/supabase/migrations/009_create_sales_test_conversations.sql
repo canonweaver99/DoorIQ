@@ -1,14 +1,17 @@
 -- Create sales_test_conversations table for ElevenLabs conversation analysis
 -- This table stores the detailed performance metrics from ElevenLabs API analysis
 
+-- Ensure UUID extension exists
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS sales_test_conversations (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   
-  -- Reference fields
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  -- Reference fields (remove foreign key constraints to avoid dependency issues)
+  user_id UUID NOT NULL,
   conversation_id TEXT UNIQUE NOT NULL,
-  agent_id UUID REFERENCES agents(id) ON DELETE SET NULL,
+  agent_id UUID,
   
   -- Outcome
   outcome TEXT CHECK (outcome IN ('SUCCESS', 'FAILURE', 'PARTIAL')),
