@@ -124,6 +124,10 @@ export interface Database {
           total_contract_value: number | null
           commission_amount: number | null
           revenue_category: string | null
+          safety_score: number | null
+          close_effectiveness_score: number | null
+          introduction_score: number | null
+          listening_score: number | null
           full_transcript: Json | null
           analytics: Json | null
           device_info: Json | null
@@ -191,6 +195,10 @@ export interface Database {
           total_contract_value?: number | null
           commission_amount?: number | null
           revenue_category?: string | null
+          safety_score?: number | null
+          close_effectiveness_score?: number | null
+          introduction_score?: number | null
+          listening_score?: number | null
           full_transcript?: Json | null
           analytics?: Json | null
           device_info?: Json | null
@@ -258,6 +266,10 @@ export interface Database {
           total_contract_value?: number | null
           commission_amount?: number | null
           revenue_category?: string | null
+          safety_score?: number | null
+          close_effectiveness_score?: number | null
+          introduction_score?: number | null
+          listening_score?: number | null
           full_transcript?: Json | null
           analytics?: Json | null
           device_info?: Json | null

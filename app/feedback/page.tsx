@@ -33,15 +33,15 @@ function FeedbackInner() {
     try {
       const supabase = createClient();
       const { data, error } = await supabase
-        .from('training_sessions')
-        .select('id, transcript, duration_seconds, analytics, overall_score, rapport_score, introduction_score, listening_score, objection_handling_score, close_effectiveness_score')
+        .from('live_sessions')
+        .select('id, full_transcript, duration_seconds, analytics, overall_score, rapport_score, introduction_score, listening_score, objection_handling_score, close_effectiveness_score, safety_score')
         .eq('id', sessionId)
         .single();
 
       if (error) throw error;
 
       // Use saved scores or generate basic feedback
-      const transcript = Array.isArray((data as any)?.transcript) ? (data as any).transcript : [];
+      const transcript = Array.isArray((data as any)?.full_transcript) ? (data as any).full_transcript : [];
       generateFeedback(data, duration, transcript);
     } catch (error) {
       console.error('Error loading session:', error);
@@ -73,28 +73,48 @@ function FeedbackInner() {
       Object.values(scores).reduce((sum, score) => sum + score, 0) / Object.values(scores).length
     );
 
+    // Use AI feedback if available, otherwise use default
+    const aiFeedback = sessionData.analytics?.feedback;
+    const feedback = aiFeedback ? {
+      strengths: aiFeedback.strengths || [
+        "Maintained professional demeanor throughout",
+        "Successfully engaged with the homeowner",
+        "Demonstrated product knowledge"
+      ],
+      improvements: aiFeedback.improvements || [
+        "Focus on building stronger rapport early",
+        "Ask more discovery questions",
+        "Practice objection handling techniques"
+      ],
+      specificTips: aiFeedback.specificTips || [
+        "Start with a friendly greeting and compliment",
+        "Ask about their current pest concerns",
+        "Address safety for pets and children upfront"
+      ]
+    } : {
+      strengths: [
+        "Maintained professional demeanor throughout",
+        "Successfully engaged with the homeowner",
+        "Demonstrated product knowledge"
+      ],
+      improvements: [
+        "Focus on building stronger rapport early",
+        "Ask more discovery questions",
+        "Practice objection handling techniques"
+      ],
+      specificTips: [
+        "Start with a friendly greeting and compliment",
+        "Ask about their current pest concerns",
+        "Address safety for pets and children upfront"
+      ]
+    };
+
     setFeedbackData({
       overallScore,
       duration,
       transcript,
       scores,
-      feedback: {
-        strengths: [
-          "Maintained professional demeanor throughout",
-          "Successfully engaged with the homeowner",
-          "Demonstrated product knowledge"
-        ],
-        improvements: [
-          "Focus on building stronger rapport early",
-          "Ask more discovery questions",
-          "Practice objection handling techniques"
-        ],
-        specificTips: [
-          "Start with a friendly greeting and compliment",
-          "Ask about their current pest concerns",
-          "Address safety for pets and children upfront"
-        ]
-      }
+      feedback
     });
     setLoading(false);
   };
