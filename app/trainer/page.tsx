@@ -399,6 +399,9 @@ function TrainerPageContent() {
       timestamp: new Date(),
     }
     setTranscript(prev => [...prev, entry])
+    if (speaker === 'homeowner') {
+      setDeltaText('')
+    }
 
     setTimeout(() => {
       transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -509,13 +512,13 @@ function TrainerPageContent() {
       setAvailableAgents(Array.isArray(agents) ? agents : [])
 
       if (agentParam) {
-        const match = agents?.find((agent: Agent) => agent.eleven_agent_id === agentParam)
+        const match = (agents as any[])?.find((agent: Agent) => (agent as any).eleven_agent_id === agentParam) as Agent | undefined
         setSelectedAgent(match || agents?.[0] || null)
         if (match && !homeownerName) {
           setHomeownerName(match.name)
         }
       } else {
-        const defaultAgent = agents?.[0]
+        const defaultAgent = (agents && (agents as any[])[0]) as Agent | undefined
         setSelectedAgent(defaultAgent || null)
         if (defaultAgent && !homeownerName) {
           setHomeownerName(defaultAgent.name || 'Homeowner')
@@ -647,13 +650,8 @@ function TrainerPageContent() {
 
   const createSessionRecord = async () => {
     try {
-      // Check if user is authenticated
-      if (!user?.id) {
-        console.warn('⚠️ No user ID available - creating anonymous session')
-      }
-
       const payload: any = {
-        user_id: user?.id || '00000000-0000-0000-0000-000000000000', // Use placeholder UUID if no user
+        user_id: user?.id || '00000000-0000-0000-0000-000000000000',
         agent_id: selectedAgent?.id || null,
         agent_name: selectedAgent?.name || null,
         agent_persona: selectedAgent?.persona || null,
@@ -662,26 +660,20 @@ function TrainerPageContent() {
           homeowner_name: selectedAgent?.name || null,
         },
       }
-      console.log('📝 Creating session with payload:', JSON.stringify(payload, null, 2))
-      console.log('👤 User authenticated:', !!user?.id)
-      
-      const { data: session, error } = await (supabase as any)
-        .from('live_sessions')
-        .insert(payload)
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('❌ Supabase error creating session:')
-        console.error('Error code:', error.code)
-        console.error('Error message:', error.message)
-        console.error('Error details:', error.details)
-        console.error('Error hint:', error.hint)
-        console.error('Full error object:', JSON.stringify(error, null, 2))
-        throw error
+      console.log('📝 Creating session via API with payload:', JSON.stringify(payload, null, 2))
+
+      const resp = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}))
+        throw new Error(err?.error || 'Failed to create session')
       }
-      console.log('✅ Session created:', (session as any).id)
-      return (session as any).id
+      const json = await resp.json()
+      console.log('✅ Session created:', json.id)
+      return json.id as string
     } catch (error: any) {
       console.error('❌ Error creating session:', error?.message || error)
       // Don't fail the session if we can't create the record
@@ -709,40 +701,30 @@ function TrainerPageContent() {
       }
 
       if (sessionId) {
-        await (supabase as any)
-          .from('live_sessions')
-          .update({
-            ended_at: new Date().toISOString(),
-            duration_seconds: duration,
-            full_transcript: transcript as any,
-            analytics: {
-              conversation_id: (window as any)?.elevenConversationId || null,
-              homeowner_name: selectedAgent?.name || homeownerName,
-              homeowner_profile: selectedAgent?.persona || 'Standard homeowner persona',
-              homeowner_agent_id: selectedAgent?.eleven_agent_id || null,
-            },
-          } as any)
-          .eq('id', sessionId as string)
-
-        try {
-          if (transcript.length > 0) {
-            await fetch('/api/grade/session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ sessionId }),
-            })
-          }
-        } catch (e) {
-          console.error('AI grading failed:', e)
+        const analytics = {
+          conversation_id: (window as any)?.elevenConversationId || null,
+          homeowner_name: selectedAgent?.name || homeownerName,
+          homeowner_profile: selectedAgent?.persona || 'Standard homeowner persona',
+          homeowner_agent_id: selectedAgent?.eleven_agent_id || null,
         }
 
-        await fetch('/api/notifications/session-complete', {
+        const resp = await fetch('/api/sessions/end', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId }),
-        }).catch((e) => {
-          console.error('Manager notification failed:', e)
+          body: JSON.stringify({ id: sessionId, duration, transcript, analytics }),
         })
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}))
+          console.error('❌ Failed to end session:', err)
+        } else {
+          await fetch('/api/notifications/session-complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
+          }).catch((e) => {
+            console.error('Manager notification failed:', e)
+          })
+        }
       }
 
       setCalculatingScore(true)
