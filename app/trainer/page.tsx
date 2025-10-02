@@ -632,7 +632,6 @@ function TrainerPageContent() {
       const payload: any = {
         user_id: user?.id || null,
         agent_id: selectedAgent?.id || null,
-        scenario_type: 'standard',
         agent_name: selectedAgent?.name || null,
         agent_persona: selectedAgent?.persona || null,
         conversation_metadata: {
@@ -640,15 +639,20 @@ function TrainerPageContent() {
           homeowner_name: selectedAgent?.name || null,
         },
       }
+      console.log('📝 Creating session with payload:', JSON.stringify(payload, null, 2))
       const { data: session, error } = await (supabase as any)
         .from('live_sessions')
         .insert(payload)
         .select()
         .single()
-      if (error) throw error
+      if (error) {
+        console.error('❌ Supabase error creating session:', error)
+        throw error
+      }
+      console.log('✅ Session created:', (session as any).id)
       return (session as any).id
     } catch (error) {
-      console.error('Error creating session:', error)
+      console.error('❌ Error creating session:', error)
       return null
     }
   }
