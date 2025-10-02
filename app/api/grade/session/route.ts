@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { gradeSession, Transcript as GTranscript } from '@/lib/grader'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
+import { buildCompleteUpdatePayload } from '@/lib/grading-helpers'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -41,13 +42,28 @@ export async function POST(req: Request) {
     // Map to structured transcript for deterministic + LLM rubric grader
     const gTranscript: GTranscript = {
       sessionId,
-      turns: transcript.map((t, i) => ({
-        id: i,
-        speaker: (t.speaker === 'user' || t.speaker === 'rep') ? 'rep' : 'homeowner',
-        startMs: typeof t.timestamp === 'number' ? t.timestamp : i * 4000,
-        endMs: typeof t.timestamp === 'number' ? (Number(t.timestamp) + Math.max(1500, t.text?.length * 30)) : i * 4000 + Math.max(1500, (t.text?.length || 10) * 30),
-        text: String(t.text || '')
-      }))
+      turns: transcript.map((t, i) => {
+        // Parse timestamp - handle both number (ms) and ISO string formats
+        let startMs: number
+        if (typeof t.timestamp === 'number') {
+          startMs = t.timestamp
+        } else if (typeof t.timestamp === 'string') {
+          startMs = new Date(t.timestamp).getTime()
+        } else {
+          startMs = i * 4000 // Fallback for missing timestamps
+        }
+        
+        // Estimate end time based on text length (avg 150 words/min = ~400ms per word)
+        const estimatedDurationMs = Math.max(1500, (t.text?.length || 10) * 30)
+        
+        return {
+          id: i,
+          speaker: (t.speaker === 'user' || t.speaker === 'rep') ? 'rep' : 'homeowner',
+          startMs,
+          endMs: startMs + estimatedDurationMs,
+          text: String(t.text || '')
+        }
+      })
     }
 
     const packet = await gradeSession(gTranscript, async (prompt: string) => {
@@ -91,50 +107,13 @@ export async function POST(req: Request) {
         return { idx: t.id, speaker: 'rep', label, rationale }
       })
 
-    const updatePayload: any = {
-      overall_score: clamp(packet.components.final, 0, 100),
-      rapport_score: clamp((packet.llm?.clarity_empathy?.score ?? 0) * 10, 0, 100),
-      introduction_score: clamp((packet.objective.stepCoverage.opener ? 85 : 40), 0, 100),
-      listening_score: clamp(Math.round(packet.objective.questionRate * 100), 0, 100),
-      objection_handling_score: clamp(packet.llm?.objection_handling?.overall ?? 0, 0, 100),
-      // Safety score: 0 if rep never mentions safety-related concepts; 60 for basic mention; 85 for detailed (pets/kids)
-      safety_score: (() => {
-        const repTurns = gTranscript.turns.filter(t => t.speaker === 'rep')
-        const safetyRegex = /(safe|safety|non[-\s]?toxic|eco|chemical|chemicals|harm|exposure|residual)/i
-        const detailedRegex = /(pets?|children|kids|family)/i
-        const anyMention = repTurns.some(t => safetyRegex.test(t.text || ''))
-        if (!anyMention) return 0
-        const detailed = repTurns.some(t => detailedRegex.test(t.text || ''))
-        return detailed ? 85 : 60
-      })(),
-      // More conservative closing score: 0 if convo < 20s and no clear close;
-      // base 40 for any close attempt, 70 for assumptive close, +10 per extra attempt up to 90
-      close_effectiveness_score: (() => {
-        const durationMs = (gTranscript.turns.at(-1)?.endMs ?? 0) - (gTranscript.turns[0]?.startMs ?? 0)
-        const attempts = packet.objective.closeAttempts || 0
-        const assumptive = gTranscript.turns.some(t => t.speaker === 'rep' && /which works better|two appointments|when would you prefer|let'?s get started/i.test(t.text || ''))
-        if (attempts === 0) return durationMs < 20000 ? 0 : 40
-        let base = assumptive ? 70 : 40
-        base += Math.min(20, Math.max(0, attempts - 1) * 10)
-        return clamp(base, 0, 100)
-      })(),
-      analytics: {
-        ...(session.analytics || {}),
-        aiGrader: 'openai+rule',
-        objective: packet.objective,
-        objection_cases: packet.objectionCases,
-        pest_control_objections: packet.pestControlObjections,
-        moment_of_death: packet.momentOfDeath,
-        difficulty_analysis: packet.components.difficulty,
-        feedback: {
-          strengths: packet.llm?.top_wins ?? [],
-          improvements: packet.llm?.top_fixes ?? [],
-          specificTips: (packet.llm?.drills ?? []).map(d => `${d.skill}: ${d.microplay}`)
-        },
-        line_ratings: lineRatings,
-        graded_at: new Date().toISOString(),
-      },
-    }
+    // Use the comprehensive helper to build complete payload with all columns
+    const updatePayload = buildCompleteUpdatePayload(
+      gTranscript,
+      packet,
+      session.analytics,
+      lineRatings
+    )
 
     let { error: updateError } = await (supabase as any)
       .from('live_sessions')
@@ -161,10 +140,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
 }
-
-function clamp(n: any, min: number, max: number) {
-  const num = Number.isFinite(n) ? Number(n) : 0
-  return Math.max(min, Math.min(max, Math.round(num)))
-}
-
-
