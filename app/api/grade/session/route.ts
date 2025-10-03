@@ -30,6 +30,15 @@ export async function POST(req: Request) {
     const transcript: TranscriptEntry[] = Array.isArray((session as any).full_transcript)
       ? (session as any).full_transcript
       : []
+    
+    console.log('📊 GRADING DEBUG:', {
+      sessionId,
+      transcriptIsArray: Array.isArray(transcript),
+      transcriptLength: transcript.length,
+      firstEntry: transcript[0],
+      lastEntry: transcript[transcript.length - 1]
+    })
+    
     if (!transcript.length) {
       return NextResponse.json({ error: 'No transcript available to grade' }, { status: 400 })
     }
@@ -65,6 +74,13 @@ export async function POST(req: Request) {
         }
       })
     }
+    
+    console.log('🎯 PARSED TRANSCRIPT:', {
+      totalTurns: gTranscript.turns.length,
+      firstTurn: gTranscript.turns[0],
+      lastTurn: gTranscript.turns[gTranscript.turns.length - 1],
+      duration: (gTranscript.turns[gTranscript.turns.length - 1]?.endMs - gTranscript.turns[0]?.startMs) / 1000
+    })
 
     const packet = await gradeSession(gTranscript, async (prompt: string) => {
       const r = await openai.chat.completions.create({
