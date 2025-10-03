@@ -34,6 +34,7 @@ export default function AnalyticsPage() {
   const router = useRouter()
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [grading, setGrading] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'transcript'>('transcript')
   const [selectedTranscriptLine, setSelectedTranscriptLine] = useState<number | null>(null)
   const supabase = createClient()
@@ -47,17 +48,21 @@ export default function AnalyticsPage() {
     const run = async () => {
       if (!session?.id) return
       const hasTranscript = Array.isArray(session.transcript) && session.transcript.length > 0
+      const hasScore = session.overall_score && session.overall_score > 0
       const hasAIFeedback = Boolean(session.analytics?.feedback)
-      if (hasTranscript && !hasAIFeedback) {
+      if (hasTranscript && (!hasScore || !hasAIFeedback)) {
         try {
+          setGrading(true)
           await fetch('/api/grade/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionId: session.id })
           })
-          fetchSessionData()
+          await fetchSessionData()
         } catch (e) {
           console.error('AI grading failed:', e)
+        } finally {
+          setGrading(false)
         }
       }
     }
@@ -194,10 +199,22 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Animated Score Display */}
-          <AnimatedScore 
-            score={session.overall_score || 0}
-            className="py-8"
-          />
+          {grading || (!session.overall_score && session.transcript && session.transcript.length > 0) ? (
+            <div className="py-16 text-center">
+              <motion.div
+                className="w-16 h-16 mx-auto rounded-full border-4 border-slate-600 border-t-blue-500 mb-4"
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, ease: 'linear', duration: 1 }}
+              />
+              <p className="text-slate-300 text-lg">Calculating your score...</p>
+              <p className="text-slate-400 text-sm mt-2">This may take a few moments</p>
+            </div>
+          ) : (
+            <AnimatedScore 
+              score={session.overall_score || 0}
+              className="py-8"
+            />
+          )}
           
           {/* Session Duration */}
           <div className="text-center text-lg text-slate-400 -mt-4 mb-6">

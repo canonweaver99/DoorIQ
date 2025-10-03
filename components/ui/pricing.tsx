@@ -373,8 +373,14 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
 
   // Calculate total price for Manager plan with reps
   const calculateTotalPrice = () => {
+    // Check if price is a string (e.g., "Contact Sales")
+    const priceValue = isMonthly ? plan.price : plan.yearlyPrice;
+    if (isNaN(Number(priceValue))) {
+      return priceValue;
+    }
+    
     if (!plan.hasRepSelector) {
-      return isMonthly ? Number(plan.price) : Number(plan.yearlyPrice);
+      return Number(priceValue);
     }
     const base = isMonthly ? (plan.basePrice || 0) : (plan.yearlyBasePrice || 0);
     const perRep = isMonthly ? (plan.repPrice || 0) : (plan.yearlyRepPrice || 0);
@@ -419,24 +425,34 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
           {plan.description}
         </p>
         <div className="mt-6 flex items-baseline justify-center gap-x-1">
-          <span className="text-5xl font-bold tracking-tight text-foreground">
-            <NumberFlow
-              value={calculateTotalPrice()}
-              format={{
-                style: "currency",
-                currency: "USD",
-                minimumFractionDigits: 0,
-              }}
-              className="font-variant-numeric: tabular-nums"
-            />
-          </span>
-          <span className="text-sm font-semibold leading-6 tracking-wide text-muted-foreground">
-            / {plan.period}
-          </span>
+          {typeof calculateTotalPrice() === 'number' ? (
+            <>
+              <span className="text-5xl font-bold tracking-tight text-foreground">
+                <NumberFlow
+                  value={calculateTotalPrice()}
+                  format={{
+                    style: "currency",
+                    currency: "USD",
+                    minimumFractionDigits: 0,
+                  }}
+                  className="font-variant-numeric: tabular-nums"
+                />
+              </span>
+              <span className="text-sm font-semibold leading-6 tracking-wide text-muted-foreground">
+                / {plan.period}
+              </span>
+            </>
+          ) : (
+            <span className="text-3xl font-bold tracking-tight text-foreground">
+              {plan.price}
+            </span>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          {isMonthly ? "Billed Monthly" : "Billed Annually"}
-        </p>
+        {typeof calculateTotalPrice() === 'number' && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {isMonthly ? "Billed Monthly" : "Billed Annually"}
+          </p>
+        )}
 
         {/* Rep Selector for Manager Plan */}
         {plan.hasRepSelector && (

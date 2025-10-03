@@ -7,7 +7,6 @@ import { DetailedBreakdown } from './analysis/DetailedBreakdown'
 import { MetricsGrid } from './analysis/MetricsGrid'
 import { TranscriptViewer } from './analysis/TranscriptViewer'
 import { SentimentTimeline } from './analysis/SentimentTimeline'
-import { ComparisonChart } from './analysis/ComparisonChart'
 import { GradeCard } from './analysis/GradeCard'
 
 type Props = {
@@ -103,8 +102,6 @@ export default function ConversationAnalysis(props: Props) {
           keyQuestions: basic.homeowner_key_questions,
         }}
       />
-
-      <ComparisonChart score={grade.total} />
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-green-900/20 border border-green-800 rounded-lg p-5">

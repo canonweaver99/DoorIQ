@@ -22,8 +22,8 @@ const demoPlans = [
   },
   {
     name: "Individual",
-    price: "35",
-    yearlyPrice: "28",
+    price: "20",
+    yearlyPrice: "16",
     period: "month",
     features: [
       "Access to ALL AI training agents",
@@ -43,9 +43,9 @@ const demoPlans = [
   },
   {
     name: "Manager",
-    price: "120",
-    yearlyPrice: "96",
-    period: "month",
+    price: "Contact Sales",
+    yearlyPrice: "Contact Sales",
+    period: "",
     features: [
       "Everything in Individual",
       "Team management dashboard",
@@ -55,18 +55,12 @@ const demoPlans = [
       "Track team performance metrics",
       "Manager coaching insights",
       "Bulk report exports",
-      "Minimum 3 reps included ($15/month each)",
-      "Add unlimited additional reps at $15/month",
+      "Custom pricing based on team size",
+      "Dedicated account manager",
     ],
     description: "For sales managers and teams",
-    buttonText: "Get Started",
-    href: "/auth/signup",
-    hasRepSelector: true,
-    basePrice: 75,
-    yearlyBasePrice: 60,
-    repPrice: 15,
-    yearlyRepPrice: 12,
-    minReps: 3,
+    buttonText: "Contact Sales",
+    href: "mailto:sales@dooriq.com",
   },
 ];
 

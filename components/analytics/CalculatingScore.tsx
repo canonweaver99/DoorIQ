@@ -87,13 +87,11 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
           
           {/* Header */}
           <div className="text-center mb-8">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            <div
               className={`w-16 h-16 mx-auto mb-4 rounded-full bg-slate-700 flex items-center justify-center ${stageInfo.color}`}
             >
               <StageIcon className="w-8 h-8" />
-            </motion.div>
+            </div>
             
             <h1 className="text-3xl font-bold text-slate-100 mb-2">
               {stageInfo.text}
