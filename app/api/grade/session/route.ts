@@ -84,22 +84,31 @@ export async function POST(req: Request) {
 
     const packet = await gradeSession(gTranscript, async (prompt: string) => {
       const r = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o', // Upgraded to GPT-4o for better quality feedback
         messages: [
-          { role: 'system', content: 'Return strict JSON only. No prose.' },
+          { role: 'system', content: 'You are an expert sales coach. Return strict JSON only. No prose.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0,
+        temperature: 0.3, // Slight creativity for better coaching feedback
         response_format: { type: 'json_object' },
       })
       return r.choices?.[0]?.message?.content || '{}'
     })
 
-    // Persist results to Supabase
-    // Heuristic line-level ratings (override average labels)
-    const lineRatings = gTranscript.turns
+    // Use LLM's contextual line-by-line ratings if available, otherwise fallback to heuristic
+    const lineRatings = packet.llm?.line_by_line_ratings?.map((rating: any) => ({
+      idx: rating.turn_id,
+      speaker: 'rep',
+      rating: rating.rating,
+      label: rating.label,
+      rationale: rating.context_rationale,
+      what_worked: rating.what_worked,
+      what_to_improve: rating.what_to_improve,
+      example_alternative: rating.example_alternative
+    })) || gTranscript.turns
       .filter(t => t.speaker === 'rep')
       .map(t => {
+        // Fallback heuristic if LLM didn't provide ratings
         const text = t.text.toLowerCase()
         let label: 'excellent' | 'good' | 'average' | 'poor' = 'average'
         let rationale = ''

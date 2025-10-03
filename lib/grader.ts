@@ -96,7 +96,7 @@ export interface LlmRubricInput {
 }
 
 export interface LlmRubricOutput {
-  discovery: { score: number; evidence: number[] };
+  discovery: { score: number; evidence: number[]; feedback?: string };
   objection_handling: {
     overall: number;
     cases: Array<{
@@ -104,15 +104,64 @@ export interface LlmRubricOutput {
       steps: { ack: 0|1; clarify: 0|1; address: 0|1; confirm: 0|1 };
       notes: string;
       evidence?: number[];
+      what_to_say_instead?: string;
     }>;
+    feedback?: string;
   };
-  clarity_empathy: { score: number; notes: string };
-  solution_framing: { score: number; notes: string };
-  pricing_next_step: { score: number; notes: string };
-  compliance: { score: number; violations: Array<{type: string; quote: string; turn_id: number}> };
-  top_wins: string[];
-  top_fixes: string[];
-  drills: Array<{ skill: string; microplay: string }>;
+  clarity_empathy: { 
+    score: number; 
+    notes: string;
+    strong_moments?: string[];
+    weak_moments?: string[];
+  };
+  solution_framing: { 
+    score: number; 
+    notes: string;
+    best_value_statement?: string;
+    missed_opportunities?: string[];
+  };
+  pricing_next_step: { 
+    score: number; 
+    notes: string;
+    close_attempts_quality?: string;
+  };
+  compliance: { 
+    score: number; 
+    violations: Array<{type: string; quote: string; turn_id: number; why_problematic?: string}> 
+  };
+  line_by_line_ratings?: Array<{
+    turn_id: number;
+    rating: number;
+    label: 'excellent' | 'good' | 'average' | 'poor';
+    context_rationale: string;
+    what_worked?: string;
+    what_to_improve?: string;
+    example_alternative?: string;
+  }>;
+  top_wins: Array<{
+    moment: string;
+    turn_id: number;
+    why_it_worked: string;
+    technique_used: string;
+  }> | string[]; // Support old format for backward compatibility
+  top_fixes: Array<{
+    moment: string;
+    turn_id: number;
+    why_it_failed: string;
+    better_approach: string;
+    expected_impact: string;
+  }> | string[]; // Support old format for backward compatibility
+  drills: Array<{ 
+    skill: string; 
+    microplay: string;
+    why_needed?: string;
+    success_criteria?: string;
+  }>;
+  overall_coaching_summary?: {
+    strengths: string[];
+    critical_improvements: string[];
+    next_session_focus: string;
+  };
   // defensive parsing
   _raw?: unknown;
 }
@@ -560,52 +609,144 @@ export function objectiveToSixty(m: ObjectiveMetrics): number {
 //////////////////////
 
 export function buildLlmPrompt(input: LlmRubricInput): string {
-  // Pass ONLY what’s needed: rep turns + objection spans + policy
+  // Pass full conversation context for better analysis
+  const allTurns = input.transcript.turns.map(t => ({
+    id: t.id,
+    speaker: t.speaker,
+    text: t.text,
+    timestamp_ms: t.startMs
+  }));
+  
   const repTurns = input.transcript.turns.filter(t => t.speaker === 'rep');
+  
   const h: Record<string, unknown> = {
-    transcript_meta: { sessionId: input.transcript.sessionId, turns: input.transcript.turns.length },
+    transcript_meta: { 
+      sessionId: input.transcript.sessionId, 
+      total_turns: input.transcript.turns.length,
+      duration_seconds: Math.round(((input.transcript.turns.at(-1)?.endMs ?? 0) - (input.transcript.turns[0]?.startMs ?? 0)) / 1000)
+    },
+    full_conversation: allTurns,
     rep_turns: repTurns.map(t => ({ id: t.id, ts: [t.startMs, t.endMs], text: t.text })),
     objection_spans: input.objectionSpans,
     policy_snippets: input.policySnippets ?? [],
     instructions: {
-      style: "Output STRICT JSON only. No prose. Temperature 0.",
-      evidence_rule: "Every deduction must cite rep turn_ids in arrays.",
+      style: "Output STRICT JSON only. No prose.",
+      evidence_rule: "Every deduction must cite specific rep turn_ids in arrays.",
+      coaching_focus: "Provide actionable, specific feedback with exact quotes from the conversation.",
       scales: {
-        discovery: "0-20",
-        objection_handling: "0-20 (5 per step; -3 if missing confirm)",
-        clarity_empathy: "0-10",
-        solution_framing: "0-10",
-        pricing_next_step: "0-10",
-        compliance: "0-10 (misleading/medical/chemical claims etc.)"
+        discovery: "0-20 (needs assessment, asking about pests/issues, understanding customer pain)",
+        objection_handling: "0-20 (acknowledge, clarify, address with empathy, confirm resolution)",
+        clarity_empathy: "0-10 (clear communication, empathy shown, active listening)",
+        solution_framing: "0-10 (value proposition, benefits vs features, customization)",
+        pricing_next_step: "0-10 (confidence in pricing discussion, creating urgency, assumptive close)",
+        compliance: "0-10 (no misleading claims, no medical/chemical false promises)"
       }
     }
   };
+  
   const skeleton = `
-You are a harsh sales QA grader. Output JSON ONLY that matches this TypeScript type:
+You are an expert door-to-door pest control sales coach. Analyze this conversation and provide detailed, actionable feedback.
+
+CRITICAL: Analyze EVERY rep line in context. Consider:
+- Where it falls in the conversation flow
+- How the homeowner responded
+- Whether it moved the sale forward
+- Missed opportunities
+
+Output JSON ONLY that matches this TypeScript type:
 
 {
-  "discovery": { "score": 0-20, "evidence": number[] },
+  "discovery": { 
+    "score": 0-20, 
+    "evidence": number[],
+    "feedback": "Detailed explanation with specific examples from conversation"
+  },
   "objection_handling": {
     "overall": 0-20,
     "cases": [
-      { "label": "price"|"timing"|"spouse"|"pests_not_bad"|"competitor"|"chemicals_kids_pets",
+      { 
+        "label": "price"|"timing"|"spouse"|"pests_not_bad"|"competitor"|"chemicals_kids_pets",
         "steps": {"ack":0|1,"clarify":0|1,"address":0|1,"confirm":0|1},
-        "notes": string, "evidence": number[] }
-    ]
+        "notes": "Specific feedback on how this objection was handled",
+        "evidence": number[],
+        "what_to_say_instead": "Better response example (if needed)"
+      }
+    ],
+    "feedback": "Overall objection handling assessment with examples"
   },
-  "clarity_empathy": { "score": 0-10, "notes": string },
-  "solution_framing": { "score": 0-10, "notes": string },
-  "pricing_next_step": { "score": 0-10, "notes": string },
-  "compliance": { "score": 0-10, "violations": [{"type": string, "quote": string, "turn_id": number}] },
-  "top_wins": string[],
-  "top_fixes": string[],
-  "drills": [{"skill": string, "microplay": string}]
+  "clarity_empathy": { 
+    "score": 0-10, 
+    "notes": "Specific examples of empathy shown or missed",
+    "strong_moments": string[],
+    "weak_moments": string[]
+  },
+  "solution_framing": { 
+    "score": 0-10, 
+    "notes": "How well value was communicated with examples",
+    "best_value_statement": "Quote the best value statement from rep",
+    "missed_opportunities": string[]
+  },
+  "pricing_next_step": { 
+    "score": 0-10, 
+    "notes": "Pricing confidence and close attempts assessment",
+    "close_attempts_quality": "Analysis of close attempts made"
+  },
+  "compliance": { 
+    "score": 0-10, 
+    "violations": [{"type": string, "quote": string, "turn_id": number, "why_problematic": string}] 
+  },
+  "line_by_line_ratings": [
+    {
+      "turn_id": number,
+      "rating": 1-10,
+      "label": "excellent"|"good"|"average"|"poor",
+      "context_rationale": "Why this rating given the conversation flow and customer state",
+      "what_worked": "Specific techniques used well (if any)",
+      "what_to_improve": "Actionable suggestion for this specific line",
+      "example_alternative": "Better way to say this (if rating < 7)"
+    }
+  ],
+  "top_wins": [
+    {
+      "moment": "Quote the exact rep line",
+      "turn_id": number,
+      "why_it_worked": "Specific reason this was effective",
+      "technique_used": "Name the sales technique (e.g., 'assumptive close', 'empathy statement')"
+    }
+  ],
+  "top_fixes": [
+    {
+      "moment": "Quote the exact rep line that needs work",
+      "turn_id": number,
+      "why_it_failed": "Specific problem identified",
+      "better_approach": "Exactly what to say/do instead",
+      "expected_impact": "How this fix would improve the outcome"
+    }
+  ],
+  "drills": [
+    {
+      "skill": "Specific skill to practice",
+      "why_needed": "Based on this conversation, why this skill matters",
+      "microplay": "Exact roleplay scenario to practice",
+      "success_criteria": "How to know you've mastered it"
+    }
+  ],
+  "overall_coaching_summary": {
+    "strengths": string[],
+    "critical_improvements": string[],
+    "next_session_focus": "Top 1-2 things to work on next time"
+  }
 }
 
-Guardrails:
-- Grade rep turns only (ignore homeowner content for scoring).
-- Cite evidence turn_ids for every deduction.
-- Be strict. No vibes. No padding. Temperature 0.
+Grading Guidelines:
+- Be SPECIFIC. Quote exact lines from the conversation.
+- Consider conversation CONTEXT and timing, not just isolated lines.
+- For line_by_line_ratings: Rate EVERY rep turn (turns with speaker='rep').
+- Ratings: 9-10 = exceptional technique, 7-8 = solid, 5-6 = adequate, 3-4 = weak, 1-2 = harmful.
+- top_wins: Highlight 3-5 best moments with exact quotes.
+- top_fixes: Identify 3-5 critical mistakes with exact quotes and fixes.
+- drills: Provide 2-4 specific practice scenarios based on gaps seen.
+- Be constructive but HONEST. Don't inflate scores.
 `.trim();
 
   return skeleton + "\n\nINPUT_JSON=\n" + JSON.stringify(h);

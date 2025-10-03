@@ -515,21 +515,6 @@ function TrainerPageContent() {
     }
   }, [pushFinal, setDelta])
 
-  // Separate effect to handle end-session requests
-  useEffect(() => {
-    const handleEndSessionRequest = () => {
-      if (sessionActive) {
-        console.log('🛑 Ending session due to agent request...')
-        endSession()
-      }
-    }
-
-    window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
-    return () => {
-      window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
-    }
-  }, [sessionActive])
-
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
@@ -638,6 +623,32 @@ function TrainerPageContent() {
       console.log('🎬 Starting training session...')
       console.log('Selected agent:', selectedAgent.name, selectedAgent.eleven_agent_id)
 
+      // 🚪 PLAY DOOR KNOCK SOUND FIRST
+      console.log('🚪 Playing door knock sound...')
+      try {
+        const knockAudio = new Audio('/sounds/knock.mp3')
+        knockAudio.volume = 0.5
+        await knockAudio.play()
+      } catch (e) {
+        console.log('⚠️ Could not play knock sound:', e)
+      }
+
+      // Wait for knock to finish
+      await new Promise(resolve => setTimeout(resolve, 800))
+
+      // 🚪 PLAY DOOR OPEN SOUND
+      console.log('🚪 Playing door open sound...')
+      try {
+        const doorOpenAudio = new Audio('/sounds/door_open.mp3')
+        doorOpenAudio.volume = 0.4
+        await doorOpenAudio.play()
+      } catch (e) {
+        console.log('⚠️ Could not play door open sound:', e)
+      }
+
+      // Brief delay before agent speaks
+      await new Promise(resolve => setTimeout(resolve, 500))
+
       console.log('🔑 Fetching WebRTC conversation token from ElevenLabs...')
       const result = await fetchConversationToken(selectedAgent.eleven_agent_id)
       
@@ -733,7 +744,8 @@ function TrainerPageContent() {
     }
   }
 
-  const endSession = async () => {
+  const endSession = useCallback(async () => {
+    console.log('🛑 endSession() called')
     setLoading(true)
     setSessionActive(false)
     setConversationToken(null)
@@ -752,6 +764,7 @@ function TrainerPageContent() {
       }
 
       if (sessionId) {
+        console.log('📤 Saving session and starting grading...')
         const analytics = {
           conversation_id: (window as any)?.elevenConversationId || null,
           homeowner_name: selectedAgent?.name || homeownerName,
@@ -768,6 +781,7 @@ function TrainerPageContent() {
           const err = await resp.json().catch(() => ({}))
           console.error('❌ Failed to end session:', err)
         } else {
+          console.log('✅ Session ended successfully, grading should start automatically')
           await fetch('/api/notifications/session-complete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -776,15 +790,39 @@ function TrainerPageContent() {
             console.error('Manager notification failed:', e)
           })
         }
+      } else {
+        console.warn('⚠️ No sessionId, skipping save')
       }
 
       setCalculatingScore(true)
       setLoading(false)
     } catch (e) {
-      console.error(e)
+      console.error('❌ Error in endSession:', e)
       setLoading(false)
     }
-  }
+  }, [sessionId, duration, transcript, selectedAgent, homeownerName, stopRecording])
+
+  // Separate effect to handle end-session requests (MUST be after endSession declaration)
+  useEffect(() => {
+    const handleEndSessionRequest = () => {
+      console.log('🛑 trainer:end-session-requested event received!')
+      console.log('🛑 sessionActive:', sessionActive)
+      console.log('🛑 sessionId:', sessionId)
+      console.log('🛑 transcript length:', transcript.length)
+      
+      if (sessionActive) {
+        console.log('✅ Conditions met, calling endSession()...')
+        endSession()
+      } else {
+        console.warn('⚠️ Session not active, skipping endSession()')
+      }
+    }
+
+    window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
+    return () => {
+      window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
+    }
+  }, [sessionActive, sessionId, transcript, endSession])
 
   const handleCalculationComplete = () => {
     if (sessionId) {
@@ -895,6 +933,53 @@ function TrainerPageContent() {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col items-center justify-start pt-12">
+          {/* Start/Stop Button (Above Orb) */}
+          {!sessionActive && (
+            <div className="mb-8">
+              <button
+                onClick={startSession}
+                disabled={loading || !selectedAgent}
+                className={`
+                  px-12 py-4 rounded-2xl font-bold text-xl
+                  transition-all duration-300 shadow-2xl
+                  ${loading || !selectedAgent
+                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white hover:scale-105 hover:shadow-purple-500/50'
+                  }
+                `}
+              >
+                {loading ? (
+                  <span className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Connecting...
+                  </span>
+                ) : selectedAgent ? (
+                  `🚪 Knock on ${selectedAgent.name}'s Door`
+                ) : (
+                  'Select a Homeowner First'
+                )}
+              </button>
+              <p className="text-slate-400 text-sm mt-3 text-center">
+                Or click the orb below to start
+              </p>
+            </div>
+          )}
+
+          {sessionActive && (
+            <div className="mb-8">
+              <button
+                onClick={endSession}
+                disabled={loading}
+                className="px-12 py-4 rounded-2xl font-bold text-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white transition-all duration-300 shadow-2xl hover:scale-105 disabled:opacity-50"
+              >
+                {loading ? 'Ending...' : 'End Session'}
+              </button>
+              <p className="text-slate-400 text-sm mt-3 text-center">
+                Or click the orb below to end
+              </p>
+            </div>
+          )}
+
           {/* Floating Bubble Container */}
           <div className="relative mb-16">
             <div id="conversation-orb-container">

@@ -373,9 +373,22 @@ export function buildCompleteUpdatePayload(
     grade_letter: scoreToGrade(packet.components.final),
 
     // === Feedback Arrays (3 columns) ===
-    what_worked: packet.llm?.top_wins ?? [],
-    what_failed: packet.llm?.top_fixes ?? [],
-    key_learnings: (packet.llm?.drills ?? []).map(d => `${d.skill}: ${d.microplay}`),
+    // Handle both old string[] format and new rich object format
+    what_worked: Array.isArray(packet.llm?.top_wins)
+      ? packet.llm.top_wins.map((w: any) => 
+          typeof w === 'string' ? w : `"${w.moment}" - ${w.why_it_worked} (${w.technique_used})`
+        )
+      : [],
+    what_failed: Array.isArray(packet.llm?.top_fixes)
+      ? packet.llm.top_fixes.map((f: any) =>
+          typeof f === 'string' ? f : `"${f.moment}" - ${f.why_it_failed}. Try: ${f.better_approach}`
+        )
+      : [],
+    key_learnings: (packet.llm?.drills ?? []).map(d => 
+      d.why_needed 
+        ? `${d.skill}: ${d.microplay} (${d.why_needed})`
+        : `${d.skill}: ${d.microplay}`
+    ),
     conversation_summary: generateSummary(transcript, packet),
 
     // === Analytics JSON (detailed breakdown) ===
