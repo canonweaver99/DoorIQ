@@ -18,6 +18,28 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DoorIQ - Practice Your Sales Pitch",
   description: "Master door-to-door sales with realistic AI voice interactions.",
+  icons: {
+    icon: '/icon.svg',
+  },
+  openGraph: {
+    title: "DoorIQ - Practice Your Sales Pitch",
+    description: "Master door-to-door sales with realistic AI voice interactions.",
+    images: [
+      {
+        url: '/dooriq-og-image.svg',
+        width: 1200,
+        height: 630,
+        alt: 'DoorIQ Logo',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "DoorIQ - Practice Your Sales Pitch",
+    description: "Master door-to-door sales with realistic AI voice interactions.",
+    images: ['/dooriq-og-image.svg'],
+  },
 };
 
 export default function RootLayout({
