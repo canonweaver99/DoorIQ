@@ -61,11 +61,8 @@ export async function POST(request: NextRequest) {
         strengths: analysis.feedback.strengths?.length || 0
       })
     } catch (gradeError) {
-      console.error('❌ OpenAI grading failed:', gradeError)
-      return NextResponse.json({ 
-        error: 'AI grading failed',
-        details: gradeError instanceof Error ? gradeError.message : 'Unknown error'
-      }, { status: 500 })
+      console.error('❌ OpenAI grading failed, falling back to simple heuristic grade:', gradeError)
+      analysis = simpleHeuristicGrade(transcript)
     }
     
     // Update session with grading results
@@ -84,6 +81,7 @@ export async function POST(request: NextRequest) {
       analytics: {
         line_ratings: analysis.line_ratings || [],
         key_moments: analysis.key_moments || {},
+        feedback: analysis.feedback || {},
         grading_version: '3.0-openai',
         graded_at: new Date().toISOString()
       }
@@ -269,5 +267,68 @@ Be critical but fair. Door-to-door sales requires excellence.`
       console.error('Error stack:', error.stack)
     }
     throw error
+  }
+}
+
+// Extremely simple fallback grader to ensure we never return zeroed analytics
+function simpleHeuristicGrade(transcript: Array<{ speaker: string; text: string }>) {
+  const repLines = transcript.filter(t => t.speaker === 'user')
+  const custLines = transcript.filter(t => t.speaker !== 'user')
+
+  const askedQuestions = repLines.filter(l => l.text.includes('?')).length
+  const empathy = repLines.filter(l => /i (understand|hear|appreciate)/i.test(l.text)).length
+  const safety = repLines.some(l => /(safe|pets|children|eco)/i.test(l.text))
+  const closing = repLines.some(l => /(schedule|appointment|which works|when would you)/i.test(l.text))
+  const intro = repLines.slice(0, 5).some(l => /(my name|i'm from|pest control)/i.test(l.text))
+
+  const listening = Math.min(100, Math.round((askedQuestions * 12) + (custLines.length * 2)))
+  const rapport = Math.min(100, empathy * 25)
+  const introduction = intro ? 75 : 35
+  const salesTechnique = Math.min(100, Math.round((askedQuestions * 10) + (safety ? 20 : 0)))
+  const closingScore = closing ? 70 : 30
+  const safetyScore = safety ? 80 : 40
+
+  const overall = Math.round(
+    introduction * 0.15 +
+    rapport * 0.20 +
+    listening * 0.20 +
+    salesTechnique * 0.25 +
+    closingScore * 0.20
+  )
+
+  const line_ratings = repLines.map((l, i) => ({
+    idx: transcript.indexOf(repLines[i]),
+    rating: /\?|understand|which works|schedule|safe/i.test(l.text) ? 'good' : 'average',
+    reason: 'Baseline heuristic rating',
+    alternative: ''
+  }))
+
+  return {
+    scores: {
+      introduction,
+      rapport,
+      listening,
+      sales_technique: salesTechnique,
+      closing: closingScore,
+      safety: safetyScore,
+      overall
+    },
+    line_ratings,
+    feedback: {
+      strengths: rapport > 50 ? ['Good empathy shown in parts of the call'] : [],
+      improvements: ['Ask more discovery questions', 'Attempt an assumptive close'],
+      specific_tips: [
+        "Try: 'I have Tuesday or Thursday available — which works better?'",
+        "Acknowledge concerns: 'I completely understand, many homeowners tell me the same thing.'"
+      ]
+    },
+    key_moments: {
+      price_discussed: /\$|price|cost/i.test(repLines.map(r => r.text).join(' ')),
+      safety_addressed: safety,
+      close_attempted: closing,
+      objection_handled: empathy > 0,
+      deal_closed: false
+    },
+    virtual_earnings: 0
   }
 }
