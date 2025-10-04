@@ -708,7 +708,11 @@ function TrainerPageContent() {
       console.log('🎬 Starting training session...')
       console.log('Selected agent:', selectedAgent.name, selectedAgent.eleven_agent_id)
 
-      // 🚪 PLAY DOOR KNOCK SOUND FIRST
+      // Start fetching conversation token IMMEDIATELY (in parallel with sounds)
+      console.log('🔑 Fetching WebRTC conversation token from ElevenLabs (in parallel)...')
+      const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id)
+
+      // 🚪 PLAY DOOR KNOCK SOUND WHILE TOKEN FETCHES
       console.log('🚪 Playing door knock sound...')
       try {
         const knockAudio = new Audio('/sounds/knock.mp3')
@@ -734,8 +738,9 @@ function TrainerPageContent() {
       // Brief delay before agent speaks
       await new Promise(resolve => setTimeout(resolve, 500))
 
-      console.log('🔑 Fetching WebRTC conversation token from ElevenLabs...')
-      const result = await fetchConversationToken(selectedAgent.eleven_agent_id)
+      // By now, token should be ready (or almost ready)
+      console.log('⏳ Waiting for conversation token...')
+      const result = await tokenPromise
       
       if (!result.canProceed) {
         throw new Error(result.error || 'Failed to initialize connection')
