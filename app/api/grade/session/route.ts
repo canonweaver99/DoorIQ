@@ -52,7 +52,21 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
     
-    const analysis = await gradeWithOpenAI(transcript)
+    let analysis
+    try {
+      analysis = await gradeWithOpenAI(transcript)
+      console.log('✅ OpenAI grading successful:', {
+        overall: analysis.scores.overall,
+        lineRatings: analysis.line_ratings?.length || 0,
+        strengths: analysis.feedback.strengths?.length || 0
+      })
+    } catch (gradeError) {
+      console.error('❌ OpenAI grading failed:', gradeError)
+      return NextResponse.json({ 
+        error: 'AI grading failed',
+        details: gradeError instanceof Error ? gradeError.message : 'Unknown error'
+      }, { status: 500 })
+    }
     
     // Update session with grading results
     const updateData = {
@@ -75,20 +89,22 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    console.log('💾 Saving grading results to database...')
+    
     const { error: updateError } = await (supabase as any)
       .from('live_sessions')
       .update(updateData)
       .eq('id', sessionId)
     
     if (updateError) {
-      console.error('Failed to update session with grades:', updateError)
+      console.error('❌ Failed to update session with grades:', updateError)
       return NextResponse.json({ 
         error: 'Failed to save grading results',
         details: updateError 
       }, { status: 500 })
     }
     
-    console.log('Grading completed successfully for session:', sessionId)
+    console.log('✅ Grading completed successfully for session:', sessionId)
     
     return NextResponse.json({ 
       success: true,
@@ -100,16 +116,26 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('Grading error:', error)
+    console.error('❌ Grading error:', error)
+    // Log the full error for debugging
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack)
+    }
     return NextResponse.json({ 
       error: 'Grading failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 })
   }
 }
 
 async function gradeWithOpenAI(transcript: any[]) {
   try {
+    console.log('🤖 Starting OpenAI grading...', {
+      transcriptLines: transcript.length,
+      repLines: transcript.filter(t => t.speaker === 'user').length
+    })
+    
     // Format transcript for OpenAI
     const transcriptText = transcript.map((entry, idx) => 
       `[${idx}] ${entry.speaker === 'user' ? 'Rep' : 'Customer'}: ${entry.text}`
@@ -124,13 +150,14 @@ Provide detailed analysis including:
 1. Score each category 0-100: introduction, rapport, listening, sales_technique, closing, safety
 2. Overall score (weighted average)
 3. For EACH line spoken by the Rep (speaker='user'), rate it as "excellent", "good", "average", or "poor"
-4. For lines rated "poor" or "average", suggest a better alternative phrase
+4. For lines rated "poor" or "average", suggest a better alternative phrase (use empty string "" if no alternative)
 5. Identify key moments: price_discussed, safety_addressed, close_attempted, objection_handled, deal_closed
 6. Calculate virtual_earnings (if Rep quoted a price AND Customer agreed, return that price, otherwise 0)
 7. Provide feedback: strengths (what worked), improvements (what needs work), specific_tips (actionable advice)
 
 Be critical but fair. Door-to-door sales requires excellence.`
 
+    console.log('📤 Calling OpenAI API...')
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -164,7 +191,7 @@ Be critical but fair. Door-to-door sales requires excellence.`
                 type: 'array',
                 items: {
                   type: 'object',
-                  required: ['idx', 'rating', 'reason'],
+                  required: ['idx', 'rating', 'reason', 'alternative'],
                   properties: {
                     idx: { type: 'number' },
                     rating: { type: 'string', enum: ['excellent', 'good', 'average', 'poor'] },
@@ -215,17 +242,32 @@ Be critical but fair. Door-to-door sales requires excellence.`
       max_tokens: 4000
     })
     
+    console.log('📥 OpenAI response received')
+    
     const content = response.choices[0]?.message?.content
     if (!content) {
+      console.error('❌ No content in OpenAI response')
       throw new Error('No content in OpenAI response')
     }
     
+    console.log('🔍 Parsing OpenAI response...')
     const analysis = JSON.parse(content)
-    console.log('OpenAI grading successful. Overall score:', analysis.scores.overall)
+    
+    console.log('✅ OpenAI grading successful:', {
+      overall: analysis.scores?.overall,
+      hasLineRatings: !!analysis.line_ratings,
+      lineRatingsCount: analysis.line_ratings?.length || 0,
+      hasStrengths: !!analysis.feedback?.strengths,
+      strengthsCount: analysis.feedback?.strengths?.length || 0
+    })
     
     return analysis
   } catch (error) {
-    console.error('OpenAI grading error:', error)
+    console.error('❌ OpenAI grading error:', error)
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
     throw error
   }
 }
