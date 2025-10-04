@@ -128,6 +128,7 @@ export interface Database {
           close_effectiveness_score: number | null
           introduction_score: number | null
           listening_score: number | null
+          virtual_earnings: number | null
           full_transcript: Json | null
           analytics: Json | null
           device_info: Json | null
@@ -199,6 +200,7 @@ export interface Database {
           close_effectiveness_score?: number | null
           introduction_score?: number | null
           listening_score?: number | null
+          virtual_earnings?: number | null
           full_transcript?: Json | null
           analytics?: Json | null
           device_info?: Json | null
@@ -270,6 +272,7 @@ export interface Database {
           close_effectiveness_score?: number | null
           introduction_score?: number | null
           listening_score?: number | null
+          virtual_earnings?: number | null
           full_transcript?: Json | null
           analytics?: Json | null
           device_info?: Json | null
