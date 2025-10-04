@@ -568,6 +568,29 @@ function TrainerPageContent() {
     }
   }
 
+  // Retry microphone permission when the connection pill is clicked
+  const retryMicrophoneAccess = useCallback(async () => {
+    try {
+      console.log('🎤 Retrying microphone permission request...')
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaStream.current = stream
+      setMicPermissionGranted(true)
+      console.log('✅ Microphone permission granted on retry')
+      alert('Microphone access granted. You can start the conversation now.')
+    } catch (err: any) {
+      console.warn('❌ Microphone permission still denied:', err?.name || err)
+      try {
+        // Use Permissions API if available to provide targeted guidance
+        const permission: any = await (navigator as any)?.permissions?.query?.({ name: 'microphone' as any })
+        if (permission?.state === 'denied') {
+          alert('Microphone access is blocked in your browser. Click the camera icon in the address bar and set Microphone to "Allow", then reload this page.')
+          return
+        }
+      } catch {}
+      alert('Unable to access the microphone. Please allow mic access in your browser settings and try again.')
+    }
+  }, [])
+
   const fetchConversationToken = async (agentId: string): Promise<{ conversationToken: string | null; canProceed: boolean; error?: string }> => {
     signedUrlAbortRef.current?.abort()
     const controller = new AbortController()
@@ -899,7 +922,15 @@ function TrainerPageContent() {
                 {sessionActive ? `Speaking with ${homeownerName || 'Agent'}` : 'Ready to start'}
               </p>
               {sessionActive && (
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50">
+                <button
+                  onClick={() => {
+                    if (connectionStatus === 'error' || !micPermissionGranted) {
+                      retryMicrophoneAccess()
+                    }
+                  }}
+                  title={!micPermissionGranted ? 'Microphone not allowed. Click to re-request permission.' : connectionStatus === 'error' ? 'Connection error. Click to retry microphone permission.' : 'Connection status'}
+                  className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800/70 transition-colors"
+                >
                   <span className={`relative flex h-2 w-2 ${
                     connectionStatus === 'connected' ? 'animate-none' : 
                     connectionStatus === 'connecting' ? 'animate-pulse' : ''
@@ -920,10 +951,10 @@ function TrainerPageContent() {
                   <span className="text-xs font-medium text-slate-300">
                     {connectionStatus === 'connected' ? 'Connected' :
                      connectionStatus === 'connecting' ? 'Connecting...' :
-                     connectionStatus === 'error' ? 'Connection Error' :
+                     connectionStatus === 'error' ? (!micPermissionGranted ? 'Mic Blocked — Click to Fix' : 'Connection Error — Click to Retry') :
                      'Disconnected'}
                   </span>
-                </div>
+                </button>
               )}
             </div>
           </div>

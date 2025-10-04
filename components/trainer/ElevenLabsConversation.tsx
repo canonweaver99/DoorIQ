@@ -354,10 +354,14 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       
     } catch (error: any) {
       console.error('❌ Failed to start conversation:', error)
-      const errMsg = error?.message || error?.error || 'Failed to connect'
+      const errMsg = error?.name === 'NotAllowedError' ? 'Microphone blocked by browser' : (error?.message || error?.error || 'Failed to connect')
       setErrorMessage(errMsg)
       setStatus('error')
       dispatchStatus('error')
+      // If mic blocked, surface a helpful hint toast via alert for now
+      if (error?.name === 'NotAllowedError') {
+        alert('Microphone access is blocked. Click the red status pill to retry permission, or allow mic access from the address bar and reload.')
+      }
     }
   }, [agentId, conversationToken])
 
