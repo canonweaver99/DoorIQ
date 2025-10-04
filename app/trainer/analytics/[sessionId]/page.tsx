@@ -278,7 +278,7 @@ export default function AnalyticsPage() {
             <ChevronRight className="ml-2 w-5 h-5" />
           </button>
           <button
-            onClick={() => router.push('/trainer/history')}
+            onClick={() => router.push('/sessions')}
             className="px-6 py-3 bg-slate-700 text-slate-100 font-semibold rounded-lg hover:bg-slate-600 transition-colors border border-slate-600"
           >
             View All Sessions

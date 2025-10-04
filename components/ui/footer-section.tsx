@@ -38,7 +38,7 @@ const footerLinks: FooterSectionType[] = [
   {
     label: 'Resources',
     links: [
-      { title: 'Contact Us', href: '/feedback' },
+      { title: 'Contact Us', href: '/support' },
       { title: 'Help', href: '/help' },
     ],
   },

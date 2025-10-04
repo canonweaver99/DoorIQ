@@ -164,8 +164,8 @@ export default function Header() {
       title: 'Training',
       items: [
         { name: 'Practice Hub', href: '/trainer', icon: Award },
-        { name: 'Session History', href: '/trainer/history', icon: ClipboardList },
-        { name: 'Leaderboard', href: '/trainer/leaderboard', icon: BarChart2 },
+        { name: 'Session History', href: '/sessions', icon: ClipboardList },
+        { name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 },
       ],
     },
     {
