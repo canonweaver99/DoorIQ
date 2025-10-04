@@ -38,6 +38,7 @@ export async function POST(req: Request) {
     }
 
     // Try to grade if transcript provided
+    let gradingResults: any = null
     if (Array.isArray(transcript) && transcript.length > 0) {
       const body = JSON.stringify({ sessionId: id })
       const headers = { 'Content-Type': 'application/json' }
@@ -64,7 +65,11 @@ export async function POST(req: Request) {
           const resp = await fetch(url, { method: 'POST', headers, body })
           const json = await resp.json().catch(() => ({}))
           console.log('🟢 [SESSION END] Grading response:', { status: resp.status, ok: resp.ok, payload: json })
-          if (resp.ok) { triggered = true; break }
+          if (resp.ok) { 
+            triggered = true
+            gradingResults = json
+            break 
+          }
         } catch (e) {
           console.error('🟠 [SESSION END] Grading request failed for', url, e)
         }
@@ -74,7 +79,10 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ 
+      ok: true,
+      grading: gradingResults 
+    })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }

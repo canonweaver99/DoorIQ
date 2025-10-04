@@ -863,11 +863,34 @@ function TrainerPageContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: sessionId, duration, transcript, analytics }),
         })
+        
+        const data = await resp.json().catch(() => ({}))
+        
         if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}))
-          console.error('❌ Failed to end session:', err)
+          console.error('❌ Failed to end session:', data)
+          setCalculatingScore(true)
+          setLoading(false)
         } else {
           console.log('✅ Session ended successfully, grading should start automatically')
+          
+          // Check for virtual earnings from grading results
+          const virtualEarnings = data?.grading?.virtual_earnings || 0
+          
+          console.log('💰 Virtual earnings from session:', virtualEarnings)
+          
+          // If there are earnings, show money notification first
+          if (virtualEarnings > 0) {
+            setEarningsAmount(virtualEarnings)
+            setShowMoneyNotification(true)
+            setLoading(false)
+            // Don't show calculating screen yet - wait for money notification to complete
+          } else {
+            // No earnings, go straight to calculating screen
+            setCalculatingScore(true)
+            setLoading(false)
+          }
+          
+          // Send notifications to managers
           await fetch('/api/notifications/session-complete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -878,10 +901,9 @@ function TrainerPageContent() {
         }
       } else {
         console.warn('⚠️ No valid sessionId, skipping save (cannot grade without a session record)')
+        setCalculatingScore(true)
+        setLoading(false)
       }
-
-      setCalculatingScore(true)
-      setLoading(false)
     } catch (e) {
       console.error('❌ Error in endSession:', e)
       setLoading(false)
