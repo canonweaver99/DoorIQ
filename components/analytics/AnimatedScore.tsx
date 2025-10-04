@@ -30,18 +30,18 @@ export default function AnimatedScore({
   }
 
   const getScoreLabel = (score: number) => {
-    if (score >= 95) return 'Outstanding!'
-    if (score >= 85) return 'Excellent'
-    if (score >= 71) return 'Good Job!'
-    if (score >= 55) return 'Needs Work'
-    return 'Needs Improvement'
+    if (score >= 90) return 'Outstanding!'
+    if (score >= 70) return 'Good Job!'
+    if (score >= 50) return 'Needs Work'
+    if (score >= 30) return 'Needs Improvement'
+    return 'Critical - Practice More'
   }
 
   const getStarRating = (score: number) => {
-    if (score >= 95) return 5
-    if (score >= 85) return 4
-    if (score >= 70) return 3
-    if (score >= 55) return 2
+    if (score >= 90) return 5
+    if (score >= 70) return 4
+    if (score >= 50) return 3
+    if (score >= 30) return 2
     return 1
   }
 
