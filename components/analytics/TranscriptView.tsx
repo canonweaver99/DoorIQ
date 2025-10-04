@@ -107,16 +107,22 @@ export default function TranscriptView({ transcript, analytics, className = "" }
   }
 
   const getHoverExplanation = (entry: TranscriptEntry, idx: number, effectiveness: string) => {
-    const text = entry.text.toLowerCase()
-    
-    // Check for AI explanation first
+    // Check for AI rating and explanation
     try {
       const ratings = analytics?.line_ratings || []
       const aiRating = ratings.find((r: any) => r.idx === idx && (entry.speaker === 'user' || entry.speaker === 'rep'))
-      if (aiRating?.explanation) return aiRating.explanation
+      if (aiRating) {
+        // Build explanation with alternative if available
+        let explanation = aiRating.reason || ''
+        if (aiRating.alternative) {
+          explanation += `\n\n💡 Try instead: "${aiRating.alternative}"`
+        }
+        return explanation
+      }
     } catch {}
 
-    // Provide heuristic explanations
+    // Fallback explanations if no AI data
+    const text = entry.text.toLowerCase()
     switch (effectiveness) {
       case 'excellent':
         if (text.includes('understand how you feel')) return 'Excellent empathy - shows you understand customer concerns'
@@ -126,8 +132,6 @@ export default function TranscriptView({ transcript, analytics, className = "" }
         return 'Excellent response - advances the sale effectively'
         
       case 'good':
-        if (text.includes('great question')) return 'Good acknowledgment, but could be more specific'
-        if (text.includes('let me explain')) return 'Good transition, shows expertise'
         return 'Good response - adequate but could be stronger'
         
       case 'poor':
@@ -244,10 +248,21 @@ export default function TranscriptView({ transcript, analytics, className = "" }
                       initial={{ opacity: 0, y: -10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      className="absolute z-10 top-full right-0 mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg"
+                      className="absolute z-10 top-full right-0 mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg border border-gray-700"
                     >
-                      <div className="absolute -top-1 right-6 w-2 h-2 bg-gray-900 rotate-45"></div>
-                      <p className="leading-relaxed">{explanation}</p>
+                      <div className="absolute -top-1 right-6 w-2 h-2 bg-gray-900 rotate-45 border-l border-t border-gray-700"></div>
+                      {explanation.split('\n\n').map((part, i) => (
+                        <div key={i} className={i > 0 ? 'mt-3 pt-3 border-t border-gray-700' : ''}>
+                          {part.startsWith('💡') ? (
+                            <div className="bg-blue-900/50 p-2 rounded">
+                              <p className="font-medium text-blue-300 mb-1">💡 Try instead:</p>
+                              <p className="text-blue-100 italic leading-relaxed">{part.replace('💡 Try instead: ', '').replace(/"/g, '')}</p>
+                            </div>
+                          ) : (
+                            <p className="leading-relaxed text-gray-200">{part}</p>
+                          )}
+                        </div>
+                      ))}
                     </motion.div>
                   )}
                 </AnimatePresence>

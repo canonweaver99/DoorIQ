@@ -12,7 +12,6 @@ import AnimatedScore from '@/components/analytics/AnimatedScore'
 import TranscriptView from '@/components/analytics/TranscriptView'
 import PerformanceMetrics from '@/components/analytics/PerformanceMetrics'
 import AICoach from '@/components/analytics/AICoach'
-import ConversationAnalysis from '@/components/ConversationAnalysis'
 import AdvancedMetrics from '@/components/analytics/AdvancedMetrics'
 
 interface SessionData {
@@ -267,13 +266,103 @@ export default function AnalyticsPage() {
             )}
           </div>
         ) : (
-          <ConversationAnalysis 
-            conversationId={session?.analytics?.conversation_id || ''}
-            userId={(session as any)?.user_id as any}
-            agentId={(session as any)?.agent_id as any}
-            homeownerName={session?.analytics?.homeowner_name || 'Austin'}
-            homeownerProfile={session?.analytics?.homeowner_profile || 'Standard homeowner persona'}
-          />
+          <div className="space-y-6">
+            {/* AI-Generated Feedback */}
+            <div className="bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-700">
+              <h2 className="text-2xl font-semibold text-slate-100 mb-6 flex items-center">
+                <Trophy className="w-6 h-6 mr-2 text-yellow-500" />
+                AI Performance Analysis
+              </h2>
+              
+              {/* Strengths */}
+              {(session as any).what_worked && (session as any).what_worked.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-green-400 mb-3 flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    What Worked Well
+                  </h3>
+                  <ul className="space-y-2">
+                    {(session as any).what_worked.map((item: string, idx: number) => (
+                      <motion.li
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="flex items-start p-3 bg-green-900/20 border border-green-700/30 rounded-lg"
+                      >
+                        <span className="text-green-400 mr-3 text-xl">✓</span>
+                        <span className="text-slate-200">{item}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Areas for Improvement */}
+              {(session as any).what_failed && (session as any).what_failed.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-yellow-400 mb-3 flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    Areas for Improvement
+                  </h3>
+                  <ul className="space-y-2">
+                    {(session as any).what_failed.map((item: string, idx: number) => (
+                      <motion.li
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="flex items-start p-3 bg-yellow-900/20 border border-yellow-700/30 rounded-lg"
+                      >
+                        <span className="text-yellow-400 mr-3 text-xl">⚠</span>
+                        <span className="text-slate-200">{item}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Specific Tips */}
+              {(session as any).key_learnings && (session as any).key_learnings.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-400 mb-3 flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    Specific Tips & Techniques
+                  </h3>
+                  <ul className="space-y-2">
+                    {(session as any).key_learnings.map((item: string, idx: number) => (
+                      <motion.li
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="flex items-start p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg"
+                      >
+                        <span className="text-blue-400 mr-3 text-xl">💡</span>
+                        <span className="text-slate-200">{item}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Show message if no feedback yet */}
+              {(!session.what_worked || session.what_worked.length === 0) && 
+               (!session.what_failed || (session as any).what_failed.length === 0) && 
+               (!(session as any).key_learnings || (session as any).key_learnings.length === 0) && (
+                <div className="text-center py-8 text-slate-400">
+                  <p>No AI feedback available yet. Complete the grading process to see detailed analysis.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Performance Metrics */}
+            <PerformanceMetrics 
+              metrics={metricsData}
+              transcript={(session as any).full_transcript || []}
+              onLineClick={scrollToTranscriptLine}
+            />
+          </div>
         )}
 
         {/* Action Buttons */}

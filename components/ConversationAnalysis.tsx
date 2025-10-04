@@ -32,24 +32,12 @@ export default function ConversationAnalysis(props: Props) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/grade/conversation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: null,
-          conversationId: props.conversationId,
-          agentId: props.agentId,
-          homeownerName: props.homeownerName,
-          homeownerProfile: props.homeownerProfile,
-          userId: props.userId,
-        })
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json?.error || 'Failed to analyze')
-      setResult(json.data)
+      // Use the simplified session grading endpoint
+      // Note: conversationId is deprecated, this component should receive sessionId instead
+      setError('This component has been deprecated. Please use the session analytics page instead.')
+      setLoading(false)
     } catch (e: any) {
       setError(e?.message || 'Failed to analyze conversation')
-    } finally {
       setLoading(false)
     }
   }
