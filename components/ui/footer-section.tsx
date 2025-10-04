@@ -23,7 +23,7 @@ const footerLinks: FooterSectionType[] = [
       { title: 'Features', href: '#features' },
       { title: 'Pricing', href: '#pricing' },
       { title: 'Testimonials', href: '#testimonials' },
-      { title: 'Integration', href: '/' },
+      { title: 'Documentation', href: '/documentation' },
     ],
   },
   {
@@ -38,9 +38,7 @@ const footerLinks: FooterSectionType[] = [
   {
     label: 'Resources',
     links: [
-      { title: 'Blog', href: '/blog' },
-      { title: 'Changelog', href: '/changelog' },
-      { title: 'Brand', href: '/brand' },
+      { title: 'Contact Us', href: '/feedback' },
       { title: 'Help', href: '/help' },
     ],
   },
