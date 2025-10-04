@@ -37,12 +37,19 @@ export default function AnimatedScore({
     return 'Critical - Practice More'
   }
 
-  const getStarRating = (score: number) => {
-    if (score >= 90) return 5
-    if (score >= 70) return 4
-    if (score >= 50) return 3
-    if (score >= 30) return 2
-    return 1
+  const getStarRating = (score: number): number => {
+    // More granular rating with half-stars
+    // 0-10: 0.5, 10-20: 1, 20-30: 1.5, 30-40: 2, 40-50: 2.5, 50-60: 3, 60-70: 3.5, 70-80: 4, 80-90: 4.5, 90+: 5
+    if (score >= 95) return 5
+    if (score >= 85) return 4.5
+    if (score >= 75) return 4
+    if (score >= 65) return 3.5
+    if (score >= 55) return 3
+    if (score >= 45) return 2.5
+    if (score >= 35) return 2
+    if (score >= 25) return 1.5
+    if (score >= 15) return 1
+    return 0.5
   }
 
   const colors = getScoreColor(score)
@@ -141,24 +148,41 @@ export default function AnimatedScore({
         </div>
       </div>
 
-      {/* Star Rating */}
+      {/* Star Rating with Half-Stars */}
       <div className="flex justify-center mb-6">
-        {[...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            custom={i}
-            animate={starControls}
-            initial={{ scale: 1, opacity: i < getStarRating(score) ? 0.3 : 0.3 }}
-          >
-            <Star
-              className={`w-10 h-10 mx-1 ${
-                i < getStarRating(score)
-                  ? 'text-yellow-400 fill-current'
-                  : 'text-slate-600'
-              }`}
-            />
-          </motion.div>
-        ))}
+        {[...Array(5)].map((_, i) => {
+          const starRating = getStarRating(score)
+          const isFull = i < Math.floor(starRating)
+          const isHalf = i === Math.floor(starRating) && starRating % 1 !== 0
+          
+          return (
+            <motion.div
+              key={i}
+              custom={i}
+              animate={starControls}
+              initial={{ scale: 1, opacity: 0.3 }}
+              className="relative"
+            >
+              {isHalf ? (
+                // Half star using gradient/clip
+                <>
+                  <Star className="w-10 h-10 mx-1 text-slate-600" />
+                  <div className="absolute inset-0 overflow-hidden" style={{ width: '50%', left: '0.25rem' }}>
+                    <Star className="w-10 h-10 text-yellow-400 fill-current" />
+                  </div>
+                </>
+              ) : (
+                <Star
+                  className={`w-10 h-10 mx-1 ${
+                    isFull
+                      ? 'text-yellow-400 fill-current'
+                      : 'text-slate-600'
+                  }`}
+                />
+              )}
+            </motion.div>
+          )
+        })}
       </div>
       
       {/* Score Label */}
