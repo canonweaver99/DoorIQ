@@ -329,6 +329,11 @@ function TrainerPageContent() {
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const signedUrlAbortRef = useRef<AbortController | null>(null)
   
+  const isUuid = (value: string | null | undefined): boolean => {
+    if (!value) return false
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  }
+  
   // Request mic permission early
   useEffect(() => {
     if (micPermissionGranted) return
@@ -665,6 +670,9 @@ function TrainerPageContent() {
       
       console.log('📝 Creating session record...')
       const newId = await createSessionRecord()
+      if (!newId || !isUuid(newId)) {
+        throw new Error('Could not create a valid session record. Please try again.')
+      }
       console.log('📋 Session ID obtained:', newId)
       setSessionId(newId)
       setSessionActive(true)
@@ -735,12 +743,10 @@ function TrainerPageContent() {
       }
       const json = await resp.json()
       console.log('✅ Session created:', json.id)
-      return json.id as string
+      return (json.id as string) || null
     } catch (error: any) {
       console.error('❌ Error creating session:', error?.message || error)
-      // Don't fail the session if we can't create the record
-      console.warn('⚠️ Continuing without session record')
-      return 'temp-session-' + Date.now()
+      return null
     }
   }
 
@@ -763,7 +769,7 @@ function TrainerPageContent() {
         signedUrlAbortRef.current = null
       }
 
-      if (sessionId) {
+      if (sessionId && isUuid(sessionId)) {
         console.log('📤 Saving session and starting grading...')
         const analytics = {
           conversation_id: (window as any)?.elevenConversationId || null,
@@ -791,7 +797,7 @@ function TrainerPageContent() {
           })
         }
       } else {
-        console.warn('⚠️ No sessionId, skipping save')
+        console.warn('⚠️ No valid sessionId, skipping save (cannot grade without a session record)')
       }
 
       setCalculatingScore(true)
