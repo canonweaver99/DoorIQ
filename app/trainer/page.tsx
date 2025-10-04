@@ -970,21 +970,6 @@ function TrainerPageContent() {
             </div>
           )}
 
-          {sessionActive && (
-            <div className="mb-8">
-              <button
-                onClick={endSession}
-                disabled={loading}
-                className="px-12 py-4 rounded-2xl font-bold text-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white transition-all duration-300 shadow-2xl hover:scale-105 disabled:opacity-50"
-              >
-                {loading ? 'Ending...' : 'End Session'}
-              </button>
-              <p className="text-slate-400 text-sm mt-3 text-center">
-                Or click the orb below to end
-              </p>
-            </div>
-          )}
-
           {/* Floating Bubble Container */}
           <div className="relative mb-16">
             <div id="conversation-orb-container">

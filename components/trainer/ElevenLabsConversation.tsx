@@ -274,13 +274,6 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           }
           
           const { userText, agentText } = extractTranscripts(msg)
-          // Normalize roles for transcript: 'homeowner' for user, 'rep' for agent/assistant
-          if (userText) {
-            window.dispatchEvent(new CustomEvent('agent:user', { detail: userText }))
-          }
-          if (agentText) {
-            window.dispatchEvent(new CustomEvent('agent:response', { detail: agentText }))
-          }
           
           console.log('🔍 EXTRACTION RESULT:', { userText, agentText, messageType: msg?.type })
           
