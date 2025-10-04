@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Build context from session data
-    const transcript = Array.isArray(sessionData.transcript) ? sessionData.transcript : []
+    const transcript = Array.isArray(sessionData.full_transcript)
+      ? sessionData.full_transcript
+      : (Array.isArray(sessionData.transcript) ? sessionData.transcript : [])
     const analytics = sessionData.analytics || {}
     const scores = {
       overall: sessionData.overall_score || 0,
@@ -115,11 +117,16 @@ CONVERSATION TRANSCRIPT:
 ${transcriptText}
 
 ADDITIONAL CONTEXT:
-${analytics.feedback ? `
-Strengths: ${analytics.feedback.strengths?.join(', ') || 'None identified'}
-Areas for Improvement: ${analytics.feedback.improvements?.join(', ') || 'None identified'}
-Specific Tips: ${analytics.feedback.specificTips?.join(' | ') || 'None provided'}
-` : 'No detailed analytics available'}
+${(() => {
+  // Normalize feedback fields from either top-level or analytics.feedback
+  const strengths = (sessionData.what_worked && Array.isArray(sessionData.what_worked) ? sessionData.what_worked : analytics?.feedback?.strengths) || []
+  const improvements = (sessionData.what_failed && Array.isArray(sessionData.what_failed) ? sessionData.what_failed : analytics?.feedback?.improvements) || []
+  const specificTips = (sessionData.key_learnings && Array.isArray(sessionData.key_learnings) ? sessionData.key_learnings : (analytics?.feedback?.specific_tips || analytics?.feedback?.specificTips)) || []
+  if (strengths.length + improvements.length + (specificTips?.length || 0) === 0) {
+    return 'No detailed analytics available'
+  }
+  return `Strengths: ${strengths.join(', ') || 'None identified'}\nAreas for Improvement: ${improvements.join(', ') || 'None identified'}\nSpecific Tips: ${specificTips.join(' | ') || 'None provided'}`
+})()}
 
 ${analytics.moment_of_death?.detected ? `
 Moment of Death Detected: ${analytics.moment_of_death.label}
