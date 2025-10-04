@@ -26,6 +26,52 @@ export interface ConversationAnalysis {
     closing: { startIdx: number; endIdx: number }
   }
   virtualEarnings: number
+  // Advanced metrics
+  advancedMetrics?: {
+    conversationFlow: {
+      pacing: number // Words per minute
+      pauseEffectiveness: number
+      topicTransitions: number
+      energyLevel: 'low' | 'moderate' | 'high' | 'too_aggressive'
+    }
+    linguisticAnalysis: {
+      vocabularyComplexity: number
+      sentenceClarity: number
+      jargonUsage: number
+      positiveLanguageRatio: number
+      fillerWordCount: number
+    }
+    emotionalIntelligence: {
+      empathyScore: number
+      mirroringScore: number
+      activeListeningIndicators: number
+      emotionalRegulation: number
+    }
+    salesStrategy: {
+      needsDiscoveryDepth: number
+      valuePropositionClarity: number
+      urgencyCreation: number
+      assumptiveClosingSkill: number
+      objectionPreemption: number
+    }
+    microBehaviors: {
+      responseTime: number[]
+      interruptionRecovery: number
+      questionQuality: number
+      complianceAdherence: number
+    }
+  }
+  patterns?: {
+    strengths: string[]
+    weaknesses: string[]
+    missedOpportunities: string[]
+    criticalMoments: Array<{
+      timestamp: number
+      type: 'positive' | 'negative' | 'missed_opportunity'
+      description: string
+      impact: 'high' | 'medium' | 'low'
+    }>
+  }
 }
 
 // Helper functions for virtual cash earning
@@ -93,6 +139,220 @@ function calculateVirtualEarnings(transcript: Array<{ speaker: string; text: str
   }
   
   return 0
+}
+
+// Advanced analysis helper functions
+function analyzeConversationFlow(transcript: Array<{ speaker: string; text: string; timestamp?: any }>) {
+  const userEntries = transcript.filter(t => t.speaker === 'user')
+  const totalWords = userEntries.reduce((sum, t) => sum + t.text.split(' ').length, 0)
+  const totalMinutes = Math.max(1, transcript.length / 4) // Estimate based on turns
+  
+  // Analyze pacing
+  const wordsPerMinute = totalWords / totalMinutes
+  const pacingScore = wordsPerMinute >= 120 && wordsPerMinute <= 180 ? 100 : 
+                      wordsPerMinute < 100 || wordsPerMinute > 200 ? 50 : 75
+  
+  // Analyze pauses (gaps in conversation)
+  let pauseEffectiveness = 100
+  const longResponses = userEntries.filter(t => t.text.length > 200)
+  if (longResponses.length > 3) pauseEffectiveness = 60 // Too much talking
+  
+  // Topic transitions
+  const topicChanges = transcript.filter((t, i) => {
+    if (i === 0 || t.speaker !== 'user') return false
+    const prevTopic = transcript[i-1].text.toLowerCase()
+    const currTopic = t.text.toLowerCase()
+    return (prevTopic.includes('pest') && currTopic.includes('price')) ||
+           (prevTopic.includes('concern') && currTopic.includes('service')) ||
+           (prevTopic.includes('question') && currTopic.includes('schedule'))
+  }).length
+  const transitionScore = topicChanges >= 2 && topicChanges <= 4 ? 100 : 
+                         topicChanges === 0 ? 40 : 70
+  
+  // Energy level
+  const exclamations = userEntries.filter(t => t.text.includes('!')).length
+  const enthusiasm = userEntries.filter(t => 
+    t.text.toLowerCase().includes('great') || 
+    t.text.toLowerCase().includes('excellent') ||
+    t.text.toLowerCase().includes('perfect')
+  ).length
+  
+  const energyLevel = exclamations > 5 || enthusiasm > 8 ? 'too_aggressive' :
+                      exclamations >= 2 && enthusiasm >= 3 ? 'high' :
+                      exclamations >= 1 || enthusiasm >= 1 ? 'moderate' : 'low'
+  
+  return {
+    pacing: pacingScore,
+    pauseEffectiveness,
+    topicTransitions: transitionScore,
+    energyLevel
+  }
+}
+
+function analyzeLinguistics(transcript: Array<{ speaker: string; text: string; timestamp?: any }>) {
+  const userEntries = transcript.filter(t => t.speaker === 'user')
+  const allText = userEntries.map(t => t.text).join(' ')
+  
+  // Vocabulary complexity (avg word length)
+  const words = allText.split(/\s+/)
+  const avgWordLength = words.reduce((sum, w) => sum + w.length, 0) / words.length
+  const complexityScore = avgWordLength >= 4 && avgWordLength <= 6 ? 100 :
+                         avgWordLength < 3 || avgWordLength > 8 ? 60 : 80
+  
+  // Sentence clarity (avg sentence length)
+  const sentences = allText.split(/[.!?]+/).filter(s => s.trim().length > 0)
+  const avgSentenceLength = words.length / sentences.length
+  const clarityScore = avgSentenceLength >= 10 && avgSentenceLength <= 20 ? 100 :
+                      avgSentenceLength < 5 || avgSentenceLength > 30 ? 60 : 80
+  
+  // Jargon usage
+  const jargonWords = ['comprehensive', 'integrated', 'solution', 'synergy', 'optimize']
+  const jargonCount = jargonWords.reduce((count, word) => 
+    count + (allText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0
+  )
+  const jargonScore = jargonCount === 0 ? 60 : jargonCount <= 3 ? 100 : 40
+  
+  // Positive language ratio
+  const positiveWords = ['great', 'excellent', 'perfect', 'wonderful', 'fantastic', 'amazing', 'protect', 'safe', 'guarantee']
+  const negativeWords = ['problem', 'issue', 'concern', 'worry', 'bad', 'terrible', 'expensive', 'cant', "don't"]
+  const positiveCount = positiveWords.reduce((count, word) => 
+    count + (allText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0
+  )
+  const negativeCount = negativeWords.reduce((count, word) => 
+    count + (allText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0
+  )
+  const positiveRatio = positiveCount / Math.max(1, positiveCount + negativeCount)
+  
+  // Filler words
+  const fillerWords = ['um', 'uh', 'like', 'you know', 'i mean', 'basically', 'actually']
+  const fillerCount = fillerWords.reduce((count, word) => 
+    count + (allText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0
+  )
+  
+  return {
+    vocabularyComplexity: complexityScore,
+    sentenceClarity: clarityScore,
+    jargonUsage: jargonScore,
+    positiveLanguageRatio: Math.round(positiveRatio * 100),
+    fillerWordCount: fillerCount
+  }
+}
+
+function analyzeEmotionalIntelligence(transcript: Array<{ speaker: string; text: string; timestamp?: any }>) {
+  const userEntries = transcript.filter(t => t.speaker === 'user')
+  const customerEntries = transcript.filter(t => t.speaker === 'austin' || t.speaker === 'homeowner')
+  
+  // Empathy indicators
+  const empathyPhrases = ['i understand', 'i hear you', 'that makes sense', 'i appreciate', 'many homeowners feel']
+  const empathyCount = userEntries.filter(t => 
+    empathyPhrases.some(phrase => t.text.toLowerCase().includes(phrase))
+  ).length
+  const empathyScore = Math.min(100, empathyCount * 25)
+  
+  // Mirroring (matching customer language)
+  let mirroringScore = 0
+  customerEntries.forEach(customerEntry => {
+    const keyWords = customerEntry.text.toLowerCase().split(' ').filter(w => w.length > 4)
+    const nextUserEntry = transcript.find((t, i) => 
+      i > transcript.indexOf(customerEntry) && t.speaker === 'user'
+    )
+    if (nextUserEntry) {
+      const matches = keyWords.filter(word => 
+        nextUserEntry.text.toLowerCase().includes(word)
+      ).length
+      if (matches > 0) mirroringScore += 20
+    }
+  })
+  mirroringScore = Math.min(100, mirroringScore)
+  
+  // Active listening indicators
+  const listeningPhrases = ['tell me more', 'what else', 'go on', 'i see', 'and then']
+  const listeningCount = userEntries.filter(t => 
+    listeningPhrases.some(phrase => t.text.toLowerCase().includes(phrase))
+  ).length
+  const listeningScore = Math.min(100, listeningCount * 30)
+  
+  // Emotional regulation (staying calm)
+  const aggressivePhrases = ['you need to', 'you should', 'you must', 'listen to me', 'but']
+  const aggressiveCount = userEntries.filter(t => 
+    aggressivePhrases.some(phrase => t.text.toLowerCase().includes(phrase))
+  ).length
+  const regulationScore = Math.max(0, 100 - (aggressiveCount * 25))
+  
+  return {
+    empathyScore,
+    mirroringScore,
+    activeListeningIndicators: listeningScore,
+    emotionalRegulation: regulationScore
+  }
+}
+
+function detectPatterns(transcript: Array<{ speaker: string; text: string; timestamp?: any }>) {
+  const strengths: string[] = []
+  const weaknesses: string[] = []
+  const missedOpportunities: string[] = []
+  const criticalMoments: Array<{
+    timestamp: number
+    type: 'positive' | 'negative' | 'missed_opportunity'
+    description: string
+    impact: 'high' | 'medium' | 'low'
+  }> = []
+  
+  // Detect patterns
+  transcript.forEach((entry, idx) => {
+    // Positive patterns
+    if (entry.speaker === 'user') {
+      if (entry.text.toLowerCase().includes('i understand') && 
+          idx > 0 && (transcript[idx-1].speaker === 'austin' || transcript[idx-1].speaker === 'homeowner')) {
+        if (!strengths.includes('Consistent empathetic responses')) {
+          strengths.push('Consistent empathetic responses')
+        }
+        criticalMoments.push({
+          timestamp: idx,
+          type: 'positive',
+          description: 'Showed empathy after customer concern',
+          impact: 'high'
+        })
+      }
+      
+      // Negative patterns
+      if (entry.text.toLowerCase().includes('actually') && entry.text.includes('?')) {
+        if (!weaknesses.includes('Overuse of tentative language in questions')) {
+          weaknesses.push('Overuse of tentative language in questions')
+        }
+        criticalMoments.push({
+          timestamp: idx,
+          type: 'negative',
+          description: 'Tentative questioning reduces authority',
+          impact: 'medium'
+        })
+      }
+    }
+    
+    // Missed opportunities
+    if ((entry.speaker === 'austin' || entry.speaker === 'homeowner') && 
+        entry.text.toLowerCase().includes('expensive')) {
+      const nextEntry = transcript[idx + 1]
+      if (nextEntry && nextEntry.speaker === 'user' && 
+          !nextEntry.text.toLowerCase().includes('value') && 
+          !nextEntry.text.toLowerCase().includes('investment')) {
+        missedOpportunities.push('Failed to reframe price as investment')
+        criticalMoments.push({
+          timestamp: idx + 1,
+          type: 'missed_opportunity',
+          description: 'Should have reframed price objection as investment',
+          impact: 'high'
+        })
+      }
+    }
+  })
+  
+  return {
+    strengths,
+    weaknesses,
+    missedOpportunities,
+    criticalMoments
+  }
 }
 
 export function analyzeConversation(
@@ -637,6 +897,53 @@ export function analyzeConversation(
     analysis.feedback.strengths.push(`Excellent close! You earned $${analysis.virtualEarnings.toFixed(2)} in virtual commission!`)
   } else {
     analysis.feedback.specificTips.push("Quote a price and get the homeowner to agree to earn virtual commission.")
+  }
+
+  // Add advanced metrics if transcript has sufficient content
+  if (transcript.length >= 10) {
+    const assumptiveCloses = transcript.filter(t => 
+      t.speaker === 'user' && (
+        t.text.toLowerCase().includes('i have two appointments') ||
+        t.text.toLowerCase().includes('which works better') ||
+        t.text.toLowerCase().includes('when would you prefer') ||
+        t.text.toLowerCase().includes('lets get started')
+      )
+    )
+    
+    const qualityQuestions = discoveryQuestions.filter(q => {
+      const questionText = transcript[q.idx].text.toLowerCase()
+      return questionText.includes('how long') || 
+             questionText.includes('when did you first notice') ||
+             questionText.includes('where have you seen') ||
+             questionText.includes('what areas')
+    })
+    
+    analysis.advancedMetrics = {
+      conversationFlow: analyzeConversationFlow(transcript),
+      linguisticAnalysis: analyzeLinguistics(transcript),
+      emotionalIntelligence: analyzeEmotionalIntelligence(transcript),
+      salesStrategy: {
+        needsDiscoveryDepth: discoveryQuestions.length >= 3 ? 100 : discoveryQuestions.length * 30,
+        valuePropositionClarity: presentationEntries.length > 0 && 
+          transcript.some(t => t.text.toLowerCase().includes('value') || t.text.toLowerCase().includes('benefit')) ? 85 : 40,
+        urgencyCreation: transcript.some(t => t.speaker === 'user' && 
+          (t.text.toLowerCase().includes('today') || t.text.toLowerCase().includes('limited') || 
+           t.text.toLowerCase().includes('seasonal'))) ? 100 : 0,
+        assumptiveClosingSkill: assumptiveCloses.length > 0 ? 100 : 
+          closingEntries.length > 0 ? 50 : 0,
+        objectionPreemption: transcript.some(t => t.speaker === 'user' && 
+          t.text.toLowerCase().includes('i know you might be thinking')) ? 85 : 20
+      },
+      microBehaviors: {
+        responseTime: [], // Would need timestamp data
+        interruptionRecovery: 75, // Placeholder
+        questionQuality: qualityQuestions.length >= 2 ? 90 : qualityQuestions.length * 40,
+        complianceAdherence: 100 // Assume compliant unless detected otherwise
+      }
+    }
+    
+    // Add pattern detection
+    analysis.patterns = detectPatterns(transcript)
   }
 
   return analysis

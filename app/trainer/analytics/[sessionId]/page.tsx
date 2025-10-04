@@ -13,6 +13,7 @@ import TranscriptView from '@/components/analytics/TranscriptView'
 import PerformanceMetrics from '@/components/analytics/PerformanceMetrics'
 import AICoach from '@/components/analytics/AICoach'
 import ConversationAnalysis from '@/components/ConversationAnalysis'
+import AdvancedMetrics from '@/components/analytics/AdvancedMetrics'
 
 interface SessionData {
   id: string
@@ -257,6 +258,13 @@ export default function AnalyticsPage() {
               analytics={session.analytics}
               className="mb-6"
             />
+            {/* Advanced Metrics Section */}
+            {session.analytics && (
+              <AdvancedMetrics 
+                advancedMetrics={session.analytics.advancedMetrics}
+                patterns={session.analytics.patterns}
+              />
+            )}
           </div>
         ) : (
           <ConversationAnalysis 

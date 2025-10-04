@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY 
@@ -33,6 +34,45 @@ export async function POST(request: NextRequest) {
       safety: sessionData.safety_score || 0,
       close_effectiveness: sessionData.close_effectiveness_score || 0
     }
+    
+    // Fetch comprehensive grading data if available
+    let comprehensiveData = null
+    let userPatterns = null
+    if (sessionData.id && sessionData.user_id) {
+      const supabase = await createServiceSupabaseClient()
+      
+      // Try to fetch detailed metrics
+      try {
+        const { data: metrics } = await (supabase as any)
+          .from('session_detailed_metrics')
+          .select('metric_data')
+          .eq('session_id', sessionData.id)
+          .eq('metric_category', 'comprehensive')
+          .single()
+        
+        if (metrics) {
+          comprehensiveData = metrics.metric_data
+        }
+      } catch (e) {
+        // Table might not exist yet
+      }
+      
+      // Try to fetch user patterns
+      try {
+        const { data: patterns } = await (supabase as any)
+          .from('user_patterns')
+          .select('pattern_type, category, description, frequency, trend')
+          .eq('user_id', sessionData.user_id)
+          .order('frequency', { ascending: false })
+          .limit(10)
+        
+        if (patterns && patterns.length > 0) {
+          userPatterns = patterns
+        }
+      } catch (e) {
+        // Table might not exist yet
+      }
+    }
 
     // Format transcript for context
     const transcriptText = transcript.map((entry: any, idx: number) => {
@@ -57,6 +97,20 @@ SESSION PERFORMANCE DATA:
 - Safety Discussion: ${scores.safety}/100
 - Close Effectiveness: ${scores.close_effectiveness}/100
 
+${comprehensiveData ? `
+ADVANCED METRICS:
+- Energy Level: ${comprehensiveData.advancedMetrics?.conversationFlow?.energyLevel || 'N/A'}
+- Empathy Score: ${comprehensiveData.advancedMetrics?.emotionalIntelligence?.empathyScore || 0}/100
+- Mirroring: ${comprehensiveData.advancedMetrics?.emotionalIntelligence?.mirroringScore || 0}/100
+- Positive Language: ${comprehensiveData.advancedMetrics?.linguisticAnalysis?.positiveLanguageRatio || 0}%
+- Filler Words: ${comprehensiveData.advancedMetrics?.linguisticAnalysis?.fillerWordCount || 0}
+` : ''}
+
+${userPatterns && userPatterns.length > 0 ? `
+YOUR RECURRING PATTERNS:
+${userPatterns.map((p: any) => `- ${p.pattern_type === 'strength' ? '✅' : '⚠️'} ${p.description || p.category} (${p.frequency}x, trend: ${p.trend || 'stable'})`).join('\n')}
+` : ''}
+
 CONVERSATION TRANSCRIPT:
 ${transcriptText}
 
@@ -73,6 +127,13 @@ Death Signal: "${analytics.moment_of_death.deathSignal}"
 Alternative Response: "${analytics.moment_of_death.alternativeResponse}"
 ` : ''}
 
+${comprehensiveData?.patterns ? `
+DETECTED PATTERNS THIS SESSION:
+- Strengths: ${comprehensiveData.patterns.strengths?.join(', ') || 'None'}
+- Weaknesses: ${comprehensiveData.patterns.weaknesses?.join(', ') || 'None'}
+- Missed Opportunities: ${comprehensiveData.patterns.missedOpportunities?.join(', ') || 'None'}
+` : ''}
+
 COACHING GUIDELINES:
 - Start with 1-2 strengths (what worked)
 - Then give 2-4 fixes with exact lines (what to change, how to say it)
@@ -80,6 +141,8 @@ COACHING GUIDELINES:
 - Each bullet: max ~18 words, clear and direct
 - Always include line numbers like "Line 5"
 - Focus on rapport, discovery, safety, assumptive closing
+${userPatterns ? '- Reference their recurring patterns when relevant' : ''}
+${comprehensiveData ? '- Use advanced metrics to provide deeper insights' : ''}
 `
 
     const response = await openai.chat.completions.create({
