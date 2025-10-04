@@ -315,6 +315,8 @@ function TrainerPageContent() {
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([])
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle')
+  const lastAgentActivityRef = useRef<number>(Date.now())
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const orbColors = getOrbColors(selectedAgent?.name)
 
@@ -432,6 +434,7 @@ function TrainerPageContent() {
           setDelta(msg.text || '', 'homeowner')
         } else if (msg?.type === 'transcript.final') {
           pushFinal(msg.text || '', 'homeowner')
+          lastAgentActivityRef.current = Date.now()
         } else if (msg?.type === 'user_transcript') {
           pushFinal(msg.user_transcript || msg.text || '', 'user')
         } else if (msg?.type === 'agent_response') {
@@ -446,6 +449,7 @@ function TrainerPageContent() {
           }
           if (text) {
             pushFinal(text, 'homeowner')
+            lastAgentActivityRef.current = Date.now()
           }
         }
       } catch (e) {
@@ -466,6 +470,7 @@ function TrainerPageContent() {
       if (e?.detail) {
         console.log('🎯 Calling pushFinal with AGENT text:', e.detail)
         pushFinal(e.detail, 'homeowner')
+        lastAgentActivityRef.current = Date.now()
       }
     }
 
@@ -475,6 +480,7 @@ function TrainerPageContent() {
       if (e?.detail) {
         console.log('🎯 Setting delta text:', e.detail)
         setDeltaText(e.detail)
+        lastAgentActivityRef.current = Date.now()
       }
     }
 
@@ -482,6 +488,11 @@ function TrainerPageContent() {
       if (e?.detail) {
         setConnectionStatus(e.detail)
         console.log('🔌 Connection status updated:', e.detail)
+        // Fail-safe: end session on error/disconnect
+        if ((e.detail === 'error' || e.detail === 'idle') && sessionActive) {
+          console.log('🛑 Connection lost or idle — auto-ending session...')
+          window.dispatchEvent(new CustomEvent('trainer:end-session-requested'))
+        }
       }
     }
 
@@ -518,7 +529,36 @@ function TrainerPageContent() {
       delete (window as any).startSessionRecording
       delete (window as any).stopSessionRecording
     }
-  }, [pushFinal, setDelta])
+  }, [pushFinal, setDelta, sessionActive])
+
+  // Inactivity watchdog: end after 30s of no agent activity
+  useEffect(() => {
+    if (!sessionActive) {
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current)
+        inactivityTimerRef.current = null
+      }
+      return
+    }
+
+    lastAgentActivityRef.current = Date.now()
+    inactivityTimerRef.current = setInterval(() => {
+      const now = Date.now()
+      const idleMs = now - lastAgentActivityRef.current
+      const INACTIVITY_LIMIT_MS = 30_000
+      if (idleMs >= INACTIVITY_LIMIT_MS) {
+        console.log(`🛑 Agent inactive for ${Math.round(idleMs/1000)}s — auto-ending session`)
+        window.dispatchEvent(new CustomEvent('trainer:end-session-requested'))
+      }
+    }, 3_000)
+
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current)
+        inactivityTimerRef.current = null
+      }
+    }
+  }, [sessionActive])
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()

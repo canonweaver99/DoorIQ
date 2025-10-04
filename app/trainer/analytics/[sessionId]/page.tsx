@@ -24,6 +24,7 @@ interface SessionData {
   objection_handling_score: number
   safety_score: number
   close_effectiveness_score: number
+  full_transcript?: any[]
   transcript: any[]
   analytics: any
   sentiment_data: any
@@ -47,7 +48,8 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const run = async () => {
       if (!session?.id) return
-      const hasTranscript = Array.isArray(session.transcript) && session.transcript.length > 0
+      const transcriptArr = (session as any).full_transcript || session.transcript
+      const hasTranscript = Array.isArray(transcriptArr) && transcriptArr.length > 0
       const hasScore = session.overall_score && session.overall_score > 0
       const hasAIFeedback = Boolean(session.analytics?.feedback)
       if (hasTranscript && (!hasScore || !hasAIFeedback)) {
@@ -67,7 +69,13 @@ export default function AnalyticsPage() {
       }
     }
     run()
-  }, [session?.id, Array.isArray(session?.transcript) ? session?.transcript?.length : 0, Boolean(session?.analytics?.feedback)])
+  }, [
+    session?.id,
+    Array.isArray((session as any)?.full_transcript)
+      ? (session as any)?.full_transcript?.length
+      : (Array.isArray(session?.transcript) ? session?.transcript?.length : 0),
+    Boolean(session?.analytics?.feedback)
+  ])
 
   const fetchSessionData = async () => {
     try {
@@ -199,7 +207,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Animated Score Display */}
-          {grading || (!session.overall_score && session.transcript && session.transcript.length > 0) ? (
+          {grading || (!session.overall_score && (session as any).full_transcript && (session as any).full_transcript.length > 0) ? (
             <div className="py-16 text-center">
               <motion.div
                 className="w-16 h-16 mx-auto rounded-full border-4 border-slate-600 border-t-blue-500 mb-4"

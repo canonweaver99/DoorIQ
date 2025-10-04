@@ -32,7 +32,7 @@ export default function TranscriptView({ transcript, analytics, className = "" }
     try {
       const ratings = analytics?.line_ratings || []
       const aiRating = ratings.find((r: any) => r.idx === idx && (entry.speaker === 'user' || entry.speaker === 'rep'))
-      if (aiRating?.label) return aiRating.label
+      if (aiRating?.rating) return aiRating.rating
     } catch {}
     
     // Excellent moves (green)

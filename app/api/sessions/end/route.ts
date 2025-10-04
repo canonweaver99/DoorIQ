@@ -39,17 +39,39 @@ export async function POST(req: Request) {
 
     // Try to grade if transcript provided
     if (Array.isArray(transcript) && transcript.length > 0) {
+      const body = JSON.stringify({ sessionId: id })
+      const headers = { 'Content-Type': 'application/json' }
+
+      const candidates: string[] = []
+      const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || ''
+      if (envUrl) candidates.push(`${envUrl.replace(/\/$/, '')}/api/grade/session`)
       try {
-        const gradeUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/grade/session`
-        console.log('🟢 [SESSION END] Transcript saved, triggering grading at:', gradeUrl)
-        const resp = await fetch(gradeUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId: id }),
-        })
-        const json = await resp.json().catch(() => ({}))
-        console.log('🟢 [SESSION END] Grading response status:', resp.status, 'payload:', json)
+        const origin = (req as any)?.headers?.get?.('origin') || (req as any)?.headers?.get?.('x-forwarded-host')
+        const proto = (req as any)?.headers?.get?.('x-forwarded-proto') || 'https'
+        if (origin && !/^https?:\/\//.test(origin)) {
+          candidates.push(`${proto}://${origin}/api/grade/session`)
+        } else if (origin) {
+          candidates.push(`${origin.replace(/\/$/, '')}/api/grade/session`)
+        }
       } catch {}
+      // Fallback to relative path last
+      candidates.push('/api/grade/session')
+
+      let triggered = false
+      for (const url of candidates) {
+        try {
+          console.log('🟢 [SESSION END] Triggering grading at:', url)
+          const resp = await fetch(url, { method: 'POST', headers, body })
+          const json = await resp.json().catch(() => ({}))
+          console.log('🟢 [SESSION END] Grading response:', { status: resp.status, ok: resp.ok, payload: json })
+          if (resp.ok) { triggered = true; break }
+        } catch (e) {
+          console.error('🟠 [SESSION END] Grading request failed for', url, e)
+        }
+      }
+      if (!triggered) {
+        console.error('🛑 [SESSION END] Failed to trigger grading after trying candidates:', candidates)
+      }
     }
 
     return NextResponse.json({ ok: true })
