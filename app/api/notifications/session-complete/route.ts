@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -9,15 +9,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
     }
 
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createServiceSupabaseClient()
     
-    // Get session details
-    const { data: session, error: sessionError } = await supabase
-      .from('training_sessions')
-      .select(`
-        *,
-        users!inner(id, full_name, email)
-      `)
+    // Get session details from live_sessions
+    const { data: session, error: sessionError } = await (supabase as any)
+      .from('live_sessions')
+      .select('*')
       .eq('id', sessionId)
       .single()
       
@@ -26,16 +23,22 @@ export async function POST(request: Request) {
     }
 
     const repId = (session as any).user_id as string
-    const repName = ((session as any).users?.full_name as string) || 'Your rep'
+    // Fetch user profile for name/email (best-effort)
+    const { data: userProfile } = await (supabase as any)
+      .from('users')
+      .select('full_name, email')
+      .eq('id', repId)
+      .single()
+    const repName = (userProfile?.full_name as string) || 'Your rep'
     const overallScore = (session as any).overall_score as number | null
     const sessionEarnings = (session as any).virtual_earnings as number | null
 
     // Find managers for this rep
-    const { data: assignments } = await supabase
+    const { data: assignments } = await (supabase as any)
       .from('manager_rep_assignments')
       .select(`
         manager_id,
-        manager:users!manager_id(id, email, full_name)
+        manager:users!inner(id, email, full_name)
       `)
       .eq('rep_id', repId)
 
@@ -54,14 +57,16 @@ export async function POST(request: Request) {
         }`
 
         // Create a message in the system (cast to any for TS compatibility)
-        await (supabase as any)
-          .from('messages')
-          .insert({
-            sender_id: repId,
-            recipient_id: assignment.manager_id,
-            session_id: sessionId,
-            message: `[System Notification] ${message}`
-          })
+        try {
+          await (supabase as any)
+            .from('messages')
+            .insert({
+              sender_id: repId,
+              recipient_id: assignment.manager_id,
+              session_id: sessionId,
+              message: `[System Notification] ${message}`
+            })
+        } catch {}
 
         return {
           manager: assignment.manager?.full_name ?? assignment.manager_id,
