@@ -45,24 +45,22 @@ export async function POST(request: NextRequest) {
     // Use OpenAI to grade the entire conversation
     console.log('Grading session with OpenAI:', sessionId, 'Lines:', transcript.length)
     
-    if (!openai.apiKey) {
-      console.error('OpenAI API key not configured')
-      return NextResponse.json({ 
-        error: 'OpenAI API key not configured' 
-      }, { status: 500 })
-    }
-    
     let analysis
-    try {
-      analysis = await gradeWithOpenAI(transcript)
-      console.log('✅ OpenAI grading successful:', {
-        overall: analysis.scores.overall,
-        lineRatings: analysis.line_ratings?.length || 0,
-        strengths: analysis.feedback.strengths?.length || 0
-      })
-    } catch (gradeError) {
-      console.error('❌ OpenAI grading failed, falling back to simple heuristic grade:', gradeError)
+    if (!openai.apiKey) {
+      console.warn('⚠️ OpenAI API key not configured — using heuristic grading fallback')
       analysis = simpleHeuristicGrade(transcript)
+    } else {
+      try {
+        analysis = await gradeWithOpenAI(transcript)
+        console.log('✅ OpenAI grading successful:', {
+          overall: analysis.scores.overall,
+          lineRatings: analysis.line_ratings?.length || 0,
+          strengths: analysis.feedback.strengths?.length || 0
+        })
+      } catch (gradeError) {
+        console.error('❌ OpenAI grading failed, falling back to simple heuristic grade:', gradeError)
+        analysis = simpleHeuristicGrade(transcript)
+      }
     }
     
     // Update session with grading results

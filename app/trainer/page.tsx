@@ -316,6 +316,7 @@ function TrainerPageContent() {
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle')
   const lastAgentActivityRef = useRef<number>(Date.now())
+  const lastUserActivityRef = useRef<number>(Date.now())
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const orbColors = getOrbColors(selectedAgent?.name)
@@ -437,6 +438,7 @@ function TrainerPageContent() {
           lastAgentActivityRef.current = Date.now()
         } else if (msg?.type === 'user_transcript') {
           pushFinal(msg.user_transcript || msg.text || '', 'user')
+          lastUserActivityRef.current = Date.now()
         } else if (msg?.type === 'agent_response') {
           const response = msg.agent_response
           let text = ''
@@ -462,6 +464,7 @@ function TrainerPageContent() {
       if (e?.detail) {
         console.log('🎯 Calling pushFinal with USER text:', e.detail)
         pushFinal(e.detail, 'user')
+        lastUserActivityRef.current = Date.now()
       }
     }
 
@@ -488,9 +491,9 @@ function TrainerPageContent() {
       if (e?.detail) {
         setConnectionStatus(e.detail)
         console.log('🔌 Connection status updated:', e.detail)
-        // Fail-safe: end session on error/disconnect
-        if ((e.detail === 'error' || e.detail === 'idle') && sessionActive) {
-          console.log('🛑 Connection lost or idle — auto-ending session...')
+        // Fail-safe: end session on error only (not idle)
+        if ((e.detail === 'error') && sessionActive) {
+          console.log('🛑 Connection error — auto-ending session...')
           window.dispatchEvent(new CustomEvent('trainer:end-session-requested'))
         }
       }
@@ -531,7 +534,7 @@ function TrainerPageContent() {
     }
   }, [pushFinal, setDelta, sessionActive])
 
-  // Inactivity watchdog: end after 30s of no agent activity
+  // Inactivity watchdog: end after 120s of no agent AND no user activity, and no active delta text
   useEffect(() => {
     if (!sessionActive) {
       if (inactivityTimerRef.current) {
@@ -542,12 +545,15 @@ function TrainerPageContent() {
     }
 
     lastAgentActivityRef.current = Date.now()
+    lastUserActivityRef.current = Date.now()
     inactivityTimerRef.current = setInterval(() => {
       const now = Date.now()
-      const idleMs = now - lastAgentActivityRef.current
-      const INACTIVITY_LIMIT_MS = 30_000
-      if (idleMs >= INACTIVITY_LIMIT_MS) {
-        console.log(`🛑 Agent inactive for ${Math.round(idleMs/1000)}s — auto-ending session`)
+      const agentIdleMs = now - lastAgentActivityRef.current
+      const userIdleMs = now - lastUserActivityRef.current
+      const INACTIVITY_LIMIT_MS = 120_000
+      const noActiveDelta = !deltaText
+      if (agentIdleMs >= INACTIVITY_LIMIT_MS && userIdleMs >= INACTIVITY_LIMIT_MS && noActiveDelta) {
+        console.log(`🛑 Agent and user inactive for ${Math.round(INACTIVITY_LIMIT_MS/1000)}s — auto-ending session`)
         window.dispatchEvent(new CustomEvent('trainer:end-session-requested'))
       }
     }, 3_000)
