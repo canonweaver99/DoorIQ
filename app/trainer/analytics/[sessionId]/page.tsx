@@ -87,9 +87,15 @@ export default function AnalyticsPage() {
 
   const fetchSessionData = async () => {
     try {
-      const sessionId = Array.isArray(params.sessionId)
+      let sessionId = Array.isArray(params.sessionId)
         ? params.sessionId[0]
         : params.sessionId
+
+      // Clean the session ID - remove any trailing special characters
+      sessionId = sessionId.replace(/[^a-f0-9-]/gi, '')
+      
+      console.log('🔍 Fetching session:', sessionId)
+      console.log('📋 Original param:', params.sessionId)
 
       // Always use API route for now to avoid auth issues
       // The API uses service role so it bypasses RLS
