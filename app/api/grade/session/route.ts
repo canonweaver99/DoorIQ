@@ -75,9 +75,16 @@ export async function POST(req: Request) {
         // Estimate end time based on text length (avg 150 words/min = ~400ms per word)
         const estimatedDurationMs = Math.max(1500, (t.text?.length || 10) * 30)
         
+        const rawSpeaker = String((t as any).speaker || '').toLowerCase()
+        // Map incoming transcript roles to grader roles
+        // Treat 'rep' | 'agent' | 'assistant' as our 'rep'; everything else as 'homeowner'
+        const mappedSpeaker = (rawSpeaker === 'rep' || rawSpeaker === 'agent' || rawSpeaker === 'assistant')
+          ? 'rep'
+          : 'homeowner'
+
         return {
           id: i,
-          speaker: (t.speaker === 'user' || t.speaker === 'rep') ? 'rep' : 'homeowner',
+          speaker: mappedSpeaker,
           startMs,
           endMs: startMs + estimatedDurationMs,
           text: String(t.text || '')
