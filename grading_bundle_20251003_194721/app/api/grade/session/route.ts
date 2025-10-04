@@ -11,14 +11,11 @@ type TranscriptEntry = { speaker: string; text: string; timestamp?: string | num
 
 export async function POST(req: Request) {
   try {
-    console.log('🔴 [GRADE API] Starting grading process...')
     const { sessionId } = await req.json()
-    console.log('🔴 [GRADE API] Session ID:', sessionId)
     if (!sessionId) {
       return NextResponse.json({ error: 'sessionId is required' }, { status: 400 })
     }
 
-    console.log('🔴 [GRADE API] Fetching session from database...')
     const supabase = await createServiceSupabaseClient()
     const { data: session, error } = await (supabase as any)
       .from('live_sessions')
@@ -27,15 +24,8 @@ export async function POST(req: Request) {
       .single()
 
     if (error || !session) {
-      console.error('🔴 [GRADE API] Database fetch error:', error)
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
-
-    console.log('🔴 [GRADE API] Session found:', {
-      id: (session as any).id,
-      transcriptIsArray: Array.isArray((session as any).full_transcript),
-      transcriptLength: Array.isArray((session as any).full_transcript) ? (session as any).full_transcript.length : 0,
-    })
 
     const transcript: TranscriptEntry[] = Array.isArray((session as any).full_transcript)
       ? (session as any).full_transcript
@@ -92,28 +82,18 @@ export async function POST(req: Request) {
       duration: (gTranscript.turns[gTranscript.turns.length - 1]?.endMs - gTranscript.turns[0]?.startMs) / 1000
     })
 
-    console.log('🔴 [GRADE API] Calling gradeSession()...')
     const packet = await gradeSession(gTranscript, async (prompt: string) => {
-      try {
-        console.log('🔴 [GRADE API] Calling GPT-4o...')
-        const r = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'You are an expert sales coach. Return strict JSON only. No prose.' },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.3,
-          response_format: { type: 'json_object' },
-        })
-        const content = r.choices?.[0]?.message?.content || '{}'
-        console.log('🔴 [GRADE API] GPT-4o response length:', content.length)
-        return content
-      } catch (err: any) {
-        console.error('🔴 [GRADE API] GPT-4o call failed:', err?.message || err)
-        throw err
-      }
+      const r = await openai.chat.completions.create({
+        model: 'gpt-4o', // Upgraded to GPT-4o for better quality feedback
+        messages: [
+          { role: 'system', content: 'You are an expert sales coach. Return strict JSON only. No prose.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3, // Slight creativity for better coaching feedback
+        response_format: { type: 'json_object' },
+      })
+      return r.choices?.[0]?.message?.content || '{}'
     })
-    console.log('🔴 [GRADE API] Grading completed. Final score:', packet?.components?.final)
 
     // Use LLM's contextual line-by-line ratings if available, otherwise fallback to heuristic
     const lineRatings = packet.llm?.line_by_line_ratings?.map((rating: any) => ({
@@ -153,20 +133,13 @@ export async function POST(req: Request) {
       })
 
     // Use the comprehensive helper to build complete payload with all columns
-    console.log('🔴 [GRADE API] Building update payload...')
     const updatePayload = buildCompleteUpdatePayload(
       gTranscript,
       packet,
       session.analytics,
       lineRatings
     )
-    console.log('🔴 [GRADE API] Update payload core fields:', {
-      overall_score: (updatePayload as any)?.overall_score,
-      pass: (updatePayload as any)?.pass,
-      grade_letter: (updatePayload as any)?.grade_letter,
-    })
 
-    console.log('🔴 [GRADE API] Updating database...')
     let { error: updateError } = await (supabase as any)
       .from('live_sessions')
       .update(updatePayload)
@@ -187,10 +160,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, data: reducedPayload, downgraded: true })
     }
 
-    console.log('🔴 [GRADE API] ✅ SUCCESS! Saved grading for session:', sessionId)
     return NextResponse.json({ ok: true, data: updatePayload, downgraded: false })
   } catch (e: any) {
-    console.error('🔴 [GRADE API] FATAL ERROR:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
 }

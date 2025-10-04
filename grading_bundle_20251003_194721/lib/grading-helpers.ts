@@ -279,20 +279,12 @@ export function buildCompleteUpdatePayload(
   sessionAnalytics: any,
   lineRatings: any[]
 ): Record<string, any> {
-  try {
-    console.log('🟣 [HELPER] Building complete update payload...')
-    console.log('🟣 [HELPER] Grade packet summary:', {
-      final: packet?.components?.final,
-      llm: !!packet?.llm,
-      objective_words: packet?.objective?._repWords,
-    })
-  } catch {}
   const clamp = (n: any, min: number, max: number) => {
     const num = Number.isFinite(n) ? Number(n) : 0
     return Math.max(min, Math.min(max, Math.round(num)))
   }
 
-  const payload = {
+  return {
     // === Core Scores (4 columns) ===
     overall_score: clamp(packet.components.final, 0, 100),
     rapport_score: clamp((packet.llm?.clarity_empathy?.score ?? 0) * 10, 0, 100),
@@ -412,7 +404,5 @@ export function buildCompleteUpdatePayload(
       graded_at: new Date().toISOString(),
     },
   }
-  try { console.log('🟣 [HELPER] Payload built successfully with overall_score:', (payload as any).overall_score) } catch {}
-  return payload
 }
 

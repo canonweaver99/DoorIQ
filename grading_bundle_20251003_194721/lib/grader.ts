@@ -977,10 +977,6 @@ export async function gradeSession(
   infer: (prompt: string)=>Promise<string>,     // your LLM caller
   policySnippets: string[] = []
 ): Promise<GradePacket> {
-  try {
-    console.log('🟡 [GRADER] Starting grading engine...')
-    console.log('🟡 [GRADER] Turns:', transcript?.turns?.length)
-  } catch {}
   const objective = computeObjectiveMetrics(transcript);
   const objectionSpans = detectObjections(transcript);
   const objectionCases = objectionSpans.map(s => scoreObjectionCase(s, transcript));
@@ -989,15 +985,7 @@ export async function gradeSession(
 
   // LLM pass (you can skip initially to save cost)
   const prompt = buildLlmPrompt({ transcript, objectionSpans, policySnippets });
-  let llm: LlmRubricOutput | null = null
-  try {
-    console.log('🟡 [GRADER] Calling GPT-4o rubric...')
-    llm = await runLlmRubric(prompt, infer);
-    console.log('🟡 [GRADER] GPT-4o rubric received')
-  } catch (e: any) {
-    console.error('🟡 [GRADER] LLM rubric failed:', e?.message || e)
-    throw e
-  }
+  const llm = await runLlmRubric(prompt, infer);
 
   // Map LLM components to 40pts with pest control adjustments
   // Discovery (20), Objection (20), Clarity (10), Solution (10), Pricing (10), Compliance (10) totals 80.
@@ -1030,7 +1018,6 @@ export async function gradeSession(
   const obj60 = objectiveToSixty(objective);
   const difficulty = analyzeDifficulty(transcript);
   const components = aggregate(obj60, llm40, objective, llm, difficulty);
-  try { console.log('🟡 [GRADER] Final score calculated:', components?.final) } catch {}
 
   return {
     sessionId: transcript.sessionId,

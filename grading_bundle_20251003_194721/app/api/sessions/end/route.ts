@@ -8,13 +8,7 @@ type TranscriptEntry = { speaker: string; text: string; timestamp?: string | num
 
 export async function POST(req: Request) {
   try {
-    console.log('🟢 [SESSION END] Ending session...')
     const { id, duration, transcript, analytics } = await req.json()
-    console.log('🟢 [SESSION END] Data received:', {
-      id,
-      duration,
-      transcriptLength: Array.isArray(transcript) ? transcript.length : 0,
-    })
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
     const supabase = await createServiceSupabaseClient()
@@ -26,29 +20,21 @@ export async function POST(req: Request) {
       analytics: analytics || {},
     }
 
-    console.log('🟢 [SESSION END] Saving transcript to database...')
     const { error } = await (supabase as any)
       .from('live_sessions')
       .update(update)
       .eq('id', id)
 
-    if (error) {
-      console.error('🟢 [SESSION END] Failed to save transcript:', error)
-      return NextResponse.json({ error: 'Failed to end session', details: error }, { status: 500 })
-    }
+    if (error) return NextResponse.json({ error: 'Failed to end session', details: error }, { status: 500 })
 
     // Try to grade if transcript provided
     if (Array.isArray(transcript) && transcript.length > 0) {
       try {
-        const gradeUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/grade/session`
-        console.log('🟢 [SESSION END] Transcript saved, triggering grading at:', gradeUrl)
-        const resp = await fetch(gradeUrl, {
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/grade/session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId: id }),
         })
-        const json = await resp.json().catch(() => ({}))
-        console.log('🟢 [SESSION END] Grading response status:', resp.status, 'payload:', json)
       } catch {}
     }
 
