@@ -71,14 +71,17 @@ export async function POST(request: NextRequest) {
     }
     
     // Update session with grading results
+    // Round all scores to integers (0-100 range)
+    const clampScore = (score: number) => Math.max(0, Math.min(100, Math.round(score)))
+    
     const updateData = {
-      overall_score: analysis.scores.overall,
-      rapport_score: analysis.scores.rapport,
-      introduction_score: analysis.scores.introduction,
-      listening_score: analysis.scores.listening,
-      objection_handling_score: analysis.scores.sales_technique,
-      safety_score: analysis.scores.safety,
-      close_effectiveness_score: analysis.scores.closing,
+      overall_score: clampScore(analysis.scores.overall),
+      rapport_score: clampScore(analysis.scores.rapport),
+      introduction_score: clampScore(analysis.scores.introduction),
+      listening_score: clampScore(analysis.scores.listening),
+      objection_handling_score: clampScore(analysis.scores.sales_technique),
+      safety_score: clampScore(analysis.scores.safety),
+      close_effectiveness_score: clampScore(analysis.scores.closing),
       virtual_earnings: analysis.virtual_earnings || 0,
       what_worked: analysis.feedback.strengths || [],
       what_failed: analysis.feedback.improvements || [],
@@ -87,6 +90,7 @@ export async function POST(request: NextRequest) {
         line_ratings: analysis.line_ratings || [],
         key_moments: analysis.key_moments || {},
         feedback: analysis.feedback || {},
+        scores: analysis.scores, // Store original decimal scores here
         grading_version: '3.0-openai',
         graded_at: new Date().toISOString()
       }
