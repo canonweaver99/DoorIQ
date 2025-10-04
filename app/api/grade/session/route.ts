@@ -44,14 +44,20 @@ export async function POST(request: NextRequest) {
     
     // Use OpenAI to grade the entire conversation
     console.log('Grading session with OpenAI:', sessionId, 'Lines:', transcript.length)
+    await logEvent(supabase as any, sessionId, 'grading_started', {
+      transcript_lines: Array.isArray(transcript) ? transcript.length : 0
+    })
     
     let analysis
+    let method: 'openai' | 'heuristic' = 'heuristic'
     if (!openai.apiKey) {
       console.warn('⚠️ OpenAI API key not configured — using heuristic grading fallback')
       analysis = simpleHeuristicGrade(transcript)
+      method = 'heuristic'
     } else {
       try {
         analysis = await gradeWithOpenAI(transcript)
+        method = 'openai'
         console.log('✅ OpenAI grading successful:', {
           overall: analysis.scores.overall,
           lineRatings: analysis.line_ratings?.length || 0,
@@ -60,6 +66,7 @@ export async function POST(request: NextRequest) {
       } catch (gradeError) {
         console.error('❌ OpenAI grading failed, falling back to simple heuristic grade:', gradeError)
         analysis = simpleHeuristicGrade(transcript)
+        method = 'heuristic'
       }
     }
     
@@ -94,6 +101,10 @@ export async function POST(request: NextRequest) {
     
     if (updateError) {
       console.error('❌ Failed to update session with grades:', updateError)
+      await logEvent(supabase as any, sessionId, 'grading_failed', {
+        method,
+        error: updateError
+      })
       return NextResponse.json({ 
         error: 'Failed to save grading results',
         details: updateError 
@@ -101,6 +112,12 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('✅ Grading completed successfully for session:', sessionId)
+    await logEvent(supabase as any, sessionId, 'grading_saved', {
+      method,
+      overall: analysis.scores?.overall ?? null,
+      line_ratings: Array.isArray(analysis.line_ratings) ? analysis.line_ratings.length : 0,
+      graded_at: new Date().toISOString()
+    })
     
     return NextResponse.json({ 
       success: true,
@@ -117,6 +134,15 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error) {
       console.error('Error stack:', error.stack)
     }
+    try {
+      const { sessionId } = await request.json().catch(() => ({ sessionId: null }))
+      if (sessionId) {
+        const supabase = await createServiceSupabaseClient()
+        await logEvent(supabase as any, sessionId, 'grading_failed', {
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+      }
+    } catch {}
     return NextResponse.json({ 
       error: 'Grading failed',
       details: error instanceof Error ? error.message : 'Unknown error',
@@ -125,6 +151,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
+async function logEvent(supabase: any, sessionId: string, event_type: string, data: any) {
+  try {
+    await supabase
+      .from('session_events')
+      .insert({
+        session_id: sessionId,
+        event_type,
+        timestamp: new Date().toISOString(),
+        data
+      })
+  } catch (e) {
+    console.warn('⚠️ Failed to log session event:', event_type, e)
+  }
+}
 async function gradeWithOpenAI(transcript: any[]) {
   try {
     console.log('🤖 Starting OpenAI grading...', {
