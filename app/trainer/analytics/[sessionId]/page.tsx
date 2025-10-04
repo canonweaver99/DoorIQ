@@ -91,21 +91,15 @@ export default function AnalyticsPage() {
         ? params.sessionId[0]
         : params.sessionId
 
-      // Try client-side Supabase first (works when user has access), then fall back to server API (service role)
-      const { data, error } = await supabase
-        .from('live_sessions')
-        .select('*')
-        .eq('id', sessionId as string)
-        .single()
-
-      if (error || !data) {
-        const resp = await fetch(`/api/sessions/${sessionId}`)
-        if (!resp.ok) throw new Error(`API fetch failed: ${resp.status}`)
-        const json = await resp.json()
-        setSession(json)
-      } else {
-        setSession(data as any)
+      // Always use API route for now to avoid auth issues
+      // The API uses service role so it bypasses RLS
+      const resp = await fetch(`/api/sessions/${sessionId}`)
+      if (!resp.ok) {
+        console.error('Failed to fetch session:', resp.status, resp.statusText)
+        throw new Error(`API fetch failed: ${resp.status}`)
       }
+      const json = await resp.json()
+      setSession(json)
     } catch (error) {
       console.error('Error fetching session:', error)
     } finally {
