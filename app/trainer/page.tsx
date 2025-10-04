@@ -625,6 +625,17 @@ function TrainerPageContent() {
       setTranscript([])
       setDuration(0)
 
+      // Require auth before starting a session. If not signed in, redirect to login.
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          console.warn('🔒 Not authenticated. Redirecting to login...')
+          router.push('/auth/login?next=/trainer')
+          setLoading(false)
+          return
+        }
+      } catch {}
+
       console.log('🎬 Starting training session...')
       console.log('Selected agent:', selectedAgent.name, selectedAgent.eleven_agent_id)
 
