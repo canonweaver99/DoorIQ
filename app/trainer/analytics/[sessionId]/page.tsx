@@ -45,6 +45,7 @@ export default function AnalyticsPage() {
   }, [params.sessionId])
 
   // Auto-grade if transcript exists but no AI feedback yet
+  // Also poll for updates if grading is in progress
   useEffect(() => {
     const run = async () => {
       if (!session?.id) return
@@ -52,20 +53,27 @@ export default function AnalyticsPage() {
       const hasTranscript = Array.isArray(transcriptArr) && transcriptArr.length > 0
       const hasScore = session.overall_score && session.overall_score > 0
       const hasAIFeedback = Boolean(session.analytics?.feedback)
+      
       if (hasTranscript && (!hasScore || !hasAIFeedback)) {
-        try {
-          setGrading(true)
-          await fetch('/api/grade/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId: session.id })
-          })
+        setGrading(true)
+        
+        // Poll every 2 seconds until grading completes
+        const pollInterval = setInterval(async () => {
           await fetchSessionData()
-        } catch (e) {
-          console.error('AI grading failed:', e)
-        } finally {
+          const freshSession = session
+          if (freshSession?.overall_score && freshSession?.overall_score > 0) {
+            clearInterval(pollInterval)
+            setGrading(false)
+          }
+        }, 2000)
+        
+        // Clear interval after 30 seconds max
+        setTimeout(() => {
+          clearInterval(pollInterval)
           setGrading(false)
-        }
+        }, 30000)
+        
+        return () => clearInterval(pollInterval)
       }
     }
     run()

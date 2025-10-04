@@ -37,8 +37,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to end session', details: error }, { status: 500 })
     }
 
-    // Try to grade if transcript provided
-    let gradingResults: any = null
+    // Trigger grading in background (fire-and-forget for faster response)
     if (Array.isArray(transcript) && transcript.length > 0) {
       const body = JSON.stringify({ sessionId: id })
       const headers = { 'Content-Type': 'application/json' }
@@ -58,30 +57,20 @@ export async function POST(req: Request) {
       // Fallback to relative path last
       candidates.push('/api/grade/session')
 
-      let triggered = false
+      // Fire-and-forget: Don't await grading, let it run in background
       for (const url of candidates) {
-        try {
-          console.log('🟢 [SESSION END] Triggering grading at:', url)
-          const resp = await fetch(url, { method: 'POST', headers, body })
-          const json = await resp.json().catch(() => ({}))
-          console.log('🟢 [SESSION END] Grading response:', { status: resp.status, ok: resp.ok, payload: json })
-          if (resp.ok) { 
-            triggered = true
-            gradingResults = json
-            break 
-          }
-        } catch (e) {
-          console.error('🟠 [SESSION END] Grading request failed for', url, e)
-        }
+        fetch(url, { method: 'POST', headers, body })
+          .then(() => console.log('🟢 [SESSION END] Background grading triggered at:', url))
+          .catch((e) => console.error('🟠 [SESSION END] Background grading failed for', url, e))
+        break // Only try first URL to avoid duplicate grading
       }
-      if (!triggered) {
-        console.error('🛑 [SESSION END] Failed to trigger grading after trying candidates:', candidates)
-      }
+      
+      console.log('🟢 [SESSION END] Grading triggered in background, responding immediately')
     }
 
     return NextResponse.json({ 
       ok: true,
-      grading: gradingResults 
+      gradingInProgress: Array.isArray(transcript) && transcript.length > 0
     })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })

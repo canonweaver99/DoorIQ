@@ -868,36 +868,25 @@ function TrainerPageContent() {
         
         if (!resp.ok) {
           console.error('❌ Failed to end session:', data)
-          setCalculatingScore(true)
-          setLoading(false)
         } else {
-          console.log('✅ Session ended successfully, grading should start automatically')
+          console.log('✅ Session ended successfully')
+          console.log('🔄 Grading running in background...')
           
-          // Check for virtual earnings from grading results
-          const virtualEarnings = data?.grading?.virtual_earnings || 0
-          
-          console.log('💰 Virtual earnings from session:', virtualEarnings)
-          
-          // If there are earnings, show money notification first
-          if (virtualEarnings > 0) {
-            setEarningsAmount(virtualEarnings)
-            setShowMoneyNotification(true)
-            setLoading(false)
-            // Don't show calculating screen yet - wait for money notification to complete
-          } else {
-            // No earnings, go straight to calculating screen
-            setCalculatingScore(true)
-            setLoading(false)
-          }
-          
-          // Send notifications to managers
-          await fetch('/api/notifications/session-complete', {
+          // Send notifications to managers  
+          fetch('/api/notifications/session-complete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionId }),
           }).catch((e) => {
             console.error('Manager notification failed:', e)
           })
+        }
+        
+        // Go straight to analytics - grading happens in background
+        if (sessionId) {
+          router.push(`/trainer/analytics/${encodeURIComponent(sessionId as string)}`)
+        } else {
+          router.push('/feedback')
         }
       } else {
         console.warn('⚠️ No valid sessionId, skipping save (cannot grade without a session record)')
