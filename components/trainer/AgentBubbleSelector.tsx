@@ -190,7 +190,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           transition={{ duration: 0.6 }}
           className="text-center mb-16 flex flex-col items-center gap-6"
         >
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4">
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4 pb-2 leading-tight">
             Choose Your Challenge
           </h1>
           <p className="text-lg text-slate-400">
