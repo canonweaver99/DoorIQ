@@ -950,31 +950,22 @@ function TrainerPageContent() {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col items-center justify-start pt-12">
-          {/* Start Button (Banner style) */}
-          {!sessionActive && (
+          {/* Start Button - neutral, hidden once starting */}
+          {!sessionActive && !loading && (
             <div className="mb-8">
               <button
                 onClick={startSession}
                 disabled={loading || !selectedAgent}
                 className={`
-                  inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold
-                  transition-all duration-200 shadow-lg border
-                  ${loading || !selectedAgent
-                    ? 'bg-white/10 text-white/50 border-white/10 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-white/10 hover:from-purple-500 hover:to-pink-500 hover:shadow-purple-500/30'
+                  inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold
+                  transition-all duration-150 shadow-lg border
+                  ${!selectedAgent
+                    ? 'bg-white/5 text-white/40 border-white/10 cursor-not-allowed'
+                    : 'bg-white/10 text-white border-white/15 backdrop-blur-sm hover:bg-white/15'
                   }
                 `}
               >
-                {loading ? (
-                  <span className="flex items-center gap-3">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Connecting...
-                  </span>
-                ) : selectedAgent ? (
-                  `🚪 Knock on ${selectedAgent.name}'s Door`
-                ) : (
-                  'Select a Homeowner First'
-                )}
+                {selectedAgent ? `Knock on ${selectedAgent.name}'s Door` : 'Select a Homeowner First'}
               </button>
             </div>
           )}
