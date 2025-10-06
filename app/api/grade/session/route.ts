@@ -77,16 +77,10 @@ export async function POST(request: NextRequest) {
     const updateData = {
       overall_score: clampScore(analysis.scores.overall),
       rapport_score: clampScore(analysis.scores.rapport),
-      introduction_score: clampScore(analysis.scores.introduction),
-      listening_score: clampScore(analysis.scores.listening),
-      objection_handling_score: clampScore(analysis.scores.sales_technique),
-      safety_score: clampScore(analysis.scores.safety),
-      close_effectiveness_score: clampScore(analysis.scores.closing),
+      discovery_score: clampScore(analysis.scores.discovery),
+      objection_handling_score: clampScore(analysis.scores.objection_handling),
+      close_score: clampScore(analysis.scores.close),
       virtual_earnings: analysis.virtual_earnings || 0,
-      // These are now stored in analytics.feedback instead of separate columns
-      // what_worked: analysis.feedback.strengths || [],
-      // what_failed: analysis.feedback.improvements || [],
-      // key_learnings: analysis.feedback.specific_tips || [],
       analytics: {
         line_ratings: analysis.line_ratings || [],
         key_moments: analysis.key_moments || {},
@@ -187,16 +181,42 @@ async function gradeWithOpenAI(transcript: any[]) {
 TRANSCRIPT:
 ${transcriptText}
 
-Provide detailed analysis including:
-1. Score each category 0-100: introduction, rapport, listening, sales_technique, closing, safety
-2. Overall score (weighted average)
-3. For EACH line spoken by the Rep (speaker='user'), rate it as "excellent", "good", "average", or "poor"
-4. For lines rated "poor" or "average", suggest a better alternative phrase (use empty string "" if no alternative)
-5. Identify key moments: price_discussed, safety_addressed, close_attempted, objection_handled, deal_closed
-6. Calculate virtual_earnings (if Rep quoted a price AND Customer agreed, return that price, otherwise 0)
-7. Provide feedback: strengths (what worked), improvements (what needs work), specific_tips (actionable advice)
+Provide detailed analysis focusing on these 4 KEY AREAS:
 
-Be critical but fair. Door-to-door sales requires excellence.`
+1. RAPPORT (0-100): How well did they introduce themselves and gain the customer's favor and trust?
+   - Quality of introduction
+   - Building connection and trust
+   - Making the customer comfortable
+   - Personal warmth and authenticity
+
+2. DISCOVERY (0-100): How many questions did they ask and how well did they listen?
+   - Number and quality of discovery questions
+   - Active listening demonstrated
+   - Understanding customer needs/pain points
+   - Gathering relevant information
+
+3. OBJECTION HANDLING (0-100): How well did they answer questions and propose solutions?
+   - Addressing concerns effectively
+   - Providing clear, thoughtful solutions
+   - Confidence in responses
+   - Turning objections into opportunities
+
+4. CLOSE (0-100): How effective was their closing method and were they able to sign on the doorstep?
+   - Closing technique used
+   - Confidence in asking for the sale
+   - Creating urgency appropriately
+   - Actually getting the commitment
+
+OVERALL SCORE: Calculate as the average of these 4 scores.
+
+ALSO PROVIDE:
+- Line-by-line ratings for EACH Rep line (excellent/good/average/poor)
+- Alternative phrases for poor/average lines
+- Key moments tracking (price_discussed, close_attempted, objection_handled, deal_closed)
+- Virtual earnings (price if deal closed, 0 otherwise)
+- The good, bad, and ugly: Be brutally honest about what worked, what failed, and specific improvements needed
+
+Focus on these 4 areas only. Be critical but constructive.`
 
     console.log('📤 Calling OpenAI API...')
     const response = await openai.chat.completions.create({
@@ -216,14 +236,12 @@ Be critical but fair. Door-to-door sales requires excellence.`
             properties: {
               scores: {
                 type: 'object',
-                required: ['introduction', 'rapport', 'listening', 'sales_technique', 'closing', 'safety', 'overall'],
+                required: ['rapport', 'discovery', 'objection_handling', 'close', 'overall'],
                 properties: {
-                  introduction: { type: 'number' },
                   rapport: { type: 'number' },
-                  listening: { type: 'number' },
-                  sales_technique: { type: 'number' },
-                  closing: { type: 'number' },
-                  safety: { type: 'number' },
+                  discovery: { type: 'number' },
+                  objection_handling: { type: 'number' },
+                  close: { type: 'number' },
                   overall: { type: 'number' }
                 },
                 additionalProperties: false
@@ -263,10 +281,9 @@ Be critical but fair. Door-to-door sales requires excellence.`
               },
               key_moments: {
                 type: 'object',
-                required: ['price_discussed', 'safety_addressed', 'close_attempted', 'objection_handled', 'deal_closed'],
+                required: ['price_discussed', 'close_attempted', 'objection_handled', 'deal_closed'],
                 properties: {
                   price_discussed: { type: 'boolean' },
-                  safety_addressed: { type: 'boolean' },
                   close_attempted: { type: 'boolean' },
                   objection_handled: { type: 'boolean' },
                   deal_closed: { type: 'boolean' }

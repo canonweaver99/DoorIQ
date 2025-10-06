@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
     const scores = {
       overall: sessionData.overall_score || 0,
       rapport: sessionData.rapport_score || 0,
+      discovery: sessionData.discovery_score || 0,
       objection_handling: sessionData.objection_handling_score || 0,
-      safety: sessionData.safety_score || 0,
-      close_effectiveness: sessionData.close_effectiveness_score || 0
+      close: sessionData.close_score || 0
     }
     
     // Fetch comprehensive grading data if available

@@ -21,9 +21,9 @@ interface SessionData {
   duration_seconds: number
   overall_score: number
   rapport_score: number
+  discovery_score: number
   objection_handling_score: number
-  safety_score: number
-  close_effectiveness_score: number
+  close_score: number
   full_transcript?: any[]
   transcript: any[]
   analytics: any
@@ -162,36 +162,36 @@ export default function AnalyticsPage() {
 
   const metricsData = [
     {
-      label: 'Rapport Building',
+      label: 'Rapport',
       score: session.rapport_score || 0,
       color: 'blue' as const,
-      feedback: (session.rapport_score || 0) >= 85 ? "Outstanding rapport building - genuine connection established" :
-                (session.rapport_score || 0) >= 70 ? "Good rapport foundation, but use more personalized language" :
-                "Focus on building trust through active listening and empathy"
+      feedback: (session.rapport_score || 0) >= 85 ? "Outstanding introduction and trust building - genuine connection established" :
+                (session.rapport_score || 0) >= 70 ? "Good rapport foundation, but make your introduction more personalized" :
+                "Focus on a warmer introduction and building authentic trust"
+    },
+    {
+      label: 'Discovery',
+      score: session.discovery_score || 0,
+      color: 'green' as const,
+      feedback: (session.discovery_score || 0) >= 85 ? "Excellent discovery - asked great questions and truly listened" :
+                (session.discovery_score || 0) >= 70 ? "Good questioning, but listen more actively to their responses" :
+                "Ask more open-ended questions and demonstrate you're listening"
     },
     {
       label: 'Objection Handling',
       score: session.objection_handling_score || 0,
-      color: 'green' as const,
-      feedback: (session.objection_handling_score || 0) >= 85 ? "Professional objection handling with empathy and expertise" :
-                (session.objection_handling_score || 0) >= 70 ? "Good objection handling, but use more empathetic responses" :
-                "Learn to acknowledge concerns before addressing them"
-    },
-    {
-      label: 'Safety Discussion',
-      score: session.safety_score || 0,
       color: 'yellow' as const,
-      feedback: (session.safety_score || 0) >= 85 ? "Excellent safety discussion - builds trust and confidence" :
-                (session.safety_score || 0) >= 70 ? "Good safety mention, but be more comprehensive" :
-                "Always address safety concerns - essential for pest control"
+      feedback: (session.objection_handling_score || 0) >= 85 ? "Masterful objection handling - turned concerns into opportunities" :
+                (session.objection_handling_score || 0) >= 70 ? "Good responses, but provide more thoughtful solutions" :
+                "Acknowledge concerns first, then provide clear solutions"
     },
     {
-      label: 'Close Effectiveness',
-      score: session.close_effectiveness_score || 0,
+      label: 'Close',
+      score: session.close_score || 0,
       color: 'purple' as const,
-      feedback: (session.close_effectiveness_score || 0) >= 85 ? "Excellent closing technique - assumptive and confident" :
-                (session.close_effectiveness_score || 0) >= 70 ? "Good closing attempt, but be more assumptive" :
-                "Practice assumptive closes and create urgency"
+      feedback: (session.close_score || 0) >= 85 ? "Excellent closing - confident ask and got the commitment!" :
+                (session.close_score || 0) >= 70 ? "Good closing attempt, but be more assumptive and create urgency" :
+                "Practice confident closes - ask for the sale on the doorstep"
     }
   ]
 
