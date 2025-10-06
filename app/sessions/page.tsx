@@ -26,73 +26,52 @@ export default function SessionsPage() {
 
   const fetchSessions = async () => {
     console.log('📊 Fetching sessions...')
-    const supabase = createClient()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
     
-    console.log('👤 User:', user?.id, user?.email)
-    
-    if (userError) {
-      console.error('❌ User error:', userError)
-    }
-    
-    if (!user) {
-      console.log('❌ No user authenticated')
+    try {
+      // Use API endpoint to avoid UUID corruption from Supabase client
+      const response = await fetch('/api/sessions/user')
+      if (!response.ok) {
+        if (response.status === 401) {
+          setIsAuthenticated(false)
+          setLoading(false)
+          return
+        }
+        throw new Error('Failed to fetch sessions')
+      }
+      
+      const data = await response.json()
+      setIsAuthenticated(true)
+      
+      // Apply client-side filtering
+      let filteredSessions = data.sessions || []
+
+      // Apply date filter client-side
+      if (filter === 'week') {
+        const weekAgo = new Date()
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        filteredSessions = filteredSessions.filter((s: any) => 
+          new Date(s.created_at) >= weekAgo
+        )
+        console.log('📅 Filtering: Past week')
+      } else if (filter === 'month') {
+        const monthAgo = new Date()
+        monthAgo.setMonth(monthAgo.getMonth() - 1)
+        filteredSessions = filteredSessions.filter((s: any) => 
+          new Date(s.created_at) >= monthAgo
+        )
+        console.log('📅 Filtering: Past month')
+      } else {
+        console.log('📅 Filtering: All time')
+      }
+
+      console.log('✅ Loaded', filteredSessions.length, 'sessions')
+      setSessions(filteredSessions)
+      setLoading(false)
+    } catch (error) {
+      console.error('❌ Error fetching sessions:', error)
       setIsAuthenticated(false)
       setLoading(false)
-      return
     }
-    
-    setIsAuthenticated(true)
-
-  let query = supabase
-      .from('live_sessions')
-      .select(`
-        *,
-        users!inner(full_name, email)
-      `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    // Apply date filter
-    if (filter === 'week') {
-      const weekAgo = new Date()
-      weekAgo.setDate(weekAgo.getDate() - 7)
-      query = query.gte('created_at', weekAgo.toISOString())
-      console.log('📅 Filtering: Past week (since', weekAgo.toISOString(), ')')
-    } else if (filter === 'month') {
-      const monthAgo = new Date()
-      monthAgo.setMonth(monthAgo.getMonth() - 1)
-      query = query.gte('created_at', monthAgo.toISOString())
-      console.log('📅 Filtering: Past month (since', monthAgo.toISOString(), ')')
-    } else {
-      console.log('📅 Filtering: All time')
-    }
-
-    const { data, error } = await query
-
-    console.log('📊 Query results:', {
-      error: error?.message,
-      sessionCount: data?.length,
-      sessions: data?.map(s => ({
-        id: s.id,
-        created: s.created_at,
-        score: s.overall_score,
-        ended: s.ended_at
-      }))
-    })
-
-    if (error) {
-      console.error('❌ Error fetching sessions:', error)
-    }
-
-    if (!error && data) {
-      console.log('✅ Loaded', data.length, 'sessions')
-      setSessions(data as Session[])
-    } else if (!error && !data) {
-      console.log('⚠️ No sessions found')
-      setSessions([])
-    }
-    setLoading(false)
   }
 
   const getScoreColor = (score: number | null) => {
@@ -286,7 +265,7 @@ export default function SessionsPage() {
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-semibold text-white mb-1">
-                        Training Session
+                        {session.agent_name || 'Training Session'}
                       </h3>
                       <div className="flex items-center space-x-4 text-sm text-slate-400">
                         <span className="flex items-center">
