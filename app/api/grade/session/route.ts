@@ -83,9 +83,10 @@ export async function POST(request: NextRequest) {
       safety_score: clampScore(analysis.scores.safety),
       close_effectiveness_score: clampScore(analysis.scores.closing),
       virtual_earnings: analysis.virtual_earnings || 0,
-      what_worked: analysis.feedback.strengths || [],
-      what_failed: analysis.feedback.improvements || [],
-      key_learnings: analysis.feedback.specific_tips || [],
+      // These are now stored in analytics.feedback instead of separate columns
+      // what_worked: analysis.feedback.strengths || [],
+      // what_failed: analysis.feedback.improvements || [],
+      // key_learnings: analysis.feedback.specific_tips || [],
       analytics: {
         line_ratings: analysis.line_ratings || [],
         key_moments: analysis.key_moments || {},
