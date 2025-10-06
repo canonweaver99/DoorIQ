@@ -895,25 +895,23 @@ function TrainerPageContent() {
         
         // Go straight to analytics - grading happens in background
         if (sessionId) {
-          // WORKAROUND: Fetch the actual session ID from database to avoid corruption
-          // The sessionId in state seems to get corrupted during JSON parsing or state updates
+          // WORKAROUND: Fetch the actual session ID via API to avoid Supabase client corruption
+          // UUIDs are being corrupted when returned from Supabase client (hex sequences interpreted as escape codes)
           try {
             const { data: { user: authUser } } = await supabase.auth.getUser()
             if (authUser?.id) {
-              const { data: sessions } = await (supabase as any)
-                .from('live_sessions')
-                .select('id')
-                .eq('user_id', authUser.id)
-                .order('started_at', { ascending: false })
-                .limit(1)
-              
-              if (sessions && sessions.length > 0) {
-                const actualId = (sessions as any)[0].id
-                console.log('📊 Fetching actual session ID from DB:', actualId)
-                console.log('📊 State had:', sessionId)
-                console.log('📊 Match:', actualId === sessionId)
-                router.push(`/trainer/analytics/${encodeURIComponent(actualId)}`)
-                return
+              // Use API route instead of Supabase client to avoid corruption
+              const resp = await fetch(`/api/sessions/recent?user_id=${authUser.id}&limit=1`)
+              if (resp.ok) {
+                const data = await resp.json()
+                if (data.sessions && data.sessions.length > 0) {
+                  const actualId = data.sessions[0].id
+                  console.log('📊 Fetching actual session ID from API:', actualId)
+                  console.log('📊 State had:', sessionId)
+                  console.log('📊 Match:', actualId === sessionId)
+                  router.push(`/trainer/analytics/${encodeURIComponent(actualId)}`)
+                  return
+                }
               }
             }
           } catch (e) {
