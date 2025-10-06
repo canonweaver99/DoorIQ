@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Calculator, CheckCircle, MessageSquare, Calendar, FileText, Target } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 const POST_SALES_TIPS = [
   'Schedule follow-up within 24 hours - strike while the iron is hot',
@@ -32,6 +33,8 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
   const [progress, setProgress] = useState(0)
   const [stage, setStage] = useState<'analyzing' | 'grading' | 'finalizing'>('analyzing')
+  const [isGraded, setIsGraded] = useState(false)
+  const supabase = createClient()
 
   useEffect(() => {
     // Rotate tips every 2.5 seconds
@@ -39,30 +42,76 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
       setCurrentTipIndex((prev) => (prev + 1) % POST_SALES_TIPS.length)
     }, 2500)
 
-    // Progress simulation
+    // Poll for grading completion
+    const checkGrading = async () => {
+      try {
+        const resp = await fetch(`/api/sessions/${sessionId}`)
+        if (resp.ok) {
+          const session = await resp.json()
+          // Check if grading is complete
+          if (session.overall_score && session.overall_score > 0) {
+            console.log('✅ Grading complete, score:', session.overall_score)
+            setIsGraded(true)
+            setProgress(100)
+            setStage('finalizing')
+            setTimeout(onComplete, 1000) // Give time to show completion
+            return true
+          }
+        }
+      } catch (e) {
+        console.error('Error checking grading status:', e)
+      }
+      return false
+    }
+
+    // Initial check
+    checkGrading()
+
+    // Poll every 2 seconds
+    const pollInterval = setInterval(async () => {
+      const complete = await checkGrading()
+      if (complete) {
+        clearInterval(pollInterval)
+      }
+    }, 2000)
+
+    // Progress simulation that's more realistic
     const progressInterval = setInterval(() => {
       setProgress(prev => {
-        const next = prev + 2
-        if (next >= 100) {
-          clearInterval(progressInterval)
-          setTimeout(onComplete, 500) // Small delay before redirect
-          return 100
-        }
-        return next
+        if (isGraded || prev >= 90) return prev // Stop at 90% until graded
+        const increment = Math.random() * 3 + 1 // Random increment 1-4%
+        return Math.min(prev + increment, 90)
       })
-    }, 150) // Complete in ~7.5 seconds
+    }, 500)
 
-    // Stage progression
-    const stageTimer1 = setTimeout(() => setStage('grading'), 2500)
-    const stageTimer2 = setTimeout(() => setStage('finalizing'), 5000)
+    // Stage progression based on progress
+    const stageInterval = setInterval(() => {
+      setProgress(currentProgress => {
+        if (currentProgress < 30) {
+          setStage('analyzing')
+        } else if (currentProgress < 70) {
+          setStage('grading')
+        } else {
+          setStage('finalizing')
+        }
+        return currentProgress
+      })
+    }, 100)
+
+    // Timeout after 30 seconds as fallback
+    const timeout = setTimeout(() => {
+      console.warn('⚠️ Grading timeout, proceeding anyway')
+      onComplete()
+    }, 30000)
 
     return () => {
       clearInterval(tipInterval)
+      clearInterval(pollInterval)
       clearInterval(progressInterval)
-      clearTimeout(stageTimer1)
-      clearTimeout(stageTimer2)
+      clearInterval(stageInterval)
+      clearTimeout(timeout)
     }
-  }, [onComplete])
+  }, [sessionId, onComplete, isGraded])
 
   const getStageInfo = (stage: string) => {
     switch (stage) {
@@ -197,7 +246,10 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
           {/* Footer */}
           <div className="text-center mt-6">
             <p className="text-sm text-slate-400">
-              This usually takes 5-10 seconds
+              {isGraded ? 'Finalizing your results...' : 'AI is analyzing your conversation...'}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              This usually takes 10-15 seconds
             </p>
           </div>
         </div>

@@ -939,20 +939,12 @@ function TrainerPageContent() {
           })
         }
         
-        // Go straight to analytics - grading happens in background
+        // Show calculating score screen while grading happens
         if (sessionId) {
-          // Just use the sessionId we have - the UUID corruption workaround might be causing more issues
-          console.log('📊 Session completed, redirecting to analytics...')
+          console.log('📊 Session completed, showing score calculation...')
           console.log('📊 Session ID:', sessionId)
-          console.log('📊 Session ID length:', sessionId.length)
-          console.log('📊 Session ID is valid UUID:', isUuid(sessionId))
-          
-          // Add a longer delay to ensure session is saved to database
-          setTimeout(() => {
-            const encodedId = encodeURIComponent(sessionId)
-            console.log('📊 Navigating to:', `/trainer/analytics/${encodedId}`)
-            router.push(`/trainer/analytics/${encodedId}`)
-          }, 2000) // Increased delay to 2 seconds
+          setCalculatingScore(true)
+          setLoading(false)
         } else {
           console.warn('📊 No sessionId available, redirecting to feedback')
           router.push('/feedback')
