@@ -108,6 +108,14 @@ export const COLOR_VARIANTS = {
     ],
     gradient: "from-cyan-500/30",
   },
+  undenary: {
+    border: [
+      "border-violet-500/60",
+      "border-purple-300/50",
+      "border-slate-600/30",
+    ],
+    gradient: "from-violet-500/30",
+  },
 } as const;
 
 const AnimatedGrid = () => (

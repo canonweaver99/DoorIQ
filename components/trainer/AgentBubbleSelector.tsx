@@ -37,9 +37,11 @@ const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
   'nonary',
   'denary',
   'duodenary',
+  'undenary',
 ]
-type DifficultyKey = 'Moderate' | 'Hard' | 'Very Hard' | 'Expert'
+type DifficultyKey = 'Easy' | 'Moderate' | 'Hard' | 'Very Hard' | 'Expert'
 const DIFFICULTY_BADGES: Record<DifficultyKey, string> = {
+  Easy: 'bg-green-500/20 text-green-300 border border-green-500/30',
   Moderate: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   Hard: 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
   'Very Hard': 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
@@ -54,6 +56,7 @@ const parseDifficulty = (agentName: string, persona?: string | null): Difficulty
   const personaMeta = PERSONA_METADATA[agentName as AllowedAgentName]
   const fallback = personaMeta?.bubble.difficulty
   const match = persona?.match(/(easy|moderate|very hard|hard|expert)/i)?.[1]?.toLowerCase()
+  if (match === 'easy') return 'Easy'
   if (match === 'moderate') return 'Moderate'
   if (match === 'very hard') return 'Very Hard'
   if (match === 'hard') return 'Hard'
