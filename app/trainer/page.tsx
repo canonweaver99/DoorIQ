@@ -418,12 +418,12 @@ function TrainerPageContent() {
   }, [])
 
   const pushFinal = useCallback(async (
-    text: string,
+    text: string | null | undefined,
     speaker: 'user' | 'homeowner' = 'homeowner',
   ) => {
     console.log('📝 pushFinal called with:', { text: text?.substring(0, 50), speaker })
-    if (!text?.trim()) {
-      console.warn('⚠️ pushFinal called with empty text, skipping')
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      console.warn('⚠️ pushFinal called with empty or invalid text, skipping', { text, type: typeof text })
       return
     }
 
@@ -457,11 +457,16 @@ function TrainerPageContent() {
         if (msg?.type === 'transcript.delta') {
           setDelta(msg.text || '', 'homeowner')
         } else if (msg?.type === 'transcript.final') {
-          pushFinal(msg.text || '', 'homeowner')
-          lastAgentActivityRef.current = Date.now()
+          if (msg.text) {
+            pushFinal(msg.text, 'homeowner')
+            lastAgentActivityRef.current = Date.now()
+          }
         } else if (msg?.type === 'user_transcript') {
-          pushFinal(msg.user_transcript || msg.text || '', 'user')
-          lastUserActivityRef.current = Date.now()
+          const userText = msg.user_transcript || msg.text
+          if (userText) {
+            pushFinal(userText, 'user')
+            lastUserActivityRef.current = Date.now()
+          }
         } else if (msg?.type === 'agent_response') {
           const response = msg.agent_response
           let text = ''
@@ -484,29 +489,35 @@ function TrainerPageContent() {
 
     const handleUserEvent = (e: any) => {
       console.log('🎯 EVENT FIRED: agent:user', e?.detail)
-      if (e?.detail) {
+      if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
         console.log('🎯 Calling pushFinal with USER text:', e.detail)
         pushFinal(e.detail, 'user')
         lastUserActivityRef.current = Date.now()
+      } else {
+        console.warn('⚠️ agent:user event received with invalid detail:', e?.detail)
       }
     }
 
     const handleAgentEvent = (e: any) => {
       console.log('🎯 EVENT FIRED: agent:response', e?.detail)
-      if (e?.detail) {
+      if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
         console.log('🎯 Calling pushFinal with AGENT text:', e.detail)
         pushFinal(e.detail, 'homeowner')
         lastAgentActivityRef.current = Date.now()
+      } else {
+        console.warn('⚠️ agent:response event received with invalid detail:', e?.detail)
       }
     }
 
     const handleDeltaEvent = (e: any) => {
       console.log('🎯 EVENT FIRED: agent:delta', e?.detail)
       // Handle interim/delta transcripts (live preview as agent speaks)
-      if (e?.detail) {
+      if (e?.detail && typeof e.detail === 'string') {
         console.log('🎯 Setting delta text:', e.detail)
         setDeltaText(e.detail)
         lastAgentActivityRef.current = Date.now()
+      } else {
+        console.warn('⚠️ agent:delta event received with invalid detail:', e?.detail)
       }
     }
 
@@ -875,7 +886,7 @@ function TrainerPageContent() {
     }
 
     try {
-      try { (window as any).stopConversation?.() } catch {}
+      // Stop the recording system
       stopRecording()
 
       if (signedUrlAbortRef.current) {
@@ -892,18 +903,28 @@ function TrainerPageContent() {
           homeowner_agent_id: selectedAgent?.eleven_agent_id || null,
         }
 
+        console.log('📤 Ending session with data:', {
+          sessionId,
+          transcriptLength: transcript?.length || 0,
+          duration,
+          hasAnalytics: !!analytics
+        })
+        
         const resp = await fetch('/api/sessions/end', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: sessionId, duration, transcript, analytics }),
         })
         
-        const data = await resp.json().catch(() => ({}))
+        const data = await resp.json().catch((e) => {
+          console.error('❌ Failed to parse end session response:', e)
+          return {}
+        })
         
         if (!resp.ok) {
-          console.error('❌ Failed to end session:', data)
+          console.error('❌ Failed to end session:', resp.status, data)
         } else {
-          console.log('✅ Session ended successfully')
+          console.log('✅ Session ended successfully:', data)
           console.log('🔄 Grading running in background...')
           
           // Send notifications to managers  
@@ -925,8 +946,12 @@ function TrainerPageContent() {
             if (authUser?.id) {
               // Use API route instead of Supabase client to avoid corruption
               const resp = await fetch(`/api/sessions/recent?user_id=${authUser.id}&limit=1`)
+              console.log('📊 Recent sessions API response status:', resp.status)
+              
               if (resp.ok) {
                 const data = await resp.json()
+                console.log('📊 Recent sessions data:', data)
+                
                 if (data.sessions && data.sessions.length > 0) {
                   const actualId = data.sessions[0].id
                   console.log('📊 Fetching actual session ID from API:', actualId)
@@ -934,7 +959,12 @@ function TrainerPageContent() {
                   console.log('📊 Match:', actualId === sessionId)
                   router.push(`/trainer/analytics/${encodeURIComponent(actualId)}`)
                   return
+                } else {
+                  console.warn('📊 No sessions found in recent sessions response')
                 }
+              } else {
+                const errorText = await resp.text().catch(() => 'Unknown error')
+                console.error('📊 Recent sessions API error:', resp.status, errorText)
               }
             }
           } catch (e) {
@@ -942,10 +972,14 @@ function TrainerPageContent() {
           }
           
           // Fallback to state value
-          console.log('📊 Redirecting to analytics for session:', sessionId)
+          console.log('📊 Fallback: Redirecting to analytics for session:', sessionId)
           const encodedId = encodeURIComponent(sessionId)
           console.log('📊 Encoded session ID:', encodedId)
-          router.push(`/trainer/analytics/${encodedId}`)
+          
+          // Add a small delay to ensure session is saved
+          setTimeout(() => {
+            router.push(`/trainer/analytics/${encodedId}`)
+          }, 500)
         } else {
           router.push('/feedback')
         }
