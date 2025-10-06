@@ -889,9 +889,11 @@ function TrainerPageContent() {
         
         // Go straight to analytics - grading happens in background
         if (sessionId) {
-          // Don't encode UUIDs - they're safe for URLs and encoding can cause issues
           console.log('📊 Redirecting to analytics for session:', sessionId)
-          router.push(`/trainer/analytics/${sessionId}`)
+          // Explicitly encode to prevent any escape sequence interpretation
+          const encodedId = encodeURIComponent(sessionId)
+          console.log('📊 Encoded session ID:', encodedId)
+          router.push(`/trainer/analytics/${encodedId}`)
         } else {
           router.push('/feedback')
         }
@@ -931,7 +933,10 @@ function TrainerPageContent() {
   const handleCalculationComplete = () => {
     if (sessionId) {
       console.log('📊 Redirecting to analytics for session:', sessionId)
-      router.push(`/trainer/analytics/${sessionId}`)
+      // Explicitly encode to prevent any escape sequence interpretation
+      const encodedId = encodeURIComponent(sessionId)
+      console.log('📊 Encoded session ID:', encodedId)
+      router.push(`/trainer/analytics/${encodedId}`)
     } else {
       router.push('/feedback')
     }

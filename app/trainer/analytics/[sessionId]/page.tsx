@@ -91,6 +91,9 @@ export default function AnalyticsPage() {
         ? params.sessionId[0]
         : params.sessionId
 
+      // Decode the session ID in case it was URL-encoded
+      sessionId = decodeURIComponent(sessionId)
+      
       // Clean the session ID - remove any trailing special characters
       sessionId = sessionId.replace(/[^a-f0-9-]/gi, '')
       

@@ -1,4 +1,4 @@
-# DoorIQ Updates - October 4, 2025
+# DoorIQ Updates - October 6, 2025
 
 ## 🎉 Major Features Implemented Today
 
@@ -116,10 +116,14 @@
 - The 'g' in "Challenge" was being cut off
 - Added proper padding for gradient text
 
-#### Fixed session ID corruption
-- Removed unnecessary `encodeURIComponent()` on UUIDs
+#### Fixed session ID corruption (UPDATED Oct 6)
+- **Root cause**: UUIDs with hex patterns like `18`, `1b`, `60` were being interpreted as escape sequences
+- **Example**: `181b1c1f...360cb` was corrupted to `1B1b1c1f...3d0cb` (404 error)
+- **Fix**: Now explicitly URL-encode session IDs before navigation
+- **Fix**: Analytics page decodes the session ID before fetching
 - Added sanitization to strip invalid characters
-- Fixed 404 errors with `$` character in URLs
+- Fixed 404 errors when navigating to analytics
+- **Files changed**: `app/trainer/page.tsx`, `app/trainer/analytics/[sessionId]/page.tsx`
 
 #### Fixed AuthSessionMissingError
 - Analytics page now uses API route instead of client-side Supabase
