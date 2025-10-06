@@ -830,9 +830,10 @@ function TrainerPageContent() {
       }
       const json = await resp.json()
       const sessionId = String(json.id || '')
-      console.log('✅ Session created:', sessionId)
-      console.log('✅ Session ID length:', sessionId.length)
-      console.log('✅ Session ID char codes:', Array.from(sessionId).map((c, i) => `${i}:${c}(${c.charCodeAt(0)})`).join(' '))
+      // Log as JSON to avoid any escape sequence interpretation
+      console.log('✅ Session created (JSON):', JSON.stringify({ id: sessionId, length: sessionId.length }))
+      // Also log the raw value for comparison
+      console.log('✅ Session created (raw):', sessionId)
       return sessionId || null
     } catch (error: any) {
       console.error('❌ Error creating session:', error?.message || error)
@@ -894,8 +895,33 @@ function TrainerPageContent() {
         
         // Go straight to analytics - grading happens in background
         if (sessionId) {
+          // WORKAROUND: Fetch the actual session ID from database to avoid corruption
+          // The sessionId in state seems to get corrupted during JSON parsing or state updates
+          try {
+            const { data: { user: authUser } } = await supabase.auth.getUser()
+            if (authUser?.id) {
+              const { data: sessions } = await (supabase as any)
+                .from('live_sessions')
+                .select('id')
+                .eq('user_id', authUser.id)
+                .order('started_at', { ascending: false })
+                .limit(1)
+              
+              if (sessions && sessions.length > 0) {
+                const actualId = (sessions as any)[0].id
+                console.log('📊 Fetching actual session ID from DB:', actualId)
+                console.log('📊 State had:', sessionId)
+                console.log('📊 Match:', actualId === sessionId)
+                router.push(`/trainer/analytics/${encodeURIComponent(actualId)}`)
+                return
+              }
+            }
+          } catch (e) {
+            console.error('Failed to fetch actual session ID:', e)
+          }
+          
+          // Fallback to state value
           console.log('📊 Redirecting to analytics for session:', sessionId)
-          // Explicitly encode to prevent any escape sequence interpretation
           const encodedId = encodeURIComponent(sessionId)
           console.log('📊 Encoded session ID:', encodedId)
           router.push(`/trainer/analytics/${encodedId}`)
