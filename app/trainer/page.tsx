@@ -759,6 +759,8 @@ function TrainerPageContent() {
         throw new Error('Could not create a valid session record. Please try again.')
       }
       console.log('📋 Session ID obtained:', newId)
+      console.log('📋 Session ID type:', typeof newId)
+      console.log('📋 Session ID length:', newId.length)
       setSessionId(newId)
       setSessionActive(true)
       setLoading(false)
@@ -827,8 +829,11 @@ function TrainerPageContent() {
         throw new Error(err?.error || 'Failed to create session')
       }
       const json = await resp.json()
-      console.log('✅ Session created:', json.id)
-      return (json.id as string) || null
+      const sessionId = String(json.id || '')
+      console.log('✅ Session created:', sessionId)
+      console.log('✅ Session ID length:', sessionId.length)
+      console.log('✅ Session ID char codes:', Array.from(sessionId).map((c, i) => `${i}:${c}(${c.charCodeAt(0)})`).join(' '))
+      return sessionId || null
     } catch (error: any) {
       console.error('❌ Error creating session:', error?.message || error)
       return null
