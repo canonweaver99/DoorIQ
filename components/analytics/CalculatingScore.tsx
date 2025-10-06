@@ -37,6 +37,13 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
   const supabase = createClient()
 
   useEffect(() => {
+    console.log('🎯 CalculatingScore mounted with sessionId:', sessionId)
+    
+    if (!sessionId || sessionId === 'unknown') {
+      console.error('❌ Invalid session ID provided to CalculatingScore')
+      onComplete() // Skip to completion
+      return
+    }
     // Rotate tips every 2.5 seconds
     const tipInterval = setInterval(() => {
       setCurrentTipIndex((prev) => (prev + 1) % POST_SALES_TIPS.length)
@@ -45,9 +52,18 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
     // Poll for grading completion
     const checkGrading = async () => {
       try {
+        console.log('🔍 Checking grading status for session:', sessionId)
         const resp = await fetch(`/api/sessions/${sessionId}`)
+        console.log('🔍 Grading check response:', resp.status)
+        
         if (resp.ok) {
           const session = await resp.json()
+          console.log('🔍 Session data:', { 
+            id: session.id, 
+            overall_score: session.overall_score,
+            has_analytics: !!session.analytics
+          })
+          
           // Check if grading is complete
           if (session.overall_score && session.overall_score > 0) {
             console.log('✅ Grading complete, score:', session.overall_score)
@@ -57,9 +73,12 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
             setTimeout(onComplete, 1000) // Give time to show completion
             return true
           }
+        } else {
+          const error = await resp.text()
+          console.error('❌ Failed to fetch session:', resp.status, error)
         }
       } catch (e) {
-        console.error('Error checking grading status:', e)
+        console.error('❌ Error checking grading status:', e)
       }
       return false
     }
@@ -80,7 +99,7 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
       setProgress(prev => {
         if (isGraded || prev >= 90) return prev // Stop at 90% until graded
         const increment = Math.random() * 3 + 1 // Random increment 1-4%
-        return Math.min(prev + increment, 90)
+        return Math.round(Math.min(prev + increment, 90))
       })
     }, 500)
 

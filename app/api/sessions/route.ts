@@ -34,7 +34,21 @@ export async function POST(req: Request) {
     const sessionId = String((data as any).id || '')
     console.log('🟢 [SESSIONS API] Session created:', sessionId)
     console.log('🟢 [SESSIONS API] Session ID length:', sessionId.length)
-    console.log('🟢 [SESSIONS API] Session ID bytes:', Buffer.from(sessionId, 'utf8').toString('hex'))
+    console.log('🟢 [SESSIONS API] Full session data:', JSON.stringify(data, null, 2))
+    
+    // Verify the session was actually created
+    const { data: verifyData, error: verifyError } = await (supabase as any)
+      .from('live_sessions')
+      .select('id, created_at')
+      .eq('id', sessionId)
+      .single()
+    
+    if (verifyError || !verifyData) {
+      console.error('🛑 [SESSIONS API] Verification failed - session not found after creation!', verifyError)
+      return NextResponse.json({ error: 'Session creation verification failed', details: verifyError }, { status: 500 })
+    }
+    
+    console.log('✅ [SESSIONS API] Session verified:', verifyData)
     return NextResponse.json({ id: sessionId })
   } catch (e: any) {
     console.error('🛑 [SESSIONS API] FATAL:', e)

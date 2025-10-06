@@ -951,7 +951,8 @@ function TrainerPageContent() {
         }
       } else {
         console.warn('⚠️ No valid sessionId, skipping save (cannot grade without a session record)')
-        setCalculatingScore(true)
+        // Don't show calculating score without a valid session
+        router.push('/feedback')
         setLoading(false)
       }
     } catch (e) {
@@ -1018,9 +1019,16 @@ function TrainerPageContent() {
 
   // Show calculating score screen after session ends
   if (calculatingScore) {
+    // Only show calculating score if we have a valid session ID
+    if (!sessionId || sessionId === 'unknown') {
+      console.error('❌ No valid session ID for calculating score')
+      router.push('/feedback')
+      return null
+    }
+    
     return (
       <CalculatingScore 
-        sessionId={sessionId || 'unknown'}
+        sessionId={sessionId}
         onComplete={handleCalculationComplete}
       />
     )
