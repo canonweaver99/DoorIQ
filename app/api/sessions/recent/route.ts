@@ -19,34 +19,37 @@ export async function GET(req: Request) {
       ? await createServiceSupabaseClient()
       : await createServerSupabaseClient()
 
-    // Use raw SQL to avoid UUID corruption in Supabase SDK
-    const { data, error } = await (supabase as any).rpc('get_user_sessions', {
-      p_user_id: user_id,
-      p_limit: limit
-    })
-
-    if (error) {
-      console.error('🛑 [SESSIONS/RECENT API] RPC error:', error)
-      // Fallback to direct query if RPC doesn't exist
-      const { data: fallbackData, error: fallbackError } = await (supabase as any)
-        .from('live_sessions')
-        .select('id, started_at, ended_at')
-        .eq('user_id', user_id)
-        .order('started_at', { ascending: false })
-        .limit(limit)
+    // Try direct query first (RPC function might not exist)
+    console.log('🔍 [SESSIONS/RECENT API] Fetching sessions for user:', user_id)
+    
+    const { data: sessions, error: queryError } = await (supabase as any)
+      .from('live_sessions')
+      .select('id, started_at, ended_at, agent_name, duration_seconds')
+      .eq('user_id', user_id)
+      .order('started_at', { ascending: false })
+      .limit(limit)
+    
+    if (queryError) {
+      console.error('🛑 [SESSIONS/RECENT API] Query error:', queryError)
       
-      if (fallbackError) {
-        console.error('🛑 [SESSIONS/RECENT API] Fallback error:', fallbackError)
-        return NextResponse.json({ error: 'Failed to fetch sessions', details: fallbackError.message }, { status: 500 })
+      // Try RPC as fallback
+      const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_user_sessions', {
+        p_user_id: user_id,
+        p_limit: limit
+      }).catch((e: any) => ({ data: null, error: e }))
+      
+      if (!rpcError && rpcData) {
+        console.log('🟢 [SESSIONS/RECENT API] Found', rpcData?.length || 0, 'sessions via RPC')
+        return NextResponse.json({ sessions: rpcData })
       }
       
-      console.log('🟢 [SESSIONS/RECENT API] Found', fallbackData?.length || 0, 'sessions (fallback)')
-      return NextResponse.json({ sessions: fallbackData || [] })
+      return NextResponse.json({ error: 'Failed to fetch sessions', details: queryError.message }, { status: 500 })
     }
-
-    console.log('🟢 [SESSIONS/RECENT API] Found', data?.length || 0, 'sessions for user', user_id)
     
-    return NextResponse.json({ sessions: data || [] })
+    console.log('🟢 [SESSIONS/RECENT API] Found', sessions?.length || 0, 'sessions')
+    console.log('🟢 [SESSIONS/RECENT API] Session IDs:', sessions?.map((s: any) => s.id))
+    
+    return NextResponse.json({ sessions: sessions || [] })
   } catch (e: any) {
     console.error('🛑 [SESSIONS/RECENT API] FATAL:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })

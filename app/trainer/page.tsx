@@ -916,6 +916,7 @@ function TrainerPageContent() {
           body: JSON.stringify({ id: sessionId, duration, transcript, analytics }),
         })
         
+        console.log('📤 End session response status:', resp.status)
         const data = await resp.json().catch((e) => {
           console.error('❌ Failed to parse end session response:', e)
           return {}
@@ -923,6 +924,7 @@ function TrainerPageContent() {
         
         if (!resp.ok) {
           console.error('❌ Failed to end session:', resp.status, data)
+          // Still try to navigate even if end failed
         } else {
           console.log('✅ Session ended successfully:', data)
           console.log('🔄 Grading running in background...')
@@ -939,48 +941,20 @@ function TrainerPageContent() {
         
         // Go straight to analytics - grading happens in background
         if (sessionId) {
-          // WORKAROUND: Fetch the actual session ID via API to avoid Supabase client corruption
-          // UUIDs are being corrupted when returned from Supabase client (hex sequences interpreted as escape codes)
-          try {
-            const { data: { user: authUser } } = await supabase.auth.getUser()
-            if (authUser?.id) {
-              // Use API route instead of Supabase client to avoid corruption
-              const resp = await fetch(`/api/sessions/recent?user_id=${authUser.id}&limit=1`)
-              console.log('📊 Recent sessions API response status:', resp.status)
-              
-              if (resp.ok) {
-                const data = await resp.json()
-                console.log('📊 Recent sessions data:', data)
-                
-                if (data.sessions && data.sessions.length > 0) {
-                  const actualId = data.sessions[0].id
-                  console.log('📊 Fetching actual session ID from API:', actualId)
-                  console.log('📊 State had:', sessionId)
-                  console.log('📊 Match:', actualId === sessionId)
-                  router.push(`/trainer/analytics/${encodeURIComponent(actualId)}`)
-                  return
-                } else {
-                  console.warn('📊 No sessions found in recent sessions response')
-                }
-              } else {
-                const errorText = await resp.text().catch(() => 'Unknown error')
-                console.error('📊 Recent sessions API error:', resp.status, errorText)
-              }
-            }
-          } catch (e) {
-            console.error('Failed to fetch actual session ID:', e)
-          }
+          // Just use the sessionId we have - the UUID corruption workaround might be causing more issues
+          console.log('📊 Session completed, redirecting to analytics...')
+          console.log('📊 Session ID:', sessionId)
+          console.log('📊 Session ID length:', sessionId.length)
+          console.log('📊 Session ID is valid UUID:', isUuid(sessionId))
           
-          // Fallback to state value
-          console.log('📊 Fallback: Redirecting to analytics for session:', sessionId)
-          const encodedId = encodeURIComponent(sessionId)
-          console.log('📊 Encoded session ID:', encodedId)
-          
-          // Add a small delay to ensure session is saved
+          // Add a longer delay to ensure session is saved to database
           setTimeout(() => {
+            const encodedId = encodeURIComponent(sessionId)
+            console.log('📊 Navigating to:', `/trainer/analytics/${encodedId}`)
             router.push(`/trainer/analytics/${encodedId}`)
-          }, 500)
+          }, 2000) // Increased delay to 2 seconds
         } else {
+          console.warn('📊 No sessionId available, redirecting to feedback')
           router.push('/feedback')
         }
       } else {
