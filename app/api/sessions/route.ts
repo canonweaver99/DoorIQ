@@ -13,6 +13,20 @@ export async function POST(req: Request) {
     // Use client-provided ID if available, otherwise generate one
     const sessionId = body?.id || crypto.randomUUID()
     
+    console.log('🟢 [SESSIONS API] Using session ID:', sessionId)
+    
+    // Check if session already exists
+    const { data: existingSession } = await (supabase as any)
+      .from('live_sessions')
+      .select('id, created_at')
+      .eq('id', sessionId)
+      .single()
+    
+    if (existingSession) {
+      console.log('⚠️ [SESSIONS API] Session already exists, returning existing ID:', sessionId)
+      return NextResponse.json({ id: sessionId, existing: true })
+    }
+    
     const payload: any = {
       id: sessionId, // Explicitly set the ID
       user_id: body?.user_id || '00000000-0000-0000-0000-000000000000',
@@ -22,8 +36,6 @@ export async function POST(req: Request) {
       started_at: new Date().toISOString(),
       conversation_metadata: body?.conversation_metadata || {},
     }
-    
-    console.log('🟢 [SESSIONS API] Using session ID:', sessionId)
 
     console.log('🟢 [SESSIONS API] Inserting into live_sessions:', payload)
     const { data, error } = await (supabase as any)
@@ -32,9 +44,21 @@ export async function POST(req: Request) {
       .select()
       .single()
 
-    if (error || !data) {
+    if (error) {
       console.error('🛑 [SESSIONS API] Insert error:', error)
+      
+      // If it's a duplicate key error, return the ID anyway
+      if (error.code === '23505' || error.message?.includes('duplicate')) {
+        console.log('⚠️ [SESSIONS API] Duplicate key error, returning ID anyway:', sessionId)
+        return NextResponse.json({ id: sessionId, existing: true })
+      }
+      
       return NextResponse.json({ error: 'Failed to create session', details: error?.message || error }, { status: 500 })
+    }
+    
+    if (!data) {
+      console.error('🛑 [SESSIONS API] No data returned after insert')
+      return NextResponse.json({ error: 'Failed to create session - no data returned' }, { status: 500 })
     }
 
     // Return the session ID we used (not from data, to avoid corruption)

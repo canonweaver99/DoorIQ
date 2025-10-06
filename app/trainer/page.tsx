@@ -849,7 +849,8 @@ function TrainerPageContent() {
       const sessionId = crypto.randomUUID()
       console.log('📝 Generated session ID client-side:', sessionId)
       
-      // Store in localStorage as backup
+      // Clear any old session ID and store the new one
+      localStorage.removeItem('currentSessionId')
       localStorage.setItem('currentSessionId', sessionId)
 
       const payload: any = {
@@ -958,6 +959,10 @@ function TrainerPageContent() {
         if (sessionId) {
           console.log('📊 Session completed, showing score calculation...')
           console.log('📊 Session ID:', sessionId)
+          
+          // Keep session ID in localStorage for the analytics page
+          localStorage.setItem('currentSessionId', sessionId)
+          
           setCalculatingScore(true)
           setLoading(false)
         } else {
