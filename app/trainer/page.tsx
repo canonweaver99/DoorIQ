@@ -795,6 +795,10 @@ function TrainerPageContent() {
       console.log('📋 Session ID obtained:', newId)
       console.log('📋 Session ID type:', typeof newId)
       console.log('📋 Session ID length:', newId.length)
+      
+      // Add a small delay to ensure session is fully committed to database
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       setSessionId(newId)
       setSessionActive(true)
       setLoading(false)

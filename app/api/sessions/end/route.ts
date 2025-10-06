@@ -27,15 +27,29 @@ export async function POST(req: Request) {
     }
 
     console.log('🟢 [SESSION END] Saving transcript to database...')
-    const { error } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from('live_sessions')
       .update(update)
       .eq('id', id)
+      .select()
+      .single()
 
     if (error) {
       console.error('🟢 [SESSION END] Failed to save transcript:', error)
       return NextResponse.json({ error: 'Failed to end session', details: error }, { status: 500 })
     }
+    
+    // Verify the update was successful
+    if (!data) {
+      console.error('🟢 [SESSION END] No data returned after update')
+      return NextResponse.json({ error: 'Session update verification failed' }, { status: 500 })
+    }
+    
+    console.log('🟢 [SESSION END] Session updated successfully:', {
+      id: data.id,
+      ended_at: data.ended_at,
+      transcript_length: data.full_transcript?.length || 0
+    })
 
     // Trigger grading in background (fire-and-forget for faster response)
     if (Array.isArray(transcript) && transcript.length > 0) {

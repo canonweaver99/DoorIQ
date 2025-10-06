@@ -36,19 +36,39 @@ export async function POST(req: Request) {
     console.log('🟢 [SESSIONS API] Session ID length:', sessionId.length)
     console.log('🟢 [SESSIONS API] Full session data:', JSON.stringify(data, null, 2))
     
-    // Verify the session was actually created
-    const { data: verifyData, error: verifyError } = await (supabase as any)
-      .from('live_sessions')
-      .select('id, created_at')
-      .eq('id', sessionId)
-      .single()
+    // Verify the session was actually created - retry a few times as it might take a moment
+    let verifyAttempts = 0
+    let verifyData = null
+    let verifyError = null
+    
+    while (verifyAttempts < 3) {
+      const { data, error } = await (supabase as any)
+        .from('live_sessions')
+        .select('id, created_at, started_at')
+        .eq('id', sessionId)
+        .single()
+      
+      if (data && !error) {
+        verifyData = data
+        verifyError = null
+        break
+      }
+      
+      verifyError = error
+      verifyAttempts++
+      
+      if (verifyAttempts < 3) {
+        console.log(`⏳ [SESSIONS API] Verification attempt ${verifyAttempts} failed, retrying...`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
     
     if (verifyError || !verifyData) {
-      console.error('🛑 [SESSIONS API] Verification failed - session not found after creation!', verifyError)
+      console.error('🛑 [SESSIONS API] Verification failed after 3 attempts - session not found!', verifyError)
       return NextResponse.json({ error: 'Session creation verification failed', details: verifyError }, { status: 500 })
     }
     
-    console.log('✅ [SESSIONS API] Session verified:', verifyData)
+    console.log('✅ [SESSIONS API] Session verified after', verifyAttempts + 1, 'attempts:', verifyData)
     return NextResponse.json({ id: sessionId })
   } catch (e: any) {
     console.error('🛑 [SESSIONS API] FATAL:', e)
