@@ -10,7 +10,11 @@ export async function POST(req: Request) {
     console.log('🟢 [SESSIONS API] Create session payload:', body)
     const supabase = await createServiceSupabaseClient()
 
+    // Use client-provided ID if available, otherwise generate one
+    const sessionId = body?.id || crypto.randomUUID()
+    
     const payload: any = {
+      id: sessionId, // Explicitly set the ID
       user_id: body?.user_id || '00000000-0000-0000-0000-000000000000',
       agent_id: body?.agent_id || null,
       agent_name: body?.agent_name || null,
@@ -18,6 +22,8 @@ export async function POST(req: Request) {
       started_at: new Date().toISOString(),
       conversation_metadata: body?.conversation_metadata || {},
     }
+    
+    console.log('🟢 [SESSIONS API] Using session ID:', sessionId)
 
     console.log('🟢 [SESSIONS API] Inserting into live_sessions:', payload)
     const { data, error } = await (supabase as any)
@@ -31,10 +37,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to create session', details: error?.message || error }, { status: 500 })
     }
 
-    const sessionId = String((data as any).id || '')
-    console.log('🟢 [SESSIONS API] Session created:', sessionId)
+    // Return the session ID we used (not from data, to avoid corruption)
+    console.log('🟢 [SESSIONS API] Session created with ID:', sessionId)
     console.log('🟢 [SESSIONS API] Session ID length:', sessionId.length)
-    console.log('🟢 [SESSIONS API] Full session data:', JSON.stringify(data, null, 2))
     
     // Verify the session was actually created - retry a few times as it might take a moment
     let verifyAttempts = 0
@@ -42,19 +47,19 @@ export async function POST(req: Request) {
     let verifyError = null
     
     while (verifyAttempts < 3) {
-      const { data, error } = await (supabase as any)
+      const { data: checkData, error: checkError } = await (supabase as any)
         .from('live_sessions')
         .select('id, created_at, started_at')
         .eq('id', sessionId)
         .single()
       
-      if (data && !error) {
-        verifyData = data
+      if (checkData && !checkError) {
+        verifyData = checkData
         verifyError = null
         break
       }
       
-      verifyError = error
+      verifyError = checkError
       verifyAttempts++
       
       if (verifyAttempts < 3) {
@@ -68,7 +73,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Session creation verification failed', details: verifyError }, { status: 500 })
     }
     
-    console.log('✅ [SESSIONS API] Session verified after', verifyAttempts + 1, 'attempts:', verifyData)
+    console.log('✅ [SESSIONS API] Session verified after', verifyAttempts + 1, 'attempts')
+    // Return the original sessionId we generated, not from database
     return NextResponse.json({ id: sessionId })
   } catch (e: any) {
     console.error('🛑 [SESSIONS API] FATAL:', e)

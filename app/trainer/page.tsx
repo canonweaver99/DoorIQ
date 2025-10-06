@@ -845,8 +845,16 @@ function TrainerPageContent() {
         throw new Error('User not authenticated')
       }
 
+      // Generate UUID client-side to avoid corruption
+      const sessionId = crypto.randomUUID()
+      console.log('📝 Generated session ID client-side:', sessionId)
+      
+      // Store in localStorage as backup
+      localStorage.setItem('currentSessionId', sessionId)
+
       const payload: any = {
-        user_id: authUser.id, // Use auth user ID directly instead of state
+        id: sessionId, // Explicitly set the ID
+        user_id: authUser.id,
         agent_id: selectedAgent?.id || null,
         agent_name: selectedAgent?.name || null,
         agent_persona: selectedAgent?.persona || null,
@@ -867,12 +875,15 @@ function TrainerPageContent() {
         throw new Error(err?.error || 'Failed to create session')
       }
       const json = await resp.json()
-      const sessionId = String(json.id || '')
-      // Log as JSON to avoid any escape sequence interpretation
-      console.log('✅ Session created (JSON):', JSON.stringify({ id: sessionId, length: sessionId.length }))
-      // Also log the raw value for comparison
-      console.log('✅ Session created (raw):', sessionId)
-      return sessionId || null
+      const returnedId = String(json.id || '')
+      
+      // Validate the returned ID matches what we sent
+      if (returnedId !== sessionId) {
+        console.warn('⚠️ Returned ID differs from generated ID:', { sent: sessionId, received: returnedId })
+      }
+      
+      console.log('✅ Session created successfully:', sessionId)
+      return sessionId
     } catch (error: any) {
       console.error('❌ Error creating session:', error?.message || error)
       return null

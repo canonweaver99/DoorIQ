@@ -94,8 +94,29 @@ export default function AnalyticsPage() {
       // Decode the session ID in case it was URL-encoded
       sessionId = decodeURIComponent(sessionId)
       
-      // Clean the session ID - remove any trailing special characters
-      sessionId = sessionId.replace(/[^a-f0-9-]/gi, '')
+      // Clean the session ID - remove any invalid characters
+      const cleanId = sessionId.replace(/[^a-f0-9-]/gi, '')
+      
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      
+      if (!uuidRegex.test(cleanId)) {
+        console.error('❌ Invalid UUID format:', cleanId)
+        // Try localStorage backup
+        const backupId = localStorage.getItem('currentSessionId')
+        if (backupId && uuidRegex.test(backupId)) {
+          console.log('✅ Using backup session ID from localStorage:', backupId)
+          sessionId = backupId
+          // Update the URL
+          router.replace(`/trainer/analytics/${backupId}`)
+        } else {
+          throw new Error('Invalid session ID format and no valid backup found')
+        }
+      } else if (cleanId !== sessionId) {
+        console.log('🧹 Cleaned session ID:', { original: sessionId, cleaned: cleanId })
+        sessionId = cleanId
+        router.replace(`/trainer/analytics/${cleanId}`)
+      }
       
       console.log('🔍 Fetching session:', sessionId)
       console.log('📋 Original param:', params.sessionId)
