@@ -31,8 +31,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to create session', details: error?.message || error }, { status: 500 })
     }
 
-    console.log('🟢 [SESSIONS API] Session created:', (data as any).id)
-    return NextResponse.json({ id: (data as any).id })
+    const sessionId = String((data as any).id || '')
+    console.log('🟢 [SESSIONS API] Session created:', sessionId)
+    console.log('🟢 [SESSIONS API] Session ID length:', sessionId.length)
+    console.log('🟢 [SESSIONS API] Session ID bytes:', Buffer.from(sessionId, 'utf8').toString('hex'))
+    return NextResponse.json({ id: sessionId })
   } catch (e: any) {
     console.error('🛑 [SESSIONS API] FATAL:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
