@@ -60,7 +60,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(16,185,129,0.08)',
     },
   },
-  'Tiger Tom': {
+  'No Problem Nancy': {
     idle: {
       start: '#fdba74',
       mid: '#f97316',
@@ -83,7 +83,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(249,115,22,0.08)',
     },
   },
-  'Tiger Tony': {
+  'Already Got It Alan': {
     idle: {
       start: '#fcd34d',
       mid: '#f59e0b',
@@ -106,7 +106,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(245,158,11,0.08)',
     },
   },
-  'Sheep Shelley': {
+  'Not Interested Nick': {
     idle: {
       start: '#fca5a5',
       mid: '#ef4444',
@@ -129,7 +129,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(239,68,68,0.08)',
     },
   },
-  'Sheep Sam': {
+  'DIY Dave': {
     idle: {
       start: '#c4b5fd',
       mid: '#8b5cf6',
@@ -152,7 +152,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(139,92,246,0.08)',
     },
   },
-  'Sheep Sandy': {
+  'Too Expensive Tim': {
     idle: {
       start: '#d8b4fe',
       mid: '#a855f7',
@@ -175,7 +175,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(168,85,247,0.08)',
     },
   },
-  'Bull Brad': {
+  'Spouse Check Susan': {
     idle: {
       start: '#93c5fd',
       mid: '#3b82f6',
@@ -198,7 +198,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(59,130,246,0.08)',
     },
   },
-  'Bull Barry': {
+  'Busy Beth': {
     idle: {
       start: '#d1d5db',
       mid: '#6b7280',
@@ -221,7 +221,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(107,114,128,0.08)',
     },
   },
-  'Bull Brenda': {
+  'Renter Randy': {
     idle: {
       start: '#fda4af',
       mid: '#f43f5e',
@@ -244,7 +244,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(244,63,94,0.08)',
     },
   },
-  'Owl Olivia': {
+  'Skeptical Sam': {
     idle: {
       start: '#c4b5fd',
       mid: '#8b5cf6',
@@ -267,7 +267,7 @@ const ORB_COLORS: Record<string, {
       hoverRing3: 'rgba(139,92,246,0.08)',
     },
   },
-  'Owl Oscar': {
+  'Just Treated Jerry': {
     idle: {
       start: '#67e8f9',
       mid: '#06b6d4',
@@ -288,6 +288,29 @@ const ORB_COLORS: Record<string, {
       hoverRing1: 'rgba(6,182,212,0.2)',
       hoverRing2: 'rgba(6,182,212,0.15)',
       hoverRing3: 'rgba(6,182,212,0.08)',
+    },
+  },
+  'Think About It Tina': {
+    idle: {
+      start: '#d8b4fe',
+      mid: '#a855f7',
+      end: '#7e22ce',
+      shadow: 'rgba(168,85,247,0.6)',
+      ring: 'rgba(168,85,247,0.15)',
+    },
+    active: {
+      start: '#c084fc',
+      mid: '#a855f7',
+      end: '#9333ea',
+      shadow: 'rgba(168,85,247,0.6)',
+      ring1: 'rgba(168,85,247,0.15)',
+      ring2: 'rgba(168,85,247,0.1)',
+      ring3: 'rgba(168,85,247,0.05)',
+      ring4: 'rgba(168,85,247,0.03)',
+      hoverShadow: 'rgba(168,85,247,0.7)',
+      hoverRing1: 'rgba(168,85,247,0.2)',
+      hoverRing2: 'rgba(168,85,247,0.15)',
+      hoverRing3: 'rgba(168,85,247,0.08)',
     },
   },
 }
