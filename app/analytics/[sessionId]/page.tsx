@@ -70,6 +70,8 @@ export default function AnalyticsPage() {
       const data = await response.json()
       console.log('Session data:', data)
       console.log('Transcript:', data.full_transcript)
+      console.log('Transcript length:', data.full_transcript?.length)
+      console.log('First transcript item:', data.full_transcript?.[0])
       setSession(data)
       
       // If transcript exists but no grading, trigger grading

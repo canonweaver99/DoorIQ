@@ -51,8 +51,17 @@ export async function PATCH(req: Request) {
     
     const supabase = await createServiceSupabaseClient()
     
+    // Convert transcript to ensure proper format
+    const formattedTranscript = transcript ? transcript.map((entry: any) => ({
+      speaker: entry.speaker,
+      text: entry.text,
+      timestamp: entry.timestamp ? new Date(entry.timestamp).toISOString() : new Date().toISOString()
+    })) : []
+    
+    console.log('📝 PATCH: Formatted transcript sample:', formattedTranscript[0])
+    
     // Simple heuristic scoring
-    const repLines = transcript ? transcript.filter((l: any) => l.speaker === 'rep' || l.speaker === 'user') : []
+    const repLines = formattedTranscript.filter((l: any) => l.speaker === 'rep' || l.speaker === 'user')
     const score = Math.min(100, Math.max(50, repLines.length * 15))
     
     console.log('📊 PATCH: Calculated score:', score, 'from', repLines.length, 'rep lines')
@@ -62,7 +71,7 @@ export async function PATCH(req: Request) {
       .update({
         ended_at: new Date().toISOString(),
         duration_seconds: duration_seconds,
-        full_transcript: transcript,
+        full_transcript: formattedTranscript,
         overall_score: score,
         what_worked: ['Completed the training session', 'Engaged with the agent'],
         what_failed: ['Keep practicing to improve your skills']
