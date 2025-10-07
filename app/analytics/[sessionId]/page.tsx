@@ -68,6 +68,8 @@ export default function AnalyticsPage() {
       }
       
       const data = await response.json()
+      console.log('Session data:', data)
+      console.log('Transcript:', data.full_transcript)
       setSession(data)
       
       // If transcript exists but no grading, trigger grading
@@ -129,13 +131,13 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+    <div className="min-h-screen bg-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/sessions"
-            className="inline-flex items-center text-purple-400 hover:text-purple-300 mb-4 transition-colors"
+            className="inline-flex items-center text-slate-400 hover:text-slate-300 mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Sessions
@@ -143,16 +145,16 @@ export default function AnalyticsPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-2">
+              <h1 className="text-3xl font-semibold text-white mb-2">
                 Session Analysis
               </h1>
-              <p className="text-slate-400">
+              <p className="text-slate-500 text-sm">
                 {session.agent_name || 'Training Session'} • {new Date(session.created_at).toLocaleDateString()}
               </p>
             </div>
             
             {grading && (
-              <div className="flex items-center text-purple-400">
+              <div className="flex items-center text-slate-400">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
                 <span>Analyzing transcript...</span>
               </div>
@@ -164,30 +166,30 @@ export default function AnalyticsPage() {
         <div className="flex space-x-2 mb-6">
           <button
             onClick={() => setActiveView('transcript')}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center ${
+            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center ${
               activeView === 'transcript'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50'
-                : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
+                ? 'bg-slate-800 text-white border border-slate-700'
+                : 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50'
             }`}
           >
-            <MessageSquare className="w-5 h-5 mr-2" />
+            <MessageSquare className="w-4 h-4 mr-2" />
             Full Transcript
           </button>
           <button
             onClick={() => setActiveView('scores')}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center ${
+            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center ${
               activeView === 'scores'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50'
-                : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
+                ? 'bg-slate-800 text-white border border-slate-700'
+                : 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50'
             }`}
           >
-            <Trophy className="w-5 h-5 mr-2" />
+            <Trophy className="w-4 h-4 mr-2" />
             Scores & Feedback
           </button>
         </div>
 
         {/* Content */}
-        <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
+        <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-sm overflow-hidden">
           {activeView === 'transcript' ? (
             <TranscriptView 
               transcript={session.full_transcript || []}

@@ -39,12 +39,12 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   const getEffectivenessColor = (effectiveness: string | undefined) => {
     switch (effectiveness) {
       case 'excellent':
-        return 'border-green-500 bg-green-500/10'
+        return 'border-emerald-500/50 bg-emerald-500/5'
       case 'good':
       case 'average':
-        return 'border-yellow-500 bg-yellow-500/10'
+        return 'border-amber-500/50 bg-amber-500/5'
       case 'poor':
-        return 'border-red-500 bg-red-500/10'
+        return 'border-red-500/50 bg-red-500/5'
       default:
         return 'border-slate-700'
     }
@@ -94,10 +94,10 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   }
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold text-white mb-6">Full Transcript</h2>
+    <div className="p-8">
+      <h2 className="text-2xl font-semibold text-slate-200 mb-6">Full Transcript</h2>
       
-      <div className="space-y-4">
+      <div className="space-y-3">
         {transcript.map((line, index) => {
           const rating = getLineEffectiveness(index, line.speaker)
           const isHovered = hoveredLine === index
@@ -105,9 +105,9 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
           return (
             <div
               key={index}
-              className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${
+              className={`relative p-4 rounded-lg border transition-all duration-200 ${
                 getEffectivenessColor(rating?.effectiveness)
-              } ${isHovered ? 'shadow-lg' : ''}`}
+              } ${isHovered ? 'shadow-md' : ''}`}
               onMouseEnter={() => setHoveredLine(index)}
               onMouseLeave={() => setHoveredLine(null)}
             >
@@ -119,10 +119,10 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
                     {getSpeakerLabel(line.speaker)}
                   </span>
                   {rating && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      rating.effectiveness === 'excellent' ? 'bg-green-500/20 text-green-400' :
-                      rating.effectiveness === 'good' || rating.effectiveness === 'average' ? 'bg-yellow-500/20 text-yellow-400' :
-                      'bg-red-500/20 text-red-400'
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      rating.effectiveness === 'excellent' ? 'bg-emerald-500/10 text-emerald-400' :
+                      rating.effectiveness === 'good' || rating.effectiveness === 'average' ? 'bg-amber-500/10 text-amber-400' :
+                      'bg-red-500/10 text-red-400'
                     }`}>
                       {getEffectivenessLabel(rating.effectiveness)}
                     </span>
@@ -140,16 +140,16 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
 
               {/* Alternative Suggestions (on hover) */}
               {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && isHovered && (
-                <div className="absolute left-0 right-0 top-full mt-2 z-10 bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-xl">
+                <div className="absolute left-0 right-0 top-full mt-2 z-10 bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-lg">
                   <div className="flex items-center mb-2">
-                    <Lightbulb className="w-4 h-4 text-yellow-400 mr-2" />
-                    <span className="text-sm font-semibold text-yellow-400">
+                    <Lightbulb className="w-4 h-4 text-amber-400 mr-2" />
+                    <span className="text-sm font-medium text-amber-400">
                       Alternative Approaches
                     </span>
                   </div>
                   <div className="space-y-2">
                     {rating.alternative_lines.map((alt, altIndex) => (
-                      <p key={altIndex} className="text-sm text-white/80 italic">
+                      <p key={altIndex} className="text-sm text-slate-300 italic">
                         "{alt}"
                       </p>
                     ))}
@@ -167,20 +167,20 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
       </div>
 
       {/* Legend */}
-      <div className="mt-8 p-4 bg-slate-800/50 rounded-lg">
-        <h3 className="text-sm font-semibold text-white mb-3">Effectiveness Legend</h3>
+      <div className="mt-8 p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+        <h3 className="text-sm font-medium text-slate-300 mb-3">Effectiveness Legend</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded border-2 border-green-500 bg-green-500/10"></div>
-            <span className="text-sm text-slate-300">Excellent Response</span>
+            <div className="w-3 h-3 rounded border border-emerald-500/50 bg-emerald-500/10"></div>
+            <span className="text-xs text-slate-400">Excellent Response</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded border-2 border-yellow-500 bg-yellow-500/10"></div>
-            <span className="text-sm text-slate-300">Good/Average Response</span>
+            <div className="w-3 h-3 rounded border border-amber-500/50 bg-amber-500/10"></div>
+            <span className="text-xs text-slate-400">Good/Average Response</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded border-2 border-red-500 bg-red-500/10"></div>
-            <span className="text-sm text-slate-300">Needs Improvement</span>
+            <div className="w-3 h-3 rounded border border-red-500/50 bg-red-500/10"></div>
+            <span className="text-xs text-slate-400">Needs Improvement</span>
           </div>
         </div>
       </div>
