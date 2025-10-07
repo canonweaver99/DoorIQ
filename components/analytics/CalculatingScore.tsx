@@ -50,7 +50,7 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
     // Check if grading is complete
     const checkGrading = async () => {
       try {
-        const resp = await fetch(`/api/working-sessions/${sessionId}`)
+        const resp = await fetch(`/api/basic-session/${sessionId}`)
         if (resp.ok) {
           const session = await resp.json()
           if (session.overall_score && session.overall_score > 0) {

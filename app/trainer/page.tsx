@@ -883,17 +883,16 @@ function TrainerPageContent() {
         try {
           console.log('💾 BASIC: Saving session with', transcript.length, 'lines')
           
-          const updateResp = await fetch(`/api/basic-session`, {
+          const updateResp = await fetch(`/api/basic-session/${sessionId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id: sessionId,
-              transcript: transcript,
-              scores: {
-                overall: 75,
-                strengths: ['Completed the training session', 'Engaged with the agent'],
-                improvements: ['Practice more conversations', 'Work on closing techniques']
-              }
+              ended_at: new Date().toISOString(),
+              duration_seconds: duration,
+              full_transcript: transcript,
+              overall_score: 75,
+              what_worked: ['Completed the training session', 'Engaged with the agent'],
+              what_failed: ['Practice more conversations', 'Work on closing techniques']
             }),
           })
           
