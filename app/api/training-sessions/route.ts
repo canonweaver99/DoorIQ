@@ -42,7 +42,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
-    console.log('✅ Training session created:', data.id)
+    console.log('✅ Training session created:', data.id, 'for user:', user.id)
+    console.log('📊 Session data:', JSON.stringify(data, null, 2))
+    
     return NextResponse.json({ 
       id: data.id, 
       status: data.status,

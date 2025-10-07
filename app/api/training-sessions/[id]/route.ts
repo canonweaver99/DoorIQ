@@ -29,17 +29,29 @@ export async function GET(_req: Request, context: { params: { id?: string } } | 
     // Use service role for query
     const serviceSupabase = await createServiceSupabaseClient()
     
-    const { data, error } = await (serviceSupabase as any)
+    console.log('🔍 Fetching session:', sessionId, 'for user:', user.id)
+    
+    // First check if session exists at all
+    const { data: anySession, error: anyError } = await (serviceSupabase as any)
       .from('training_sessions')
       .select('*')
       .eq('id', sessionId)
-      .eq('user_id', user.id) // Ensure user can only access their own sessions
       .single()
     
-    if (error || !data) {
-      console.error('Training session not found:', sessionId, error)
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    if (anyError || !anySession) {
+      console.error('❌ Session does not exist in database:', sessionId, anyError)
+      return NextResponse.json({ error: 'Session not found in database' }, { status: 404 })
     }
+    
+    console.log('✅ Session exists:', anySession.id, 'owner:', anySession.user_id, 'current user:', user.id)
+    
+    // Check if user owns the session
+    if (anySession.user_id !== user.id) {
+      console.error('❌ User does not own session:', sessionId, 'owner:', anySession.user_id, 'user:', user.id)
+      return NextResponse.json({ error: 'Unauthorized access to session' }, { status: 403 })
+    }
+    
+    const data = anySession
     
     return NextResponse.json(data)
   } catch (e: any) {
