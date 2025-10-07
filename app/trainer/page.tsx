@@ -882,13 +882,19 @@ function TrainerPageContent() {
         // Save current transcript to the session
         if (transcript.length > 0) {
           console.log('💾 Saving transcript with', transcript.length, 'lines')
-          for (const line of transcript) {
-            await fetch(`/api/training-sessions/${sessionId}`, {
+          // Save all transcript lines in one batch for better performance
+          const transcriptSavePromises = transcript.map(line => 
+            fetch(`/api/training-sessions/${sessionId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ transcript_line: line }),
             }).catch(err => console.error('Error saving transcript line:', err))
-          }
+          )
+          
+          await Promise.allSettled(transcriptSavePromises)
+          console.log('✅ Transcript saving completed')
+        } else {
+          console.warn('⚠️ No transcript to save')
         }
         
         // Complete the session (this triggers background grading)
@@ -899,12 +905,16 @@ function TrainerPageContent() {
         })
         
         if (completeResp.ok) {
-          console.log('✅ Training session completed, showing results...')
+          const completionData = await completeResp.json()
+          console.log('✅ Training session completed:', completionData)
           setCalculatingScore(true)
           setLoading(false)
         } else {
-          console.error('❌ Failed to complete session')
-          router.push('/feedback')
+          const errorText = await completeResp.text()
+          console.error('❌ Failed to complete session:', completeResp.status, errorText)
+          // Still show calculating score even if completion API fails
+          console.log('🔄 Proceeding with results anyway...')
+          setCalculatingScore(true)
           setLoading(false)
         }
       } else {
