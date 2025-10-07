@@ -171,7 +171,7 @@ export default function AdminSessionsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <Link href={`/trainer/analytics/${s.id}`} className="inline-flex items-center text-blue-600 hover:text-blue-500">
+                        <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-blue-600 hover:text-blue-500">
                           View <ChevronRight className="w-4 h-4 ml-1" />
                         </Link>
                       </td>

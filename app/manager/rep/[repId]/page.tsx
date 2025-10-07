@@ -299,7 +299,7 @@ export default function RepDetailPage() {
                       
                       <div className="flex space-x-3">
                         <Link
-                          href={`/trainer/analytics/${session.id}`}
+                          href={`/analytics/${session.id}`}
                           className="text-sm text-blue-400 hover:text-blue-300"
                         >
                           View Details →
