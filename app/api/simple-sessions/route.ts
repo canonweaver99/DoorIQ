@@ -23,19 +23,13 @@ export async function POST(req: Request) {
     // Use the existing live_sessions table but with a simple approach
     const serviceSupabase = await createServiceSupabaseClient()
     
+    // Only use fields that definitely exist in live_sessions
     const { data, error } = await (serviceSupabase as any)
       .from('live_sessions')
       .insert({
         user_id: user.id,
         agent_name: agent_name,
-        agent_id: agent_id,
-        started_at: new Date().toISOString(),
-        full_transcript: [],
-        overall_score: 0,
-        rapport_score: 0,
-        discovery_score: 0,
-        objection_handling_score: 0,
-        closing_score: 0
+        started_at: new Date().toISOString()
       })
       .select('id')
       .single()

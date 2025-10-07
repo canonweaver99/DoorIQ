@@ -890,13 +890,7 @@ function TrainerPageContent() {
               ended_at: new Date().toISOString(),
               duration_seconds: duration,
               full_transcript: transcript,
-              // Add some basic scores so it doesn't look empty
-              overall_score: 75,
-              rapport_score: 75,
-              discovery_score: 75,
-              objection_handling_score: 75,
-              closing_score: 75,
-              virtual_earnings: 50
+              overall_score: 75
             }),
           })
           
