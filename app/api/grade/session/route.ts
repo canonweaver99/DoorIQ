@@ -152,8 +152,7 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ OpenAI grading complete:', {
       lines_rated: gradingResult.line_ratings?.length || 0,
-      overall_score: gradingResult.scores?.overall || 0,
-      all_scores: gradingResult.scores,
+      scores: gradingResult.scores,
       raw_response: completion.choices[0].message.content?.substring(0, 200)
     })
 
@@ -161,24 +160,38 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString()
 
     // Update live_sessions with scores and analytics
+    const rapportScore = typeof gradingResult.scores?.rapport === 'number' ? gradingResult.scores.rapport : null
+    const discoveryScore = typeof gradingResult.scores?.discovery === 'number' ? gradingResult.scores.discovery : null
+    const objectionScore = typeof gradingResult.scores?.objection_handling === 'number' ? gradingResult.scores.objection_handling : null
+    const closeScore = typeof gradingResult.scores?.closing === 'number' ? gradingResult.scores.closing : null
+
+    const calculatedOverall = (() => {
+      if (typeof gradingResult.scores?.overall === 'number') {
+        return gradingResult.scores.overall
+      }
+      const scores = [rapportScore, discoveryScore, objectionScore, closeScore].filter((value) => typeof value === 'number') as number[]
+      if (scores.length === 0) {
+        return 0
+      }
+      return Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
+    })()
+
     const { error: updateError } = await supabase
       .from('live_sessions')
       .update({
-        overall_score: gradingResult.scores?.overall || 0,
-        rapport_score: gradingResult.scores?.rapport || 0,
-        needs_discovery_score: gradingResult.scores?.discovery || 0,
-        objection_handling_score: gradingResult.scores?.objection_handling || 0,
-        close_effectiveness_score: gradingResult.scores?.closing || 0,
-        safety_score: gradingResult.scores?.safety || 0,
-        introduction_score: gradingResult.scores?.introduction || 0,
-        listening_score: gradingResult.scores?.listening || 0,
-        virtual_earnings: gradingResult.virtual_earnings || 0,
-        sale_closed: gradingResult.sale_closed || false,
+        overall_score: calculatedOverall,
+        rapport_score: rapportScore,
+        discovery_score: discoveryScore,
+        objection_handling_score: objectionScore,
+        close_score: closeScore,
+        virtual_earnings: typeof gradingResult.virtual_earnings === 'number' ? gradingResult.virtual_earnings : null,
+        sale_closed: typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : null,
         analytics: {
           line_ratings: gradingResult.line_ratings || [],
           feedback: gradingResult.feedback || {},
           graded_at: now,
-          grading_version: '3.0-openai'
+          grading_version: '3.0-openai',
+          scores: gradingResult.scores || {}
         }
       })
       .eq('id', sessionId)

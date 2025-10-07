@@ -103,9 +103,10 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   return (
     <div className="p-8">
       <h2 className="text-2xl font-semibold text-slate-200 mb-6">Full Transcript</h2>
-      
-      <div className="space-y-3">
-        {transcript.map((line, index) => {
+
+      <div className="max-h-[70vh] overflow-y-auto pr-2">
+        <div className="space-y-3">
+          {transcript.map((line, index) => {
           const rating = getLineEffectiveness(index, line.speaker)
           const isHovered = hoveredLine === index
           
@@ -146,12 +147,12 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
               <p className="text-white/90 leading-relaxed">{getLineText(line)}</p>
 
               {/* Alternative Suggestions (on hover) */}
-              {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && isHovered && (
-                <div className="absolute left-0 right-0 top-full mt-2 z-10 bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-lg">
+              {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && (
+                <div className="mt-3 rounded-lg border border-slate-700 bg-slate-800/40 p-3">
                   <div className="flex items-center mb-2">
                     <Lightbulb className="w-4 h-4 text-amber-400 mr-2" />
                     <span className="text-sm font-medium text-amber-400">
-                      Alternative Approaches
+                      Suggested Alternative
                     </span>
                   </div>
                   <div className="space-y-2">
@@ -171,6 +172,7 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
             </div>
           )
         })}
+        </div>
       </div>
 
       {/* Legend */}

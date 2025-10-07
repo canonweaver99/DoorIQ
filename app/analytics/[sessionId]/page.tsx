@@ -9,21 +9,15 @@ import ScoresView from '@/components/analytics/ScoresView'
 
 interface SessionData {
   id: string
-  user_id: string
   created_at: string
-  started_at: string
-  ended_at: string | null
-  duration_seconds: number | null
   agent_name: string | null
+  full_transcript: any[] | null
   overall_score: number | null
   rapport_score: number | null
+  discovery_score: number | null
   objection_handling_score: number | null
-  close_effectiveness_score: number | null
-  safety_score: number | null
-  introduction_score: number | null
-  listening_score: number | null
-  needs_discovery_score: number | null
-  full_transcript: any[] | null
+  close_score: number | null
+  virtual_earnings: number | null
   analytics: {
     line_ratings?: Array<{
       line_number: number
@@ -38,10 +32,10 @@ interface SessionData {
       improvements: string[]
       specific_tips: string[]
     }
+    scores?: Record<string, number>
   } | null
   what_worked: string[] | null
   what_failed: string[] | null
-  virtual_earnings: number | null
 }
 
 export default function AnalyticsPage() {
@@ -208,13 +202,13 @@ export default function AnalyticsPage() {
             <ScoresView
               overallScore={session.overall_score || 0}
               scores={{
-                rapport: session.rapport_score || 0,
-                discovery: session.needs_discovery_score || 0,
-                objection_handling: session.objection_handling_score || 0,
-                closing: session.close_effectiveness_score || 0,
-                safety: session.safety_score || 0,
-                introduction: session.introduction_score || 0,
-                listening: session.listening_score || 0
+                rapport: session.rapport_score ?? 0,
+                discovery: session.discovery_score ?? 0,
+                objection_handling: session.objection_handling_score ?? 0,
+                closing: session.close_score ?? 0,
+                safety: session.analytics?.scores?.safety ?? 0,
+                introduction: session.analytics?.scores?.introduction ?? 0,
+                listening: session.analytics?.scores?.listening ?? 0
               }}
               feedback={session.analytics?.feedback || {
                 strengths: session.what_worked || [],

@@ -1,6 +1,6 @@
 'use client'
 
-import { Star, TrendingUp, Users, Target, Shield, HandshakeIcon, DollarSign } from 'lucide-react'
+import { TrendingUp, Users, Target, Shield, HandshakeIcon, DollarSign } from 'lucide-react'
 
 interface ScoresViewProps {
   overallScore: number
@@ -22,14 +22,6 @@ interface ScoresViewProps {
 }
 
 export default function ScoresView({ overallScore, scores, feedback, virtualEarnings }: ScoresViewProps) {
-  const getStarRating = (score: number) => {
-    if (score >= 90) return 5
-    if (score >= 80) return 4
-    if (score >= 70) return 3
-    if (score >= 60) return 2
-    return 1
-  }
-
   const getGradeColor = (score: number) => {
     if (score >= 80) return 'text-emerald-400'
     if (score >= 60) return 'text-amber-400'
@@ -52,8 +44,6 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
     if (score >= 60) return 'bg-amber-500'
     return 'bg-red-500'
   }
-
-  const starRating = getStarRating(overallScore)
 
   const mainMetrics = [
     {
@@ -119,18 +109,6 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
           <div className="absolute -top-2 -right-2 w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center shadow-lg border-2 border-slate-600">
             <span className="text-white font-bold text-lg">{getGradeLetter(overallScore)}</span>
           </div>
-        </div>
-
-        {/* Star Rating */}
-        <div className="flex justify-center mb-6 space-x-1">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-6 h-6 ${
-                i < starRating ? 'text-amber-400 fill-amber-400' : 'text-slate-600'
-              }`}
-            />
-          ))}
         </div>
 
         {/* AI Overview */}

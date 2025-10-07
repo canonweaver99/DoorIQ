@@ -62,12 +62,6 @@ export async function PATCH(req: Request) {
     
     console.log('📝 PATCH: Formatted transcript sample:', formattedTranscript[0])
     
-    // Simple heuristic scoring
-    const repLines = formattedTranscript.filter((l: any) => l.speaker === 'rep' || l.speaker === 'user')
-    const score = Math.min(100, Math.max(50, repLines.length * 15))
-    
-    console.log('📊 PATCH: Calculated score:', score, 'from', repLines.length, 'rep lines')
-    
     const now = new Date().toISOString()
 
     const { data, error } = await (supabase as any)
@@ -76,16 +70,7 @@ export async function PATCH(req: Request) {
         ended_at: now,
         duration_seconds: duration_seconds,
         full_transcript: formattedTranscript,
-        overall_score: score,
-        analytics: {
-          graded_at: now,
-          grading_version: 'manual-placeholder',
-          feedback: {
-            strengths: ['Completed the training session', 'Engaged with the agent'],
-            improvements: ['Keep practicing to improve your skills'],
-            specific_tips: []
-          }
-        }
+        overall_score: null
       })
       .eq('id', id)
       .select('id')
