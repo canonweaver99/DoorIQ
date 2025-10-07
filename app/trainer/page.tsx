@@ -833,26 +833,23 @@ function TrainerPageContent() {
 
   const createSessionRecord = async () => {
     try {
-      const resp = await fetch('/api/basic-session', {
+      const resp = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           agent_name: selectedAgent?.name,
-          agent_id: selectedAgent?.eleven_agent_id,
         }),
       })
       
       if (!resp.ok) {
-        throw new Error('Failed to create basic session')
+        throw new Error('Failed to create session')
       }
       
       const json = await resp.json()
-      const sessionId = json.id
-      
-      console.log('✅ BASIC session created:', sessionId)
-      return sessionId
+      console.log('✅ Session created:', json.id)
+      return json.id
     } catch (error: any) {
-      console.error('❌ Error creating basic session:', error)
+      console.error('❌ Error creating session:', error)
       return null
     }
   }
@@ -877,41 +874,27 @@ function TrainerPageContent() {
       }
 
       if (sessionId) {
-        console.log('🛑 Ending training session:', sessionId)
+        console.log('🛑 Ending session:', sessionId)
         
-        // Save session with transcript - ONE SIMPLE CALL
-        try {
-          console.log('💾 BASIC: Saving session with', transcript.length, 'lines')
-          
-          const updateResp = await fetch(`/api/basic-session/${sessionId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ended_at: new Date().toISOString(),
-              duration_seconds: duration,
-              full_transcript: transcript,
-              overall_score: 75,
-              what_worked: ['Completed the training session', 'Engaged with the agent'],
-              what_failed: ['Practice more conversations', 'Work on closing techniques']
-            }),
-          })
-          
-          if (updateResp.ok) {
-            console.log('✅ BASIC session saved successfully')
-          } else {
-            console.error('❌ BASIC session save failed:', updateResp.status)
-          }
-        } catch (error) {
-          console.error('❌ Error saving basic session:', error)
-        }
+        // Save session with transcript
+        await fetch('/api/session', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: sessionId,
+            transcript: transcript,
+            duration_seconds: duration
+          }),
+        })
         
-        // Always proceed to results
-        console.log('🎯 BASIC: Proceeding to results...')
-        setCalculatingScore(true)
+        console.log('✅ Session saved, redirecting to results...')
+        
+        // Redirect to results page
+        router.push(`/trainer/results/${sessionId}`)
         setLoading(false)
       } else {
-        console.warn('⚠️ No session ID, redirecting to feedback')
-        router.push('/feedback')
+        console.warn('⚠️ No session ID')
+        router.push('/trainer')
         setLoading(false)
       }
     } catch (e) {
@@ -943,12 +926,7 @@ function TrainerPageContent() {
   }, [sessionActive, sessionId, transcript, endSession])
 
   const handleCalculationComplete = () => {
-    if (sessionId) {
-      console.log('✅ Redirecting to analytics with integer ID:', sessionId)
-      router.push(`/trainer/analytics/${sessionId}`)
-    } else {
-      router.push('/feedback')
-    }
+    // Not used anymore - direct redirect in endSession
   }
 
   const handleMoneyNotificationComplete = () => {
@@ -962,26 +940,7 @@ function TrainerPageContent() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Show money notification when deal is closed
-  if (showMoneyNotification) {
-    return (
-      <MoneyNotification 
-        amount={earningsAmount}
-        show={showMoneyNotification}
-        onComplete={handleMoneyNotificationComplete}
-      />
-    )
-  }
-
-  // Show calculating score screen after session ends
-  if (calculatingScore && sessionId) {
-    return (
-      <CalculatingScore 
-        sessionId={sessionId}
-        onComplete={handleCalculationComplete}
-      />
-    )
-  }
+  // Removed intermediate screens - direct to results
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
