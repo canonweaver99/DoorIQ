@@ -936,9 +936,32 @@ function TrainerPageContent() {
     }
   }, [sessionActive, sessionId, transcript, endSession])
 
-  const handleCalculationComplete = () => {
+  const handleCalculationComplete = async () => {
     if (sessionId) {
-      router.push(`/trainer/analytics/${sessionId}`)
+      try {
+        // Fetch the correct session ID from database to avoid UUID corruption
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        if (authUser?.id) {
+          const response = await fetch(`/api/sessions/recent?user_id=${authUser.id}&limit=1`)
+          if (response.ok) {
+            const data = await response.json()
+            const sessions = data.sessions || []
+            if (sessions.length > 0) {
+              const correctSessionId = sessions[0].id
+              console.log('✅ Using correct session ID for redirect:', correctSessionId)
+              router.push(`/trainer/analytics/${correctSessionId}`)
+              return
+            }
+          }
+        }
+        
+        // Fallback to original sessionId if API fails
+        console.warn('⚠️ Falling back to original session ID')
+        router.push(`/trainer/analytics/${sessionId}`)
+      } catch (error) {
+        console.error('❌ Error fetching correct session ID:', error)
+        router.push(`/trainer/analytics/${sessionId}`)
+      }
     } else {
       router.push('/feedback')
     }
