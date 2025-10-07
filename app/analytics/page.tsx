@@ -1,8 +1,22 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
 export default function AnalyticsPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to sessions page as the main analytics landing
+    router.push('/sessions')
+  }, [router])
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold">Analytics</h1>
-      <p className="mt-2 text-slate-300">Charts and insights about your practice and performance.</p>
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+        <p className="text-white/70">Redirecting to sessions...</p>
+      </div>
     </div>
   )
 }
