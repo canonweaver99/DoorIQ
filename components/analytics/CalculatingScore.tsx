@@ -24,7 +24,7 @@ const POST_SALES_TIPS = [
 ]
 
 interface CalculatingScoreProps {
-  sessionId: string
+  sessionId: number | string
   onComplete: () => void
   className?: string
 }
@@ -50,7 +50,7 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
     // Check if grading is complete
     const checkGrading = async () => {
       try {
-        const resp = await fetch(`/api/sessions/${sessionId}`)
+        const resp = await fetch(`/api/training-sessions/${sessionId}`)
         if (resp.ok) {
           const session = await resp.json()
           if (session.overall_score && session.overall_score > 0) {

@@ -267,13 +267,6 @@ export default function AnalyticsPage() {
               analytics={session.analytics}
               className="mb-6"
             />
-            {/* Advanced Metrics Section */}
-            {session.analytics && (
-              <AdvancedMetrics 
-                advancedMetrics={session.analytics.advancedMetrics}
-                patterns={session.analytics.patterns}
-              />
-            )}
           </div>
         ) : (
           <div className="space-y-6">
@@ -285,14 +278,14 @@ export default function AnalyticsPage() {
               </h2>
               
               {/* Strengths */}
-              {(session as any).what_worked && (session as any).what_worked.length > 0 && (
+              {session.feedback_strengths && session.feedback_strengths.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-green-400 mb-3 flex items-center">
                     <Target className="w-5 h-5 mr-2" />
                     What Worked Well
                   </h3>
                   <ul className="space-y-2">
-                    {(session as any).what_worked.map((item: string, idx: number) => (
+                    {session.feedback_strengths.map((item: string, idx: number) => (
                       <motion.li
                         key={idx}
                         initial={{ opacity: 0, x: -20 }}
@@ -309,14 +302,14 @@ export default function AnalyticsPage() {
               )}
               
               {/* Areas for Improvement */}
-              {(session as any).what_failed && (session as any).what_failed.length > 0 && (
+              {session.feedback_improvements && session.feedback_improvements.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-yellow-400 mb-3 flex items-center">
                     <Target className="w-5 h-5 mr-2" />
                     Areas for Improvement
                   </h3>
                   <ul className="space-y-2">
-                    {(session as any).what_failed.map((item: string, idx: number) => (
+                    {session.feedback_improvements.map((item: string, idx: number) => (
                       <motion.li
                         key={idx}
                         initial={{ opacity: 0, x: -20 }}
@@ -332,46 +325,62 @@ export default function AnalyticsPage() {
                 </div>
               )}
               
-              {/* Specific Tips */}
-              {(session as any).key_learnings && (session as any).key_learnings.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-blue-400 mb-3 flex items-center">
-                    <Target className="w-5 h-5 mr-2" />
-                    Specific Tips & Techniques
-                  </h3>
-                  <ul className="space-y-2">
-                    {(session as any).key_learnings.map((item: string, idx: number) => (
-                      <motion.li
-                        key={idx}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="flex items-start p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg"
-                      >
-                        <span className="text-blue-400 mr-3 text-xl">💡</span>
-                        <span className="text-slate-200">{item}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                </div>
-              )}
               
               {/* Show message if no feedback yet */}
-              {(!session.what_worked || session.what_worked.length === 0) && 
-               (!session.what_failed || (session as any).what_failed.length === 0) && 
-               (!(session as any).key_learnings || (session as any).key_learnings.length === 0) && (
+              {(!session.feedback_strengths || session.feedback_strengths.length === 0) && 
+               (!session.feedback_improvements || session.feedback_improvements.length === 0) && (
                 <div className="text-center py-8 text-slate-400">
                   <p>No AI feedback available yet. Complete the grading process to see detailed analysis.</p>
                 </div>
               )}
             </div>
-            
-            {/* Performance Metrics */}
-            <PerformanceMetrics 
-              metrics={metricsData}
-              transcript={session.transcript || []}
-              onLineClick={scrollToTranscriptLine}
-            />
+
+            {/* 4-Category Scoring Grid */}
+            <div className="bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-700">
+              <h2 className="text-2xl font-semibold text-slate-100 mb-6 flex items-center">
+                <Trophy className="w-6 h-6 mr-2 text-yellow-500" />
+                Performance Breakdown
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {metricsData.map((metric, idx) => (
+                  <motion.div
+                    key={metric.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="bg-slate-900/50 rounded-xl p-6 border border-slate-600"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-slate-100">{metric.label}</h3>
+                      <div className={`text-2xl font-bold ${
+                        metric.score >= 85 ? 'text-green-400' :
+                        metric.score >= 70 ? 'text-yellow-400' :
+                        'text-red-400'
+                      }`}>
+                        {metric.score}/100
+                      </div>
+                    </div>
+                    
+                    {/* Progress bar */}
+                    <div className="w-full bg-slate-700 rounded-full h-3 mb-3">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${metric.score}%` }}
+                        transition={{ duration: 1, delay: idx * 0.1 }}
+                        className={`h-3 rounded-full ${
+                          metric.score >= 85 ? 'bg-green-500' :
+                          metric.score >= 70 ? 'bg-yellow-500' :
+                          'bg-red-500'
+                        }`}
+                      />
+                    </div>
+                    
+                    <p className="text-sm text-slate-300">{metric.feedback}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
