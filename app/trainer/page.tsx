@@ -833,7 +833,7 @@ function TrainerPageContent() {
 
   const createSessionRecord = async () => {
     try {
-      const resp = await fetch('/api/working-sessions', {
+      const resp = await fetch('/api/basic-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -843,16 +843,16 @@ function TrainerPageContent() {
       })
       
       if (!resp.ok) {
-        throw new Error('Failed to create working session')
+        throw new Error('Failed to create basic session')
       }
       
       const json = await resp.json()
       const sessionId = json.id
       
-      console.log('✅ WORKING session created:', sessionId)
+      console.log('✅ BASIC session created:', sessionId)
       return sessionId
     } catch (error: any) {
-      console.error('❌ Error creating working session:', error)
+      console.error('❌ Error creating basic session:', error)
       return null
     }
   }
@@ -881,30 +881,33 @@ function TrainerPageContent() {
         
         // Save session with transcript - ONE SIMPLE CALL
         try {
-          console.log('💾 WORKING: Saving session with', transcript.length, 'lines')
+          console.log('💾 BASIC: Saving session with', transcript.length, 'lines')
           
-          const updateResp = await fetch(`/api/working-sessions/${sessionId}`, {
+          const updateResp = await fetch(`/api/basic-session`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              ended_at: new Date().toISOString(),
-              duration_seconds: duration,
-              full_transcript: transcript,
-              overall_score: 75
+              id: sessionId,
+              transcript: transcript,
+              scores: {
+                overall: 75,
+                strengths: ['Completed the training session', 'Engaged with the agent'],
+                improvements: ['Practice more conversations', 'Work on closing techniques']
+              }
             }),
           })
           
           if (updateResp.ok) {
-            console.log('✅ WORKING session saved successfully')
+            console.log('✅ BASIC session saved successfully')
           } else {
-            console.error('❌ WORKING session save failed:', updateResp.status)
+            console.error('❌ BASIC session save failed:', updateResp.status)
           }
         } catch (error) {
-          console.error('❌ Error saving working session:', error)
+          console.error('❌ Error saving basic session:', error)
         }
         
         // Always proceed to results
-        console.log('🎯 WORKING: Proceeding to results...')
+        console.log('🎯 BASIC: Proceeding to results...')
         setCalculatingScore(true)
         setLoading(false)
       } else {
