@@ -833,37 +833,26 @@ function TrainerPageContent() {
 
   const createSessionRecord = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser?.id) {
-        throw new Error('User not authenticated')
-      }
-
-      const resp = await fetch('/api/sessions', {
+      const resp = await fetch('/api/training-sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: authUser.id,
-          agent_id: selectedAgent?.id,
           agent_name: selectedAgent?.name,
-          agent_persona: selectedAgent?.persona,
-          conversation_metadata: {
-            homeowner_agent_id: selectedAgent?.eleven_agent_id,
-            homeowner_name: selectedAgent?.name,
-          },
+          agent_id: selectedAgent?.eleven_agent_id,
         }),
       })
       
       if (!resp.ok) {
-        throw new Error('Failed to create session')
+        throw new Error('Failed to create training session')
       }
       
       const json = await resp.json()
       const sessionId = json.id
       
-      console.log('Session created:', sessionId)
+      console.log('✅ Training session created:', sessionId)
       return sessionId
     } catch (error: any) {
-      console.error('Error creating session:', error)
+      console.error('❌ Error creating training session:', error)
       return null
     }
   }
@@ -888,23 +877,38 @@ function TrainerPageContent() {
       }
 
       if (sessionId) {
-        console.log('Ending session:', sessionId)
+        console.log('🛑 Ending training session:', sessionId)
         
-        await fetch('/api/sessions/end', {
+        // Save current transcript to the session
+        if (transcript.length > 0) {
+          console.log('💾 Saving transcript with', transcript.length, 'lines')
+          for (const line of transcript) {
+            await fetch(`/api/training-sessions/${sessionId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transcript_line: line }),
+            }).catch(err => console.error('Error saving transcript line:', err))
+          }
+        }
+        
+        // Complete the session (this triggers background grading)
+        const completeResp = await fetch(`/api/training-sessions/${sessionId}/complete`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            id: sessionId, 
-            duration, 
-            transcript 
-          }),
+          body: JSON.stringify({ duration_seconds: duration }),
         })
         
-        console.log('Session ended, showing results...')
-        setCalculatingScore(true)
-        setLoading(false)
+        if (completeResp.ok) {
+          console.log('✅ Training session completed, showing results...')
+          setCalculatingScore(true)
+          setLoading(false)
+        } else {
+          console.error('❌ Failed to complete session')
+          router.push('/feedback')
+          setLoading(false)
+        }
       } else {
-        console.warn('No session ID, redirecting to feedback')
+        console.warn('⚠️ No session ID, redirecting to feedback')
         router.push('/feedback')
         setLoading(false)
       }
@@ -936,32 +940,10 @@ function TrainerPageContent() {
     }
   }, [sessionActive, sessionId, transcript, endSession])
 
-  const handleCalculationComplete = async () => {
+  const handleCalculationComplete = () => {
     if (sessionId) {
-      try {
-        // Fetch the correct session ID from database to avoid UUID corruption
-        const { data: { user: authUser } } = await supabase.auth.getUser()
-        if (authUser?.id) {
-          const response = await fetch(`/api/sessions/recent?user_id=${authUser.id}&limit=1`)
-          if (response.ok) {
-            const data = await response.json()
-            const sessions = data.sessions || []
-            if (sessions.length > 0) {
-              const correctSessionId = sessions[0].id
-              console.log('✅ Using correct session ID for redirect:', correctSessionId)
-              router.push(`/trainer/analytics/${correctSessionId}`)
-              return
-            }
-          }
-        }
-        
-        // Fallback to original sessionId if API fails
-        console.warn('⚠️ Falling back to original session ID')
-        router.push(`/trainer/analytics/${sessionId}`)
-      } catch (error) {
-        console.error('❌ Error fetching correct session ID:', error)
-        router.push(`/trainer/analytics/${sessionId}`)
-      }
+      console.log('✅ Redirecting to analytics with integer ID:', sessionId)
+      router.push(`/trainer/analytics/${sessionId}`)
     } else {
       router.push('/feedback')
     }

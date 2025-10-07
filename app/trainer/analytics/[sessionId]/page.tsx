@@ -15,7 +15,7 @@ import AICoach from '@/components/analytics/AICoach'
 import AdvancedMetrics from '@/components/analytics/AdvancedMetrics'
 
 interface SessionData {
-  id: string
+  id: number
   started_at: string
   ended_at: string
   duration_seconds: number
@@ -23,11 +23,13 @@ interface SessionData {
   rapport_score: number
   discovery_score: number
   objection_handling_score: number
-  close_score: number
-  full_transcript?: any[]
+  closing_score: number
   transcript: any[]
-  analytics: any
-  sentiment_data: any
+  feedback_strengths: string[]
+  feedback_improvements: string[]
+  virtual_earnings: number
+  graded_at: string
+  analytics?: any
 }
 
 export default function AnalyticsPage() {
@@ -49,7 +51,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const run = async () => {
       if (!session?.id) return
-      const transcriptArr = (session as any).full_transcript || session.transcript
+      const transcriptArr = session.transcript || []
       const hasTranscript = Array.isArray(transcriptArr) && transcriptArr.length > 0
       const hasScore = session.overall_score && session.overall_score > 0
       const hasAIFeedback = Boolean(session.analytics?.feedback)
@@ -79,9 +81,7 @@ export default function AnalyticsPage() {
     run()
   }, [
     session?.id,
-    Array.isArray((session as any)?.full_transcript)
-      ? (session as any)?.full_transcript?.length
-      : (Array.isArray(session?.transcript) ? session?.transcript?.length : 0),
+    Array.isArray(session?.transcript) ? session?.transcript?.length : 0,
     Boolean(session?.analytics?.feedback)
   ])
 
@@ -91,17 +91,17 @@ export default function AnalyticsPage() {
         ? params.sessionId[0]
         : params.sessionId
 
-      console.log('Fetching session:', sessionId)
+      console.log('📊 Fetching training session:', sessionId)
 
-      const resp = await fetch(`/api/sessions/${sessionId}`)
+      const resp = await fetch(`/api/training-sessions/${sessionId}`)
       if (!resp.ok) {
-        throw new Error(`Session not found: ${resp.status}`)
+        throw new Error(`Training session not found: ${resp.status}`)
       }
       
       const json = await resp.json()
       setSession(json)
     } catch (error) {
-      console.error('Error fetching session:', error)
+      console.error('❌ Error fetching training session:', error)
     } finally {
       setLoading(false)
     }
@@ -178,10 +178,10 @@ export default function AnalyticsPage() {
     },
     {
       label: 'Close',
-      score: session.close_score || 0,
+      score: session.closing_score || 0,
       color: 'purple' as const,
-      feedback: (session.close_score || 0) >= 85 ? "Excellent closing - confident ask and got the commitment!" :
-                (session.close_score || 0) >= 70 ? "Good closing attempt, but be more assumptive and create urgency" :
+      feedback: (session.closing_score || 0) >= 85 ? "Excellent closing - confident ask and got the commitment!" :
+                (session.closing_score || 0) >= 70 ? "Good closing attempt, but be more assumptive and create urgency" :
                 "Practice confident closes - ask for the sale on the doorstep"
     }
   ]
@@ -209,7 +209,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Animated Score Display */}
-          {grading || (!session.overall_score && (session as any).full_transcript && (session as any).full_transcript.length > 0) ? (
+          {grading || (!session.overall_score && session.transcript && session.transcript.length > 0) ? (
             <div className="py-16 text-center">
               <motion.div
                 className="w-16 h-16 mx-auto rounded-full border-4 border-slate-600 border-t-blue-500 mb-4"
@@ -263,7 +263,7 @@ export default function AnalyticsPage() {
         {activeTab === 'transcript' ? (
           <div id="transcript-section">
             <TranscriptView 
-              transcript={(session as any).full_transcript || []}
+              transcript={session.transcript || []}
               analytics={session.analytics}
               className="mb-6"
             />
@@ -369,7 +369,7 @@ export default function AnalyticsPage() {
             {/* Performance Metrics */}
             <PerformanceMetrics 
               metrics={metricsData}
-              transcript={(session as any).full_transcript || []}
+              transcript={session.transcript || []}
               onLineClick={scrollToTranscriptLine}
             />
           </div>
