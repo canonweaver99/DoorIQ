@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServiceSupabaseClient } from '@/lib/supabase/server'
+import { createServiceSupabaseClient, createServerSupabaseClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -10,14 +10,26 @@ export async function POST(req: Request) {
     const body = await req.json()
     console.log('🚀 BASIC: Creating session with body:', body)
     
-    // Use service role directly - no auth complications
+    // Get authenticated user first (from cookies)
+    const serverSupabase = await createServerSupabaseClient()
+    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
+
+    if (authError || !user) {
+      console.error('❌ BASIC: No authenticated user found:', authError)
+      return NextResponse.json({ 
+        error: 'Unauthorized - no authenticated user',
+        details: authError?.message || null
+      }, { status: 401 })
+    }
+    
+    // Use service role for DB write
     const supabase = await createServiceSupabaseClient()
     
     // Create with absolute minimum fields
     const { data, error } = await (supabase as any)
       .from('live_sessions')
       .insert({
-        user_id: 'c4721c11-8b92-47f6-be26-ebc6d8976f6', // Use the user ID we know exists from debug
+        user_id: user.id,
         agent_name: body.agent_name || 'Test Agent',
         started_at: new Date().toISOString()
       })
