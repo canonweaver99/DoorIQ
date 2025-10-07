@@ -787,18 +787,12 @@ function TrainerPageContent() {
         throw new Error('No conversation token received')
       }
       
-      console.log('📝 Creating session record...')
       const newId = await createSessionRecord()
-      if (!newId || !isUuid(newId)) {
-        throw new Error('Could not create a valid session record. Please try again.')
+      if (!newId) {
+        throw new Error('Failed to create session')
       }
-      console.log('📋 Session ID obtained:', newId)
-      console.log('📋 Session ID type:', typeof newId)
-      console.log('📋 Session ID length:', newId.length)
       
-      // Add a small delay to ensure session is fully committed to database
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
+      console.log('Session ID:', newId)
       setSessionId(newId)
       setSessionActive(true)
       setLoading(false)
@@ -839,54 +833,37 @@ function TrainerPageContent() {
 
   const createSessionRecord = async () => {
     try {
-      // Get the current authenticated user ID directly from Supabase auth
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser?.id) {
         throw new Error('User not authenticated')
       }
 
-      // Generate UUID client-side to avoid corruption
-      const sessionId = crypto.randomUUID()
-      console.log('📝 Generated session ID client-side:', sessionId)
-      
-      // Clear any old session ID and store the new one
-      localStorage.removeItem('currentSessionId')
-      localStorage.setItem('currentSessionId', sessionId)
-
-      const payload: any = {
-        id: sessionId, // Explicitly set the ID
-        user_id: authUser.id,
-        agent_id: selectedAgent?.id || null,
-        agent_name: selectedAgent?.name || null,
-        agent_persona: selectedAgent?.persona || null,
-        conversation_metadata: {
-          homeowner_agent_id: selectedAgent?.eleven_agent_id || null,
-          homeowner_name: selectedAgent?.name || null,
-        },
-      }
-      console.log('📝 Creating session via API with payload:', JSON.stringify(payload, null, 2))
-
       const resp = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          user_id: authUser.id,
+          agent_id: selectedAgent?.id,
+          agent_name: selectedAgent?.name,
+          agent_persona: selectedAgent?.persona,
+          conversation_metadata: {
+            homeowner_agent_id: selectedAgent?.eleven_agent_id,
+            homeowner_name: selectedAgent?.name,
+          },
+        }),
       })
+      
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}))
-        throw new Error(err?.error || 'Failed to create session')
+        throw new Error('Failed to create session')
       }
+      
       const json = await resp.json()
-      const returnedId = String(json.id || '')
+      const sessionId = json.id
       
-      // Validate the returned ID matches what we sent
-      if (returnedId !== sessionId) {
-        console.warn('⚠️ Returned ID differs from generated ID:', { sent: sessionId, received: returnedId })
-      }
-      
-      console.log('✅ Session created successfully:', sessionId)
+      console.log('Session created:', sessionId)
       return sessionId
     } catch (error: any) {
-      console.error('❌ Error creating session:', error?.message || error)
+      console.error('Error creating session:', error)
       return null
     }
   }
@@ -910,68 +887,24 @@ function TrainerPageContent() {
         signedUrlAbortRef.current = null
       }
 
-      if (sessionId && isUuid(sessionId)) {
-        console.log('📤 Saving session and starting grading...')
-        const analytics = {
-          conversation_id: (window as any)?.elevenConversationId || null,
-          homeowner_name: selectedAgent?.name || homeownerName,
-          homeowner_profile: selectedAgent?.persona || 'Standard homeowner persona',
-          homeowner_agent_id: selectedAgent?.eleven_agent_id || null,
-        }
-
-        console.log('📤 Ending session with data:', {
-          sessionId,
-          transcriptLength: transcript?.length || 0,
-          duration,
-          hasAnalytics: !!analytics
-        })
+      if (sessionId) {
+        console.log('Ending session:', sessionId)
         
-        const resp = await fetch('/api/sessions/end', {
+        await fetch('/api/sessions/end', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: sessionId, duration, transcript, analytics }),
+          body: JSON.stringify({ 
+            id: sessionId, 
+            duration, 
+            transcript 
+          }),
         })
         
-        console.log('📤 End session response status:', resp.status)
-        const data = await resp.json().catch((e) => {
-          console.error('❌ Failed to parse end session response:', e)
-          return {}
-        })
-        
-        if (!resp.ok) {
-          console.error('❌ Failed to end session:', resp.status, data)
-          // Still try to navigate even if end failed
-        } else {
-          console.log('✅ Session ended successfully:', data)
-          console.log('🔄 Grading running in background...')
-          
-          // Send notifications to managers  
-          fetch('/api/notifications/session-complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId }),
-          }).catch((e) => {
-            console.error('Manager notification failed:', e)
-          })
-        }
-        
-        // Show calculating score screen while grading happens
-        if (sessionId) {
-          console.log('📊 Session completed, showing score calculation...')
-          console.log('📊 Session ID:', sessionId)
-          
-          // Keep session ID in localStorage for the analytics page
-          localStorage.setItem('currentSessionId', sessionId)
-          
-          setCalculatingScore(true)
-          setLoading(false)
-        } else {
-          console.warn('📊 No sessionId available, redirecting to feedback')
-          router.push('/feedback')
-        }
+        console.log('Session ended, showing results...')
+        setCalculatingScore(true)
+        setLoading(false)
       } else {
-        console.warn('⚠️ No valid sessionId, skipping save (cannot grade without a session record)')
-        // Don't show calculating score without a valid session
+        console.warn('No session ID, redirecting to feedback')
         router.push('/feedback')
         setLoading(false)
       }
@@ -1005,11 +938,7 @@ function TrainerPageContent() {
 
   const handleCalculationComplete = () => {
     if (sessionId) {
-      console.log('📊 Redirecting to analytics for session:', sessionId)
-      // Explicitly encode to prevent any escape sequence interpretation
-      const encodedId = encodeURIComponent(sessionId)
-      console.log('📊 Encoded session ID:', encodedId)
-      router.push(`/trainer/analytics/${encodedId}`)
+      router.push(`/trainer/analytics/${sessionId}`)
     } else {
       router.push('/feedback')
     }
@@ -1038,14 +967,7 @@ function TrainerPageContent() {
   }
 
   // Show calculating score screen after session ends
-  if (calculatingScore) {
-    // Only show calculating score if we have a valid session ID
-    if (!sessionId || sessionId === 'unknown') {
-      console.error('❌ No valid session ID for calculating score')
-      router.push('/feedback')
-      return null
-    }
-    
+  if (calculatingScore && sessionId) {
     return (
       <CalculatingScore 
         sessionId={sessionId}

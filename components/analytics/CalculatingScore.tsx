@@ -37,86 +37,43 @@ export default function CalculatingScore({ sessionId, onComplete, className = ""
   const supabase = createClient()
 
   useEffect(() => {
-    console.log('🎯 CalculatingScore mounted with sessionId:', sessionId)
-    
-    if (!sessionId || sessionId === 'unknown') {
-      console.error('❌ Invalid session ID provided to CalculatingScore')
-      onComplete() // Skip to completion
+    if (!sessionId) {
+      onComplete()
       return
     }
-    // Rotate tips every 2.5 seconds
+
+    // Rotate tips
     const tipInterval = setInterval(() => {
       setCurrentTipIndex((prev) => (prev + 1) % POST_SALES_TIPS.length)
     }, 2500)
 
-    // Poll for grading completion with retry logic
-    let retryCount = 0
-    const maxRetries = 3
-    
+    // Check if grading is complete
     const checkGrading = async () => {
       try {
-        console.log('🔍 Checking grading status for session:', sessionId, 'Attempt:', retryCount + 1)
         const resp = await fetch(`/api/sessions/${sessionId}`)
-        console.log('🔍 Grading check response:', resp.status)
-        
         if (resp.ok) {
           const session = await resp.json()
-          console.log('🔍 Session data:', { 
-            id: session.id, 
-            overall_score: session.overall_score,
-            has_analytics: !!session.analytics
-          })
-          
-          // Reset retry count on successful fetch
-          retryCount = 0
-          
-          // Check if grading is complete
           if (session.overall_score && session.overall_score > 0) {
-            console.log('✅ Grading complete, score:', session.overall_score)
+            console.log('Grading complete!')
             setIsGraded(true)
             setProgress(100)
-            setStage('finalizing')
-            setTimeout(onComplete, 1000) // Give time to show completion
+            setTimeout(onComplete, 1000)
             return true
           }
-        } else if (resp.status === 404 && retryCount < maxRetries) {
-          // Session might not be saved yet, retry
-          retryCount++
-          console.warn(`⚠️ Session not found (404), will retry in 2 seconds... (${retryCount}/${maxRetries})`)
-          return false
-        } else {
-          const error = await resp.text()
-          console.error('❌ Failed to fetch session:', resp.status, error)
-          if (retryCount >= maxRetries) {
-            console.error('❌ Max retries reached, giving up')
-            // Continue to completion anyway
-            setTimeout(onComplete, 2000)
-            return true
-          }
-          retryCount++
         }
       } catch (e) {
-        console.error('❌ Error checking grading status:', e)
-        retryCount++
-        if (retryCount >= maxRetries) {
-          setTimeout(onComplete, 2000)
-          return true
-        }
+        console.error('Error checking grading:', e)
       }
       return false
     }
 
-    // Initial check - wait a bit for session to be saved
-    setTimeout(() => {
-      checkGrading()
-    }, 1000)
-
-    // Poll every 3 seconds (increased from 2 to give more time)
+    // Start checking after 2 seconds
+    setTimeout(checkGrading, 2000)
+    
+    // Then poll every 3 seconds
     const pollInterval = setInterval(async () => {
       const complete = await checkGrading()
-      if (complete) {
-        clearInterval(pollInterval)
-      }
+      if (complete) clearInterval(pollInterval)
     }, 3000)
 
     // Progress simulation that's more realistic
