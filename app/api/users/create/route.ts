@@ -3,9 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
   try {
-    const { id, email, full_name, rep_id } = await request.json()
+    const { id, email, full_name } = await request.json()
 
-    if (!id || !email || !full_name || !rep_id) {
+    if (!id || !email || !full_name) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     const { error } = await admin
       .from('users')
-      .insert({ id, email, full_name, rep_id } as any)
+      .insert({ id, email, full_name } as any)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })

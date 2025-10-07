@@ -21,7 +21,6 @@ export default function SettingsPage() {
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
-    rep_id: '',
     notifications: true,
   })
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -50,7 +49,6 @@ export default function SettingsPage() {
       setFormData({
         full_name: data.full_name,
         email: data.email,
-        rep_id: data.rep_id,
         notifications: true, // Default value, you can store this in user preferences
       })
 
@@ -89,7 +87,6 @@ export default function SettingsPage() {
       .update({
         full_name: formData.full_name,
         email: formData.email,
-        rep_id: formData.rep_id,
       })
       .eq('id', userData.id)
 
@@ -161,18 +158,6 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Rep ID
-              </label>
-              <input
-                type="text"
-                value={formData.rep_id}
-                onChange={(e) => setFormData({ ...formData, rep_id: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Enter your rep ID"
-              />
-            </div>
           </div>
         </div>
 

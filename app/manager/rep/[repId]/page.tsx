@@ -185,7 +185,7 @@ export default function RepDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">{rep?.full_name}</h1>
-              <p className="text-slate-400">{rep?.email} • Rep ID: {rep?.rep_id}</p>
+              <p className="text-slate-400">{rep?.email}</p>
             </div>
           </div>
         </div>

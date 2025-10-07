@@ -12,7 +12,6 @@ export function SignUpClient() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [repId, setRepId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -39,7 +38,6 @@ export function SignUpClient() {
             id: authData.user.id,
             email,
             full_name: fullName,
-            rep_id: repId,
           })
         })
         const json = await res.json()
@@ -126,21 +124,6 @@ export function SignUpClient() {
               className="w-full pl-10 pr-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 bg-slate-800 text-slate-100 placeholder-slate-400 text-sm"
               placeholder="Full name"
               autoComplete="name"
-            />
-          </div>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <Hash className="w-4 h-4" />
-            </span>
-            <input
-              id="repId"
-              type="text"
-              value={repId}
-              onChange={(e) => setRepId(e.target.value)}
-              required
-              className="w-full pl-10 pr-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 bg-slate-800 text-slate-100 placeholder-slate-400 text-sm"
-              placeholder="Rep ID (e.g., REP-001)"
-              autoComplete="off"
             />
           </div>
           <div className="relative">

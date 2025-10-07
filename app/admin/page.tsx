@@ -16,7 +16,7 @@ import {
 interface TeamMember {
   id: string
   full_name: string
-  rep_id: string
+  rep_id?: string
   sessions_count: number
   average_score: number
   last_session: string
@@ -58,7 +58,6 @@ export default function AdminDashboard() {
         {
           id: '1',
           full_name: 'Sarah Johnson',
-          rep_id: 'REP-001',
           sessions_count: 52,
           average_score: 82,
           last_session: new Date().toISOString(),
@@ -67,7 +66,6 @@ export default function AdminDashboard() {
         {
           id: '2',
           full_name: 'Mike Chen',
-          rep_id: 'REP-002',
           sessions_count: 48,
           average_score: 85,
           last_session: new Date(Date.now() - 86400000).toISOString(),
@@ -76,7 +74,6 @@ export default function AdminDashboard() {
         {
           id: '3',
           full_name: 'Alex Rivera',
-          rep_id: 'REP-003',
           sessions_count: 45,
           average_score: 88,
           last_session: new Date(Date.now() - 172800000).toISOString(),
@@ -85,7 +82,6 @@ export default function AdminDashboard() {
         {
           id: '4',
           full_name: 'Emma Davis',
-          rep_id: 'REP-004',
           sessions_count: 38,
           average_score: 75,
           last_session: new Date().toISOString(),
@@ -306,7 +302,6 @@ export default function AdminDashboard() {
                           <div className="text-sm font-medium text-gray-900">
                             {member.full_name}
                           </div>
-                          <div className="text-sm text-gray-500">{member.rep_id}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
