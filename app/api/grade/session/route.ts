@@ -174,8 +174,6 @@ export async function POST(request: NextRequest) {
         listening_score: gradingResult.scores?.listening || 0,
         virtual_earnings: gradingResult.virtual_earnings || 0,
         sale_closed: gradingResult.sale_closed || false,
-        what_worked: gradingResult.feedback?.strengths || [],
-        what_failed: gradingResult.feedback?.improvements || [],
         analytics: {
           line_ratings: gradingResult.line_ratings || [],
           feedback: gradingResult.feedback || {},

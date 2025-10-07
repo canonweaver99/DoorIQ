@@ -347,7 +347,33 @@ function TrainerPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
-  
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const removeShareModalArtifacts = () => {
+      const nodes = document.querySelectorAll(
+        'script[src*="share-modal"], link[href*="share-modal"], div[id*="share-modal"], button[data-testid*="share"], button[class*="share"]'
+      )
+      nodes.forEach((node) => {
+        node.parentElement?.removeChild(node)
+      })
+    }
+
+    removeShareModalArtifacts()
+
+    const observer = new MutationObserver(() => {
+      removeShareModalArtifacts()
+    })
+
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   // Audio recording hook
   const { isRecording, startRecording, stopRecording } = useSessionRecording(sessionId)
   const durationInterval = useRef<NodeJS.Timeout | null>(null)

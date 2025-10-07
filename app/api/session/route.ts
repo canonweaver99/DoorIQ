@@ -52,11 +52,13 @@ export async function PATCH(req: Request) {
     const supabase = await createServiceSupabaseClient()
     
     // Convert transcript to ensure proper format
-    const formattedTranscript = transcript ? transcript.map((entry: any) => ({
-      speaker: entry.speaker,
-      text: entry.text,
-      timestamp: entry.timestamp ? new Date(entry.timestamp).toISOString() : new Date().toISOString()
-    })) : []
+    const formattedTranscript = transcript
+      ? transcript.map((entry: any) => ({
+          speaker: entry.speaker,
+          text: entry.text,
+          timestamp: entry.timestamp ? new Date(entry.timestamp).toISOString() : new Date().toISOString()
+        }))
+      : []
     
     console.log('📝 PATCH: Formatted transcript sample:', formattedTranscript[0])
     
@@ -66,15 +68,24 @@ export async function PATCH(req: Request) {
     
     console.log('📊 PATCH: Calculated score:', score, 'from', repLines.length, 'rep lines')
     
+    const now = new Date().toISOString()
+
     const { data, error } = await (supabase as any)
       .from('live_sessions')
       .update({
-        ended_at: new Date().toISOString(),
+        ended_at: now,
         duration_seconds: duration_seconds,
         full_transcript: formattedTranscript,
         overall_score: score,
-        what_worked: ['Completed the training session', 'Engaged with the agent'],
-        what_failed: ['Keep practicing to improve your skills']
+        analytics: {
+          graded_at: now,
+          grading_version: 'manual-placeholder',
+          feedback: {
+            strengths: ['Completed the training session', 'Engaged with the agent'],
+            improvements: ['Keep practicing to improve your skills'],
+            specific_tips: []
+          }
+        }
       })
       .eq('id', id)
       .select('id')
