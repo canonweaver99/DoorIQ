@@ -25,12 +25,11 @@ async function testGrading() {
   console.log(`\n🧪 Testing grading for session: ${sessionId}\n`)
   
   try {
-    const response = await fetch(`${API_URL}/api/grade/session`, {
+    const response = await fetch(`${API_URL}/api/training-sessions/${sessionId}/grade`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ sessionId }),
     })
 
     const data = await response.json()

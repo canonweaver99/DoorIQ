@@ -28,8 +28,8 @@ export default function SessionsPage() {
     console.log('📊 Fetching sessions...')
     
     try {
-      // Use API endpoint to avoid UUID corruption from Supabase client
-      const response = await fetch('/api/sessions/user')
+      // Use new training-sessions API
+      const response = await fetch('/api/training-sessions')
       if (!response.ok) {
         if (response.status === 401) {
           setIsAuthenticated(false)

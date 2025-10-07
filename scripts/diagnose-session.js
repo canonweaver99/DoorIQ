@@ -21,10 +21,9 @@ async function diagnose() {
   try {
     // Test the grading endpoint
     console.log('📡 Testing grading endpoint...')
-    const response = await fetch(`http://localhost:3000/api/grade/session`, {
+    const response = await fetch(`http://localhost:3000/api/training-sessions/${sessionId}/grade`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId })
+      headers: { 'Content-Type': 'application/json' }
     })
     
     console.log('Status:', response.status, response.statusText)
