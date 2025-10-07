@@ -62,7 +62,7 @@ export default function AnalyticsPage() {
 
   const fetchSession = async () => {
     try {
-      const response = await fetch(`/api/sessions/${sessionId}`)
+      const response = await fetch(`/api/session?id=${sessionId}`)
       if (!response.ok) {
         throw new Error('Failed to fetch session')
       }
