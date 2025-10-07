@@ -322,7 +322,7 @@ const getOrbColors = (name?: string) => {
 
 function TrainerPageContent() {
   const [sessionActive, setSessionActive] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<number | null>(null)
   const [deltaText, setDeltaText] = useState<string>('')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [duration, setDuration] = useState(0)
@@ -349,7 +349,7 @@ function TrainerPageContent() {
   const supabase = createClient()
   
   // Audio recording hook
-  const { isRecording, startRecording, stopRecording } = useSessionRecording(sessionId)
+  const { isRecording, startRecording, stopRecording } = useSessionRecording(sessionId?.toString() || null)
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
@@ -798,11 +798,11 @@ function TrainerPageContent() {
       setLoading(false)
       
       // Start recording after session is active
-      if (newId && !newId.startsWith('temp-session-')) {
+      if (newId) {
         console.log('🎙️ Starting audio recording...')
         startRecording()
       } else {
-        console.warn('⚠️ Skipping recording for temporary session')
+        console.warn('⚠️ No session ID, skipping recording')
       }
 
       durationInterval.current = setInterval(() => {
