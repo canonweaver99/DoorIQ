@@ -100,9 +100,9 @@ export default function AnalyticsPage() {
         ? params.sessionId[0]
         : params.sessionId
 
-      console.log('📊 SIMPLE: Fetching session:', sessionId)
+      console.log('📊 WORKING: Fetching session:', sessionId)
 
-      const resp = await fetch(`/api/simple-sessions/${sessionId}`)
+      const resp = await fetch(`/api/working-sessions/${sessionId}`)
       if (!resp.ok) {
         throw new Error(`Training session not found: ${resp.status}`)
       }

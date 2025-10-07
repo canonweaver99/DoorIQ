@@ -833,7 +833,7 @@ function TrainerPageContent() {
 
   const createSessionRecord = async () => {
     try {
-      const resp = await fetch('/api/simple-sessions', {
+      const resp = await fetch('/api/working-sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -843,16 +843,16 @@ function TrainerPageContent() {
       })
       
       if (!resp.ok) {
-        throw new Error('Failed to create simple session')
+        throw new Error('Failed to create working session')
       }
       
       const json = await resp.json()
       const sessionId = json.id
       
-      console.log('✅ SIMPLE session created:', sessionId)
+      console.log('✅ WORKING session created:', sessionId)
       return sessionId
     } catch (error: any) {
-      console.error('❌ Error creating simple session:', error)
+      console.error('❌ Error creating working session:', error)
       return null
     }
   }
@@ -881,9 +881,9 @@ function TrainerPageContent() {
         
         // Save session with transcript - ONE SIMPLE CALL
         try {
-          console.log('💾 SIMPLE: Saving session with', transcript.length, 'lines')
+          console.log('💾 WORKING: Saving session with', transcript.length, 'lines')
           
-          const updateResp = await fetch(`/api/simple-sessions/${sessionId}`, {
+          const updateResp = await fetch(`/api/working-sessions/${sessionId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -895,16 +895,16 @@ function TrainerPageContent() {
           })
           
           if (updateResp.ok) {
-            console.log('✅ SIMPLE session saved successfully')
+            console.log('✅ WORKING session saved successfully')
           } else {
-            console.error('❌ SIMPLE session save failed:', updateResp.status)
+            console.error('❌ WORKING session save failed:', updateResp.status)
           }
         } catch (error) {
-          console.error('❌ Error saving simple session:', error)
+          console.error('❌ Error saving working session:', error)
         }
         
         // Always proceed to results
-        console.log('🎯 SIMPLE: Proceeding to results...')
+        console.log('🎯 WORKING: Proceeding to results...')
         setCalculatingScore(true)
         setLoading(false)
       } else {

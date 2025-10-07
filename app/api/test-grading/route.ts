@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 // Test OpenAI grading in isolation
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
     console.log('🧪 Testing OpenAI grading...')
     
