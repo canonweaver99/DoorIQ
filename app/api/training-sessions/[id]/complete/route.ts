@@ -30,6 +30,24 @@ export async function POST(_req: Request, context: { params: { id?: string } } |
     // Use service role for updates
     const serviceSupabase = await createServiceSupabaseClient()
     
+    // First check if session exists
+    const { data: existingSession, error: fetchError } = await (serviceSupabase as any)
+      .from('training_sessions')
+      .select('id, user_id, transcript, status')
+      .eq('id', sessionId)
+      .single()
+    
+    if (fetchError || !existingSession) {
+      console.error('Session not found:', sessionId, fetchError)
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    }
+    
+    // Check if user owns the session
+    if (existingSession.user_id !== user.id) {
+      console.error('User does not own session:', sessionId, 'user:', user.id, 'owner:', existingSession.user_id)
+      return NextResponse.json({ error: 'Unauthorized access to session' }, { status: 403 })
+    }
+    
     // Mark session as completed
     const { data: completedSession, error: updateError } = await (serviceSupabase as any)
       .from('training_sessions')
@@ -39,13 +57,12 @@ export async function POST(_req: Request, context: { params: { id?: string } } |
         duration_seconds: duration_seconds || 0
       })
       .eq('id', sessionId)
-      .eq('user_id', user.id)
       .select('id, transcript, status')
       .single()
     
     if (updateError || !completedSession) {
-      console.error('Error completing session:', updateError)
-      return NextResponse.json({ error: 'Failed to complete session' }, { status: 500 })
+      console.error('Error updating session:', updateError)
+      return NextResponse.json({ error: 'Failed to update session' }, { status: 500 })
     }
     
     // Trigger background grading if transcript exists

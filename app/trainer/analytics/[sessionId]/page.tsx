@@ -59,6 +59,15 @@ export default function AnalyticsPage() {
       if (hasTranscript && (!hasScore || !hasAIFeedback)) {
         setGrading(true)
         
+        // Trigger grading immediately
+        console.log('🎯 Triggering grading for session:', session.id)
+        fetch(`/api/training-sessions/${session.id}/grade`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        }).catch(error => {
+          console.error('Error triggering grading:', error)
+        })
+        
         // Poll every 2 seconds until grading completes
         const pollInterval = setInterval(async () => {
           await fetchSessionData()

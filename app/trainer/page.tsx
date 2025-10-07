@@ -897,26 +897,31 @@ function TrainerPageContent() {
           console.warn('⚠️ No transcript to save')
         }
         
-        // Complete the session (this triggers background grading)
-        const completeResp = await fetch(`/api/training-sessions/${sessionId}/complete`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ duration_seconds: duration }),
-        })
-        
-        if (completeResp.ok) {
-          const completionData = await completeResp.json()
-          console.log('✅ Training session completed:', completionData)
-          setCalculatingScore(true)
-          setLoading(false)
-        } else {
-          const errorText = await completeResp.text()
-          console.error('❌ Failed to complete session:', completeResp.status, errorText)
-          // Still show calculating score even if completion API fails
-          console.log('🔄 Proceeding with results anyway...')
-          setCalculatingScore(true)
-          setLoading(false)
+        // Update session status to completed
+        try {
+          const completeResp = await fetch(`/api/training-sessions/${sessionId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              status: 'completed',
+              ended_at: new Date().toISOString(),
+              duration_seconds: duration 
+            }),
+          })
+          
+          if (completeResp.ok) {
+            console.log('✅ Training session marked as completed')
+          } else {
+            console.warn('⚠️ Failed to mark session as completed, but proceeding anyway')
+          }
+        } catch (error) {
+          console.warn('⚠️ Error updating session status:', error)
         }
+        
+        // Always show calculating score regardless of API status
+        console.log('🎯 Proceeding to results...')
+        setCalculatingScore(true)
+        setLoading(false)
       } else {
         console.warn('⚠️ No session ID, redirecting to feedback')
         router.push('/feedback')
