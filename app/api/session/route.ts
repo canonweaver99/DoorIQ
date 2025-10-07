@@ -45,11 +45,17 @@ export async function PATCH(req: Request) {
   try {
     const { id, transcript, duration_seconds } = await req.json()
     
+    console.log('🔧 PATCH: Updating session:', id)
+    console.log('📝 PATCH: Transcript lines:', transcript?.length || 0)
+    console.log('⏱️ PATCH: Duration:', duration_seconds)
+    
     const supabase = await createServiceSupabaseClient()
     
     // Simple heuristic scoring
-    const repLines = transcript.filter((l: any) => l.speaker === 'rep' || l.speaker === 'user')
+    const repLines = transcript ? transcript.filter((l: any) => l.speaker === 'rep' || l.speaker === 'user') : []
     const score = Math.min(100, Math.max(50, repLines.length * 15))
+    
+    console.log('📊 PATCH: Calculated score:', score, 'from', repLines.length, 'rep lines')
     
     const { data, error } = await (supabase as any)
       .from('live_sessions')
@@ -66,11 +72,12 @@ export async function PATCH(req: Request) {
       .single()
     
     if (error) {
-      console.error('Session update error:', error)
+      console.error('❌ PATCH: Update failed:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
-    return NextResponse.json({ id: data.id })
+    console.log('✅ PATCH: Session updated successfully:', data.id)
+    return NextResponse.json({ id: data.id, score: score })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
