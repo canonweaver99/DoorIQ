@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { ArrowLeft, User, Calendar, Clock } from 'lucide-react'
-import ConversationAnalysis from '@/components/ConversationAnalysis'
 
 export default function AdminSessionDetailPage() {
   const params = useParams<{ id: string }>()
@@ -78,14 +77,33 @@ export default function AdminSessionDetailPage() {
           </div>
         </div>
 
-        {/* Full analysis view */}
-        <ConversationAnalysis 
-          conversationId={session?.analytics?.conversation_id || ''}
-          userId={session?.user_id}
-          agentId={session?.agent_id}
-          homeownerName={session?.analytics?.homeowner_name || 'Austin'}
-          homeownerProfile={session?.analytics?.homeowner_profile || 'Standard homeowner persona'}
-        />
+        {/* Session Details */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-xl font-semibold text-slate-900 mb-4">Session Details</h2>
+          
+          {/* Transcript */}
+          {session.full_transcript && session.full_transcript.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-slate-800 mb-3">Transcript</h3>
+              <div className="space-y-2">
+                {session.full_transcript.map((line: any, idx: number) => (
+                  <div key={idx} className="p-2 bg-slate-50 rounded">
+                    <span className="font-semibold text-slate-700">{line.speaker}:</span>{' '}
+                    <span className="text-slate-600">{line.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Score */}
+          {session.overall_score && (
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">Score</h3>
+              <div className="text-3xl font-bold text-blue-600">{session.overall_score}/100</div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
