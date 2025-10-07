@@ -11,9 +11,23 @@ export async function GET() {
     
     const supabase = await createServiceSupabaseClient()
     
+    // Get a real user ID from the users table
+    const { data: realUser } = await (supabase as any)
+      .from('users')
+      .select('id')
+      .limit(1)
+      .single()
+    
+    if (!realUser) {
+      return NextResponse.json({
+        status: 'FAILED',
+        error: 'No users found in database'
+      })
+    }
+    
     // Try to create the absolute minimum session
     const testData = {
-      user_id: 'c4721c11-8b92-47f6-be26-ebc6d8976f6', // Known user ID from debug
+      user_id: realUser.id, // Use real user ID from database
       agent_name: 'Test Agent',
       started_at: new Date().toISOString()
     }
