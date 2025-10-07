@@ -901,10 +901,10 @@ function TrainerPageContent() {
           console.error('❌ PATCH request error:', error)
         }
         
-        console.log('🔄 Redirecting to loading page...')
+        console.log('🔄 Redirecting to analytics page...')
         
-        // Redirect to loading page (it will poll and redirect to results when ready)
-        router.push(`/trainer/loading/${sessionId}`)
+        // Redirect to the new analytics page with transcript and scores
+        router.push(`/analytics/${sessionId}`)
         setLoading(false)
       } else {
         console.warn('⚠️ No session ID')

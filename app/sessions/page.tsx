@@ -297,7 +297,7 @@ export default function SessionsPage() {
                       </div>
                       
                       <Link
-                        href={`/trainer/analytics/${session.id}`}
+                        href={`/analytics/${session.id}`}
                         className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-pink-600/30 transition-all border border-purple-500/20"
                       >
                         View Details

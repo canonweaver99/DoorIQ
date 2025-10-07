@@ -39,7 +39,7 @@ export default function LoadingPage() {
           // Check if session has been updated with transcript and score
           if (session.full_transcript && session.full_transcript.length > 0) {
             console.log('✅ Session is ready! Redirecting...')
-            router.push(`/trainer/results/${sessionId}`)
+            router.push(`/analytics/${sessionId}`)
             return true
           } else {
             setStatus('Processing your conversation...')
@@ -69,7 +69,7 @@ export default function LoadingPage() {
     // Timeout after 15 seconds - redirect anyway
     const timeout = setTimeout(() => {
       console.warn('⚠️ Timeout waiting for session, redirecting anyway...')
-      router.push(`/trainer/results/${params.sessionId}`)
+      router.push(`/analytics/${params.sessionId}`)
     }, 15000)
 
     return () => {
