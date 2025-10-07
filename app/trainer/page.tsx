@@ -875,19 +875,33 @@ function TrainerPageContent() {
 
       if (sessionId) {
         console.log('🛑 Ending session:', sessionId)
+        console.log('📊 Transcript to save:', transcript.length, 'lines')
+        console.log('📊 Transcript content:', transcript)
         
         // Save session with transcript
-        await fetch('/api/session', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: sessionId,
-            transcript: transcript,
-            duration_seconds: duration
-          }),
-        })
+        try {
+          const response = await fetch('/api/session', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: sessionId,
+              transcript: transcript,
+              duration_seconds: duration
+            }),
+          })
+          
+          if (response.ok) {
+            const result = await response.json()
+            console.log('✅ Session PATCH succeeded:', result)
+          } else {
+            const error = await response.text()
+            console.error('❌ Session PATCH failed:', response.status, error)
+          }
+        } catch (error) {
+          console.error('❌ PATCH request error:', error)
+        }
         
-        console.log('✅ Session saved, redirecting to results...')
+        console.log('🔄 Redirecting to results...')
         
         // Redirect to results page
         router.push(`/trainer/results/${sessionId}`)
