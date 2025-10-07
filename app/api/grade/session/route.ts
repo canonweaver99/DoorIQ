@@ -6,12 +6,21 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
+// Check if API key is configured
+if (!process.env.OPENAI_API_KEY) {
+  console.error('❌ OPENAI_API_KEY not configured')
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { sessionId } = await request.json()
     
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
     }
 
     console.log('🎯 Starting grading for session:', sessionId)
@@ -135,7 +144,9 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ OpenAI grading complete:', {
       lines_rated: gradingResult.line_ratings?.length || 0,
-      overall_score: gradingResult.scores?.overall || 0
+      overall_score: gradingResult.scores?.overall || 0,
+      all_scores: gradingResult.scores,
+      raw_response: completion.choices[0].message.content?.substring(0, 200)
     })
 
     // Start a transaction to update both tables

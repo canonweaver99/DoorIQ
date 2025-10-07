@@ -86,6 +86,7 @@ export default function AnalyticsPage() {
   }
 
   const triggerGrading = async () => {
+    console.log('🎯 Triggering grading for session:', sessionId)
     setGrading(true)
     try {
       const response = await fetch('/api/grade/session', {
@@ -94,9 +95,15 @@ export default function AnalyticsPage() {
         body: JSON.stringify({ sessionId })
       })
       
+      console.log('📊 Grading response status:', response.status)
+      const result = await response.json()
+      console.log('📊 Grading result:', result)
+      
       if (response.ok) {
         // Refresh session data to get grading results
         await fetchSession()
+      } else {
+        console.error('❌ Grading failed:', result)
       }
     } catch (error) {
       console.error('Error grading session:', error)
