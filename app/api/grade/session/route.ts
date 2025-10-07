@@ -65,8 +65,16 @@ export async function POST(request: NextRequest) {
     // Format transcript for OpenAI
     const formattedTranscript = session.full_transcript
       .map((line: any, index: number) => {
-        const speaker = line.speaker === 'rep' || line.speaker === 'user' ? 'Sales Rep' : 'Homeowner'
-        return `[${index}] ${speaker}: ${line.text}`
+        // Normalize speaker names
+        let speaker = 'Homeowner'
+        if (line.speaker === 'rep' || line.speaker === 'user') {
+          speaker = 'Sales Rep'
+        } else if (line.speaker === 'homeowner' || line.speaker === 'agent' || line.speaker === 'ai') {
+          speaker = 'Homeowner'
+        }
+        // Get text from either text or message field
+        const text = line.text || line.message || ''
+        return `[${index}] ${speaker}: ${text}`
       })
       .join('\n')
 

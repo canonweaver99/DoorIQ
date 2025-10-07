@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { User, Bot, Lightbulb } from 'lucide-react'
 
 interface TranscriptLine {
-  speaker: 'rep' | 'homeowner' | 'system' | 'user' | 'agent'
-  text: string
-  timestamp?: number
+  speaker: 'rep' | 'homeowner' | 'system' | 'user' | 'agent' | 'ai'
+  text?: string
+  message?: string  // Support both text and message fields
+  timestamp?: number | string
+  id?: string
 }
 
 interface LineRating {
@@ -34,6 +36,11 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
     if (speaker !== 'rep' && speaker !== 'user') return null
     
     return ratingsMap.get(lineIndex) || null
+  }
+
+  // Get the text content from either text or message field
+  const getLineText = (line: TranscriptLine): string => {
+    return line.text || line.message || ''
   }
 
   const getEffectivenessColor = (effectiveness: string | undefined) => {
@@ -74,7 +81,7 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
 
   const getSpeakerLabel = (speaker: string) => {
     if (speaker === 'rep' || speaker === 'user') return 'Sales Rep'
-    if (speaker === 'homeowner' || speaker === 'agent') return 'Homeowner'
+    if (speaker === 'homeowner' || speaker === 'agent' || speaker === 'ai') return 'Homeowner'
     return 'System'
   }
 
@@ -136,7 +143,7 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
               </div>
 
               {/* Line Text */}
-              <p className="text-white/90 leading-relaxed">{line.text}</p>
+              <p className="text-white/90 leading-relaxed">{getLineText(line)}</p>
 
               {/* Alternative Suggestions (on hover) */}
               {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && isHovered && (
