@@ -15,7 +15,7 @@ import AICoach from '@/components/analytics/AICoach'
 import AdvancedMetrics from '@/components/analytics/AdvancedMetrics'
 
 interface SessionData {
-  id: number
+  id: string
   started_at: string
   ended_at: string
   duration_seconds: number
@@ -24,11 +24,11 @@ interface SessionData {
   discovery_score: number
   objection_handling_score: number
   closing_score: number
+  full_transcript: any[]
   transcript: any[]
-  feedback_strengths: string[]
-  feedback_improvements: string[]
+  what_worked?: string[]
+  what_failed?: string[]
   virtual_earnings: number
-  graded_at: string
   analytics?: any
 }
 
@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const run = async () => {
       if (!session?.id) return
-      const transcriptArr = session.transcript || []
+      const transcriptArr = session.full_transcript || session.transcript || []
       const hasTranscript = Array.isArray(transcriptArr) && transcriptArr.length > 0
       const hasScore = session.overall_score && session.overall_score > 0
       const hasAIFeedback = Boolean(session.analytics?.feedback)
@@ -100,9 +100,9 @@ export default function AnalyticsPage() {
         ? params.sessionId[0]
         : params.sessionId
 
-      console.log('📊 Fetching training session:', sessionId)
+      console.log('📊 SIMPLE: Fetching session:', sessionId)
 
-      const resp = await fetch(`/api/training-sessions/${sessionId}`)
+      const resp = await fetch(`/api/simple-sessions/${sessionId}`)
       if (!resp.ok) {
         throw new Error(`Training session not found: ${resp.status}`)
       }
@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
         {activeTab === 'transcript' ? (
           <div id="transcript-section">
             <TranscriptView 
-              transcript={session.transcript || []}
+              transcript={session.full_transcript || session.transcript || []}
               analytics={session.analytics}
               className="mb-6"
             />
@@ -287,14 +287,14 @@ export default function AnalyticsPage() {
               </h2>
               
               {/* Strengths */}
-              {session.feedback_strengths && session.feedback_strengths.length > 0 && (
+              {session.what_worked && session.what_worked.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-green-400 mb-3 flex items-center">
                     <Target className="w-5 h-5 mr-2" />
                     What Worked Well
                   </h3>
                   <ul className="space-y-2">
-                    {session.feedback_strengths.map((item: string, idx: number) => (
+                    {session.what_worked.map((item: string, idx: number) => (
                       <motion.li
                         key={idx}
                         initial={{ opacity: 0, x: -20 }}
@@ -311,14 +311,14 @@ export default function AnalyticsPage() {
               )}
               
               {/* Areas for Improvement */}
-              {session.feedback_improvements && session.feedback_improvements.length > 0 && (
+              {session.what_failed && session.what_failed.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-yellow-400 mb-3 flex items-center">
                     <Target className="w-5 h-5 mr-2" />
                     Areas for Improvement
                   </h3>
                   <ul className="space-y-2">
-                    {session.feedback_improvements.map((item: string, idx: number) => (
+                    {session.what_failed.map((item: string, idx: number) => (
                       <motion.li
                         key={idx}
                         initial={{ opacity: 0, x: -20 }}
@@ -336,8 +336,8 @@ export default function AnalyticsPage() {
               
               
               {/* Show message if no feedback yet */}
-              {(!session.feedback_strengths || session.feedback_strengths.length === 0) && 
-               (!session.feedback_improvements || session.feedback_improvements.length === 0) && (
+              {(!session.what_worked || session.what_worked.length === 0) && 
+               (!session.what_failed || session.what_failed.length === 0) && (
                 <div className="text-center py-8 text-slate-400">
                   <p>No AI feedback available yet. Complete the grading process to see detailed analysis.</p>
                 </div>
