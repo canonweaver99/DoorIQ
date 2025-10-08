@@ -7,12 +7,7 @@ import Link from 'next/link'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
 
-type Session = Database['public']['Tables']['live_sessions']['Row'] & {
-  users: {
-    full_name: string
-    email: string
-  }
-}
+type Session = Database['public']['Tables']['live_sessions']['Row']
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([])
@@ -28,44 +23,47 @@ export default function SessionsPage() {
     console.log('📊 Fetching sessions...')
     
     try {
-      // Use new training-sessions API
-      const response = await fetch('/api/training-sessions')
-      if (!response.ok) {
-        if (response.status === 401) {
-          setIsAuthenticated(false)
-          setLoading(false)
-          return
-        }
-        throw new Error('Failed to fetch sessions')
-      }
-      
-      const data = await response.json()
-      setIsAuthenticated(true)
-      
-      // Apply client-side filtering
-      let filteredSessions = data.sessions || []
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
-      // Apply date filter client-side
+      if (!user) {
+        console.warn('⚠️ No authenticated user found')
+        setIsAuthenticated(false)
+        setLoading(false)
+        return
+      }
+
+      setIsAuthenticated(true)
+
+      let query = supabase
+        .from('live_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
       if (filter === 'week') {
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
-        filteredSessions = filteredSessions.filter((s: any) => 
-          new Date(s.created_at) >= weekAgo
-        )
+        query = query.gte('created_at', weekAgo.toISOString())
         console.log('📅 Filtering: Past week')
       } else if (filter === 'month') {
         const monthAgo = new Date()
         monthAgo.setMonth(monthAgo.getMonth() - 1)
-        filteredSessions = filteredSessions.filter((s: any) => 
-          new Date(s.created_at) >= monthAgo
-        )
+        query = query.gte('created_at', monthAgo.toISOString())
         console.log('📅 Filtering: Past month')
       } else {
         console.log('📅 Filtering: All time')
       }
 
-      console.log('✅ Loaded', filteredSessions.length, 'sessions')
-      setSessions(filteredSessions)
+      const { data, error, status } = await query
+
+      if (error && status !== 406) {
+        throw error
+      }
+
+      const rows = (data ?? []) as Session[]
+      console.log('✅ Loaded', rows.length, 'sessions')
+      setSessions(rows)
       setLoading(false)
     } catch (error) {
       console.error('❌ Error fetching sessions:', error)

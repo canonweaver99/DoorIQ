@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import ScoresView from '@/components/analytics/ScoresView'
+import TranscriptView from '@/components/analytics/TranscriptView'
 
 interface SessionData {
   id: string
@@ -196,7 +197,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505]">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
