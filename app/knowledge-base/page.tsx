@@ -163,11 +163,11 @@ export default function KnowledgeBasePage() {
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4 drop-shadow-lg">
             Knowledge Base
           </h1>
-          <p className="text-xl text-slate-400 drop-shadow-md">
+          <p className="text-xl text-slate-400 drop-shadow-md max-w-3xl mx-auto">
             Upload training materials and documentation to improve AI grading accuracy
           </p>
         </div>
@@ -176,7 +176,9 @@ export default function KnowledgeBasePage() {
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+              <Search className="w-5 h-5 text-slate-300" />
+            </div>
             <input
               type="text"
               placeholder="Search files..."
@@ -215,13 +217,17 @@ export default function KnowledgeBasePage() {
 
         {/* File Grid */}
         {filteredItems.length === 0 ? (
-          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-12 text-center border border-slate-700 shadow-xl">
-            <Upload className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <p className="text-xl text-white/70 mb-2">No files uploaded yet</p>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-slate-900/80 backdrop-blur-xl rounded-2xl p-12 text-center border border-slate-700 shadow-xl hover:border-purple-500/60 hover:shadow-purple-500/20 transition-all"
+          >
+            <Upload className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+            <p className="text-xl text-white/80 mb-2">No files uploaded yet</p>
             <p className="text-slate-400">
-              Upload training materials, scripts, or documentation to enhance AI grading
+              Tap anywhere here or use the upload button to add training materials.
             </p>
-          </div>
+          </button>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
