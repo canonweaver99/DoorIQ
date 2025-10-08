@@ -37,24 +37,44 @@ export function LoginClient() {
   }
 
   const handleGoogleSignIn = async () => {
+    setLoading(true)
+    setError(null)
+    
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
+      
+      // Get the current origin or fallback to production URL
+      const origin = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : process.env.NEXT_PUBLIC_SITE_URL || 'https://door-iq.vercel.app'
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Google OAuth error:', error)
+        throw error
+      }
+      
+      console.log('Google OAuth initiated:', data)
     } catch (error: any) {
-      setError(error.message)
+      console.error('handleGoogleSignIn error:', error)
+      setError(error.message || 'Failed to initiate Google sign-in')
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-900">
-      <div className="w-full max-w-sm bg-gradient-to-b from-slate-800/70 to-slate-900 rounded-3xl shadow-2xl p-8 flex flex-col items-center border border-slate-700 text-slate-100">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+      <div className="w-full max-w-sm bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 flex flex-col items-center border border-slate-700 text-slate-100">
         <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-900 mb-6 shadow-lg border border-slate-700">
           <LogIn className="w-7 h-7 text-slate-100" />
         </div>

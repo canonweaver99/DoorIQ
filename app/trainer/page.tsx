@@ -1058,10 +1058,10 @@ function TrainerPageContent() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col items-center justify-start pt-12">
+        <div className="flex-1 flex flex-col items-center justify-start pt-6">
           {/* Start Button - neutral, hidden once starting */}
           {!sessionActive && !loading && (
-            <div className="mb-8">
+            <div className="mb-4">
               <button
                 onClick={startSession}
                 disabled={loading || !selectedAgent}
