@@ -1087,7 +1087,7 @@ function TrainerPageContent() {
                 onClick={sessionActive ? endSession : startSession}
                 disabled={loading}
                 aria-label={sessionActive ? "Stop conversation" : "Start conversation"}
-                className="relative"
+                className={`relative ${sessionActive ? 'active' : ''}`}
               >
                 {/* Concentric animated circles */}
                 <div id="orb-circle-0" className="orb-circle"></div>
@@ -1148,31 +1148,16 @@ function TrainerPageContent() {
               #orb-circle-0 {
                 border-color: ${orbColors.idle.start}60;
                 animation: rotate-scale-0 5s ease-in-out infinite;
-                box-shadow: 
-                  0 0 60px ${orbColors.idle.shadow},
-                  inset 0 0 40px ${orbColors.idle.start}10;
               }
               
               #orb-circle-1 {
                 border-color: ${orbColors.idle.mid}50;
                 animation: rotate-scale-1 5s ease-in-out infinite;
-                box-shadow: inset 0 0 30px ${orbColors.idle.mid}10;
               }
               
               #orb-circle-2 {
                 border-color: ${orbColors.idle.end}30;
                 animation: rotate-scale-2 5s ease-in-out infinite;
-                box-shadow: inset 0 0 20px ${orbColors.idle.end}10;
-              }
-              
-              /* Inner glow effect */
-              .orb-circle::before {
-                content: '';
-                position: absolute;
-                inset: 0;
-                border-radius: 9999px;
-                background: radial-gradient(ellipse at center, ${orbColors.idle.start}10 0%, transparent 70%);
-                mix-blend-mode: screen;
               }
               
               /* Active state - brighter, faster animation */
@@ -1183,27 +1168,16 @@ function TrainerPageContent() {
               #conversation-orb.active #orb-circle-0 {
                 border-color: ${orbColors.active.start}80;
                 animation: rotate-scale-0-active 3s ease-in-out infinite;
-                box-shadow: 
-                  0 0 80px ${orbColors.active.shadow},
-                  0 0 0 8px ${orbColors.active.ring1},
-                  0 0 0 16px ${orbColors.active.ring2},
-                  inset 0 0 60px ${orbColors.active.start}20;
               }
               
               #conversation-orb.active #orb-circle-1 {
                 border-color: ${orbColors.active.mid}70;
                 animation: rotate-scale-1-active 3s ease-in-out infinite;
-                box-shadow: inset 0 0 40px ${orbColors.active.mid}20;
               }
               
               #conversation-orb.active #orb-circle-2 {
                 border-color: ${orbColors.active.end}50;
                 animation: rotate-scale-2-active 3s ease-in-out infinite;
-                box-shadow: inset 0 0 30px ${orbColors.active.end}20;
-              }
-              
-              #conversation-orb.active .orb-circle::before {
-                background: radial-gradient(ellipse at center, ${orbColors.active.start}20 0%, transparent 70%);
               }
               
               /* Rotation and scale animations - idle state */
