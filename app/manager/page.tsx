@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, BookOpen, Database, MessageSquare, BarChart3, Settings, Home, UserCog } from 'lucide-react'
@@ -24,7 +24,7 @@ const tabs = [
   { id: 'settings' as Tab, name: 'Settings', icon: Settings },
 ]
 
-export default function ManagerPage() {
+function ManagerPageContent() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
 
@@ -145,5 +145,17 @@ export default function ManagerPage() {
         </AnimatePresence>
       </div>
     </div>
+  )
+}
+
+export default function ManagerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    }>
+      <ManagerPageContent />
+    </Suspense>
   )
 }
