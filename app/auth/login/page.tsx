@@ -90,6 +90,12 @@ export default function LoginPage() {
 
   return (
     <SignInPage
+      title={
+        <span className="font-light text-white tracking-tight">
+          Welcome to <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span>
+        </span>
+      }
+      description="Access your training sessions, compete on leaderboards, and master door-to-door sales"
       heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=2160&q=80"
       testimonials={testimonials}
       onSignIn={handleSignIn}

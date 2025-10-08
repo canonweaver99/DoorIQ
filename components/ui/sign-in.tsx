@@ -56,12 +56,8 @@ const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial; del
 // --- MAIN COMPONENT ---
 
 export const SignInPage: React.FC<SignInPageProps> = ({
-  title = (
-    <span className="font-light text-white tracking-tight">
-      Welcome to <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span>
-    </span>
-  ),
-  description = "Access your training sessions, compete on leaderboards, and master door-to-door sales",
+  title,
+  description,
   heroImageSrc,
   testimonials = [],
   onSignIn,
