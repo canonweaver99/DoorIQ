@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SignUpPage, Testimonial } from '@/components/ui/sign-up'
+import { SignUpComponent, Testimonial } from '@/components/ui/sign-up'
 
 const testimonials: Testimonial[] = [
   {
@@ -90,7 +90,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <SignUpPage
+    <SignUpComponent
       title={
         <span className="font-light text-white tracking-tight">
           Join <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span>
@@ -107,3 +107,4 @@ export default function SignUpPage() {
     />
   )
 }
+

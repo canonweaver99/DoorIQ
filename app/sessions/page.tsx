@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
-import { SignInPage, Testimonial } from '@/components/ui/sign-in'
+import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
 
 type Session = Database['public']['Tables']['live_sessions']['Row']
 
@@ -224,7 +224,7 @@ export default function SessionsPage() {
   // Show beautiful sign-in page if not authenticated
   if (isAuthenticated === false) {
     return (
-      <SignInPage
+      <SignInComponent
         title={
           <span className="font-light text-white tracking-tight">
             Sign in to view your <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Sessions</span>
@@ -242,6 +242,7 @@ export default function SessionsPage() {
       />
     )
   }
+
 
   if (loading) {
     return (

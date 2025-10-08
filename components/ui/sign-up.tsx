@@ -54,7 +54,7 @@ const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial; del
 
 // --- MAIN COMPONENT ---
 
-export const SignUpPage: React.FC<SignUpPageProps> = ({
+export const SignUpComponent: React.FC<SignUpPageProps> = ({
   title,
   description,
   heroImageSrc,
