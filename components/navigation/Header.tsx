@@ -62,7 +62,8 @@ export default function Header() {
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
-  const userRole: UserRole | null = user?.role ?? authMeta?.role ?? null
+  const rawRole = (user?.role ?? authMeta?.role ?? null) as string | null
+  const userRole: UserRole | null = rawRole ? (rawRole.toLowerCase() as UserRole) : null
   const isSignedIn = Boolean(user || authMeta)
   const profileName = (user?.full_name || authMeta?.full_name || authMeta?.email || 'Sales Pro') as string
   const profileEmail = user?.email || authMeta?.email || 'team@dooriq.app'
