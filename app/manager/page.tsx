@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, BookOpen, Database, MessageSquare, BarChart3, Settings, Home, UserCog } from 'lucide-react'
 import TeamOverview from '@/components/manager/TeamOverview'
@@ -24,7 +25,16 @@ const tabs = [
 ]
 
 export default function ManagerPage() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+
+  // Set the active tab from URL parameter if provided
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as Tab | null
+    if (tabParam && tabs.some(tab => tab.id === tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [searchParams])
 
   const renderTabContent = () => {
     switch (activeTab) {

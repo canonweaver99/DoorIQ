@@ -209,13 +209,13 @@ export default function Header() {
         { name: 'Analytics', href: '/analytics', icon: BarChart3 },
         { name: 'AI Insights', href: '/insights', icon: PieChart },
         { name: 'Playbooks', href: '/playbooks', icon: NotebookPen, badge: 'New' },
-        { name: 'Add Knowledge Base', href: '/knowledge-base', icon: DatabaseIcon, managerOnly: true },
+        { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       ],
     },
     {
       title: 'Training',
       items: [
-        { name: 'Practice Hub', href: '/trainer', icon: Award },
+        { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
         { name: 'Session History', href: '/sessions', icon: ClipboardList },
         { name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 },
       ],
@@ -235,7 +235,7 @@ export default function Header() {
   ]
 
   const quickActions = [
-    { label: 'Start Training', href: '/trainer', icon: Mic },
+    { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
     { label: 'Review Sessions', href: '/sessions', icon: ClipboardList },
     { label: 'Invite Teammate', href: '/invite', icon: Users },
   ]
@@ -246,7 +246,7 @@ export default function Header() {
       { name: 'Analytics', href: '/analytics', icon: BarChart3 },
       { name: 'AI Insights', href: '/insights', icon: PieChart },
       { name: 'Playbooks', href: '/playbooks', icon: NotebookPen },
-      { name: 'Add Knowledge Base', href: '/knowledge-base', icon: DatabaseIcon, managerOnly: true },
+      { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
       { name: 'Documentation', href: '/documentation', icon: BookOpen },
       { name: 'Messages', href: '/messages', icon: MessageCircle },
