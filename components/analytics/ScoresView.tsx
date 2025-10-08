@@ -26,15 +26,15 @@ interface ScoresViewProps {
 
 export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, insightsByCategory = {}, grading = false }: ScoresViewProps) {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return '#a855f7' // purple
-    if (score >= 60) return '#ec4899' // pink
+    if (score >= 80) return '#10b981' // emerald
+    if (score >= 60) return '#3b82f6' // blue
     if (score >= 40) return '#f59e0b' // amber
     return '#ef4444' // red
   }
 
   const getScoreTextColor = (score: number) => {
-    if (score >= 80) return 'text-purple-400'
-    if (score >= 60) return 'text-pink-400'
+    if (score >= 80) return 'text-emerald-400'
+    if (score >= 60) return 'text-blue-400'
     if (score >= 40) return 'text-amber-400'
     return 'text-red-400'
   }
@@ -81,31 +81,18 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
   const strokeDashoffset = circumference - (overallScore / 100) * circumference
 
   const getMetricBorder = (score: number) => {
-    if (score >= 80) return 'border-purple-500/30'
-    if (score >= 60) return 'border-pink-500/30'
+    if (score >= 80) return 'border-emerald-500/30'
+    if (score >= 60) return 'border-blue-500/30'
     if (score >= 40) return 'border-amber-500/30'
     return 'border-red-500/30'
-  }
-
-  const getMetricGlow = (score: number) => {
-    if (score >= 80) return '0 10px 40px -25px rgba(168,85,247,0.4)'
-    if (score >= 60) return '0 10px 40px -25px rgba(236,72,153,0.4)'
-    if (score >= 40) return '0 10px 40px -25px rgba(245,158,11,0.3)'
-    return '0 10px 40px -25px rgba(239,68,68,0.3)'
   }
 
   return (
     <div className="flex flex-col gap-6">
       {/* Overall Score Section */}
-      <section className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl px-8 py-10 shadow-2xl">
+      <section className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl px-8 py-10 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center gap-10">
           <div className="relative flex items-center justify-center">
-            <div
-              className="absolute inset-0 blur-3xl opacity-40"
-              style={{
-                background: `radial-gradient(circle at center, ${getScoreColor(overallScore)}, transparent 70%)`
-              }}
-            />
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -134,9 +121,6 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                   initial={{ strokeDashoffset: circumference }}
                   animate={{ strokeDashoffset }}
                   transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-                  style={{
-                    filter: `drop-shadow(0 0 12px ${getScoreColor(overallScore)}88)`
-                  }}
                 />
               </svg>
               <div className="relative text-center space-y-2">
@@ -198,8 +182,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: idx * 0.1 }}
-              className={`bg-slate-900/80 backdrop-blur-xl border ${getMetricBorder(metric.score)} rounded-3xl overflow-hidden`}
-              style={{ boxShadow: getMetricGlow(metric.score) }}
+              className={`bg-slate-900/80 backdrop-blur-xl border ${getMetricBorder(metric.score)} rounded-3xl overflow-hidden shadow-lg`}
             >
               <div
                 className="h-1 w-full"
@@ -227,8 +210,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                     animate={{ width: `${metric.score}%` }}
                     transition={{ duration: 0.8, delay: idx * 0.1 + 0.3 }}
                     style={{ 
-                      background: `linear-gradient(90deg, ${getScoreColor(metric.score)}, ${getScoreColor(metric.score)}cc)`,
-                      boxShadow: `0 0 10px ${getScoreColor(metric.score)}66`
+                      background: `linear-gradient(90deg, ${getScoreColor(metric.score)}, ${getScoreColor(metric.score)}cc)`
                     }}
                   />
                 </div>
@@ -257,7 +239,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
 
       {/* Feedback Section */}
       {(feedback.strengths.length > 0 || feedback.improvements.length > 0) && (
-        <section className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl px-8 py-8 shadow-2xl">
+        <section className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl px-8 py-8 shadow-xl">
           <div className="flex items-center gap-3 mb-6">
             <Sparkles className="w-5 h-5 text-purple-400" />
             <div className="text-sm uppercase tracking-[0.25em] text-slate-500">
@@ -280,7 +262,6 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                 transition={{ duration: 0.4, delay: index * 0.05 }}
                 className="rounded-xl px-4 py-4 border border-emerald-500/20 bg-emerald-500/5"
                 style={{ 
-                  boxShadow: '0 8px 25px -15px rgba(16,185,129,0.3)',
                   borderLeft: '3px solid rgba(16,185,129,0.5)'
                 }}
               >
@@ -297,7 +278,6 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                 transition={{ duration: 0.4, delay: index * 0.05 }}
                 className="rounded-xl px-4 py-4 border border-rose-500/20 bg-rose-500/5"
                 style={{ 
-                  boxShadow: '0 8px 25px -15px rgba(239,68,68,0.3)',
                   borderLeft: '3px solid rgba(239,68,68,0.5)'
                 }}
               >
@@ -316,7 +296,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="rounded-3xl px-8 py-10 border border-purple-500/30 text-center space-y-5 shadow-2xl shadow-purple-500/10"
+          className="rounded-3xl px-8 py-10 border border-purple-500/30 text-center space-y-5 shadow-xl"
           style={{ 
             background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(236,72,153,0.12))',
             backdropFilter: 'blur(20px)'
@@ -345,8 +325,8 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
       {/* Response Quality Legend */}
       <div className="flex flex-wrap gap-2 items-center justify-center text-xs">
         <span className="uppercase tracking-[0.25em] text-slate-500 mr-2">Response Quality</span>
-        <span className="px-3 py-1.5 rounded-full text-white border border-purple-500/30" style={{ background: 'rgba(168,85,247,0.2)' }}>Excellent</span>
-        <span className="px-3 py-1.5 rounded-full text-white border border-pink-500/30" style={{ background: 'rgba(236,72,153,0.2)' }}>Good</span>
+        <span className="px-3 py-1.5 rounded-full text-white border border-emerald-500/30" style={{ background: 'rgba(16,185,129,0.2)' }}>Excellent</span>
+        <span className="px-3 py-1.5 rounded-full text-white border border-blue-500/30" style={{ background: 'rgba(59,130,246,0.2)' }}>Good</span>
         <span className="px-3 py-1.5 rounded-full text-white border border-amber-500/30" style={{ background: 'rgba(245,158,11,0.2)' }}>Average</span>
         <span className="px-3 py-1.5 rounded-full text-white border border-red-500/30" style={{ background: 'rgba(239,68,68,0.2)' }}>Needs Work</span>
       </div>

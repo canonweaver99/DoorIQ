@@ -157,8 +157,13 @@ export async function POST(request: NextRequest) {
     console.log('✅ OpenAI grading complete:', {
       lines_rated: gradingResult.line_ratings?.length || 0,
       scores: gradingResult.scores,
-      raw_response: completion.choices[0].message.content?.substring(0, 200)
+      sale_closed: gradingResult.sale_closed,
+      return_appointment: gradingResult.return_appointment,
+      virtual_earnings: gradingResult.virtual_earnings,
+      raw_response: completion.choices[0].message.content?.substring(0, 500)
     })
+    
+    console.log('📊 Full grading result:', JSON.stringify(gradingResult, null, 2))
 
     // Start a transaction to update both tables
     const now = new Date().toISOString()
@@ -169,6 +174,8 @@ export async function POST(request: NextRequest) {
     const objectionScore = typeof gradingResult.scores?.objection_handling === 'number' ? gradingResult.scores.objection_handling : null
     const closeScore = typeof gradingResult.scores?.closing === 'number' ? gradingResult.scores.closing : null
     const returnAppointment = typeof gradingResult.return_appointment === 'boolean' ? gradingResult.return_appointment : false
+
+    console.log('🔍 Extracted scores:', { rapportScore, discoveryScore, objectionScore, closeScore })
 
     let saleClosed = typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : false
     if (returnAppointment && !saleClosed) {
@@ -182,6 +189,8 @@ export async function POST(request: NextRequest) {
     if (!saleClosed) {
       virtualEarnings = 0
     }
+
+    console.log('💰 Final values:', { saleClosed, returnAppointment, virtualEarnings })
 
     const calculatedOverall = (() => {
       if (typeof gradingResult.scores?.overall === 'number') {

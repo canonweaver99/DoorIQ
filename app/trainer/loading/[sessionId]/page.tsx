@@ -130,7 +130,7 @@ export default function LoadingPage() {
             transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             className="inline-block mb-8"
           >
-            <Loader2 className="w-16 h-16 text-purple-500" style={{ filter: 'drop-shadow(0 0 12px rgba(168,85,247,0.6))' }} />
+            <Loader2 className="w-16 h-16 text-purple-500" />
           </motion.div>
 
           {/* Status */}
@@ -153,11 +153,11 @@ export default function LoadingPage() {
                 <div
                   className={`h-2 w-2 rounded-full ${
                     gradingStatus === 'completed'
-                      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+                      ? 'bg-emerald-400'
                       : gradingStatus === 'in-progress'
-                      ? 'bg-purple-400 animate-pulse shadow-[0_0_8px_rgba(168,85,247,0.6)]'
+                      ? 'bg-purple-400 animate-pulse'
                       : gradingStatus === 'error'
-                      ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]'
+                      ? 'bg-rose-400'
                       : 'bg-slate-600'
                   }`}
                 />

@@ -39,9 +39,9 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   const getEffectivenessColor = (effectiveness: string | undefined) => {
     switch (effectiveness) {
       case 'excellent':
-        return 'border-purple-500/40 bg-purple-500/8'
+        return 'border-emerald-500/40 bg-emerald-500/8'
       case 'good':
-        return 'border-pink-500/40 bg-pink-500/8'
+        return 'border-blue-500/40 bg-blue-500/8'
       case 'average':
         return 'border-amber-500/40 bg-amber-500/8'
       case 'poor':
@@ -54,9 +54,9 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   const getEffectivenessLabel = (effectiveness: string | undefined) => {
     switch (effectiveness) {
       case 'excellent':
-        return { label: 'Excellent', color: 'text-purple-300 bg-purple-500/15 border-purple-500/30' }
+        return { label: 'Excellent', color: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30' }
       case 'good':
-        return { label: 'Good', color: 'text-pink-300 bg-pink-500/15 border-pink-500/30' }
+        return { label: 'Good', color: 'text-blue-300 bg-blue-500/15 border-blue-500/30' }
       case 'average':
         return { label: 'Average', color: 'text-amber-300 bg-amber-500/15 border-amber-500/30' }
       case 'poor':
@@ -120,7 +120,7 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
                 </div>
 
                 {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && (
-                  <div className="mt-3 ml-4 p-4 rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-sm">
+                  <div className="mt-3 ml-4 p-4 rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-600/10 to-pink-600/10 backdrop-blur-sm">
                     <div className="flex items-center gap-2 mb-2 text-purple-200">
                       <Lightbulb className="w-4 h-4" />
                       <span className="text-sm font-medium">Suggested Alternative</span>
@@ -146,8 +146,8 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
       <div className="mt-8 p-5 bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-700">
         <h3 className="text-sm font-medium text-slate-300 mb-4 uppercase tracking-[0.15em]">Response Quality Legend</h3>
         <div className="flex flex-wrap gap-3 justify-center">
-          <span className="px-3 py-1.5 rounded-full text-xs text-white border border-purple-500/30" style={{ background: 'rgba(168,85,247,0.2)' }}>Excellent</span>
-          <span className="px-3 py-1.5 rounded-full text-xs text-white border border-pink-500/30" style={{ background: 'rgba(236,72,153,0.2)' }}>Good</span>
+          <span className="px-3 py-1.5 rounded-full text-xs text-white border border-emerald-500/30" style={{ background: 'rgba(16,185,129,0.2)' }}>Excellent</span>
+          <span className="px-3 py-1.5 rounded-full text-xs text-white border border-blue-500/30" style={{ background: 'rgba(59,130,246,0.2)' }}>Good</span>
           <span className="px-3 py-1.5 rounded-full text-xs text-white border border-amber-500/30" style={{ background: 'rgba(245,158,11,0.2)' }}>Average</span>
           <span className="px-3 py-1.5 rounded-full text-xs text-white border border-red-500/30" style={{ background: 'rgba(239,68,68,0.2)' }}>Needs Work</span>
         </div>
