@@ -87,6 +87,13 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
     return 'border-red-500/30'
   }
 
+  const getIconColor = (score: number) => {
+    if (score >= 80) return 'text-emerald-400'
+    if (score >= 60) return 'text-blue-400'
+    if (score >= 40) return 'text-amber-400'
+    return 'text-red-400'
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Overall Score Section */}
@@ -194,7 +201,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                      <Icon className="w-5 h-5 text-slate-400" />
+                      <Icon className={`w-5 h-5 ${getIconColor(metric.score)}`} />
                     </div>
                     <div>
                       <div className={`text-3xl font-semibold ${getScoreTextColor(metric.score)}`}>{metric.score}%</div>
@@ -265,7 +272,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                   borderLeft: '3px solid rgba(16,185,129,0.5)'
                 }}
               >
-                <div className="text-sm text-emerald-100 leading-relaxed">
+                <div className="text-base text-emerald-100 leading-relaxed">
                   {text}
                 </div>
               </motion.div>
@@ -281,7 +288,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                   borderLeft: '3px solid rgba(239,68,68,0.5)'
                 }}
               >
-                <div className="text-sm text-rose-100 leading-relaxed">
+                <div className="text-base text-rose-100 leading-relaxed">
                   {text}
                 </div>
               </motion.div>
