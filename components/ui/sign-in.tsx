@@ -79,21 +79,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6">
-            {/* Logo/Brand */}
-            <div className="animate-element animate-delay-100 flex items-center gap-2 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                <span className="text-white font-bold text-xl">D</span>
-              </div>
-              <span className="text-2xl font-bold text-white">DoorIQ</span>
-            </div>
-
-            <h1 className="animate-element animate-delay-200 text-4xl md:text-5xl font-semibold leading-tight">
+            <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
               {title}
             </h1>
-            <p className="animate-element animate-delay-300 text-slate-400 leading-relaxed">{description}</p>
+            <p className="animate-element animate-delay-200 text-slate-400 leading-relaxed">{description}</p>
 
             <form className="space-y-5" onSubmit={onSignIn}>
-              <div className="animate-element animate-delay-400">
+              <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Email Address</label>
                 <GlassInputWrapper>
                   <input
@@ -106,7 +98,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 </GlassInputWrapper>
               </div>
 
-              <div className="animate-element animate-delay-500">
+              <div className="animate-element animate-delay-400">
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Password</label>
                 <GlassInputWrapper>
                   <div className="relative">
@@ -133,7 +125,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 </GlassInputWrapper>
               </div>
 
-              <div className="animate-element animate-delay-600 flex items-center justify-between text-sm">
+              <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <input type="checkbox" name="rememberMe" className="custom-checkbox" />
                   <span className="text-slate-300 group-hover:text-white transition-colors">Keep me signed in</span>
@@ -156,13 +148,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-700 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-4 font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98]"
+                className="animate-element animate-delay-600 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-4 font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 
-            <div className="animate-element animate-delay-800 relative flex items-center justify-center">
+            <div className="animate-element animate-delay-700 relative flex items-center justify-center">
               <span className="w-full border-t border-white/10"></span>
               <span className="px-4 text-sm text-slate-400 bg-transparent absolute">Or continue with</span>
             </div>
@@ -170,13 +162,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             <button
               onClick={onGoogleSignIn}
               disabled={loading}
-              className="animate-element animate-delay-900 w-full flex items-center justify-center gap-3 border border-white/10 rounded-2xl py-4 hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
+              className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-white/10 rounded-2xl py-4 hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
             >
               <GoogleIcon />
               Continue with Google
             </button>
 
-            <p className="animate-element animate-delay-1000 text-center text-sm text-slate-400">
+            <p className="animate-element animate-delay-900 text-center text-sm text-slate-400">
               New to DoorIQ?{' '}
               <button
                 type="button"
