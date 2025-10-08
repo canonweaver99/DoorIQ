@@ -122,13 +122,6 @@ export default function Header() {
         authUser.app_metadata?.roles
       )
 
-      setAuthMeta({
-        id: authUser.id,
-        email: authUser.email,
-        full_name: authUser.user_metadata?.full_name,
-        role: metaRole,
-      })
-
       let { data: userData } = await supabase
         .from('users')
         .select('*')
@@ -147,9 +140,22 @@ export default function Header() {
         }
       }
 
+      console.log('🔍 Header - Auth User:', { id: authUser.id, email: authUser.email })
+      console.log('🔍 Header - Fetched User Data:', userData)
+
       if (userData) {
+        console.log('✅ Header - Setting user with role:', userData.role, 'earnings:', userData.virtual_earnings)
         setUser(userData)
         setAuthMeta(null)
+      } else {
+        console.log('⚠️ Header - No user data found, using auth metadata')
+        setAuthMeta({
+          id: authUser.id,
+          email: authUser.email,
+          full_name: authUser.user_metadata?.full_name,
+          role: metaRole,
+          virtual_earnings: null,
+        })
       }
     }
 
