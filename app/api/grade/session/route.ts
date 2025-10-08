@@ -164,22 +164,6 @@ export async function POST(request: NextRequest) {
     const discoveryScore = typeof gradingResult.scores?.discovery === 'number' ? gradingResult.scores.discovery : null
     const objectionScore = typeof gradingResult.scores?.objection_handling === 'number' ? gradingResult.scores.objection_handling : null
     const closeScore = typeof gradingResult.scores?.closing === 'number' ? gradingResult.scores.closing : null
-
-    const calculatedOverall = (() => {
-      if (typeof gradingResult.scores?.overall === 'number') {
-        return gradingResult.scores.overall
-      }
-      const scores = [rapportScore, discoveryScore, objectionScore, closeScore].filter((value) => typeof value === 'number') as number[]
-      if (scores.length === 0) {
-        return 0
-      }
-      return Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
-    })()
-
-    const rapportScore = typeof gradingResult.scores?.rapport === 'number' ? gradingResult.scores.rapport : null
-    const discoveryScore = typeof gradingResult.scores?.discovery === 'number' ? gradingResult.scores.discovery : null
-    const objectionScore = typeof gradingResult.scores?.objection_handling === 'number' ? gradingResult.scores.objection_handling : null
-    const closeScore = typeof gradingResult.scores?.closing === 'number' ? gradingResult.scores.closing : null
     const saleClosed = typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : false
     const virtualEarnings = saleClosed && typeof gradingResult.virtual_earnings === 'number'
       ? gradingResult.virtual_earnings
