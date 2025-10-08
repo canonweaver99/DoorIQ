@@ -138,36 +138,42 @@ export default function SessionsPage() {
   // Show sign-in prompt if not authenticated
   if (isAuthenticated === false) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900/90 backdrop-blur-xl rounded-2xl border border-slate-700 p-8 text-center shadow-2xl">
-          <div className="mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/50">
-              <AlertCircle className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">Sign In Required</h2>
-            <p className="text-slate-400">
-              You need to be signed in to view your training sessions
-            </p>
+      <div className="min-h-screen bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28] flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          {/* Header Section */}
+          <div className="text-center mb-8">
+            <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400 mb-2">ACCOUNT</p>
+            <h1 className="text-3xl font-semibold text-white mb-3">DoorIQ Control Center</h1>
           </div>
-          <div className="flex flex-col gap-3">
-            <Link
-              href="/auth/login"
-              className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/25"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="w-full px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-semibold rounded-lg transition-all"
-            >
-              Create Account
-            </Link>
-            <Link
-              href="/"
-              className="text-sm text-slate-400 hover:text-slate-300 mt-2"
-            >
-              ← Back to Home
-            </Link>
+
+          {/* Main Card */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.06] backdrop-blur-xl p-8 shadow-[0_30px_120px_rgba(109,40,217,0.35)]">
+            <p className="text-sm font-semibold text-white mb-3">Get Started with DoorIQ</p>
+            <p className="text-xs text-slate-300 leading-relaxed mb-6">Sign in to track your progress, compete on the leaderboard, and unlock all features.</p>
+            
+            <div className="space-y-2">
+              <Link
+                href="/auth/login"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Sign Up
+              </Link>
+            </div>
+
+            <div className="mt-6 text-center">
+              <Link
+                href="/"
+                className="text-xs text-slate-400 hover:text-slate-300 transition"
+              >
+                ← Back to Home
+              </Link>
+            </div>
           </div>
         </div>
       </div>
