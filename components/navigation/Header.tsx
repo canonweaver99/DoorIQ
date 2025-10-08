@@ -67,7 +67,7 @@ export default function Header() {
   const profileName = (user?.full_name || authMeta?.full_name || authMeta?.email || 'Sales Pro') as string
   const profileEmail = user?.email || authMeta?.email || 'team@dooriq.app'
   const profileInitial = profileName.charAt(0).toUpperCase()
-  const profileEarnings = user?.virtual_earnings
+  const profileEarnings = typeof user?.virtual_earnings === 'number' ? user!.virtual_earnings : 0
 
   useEffect(() => {
     setPortalReady(true)
@@ -313,7 +313,7 @@ export default function Header() {
             })}
 
             <div className="flex items-center gap-3">
-              {profileEarnings !== undefined && (
+              {isSignedIn && (
                 <div className="pl-2 border-l border-white/10">
                   <p className="text-xs text-slate-300 leading-4">{user?.full_name ?? profileName}</p>
                   <p className="text-[11px] text-purple-400 font-semibold">${profileEarnings.toFixed(2)} earned</p>

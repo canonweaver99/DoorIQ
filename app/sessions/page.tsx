@@ -96,12 +96,14 @@ export default function SessionsPage() {
     if (session.objection_handling_score && session.objection_handling_score < 70) {
       insights.push({ type: 'warning', text: 'Practice handling common objections more confidently' })
     }
-    if (session.close_effectiveness_score && session.close_effectiveness_score < 70) {
+    const closing = session.close_effectiveness_score ?? (session as any).close_score ?? null
+    if (closing && closing < 70) {
       insights.push({ type: 'warning', text: 'Focus on closing techniques and asking for the sale' })
     }
     
     // Check for high scores
-    if (session.safety_score && session.safety_score >= 80) {
+    const safety = session.safety_score ?? null
+    if (safety && safety >= 80) {
       insights.push({ type: 'success', text: 'Great job addressing safety concerns!' })
     }
     if (session.overall_score && session.overall_score >= 80) {
@@ -320,14 +322,14 @@ export default function SessionsPage() {
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-3">
                       <p className="text-xs text-slate-400 mb-1">Safety</p>
-                      <p className={`text-lg font-semibold ${getScoreColor(session.safety_score)}`}>
-                        {session.safety_score || '--'}%
+                      <p className={`text-lg font-semibold ${getScoreColor(session.safety_score ?? null)}`}>
+                        {(session.safety_score ?? '--') as any}%
                       </p>
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-3">
                       <p className="text-xs text-slate-400 mb-1">Closing</p>
-                      <p className={`text-lg font-semibold ${getScoreColor(session.close_effectiveness_score)}`}>
-                        {session.close_effectiveness_score || '--'}%
+                      <p className={`text-lg font-semibold ${getScoreColor((session.close_effectiveness_score ?? (session as any).close_score ?? null))}`}>
+                        {(session.close_effectiveness_score ?? (session as any).close_score ?? '--') as any}%
                       </p>
                     </div>
                   </div>

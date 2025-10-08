@@ -1,6 +1,6 @@
 'use client'
 
-import { Users, Target, Shield, HandshakeIcon, DollarSign, ChevronDown, Sparkles, Lightbulb, Loader2 } from 'lucide-react'
+import { Users, Target, Shield, HandshakeIcon, DollarSign, ChevronDown, Sparkles, Lightbulb, Loader2, Mic, MessageSquare, HelpCircle, Ear, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface ScoresViewProps {
@@ -13,6 +13,50 @@ interface ScoresViewProps {
     safety: number
     introduction: number
     listening: number
+    // New enhanced metrics
+    speaking_pace?: number
+    filler_words?: number
+    question_ratio?: number
+    active_listening?: number
+    assumptive_language?: number
+  }
+  enhancedMetrics?: {
+    speaking_pace?: {
+      avg_wpm: number
+      pace_variation: string
+      rushed_sections: number[]
+      clear_sections: number[]
+      score_breakdown: string
+    }
+    filler_words?: {
+      total_count: number
+      per_minute: number
+      common_fillers: Record<string, number>
+      clusters: Array<{ line_range: string; density: string }>
+      score_breakdown: string
+    }
+    question_ratio?: {
+      percentage: number
+      total_questions: number
+      open_ended: number
+      closed: number
+      by_category: Record<string, number>
+      score_breakdown: string
+    }
+    active_listening?: {
+      acknowledgments: number
+      empathy_statements: number
+      paraphrasing_count: number
+      building_on_responses: number
+      score_breakdown: string
+    }
+    assumptive_language?: {
+      assumptive_phrases: number
+      tentative_phrases: number
+      confidence_ratio: number
+      strong_closes: string[]
+      score_breakdown: string
+    }
   }
   feedback: {
     strengths: string[]
@@ -24,7 +68,7 @@ interface ScoresViewProps {
   grading?: boolean
 }
 
-export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, insightsByCategory = {}, grading = false }: ScoresViewProps) {
+export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, insightsByCategory = {}, grading = false, enhancedMetrics }: ScoresViewProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#10b981' // emerald
     if (score >= 60) return '#3b82f6' // blue
@@ -243,6 +287,147 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
           )
         })}
       </section>
+
+      {/* Enhanced Metrics Section */}
+      {(scores.speaking_pace !== undefined || scores.filler_words !== undefined || 
+        scores.question_ratio !== undefined || scores.active_listening !== undefined || 
+        scores.assumptive_language !== undefined) && (
+        <section className="bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-3xl px-8 py-8 shadow-xl">
+          <div className="flex items-center gap-3 mb-6">
+            <TrendingUp className="w-5 h-5 text-indigo-400" />
+            <div className="text-sm uppercase tracking-[0.25em] text-slate-500">
+              Enhanced Performance Metrics
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {scores.speaking_pace !== undefined && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Mic className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm text-slate-300">Speaking Pace</span>
+                  </div>
+                  <span className={`text-2xl font-semibold ${getScoreTextColor(scores.speaking_pace)}`}>
+                    {scores.speaking_pace}%
+                  </span>
+                </div>
+                {enhancedMetrics?.speaking_pace && (
+                  <div className="space-y-2 text-xs text-slate-400">
+                    <div>Avg: {enhancedMetrics.speaking_pace.avg_wpm} WPM</div>
+                    <div className="text-slate-500">{enhancedMetrics.speaking_pace.score_breakdown}</div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {scores.filler_words !== undefined && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm text-slate-300">Filler Words</span>
+                  </div>
+                  <span className={`text-2xl font-semibold ${getScoreTextColor(scores.filler_words)}`}>
+                    {scores.filler_words}%
+                  </span>
+                </div>
+                {enhancedMetrics?.filler_words && (
+                  <div className="space-y-2 text-xs text-slate-400">
+                    <div>{enhancedMetrics.filler_words.total_count} total ({enhancedMetrics.filler_words.per_minute}/min)</div>
+                    <div className="text-slate-500">{enhancedMetrics.filler_words.score_breakdown}</div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {scores.question_ratio !== undefined && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm text-slate-300">Question Ratio</span>
+                  </div>
+                  <span className={`text-2xl font-semibold ${getScoreTextColor(scores.question_ratio)}`}>
+                    {scores.question_ratio}%
+                  </span>
+                </div>
+                {enhancedMetrics?.question_ratio && (
+                  <div className="space-y-2 text-xs text-slate-400">
+                    <div>{enhancedMetrics.question_ratio.percentage}% questions</div>
+                    <div className="text-slate-500">{enhancedMetrics.question_ratio.score_breakdown}</div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {scores.active_listening !== undefined && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Ear className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm text-slate-300">Active Listening</span>
+                  </div>
+                  <span className={`text-2xl font-semibold ${getScoreTextColor(scores.active_listening)}`}>
+                    {scores.active_listening}%
+                  </span>
+                </div>
+                {enhancedMetrics?.active_listening && (
+                  <div className="space-y-2 text-xs text-slate-400">
+                    <div>{enhancedMetrics.active_listening.acknowledgments} acknowledgments</div>
+                    <div className="text-slate-500">{enhancedMetrics.active_listening.score_breakdown}</div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {scores.assumptive_language !== undefined && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm text-slate-300">Assumptive Language</span>
+                  </div>
+                  <span className={`text-2xl font-semibold ${getScoreTextColor(scores.assumptive_language)}`}>
+                    {scores.assumptive_language}%
+                  </span>
+                </div>
+                {enhancedMetrics?.assumptive_language && (
+                  <div className="space-y-2 text-xs text-slate-400">
+                    <div>Confidence: {(enhancedMetrics.assumptive_language.confidence_ratio * 100).toFixed(0)}%</div>
+                    <div className="text-slate-500">{enhancedMetrics.assumptive_language.score_breakdown}</div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Feedback Section */}
       {(feedback.strengths.length > 0 || feedback.improvements.length > 0) && (

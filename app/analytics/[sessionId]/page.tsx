@@ -21,6 +21,18 @@ interface SessionData {
   introduction_score: number | null
   listening_score: number | null
   virtual_earnings: number | null
+  // New enhanced metric scores
+  speaking_pace_score: number | null
+  filler_words_score: number | null
+  question_ratio_score: number | null
+  active_listening_score: number | null
+  assumptive_language_score: number | null
+  // New enhanced metric data
+  speaking_pace_data: any | null
+  filler_words_data: any | null
+  question_ratio_data: any | null
+  active_listening_data: any | null
+  assumptive_language_data: any | null
   analytics: {
     line_ratings?: Array<{
       line_number: number
@@ -36,6 +48,7 @@ interface SessionData {
       specific_tips: string[]
     }
     scores?: Record<string, number>
+    enhanced_metrics?: Record<string, any>
   } | null
   what_worked: string[] | null
   what_failed: string[] | null
@@ -182,7 +195,20 @@ export default function AnalyticsPage() {
           closing: session.close_score ?? 0,
           safety: session.analytics?.scores?.safety ?? 0,
           introduction: session.analytics?.scores?.introduction ?? 0,
-          listening: session.analytics?.scores?.listening ?? 0
+          listening: session.analytics?.scores?.listening ?? 0,
+          // Enhanced metrics from database or analytics
+          speaking_pace: session.speaking_pace_score ?? session.analytics?.scores?.speaking_pace,
+          filler_words: session.filler_words_score ?? session.analytics?.scores?.filler_words,
+          question_ratio: session.question_ratio_score ?? session.analytics?.scores?.question_ratio,
+          active_listening: session.active_listening_score ?? session.analytics?.scores?.active_listening,
+          assumptive_language: session.assumptive_language_score ?? session.analytics?.scores?.assumptive_language
+        }}
+        enhancedMetrics={session.analytics?.enhanced_metrics || {
+          speaking_pace: session.speaking_pace_data,
+          filler_words: session.filler_words_data,
+          question_ratio: session.question_ratio_data,
+          active_listening: session.active_listening_data,
+          assumptive_language: session.assumptive_language_data
         }}
         feedback={session.analytics?.feedback || {
           strengths: session.what_worked || [],
