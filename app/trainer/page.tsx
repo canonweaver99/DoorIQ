@@ -930,8 +930,8 @@ function TrainerPageContent() {
         console.log('🔄 Redirecting to analytics page...')
         
         // Redirect to the loading screen which will handle grading polling
+        // Keep loading=true to prevent UI flash during navigation
         router.push(`/trainer/loading/${sessionId}`)
-        setLoading(false)
       } else {
         console.warn('⚠️ No session ID')
         router.push('/trainer')
