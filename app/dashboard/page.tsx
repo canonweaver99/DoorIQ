@@ -1,15 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, Target, Award, Users, Zap, Calendar, Clock } from 'lucide-react'
-import MetricCard from '@/components/dashboard/MetricCard'
-import PerformanceChart from '@/components/dashboard/PerformanceChart'
-import InsightsPanel from '@/components/dashboard/InsightsPanel'
-import SessionsTable from '@/components/dashboard/SessionsTable'
-import PlaybookSection from '@/components/dashboard/PlaybookSection'
-import LeaderboardWidget from '@/components/dashboard/LeaderboardWidget'
-import UpcomingChallenges from '@/components/dashboard/UpcomingChallenges'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Zap, Calendar, Clock } from 'lucide-react'
+import TabNavigation from '@/components/dashboard/TabNavigation'
+import OverviewTab from '@/components/dashboard/tabs/OverviewTab'
+import PerformanceTab from '@/components/dashboard/tabs/PerformanceTab'
+import LearningTab from '@/components/dashboard/tabs/LearningTab'
+import TeamTab from '@/components/dashboard/tabs/TeamTab'
 
 // Mock data
 const mockData = {
@@ -123,11 +121,32 @@ const mockData = {
 
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [activeTab, setActiveTab] = useState('overview')
+
+  // Load last viewed tab from localStorage
+  useEffect(() => {
+    const savedTab = localStorage.getItem('dashboardActiveTab')
+    if (savedTab) {
+      setActiveTab(savedTab)
+    }
+  }, [])
+
+  // Save active tab to localStorage
+  useEffect(() => {
+    localStorage.setItem('dashboardActiveTab', activeTab)
+  }, [activeTab])
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000)
     return () => clearInterval(timer)
   }, [])
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: Home },
+    { id: 'performance', label: 'Performance', icon: TrendingUp },
+    { id: 'learning', label: 'Learning', icon: BookOpen },
+    { id: 'team', label: 'Team', icon: UsersIcon },
+  ]
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -145,7 +164,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6"
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -190,66 +209,46 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Key Metrics Cards */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-        >
-          <MetricCard
-            title="Practice Sessions Today"
-            value={mockData.metrics.sessionsToday.value}
-            subtitle="sessions completed"
-            trend={mockData.metrics.sessionsToday.trend}
-            trendUp={mockData.metrics.sessionsToday.trendUp}
-            icon={Target}
-            delay={0}
-          />
-          <MetricCard
-            title="Average Score"
-            value={`${mockData.metrics.avgScore.value}%`}
-            subtitle="this week"
-            trend={mockData.metrics.avgScore.trend}
-            trendUp={mockData.metrics.avgScore.trendUp}
-            icon={TrendingUp}
-            delay={0.1}
-          />
-          <MetricCard
-            title="Skills Mastered"
-            value={mockData.metrics.skillsMastered.value}
-            subtitle={`of ${mockData.metrics.skillsMastered.total} total`}
-            progress={mockData.metrics.skillsMastered.percentage}
-            icon={Award}
-            delay={0.2}
-          />
-          <MetricCard
-            title="Team Ranking"
-            value={`#${mockData.metrics.teamRanking.value}`}
-            subtitle={`of ${mockData.metrics.teamRanking.total} members`}
-            trend={mockData.metrics.teamRanking.trend}
-            trendUp={mockData.metrics.teamRanking.trendUp}
-            icon={Users}
-            delay={0.3}
-          />
-        </motion.div>
+        {/* Tab Navigation */}
+        <TabNavigation tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            <InsightsPanel insights={mockData.insights} />
-            <PerformanceChart data={mockData.performanceData} />
-            <SessionsTable sessions={mockData.recentSessions} />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            <PlaybookSection />
-            <LeaderboardWidget leaderboard={mockData.leaderboard} />
-            <UpcomingChallenges />
-          </div>
-        </div>
+        {/* Tab Content with Smooth Transitions */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <OverviewTab
+              key="overview"
+              metrics={mockData.metrics}
+              recentSessions={mockData.recentSessions}
+              insights={mockData.insights}
+            />
+          )}
+          {activeTab === 'performance' && (
+            <PerformanceTab
+              key="performance"
+              performanceData={mockData.performanceData}
+              insights={mockData.insights}
+              sessions={mockData.recentSessions}
+            />
+          )}
+          {activeTab === 'learning' && (
+            <LearningTab
+              key="learning"
+              skillsMastered={mockData.metrics.skillsMastered}
+            />
+          )}
+          {activeTab === 'team' && (
+            <TeamTab
+              key="team"
+              leaderboard={mockData.leaderboard}
+              userRank={mockData.user.rank}
+              teamStats={{
+                teamSize: mockData.metrics.teamRanking.total,
+                avgTeamScore: 75,
+                yourScore: mockData.metrics.avgScore.value,
+              }}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
