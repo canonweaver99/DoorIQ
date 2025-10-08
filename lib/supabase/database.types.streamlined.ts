@@ -41,6 +41,7 @@ export interface StreamlinedDatabase {
           // Results
           virtual_earnings: number | null
           sale_closed: boolean | null
+          return_appointment: boolean | null
           
           // Feedback
           what_worked: string[] | null

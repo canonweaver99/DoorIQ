@@ -48,16 +48,26 @@ export default function AnalyticsPage() {
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [grading, setGrading] = useState(false)
+  const [activeView, setActiveView] = useState<'scores' | 'transcript'>('scores')
 
   const insightsByCategory = useMemo(() => {
     if (!session?.analytics?.line_ratings || !session.full_transcript) return {}
+
+    const normalizeCategory = (value?: string) => {
+      const slug = (value || '').toLowerCase()
+      if (slug.includes('rapport')) return 'rapport'
+      if (slug.includes('discovery') || slug.includes('needs')) return 'discovery'
+      if (slug.includes('objection')) return 'objection_handling'
+      if (slug.includes('close')) return 'closing'
+      return slug.replace(/[^a-z0-9]+/g, '_') || 'general'
+    }
 
     const categoryMap: Record<string, Array<{ quote: string; impact: string }>> = {}
 
     session.analytics.line_ratings.forEach((rating) => {
       const transcriptLine = session.full_transcript?.[rating.line_number]
       const quote = transcriptLine?.text || transcriptLine?.message
-      const category = rating.category || 'general'
+      const category = normalizeCategory(rating.category)
 
       if (!quote) return
 
@@ -129,10 +139,10 @@ export default function AnalyticsPage() {
     }
   }
 
-  const renderContent = () => {
+  const renderBody = () => {
     if (loading) {
       return (
-        <div className="flex flex-col items-center justify-center gap-4 py-32">
+        <div className="flex flex-col items-center justify-center gap-4 py-36">
           <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
           <p className="text-gray-500">Loading session data...</p>
         </div>
@@ -141,11 +151,22 @@ export default function AnalyticsPage() {
 
     if (!session) {
       return (
-        <div className="bg-[#101010] border border-gray-800 rounded-2xl p-10 text-center">
+        <div className="bg-[#101010] border border-gray-800 rounded-3xl p-12 text-center">
           <p className="text-gray-400 mb-4">Session not found</p>
           <Link href="/sessions" className="text-white hover:text-gray-300 font-medium">
             Back to Sessions
           </Link>
+        </div>
+      )
+    }
+
+    if (activeView === 'transcript') {
+      return (
+        <div className="bg-[#0b0b0b] border border-gray-800 rounded-3xl">
+          <TranscriptView
+            transcript={session.full_transcript || []}
+            lineRatings={session.analytics?.line_ratings || []}
+          />
         </div>
       )
     }
@@ -176,9 +197,9 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-[#050505]">
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-start justify-between gap-6 mb-10">
-          <div className="space-y-3">
+      <div className="max-w-5xl mx-auto px-6 py-12 space-y-10">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
             <Link
               href="/sessions"
               className="inline-flex items-center text-gray-500 hover:text-gray-300 text-sm font-medium transition-colors"
@@ -187,20 +208,40 @@ export default function AnalyticsPage() {
               Back to Sessions
             </Link>
             <h1 className="text-3xl font-semibold text-white">Session Analysis</h1>
-            <p className="text-gray-500 text-sm">
-              {session?.agent_name || 'Training Session'}
-            </p>
+            {session && (
+              <p className="text-gray-500 text-sm">
+                {session.agent_name || 'Training Session'}
+              </p>
+            )}
           </div>
 
           {grading && (
-            <div className="flex items-center gap-3 bg-[#111] border border-gray-800 rounded-full px-5 py-2 text-gray-300">
+            <div className="inline-flex items-center gap-3 bg-[#111111] border border-gray-800 rounded-full px-5 py-2 text-gray-300">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm">Analyzing conversation...</span>
             </div>
           )}
         </div>
 
-        {renderContent()}
+        {!loading && session && (
+          <div className="inline-flex items-center rounded-full bg-white/5 border border-white/10 p-1 text-sm text-gray-300">
+            {(['scores', 'transcript'] as const).map((view) => (
+              <button
+                key={view}
+                onClick={() => setActiveView(view)}
+                className={`px-4 py-2 rounded-full transition-all ${
+                  activeView === view
+                    ? 'bg-gradient-to-r from-[#a855f7] to-[#ec4899] text-white shadow-[0_0_15px_rgba(168,85,247,0.35)]'
+                    : 'hover:text-white'
+                }`}
+              >
+                {view === 'scores' ? 'Scores & Feedback' : 'Transcript'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {renderBody()}
       </div>
     </div>
   )

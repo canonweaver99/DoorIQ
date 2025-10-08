@@ -43,9 +43,9 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   const getEffectivenessColor = (effectiveness: string | undefined) => {
     switch (effectiveness) {
       case 'excellent':
-        return 'border-green-500/30 bg-green-500/5'
+        return 'border-purple-500/40 bg-purple-500/10'
       case 'good':
-        return 'border-blue-500/30 bg-blue-500/5'
+        return 'border-pink-500/40 bg-pink-500/10'
       case 'average':
         return 'border-amber-500/30 bg-amber-500/5'
       case 'poor':
@@ -58,9 +58,9 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   const getEffectivenessLabel = (effectiveness: string | undefined) => {
     switch (effectiveness) {
       case 'excellent':
-        return { label: 'Excellent', color: 'text-green-500 bg-green-500/10' }
+        return { label: 'Excellent', color: 'text-purple-300 bg-purple-500/10' }
       case 'good':
-        return { label: 'Good', color: 'text-blue-500 bg-blue-500/10' }
+        return { label: 'Good', color: 'text-pink-300 bg-pink-500/10' }
       case 'average':
         return { label: 'Average', color: 'text-amber-500 bg-amber-500/10' }
       case 'poor':
@@ -85,8 +85,11 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   }
 
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-semibold text-white mb-8">Conversation Transcript</h2>
+    <div className="p-8 space-y-8">
+      <div className="space-y-2">
+        <div className="text-sm uppercase tracking-[0.3em] text-gray-500">Transcript</div>
+        <h2 className="text-2xl font-semibold text-white">Conversation Flow</h2>
+      </div>
 
       {/* Transcript Messages */}
       <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
@@ -101,7 +104,7 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
               <div className={`max-w-2xl ${isRep ? 'ml-12' : 'mr-12'}`}>
                 {/* Speaker and Rating */}
                 <div className={`flex items-center gap-2 mb-2 ${isRep ? 'justify-end' : 'justify-start'}`}>
-                  <span className="text-sm font-medium text-gray-400">
+                  <span className="text-xs uppercase tracking-[0.2em] text-gray-500">
                     {getSpeakerLabel(line.speaker)}
                   </span>
                   {effectivenessLabel && effectivenessLabel.label && (
@@ -112,13 +115,13 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
                 </div>
 
                 {/* Message Bubble */}
-                <div className={`
-                  rounded-lg p-4 
-                  ${isRep 
-                    ? `bg-white text-black ${rating ? effectivenessStyle : ''}` 
-                    : 'bg-[#2a2a2a] text-gray-100 border border-gray-800'
-                  }
-                `}>
+                <div
+                  className={`rounded-2xl p-4 border ${
+                    isRep
+                      ? `bg-gradient-to-r from-[#2a1042] to-[#3b0f2f] border-purple-500/20 shadow-[0_15px_30px_-20px_rgba(168,85,247,0.6)] text-slate-100`
+                      : 'bg-[#12121a] border-white/5 text-gray-200'
+                  } ${rating ? effectivenessStyle : ''}`}
+                >
                   <p className="leading-relaxed text-[15px]">
                     {getLineText(line)}
                   </p>
@@ -126,18 +129,18 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
 
                 {/* Suggestions */}
                 {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && (
-                  <div className="mt-3 ml-4 p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Lightbulb className="w-4 h-4 text-amber-500" />
-                      <span className="text-sm font-medium text-amber-500">Suggested Alternative</span>
+                  <div className="mt-3 ml-4 p-4 rounded-2xl border border-purple-500/20 bg-purple-500/10">
+                    <div className="flex items-center gap-2 mb-2 text-purple-200">
+                      <Lightbulb className="w-4 h-4" />
+                      <span className="text-sm font-medium">Suggested Alternative</span>
                     </div>
                     {rating.alternative_lines.map((alt, altIndex) => (
-                      <p key={altIndex} className="text-sm text-gray-300 italic mb-2">
+                      <p key={altIndex} className="text-sm text-gray-100 italic mb-2">
                         "{alt}"
                       </p>
                     ))}
                     {rating.improvement_notes && (
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-purple-200/80 mt-2">
                         {rating.improvement_notes}
                       </p>
                     )}
@@ -150,25 +153,13 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
       </div>
 
       {/* Legend */}
-      <div className="mt-8 p-4 bg-[#1a1a1a] rounded-lg border border-gray-800">
-        <h3 className="text-sm font-medium text-gray-300 mb-3">Response Quality Legend</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/40"></div>
-            <span className="text-xs text-gray-400">Excellent</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-500/20 border border-blue-500/40"></div>
-            <span className="text-xs text-gray-400">Good</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500/40"></div>
-            <span className="text-xs text-gray-400">Average</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-red-500/20 border border-red-500/40"></div>
-            <span className="text-xs text-gray-400">Needs Work</span>
-          </div>
+      <div className="mt-6 p-4 bg-[#10101a] rounded-2xl border border-white/10">
+        <h3 className="text-sm font-medium text-gray-300 mb-3 uppercase tracking-[0.2em]">Response Quality Legend</h3>
+        <div className="flex flex-wrap gap-3">
+          <span className="px-3 py-1 rounded-full text-xs text-white" style={{ background: 'rgba(168,85,247,0.25)' }}>Excellent</span>
+          <span className="px-3 py-1 rounded-full text-xs text-white" style={{ background: 'rgba(236,72,153,0.25)' }}>Good</span>
+          <span className="px-3 py-1 rounded-full text-xs text-white" style={{ background: 'rgba(250,204,21,0.25)' }}>Average</span>
+          <span className="px-3 py-1 rounded-full text-xs text-white" style={{ background: 'rgba(239,68,68,0.25)' }}>Needs Work</span>
         </div>
       </div>
     </div>

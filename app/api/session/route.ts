@@ -70,7 +70,10 @@ export async function PATCH(req: Request) {
         ended_at: now,
         duration_seconds: duration_seconds,
         full_transcript: formattedTranscript,
-        overall_score: null
+        overall_score: null,
+        sale_closed: false,
+        virtual_earnings: 0,
+        return_appointment: false
       })
       .eq('id', id)
       .select('id')

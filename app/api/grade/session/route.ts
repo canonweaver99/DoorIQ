@@ -105,6 +105,9 @@ export async function POST(request: NextRequest) {
           - Active listening
           
           Identify strengths, areas for improvement, and specific tips.
+          Determine whether a return appointment or inspection was scheduled (return_appointment true/false).
+          A sale counts as closed ONLY if the rep secured the deal at the door during this conversation. Scheduling a follow-up or inspection without payment is NOT a closed sale.
+          If a sale is not closed, virtual_earnings must be 0 and sale_closed must be false.
           ${knowledgeContext}
           
           Return a JSON object with this structure:
@@ -135,7 +138,8 @@ export async function POST(request: NextRequest) {
               "specific_tips": ["When they mention price, pivot to value instead of defending"]
             },
             "virtual_earnings": 75.00,
-            "sale_closed": true
+            "sale_closed": true,
+            "return_appointment": false
           }`
         },
         {
@@ -164,10 +168,16 @@ export async function POST(request: NextRequest) {
     const discoveryScore = typeof gradingResult.scores?.discovery === 'number' ? gradingResult.scores.discovery : null
     const objectionScore = typeof gradingResult.scores?.objection_handling === 'number' ? gradingResult.scores.objection_handling : null
     const closeScore = typeof gradingResult.scores?.closing === 'number' ? gradingResult.scores.closing : null
-    const saleClosed = typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : false
-    const virtualEarnings = saleClosed && typeof gradingResult.virtual_earnings === 'number'
+    const returnAppointment = typeof gradingResult.return_appointment === 'boolean' ? gradingResult.return_appointment : false
+
+    let saleClosed = typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : false
+    let virtualEarnings = saleClosed && typeof gradingResult.virtual_earnings === 'number'
       ? gradingResult.virtual_earnings
       : 0
+
+    if (!saleClosed) {
+      virtualEarnings = 0
+    }
 
     const calculatedOverall = (() => {
       if (typeof gradingResult.scores?.overall === 'number') {
@@ -191,6 +201,7 @@ export async function POST(request: NextRequest) {
         close_score: closeScore,
         virtual_earnings: virtualEarnings,
         sale_closed: saleClosed,
+        return_appointment: returnAppointment,
         analytics: {
           line_ratings: gradingResult.line_ratings || [],
           feedback: gradingResult.feedback || {},
@@ -213,7 +224,10 @@ export async function POST(request: NextRequest) {
       success: true,
       scores: gradingResult.scores,
       feedback: gradingResult.feedback,
-      lines_graded: gradingResult.line_ratings?.length || 0
+      lines_graded: gradingResult.line_ratings?.length || 0,
+      sale_closed: saleClosed,
+      return_appointment: returnAppointment,
+      virtual_earnings: virtualEarnings
     })
 
   } catch (error: any) {

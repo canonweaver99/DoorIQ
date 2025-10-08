@@ -26,14 +26,14 @@ interface ScoresViewProps {
 
 export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, insightsByCategory = {}, grading = false }: ScoresViewProps) {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return '#10b981' // green
-    if (score >= 60) return '#f59e0b' // amber
-    return '#ef4444' // red
+    if (score >= 80) return '#a855f7'
+    if (score >= 60) return '#ec4899'
+    return '#ef4444'
   }
 
   const getScoreTextColor = (score: number) => {
-    if (score >= 80) return 'text-green-500'
-    if (score >= 60) return 'text-amber-500'
+    if (score >= 80) return 'text-purple-300'
+    if (score >= 60) return 'text-pink-300'
     return 'text-red-500'
   }
 
@@ -84,15 +84,15 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
   ]
 
   const getMetricAccent = (score: number) => {
-    if (score >= 80) return 'rgba(16,185,129,0.3)'
-    if (score >= 60) return 'rgba(245,158,11,0.3)'
-    return 'rgba(239,68,68,0.3)'
+    if (score >= 80) return 'rgba(168,85,247,0.35)'
+    if (score >= 60) return 'rgba(236,72,153,0.35)'
+    return 'rgba(239,68,68,0.35)'
   }
 
   const getMetricTint = (score: number) => {
-    if (score >= 80) return 'rgba(16,185,129,0.05)'
-    if (score >= 60) return 'rgba(245,158,11,0.05)'
-    return 'rgba(239,68,68,0.05)'
+    if (score >= 80) return 'rgba(168,85,247,0.08)'
+    if (score >= 60) return 'rgba(236,72,153,0.08)'
+    return 'rgba(239,68,68,0.08)'
   }
 
   return (
@@ -166,7 +166,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
             </div>
 
             {virtualEarnings > 0 && (
-              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl border border-green-500/30 bg-green-500/10 text-green-400 font-medium">
+              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl border border-purple-500/40 bg-purple-500/20 text-purple-200 font-medium">
                 <DollarSign className="w-4 h-4" />
                 ${virtualEarnings.toFixed(2)} virtual earnings this session
               </div>
@@ -243,11 +243,17 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
 
       {feedbackItems.length > 0 && (
         <section className="bg-[#0c0c0c] border border-gray-800 rounded-3xl px-8 py-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-gray-500">
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 text-purple-300" />
               Session Highlights
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gray-500 mb-4">
+            <span>Pros</span>
+            <span className="w-px h-3 bg-gray-700" />
+            <span className="text-rose-400">Cons</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -256,11 +262,21 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                 key={index}
                 className="rounded-2xl border border-white/5 px-4 py-4"
                 style={{
-                  background: item.type === 'strength' ? 'rgba(16,185,129,0.05)' : 'rgba(245,158,11,0.05)',
-                  borderLeft: item.type === 'strength' ? '3px solid rgba(16,185,129,0.4)' : '3px solid rgba(245,158,11,0.4)'
+                  background:
+                    item.type === 'strength'
+                      ? 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(236,72,153,0.08))'
+                      : 'rgba(239,68,68,0.08)',
+                  borderLeft:
+                    item.type === 'strength'
+                      ? '3px solid rgba(168,85,247,0.5)'
+                      : '3px solid rgba(239,68,68,0.6)'
                 }}
               >
-                <div className="text-sm text-gray-200 leading-relaxed">
+                <div
+                  className={`text-sm leading-relaxed ${
+                    item.type === 'strength' ? 'text-gray-100' : 'text-red-200'
+                  }`}
+                >
                   {item.text}
                 </div>
               </div>
@@ -271,35 +287,29 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
 
       {feedback.specific_tips.length > 0 && (
         <section
-          className="rounded-3xl px-8 py-8 border border-purple-500/30"
-          style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(236,72,153,0.08))' }}
+          className="rounded-3xl px-8 py-8 border border-purple-500/40 text-center space-y-4"
+          style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.12), rgba(236,72,153,0.12))' }}
         >
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-2xl bg-white/10 border border-white/20">
-              <Lightbulb className="w-5 h-5 text-purple-200" />
-            </div>
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm uppercase tracking-[0.3em] text-purple-200/80">Pro Tips</div>
-                <h3 className="text-2xl font-semibold text-white mt-2">High-impact adjustments for next session</h3>
+          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-white/10 border border-white/20 mb-2">
+            <Lightbulb className="w-5 h-5 text-purple-100" />
+          </div>
+          <div className="text-sm uppercase tracking-[0.4em] text-purple-200/80">Pro Tips</div>
+          <h3 className="text-2xl font-semibold text-white">High-impact adjustments for next session</h3>
+          <div className="grid grid-cols-1 gap-3 max-w-2xl mx-auto">
+            {feedback.specific_tips.map((tip, index) => (
+              <div key={index} className="rounded-2xl border border-white/20 bg-white/5 px-4 py-4 text-gray-100 leading-relaxed">
+                {tip}
               </div>
-              <div className="grid grid-cols-1 gap-3">
-                {feedback.specific_tips.map((tip, index) => (
-                  <div key={index} className="rounded-2xl border border-white/20 bg-white/5 px-4 py-4 text-gray-200 leading-relaxed">
-                    {tip}
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </section>
       )}
 
       <div className="flex flex-wrap gap-2 items-center text-xs text-gray-400">
         <span className="uppercase tracking-[0.3em] text-gray-500 mr-2">Response Quality</span>
-        <span className="px-3 py-1 rounded-full text-white" style={{ background: 'rgba(16,185,129,0.25)' }}>Excellent</span>
-        <span className="px-3 py-1 rounded-full text-white" style={{ background: 'rgba(59,130,246,0.25)' }}>Good</span>
-        <span className="px-3 py-1 rounded-full text-white" style={{ background: 'rgba(245,158,11,0.25)' }}>Average</span>
+        <span className="px-3 py-1 rounded-full text-white" style={{ background: 'rgba(168,85,247,0.25)' }}>Excellent</span>
+        <span className="px-3 py-1 rounded-full text-white" style={{ background: 'rgba(236,72,153,0.25)' }}>Good</span>
+        <span className="px-3 py-1 rounded-full text-white" style={{ background: 'rgba(250,204,21,0.25)' }}>Average</span>
         <span className="px-3 py-1 rounded-full text-white" style={{ background: 'rgba(239,68,68,0.25)' }}>Needs Work</span>
       </div>
     </div>
