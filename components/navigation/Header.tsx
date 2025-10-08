@@ -119,11 +119,23 @@ export default function Header() {
         role: metaRole,
       })
 
-      const { data: userData } = await supabase
+      let { data: userData } = await supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
         .single()
+
+      if (!userData && authUser.email) {
+        const { data: userDataByEmail } = await supabase
+          .from('users')
+          .select('*')
+          .ilike('email', authUser.email)
+          .maybeSingle()
+
+        if (userDataByEmail) {
+          userData = userDataByEmail
+        }
+      }
 
       if (userData) {
         setUser(userData)
