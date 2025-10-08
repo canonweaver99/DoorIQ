@@ -515,15 +515,15 @@ export default function SessionsPage() {
                       </p>
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Objection Handling</p>
-                      <p className={`text-lg font-semibold ${getScoreColor(session.objection_handling_score)}`}>
-                        {session.objection_handling_score || '--'}%
+                      <p className="text-xs text-slate-400 mb-1">Discovery</p>
+                      <p className={`text-lg font-semibold ${getScoreColor(session.discovery_score)}`}>
+                        {session.discovery_score || '--'}%
                       </p>
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Safety</p>
-                      <p className={`text-lg font-semibold ${getScoreColor(session.safety_score ?? null)}`}>
-                        {(session.safety_score ?? '--') as any}%
+                      <p className="text-xs text-slate-400 mb-1">Objection Handling</p>
+                      <p className={`text-lg font-semibold ${getScoreColor(session.objection_handling_score)}`}>
+                        {session.objection_handling_score || '--'}%
                       </p>
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-3">
