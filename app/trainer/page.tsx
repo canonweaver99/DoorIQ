@@ -754,42 +754,6 @@ function TrainerPageContent() {
       setTranscript([])
       setDuration(0)
 
-      const waitForAudioEnd = (audio: HTMLAudioElement, fallbackMs = 1200) =>
-        new Promise<void>((resolve) => {
-          let resolved = false
-          const cleanup = () => {
-            audio.removeEventListener('ended', handleEnded)
-            audio.removeEventListener('error', handleError)
-            if (timeoutId) {
-              clearTimeout(timeoutId)
-            }
-          }
-
-          const handleEnded = () => {
-            if (resolved) return
-            resolved = true
-            cleanup()
-            resolve()
-          }
-
-          const handleError = () => {
-            if (resolved) return
-            resolved = true
-            cleanup()
-            resolve()
-          }
-
-          const timeoutId = setTimeout(() => {
-            if (resolved) return
-            resolved = true
-            cleanup()
-            resolve()
-          }, fallbackMs)
-
-          audio.addEventListener('ended', handleEnded, { once: true })
-          audio.addEventListener('error', handleError, { once: true })
-        })
-
       // Require auth before starting a session. If not signed in, redirect to login.
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -814,10 +778,12 @@ function TrainerPageContent() {
         const knockAudio = new Audio('/sounds/knock.mp3')
         knockAudio.volume = 0.5
         await knockAudio.play()
-        await waitForAudioEnd(knockAudio, 1200)
       } catch (e) {
         console.log('⚠️ Could not play knock sound:', e)
       }
+
+      // Wait for knock to finish
+      await new Promise(resolve => setTimeout(resolve, 800))
 
       // 🚪 PLAY DOOR OPEN SOUND
       console.log('🚪 Playing door open sound...')
@@ -825,10 +791,12 @@ function TrainerPageContent() {
         const doorOpenAudio = new Audio('/sounds/door_open.mp3')
         doorOpenAudio.volume = 0.4
         await doorOpenAudio.play()
-        await waitForAudioEnd(doorOpenAudio, 1500)
       } catch (e) {
         console.log('⚠️ Could not play door open sound:', e)
       }
+
+      // Brief delay before agent speaks
+      await new Promise(resolve => setTimeout(resolve, 500))
 
       // By now, token should be ready (or almost ready)
       console.log('⏳ Waiting for conversation token...')
