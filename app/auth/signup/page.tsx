@@ -43,7 +43,7 @@ export default function SignUpPage() {
 
     try {
       const supabase = createClient()
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -55,8 +55,18 @@ export default function SignUpPage() {
 
       if (signUpError) throw signUpError
 
-      router.push('/trainer/select-homeowner')
-      router.refresh()
+      // Check if user is confirmed (some setups auto-confirm, others require email verification)
+      if (data.user) {
+        // Wait a moment for session to be established
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // Redirect to home page
+        router.push('/')
+        router.refresh()
+      } else {
+        setError('Account created but session not established. Please try logging in.')
+        setLoading(false)
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to create account')
       setLoading(false)
@@ -74,7 +84,7 @@ export default function SignUpPage() {
       const { error: signUpError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/auth/callback?next=/trainer/select-homeowner`,
+          redirectTo: `${origin}/auth/callback?next=/`,
         },
       })
 
