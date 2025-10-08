@@ -17,6 +17,9 @@ interface SessionData {
   discovery_score: number | null
   objection_handling_score: number | null
   close_score: number | null
+  safety_score: number | null
+  introduction_score: number | null
+  listening_score: number | null
   virtual_earnings: number | null
   analytics: {
     line_ratings?: Array<{
@@ -118,10 +121,7 @@ export default function AnalyticsPage() {
       const result = await response.json()
       console.log('📊 Grading result:', result)
       
-      if (response.ok) {
-        // Refresh session data to get grading results
-        await fetchSession()
-      } else {
+      if (!response.ok) {
         console.error('❌ Grading failed:', result)
       }
     } catch (error) {
@@ -133,10 +133,10 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
-          <p className="text-white/70">Loading session data...</p>
+          <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">Loading session data...</p>
         </div>
       </div>
     )
@@ -144,12 +144,12 @@ export default function AnalyticsPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-white/70 mb-4">Session not found</p>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-center bg-[#1a1a1a] border border-gray-800 rounded-lg p-8">
+          <p className="text-gray-400 mb-4">Session not found</p>
           <Link
             href="/sessions"
-            className="text-purple-400 hover:text-purple-300 underline"
+            className="text-white hover:text-gray-300 font-medium"
           >
             Back to Sessions
           </Link>
@@ -159,13 +159,13 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <div className="px-4 sm:px-6 lg:px-12 py-8">
+    <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/sessions"
-            className="inline-flex items-center text-slate-400 hover:text-slate-300 mb-4 transition-colors"
+            className="inline-flex items-center text-gray-500 hover:text-gray-300 mb-6 text-sm font-medium transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Sessions
@@ -176,48 +176,48 @@ export default function AnalyticsPage() {
               <h1 className="text-3xl font-semibold text-white mb-2">
                 Session Analysis
               </h1>
-              <p className="text-slate-500 text-sm">
-                {session.agent_name || 'Training Session'} • {new Date(session.created_at).toLocaleDateString()}
+              <p className="text-gray-500 text-base">
+                {session.agent_name || 'Training Session'} • {new Date(session.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
             
             {grading && (
-              <div className="flex items-center text-slate-400">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                <span>Analyzing transcript...</span>
+              <div className="flex items-center text-gray-400 bg-[#1a1a1a] px-4 py-2 rounded-lg border border-gray-800">
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <span className="text-sm">Analyzing transcript...</span>
               </div>
             )}
           </div>
         </div>
 
         {/* View Toggle */}
-        <div className="flex justify-center gap-3 mb-6">
+        <div className="flex gap-1 p-1 bg-[#1a1a1a] rounded-lg border border-gray-800 max-w-md mx-auto mb-8">
           <button
             onClick={() => setActiveView('transcript')}
-            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center ${
+            className={`flex-1 px-4 py-2.5 rounded-md font-medium transition-all duration-200 flex items-center justify-center text-sm ${
               activeView === 'transcript'
-                ? 'bg-slate-800 text-white border border-slate-700'
-                : 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50'
+                ? 'bg-white text-black'
+                : 'text-gray-400 hover:text-white'
             }`}
           >
             <MessageSquare className="w-4 h-4 mr-2" />
-            Full Transcript
+            Transcript
           </button>
           <button
             onClick={() => setActiveView('scores')}
-            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center ${
+            className={`flex-1 px-4 py-2.5 rounded-md font-medium transition-all duration-200 flex items-center justify-center text-sm ${
               activeView === 'scores'
-                ? 'bg-slate-800 text-white border border-slate-700'
-                : 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50'
+                ? 'bg-white text-black'
+                : 'text-gray-400 hover:text-white'
             }`}
           >
             <Trophy className="w-4 h-4 mr-2" />
-            Scores & Feedback
+            Performance
           </button>
         </div>
 
         {/* Content */}
-        <div className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
+        <div className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden">
           {activeView === 'transcript' ? (
             <TranscriptView 
               transcript={session.full_transcript || []}
@@ -247,16 +247,16 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="mt-8 flex gap-3 justify-center">
           <button
             onClick={() => router.push('/trainer')}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white transition-colors shadow-lg"
+            className="px-6 py-3 rounded-lg font-medium bg-white text-black hover:bg-gray-100 transition-colors"
           >
             Practice Again
           </button>
           <button
             onClick={() => router.push('/')}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700/70 transition-colors"
+            className="px-6 py-3 rounded-lg font-medium bg-[#1a1a1a] border border-gray-800 text-white hover:bg-[#252525] transition-colors"
           >
             Return Home
           </button>

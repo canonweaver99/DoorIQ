@@ -82,7 +82,7 @@ export async function PATCH(req: Request) {
     }
     
     console.log('✅ PATCH: Session updated successfully:', data.id)
-    return NextResponse.json({ id: data.id, score: score })
+    return NextResponse.json({ id: data.id })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }

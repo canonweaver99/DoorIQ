@@ -20,6 +20,8 @@ export default function LoadingPage() {
   const [currentTip, setCurrentTip] = useState(0)
   const [status, setStatus] = useState('Saving your session...')
   const [attempts, setAttempts] = useState(0)
+  const [gradingStatus, setGradingStatus] = useState<'idle' | 'in-progress' | 'completed' | 'error'>('idle')
+  const [lastError, setLastError] = useState<string | null>(null)
 
   useEffect(() => {
     // Rotate tips every 3 seconds
@@ -27,10 +29,42 @@ export default function LoadingPage() {
       setCurrentTip((prev) => (prev + 1) % TIPS.length)
     }, 3000)
 
+    const sessionId = params.sessionId as string
+    let gradingTriggered = false
+
+    const triggerGrading = async () => {
+      if (!sessionId) return
+
+      try {
+        setGradingStatus('in-progress')
+        setStatus('Sending transcript for grading...')
+        setLastError(null)
+
+        const resp = await fetch('/api/grade/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        })
+
+        if (!resp.ok) {
+          const body = await resp.json().catch(() => null)
+          const message = body?.error || `Grading failed with status ${resp.status}`
+          throw new Error(message)
+        }
+
+        setGradingStatus('completed')
+        setStatus('Grading complete! Finalizing your results...')
+      } catch (error: any) {
+        console.error('Error triggering grading:', error)
+        setLastError(error?.message || 'Unable to start grading')
+        setGradingStatus('error')
+        setStatus('We hit a snag while grading. Retrying shortly...')
+      }
+    }
+
     // Poll for session readiness
     const checkSession = async () => {
       try {
-        const sessionId = params.sessionId
         const resp = await fetch(`/api/session?id=${sessionId}`)
         
         if (resp.ok) {
@@ -38,11 +72,21 @@ export default function LoadingPage() {
           
           // Check if session has been updated with transcript and score
           if (session.full_transcript && session.full_transcript.length > 0) {
-            console.log('✅ Session is ready! Redirecting...')
-            router.push(`/analytics/${sessionId}`)
-            return true
+            if (!gradingTriggered && (!session.analytics || !session.analytics.line_ratings)) {
+              gradingTriggered = true
+              await triggerGrading()
+            }
+
+            if (session.analytics?.line_ratings) {
+              console.log('✅ Session is ready! Redirecting...')
+              router.push(`/analytics/${sessionId}`)
+              return true
+            }
+
+            setStatus(gradingStatus === 'in-progress' ? 'Analyzing your conversation...' : 'Processing your conversation...')
+            setAttempts(prev => prev + 1)
           } else {
-            setStatus('Processing your conversation...')
+            setStatus('Capturing your conversation details...')
             setAttempts(prev => prev + 1)
           }
         }
@@ -78,7 +122,7 @@ export default function LoadingPage() {
       clearTimeout(initialCheck)
       clearTimeout(timeout)
     }
-  }, [params.sessionId, router])
+  }, [params.sessionId, router, gradingStatus])
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -107,6 +151,33 @@ export default function LoadingPage() {
           >
             <div className="text-sm font-semibold text-blue-400 mb-2">Pro Tip</div>
             <div className="text-slate-200">{TIPS[currentTip]}</div>
+
+            <div className="mt-4 text-left space-y-2 text-xs text-slate-400">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    gradingStatus === 'completed'
+                      ? 'bg-green-400'
+                      : gradingStatus === 'in-progress'
+                      ? 'bg-yellow-400 animate-pulse'
+                      : gradingStatus === 'error'
+                      ? 'bg-rose-400'
+                      : 'bg-slate-600'
+                  }`}
+                />
+                <span>
+                  Grading status:{' '}
+                  {gradingStatus === 'idle'
+                    ? 'Waiting to start'
+                    : gradingStatus === 'in-progress'
+                    ? 'In progress'
+                    : gradingStatus === 'completed'
+                    ? 'Complete'
+                    : 'Retrying shortly'}
+                </span>
+              </div>
+              {lastError && <div className="text-rose-300">{lastError}</div>}
+            </div>
           </motion.div>
 
           {/* Debug info */}
