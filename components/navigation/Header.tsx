@@ -47,6 +47,7 @@ type AuthMeta = {
   email?: string | null
   full_name?: string | null
   role?: UserRole | null
+  virtual_earnings?: number | null
 }
 
 const normalizeRole = (roleValue: unknown): UserRole | null => {
@@ -64,6 +65,15 @@ const normalizeRole = (roleValue: unknown): UserRole | null => {
   }
 
   return null
+}
+
+const parseEarnings = (value: unknown): number => {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
 }
 
 export default function Header() {
@@ -84,7 +94,7 @@ export default function Header() {
   const profileName = (user?.full_name || authMeta?.full_name || authMeta?.email || 'Sales Pro') as string
   const profileEmail = user?.email || authMeta?.email || 'team@dooriq.app'
   const profileInitial = profileName.charAt(0).toUpperCase()
-  const profileEarnings = typeof user?.virtual_earnings === 'number' ? user!.virtual_earnings : 0
+  const profileEarnings = parseEarnings(user?.virtual_earnings ?? authMeta?.virtual_earnings)
 
   useEffect(() => {
     setPortalReady(true)
