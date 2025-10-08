@@ -3,8 +3,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, MessageSquare, Trophy, Loader2 } from 'lucide-react'
-import TranscriptView from '@/components/analytics/TranscriptView'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import ScoresView from '@/components/analytics/ScoresView'
 
 interface SessionData {
@@ -49,7 +48,6 @@ export default function AnalyticsPage() {
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [grading, setGrading] = useState(false)
-  const [activeView, setActiveView] = useState<'transcript' | 'scores'>('transcript')
 
   const insightsByCategory = useMemo(() => {
     if (!session?.analytics?.line_ratings || !session.full_transcript) return {}
@@ -131,136 +129,78 @@ export default function AnalyticsPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-4" />
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-4 py-32">
+          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
           <p className="text-gray-500">Loading session data...</p>
         </div>
-      </div>
-    )
-  }
+      )
+    }
 
-  if (!session) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-center bg-[#1a1a1a] border border-gray-800 rounded-lg p-8">
+    if (!session) {
+      return (
+        <div className="bg-[#101010] border border-gray-800 rounded-2xl p-10 text-center">
           <p className="text-gray-400 mb-4">Session not found</p>
-          <Link
-            href="/sessions"
-            className="text-white hover:text-gray-300 font-medium"
-          >
+          <Link href="/sessions" className="text-white hover:text-gray-300 font-medium">
             Back to Sessions
           </Link>
         </div>
-      </div>
+      )
+    }
+
+    return (
+      <ScoresView
+        overallScore={session.overall_score || 0}
+        scores={{
+          rapport: session.rapport_score ?? 0,
+          discovery: session.discovery_score ?? 0,
+          objection_handling: session.objection_handling_score ?? 0,
+          closing: session.close_score ?? 0,
+          safety: session.analytics?.scores?.safety ?? 0,
+          introduction: session.analytics?.scores?.introduction ?? 0,
+          listening: session.analytics?.scores?.listening ?? 0
+        }}
+        feedback={session.analytics?.feedback || {
+          strengths: session.what_worked || [],
+          improvements: session.what_failed || [],
+          specific_tips: []
+        }}
+        virtualEarnings={session.virtual_earnings || 0}
+        insightsByCategory={insightsByCategory}
+        grading={grading}
+      />
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/sessions"
-            className="inline-flex items-center text-gray-500 hover:text-gray-300 mb-6 text-sm font-medium transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Sessions
-          </Link>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold text-white mb-2">
-                Session Analysis
-              </h1>
-              <p className="text-gray-500 text-base">
-                {session.agent_name || 'Training Session'} • {new Date(session.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
-            </div>
-            
-            {grading && (
-              <div className="flex items-center text-gray-400 bg-[#1a1a1a] px-4 py-2 rounded-lg border border-gray-800">
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                <span className="text-sm">Analyzing transcript...</span>
-              </div>
-            )}
+    <div className="min-h-screen bg-[#050505]">
+      <div className="max-w-5xl mx-auto px-6 py-10">
+        <div className="flex items-start justify-between gap-6 mb-10">
+          <div className="space-y-3">
+            <Link
+              href="/sessions"
+              className="inline-flex items-center text-gray-500 hover:text-gray-300 text-sm font-medium transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Sessions
+            </Link>
+            <h1 className="text-3xl font-semibold text-white">Session Analysis</h1>
+            <p className="text-gray-500 text-sm">
+              {session?.agent_name || 'Training Session'}
+            </p>
           </div>
-        </div>
 
-        {/* View Toggle */}
-        <div className="flex gap-1 p-1 bg-[#1a1a1a] rounded-lg border border-gray-800 max-w-md mx-auto mb-8">
-          <button
-            onClick={() => setActiveView('transcript')}
-            className={`flex-1 px-4 py-2.5 rounded-md font-medium transition-all duration-200 flex items-center justify-center text-sm ${
-              activeView === 'transcript'
-                ? 'bg-white text-black'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Transcript
-          </button>
-          <button
-            onClick={() => setActiveView('scores')}
-            className={`flex-1 px-4 py-2.5 rounded-md font-medium transition-all duration-200 flex items-center justify-center text-sm ${
-              activeView === 'scores'
-                ? 'bg-white text-black'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Trophy className="w-4 h-4 mr-2" />
-            Performance
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden">
-          {activeView === 'transcript' ? (
-            <TranscriptView 
-              transcript={session.full_transcript || []}
-              lineRatings={session.analytics?.line_ratings || []}
-            />
-          ) : (
-            <ScoresView
-              overallScore={session.overall_score || 0}
-              scores={{
-                rapport: session.rapport_score ?? 0,
-                discovery: session.discovery_score ?? 0,
-                objection_handling: session.objection_handling_score ?? 0,
-                closing: session.close_score ?? 0,
-                safety: session.analytics?.scores?.safety ?? 0,
-                introduction: session.analytics?.scores?.introduction ?? 0,
-                listening: session.analytics?.scores?.listening ?? 0
-              }}
-              feedback={session.analytics?.feedback || {
-                strengths: session.what_worked || [],
-                improvements: session.what_failed || [],
-                specific_tips: []
-              }}
-              virtualEarnings={session.virtual_earnings || 0}
-              insightsByCategory={insightsByCategory}
-            />
+          {grading && (
+            <div className="flex items-center gap-3 bg-[#111] border border-gray-800 rounded-full px-5 py-2 text-gray-300">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Analyzing conversation...</span>
+            </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex gap-3 justify-center">
-          <button
-            onClick={() => router.push('/trainer')}
-            className="px-6 py-3 rounded-lg font-medium bg-white text-black hover:bg-gray-100 transition-colors"
-          >
-            Practice Again
-          </button>
-          <button
-            onClick={() => router.push('/')}
-            className="px-6 py-3 rounded-lg font-medium bg-[#1a1a1a] border border-gray-800 text-white hover:bg-[#252525] transition-colors"
-          >
-            Return Home
-          </button>
-        </div>
+        {renderContent()}
       </div>
     </div>
   )
