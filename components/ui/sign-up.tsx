@@ -99,7 +99,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 </GlassInputWrapper>
               </div>
 
-              <div className="animate-element animate-delay-500">
+              <div className="animate-element animate-delay-400">
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Email Address</label>
                 <GlassInputWrapper>
                   <input
@@ -112,7 +112,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 </GlassInputWrapper>
               </div>
 
-              <div className="animate-element animate-delay-600">
+              <div className="animate-element animate-delay-500">
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Password</label>
                 <GlassInputWrapper>
                   <div className="relative">
@@ -149,13 +149,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-700 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-4 font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98]"
+                className="animate-element animate-delay-600 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-4 font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
             </form>
 
-            <div className="animate-element animate-delay-800 relative flex items-center justify-center">
+            <div className="animate-element animate-delay-700 relative flex items-center justify-center">
               <span className="w-full border-t border-white/10"></span>
               <span className="px-4 text-sm text-slate-400 bg-transparent absolute">Or continue with</span>
             </div>
@@ -163,13 +163,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             <button
               onClick={onGoogleSignUp}
               disabled={loading}
-              className="animate-element animate-delay-900 w-full flex items-center justify-center gap-3 border border-white/10 rounded-2xl py-4 hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
+              className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-white/10 rounded-2xl py-4 hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
             >
               <GoogleIcon />
               Continue with Google
             </button>
 
-            <p className="animate-element animate-delay-1000 text-center text-sm text-slate-400">
+            <p className="animate-element animate-delay-900 text-center text-sm text-slate-400">
               Already have an account?{' '}
               <button
                 type="button"
