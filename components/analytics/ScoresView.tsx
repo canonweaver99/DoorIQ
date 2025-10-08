@@ -97,7 +97,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="bg-[#0c0c0c] border border-gray-800 rounded-3xl px-8 py-10">
+      <section className="rounded-3xl px-8 py-10 border border-white/10 bg-gradient-to-br from-[#1b1033] via-[#21153e] to-[#2a1c4d] shadow-[0_25px_80px_-40px_rgba(124,58,237,0.45)]">
         <div className="flex flex-col lg:flex-row lg:items-center gap-10">
           <div className="relative flex items-center justify-center">
             <div
@@ -192,8 +192,8 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
           return (
             <div
               key={metric.id}
-              className="rounded-3xl border border-gray-800 bg-[#0c0c0c] overflow-hidden"
-              style={{ boxShadow: `0 0 0 1px rgba(255,255,255,0.02)` }}
+              className="rounded-3xl border border-white/10 overflow-hidden bg-gradient-to-br from-[#22123d] via-[#221540] to-[#1f1838]"
+              style={{ boxShadow: `0 18px 45px -32px rgba(124,58,237,0.6)` }}
             >
               <div
                 className="h-[3px] w-full"
@@ -242,7 +242,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
       </section>
 
       {feedbackItems.length > 0 && (
-        <section className="bg-[#0c0c0c] border border-gray-800 rounded-3xl px-8 py-8">
+        <section className="rounded-3xl px-8 py-8 border border-white/10 bg-gradient-to-br from-[#1f1536] via-[#261b42] to-[#1a1430] shadow-[0_20px_60px_-45px_rgba(124,58,237,0.55)]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-gray-500">
               <Sparkles className="w-4 h-4 text-purple-300" />
@@ -251,7 +251,7 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
           </div>
 
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gray-500 mb-4">
-            <span>Pros</span>
+            <span className="text-emerald-300">Pros</span>
             <span className="w-px h-3 bg-gray-700" />
             <span className="text-rose-400">Cons</span>
           </div>
@@ -264,17 +264,17 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                 style={{
                   background:
                     item.type === 'strength'
-                      ? 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(236,72,153,0.08))'
-                      : 'rgba(239,68,68,0.08)',
+                      ? 'linear-gradient(135deg, rgba(16,185,129,0.14), rgba(56,189,248,0.08))'
+                      : 'linear-gradient(135deg, rgba(239,68,68,0.16), rgba(244,63,94,0.08))',
                   borderLeft:
                     item.type === 'strength'
-                      ? '3px solid rgba(168,85,247,0.5)'
+                      ? '3px solid rgba(16,185,129,0.6)'
                       : '3px solid rgba(239,68,68,0.6)'
                 }}
               >
                 <div
                   className={`text-sm leading-relaxed ${
-                    item.type === 'strength' ? 'text-gray-100' : 'text-red-200'
+                    item.type === 'strength' ? 'text-emerald-100' : 'text-red-200'
                   }`}
                 >
                   {item.text}

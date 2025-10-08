@@ -171,6 +171,10 @@ export async function POST(request: NextRequest) {
     const returnAppointment = typeof gradingResult.return_appointment === 'boolean' ? gradingResult.return_appointment : false
 
     let saleClosed = typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : false
+    if (returnAppointment && !saleClosed) {
+      saleClosed = false
+    }
+
     let virtualEarnings = saleClosed && typeof gradingResult.virtual_earnings === 'number'
       ? gradingResult.virtual_earnings
       : 0
