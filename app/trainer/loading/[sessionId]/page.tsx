@@ -19,7 +19,6 @@ export default function LoadingPage() {
   const router = useRouter()
   const [currentTip, setCurrentTip] = useState(0)
   const [status, setStatus] = useState('Saving your session...')
-  const [attempts, setAttempts] = useState(0)
   const [gradingStatus, setGradingStatus] = useState<'idle' | 'in-progress' | 'completed' | 'error'>('idle')
   const [lastError, setLastError] = useState<string | null>(null)
 
@@ -84,15 +83,12 @@ export default function LoadingPage() {
             }
 
             setStatus(gradingStatus === 'in-progress' ? 'Analyzing your conversation...' : 'Processing your conversation...')
-            setAttempts(prev => prev + 1)
           } else {
             setStatus('Capturing your conversation details...')
-            setAttempts(prev => prev + 1)
           }
         }
       } catch (error) {
         console.error('Error checking session:', error)
-        setAttempts(prev => prev + 1)
       }
       return false
     }
@@ -181,9 +177,6 @@ export default function LoadingPage() {
           </motion.div>
 
           {/* Debug info */}
-          <div className="mt-4 text-xs text-slate-500">
-            Check attempt: {attempts}
-          </div>
         </div>
       </div>
     </div>
