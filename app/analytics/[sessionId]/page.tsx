@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Star, MessageSquare, Trophy, Target, Users, HandshakeIcon, Loader2 } from 'lucide-react'
+import { ArrowLeft, MessageSquare, Trophy, Loader2 } from 'lucide-react'
 import TranscriptView from '@/components/analytics/TranscriptView'
 import ScoresView from '@/components/analytics/ScoresView'
 
@@ -47,6 +47,31 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [grading, setGrading] = useState(false)
   const [activeView, setActiveView] = useState<'transcript' | 'scores'>('transcript')
+
+  const insightsByCategory = useMemo(() => {
+    if (!session?.analytics?.line_ratings || !session.full_transcript) return {}
+
+    const categoryMap: Record<string, Array<{ quote: string; impact: string }>> = {}
+
+    session.analytics.line_ratings.forEach((rating) => {
+      const transcriptLine = session.full_transcript?.[rating.line_number]
+      const quote = transcriptLine?.text || transcriptLine?.message
+      const category = rating.category || 'general'
+
+      if (!quote) return
+
+      if (!categoryMap[category]) {
+        categoryMap[category] = []
+      }
+
+      categoryMap[category].push({
+        quote,
+        impact: rating.improvement_notes || `Rated ${rating.effectiveness}`
+      })
+    })
+
+    return categoryMap
+  }, [session])
 
   useEffect(() => {
     if (sessionId) {
@@ -166,7 +191,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* View Toggle */}
-        <div className="flex space-x-2 mb-6">
+        <div className="flex justify-center gap-3 mb-6">
           <button
             onClick={() => setActiveView('transcript')}
             className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center ${
@@ -216,8 +241,25 @@ export default function AnalyticsPage() {
                 specific_tips: []
               }}
               virtualEarnings={session.virtual_earnings || 0}
+              insightsByCategory={insightsByCategory}
             />
           )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => router.push('/trainer')}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg font-medium bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+          >
+            Practice Again
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg font-medium bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700/70 transition-colors"
+          >
+            Return Home
+          </button>
         </div>
       </div>
     </div>

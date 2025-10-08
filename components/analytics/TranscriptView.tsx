@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { User, Bot, Lightbulb } from 'lucide-react'
 
 interface TranscriptLine {
@@ -26,8 +25,6 @@ interface TranscriptViewProps {
 }
 
 export default function TranscriptView({ transcript, lineRatings }: TranscriptViewProps) {
-  const [hoveredLine, setHoveredLine] = useState<number | null>(null)
-
   // Create a map of line ratings by line number
   const ratingsMap = new Map(lineRatings.map(r => [r.line_number, r]))
 
@@ -41,20 +38,6 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   // Get the text content from either text or message field
   const getLineText = (line: TranscriptLine): string => {
     return line.text || line.message || ''
-  }
-
-  const getEffectivenessColor = (effectiveness: string | undefined) => {
-    switch (effectiveness) {
-      case 'excellent':
-        return 'border-emerald-500/50 bg-emerald-500/5'
-      case 'good':
-      case 'average':
-        return 'border-amber-500/50 bg-amber-500/5'
-      case 'poor':
-        return 'border-red-500/50 bg-red-500/5'
-      default:
-        return 'border-slate-700'
-    }
   }
 
   const getEffectivenessLabel = (effectiveness: string | undefined) => {
@@ -72,24 +55,55 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
     }
   }
 
+  const formatTimestamp = (timestamp?: number | string) => {
+    if (!timestamp) return ''
+
+    if (typeof timestamp === 'string') {
+      const date = new Date(timestamp)
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    }
+
+    if (typeof timestamp === 'number') {
+      const minutes = Math.floor(timestamp / 60)
+      const seconds = Math.floor(timestamp % 60)
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`
+    }
+
+    return ''
+  }
+
+  const getBubbleClasses = (speaker: string, rating: LineRating | null) => {
+    const isRep = speaker === 'rep' || speaker === 'user'
+    if (!isRep) {
+      return 'bg-slate-900/70 border border-slate-700 text-slate-100'
+    }
+
+    switch (rating?.effectiveness) {
+      case 'excellent':
+        return 'bg-emerald-500/10 border border-emerald-400/60 text-emerald-50 shadow-[0_10px_30px_-15px_rgba(16,185,129,0.7)]'
+      case 'good':
+      case 'average':
+        return 'bg-amber-400/10 border border-amber-300/60 text-amber-50 shadow-[0_10px_30px_-15px_rgba(250,204,21,0.7)]'
+      case 'poor':
+        return 'bg-rose-500/10 border border-rose-400/60 text-rose-50 shadow-[0_10px_30px_-15px_rgba(244,63,94,0.7)]'
+      default:
+        return 'bg-indigo-600/70 border border-indigo-400/60 text-white shadow-[0_12px_35px_-18px_rgba(99,102,241,0.8)]'
+    }
+  }
+
   const getSpeakerIcon = (speaker: string) => {
     if (speaker === 'rep' || speaker === 'user') {
-      return <User className="w-5 h-5 text-purple-400" />
+      return <User className="w-4 h-4" />
     }
-    return <Bot className="w-5 h-5 text-blue-400" />
+    return <Bot className="w-4 h-4" />
   }
 
   const getSpeakerLabel = (speaker: string) => {
-    if (speaker === 'rep' || speaker === 'user') return 'Sales Rep'
+    if (speaker === 'rep' || speaker === 'user') return 'You'
     if (speaker === 'homeowner' || speaker === 'agent' || speaker === 'ai') return 'Homeowner'
     return 'System'
-  }
-
-  const formatTimestamp = (timestamp?: number) => {
-    if (!timestamp) return ''
-    const minutes = Math.floor(timestamp / 60)
-    const seconds = Math.floor(timestamp % 60)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
   if (!transcript || transcript.length === 0) {
@@ -104,74 +118,52 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
     <div className="p-8">
       <h2 className="text-2xl font-semibold text-slate-200 mb-6">Full Transcript</h2>
 
-      <div className="max-h-[70vh] overflow-y-auto pr-2">
-        <div className="space-y-3">
+      <div className="max-h-[70vh] overflow-y-auto pr-1">
+        <div className="space-y-4">
           {transcript.map((line, index) => {
-          const rating = getLineEffectiveness(index, line.speaker)
-          const isHovered = hoveredLine === index
-          
-          return (
-            <div
-              key={index}
-              className={`relative p-4 rounded-lg border transition-all duration-200 ${
-                getEffectivenessColor(rating?.effectiveness)
-              } ${isHovered ? 'shadow-md' : ''}`}
-              onMouseEnter={() => setHoveredLine(index)}
-              onMouseLeave={() => setHoveredLine(null)}
-            >
-              {/* Speaker Info */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  {getSpeakerIcon(line.speaker)}
-                  <span className="font-semibold text-white">
-                    {getSpeakerLabel(line.speaker)}
-                  </span>
-                  {rating && (
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      rating.effectiveness === 'excellent' ? 'bg-emerald-500/10 text-emerald-400' :
-                      rating.effectiveness === 'good' || rating.effectiveness === 'average' ? 'bg-amber-500/10 text-amber-400' :
-                      'bg-red-500/10 text-red-400'
-                    }`}>
-                      {getEffectivenessLabel(rating.effectiveness)}
-                    </span>
+            const rating = getLineEffectiveness(index, line.speaker)
+            const isRep = line.speaker === 'rep' || line.speaker === 'user'
+            const bubbleClasses = getBubbleClasses(line.speaker, rating)
+
+            return (
+              <div key={index} className={`flex ${isRep ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-xl md:max-w-2xl lg:max-w-3xl rounded-2xl px-4 py-3 shadow-lg transition-transform duration-200 ${bubbleClasses}`}>
+                  <div className={`flex items-center text-xs mb-2 uppercase tracking-wide ${isRep ? 'text-white/70' : 'text-slate-400/80'}`}>
+                    {getSpeakerIcon(line.speaker)}
+                    <span className="ml-2 font-semibold">{getSpeakerLabel(line.speaker)}</span>
+                    {rating && (
+                      <span className="ml-2 px-2 py-0.5 rounded-full bg-black/20 text-[10px] font-medium">
+                        {getEffectivenessLabel(rating.effectiveness)}
+                      </span>
+                    )}
+                    {line.timestamp !== undefined && (
+                      <span className="ml-auto text-[10px] opacity-70">{formatTimestamp(line.timestamp)}</span>
+                    )}
+                  </div>
+
+                  <p className={`leading-relaxed text-sm md:text-base ${isRep ? 'text-white/90' : 'text-slate-100/90'}`}>
+                    {getLineText(line)}
+                  </p>
+
+                  {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && (
+                    <div className={`mt-3 rounded-xl border border-white/10 bg-black/20 p-3 space-y-2`}
+                    >
+                      <div className="flex items-center text-xs font-semibold text-amber-200">
+                        <Lightbulb className="w-4 h-4 mr-2" />
+                        Suggested Alternative
+                      </div>
+                      {rating.alternative_lines.map((alt, altIndex) => (
+                        <p key={altIndex} className="text-xs text-amber-50/90 italic">“{alt}”</p>
+                      ))}
+                      {rating.improvement_notes && (
+                        <p className="text-[11px] text-amber-100/80">💡 {rating.improvement_notes}</p>
+                      )}
+                    </div>
                   )}
                 </div>
-                {line.timestamp !== undefined && (
-                  <span className="text-sm text-slate-400">
-                    {formatTimestamp(line.timestamp)}
-                  </span>
-                )}
               </div>
-
-              {/* Line Text */}
-              <p className="text-white/90 leading-relaxed">{getLineText(line)}</p>
-
-              {/* Alternative Suggestions (on hover) */}
-              {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && (
-                <div className="mt-3 rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                  <div className="flex items-center mb-2">
-                    <Lightbulb className="w-4 h-4 text-amber-400 mr-2" />
-                    <span className="text-sm font-medium text-amber-400">
-                      Suggested Alternative
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {rating.alternative_lines.map((alt, altIndex) => (
-                      <p key={altIndex} className="text-sm text-slate-300 italic">
-                        "{alt}"
-                      </p>
-                    ))}
-                  </div>
-                  {rating.improvement_notes && (
-                    <p className="text-xs text-slate-400 mt-2">
-                      💡 {rating.improvement_notes}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
+            )
+          })}
         </div>
       </div>
 
@@ -196,3 +188,4 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
     </div>
   )
 }
+

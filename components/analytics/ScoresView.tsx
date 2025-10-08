@@ -19,9 +19,10 @@ interface ScoresViewProps {
     specific_tips: string[]
   }
   virtualEarnings: number
+  insightsByCategory?: Record<string, Array<{ quote: string; impact: string }>>
 }
 
-export default function ScoresView({ overallScore, scores, feedback, virtualEarnings }: ScoresViewProps) {
+export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, insightsByCategory = {} }: ScoresViewProps) {
   const getGradeColor = (score: number) => {
     if (score >= 80) return 'text-emerald-400'
     if (score >= 60) return 'text-amber-400'
@@ -47,24 +48,28 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
 
   const mainMetrics = [
     {
+      id: 'rapport',
       name: 'Rapport Building',
       score: scores.rapport,
       icon: Users,
       description: 'Building trust and connection with the homeowner'
     },
     {
+      id: 'discovery',
       name: 'Discovery',
       score: scores.discovery,
       icon: Target,
       description: 'Understanding customer needs and pain points'
     },
     {
+      id: 'objection_handling',
       name: 'Objection Handling',
       score: scores.objection_handling,
       icon: Shield,
       description: 'Addressing concerns and overcoming resistance'
     },
     {
+      id: 'closing',
       name: 'Closing Technique',
       score: scores.closing,
       icon: HandshakeIcon,
@@ -127,32 +132,39 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
         )}
       </div>
 
-      {/* Main Metrics - Horizontal Progress Bars */}
-      <div className="space-y-6 mb-12 max-w-4xl mx-auto">
+      {/* Main Metrics */}
+      <div className="space-y-4 mb-12 max-w-4xl mx-auto">
         {mainMetrics.map((metric) => {
           const Icon = metric.icon
+          const quotes = insightsByCategory?.[metric.id] || []
           return (
-            <div key={metric.name} className="bg-slate-800/30 rounded-lg p-6 border border-slate-700">
-              <div className="flex items-center justify-between mb-3">
+            <details key={metric.id} className="group rounded-xl border border-slate-700 bg-slate-800/30 overflow-hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5">
                 <div className="flex items-center space-x-3">
                   <Icon className="w-5 h-5 text-slate-400" />
-                  <h3 className="text-white font-medium">{metric.name}</h3>
+                  <div>
+                    <h3 className="text-white font-medium">{metric.name}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{metric.description}</p>
+                  </div>
                 </div>
-                <span className={`text-2xl font-bold ${getGradeColor(metric.score)}`}>
-                  {metric.score}%
-                </span>
+                <div className="flex items-center space-x-4">
+                  <span className={`text-2xl font-bold ${getGradeColor(metric.score)}`}>{metric.score}%</span>
+                  <span className="text-slate-500 text-sm">Click to view transcript pull-quotes</span>
+                </div>
+              </summary>
+              <div className="border-t border-slate-700/70 bg-slate-900/40 px-6 py-5 space-y-4">
+                {quotes.length > 0 ? (
+                  quotes.map((item, idx) => (
+                    <div key={idx} className="rounded-lg border border-slate-700 bg-slate-900/70 p-4">
+                      <p className="text-sm text-slate-200 leading-relaxed">“{item.quote}”</p>
+                      <p className="text-xs text-slate-400 mt-2">Influence: {item.impact}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400 italic">No specific lines highlighted for this category yet.</p>
+                )}
               </div>
-              
-              {/* Progress Bar */}
-              <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-all duration-500 ${getProgressBarColor(metric.score)}`}
-                  style={{ width: `${metric.score}%` }}
-                />
-              </div>
-              
-              <p className="text-xs text-slate-500 mt-2">{metric.description}</p>
-            </div>
+            </details>
           )
         })}
       </div>
