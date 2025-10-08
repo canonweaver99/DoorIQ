@@ -40,64 +40,34 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
     return line.text || line.message || ''
   }
 
-  const getEffectivenessLabel = (effectiveness: string | undefined) => {
+  const getEffectivenessColor = (effectiveness: string | undefined) => {
     switch (effectiveness) {
       case 'excellent':
-        return 'Excellent'
+        return 'border-green-500/30 bg-green-500/5'
       case 'good':
-        return 'Good'
+        return 'border-blue-500/30 bg-blue-500/5'
       case 'average':
-        return 'Average'
+        return 'border-amber-500/30 bg-amber-500/5'
       case 'poor':
-        return 'Needs Improvement'
+        return 'border-red-500/30 bg-red-500/5'
       default:
         return ''
     }
   }
 
-  const formatTimestamp = (timestamp?: number | string) => {
-    if (!timestamp) return ''
-
-    if (typeof timestamp === 'string') {
-      const date = new Date(timestamp)
-      if (!Number.isNaN(date.getTime())) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-    }
-
-    if (typeof timestamp === 'number') {
-      const minutes = Math.floor(timestamp / 60)
-      const seconds = Math.floor(timestamp % 60)
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`
-    }
-
-    return ''
-  }
-
-  const getBubbleClasses = (speaker: string, rating: LineRating | null) => {
-    const isRep = speaker === 'rep' || speaker === 'user'
-    if (!isRep) {
-      return 'bg-slate-900/70 border border-slate-700 text-slate-100'
-    }
-
-    switch (rating?.effectiveness) {
+  const getEffectivenessLabel = (effectiveness: string | undefined) => {
+    switch (effectiveness) {
       case 'excellent':
-        return 'bg-emerald-500/10 border border-emerald-400/60 text-emerald-50 shadow-[0_10px_30px_-15px_rgba(16,185,129,0.7)]'
+        return { label: 'Excellent', color: 'text-green-500 bg-green-500/10' }
       case 'good':
+        return { label: 'Good', color: 'text-blue-500 bg-blue-500/10' }
       case 'average':
-        return 'bg-amber-400/10 border border-amber-300/60 text-amber-50 shadow-[0_10px_30px_-15px_rgba(250,204,21,0.7)]'
+        return { label: 'Average', color: 'text-amber-500 bg-amber-500/10' }
       case 'poor':
-        return 'bg-rose-500/10 border border-rose-400/60 text-rose-50 shadow-[0_10px_30px_-15px_rgba(244,63,94,0.7)]'
+        return { label: 'Needs Work', color: 'text-red-500 bg-red-500/10' }
       default:
-        return 'bg-indigo-600/70 border border-indigo-400/60 text-white shadow-[0_12px_35px_-18px_rgba(99,102,241,0.8)]'
+        return { label: '', color: '' }
     }
-  }
-
-  const getSpeakerIcon = (speaker: string) => {
-    if (speaker === 'rep' || speaker === 'user') {
-      return <User className="w-4 h-4" />
-    }
-    return <Bot className="w-4 h-4" />
   }
 
   const getSpeakerLabel = (speaker: string) => {
@@ -109,80 +79,98 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   if (!transcript || transcript.length === 0) {
     return (
       <div className="p-8 text-center">
-        <p className="text-slate-400">No transcript available for this session</p>
+        <p className="text-gray-400">No transcript available for this session</p>
       </div>
     )
   }
 
   return (
     <div className="p-8">
-      <h2 className="text-2xl font-semibold text-slate-200 mb-6">Full Transcript</h2>
+      <h2 className="text-2xl font-semibold text-white mb-8">Conversation Transcript</h2>
 
-      <div className="max-h-[70vh] overflow-y-auto pr-1">
-        <div className="space-y-4">
-          {transcript.map((line, index) => {
-            const rating = getLineEffectiveness(index, line.speaker)
-            const isRep = line.speaker === 'rep' || line.speaker === 'user'
-            const bubbleClasses = getBubbleClasses(line.speaker, rating)
+      {/* Transcript Messages */}
+      <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+        {transcript.map((line, index) => {
+          const rating = getLineEffectiveness(index, line.speaker)
+          const isRep = line.speaker === 'rep' || line.speaker === 'user'
+          const effectivenessStyle = rating ? getEffectivenessColor(rating.effectiveness) : ''
+          const effectivenessLabel = rating ? getEffectivenessLabel(rating.effectiveness) : null
 
-            return (
-              <div key={index} className={`flex ${isRep ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xl md:max-w-2xl lg:max-w-3xl rounded-2xl px-4 py-3 shadow-lg transition-transform duration-200 ${bubbleClasses}`}>
-                  <div className={`flex items-center text-xs mb-2 uppercase tracking-wide ${isRep ? 'text-white/70' : 'text-slate-400/80'}`}>
-                    {getSpeakerIcon(line.speaker)}
-                    <span className="ml-2 font-semibold">{getSpeakerLabel(line.speaker)}</span>
-                    {rating && (
-                      <span className="ml-2 px-2 py-0.5 rounded-full bg-black/20 text-[10px] font-medium">
-                        {getEffectivenessLabel(rating.effectiveness)}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className={`leading-relaxed text-sm md:text-base ${isRep ? 'text-white/90' : 'text-slate-100/90'}`}>
-                    {getLineText(line)}
-                  </p>
-
-                  {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && (
-                    <div className={`mt-3 rounded-xl border border-white/10 bg-black/20 p-3 space-y-2`}
-                    >
-                      <div className="flex items-center text-xs font-semibold text-amber-200">
-                        <Lightbulb className="w-4 h-4 mr-2" />
-                        Suggested Alternative
-                      </div>
-                      {rating.alternative_lines.map((alt, altIndex) => (
-                        <p key={altIndex} className="text-xs text-amber-50/90 italic">“{alt}”</p>
-                      ))}
-                      {rating.improvement_notes && (
-                        <p className="text-[11px] text-amber-100/80">💡 {rating.improvement_notes}</p>
-                      )}
-                    </div>
+          return (
+            <div key={index} className={`flex ${isRep ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-2xl ${isRep ? 'ml-12' : 'mr-12'}`}>
+                {/* Speaker and Rating */}
+                <div className={`flex items-center gap-2 mb-2 ${isRep ? 'justify-end' : 'justify-start'}`}>
+                  <span className="text-sm font-medium text-gray-400">
+                    {getSpeakerLabel(line.speaker)}
+                  </span>
+                  {effectivenessLabel && effectivenessLabel.label && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${effectivenessLabel.color}`}>
+                      {effectivenessLabel.label}
+                    </span>
                   )}
                 </div>
+
+                {/* Message Bubble */}
+                <div className={`
+                  rounded-lg p-4 
+                  ${isRep 
+                    ? `bg-white text-black ${rating ? effectivenessStyle : ''}` 
+                    : 'bg-[#2a2a2a] text-gray-100 border border-gray-800'
+                  }
+                `}>
+                  <p className="leading-relaxed text-[15px]">
+                    {getLineText(line)}
+                  </p>
+                </div>
+
+                {/* Suggestions */}
+                {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && (
+                  <div className="mt-3 ml-4 p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lightbulb className="w-4 h-4 text-amber-500" />
+                      <span className="text-sm font-medium text-amber-500">Suggested Alternative</span>
+                    </div>
+                    {rating.alternative_lines.map((alt, altIndex) => (
+                      <p key={altIndex} className="text-sm text-gray-300 italic mb-2">
+                        "{alt}"
+                      </p>
+                    ))}
+                    {rating.improvement_notes && (
+                      <p className="text-xs text-gray-400 mt-2">
+                        {rating.improvement_notes}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-            )
-          })}
-        </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Legend */}
-      <div className="mt-8 p-4 bg-slate-800/30 rounded-lg border border-slate-700">
-        <h3 className="text-sm font-medium text-slate-300 mb-3">Effectiveness Legend</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded border border-emerald-500/50 bg-emerald-500/10"></div>
-            <span className="text-xs text-slate-400">Excellent Response</span>
+      <div className="mt-8 p-4 bg-[#1a1a1a] rounded-lg border border-gray-800">
+        <h3 className="text-sm font-medium text-gray-300 mb-3">Response Quality Legend</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/40"></div>
+            <span className="text-xs text-gray-400">Excellent</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded border border-amber-500/50 bg-amber-500/10"></div>
-            <span className="text-xs text-slate-400">Good/Average Response</span>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-blue-500/20 border border-blue-500/40"></div>
+            <span className="text-xs text-gray-400">Good</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded border border-red-500/50 bg-red-500/10"></div>
-            <span className="text-xs text-slate-400">Needs Improvement</span>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500/40"></div>
+            <span className="text-xs text-gray-400">Average</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-red-500/20 border border-red-500/40"></div>
+            <span className="text-xs text-gray-400">Needs Work</span>
           </div>
         </div>
       </div>
     </div>
   )
 }
-
