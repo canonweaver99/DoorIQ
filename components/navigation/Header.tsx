@@ -49,6 +49,23 @@ type AuthMeta = {
   role?: UserRole | null
 }
 
+const normalizeRole = (roleValue: unknown): UserRole | null => {
+  if (!roleValue) return null
+
+  if (Array.isArray(roleValue)) {
+    return normalizeRole(roleValue.find((value) => typeof value === 'string'))
+  }
+
+  if (typeof roleValue === 'string') {
+    const normalized = roleValue.toLowerCase()
+    if (normalized === 'rep' || normalized === 'manager' || normalized === 'admin') {
+      return normalized
+    }
+  }
+
+  return null
+}
+
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
@@ -62,8 +79,7 @@ export default function Header() {
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
-  const rawRole = (user?.role ?? authMeta?.role ?? null) as string | null
-  const userRole: UserRole | null = rawRole ? (rawRole.toLowerCase() as UserRole) : null
+  const userRole: UserRole | null = normalizeRole(user?.role) ?? normalizeRole(authMeta?.role)
   const isSignedIn = Boolean(user || authMeta)
   const profileName = (user?.full_name || authMeta?.full_name || authMeta?.email || 'Sales Pro') as string
   const profileEmail = user?.email || authMeta?.email || 'team@dooriq.app'
@@ -89,11 +105,18 @@ export default function Header() {
       }
 
       // Save auth metadata immediately so we can show a basic profile card
+      const metaRole = normalizeRole(
+        authUser.user_metadata?.role ??
+        authUser.user_metadata?.roles ??
+        authUser.app_metadata?.role ??
+        authUser.app_metadata?.roles
+      )
+
       setAuthMeta({
         id: authUser.id,
         email: authUser.email,
         full_name: authUser.user_metadata?.full_name,
-        role: authUser.user_metadata?.role,
+        role: metaRole,
       })
 
       const { data: userData } = await supabase
