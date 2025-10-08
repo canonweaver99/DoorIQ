@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 sm:px-6 lg:px-12 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Content */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
           {activeView === 'transcript' ? (
             <TranscriptView 
               transcript={session.full_transcript || []}
@@ -247,16 +247,16 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
             onClick={() => router.push('/trainer')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg font-medium bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white transition-colors shadow-lg"
           >
             Practice Again
           </button>
           <button
             onClick={() => router.push('/')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg font-medium bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700/70 transition-colors"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700/70 transition-colors"
           >
             Return Home
           </button>

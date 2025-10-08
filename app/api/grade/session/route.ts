@@ -176,6 +176,27 @@ export async function POST(request: NextRequest) {
       return Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
     })()
 
+    const rapportScore = typeof gradingResult.scores?.rapport === 'number' ? gradingResult.scores.rapport : null
+    const discoveryScore = typeof gradingResult.scores?.discovery === 'number' ? gradingResult.scores.discovery : null
+    const objectionScore = typeof gradingResult.scores?.objection_handling === 'number' ? gradingResult.scores.objection_handling : null
+    const closeScore = typeof gradingResult.scores?.closing === 'number' ? gradingResult.scores.closing : null
+    const saleClosed = typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : false
+    const virtualEarnings = saleClosed && typeof gradingResult.virtual_earnings === 'number'
+      ? gradingResult.virtual_earnings
+      : 0
+
+    const calculatedOverall = (() => {
+      if (typeof gradingResult.scores?.overall === 'number') {
+        return gradingResult.scores.overall
+      }
+
+      const numericScores = [rapportScore, discoveryScore, objectionScore, closeScore].filter((value) => typeof value === 'number') as number[]
+      if (numericScores.length === 0) {
+        return 0
+      }
+      return Math.round(numericScores.reduce((sum, value) => sum + value, 0) / numericScores.length)
+    })()
+
     const { error: updateError } = await supabase
       .from('live_sessions')
       .update({
@@ -184,8 +205,8 @@ export async function POST(request: NextRequest) {
         discovery_score: discoveryScore,
         objection_handling_score: objectionScore,
         close_score: closeScore,
-        virtual_earnings: typeof gradingResult.virtual_earnings === 'number' ? gradingResult.virtual_earnings : null,
-        sale_closed: typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : null,
+        virtual_earnings: virtualEarnings,
+        sale_closed: saleClosed,
         analytics: {
           line_ratings: gradingResult.line_ratings || [],
           feedback: gradingResult.feedback || {},

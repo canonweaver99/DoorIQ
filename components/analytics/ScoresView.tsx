@@ -138,8 +138,8 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
           const Icon = metric.icon
           const quotes = insightsByCategory?.[metric.id] || []
           return (
-            <details key={metric.id} className="group rounded-xl border border-slate-700 bg-slate-800/30 overflow-hidden">
-              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5">
+            <details key={metric.id} className="group rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5 gap-4">
                 <div className="flex items-center space-x-3">
                   <Icon className="w-5 h-5 text-slate-400" />
                   <div>
@@ -148,11 +148,19 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <span className={`text-2xl font-bold ${getGradeColor(metric.score)}`}>{metric.score}%</span>
-                  <span className="text-slate-500 text-sm">Click to view transcript pull-quotes</span>
+                  <div className="flex flex-col items-end">
+                    <span className={`text-2xl font-bold ${getGradeColor(metric.score)}`}>{metric.score}%</span>
+                    <div className="mt-2 h-1 w-28 rounded bg-slate-800">
+                      <div className={getProgressBarColor(metric.score)} style={{ width: `${metric.score}%`, height: '100%' }} />
+                    </div>
+                  </div>
+                  <span className="text-purple-400 text-sm inline-flex items-center font-medium">
+                    <svg className="w-4 h-4 mr-1 fill-purple-400" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+                    View transcript pull-quotes
+                  </span>
                 </div>
               </summary>
-              <div className="border-t border-slate-700/70 bg-slate-900/40 px-6 py-5 space-y-4">
+              <div className="border-t border-slate-800 bg-slate-900/70 px-6 py-5 space-y-4">
                 {quotes.length > 0 ? (
                   quotes.map((item, idx) => (
                     <div key={idx} className="rounded-lg border border-slate-700 bg-slate-900/70 p-4">

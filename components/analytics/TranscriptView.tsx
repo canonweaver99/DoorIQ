@@ -136,9 +136,6 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
                         {getEffectivenessLabel(rating.effectiveness)}
                       </span>
                     )}
-                    {line.timestamp !== undefined && (
-                      <span className="ml-auto text-[10px] opacity-70">{formatTimestamp(line.timestamp)}</span>
-                    )}
                   </div>
 
                   <p className={`leading-relaxed text-sm md:text-base ${isRep ? 'text-white/90' : 'text-slate-100/90'}`}>
