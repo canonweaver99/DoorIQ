@@ -121,7 +121,7 @@ export default function LoadingPage() {
   }, [params.sessionId, router, gradingStatus])
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
       <div className="max-w-md w-full px-6">
         <div className="text-center">
           {/* Spinner */}
@@ -130,12 +130,12 @@ export default function LoadingPage() {
             transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             className="inline-block mb-8"
           >
-            <Loader2 className="w-16 h-16 text-blue-500" />
+            <Loader2 className="w-16 h-16 text-purple-500" style={{ filter: 'drop-shadow(0 0 12px rgba(168,85,247,0.6))' }} />
           </motion.div>
 
           {/* Status */}
-          <h1 className="text-2xl font-bold text-slate-100 mb-2">{status}</h1>
-          <p className="text-slate-400 mb-8">This will only take a moment...</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-2 drop-shadow-lg">{status}</h1>
+          <p className="text-slate-400 mb-10">This will only take a moment...</p>
 
           {/* Tip */}
           <motion.div
@@ -143,40 +143,38 @@ export default function LoadingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-slate-800 rounded-lg p-6 border border-slate-700"
+            className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 shadow-2xl"
           >
-            <div className="text-sm font-semibold text-blue-400 mb-2">Pro Tip</div>
-            <div className="text-slate-200">{TIPS[currentTip]}</div>
+            <div className="text-sm font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-3 uppercase tracking-wide">Pro Tip</div>
+            <div className="text-slate-200 leading-relaxed">{TIPS[currentTip]}</div>
 
-            <div className="mt-4 text-left space-y-2 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
+            <div className="mt-5 pt-4 border-t border-slate-700 text-left space-y-2 text-xs">
+              <div className="flex items-center gap-2 text-slate-400">
                 <div
                   className={`h-2 w-2 rounded-full ${
                     gradingStatus === 'completed'
-                      ? 'bg-green-400'
+                      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
                       : gradingStatus === 'in-progress'
-                      ? 'bg-yellow-400 animate-pulse'
+                      ? 'bg-purple-400 animate-pulse shadow-[0_0_8px_rgba(168,85,247,0.6)]'
                       : gradingStatus === 'error'
-                      ? 'bg-rose-400'
+                      ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]'
                       : 'bg-slate-600'
                   }`}
                 />
                 <span>
-                  Grading status:{' '}
+                  Grading:{' '}
                   {gradingStatus === 'idle'
-                    ? 'Waiting to start'
+                    ? 'Waiting'
                     : gradingStatus === 'in-progress'
-                    ? 'In progress'
+                    ? 'Analyzing...'
                     : gradingStatus === 'completed'
                     ? 'Complete'
-                    : 'Retrying shortly'}
+                    : 'Retrying'}
                 </span>
               </div>
-              {lastError && <div className="text-rose-300">{lastError}</div>}
+              {lastError && <div className="text-rose-300 pl-4">{lastError}</div>}
             </div>
           </motion.div>
-
-          {/* Debug info */}
         </div>
       </div>
     </div>
