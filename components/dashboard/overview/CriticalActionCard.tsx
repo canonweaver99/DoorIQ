@@ -117,7 +117,7 @@ export default function CriticalActionCard({ actions }: CriticalActionCardProps)
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              className={`relative bg-[#1e1e30]/60 backdrop-blur-xl border ${getBorderColor(action.severity)} border-l-4 rounded-xl p-4 ${getSeverityColor(action.severity)}`}
+              className={`relative bg-[#1e1e30]/60 backdrop-blur-xl border ${getBorderColor(action.severity)} border-l-4 rounded-xl px-4 py-3 ${getSeverityColor(action.severity)}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
@@ -145,7 +145,7 @@ export default function CriticalActionCard({ actions }: CriticalActionCardProps)
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-2 mt-2">
                 <button className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-xs font-medium text-white transition-colors">
                   Review
                 </button>
@@ -154,12 +154,6 @@ export default function CriticalActionCard({ actions }: CriticalActionCardProps)
                   className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg text-xs font-medium text-slate-400 transition-colors"
                 >
                   Dismiss
-                </button>
-                <button 
-                  onClick={() => handleSnooze(action.id)}
-                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg text-xs font-medium text-slate-400 transition-colors"
-                >
-                  Snooze 24h
                 </button>
               </div>
             </motion.div>

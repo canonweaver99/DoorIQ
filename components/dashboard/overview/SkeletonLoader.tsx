@@ -4,28 +4,30 @@ import { motion } from 'framer-motion'
 
 export function MetricCardSkeleton() {
   return (
-    <div className="bg-[#1e1e30] border border-white/10 rounded-2xl p-4 h-[140px]">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 bg-white/5 rounded-lg animate-pulse" />
-        <div className="w-20 h-3 bg-white/5 rounded animate-pulse" />
+    <div className="bg-[#1e1e30] border border-white/10 rounded-2xl px-4 py-3 h-[90px] max-h-[90px] flex flex-col justify-between">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-white/5 rounded-lg animate-pulse" />
+          <div className="w-20 h-3 bg-white/5 rounded animate-pulse" />
+        </div>
+        <div className="w-12 h-3 bg-white/5 rounded animate-pulse" />
       </div>
-      <div className="w-16 h-8 bg-white/5 rounded animate-pulse mb-2" />
-      <div className="w-full h-6 bg-white/5 rounded animate-pulse" />
+      <div className="w-16 h-10 bg-white/5 rounded animate-pulse" />
     </div>
   )
 }
 
 export function SessionCardSkeleton() {
   return (
-    <div className="flex-shrink-0 w-[280px] sm:w-[300px] h-[120px] bg-[#1e1e30] border border-white/10 rounded-xl p-4">
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1">
-          <div className="w-32 h-4 bg-white/5 rounded animate-pulse mb-2" />
-          <div className="w-20 h-3 bg-white/5 rounded animate-pulse" />
-        </div>
-        <div className="w-12 h-8 bg-white/5 rounded animate-pulse" />
+    <div className="w-full h-[80px] bg-[#1e1e30] border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="w-32 h-4 bg-white/5 rounded animate-pulse mb-2" />
+        <div className="w-20 h-3 bg-white/5 rounded animate-pulse" />
       </div>
-      <div className="w-full h-8 bg-white/5 rounded animate-pulse mt-2" />
+      <div className="flex-1 min-w-0 hidden md:block">
+        <div className="w-full h-8 bg-white/5 rounded animate-pulse" />
+      </div>
+      <div className="flex-shrink-0 w-16 h-10 bg-white/5 rounded-lg animate-pulse" />
     </div>
   )
 }

@@ -43,7 +43,7 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
     }))
 
   // Prepare session data with skills and insights
-  const enhancedSessions = recentSessions.slice(0, 3).map(session => ({
+  const enhancedSessions = recentSessions.slice(0, 4).map(session => ({
     id: session.id,
     homeowner: session.homeowner,
     time: session.time,
@@ -67,7 +67,7 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="space-y-5 pb-24"
+      className="space-y-6 pb-24"
     >
       {/* Critical Actions */}
       {criticalActions.length > 0 && (
@@ -80,7 +80,7 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
         </motion.div>
       )}
 
-      {/* Enhanced Metrics Grid - 20% less spacing */}
+      {/* Enhanced Metrics Grid - Reduced spacing */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <MetricCardSkeleton key={i} />)}
@@ -138,18 +138,15 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
         </div>
       )}
 
-      {/* Recent Sessions - Horizontal Scroll */}
+      {/* Recent Sessions - 24px gap from metrics */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl p-5 backdrop-blur-sm"
+        className="bg-[#1e1e30] border border-white/10 rounded-2xl p-4 backdrop-blur-sm"
       >
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-white">Recent Sessions</h3>
-            <p className="text-xs text-slate-400">Your latest training activity</p>
-          </div>
+          <h3 className="text-base font-semibold text-white">Recent Sessions</h3>
           <Link
             href="/sessions"
             className="flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300 transition-colors"
@@ -159,11 +156,11 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
         </div>
 
         {loading ? (
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-            {[...Array(3)].map((_, i) => <SessionCardSkeleton key={i} />)}
+          <div className="space-y-2">
+            {[...Array(4)].map((_, i) => <SessionCardSkeleton key={i} />)}
           </div>
         ) : enhancedSessions.length > 0 ? (
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2">
+          <div className="space-y-2">
             {enhancedSessions.map((session, index) => (
               <SessionCard
                 key={session.id}
@@ -171,20 +168,6 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
                 delay={0.25 + index * 0.05}
               />
             ))}
-            {/* View All Card */}
-            <Link href="/sessions">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-                whileHover={{ scale: 1.05 }}
-                className="flex-shrink-0 w-[140px] h-[120px] bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-purple-500/50 transition-all"
-              >
-                <ArrowRight className="w-8 h-8 text-purple-400" />
-                <span className="text-sm font-medium text-white">View All</span>
-                <span className="text-xs text-slate-400">{recentSessions.length} total</span>
-              </motion.div>
-            </Link>
           </div>
         ) : (
           <EmptyState message="No sessions yet. Start your first training!" />

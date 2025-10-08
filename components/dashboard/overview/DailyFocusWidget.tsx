@@ -24,14 +24,14 @@ export default function DailyFocusWidget({ current, goal, type, delay = 0 }: Dai
   }, [percentage])
 
   const getMotivationalMessage = () => {
-    if (isComplete) return "🎉 Goal crushed!"
+    if (isComplete) return "Goal crushed!"
     if (percentage >= 75) return "Almost there!"
     if (percentage >= 50) return "Halfway there!"
     if (percentage >= 25) return "Good start!"
     return "Let's go!"
   }
 
-  const circumference = 2 * Math.PI * 36 // radius is 36
+  const circumference = 2 * Math.PI * 28 // radius is 28 (smaller for compact design)
   const strokeDashoffset = circumference - (progress / 100) * circumference
 
   return (
@@ -39,31 +39,32 @@ export default function DailyFocusWidget({ current, goal, type, delay = 0 }: Dai
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
+      whileHover={{ y: -4, scale: 1.02 }}
       className="relative group"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-indigo-600/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
-      <div className="relative bg-[#1e1e30] border border-white/10 rounded-2xl p-4 backdrop-blur-sm hover:border-purple-500/50 transition-all duration-300 h-[140px] flex flex-col items-center justify-center">
+      <div className="relative bg-[#1e1e30] border border-white/10 rounded-2xl px-4 py-3 backdrop-blur-sm hover:border-purple-500/50 transition-all duration-300 h-[90px] max-h-[90px] flex items-center justify-between gap-3">
         {/* Circular Progress Ring */}
-        <div className="relative">
-          <svg width="80" height="80" className="transform -rotate-90">
+        <div className="relative flex-shrink-0">
+          <svg width="64" height="64" className="transform -rotate-90">
             {/* Background circle */}
             <circle
-              cx="40"
-              cy="40"
-              r="36"
+              cx="32"
+              cy="32"
+              r="28"
               fill="none"
               stroke="rgba(255,255,255,0.05)"
-              strokeWidth="6"
+              strokeWidth="5"
             />
             {/* Progress circle */}
             <motion.circle
-              cx="40"
-              cy="40"
-              r="36"
+              cx="32"
+              cy="32"
+              r="28"
               fill="none"
               stroke={isComplete ? "#10B981" : "#8B5CF6"}
-              strokeWidth="6"
+              strokeWidth="5"
               strokeLinecap="round"
               strokeDasharray={circumference}
               initial={{ strokeDashoffset: circumference }}
@@ -74,25 +75,27 @@ export default function DailyFocusWidget({ current, goal, type, delay = 0 }: Dai
 
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <Target className={`w-5 h-5 mb-1 ${isComplete ? 'text-green-400' : 'text-purple-400'}`} />
-            <span className="text-lg font-bold text-white">
+            <span className="text-xl font-bold text-white leading-none">
               {current}/{goal}
             </span>
           </div>
         </div>
 
         {/* Label */}
-        <div className="text-center mt-2">
-          <p className="text-xs text-slate-400 mb-0.5">
-            {type === 'sessions' ? 'Daily Sessions' : 'Target Score'}
-          </p>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="p-1.5 bg-purple-500/10 rounded-lg">
+              <Target className="w-3.5 h-3.5 text-purple-400" />
+            </div>
+            <span className="text-sm font-medium text-slate-400">Daily Goal</span>
+          </div>
           <motion.p
             key={getMotivationalMessage()}
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             className={`text-xs font-semibold ${isComplete ? 'text-green-400' : 'text-purple-400'}`}
           >
-            {getMotivationalMessage()}
+            {isComplete ? `${current}/${goal} - ${getMotivationalMessage()}` : getMotivationalMessage()}
           </motion.p>
         </div>
 
