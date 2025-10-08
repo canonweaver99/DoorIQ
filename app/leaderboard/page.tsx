@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
-import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award } from 'lucide-react'
+import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award, RefreshCw } from 'lucide-react'
 
 type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
   rank: number
@@ -15,15 +15,59 @@ type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('month')
   const [currentUserId, setCurrentUserId] = useState<string>('')
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const supabaseRef = useRef(createClient())
 
   useEffect(() => {
     fetchLeaderboard()
+    
+    // Set up real-time subscription to listen for changes in users table
+    const supabase = supabaseRef.current
+    const channel = supabase
+      .channel('leaderboard-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users',
+          filter: 'role=eq.rep'
+        },
+        (payload) => {
+          console.log('💰 User earnings updated:', payload)
+          // Refresh leaderboard when any user's data changes
+          fetchLeaderboard(true)
+        }
+      )
+      .subscribe()
+
+    // Refresh when page gains focus (user returns to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('👀 Page visible again, refreshing leaderboard...')
+        fetchLeaderboard(true)
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      channel.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [timeframe])
 
-  const fetchLeaderboard = async () => {
-    const supabase = createClient()
+  const fetchLeaderboard = async (isRefresh: boolean = false) => {
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
+    
+    const supabase = supabaseRef.current
     const { data: { user } } = await supabase.auth.getUser()
     
     if (user) {
@@ -40,6 +84,7 @@ export default function LeaderboardPage() {
     if (error || !users) {
       console.error('Error fetching leaderboard:', error)
       setLoading(false)
+      setRefreshing(false)
       return
     }
 
@@ -85,7 +130,13 @@ export default function LeaderboardPage() {
     )
 
     setLeaderboard(leaderboardData as LeaderboardUser[])
+    setLastUpdated(new Date())
     setLoading(false)
+    setRefreshing(false)
+  }
+
+  const handleManualRefresh = () => {
+    fetchLeaderboard(true)
   }
 
   const getRankIcon = (rank: number) => {
@@ -145,8 +196,28 @@ export default function LeaderboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4 drop-shadow-lg">Leaderboard</h1>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg">Leaderboard</h1>
+            <button
+              onClick={handleManualRefresh}
+              disabled={refreshing}
+              className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-200 disabled:opacity-50 shadow-lg hover:scale-105 disabled:hover:scale-100"
+              title="Refresh leaderboard"
+            >
+              <RefreshCw className={`w-5 h-5 text-white ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
           <p className="text-xl text-slate-400 drop-shadow-md">See how you rank against your team</p>
+          <p className="text-sm text-slate-500 mt-2">
+            Last updated: {lastUpdated.toLocaleTimeString()}
+            <span className="ml-2 inline-flex items-center gap-1">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-xs">Live</span>
+            </span>
+          </p>
         </div>
 
         {/* Timeframe Selector */}
