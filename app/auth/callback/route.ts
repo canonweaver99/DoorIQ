@@ -58,9 +58,10 @@ export async function GET(request: Request) {
         console.log('✅ User profile already exists')
       }
 
-      // For email confirmation, redirect to home
+      // For email confirmation, redirect to confirmation page
+      // This ensures session is properly established before going to home
       if (type === 'signup' || type === 'email') {
-        redirectPath = '/'
+        redirectPath = '/auth/confirmed'
       }
     }
   }
