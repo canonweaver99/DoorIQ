@@ -193,7 +193,7 @@ export const SignUpComponent: React.FC<SignUpPageProps> = ({
             <div className="absolute inset-0 bg-gradient-to-t from-[#07030f] via-transparent to-transparent rounded-3xl"></div>
           </div>
           {testimonials.length > 0 && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4 px-8 w-full justify-center z-10">
+            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-4 px-8 w-full justify-center z-10">
               <TestimonialCard testimonial={testimonials[0]} delay="animate-delay-1000" />
               {testimonials[1] && (
                 <div className="hidden xl:flex">
