@@ -38,6 +38,7 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
+import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 
 type User = Database['public']['Tables']['users']['Row']
 type UserRole = User['role']
@@ -96,6 +97,8 @@ function HeaderContent() {
   const profileEmail = user?.email || authMeta?.email || 'team@dooriq.app'
   const profileInitial = profileName.charAt(0).toUpperCase()
   const profileEarnings = parseEarnings(user?.virtual_earnings ?? authMeta?.virtual_earnings)
+  const userId = user?.id || authMeta?.id || null
+  const unreadCount = useUnreadMessages(userId)
 
   useEffect(() => {
     setPortalReady(true)
@@ -226,7 +229,12 @@ function HeaderContent() {
       {
         title: 'Support & Account',
         items: [
-          { name: 'Messages', href: isManagerLike ? '/manager?tab=messages' : '/messages', icon: MessageCircle },
+          { 
+            name: 'Messages', 
+            href: isManagerLike ? '/manager?tab=messages' : '/messages', 
+            icon: MessageCircle,
+            badge: unreadCount > 0 ? String(unreadCount) : undefined
+          },
           { name: 'Documentation', href: '/documentation', icon: BookOpen },
           { name: 'Help Center', href: '/support', icon: HelpCircle },
           { name: 'Notifications', href: '/notifications', icon: Bell },
@@ -242,7 +250,7 @@ function HeaderContent() {
     }
 
     return sections
-  }, [isManagerLike])
+  }, [isManagerLike, unreadCount])
 
   const quickActions = [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
@@ -251,14 +259,14 @@ function HeaderContent() {
   ]
 
   const profileNavigation = useMemo(() => {
-    const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean }> = [
+    const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }> = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Analytics', href: isManagerLike ? '/manager?tab=analytics' : '/analytics', icon: BarChart3 },
       { name: 'Playbooks', href: '/playbooks', icon: NotebookPen },
       { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
       { name: 'Documentation', href: '/documentation', icon: BookOpen },
-      { name: 'Messages', href: isManagerLike ? '/manager?tab=messages' : '/messages', icon: MessageCircle },
+      { name: 'Messages', href: isManagerLike ? '/manager?tab=messages' : '/messages', icon: MessageCircle, badge: unreadCount > 0 ? unreadCount : undefined },
       { name: 'Support', href: '/support', icon: LifeBuoy },
       { name: 'Integrations', href: '/integrations', icon: Plug },
       { name: 'Notifications', href: '/notifications', icon: Bell },
@@ -271,8 +279,8 @@ function HeaderContent() {
       items.splice(2, 0, { name: 'AI Insights', href: '/insights', icon: PieChart })
     }
 
-    return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean }>
-  }, [isManagerLike])
+    return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }>
+  }, [isManagerLike, unreadCount])
 
   const handleSignOut = async () => {
     try {
@@ -460,14 +468,21 @@ function HeaderContent() {
                         key={item.name}
                         href={item.href}
                         onClick={() => setIsMenuOpen(false)}
-                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
+                        className={`flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-all ${
                           active
                             ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 text-white'
                             : 'text-slate-300 hover:bg-white/5 hover:text-white'
                         }`}
                       >
-                        <Icon className="w-5 h-5" />
-                        <span className="tracking-tight">{item.name}</span>
+                        <span className="flex items-center space-x-3">
+                          <Icon className="w-5 h-5" />
+                          <span className="tracking-tight">{item.name}</span>
+                        </span>
+                        {item.badge && item.badge > 0 && (
+                          <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-bold rounded-full">
+                            {item.badge}
+                          </span>
+                        )}
                       </Link>
                     )
                   })}
@@ -670,7 +685,11 @@ function HeaderContent() {
                                       <span className="text-sm font-medium tracking-tight">{item.name}</span>
                                     </span>
                                     {item.badge && (
-                                      <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-purple-200">
+                                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                        item.name === 'Messages' && Number(item.badge) > 0
+                                          ? 'bg-purple-500 text-white'
+                                          : 'bg-purple-500/20 text-purple-200 uppercase tracking-[0.2em]'
+                                      }`}>
                                         {item.badge}
                                       </span>
                                     )}

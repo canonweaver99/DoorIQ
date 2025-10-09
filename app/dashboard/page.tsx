@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Zap, Calendar, Clock } from 'lucide-react'
+import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Zap, Calendar, Clock, MessageSquare } from 'lucide-react'
 import TabNavigation from '@/components/dashboard/TabNavigation'
 import OverviewTab from '@/components/dashboard/tabs/OverviewTab'
 import PerformanceTab from '@/components/dashboard/tabs/PerformanceTab'
 import LearningTab from '@/components/dashboard/tabs/LearningTab'
 import TeamTab from '@/components/dashboard/tabs/TeamTab'
+import MessagesTab from '@/components/dashboard/tabs/MessagesTab'
 
 // Mock data
 const mockData = {
@@ -146,6 +147,7 @@ export default function DashboardPage() {
     { id: 'performance', label: 'Performance', icon: TrendingUp },
     { id: 'learning', label: 'Learning', icon: BookOpen },
     { id: 'team', label: 'Team', icon: UsersIcon },
+    { id: 'messages', label: 'Messages', icon: MessageSquare },
   ]
 
   const formatDate = (date: Date) => {
@@ -247,6 +249,9 @@ export default function DashboardPage() {
                 yourScore: mockData.metrics.avgScore.value,
               }}
             />
+          )}
+          {activeTab === 'messages' && (
+            <MessagesTab key="messages" />
           )}
         </AnimatePresence>
       </div>
