@@ -60,27 +60,30 @@ const topPerformers = [
   },
 ]
 
-// Revenue chart data by time period
-const dailyRevenueData = Array.from({ length: 30 }, (_, i) => {
+// Revenue chart data by time period - Limited ranges for better readability
+// Day view: Last 7 days
+const dailyRevenueData = Array.from({ length: 7 }, (_, i) => {
   const date = new Date()
-  date.setDate(date.getDate() - (29 - i))
+  date.setDate(date.getDate() - (6 - i))
   const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
   const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   return {
-    period: i % 7 === 0 ? dateStr : dayName,
+    period: dayName,
+    fullPeriod: dateStr,
     revenue: Math.floor(3000 + Math.random() * 4000),
     repsWhoSold: Math.floor(5 + Math.random() * 12),
     totalSales: Math.floor(8 + Math.random() * 20)
   }
 })
 
-const weeklyRevenueData = Array.from({ length: 12 }, (_, i) => {
+// Week view: Last 6 weeks
+const weeklyRevenueData = Array.from({ length: 6 }, (_, i) => {
   const weekStart = new Date()
-  weekStart.setDate(weekStart.getDate() - (11 - i) * 7)
+  weekStart.setDate(weekStart.getDate() - (5 - i) * 7)
   const weekEnd = new Date(weekStart)
   weekEnd.setDate(weekEnd.getDate() + 6)
   return {
-    period: `Week ${i + 1}`,
+    period: `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
     fullPeriod: `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
     revenue: Math.floor(18000 + Math.random() * 15000),
     repsWhoSold: Math.floor(12 + Math.random() * 8),
@@ -88,20 +91,27 @@ const weeklyRevenueData = Array.from({ length: 12 }, (_, i) => {
   }
 })
 
-const monthlyRevenueData = [
-  { period: 'Jan', revenue: 62500, repsWhoSold: 18, totalSales: 245 },
-  { period: 'Feb', revenue: 58200, repsWhoSold: 16, totalSales: 228 },
-  { period: 'Mar', revenue: 71800, repsWhoSold: 20, totalSales: 282 },
-  { period: 'Apr', revenue: 85300, repsWhoSold: 22, totalSales: 315 },
-  { period: 'May', revenue: 68900, repsWhoSold: 19, totalSales: 265 },
-  { period: 'Jun', revenue: 78400, repsWhoSold: 21, totalSales: 298 },
-  { period: 'Jul', revenue: 82100, repsWhoSold: 23, totalSales: 308 },
-  { period: 'Aug', revenue: 69500, repsWhoSold: 18, totalSales: 272 },
-  { period: 'Sep', revenue: 88700, repsWhoSold: 24, totalSales: 335 },
-  { period: 'Oct', revenue: 76200, repsWhoSold: 20, totalSales: 289 },
-  { period: 'Nov', revenue: 84600, repsWhoSold: 22, totalSales: 318 },
-  { period: 'Dec', revenue: 92800, repsWhoSold: 24, totalSales: 348 },
-]
+// Month view: Last 6 months
+const getLastSixMonths = () => {
+  const months = []
+  const now = new Date()
+  
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const monthName = date.toLocaleDateString('en-US', { month: 'short' })
+    months.push({
+      period: monthName,
+      fullPeriod: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      revenue: Math.floor(58000 + Math.random() * 35000),
+      repsWhoSold: Math.floor(16 + Math.random() * 8),
+      totalSales: Math.floor(220 + Math.random() * 130)
+    })
+  }
+  
+  return months
+}
+
+const monthlyRevenueData = getLastSixMonths()
 
 export default function TeamOverview() {
   const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month'>('month')
@@ -243,9 +253,9 @@ export default function TeamOverview() {
                 stroke="#6B7280"
                 tick={{ fill: '#6B7280', fontSize: 11 }}
                 axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                angle={timePeriod === 'day' ? -45 : 0}
-                textAnchor={timePeriod === 'day' ? 'end' : 'middle'}
-                height={timePeriod === 'day' ? 60 : 30}
+                angle={timePeriod === 'week' ? -15 : 0}
+                textAnchor={timePeriod === 'week' ? 'end' : 'middle'}
+                height={timePeriod === 'week' ? 50 : 30}
               />
               <YAxis 
                 stroke="#6B7280"

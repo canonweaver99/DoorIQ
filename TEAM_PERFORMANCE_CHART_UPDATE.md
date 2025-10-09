@@ -11,30 +11,34 @@ Updated the Team Performance chart in the Manager Panel to display team revenue 
 
 ### 2. Added Time Period Toggles
 Added three toggle options above the chart:
-- **Day**: Shows daily earnings for the last 30 days
-- **Week**: Shows weekly earnings for the last 12 weeks  
-- **Month**: Shows monthly earnings for the last 12 months (default)
+- **Day**: Shows daily earnings for the last 7 days
+- **Week**: Shows weekly earnings for the last 6 weeks  
+- **Month**: Shows monthly earnings for the last 6 months (default)
 
 The toggle uses an elegant purple-themed selector that matches the dashboard design.
 
 ### 3. Data Structure
-Created three separate datasets for different time periods:
+Created three separate datasets for different time periods (optimized for readability with 6-7 data points):
 
-#### Daily Data (30 days)
-- Period labels: Day names (Mon, Tue, Wed) with occasional dates
+#### Daily Data (7 days)
+- Period labels: Day names (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
+- Full date shown in tooltip (e.g., "Oct 3")
 - Revenue: $3,000 - $7,000 per day
 - Includes: repsWhoSold, totalSales
 
-#### Weekly Data (12 weeks)
-- Period labels: Week 1, Week 2, etc.
-- Full date ranges in tooltip
+#### Weekly Data (6 weeks)
+- Period labels: "Week of [date]" (e.g., "Week of Oct 3")
+- Full date ranges in tooltip (e.g., "Oct 3 - Oct 9")
 - Revenue: $18,000 - $33,000 per week
 - Includes: repsWhoSold, totalSales
+- Labels slightly angled (-15°) for better readability
 
-#### Monthly Data (12 months)
-- Period labels: Jan, Feb, Mar, etc.
-- Revenue: $58,200 - $92,800 per month
+#### Monthly Data (6 months)
+- Period labels: Month abbreviations (e.g., Aug, Sep, Oct, Nov, Dec, Jan)
+- Full month/year shown in tooltip (e.g., "October 2025")
+- Revenue: $58,000 - $93,000 per month
 - Includes: repsWhoSold, totalSales
+- Dynamically generated to show last 6 months from current date
 
 ### 4. Visual Design
 
@@ -74,9 +78,11 @@ Tooltip styling:
 ### 6. Responsive Design
 
 #### X-Axis Handling
-- **Day view**: Labels rotated -45° to prevent overlap with 30 data points
-- **Week/Month views**: Horizontal labels for better readability
+- **Day view**: Horizontal labels (7 data points fit comfortably)
+- **Week view**: Labels rotated -15° for better readability with longer labels
+- **Month view**: Horizontal labels (6 data points)
 - Dynamic height adjustment based on view
+- Consistent 6-7 data points across all views for clean, readable charts
 
 #### Y-Axis
 - Formatted as dollars with "k" suffix ($XXk)
@@ -124,19 +130,21 @@ const getChartData = () => {
 
 1. Navigate to the Manager Panel: `/manager`
 2. The Team Performance chart should display on the "Team Overview" tab
-3. Default view shows monthly revenue (12 months)
-4. Click "Week" toggle to see 12 weeks of data
-5. Click "Day" toggle to see 30 days of data
+3. Default view shows monthly revenue (last 6 months)
+4. Click "Week" toggle to see last 6 weeks of data
+5. Click "Day" toggle to see last 7 days of data
 6. Hover over any bar to see detailed metrics:
    - Total revenue for that period
    - Number of reps who sold
    - Total number of sales
+7. Notice the clean, readable layout with 6-7 bars regardless of view
 
 ## Key Features
 
 ✅ Bar chart instead of line chart  
 ✅ Revenue-focused metrics (not scores)  
 ✅ Three time period views (Day, Week, Month)  
+✅ **Optimized data ranges** (6-7 bars max for better readability)  
 ✅ Purple/teal gradient matching theme  
 ✅ Dollar values on top of bars  
 ✅ Interactive hover tooltip with detailed metrics  
@@ -144,6 +152,7 @@ const getChartData = () => {
 ✅ Dark theme consistency  
 ✅ Smooth transitions and animations  
 ✅ Responsive design for all screen sizes  
+✅ Clean X-axis labels with minimal rotation needed  
 
 ## Notes
 
