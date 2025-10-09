@@ -14,6 +14,7 @@ export async function GET(request: Request) {
     origin: requestUrl.origin
   })
 
+  // Default redirect destination after successful authentication
   let redirectPath = requestUrl.searchParams.get('next') || '/'
 
   if (code) {
@@ -58,10 +59,8 @@ export async function GET(request: Request) {
         console.log('✅ User profile already exists')
       }
 
-      // Always go through confirmation page after successful code exchange
-      // This ensures session is properly established before redirecting
-      console.log('🔄 Forcing redirect through confirmation page')
-      redirectPath = '/auth/confirmed'
+      // Redirect directly to the destination (no intermediate page)
+      console.log('🔄 Redirecting after auth to:', redirectPath)
     }
   }
   
