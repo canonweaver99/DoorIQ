@@ -1,156 +1,211 @@
-"use client";
+'use client'
 
-import {
-  Legend,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart as RechartsRadarChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
 
-interface RadarSeries {
-  id: string;
-  name: string;
-  color: string;
-  values: Record<string, number>;
+interface SkillData {
+  skill: string
+  value: number
+  teamAverage?: number
 }
 
 interface RadarChartProps {
-  skills: string[];
-  series: RadarSeries[];
-  teamAverage?: Record<string, number>;
-  showTeamAverage?: boolean;
+  data: SkillData[]
+  showTeamAverage: boolean
+  animated?: boolean
 }
 
-export default function RadarChart({
-  skills,
-  series,
-  teamAverage,
-  showTeamAverage = false,
-}: RadarChartProps) {
-  const chartData = skills.map((skill) => {
-    const entry: Record<string, number | string> = { skill };
-    series.forEach((item) => {
-      entry[item.id] = item.values[skill] ?? 0;
-    });
-    if (showTeamAverage && teamAverage) {
-      entry.teamAverage = teamAverage[skill] ?? 0;
+export default function RadarChart({ data, showTeamAverage, animated = false }: RadarChartProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [animationProgress, setAnimationProgress] = useState(animated ? 0 : 1)
+
+  useEffect(() => {
+    if (animated) {
+      let start: number | null = null
+      const duration = 1000
+
+      const animate = (timestamp: number) => {
+        if (!start) start = timestamp
+        const progress = Math.min((timestamp - start) / duration, 1)
+        setAnimationProgress(progress)
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        }
+      }
+
+      requestAnimationFrame(animate)
     }
-    return entry;
-  });
+  }, [animated, data])
 
-  const legendPayload = series.map((item) => ({
-    value: item.name,
-    id: item.id,
-    type: "circle" as const,
-    color: item.color,
-  }));
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-  if (showTeamAverage && teamAverage) {
-    legendPayload.push({
-      value: "Team Average",
-      id: "teamAverage",
-      type: "line" as const,
-      color: "rgba(255,255,255,0.8)",
-    });
-  }
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload) return null;
+    // Set canvas size
+    const size = 300
+    canvas.width = size
+    canvas.height = size
 
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 6 }}
-        className="rounded-lg border border-white/10 bg-[#0c0c18]/90 px-4 py-3 text-sm text-white shadow-xl backdrop-blur"
-      >
-        <p className="text-xs uppercase tracking-[0.25em] text-white/40 mb-2">
-          {label}
-        </p>
-        <div className="space-y-1">
-          {payload.map((item: any) => (
-            <div
-              key={item.dataKey}
-              className="flex items-center justify-between gap-6"
-            >
-              <span className="flex items-center gap-2 text-white/70">
-                <span
-                  className="inline-flex h-2 w-2 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                {item.name}
-              </span>
-              <span className="text-white font-semibold">{item.value}%</span>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-    );
-  };
+    const centerX = size / 2
+    const centerY = size / 2
+    const radius = size * 0.35
+    const levels = 5
+
+    // Clear canvas
+    ctx.clearRect(0, 0, size, size)
+
+    // Draw background grid
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)'
+    ctx.lineWidth = 1
+
+    for (let i = 1; i <= levels; i++) {
+      ctx.beginPath()
+      const levelRadius = (radius / levels) * i
+      
+      for (let j = 0; j < data.length; j++) {
+        const angle = (Math.PI * 2 * j) / data.length - Math.PI / 2
+        const x = centerX + Math.cos(angle) * levelRadius
+        const y = centerY + Math.sin(angle) * levelRadius
+        
+        if (j === 0) {
+          ctx.moveTo(x, y)
+        } else {
+          ctx.lineTo(x, y)
+        }
+      }
+      
+      ctx.closePath()
+      ctx.stroke()
+    }
+
+    // Draw axis lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
+    for (let i = 0; i < data.length; i++) {
+      const angle = (Math.PI * 2 * i) / data.length - Math.PI / 2
+      const x = centerX + Math.cos(angle) * radius
+      const y = centerY + Math.sin(angle) * radius
+      
+      ctx.beginPath()
+      ctx.moveTo(centerX, centerY)
+      ctx.lineTo(x, y)
+      ctx.stroke()
+    }
+
+    // Draw team average if enabled
+    if (showTeamAverage && data.some(d => d.teamAverage !== undefined)) {
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)'
+      ctx.lineWidth = 2
+      ctx.setLineDash([5, 5])
+      ctx.beginPath()
+
+      for (let i = 0; i < data.length; i++) {
+        const angle = (Math.PI * 2 * i) / data.length - Math.PI / 2
+        const value = (data[i].teamAverage || 0) / 100
+        const distance = radius * value * animationProgress
+        const x = centerX + Math.cos(angle) * distance
+        const y = centerY + Math.sin(angle) * distance
+        
+        if (i === 0) {
+          ctx.moveTo(x, y)
+        } else {
+          ctx.lineTo(x, y)
+        }
+      }
+      
+      ctx.closePath()
+      ctx.stroke()
+      ctx.setLineDash([])
+    }
+
+    // Draw data polygon with gradient
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius)
+    gradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)')
+    gradient.addColorStop(1, 'rgba(236, 72, 153, 0.2)')
+
+    ctx.fillStyle = gradient
+    ctx.strokeStyle = 'rgba(168, 85, 247, 0.8)'
+    ctx.lineWidth = 2.5
+    ctx.beginPath()
+
+    for (let i = 0; i < data.length; i++) {
+      const angle = (Math.PI * 2 * i) / data.length - Math.PI / 2
+      const value = data[i].value / 100
+      const distance = radius * value * animationProgress
+      const x = centerX + Math.cos(angle) * distance
+      const y = centerY + Math.sin(angle) * distance
+      
+      if (i === 0) {
+        ctx.moveTo(x, y)
+      } else {
+        ctx.lineTo(x, y)
+      }
+    }
+    
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+
+    // Draw points
+    for (let i = 0; i < data.length; i++) {
+      const angle = (Math.PI * 2 * i) / data.length - Math.PI / 2
+      const value = data[i].value / 100
+      const distance = radius * value * animationProgress
+      const x = centerX + Math.cos(angle) * distance
+      const y = centerY + Math.sin(angle) * distance
+      
+      // Point glow
+      const pointGradient = ctx.createRadialGradient(x, y, 0, x, y, 8)
+      pointGradient.addColorStop(0, 'rgba(236, 72, 153, 0.8)')
+      pointGradient.addColorStop(1, 'rgba(236, 72, 153, 0)')
+      ctx.fillStyle = pointGradient
+      ctx.beginPath()
+      ctx.arc(x, y, 8, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Point
+      ctx.fillStyle = '#ec4899'
+      ctx.beginPath()
+      ctx.arc(x, y, 4, 0, Math.PI * 2)
+      ctx.fill()
+    }
+
+    // Draw labels
+    ctx.fillStyle = '#9ca3af'
+    ctx.font = '12px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    for (let i = 0; i < data.length; i++) {
+      const angle = (Math.PI * 2 * i) / data.length - Math.PI / 2
+      const labelDistance = radius + 30
+      const x = centerX + Math.cos(angle) * labelDistance
+      const y = centerY + Math.sin(angle) * labelDistance
+      
+      // Wrap text if needed
+      const words = data[i].skill.split(' ')
+      if (words.length > 1) {
+        ctx.fillText(words[0], x, y - 6)
+        ctx.fillText(words.slice(1).join(' '), x, y + 6)
+      } else {
+        ctx.fillText(data[i].skill, x, y)
+      }
+
+      // Draw value
+      ctx.fillStyle = '#e5e7eb'
+      ctx.font = 'bold 11px sans-serif'
+      ctx.fillText(`${data[i].value}`, x, y + 18)
+    }
+
+  }, [data, showTeamAverage, animationProgress])
 
   return (
-    <div className="relative h-[420px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <RechartsRadarChart
-          cx="50%"
-          cy="50%"
-          outerRadius="80%"
-          data={chartData}
-        >
-          <PolarGrid radialLines={true} stroke="rgba(255,255,255,0.08)" />
-          <PolarAngleAxis
-            dataKey="skill"
-            tick={{ fill: "rgba(255,255,255,0.7)", fontSize: 14 }}
-          />
-          <PolarRadiusAxis
-            angle={90}
-            domain={[0, 100]}
-            tickCount={6}
-            tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 12 }}
-            stroke="rgba(255,255,255,0.1)"
-          />
-          {showTeamAverage && teamAverage && (
-            <Radar
-              key="teamAverage"
-              dataKey="teamAverage"
-              name="Team Average"
-              stroke="rgba(255,255,255,0.8)"
-              fill="rgba(255,255,255,0.05)"
-              strokeDasharray="6 5"
-              strokeWidth={2}
-              fillOpacity={0.1}
-            />
-          )}
-          {series.map((item) => (
-            <Radar
-              key={item.id}
-              dataKey={item.id}
-              name={item.name}
-              stroke={item.color}
-              fill={item.color}
-              fillOpacity={0.25}
-              strokeWidth={2.5}
-              dot={{ r: 4, fill: "#0c0c18", strokeWidth: 2 }}
-              activeDot={{ r: 6, strokeWidth: 0 }}
-              isAnimationActive
-            />
-          ))}
-          <Tooltip
-            content={<CustomTooltip />}
-            cursor={{ stroke: "rgba(255,255,255,0.2)" }}
-          />
-          <Legend
-            wrapperStyle={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}
-            iconType="circle"
-            payload={legendPayload}
-          />
-        </RechartsRadarChart>
-      </ResponsiveContainer>
+    <div className="flex items-center justify-center p-4">
+      <canvas ref={canvasRef} className="max-w-full" />
     </div>
-  );
+  )
 }
+
