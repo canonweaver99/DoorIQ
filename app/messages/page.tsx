@@ -130,7 +130,7 @@ export default function MessagesPage() {
         if (row.recipient_id !== currentUser.id) return
         setMessages(prev => [...prev, {
           id: row.id,
-          text: row.message_text,
+          text: row.message || row.message_text,
           sender_id: row.sender_id,
           sender_name: selectedManager?.name || 'Manager',
           sender_role: 'manager',
@@ -152,7 +152,7 @@ export default function MessagesPage() {
           if (exists) return prev
           return [...prev, {
             id: row.id,
-            text: row.message_text,
+            text: row.message || row.message_text,
             sender_id: row.sender_id,
             sender_name: currentUser.full_name || 'You',
             sender_role: 'rep',
@@ -199,8 +199,7 @@ export default function MessagesPage() {
         .insert({
           sender_id: currentUser.id,
           recipient_id: selectedManager.id,
-          message_text: textToSend,
-          message_type: 'text',
+          message: textToSend,
         })
         .select('id, created_at, is_read')
         .single()
