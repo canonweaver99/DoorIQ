@@ -58,18 +58,14 @@ export async function GET(request: Request) {
         console.log('✅ User profile already exists')
       }
 
-      // For email confirmation or if there's a session but no explicit redirect,
-      // go to confirmation page to ensure session is properly established
-      if (type === 'signup' || type === 'email') {
-        redirectPath = '/auth/confirmed'
-      } else if (data.session && redirectPath === '/') {
-        // OAuth flow - also go through confirmation page to ensure session pickup
-        redirectPath = '/auth/confirmed'
-      }
+      // Always go through confirmation page after successful code exchange
+      // This ensures session is properly established before redirecting
+      console.log('🔄 Forcing redirect through confirmation page')
+      redirectPath = '/auth/confirmed'
     }
   }
   
-  console.log('🔄 Redirecting to:', redirectPath)
+  console.log('🔄 Final redirect path:', redirectPath)
   
   // Redirect to home page or custom destination after successful authentication
   return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
