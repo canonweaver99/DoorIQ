@@ -1,27 +1,260 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { useState } from 'react'
-import { Send, Paperclip, Mic, Smile, Search, Users, Clock, CheckCheck } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { Send, Paperclip, Mic, Smile, Search, Users, CheckCheck } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
-const conversations = [
-  { id: 1, name: 'Marcus Johnson', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', lastMessage: 'Thanks for the feedback!', time: '2m', unread: 0, online: true },
-  { id: 2, name: 'Sarah Chen', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', lastMessage: 'When is the next training?', time: '15m', unread: 2, online: true },
-  { id: 3, name: 'Team Alpha (All)', avatar: '', lastMessage: 'Great work this week everyone!', time: '1h', unread: 0, online: false, isGroup: true },
-  { id: 4, name: 'Alex Rivera', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop', lastMessage: 'Could you review my last session?', time: '2h', unread: 1, online: false },
-]
+interface Message {
+  id: string
+  text: string
+  sender_id: string
+  sender_name: string
+  sender_role: 'rep' | 'manager'
+  created_at: string
+  read: boolean
+}
 
-const messages = [
-  { id: 1, sender: 'Marcus Johnson', text: 'Hi! I wanted to ask about the new objection handling techniques', time: '10:30 AM', isOwn: false },
-  { id: 2, sender: 'You', text: 'Sure! The new approach focuses on acknowledge-validate-respond. Have you reviewed the playbook?', time: '10:32 AM', isOwn: true },
-  { id: 3, sender: 'Marcus Johnson', text: 'Yes, I practiced it in my last session and scored 92%!', time: '10:35 AM', isOwn: false },
-  { id: 4, sender: 'You', text: 'That\'s excellent! Keep using that assumptive language you\'ve been working on.', time: '10:37 AM', isOwn: true },
-  { id: 5, sender: 'Marcus Johnson', text: 'Thanks for the feedback!', time: '10:38 AM', isOwn: false },
-]
+interface Conversation {
+  id: string
+  name: string
+  avatar?: string
+  online?: boolean
+  lastMessage?: string
+  lastMessageTime?: string
+  unreadCount: number
+  role?: string
+}
 
 export default function MessagingCenter() {
-  const [selectedConversation, setSelectedConversation] = useState(conversations[0])
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [messageText, setMessageText] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const supabase = createClient()
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
+  useEffect(() => {
+    fetchUserAndConversations()
+  }, [])
+
+  useEffect(() => {
+    if (!currentUser || !selectedConversation) return
+    loadMessages(selectedConversation.id)
+    subscribeToRealtime(selectedConversation.id)
+    markMessagesAsRead(selectedConversation.id)
+    
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, selectedConversation?.id])
+
+  const fetchUserAndConversations = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        
+        setCurrentUser(userData)
+        await supabase.rpc('update_user_last_seen')
+
+        // Fetch latest conversations
+        const { data: convData, error } = await supabase.rpc('get_latest_conversations', {
+          user_id: user.id
+        })
+
+        if (error) throw error
+
+        const mapped: Conversation[] = (convData || []).map((c: any) => ({
+          id: c.contact_id,
+          name: c.contact_name || 'User',
+          online: c.is_online,
+          lastMessage: c.last_message,
+          lastMessageTime: c.last_message_time,
+          unreadCount: c.unread_count || 0,
+          role: c.contact_role
+        }))
+
+        setConversations(mapped)
+        if (mapped.length > 0) setSelectedConversation(mapped[0])
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadMessages = async (repId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('get_conversation_history', {
+        user1_id: currentUser.id,
+        user2_id: repId,
+      })
+      if (error) throw error
+      
+      const mapped: Message[] = (data || []).map((m: any) => ({
+        id: m.id,
+        text: m.message_text,
+        sender_id: m.sender_id,
+        sender_name: m.sender_name,
+        sender_role: m.sender_role,
+        created_at: m.created_at,
+        read: m.is_read,
+      }))
+      setMessages(mapped)
+    } catch (e) {
+      console.error('Failed to load messages:', e)
+    }
+  }
+
+  const subscribeToRealtime = (repId: string) => {
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
+
+    const channel = supabase.channel(`messages:${currentUser.id}:${repId}`)
+      // Incoming from rep
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `sender_id=eq.${repId}`,
+      }, (payload: any) => {
+        const row = payload.new
+        if (row.recipient_id !== currentUser.id) return
+        setMessages(prev => [...prev, {
+          id: row.id,
+          text: row.message || row.message_text,
+          sender_id: row.sender_id,
+          sender_name: selectedConversation?.name || 'Rep',
+          sender_role: 'rep',
+          created_at: row.created_at,
+          read: !!row.is_read,
+        }])
+        markMessagesAsRead(repId)
+      })
+      // Outgoing from manager
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `sender_id=eq.${currentUser.id}`,
+      }, (payload: any) => {
+        const row = payload.new
+        if (row.recipient_id !== repId) return
+        setMessages(prev => {
+          const exists = prev.some(m => m.id === row.id)
+          if (exists) return prev
+          return [...prev, {
+            id: row.id,
+            text: row.message || row.message_text,
+            sender_id: row.sender_id,
+            sender_name: currentUser.full_name || 'You',
+            sender_role: 'manager',
+            created_at: row.created_at,
+            read: !!row.is_read,
+          }]
+        })
+      })
+      .subscribe()
+    
+    channelRef.current = channel
+  }
+
+  const markMessagesAsRead = async (repId: string) => {
+    try {
+      await supabase
+        .from('messages')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .match({ sender_id: repId, recipient_id: currentUser.id, is_read: false })
+    } catch (e) {
+      console.error('Failed to mark messages as read:', e)
+    }
+  }
+
+  const sendMessage = async () => {
+    if (!messageText.trim() || !selectedConversation || !currentUser) return
+
+    const optimistic: Message = {
+      id: `temp-${Date.now()}`,
+      text: messageText,
+      sender_id: currentUser.id,
+      sender_name: currentUser.full_name || 'You',
+      sender_role: 'manager',
+      created_at: new Date().toISOString(),
+      read: true,
+    }
+
+    setMessages(prev => [...prev, optimistic])
+    const textToSend = messageText
+    setMessageText('')
+
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: currentUser.id,
+          recipient_id: selectedConversation.id,
+          message: textToSend,
+        })
+        .select('id, created_at, is_read')
+        .single()
+      
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+      
+      setMessages(prev => prev.map(m => m.id === optimistic.id ? {
+        ...m,
+        id: data.id,
+        created_at: data.created_at,
+        read: !!data.is_read,
+      } : m))
+    } catch (e: any) {
+      console.error('Failed to send message:', e)
+      alert(`Failed to send message: ${e.message || 'Unknown error'}`)
+      setMessages(prev => prev.filter(m => m.id !== optimistic.id))
+      setMessageText(textToSend)
+    }
+  }
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m`
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h`
+    return date.toLocaleDateString()
+  }
+
+  const filteredConversations = conversations.filter(conv => 
+    conv.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-280px)] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-[calc(100vh-280px)] grid grid-cols-12 gap-6">
@@ -33,7 +266,9 @@ export default function MessagingCenter() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search conversations..."
+              placeholder="Search reps..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
             />
           </div>
@@ -41,48 +276,51 @@ export default function MessagingCenter() {
 
         {/* Conversation List */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {conversations.map((conv, index) => (
-            <motion.button
-              key={conv.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              onClick={() => setSelectedConversation(conv)}
-              className={`w-full p-4 border-b border-white/5 hover:bg-white/5 transition-all text-left ${
-                selectedConversation.id === conv.id ? 'bg-white/10' : ''
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {conv.isGroup ? (
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                ) : (
+          <AnimatePresence>
+            {filteredConversations.map((conv, index) => (
+              <motion.button
+                key={conv.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                onClick={() => setSelectedConversation(conv)}
+                className={`w-full p-4 border-b border-white/5 hover:bg-white/5 transition-all text-left ${
+                  selectedConversation?.id === conv.id ? 'bg-white/10' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
                   <div className="relative">
-                    <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-xl object-cover" />
+                    {conv.avatar ? (
+                      <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-xl object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                        {conv.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     {conv.online && (
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-[#1e1e30] rounded-full"></div>
                     )}
                   </div>
-                )}
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-semibold text-white truncate">{conv.name}</p>
-                    <span className="text-xs text-slate-400">{conv.time}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-slate-400 truncate">{conv.lastMessage}</p>
-                    {conv.unread > 0 && (
-                      <span className="flex-shrink-0 ml-2 px-2 py-0.5 bg-purple-500 text-white text-xs font-bold rounded-full">
-                        {conv.unread}
-                      </span>
-                    )}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-semibold text-white truncate">{conv.name}</p>
+                      <span className="text-xs text-slate-400">{conv.lastMessageTime ? formatTime(conv.lastMessageTime) : ''}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-slate-400 truncate">{conv.lastMessage || 'No messages yet'}</p>
+                      {conv.unreadCount > 0 && (
+                        <span className="flex-shrink-0 ml-2 px-2 py-0.5 bg-purple-500 text-white text-xs font-bold rounded-full">
+                          {conv.unreadCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.button>
-          ))}
+              </motion.button>
+            ))}
+          </AnimatePresence>
         </div>
 
         {/* Broadcast Button */}
@@ -96,86 +334,101 @@ export default function MessagingCenter() {
 
       {/* Active Conversation */}
       <div className="col-span-12 md:col-span-8 bg-[#1e1e30] border border-white/10 rounded-2xl overflow-hidden flex flex-col">
-        {/* Chat Header */}
-        <div className="p-4 border-b border-white/10 bg-white/5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {selectedConversation.isGroup ? (
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
+        {selectedConversation ? (
+          <>
+            {/* Chat Header */}
+            <div className="p-4 border-b border-white/10 bg-white/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    {selectedConversation.avatar ? (
+                      <img src={selectedConversation.avatar} alt={selectedConversation.name} className="w-10 h-10 rounded-xl object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                        {selectedConversation.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    {selectedConversation.online && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-[#1e1e30] rounded-full"></div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{selectedConversation.name}</p>
+                    <p className="text-xs text-slate-400">Rep • {selectedConversation.online ? 'Online' : 'Offline'}</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="relative">
-                  <img src={selectedConversation.avatar} alt={selectedConversation.name} className="w-10 h-10 rounded-xl object-cover" />
-                  {selectedConversation.online && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-[#1e1e30] rounded-full"></div>
-                  )}
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-semibold text-white">{selectedConversation.name}</p>
-                <p className="text-xs text-slate-400">{selectedConversation.online ? 'Online' : 'Offline'}</p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-          {messages.map((message, index) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-[70%] ${message.isOwn ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                {!message.isOwn && (
-                  <span className="text-xs text-slate-400 px-2">{message.sender}</span>
-                )}
-                <div className={`px-4 py-3 rounded-2xl ${
-                  message.isOwn
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                    : 'bg-white/10 text-white border border-white/10'
-                }`}>
-                  <p className="text-sm">{message.text}</p>
-                </div>
-                <div className="flex items-center gap-2 px-2">
-                  <span className="text-xs text-slate-400">{message.time}</span>
-                  {message.isOwn && (
-                    <CheckCheck className="w-3 h-3 text-purple-400" />
-                  )}
-                </div>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {messages.map((message, index) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className={`flex ${message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[70%] ${message.sender_id === currentUser?.id ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                    {message.sender_id !== currentUser?.id && (
+                      <span className="text-xs text-slate-400 px-2">{message.sender_name}</span>
+                    )}
+                    <div className={`px-4 py-3 rounded-2xl ${
+                      message.sender_id === currentUser?.id
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                        : 'bg-white/10 text-white border border-white/10'
+                    }`}>
+                      <p className="text-sm">{message.text}</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-2">
+                      <span className="text-xs text-slate-400">{formatTime(message.created_at)}</span>
+                      {message.sender_id === currentUser?.id && message.read && (
+                        <CheckCheck className="w-3 h-3 text-purple-400" />
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Message Input */}
+            <div className="p-4 border-t border-white/10 bg-white/5">
+              <div className="flex items-center gap-3">
+                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                  <Paperclip className="w-5 h-5 text-slate-400" />
+                </button>
+                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                  <Smile className="w-5 h-5 text-slate-400" />
+                </button>
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                />
+                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                  <Mic className="w-5 h-5 text-slate-400" />
+                </button>
+                <button
+                  onClick={sendMessage}
+                  className="p-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-lg transition-all"
+                >
+                  <Send className="w-5 h-5 text-white" />
+                </button>
               </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Message Input */}
-        <div className="p-4 border-t border-white/10 bg-white/5">
-          <div className="flex items-center gap-3">
-            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <Paperclip className="w-5 h-5 text-slate-400" />
-            </button>
-            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <Smile className="w-5 h-5 text-slate-400" />
-            </button>
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
-            />
-            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <Mic className="w-5 h-5 text-slate-400" />
-            </button>
-            <button className="p-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-lg transition-all">
-              <Send className="w-5 h-5 text-white" />
-            </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <Users className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+              <p className="text-slate-400">Select a rep to start messaging</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
