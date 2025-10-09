@@ -57,6 +57,12 @@ export default function SignUpPage() {
 
       if (signUpError) throw signUpError
 
+      console.log('📝 Signup response:', {
+        user: !!authData.user,
+        session: !!authData.session,
+        userId: authData.user?.id
+      })
+
       // Step 2: Create user profile in users table
       if (authData.user) {
         const res = await fetch('/api/users/create', {
@@ -77,12 +83,20 @@ export default function SignUpPage() {
           }
         }
 
-        // Step 3: Wait a moment for session to be established
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        // Step 4: Redirect to home page
-        router.push('/')
-        router.refresh()
+        // Step 3: Check if session was created (email confirmation might be required)
+        if (authData.session) {
+          console.log('✅ Session created, redirecting...')
+          
+          // Wait a moment for session to be fully established
+          await new Promise(resolve => setTimeout(resolve, 800))
+          
+          // Use window.location for a full page reload to ensure session is picked up
+          window.location.href = '/'
+        } else {
+          console.log('⚠️ No session - email confirmation may be required')
+          setError('Account created! Please check your email to confirm your account, then sign in.')
+          setLoading(false)
+        }
       } else {
         setError('Account created but session not established. Please try logging in.')
         setLoading(false)
