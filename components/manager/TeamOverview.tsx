@@ -1,18 +1,19 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Users, TrendingUp, Target, AlertCircle, Mail, Calendar, Trophy, Download, Activity, DollarSign } from 'lucide-react'
+import { Users, TrendingUp, Target, Mail, Calendar, Trophy, Download, Activity, DollarSign } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 // Mock data
 const teamData = {
   totalReps: 24,
+  activeNow: 18,
   teamAverage: 78,
-  trainingCompletion: 87,
-  activeAlerts: 2,
+  totalEarned: 24750,
   monthlyChange: 8.3,
   weeklyChange: 5.2,
-  weeklyCompletionChange: 12.5,
+  earningsChange: 15.3,
+  activeChange: 3,
 }
 
 const topPerformers = [
@@ -79,17 +80,17 @@ export default function TeamOverview() {
     <div className="space-y-8">
       {/* TOP METRICS ROW - 4 Minimal Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Reps */}
+        {/* Total Earned */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
           className="metric-card"
         >
-          <Users className="w-4 h-4 text-slate-400 mb-4" />
-          <p className="metric-value">{teamData.totalReps}</p>
-          <p className="metric-label">Total Reps</p>
-          <p className="metric-change text-green-400">+{teamData.monthlyChange}% from last month</p>
+          <DollarSign className="w-4 h-4 text-slate-400 mb-4" />
+          <p className="metric-value">${teamData.totalEarned.toLocaleString()}</p>
+          <p className="metric-label">Total Earned</p>
+          <p className="metric-change text-green-400">+{teamData.earningsChange}% from last month</p>
         </motion.div>
 
         {/* Team Average */}
@@ -105,30 +106,30 @@ export default function TeamOverview() {
           <p className="metric-change text-green-400">+{teamData.weeklyChange}% from last week</p>
         </motion.div>
 
-        {/* Training Completion */}
+        {/* Total Reps */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
           className="metric-card"
         >
-          <Activity className="w-4 h-4 text-slate-400 mb-4" />
-          <p className="metric-value">{teamData.trainingCompletion}%</p>
-          <p className="metric-label">Training Completion</p>
-          <p className="metric-change text-green-400">+{teamData.weeklyCompletionChange}% this week</p>
+          <Users className="w-4 h-4 text-slate-400 mb-4" />
+          <p className="metric-value">{teamData.totalReps}</p>
+          <p className="metric-label">Total Reps</p>
+          <p className="metric-change text-green-400">+{teamData.monthlyChange}% from last month</p>
         </motion.div>
 
-        {/* Active Alerts */}
+        {/* Active Now */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.3 }}
-          className="metric-card cursor-pointer hover:border-amber-500/30"
+          className="metric-card"
         >
-          <AlertCircle className="w-4 h-4 text-amber-400 mb-4" />
-          <p className="metric-value">{teamData.activeAlerts}</p>
-          <p className="metric-label">Active Alerts</p>
-          <p className="metric-change text-slate-400">Click to view details</p>
+          <Activity className="w-4 h-4 text-green-400 mb-4" />
+          <p className="metric-value">{teamData.activeNow}</p>
+          <p className="metric-label">Active Now</p>
+          <p className="metric-change text-slate-400">+{teamData.activeChange} since last hour</p>
         </motion.div>
       </div>
 
