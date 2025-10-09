@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Home,
   Mic,
@@ -79,6 +79,7 @@ const parseEarnings = (value: unknown): number => {
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
@@ -198,41 +199,50 @@ export default function Header() {
     return navItems
   }, [userRole])
 
-  const sidebarSections: Array<{
-    title: string
-    items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string; managerOnly?: boolean }>
-  }> = [
-    {
-      title: 'Workspace',
-      items: [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-        { name: 'AI Insights', href: '/insights', icon: PieChart },
-        { name: 'Playbooks', href: '/playbooks', icon: NotebookPen, badge: 'New' },
-        { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
-      ],
-    },
-    {
-      title: 'Training',
-      items: [
-        { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
-        { name: 'Session History', href: '/sessions', icon: ClipboardList },
-        { name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 },
-      ],
-    },
-    {
-      title: 'Support & Account',
-      items: [
-        { name: 'Messages', href: '/messages', icon: MessageCircle },
-        { name: 'Documentation', href: '/documentation', icon: BookOpen },
-        { name: 'Help Center', href: '/support', icon: HelpCircle },
-        { name: 'Notifications', href: '/notifications', icon: Bell },
-        { name: 'Settings', href: '/settings', icon: SettingsIcon },
-        { name: 'Billing', href: '/billing', icon: CreditCard },
-        { name: 'User Profile', href: '/profile', icon: UserCircle },
-      ],
-    },
-  ]
+  const isManagerLike = userRole === 'manager' || userRole === 'admin'
+
+  const sidebarSections = useMemo(() => {
+    const sections: Array<{
+      title: string
+      items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string; managerOnly?: boolean }>
+    }> = [
+      {
+        title: 'Workspace',
+        items: [
+          { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+          { name: 'Analytics', href: isManagerLike ? '/manager?tab=analytics' : '/analytics', icon: BarChart3 },
+          { name: 'Playbooks', href: '/playbooks', icon: NotebookPen, badge: 'New' },
+          { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
+        ],
+      },
+      {
+        title: 'Training',
+        items: [
+          { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
+          { name: 'Session History', href: '/sessions', icon: ClipboardList },
+          { name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 },
+        ],
+      },
+      {
+        title: 'Support & Account',
+        items: [
+          { name: 'Messages', href: isManagerLike ? '/manager?tab=messages' : '/messages', icon: MessageCircle },
+          { name: 'Documentation', href: '/documentation', icon: BookOpen },
+          { name: 'Help Center', href: '/support', icon: HelpCircle },
+          { name: 'Notifications', href: '/notifications', icon: Bell },
+          { name: 'Settings', href: '/settings', icon: SettingsIcon },
+          { name: 'Billing', href: '/billing', icon: CreditCard },
+          { name: 'User Profile', href: '/profile', icon: UserCircle },
+        ],
+      },
+    ]
+
+    if (!isManagerLike) {
+      sections[0].items.splice(2, 0, { name: 'AI Insights', href: '/insights', icon: PieChart })
+    }
+
+    return sections
+  }, [isManagerLike])
 
   const quickActions = [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
@@ -241,23 +251,28 @@ export default function Header() {
   ]
 
   const profileNavigation = useMemo(() => {
-    return [
+    const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean }> = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-      { name: 'AI Insights', href: '/insights', icon: PieChart },
+      { name: 'Analytics', href: isManagerLike ? '/manager?tab=analytics' : '/analytics', icon: BarChart3 },
       { name: 'Playbooks', href: '/playbooks', icon: NotebookPen },
       { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
       { name: 'Documentation', href: '/documentation', icon: BookOpen },
-      { name: 'Messages', href: '/messages', icon: MessageCircle },
+      { name: 'Messages', href: isManagerLike ? '/manager?tab=messages' : '/messages', icon: MessageCircle },
       { name: 'Support', href: '/support', icon: LifeBuoy },
       { name: 'Integrations', href: '/integrations', icon: Plug },
       { name: 'Notifications', href: '/notifications', icon: Bell },
       { name: 'Settings', href: '/settings', icon: SettingsIcon },
       { name: 'Billing', href: '/billing', icon: CreditCard },
       { name: 'User Profile', href: '/profile', icon: UserCircle },
-    ] satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean }>
-  }, [])
+    ]
+
+    if (!isManagerLike) {
+      items.splice(2, 0, { name: 'AI Insights', href: '/insights', icon: PieChart })
+    }
+
+    return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean }>
+  }, [isManagerLike])
 
   const handleSignOut = async () => {
     try {
@@ -275,7 +290,14 @@ export default function Header() {
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
-    return pathname.startsWith(href)
+
+    if (href.startsWith('/manager?tab=')) {
+      const targetTab = href.split('tab=')[1]
+      return pathname === '/manager' && searchParams?.get('tab') === targetTab
+    }
+
+    const [basePath] = href.split('?')
+    return pathname.startsWith(basePath)
   }
 
   useEffect(() => {

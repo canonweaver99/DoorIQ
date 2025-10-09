@@ -1,8 +1,8 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
-import { Search, Filter, ChevronDown, MoreVertical, Mail, Target, X, TrendingUp, TrendingDown, CheckSquare } from 'lucide-react'
+import { useRef, useState, useEffect } from 'react'
+import { Search, Filter, ChevronDown, MoreVertical, Mail, Target, X, TrendingUp, TrendingDown, CheckSquare, UserCheck, MessageSquare, Eye } from 'lucide-react'
 import RepProfileModal from './RepProfileModal'
 
 const mockReps = [
@@ -19,6 +19,34 @@ export default function RepManagement() {
   const [sortBy, setSortBy] = useState('score')
   const [selectedReps, setSelectedReps] = useState<number[]>([])
   const [selectedRep, setSelectedRep] = useState<typeof mockReps[0] | null>(null)
+  const [actionMenuRepId, setActionMenuRepId] = useState<number | null>(null)
+  const actionMenuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!actionMenuRepId) return
+      if (actionMenuRef.current?.contains(event.target as Node)) return
+      setActionMenuRepId(null)
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [actionMenuRepId])
+
+  const handleAction = (action: 'message' | 'promote' | 'profile', repId: number) => {
+    switch (action) {
+      case 'message':
+        // placeholder: wire up messaging flow when backend available
+        break
+      case 'promote':
+        // placeholder: integrate promotion flow when role management is ready
+        break
+      case 'profile':
+        setSelectedRep(mockReps.find((rep) => rep.id === repId) ?? null)
+        break
+    }
+    setActionMenuRepId(null)
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -231,10 +259,59 @@ export default function RepManagement() {
                 </div>
 
                 {/* Actions */}
-                <div className="col-span-1" onClick={(e) => e.stopPropagation()}>
-                  <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <div className="col-span-1 relative" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    onClick={() => setActionMenuRepId((prev) => (prev === rep.id ? null : rep.id))}
+                    aria-haspopup="menu"
+                    aria-expanded={actionMenuRepId === rep.id}
+                    aria-label={`Open actions for ${rep.name}`}
+                  >
                     <MoreVertical className="w-5 h-5 text-slate-400" />
                   </button>
+
+                  <AnimatePresence>
+                    {actionMenuRepId === rep.id && (
+                      <motion.div
+                        ref={actionMenuRef}
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-[#1f1f32] shadow-lg shadow-purple-600/20 z-10"
+                        role="menu"
+                        aria-label="Rep actions"
+                      >
+                        {[
+                          {
+                            key: 'message' as const,
+                            label: 'Send Message',
+                            icon: <MessageSquare className="w-4 h-4 text-purple-300" />,
+                          },
+                          {
+                            key: 'promote' as const,
+                            label: 'Promote to Manager',
+                            icon: <UserCheck className="w-4 h-4 text-blue-300" />,
+                          },
+                          {
+                            key: 'profile' as const,
+                            label: 'View Profile',
+                            icon: <Eye className="w-4 h-4 text-green-300" />,
+                          },
+                        ].map((item) => (
+                          <button
+                            key={item.key}
+                            onClick={() => handleAction(item.key, rep.id)}
+                            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                            role="menuitem"
+                          >
+                            {item.icon}
+                            {item.label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             </motion.div>

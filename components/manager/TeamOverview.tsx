@@ -10,7 +10,7 @@ const teamData = {
   activeNow: 18,
   teamAverage: 78,
   totalEarned: 24750,
-  monthlyChange: 8.3,
+  monthlyChange: 3,
   weeklyChange: 5.2,
   earningsChange: 15.3,
   activeChange: 3,
@@ -116,7 +116,7 @@ export default function TeamOverview() {
           <Users className="w-4 h-4 text-slate-400 mb-4" />
           <p className="metric-value">{teamData.totalReps}</p>
           <p className="metric-label">Total Reps</p>
-          <p className="metric-change text-green-400">+{teamData.monthlyChange}% from last month</p>
+          <p className="metric-change text-green-400">+{teamData.monthlyChange} from last month</p>
         </motion.div>
 
         {/* Active Now */}
