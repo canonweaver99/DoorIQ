@@ -76,7 +76,7 @@ const parseEarnings = (value: unknown): number => {
   return 0
 }
 
-export default function Header() {
+function HeaderContent() {
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -718,6 +718,10 @@ export default function Header() {
         )}
     </header>
   )
+}
+
+export default function Header() {
+  return <HeaderContent />
 }
 
 const HamburgerIcon = ({ open }: { open: boolean }) => {

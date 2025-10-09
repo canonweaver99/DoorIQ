@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Suspense } from "react";
 import Header from "@/components/navigation/Header";
 import { Footer } from "@/components/ui/footer-section";
 
@@ -50,7 +51,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100` }>
-        <Header />
+        <Suspense fallback={<div style={{ height: 64 }} />}>
+          <Header />
+        </Suspense>
         {/* Spacer to avoid content under fixed nav (approx 64px for new header) */}
         <div style={{ height: 64 }} />
         <div className="min-h-[calc(100svh-64px)] flex flex-col">
