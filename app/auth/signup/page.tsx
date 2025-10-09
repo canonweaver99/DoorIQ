@@ -43,7 +43,9 @@ export default function SignUpPage() {
 
     try {
       const supabase = createClient()
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      
+      // Step 1: Create auth user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -55,12 +57,30 @@ export default function SignUpPage() {
 
       if (signUpError) throw signUpError
 
-      // Check if user is confirmed (some setups auto-confirm, others require email verification)
-      if (data.user) {
-        // Wait a moment for session to be established
+      // Step 2: Create user profile in users table
+      if (authData.user) {
+        const res = await fetch('/api/users/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: authData.user.id,
+            email: authData.user.email,
+            full_name: fullName,
+          })
+        })
+        
+        const json = await res.json()
+        if (!res.ok && res.status !== 200) {
+          // If user already exists (duplicate), that's okay - might be re-signup
+          if (json.message !== 'User already exists') {
+            throw new Error(json.error || 'Failed to create user profile')
+          }
+        }
+
+        // Step 3: Wait a moment for session to be established
         await new Promise(resolve => setTimeout(resolve, 500))
         
-        // Redirect to home page
+        // Step 4: Redirect to home page
         router.push('/')
         router.refresh()
       } else {
@@ -68,6 +88,7 @@ export default function SignUpPage() {
         setLoading(false)
       }
     } catch (err: any) {
+      console.error('Signup error:', err)
       setError(err.message || 'Failed to create account')
       setLoading(false)
     }

@@ -31,6 +31,9 @@ export async function GET(request: Request) {
     }
   }
 
-  // Redirect to trainer after successful authentication
-  return NextResponse.redirect(new URL('/trainer/select-homeowner', requestUrl.origin))
+  // Check if there's a 'next' parameter for custom redirect
+  const next = requestUrl.searchParams.get('next') || '/'
+  
+  // Redirect to home page or custom destination after successful authentication
+  return NextResponse.redirect(new URL(next, requestUrl.origin))
 }
