@@ -1,165 +1,144 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { TrendingUp, Users, Target, Download, Calendar } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
+import RadarChart from '@/components/analytics/RadarChart'
+import ConversionFunnel from '@/components/analytics/ConversionFunnel'
+import AIInsightsPanel from '@/components/analytics/AIInsightsPanel'
+import RepComparison from '@/components/analytics/RepComparison'
+import LeaderboardMini from '@/components/analytics/LeaderboardMini'
+import DateRangePicker from '@/components/analytics/DateRangePicker'
+import type { InsightType } from '@/components/analytics/AIInsightsPanel'
 
-const performanceData = [
-  { month: 'Apr', teamAvg: 72, topPerformer: 88, industry: 75 },
-  { month: 'May', teamAvg: 75, topPerformer: 90, industry: 76 },
-  { month: 'Jun', teamAvg: 78, topPerformer: 92, industry: 77 },
-  { month: 'Jul', teamAvg: 76, topPerformer: 89, industry: 76 },
-  { month: 'Aug', teamAvg: 80, topPerformer: 94, industry: 78 },
-  { month: 'Sep', teamAvg: 82, topPerformer: 95, industry: 79 },
+const mockReps = [
+  { id: '1', name: 'Sarah Johnson' },
+  { id: '2', name: 'Mike Chen' },
+  { id: '3', name: 'Emily Rodriguez' },
+  { id: '4', name: 'James Smith' },
 ]
 
-const skillDistribution = [
-  { name: 'Rapport', value: 85 },
-  { name: 'Discovery', value: 78 },
-  { name: 'Objection Handling', value: 82 },
-  { name: 'Closing', value: 88 },
+const mockLeaderboard = [
+  { rank: 1, name: 'Sarah Johnson', score: 94, change: 2 },
+  { rank: 2, name: 'Mike Chen', score: 91, change: -1 },
+  { rank: 3, name: 'Emily Rodriguez', score: 88, change: 1 },
+  { rank: 4, name: 'James Smith', score: 85, change: 0 },
 ]
-
-const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#EC4899']
 
 export default function AnalyticsDashboard() {
+  const [selectedReps, setSelectedReps] = useState<string[]>(['1'])
+  const [showTeamAverage, setShowTeamAverage] = useState(false)
+  const [dateRange, setDateRange] = useState('Last 30 Days')
+  const [refreshing, setRefreshing] = useState(false)
+  const [insights, setInsights] = useState<Array<{ type: InsightType; title: string; description: string; confidence: number; priority: 'high' | 'medium' | 'low' }>>([])
+
+  useEffect(() => {
+    generateInsights()
+    const id = setInterval(generateInsights, 60000)
+    return () => clearInterval(id)
+  }, [selectedReps])
+
+  const generateInsights = () => {
+    setInsights([
+      { type: 'pattern', title: 'Discovery Questions Drive Wins', description: '3+ open-ended questions early increases close rate by 68%.', confidence: 87, priority: 'high' },
+      { type: 'anomaly', title: 'Thursday Afternoon Dip', description: 'Objection handling down 23% on Thursdays 3-5 PM.', confidence: 92, priority: 'high' },
+      { type: 'opportunity', title: 'Assumptive Language Undersused', description: 'Top reps use assumptive closes 2.3x more.', confidence: 79, priority: 'medium' },
+      { type: 'coaching', title: 'Active Listening Gap', description: '4 reps need acknowledgment and paraphrasing drills.', confidence: 84, priority: 'high' },
+      { type: 'predictor', title: 'Best Time Window', description: '10–11 AM sessions have 34% higher success.', confidence: 76, priority: 'medium' },
+    ])
+  }
+
+  const handleRefreshInsights = () => {
+    setRefreshing(true)
+    setTimeout(() => { generateInsights(); setRefreshing(false) }, 1200)
+  }
+
+  const handleExport = () => {
+    // TODO: implement export for manager analytics
+    console.log('Export manager analytics')
+  }
+
+  const radarData = [
+    { skill: 'Rapport Building', value: 84, teamAverage: 76 },
+    { skill: 'Discovery', value: 86, teamAverage: 78 },
+    { skill: 'Objection Handling', value: 73, teamAverage: 71 },
+    { skill: 'Closing', value: 81, teamAverage: 69 },
+    { skill: 'Speaking Mechanics', value: 79, teamAverage: 75 },
+  ]
+
+  const funnelStages = [
+    { name: 'Door Opened', percentage: 100, avgTime: '0:30', bestPerformer: 'Sarah J.' },
+    { name: 'Rapport Built', percentage: 82, avgTime: '2:10', bestPerformer: 'Mike C.' },
+    { name: 'Needs Discovered', percentage: 68, avgTime: '4:20', isDropoff: true, dropoffReasons: ['Insufficient open-ended questions', 'Rushed discovery'], bestPerformer: 'Sarah J.' },
+    { name: 'Solution Presented', percentage: 57, avgTime: '3:40', dropoffReasons: ['Generic pitch', 'Jargon confusion'], bestPerformer: 'Emily R.' },
+    { name: 'Objections Handled', percentage: 44, avgTime: '5:05', isDropoff: true, dropoffReasons: ['Defensive tone', 'No clarifying questions'], bestPerformer: 'James S.' },
+    { name: 'Close Attempted', percentage: 36, avgTime: '2:00', bestPerformer: 'Sarah J.' },
+    { name: 'Sale Closed', percentage: 21, avgTime: '1:40', bestPerformer: 'Sarah J.' },
+  ]
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white mb-1">Analytics Dashboard</h2>
-          <p className="text-slate-400">Comprehensive team performance insights</p>
+          <p className="text-slate-400">Actionable team performance insights</p>
         </div>
         <div className="flex items-center gap-2">
-          <select className="px-4 py-2 bg-[#1e1e30] border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40">
-            <option>Last 30 Days</option>
-            <option>Last 90 Days</option>
-            <option>Last 6 Months</option>
-            <option>All Time</option>
-          </select>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30">
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
+          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30">
             <Download className="w-4 h-4" />
             Export Report
           </button>
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Sessions', value: 247, change: '+12%', icon: Target, color: 'purple' },
-          { label: 'Team Average', value: '82%', change: '+5%', icon: TrendingUp, color: 'blue' },
-          { label: 'Active Reps', value: 24, change: '+2', icon: Users, color: 'green' },
-          { label: 'Training ROI', value: '340%', change: '+18%', icon: Calendar, color: 'amber' },
-        ].map((metric, idx) => {
-          const Icon = metric.icon
-          return (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.1 }}
-              className="bg-[#1e1e30] border border-white/10 rounded-xl p-6"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <Icon className={`w-5 h-5 text-${metric.color}-400`} />
-                <span className="text-xs font-semibold text-green-400">{metric.change}</span>
-              </div>
-              <p className="text-3xl font-bold text-white mb-1">{metric.value}</p>
-              <p className="text-sm text-slate-400">{metric.label}</p>
-            </motion.div>
-          )
-        })}
-      </div>
+      {/* Three-column grid: 30-40-30 */}
+      <div className="grid grid-cols-1 xl:grid-cols-10 gap-6">
+        {/* Left 30% */}
+        <div className="xl:col-span-3 space-y-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-5">
+            <h3 className="text-sm font-medium text-white mb-4 uppercase tracking-wider">Rep Comparison</h3>
+            <RepComparison availableReps={mockReps} selectedReps={selectedReps} onSelectionChange={setSelectedReps} maxSelection={4} />
+            <div className="mt-4 pt-4 border-t border-white/[0.08]">
+              <button onClick={() => setShowTeamAverage(!showTeamAverage)} className={`${showTeamAverage ? 'bg-purple-500/20 text-purple-200' : 'bg-white/[0.02] text-white/70 hover:bg-white/[0.04] hover:text-white'} w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-all`}>
+                <span className="text-sm font-medium">Compare to Team Average</span>
+                <div className={`${showTeamAverage ? 'bg-purple-500' : 'bg-white/20'} w-10 h-5 rounded-full relative`}>
+                  <div className={`${showTeamAverage ? 'translate-x-5' : 'translate-x-0.5'} absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform`} />
+                </div>
+              </button>
+            </div>
+          </motion.div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Performance Trend */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-        >
-          <h3 className="text-lg font-semibold text-white mb-4">Performance Trend</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3e" />
-                <XAxis dataKey="month" stroke="#64748b" style={{ fontSize: '12px' }} />
-                <YAxis stroke="#64748b" style={{ fontSize: '12px' }} domain={[0, 100]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1e1e30',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '12px',
-                  }}
-                />
-                <Legend />
-                <Line type="monotone" dataKey="teamAvg" stroke="#8B5CF6" strokeWidth={2} name="Team Avg" />
-                <Line type="monotone" dataKey="topPerformer" stroke="#10B981" strokeWidth={2} name="Top Performer" />
-                <Line type="monotone" dataKey="industry" stroke="#64748b" strokeWidth={2} strokeDasharray="5 5" name="Industry Avg" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }} className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-5">
+            <h3 className="text-sm font-medium text-white mb-2 uppercase tracking-wider">Skills Assessment</h3>
+            <RadarChart data={radarData} showTeamAverage={showTeamAverage} animated={true} />
+          </motion.div>
 
-        {/* Skill Distribution */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-        >
-          <h3 className="text-lg font-semibold text-white mb-4">Skill Distribution</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={skillDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {skillDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* AI Insights */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.6 }}
-        className="bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-2xl p-6"
-      >
-        <h3 className="text-lg font-semibold text-white mb-4">AI-Generated Insights</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/10 border border-white/10 rounded-xl p-4">
-            <p className="text-sm font-medium text-purple-300 mb-2">🎯 Trend Identified</p>
-            <p className="text-sm text-white">Team scores increase 15% on Tuesday afternoons</p>
-          </div>
-          <div className="bg-white/10 border border-white/10 rounded-xl p-4">
-            <p className="text-sm font-medium text-amber-300 mb-2">⚠️ Anomaly Detected</p>
-            <p className="text-sm text-white">3 reps showing declining performance this week</p>
-          </div>
-          <div className="bg-white/10 border border-white/10 rounded-xl p-4">
-            <p className="text-sm font-medium text-green-300 mb-2">💡 Recommendation</p>
-            <p className="text-sm text-white">Focus team training on objection handling next week</p>
-          </div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }} className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-5">
+            <LeaderboardMini entries={mockLeaderboard} />
+          </motion.div>
         </div>
-      </motion.div>
+
+        {/* Center 40% */}
+        <div className="xl:col-span-4">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }} className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-6">Session Flow Analysis</h3>
+            <ConversionFunnel stages={funnelStages} />
+          </motion.div>
+        </div>
+
+        {/* Right 30% */}
+        <div className="xl:col-span-3">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }} className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-medium text-white uppercase tracking-wider">AI-Powered Recommendations</h3>
+              {refreshing && <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />}
+            </div>
+            <AIInsightsPanel insights={insights} onRefresh={handleRefreshInsights} refreshing={refreshing} />
+          </motion.div>
+        </div>
+      </div>
     </div>
   )
 }
