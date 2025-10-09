@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Users, TrendingUp, Target, Mail, Calendar, Trophy, Download, Activity, DollarSign } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 // Mock data
 const teamData = {
@@ -59,23 +60,68 @@ const topPerformers = [
   },
 ]
 
-// Performance chart data
-const performanceData = [
-  { month: 'Jan', teamAvg: 72, topPerformer: 88, industryAvg: 68 },
-  { month: 'Feb', teamAvg: 68, topPerformer: 85, industryAvg: 67 },
-  { month: 'Mar', teamAvg: 75, topPerformer: 90, industryAvg: 69 },
-  { month: 'Apr', teamAvg: 82, topPerformer: 94, industryAvg: 70 },
-  { month: 'May', teamAvg: 73, topPerformer: 87, industryAvg: 68 },
-  { month: 'Jun', teamAvg: 77, topPerformer: 91, industryAvg: 71 },
-  { month: 'Jul', teamAvg: 79, topPerformer: 89, industryAvg: 69 },
-  { month: 'Aug', teamAvg: 74, topPerformer: 86, industryAvg: 68 },
-  { month: 'Sep', teamAvg: 80, topPerformer: 93, industryAvg: 72 },
-  { month: 'Oct', teamAvg: 76, topPerformer: 88, industryAvg: 70 },
-  { month: 'Nov', teamAvg: 81, topPerformer: 90, industryAvg: 71 },
-  { month: 'Dec', teamAvg: 85, topPerformer: 95, industryAvg: 73 },
+// Revenue chart data by time period
+const dailyRevenueData = Array.from({ length: 30 }, (_, i) => {
+  const date = new Date()
+  date.setDate(date.getDate() - (29 - i))
+  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
+  const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return {
+    period: i % 7 === 0 ? dateStr : dayName,
+    revenue: Math.floor(3000 + Math.random() * 4000),
+    repsWhoSold: Math.floor(5 + Math.random() * 12),
+    totalSales: Math.floor(8 + Math.random() * 20)
+  }
+})
+
+const weeklyRevenueData = Array.from({ length: 12 }, (_, i) => {
+  const weekStart = new Date()
+  weekStart.setDate(weekStart.getDate() - (11 - i) * 7)
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekEnd.getDate() + 6)
+  return {
+    period: `Week ${i + 1}`,
+    fullPeriod: `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    revenue: Math.floor(18000 + Math.random() * 15000),
+    repsWhoSold: Math.floor(12 + Math.random() * 8),
+    totalSales: Math.floor(45 + Math.random() * 60)
+  }
+})
+
+const monthlyRevenueData = [
+  { period: 'Jan', revenue: 62500, repsWhoSold: 18, totalSales: 245 },
+  { period: 'Feb', revenue: 58200, repsWhoSold: 16, totalSales: 228 },
+  { period: 'Mar', revenue: 71800, repsWhoSold: 20, totalSales: 282 },
+  { period: 'Apr', revenue: 85300, repsWhoSold: 22, totalSales: 315 },
+  { period: 'May', revenue: 68900, repsWhoSold: 19, totalSales: 265 },
+  { period: 'Jun', revenue: 78400, repsWhoSold: 21, totalSales: 298 },
+  { period: 'Jul', revenue: 82100, repsWhoSold: 23, totalSales: 308 },
+  { period: 'Aug', revenue: 69500, repsWhoSold: 18, totalSales: 272 },
+  { period: 'Sep', revenue: 88700, repsWhoSold: 24, totalSales: 335 },
+  { period: 'Oct', revenue: 76200, repsWhoSold: 20, totalSales: 289 },
+  { period: 'Nov', revenue: 84600, repsWhoSold: 22, totalSales: 318 },
+  { period: 'Dec', revenue: 92800, repsWhoSold: 24, totalSales: 348 },
 ]
 
 export default function TeamOverview() {
+  const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month'>('month')
+  
+  // Get data based on selected time period
+  const getChartData = () => {
+    switch (timePeriod) {
+      case 'day':
+        return dailyRevenueData
+      case 'week':
+        return weeklyRevenueData
+      case 'month':
+        return monthlyRevenueData
+      default:
+        return monthlyRevenueData
+    }
+  }
+
+  const chartData = getChartData()
+  
   return (
     <div className="space-y-8">
       {/* TOP METRICS ROW - 4 Minimal Cards */}
@@ -142,66 +188,111 @@ export default function TeamOverview() {
           transition={{ duration: 0.4, delay: 0.4 }}
           className="lg:col-span-3 performance-chart"
         >
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white">Team Performance</h3>
-            <p className="text-sm text-slate-400 mt-1">Monthly average comparison</p>
+          <div className="mb-6 flex items-end justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Team Performance</h3>
+              <p className="text-sm text-slate-400 mt-1">Total team revenue over time</p>
+            </div>
+            
+            {/* Time Period Toggle */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg p-1">
+              <button
+                onClick={() => setTimePeriod('day')}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                  timePeriod === 'day'
+                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Day
+              </button>
+              <button
+                onClick={() => setTimePeriod('week')}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                  timePeriod === 'week'
+                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => setTimePeriod('month')}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                  timePeriod === 'month'
+                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Month
+              </button>
+            </div>
           </div>
 
           <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={performanceData}>
+            <BarChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
+              <defs>
+                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#06B6D4" stopOpacity={0.6} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
               <XAxis 
-                dataKey="month" 
+                dataKey="period" 
                 stroke="#6B7280"
-                tick={{ fill: '#6B7280', fontSize: 12 }}
+                tick={{ fill: '#6B7280', fontSize: 11 }}
                 axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                angle={timePeriod === 'day' ? -45 : 0}
+                textAnchor={timePeriod === 'day' ? 'end' : 'middle'}
+                height={timePeriod === 'day' ? 60 : 30}
               />
               <YAxis 
                 stroke="#6B7280"
-                tick={{ fill: '#6B7280', fontSize: 12 }}
+                tick={{ fill: '#6B7280', fontSize: 11 }}
                 axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                domain={[0, 100]}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
               />
               <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(30, 30, 48, 0.95)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: '#fff'
+                cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-[#1e1e30]/95 border border-white/10 rounded-lg p-3 shadow-xl backdrop-blur-sm">
+                        <p className="text-white font-semibold mb-2">
+                          {data.fullPeriod || data.period}
+                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm text-purple-300">
+                            Revenue: <span className="font-bold text-white">${data.revenue.toLocaleString()}</span>
+                          </p>
+                          <p className="text-sm text-cyan-300">
+                            Reps Who Sold: <span className="font-bold text-white">{data.repsWhoSold}</span>
+                          </p>
+                          <p className="text-sm text-green-300">
+                            Total Sales: <span className="font-bold text-white">{data.totalSales}</span>
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  }
+                  return null
                 }}
               />
-              <Legend 
-                wrapperStyle={{ paddingTop: '20px' }}
-                iconType="line"
+              <Bar 
+                dataKey="revenue" 
+                fill="url(#revenueGradient)"
+                radius={[8, 8, 0, 0]}
+                maxBarSize={60}
+                label={{
+                  position: 'top',
+                  fill: '#9CA3AF',
+                  fontSize: 10,
+                  formatter: (value: number) => `$${(value / 1000).toFixed(1)}k`
+                }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="teamAvg" 
-                stroke="#8B5CF6" 
-                strokeWidth={2}
-                name="Team Avg"
-                dot={{ fill: '#8B5CF6', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="topPerformer" 
-                stroke="#10B981" 
-                strokeWidth={2}
-                name="Top Performer"
-                dot={{ fill: '#10B981', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="industryAvg" 
-                stroke="#6B7280" 
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                name="Industry Avg"
-                dot={{ fill: '#6B7280', r: 3 }}
-              />
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
         </motion.div>
 
