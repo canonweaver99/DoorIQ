@@ -78,13 +78,12 @@ function ManagerPageContent() {
 
             {/* Quick Actions */}
             <div className="flex items-center gap-2">
-              <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 rounded-xl text-sm font-medium text-white transition-all">
+              <button 
+                onClick={() => setActiveTab('messages')}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30"
+              >
                 <MessageSquare className="w-4 h-4" />
-                Send Message
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30">
-                <BookOpen className="w-4 h-4" />
-                <span className="hidden sm:inline">Assign Training</span>
+                <span className="hidden sm:inline">Send Message</span>
               </button>
             </div>
           </div>

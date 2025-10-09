@@ -4,6 +4,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import Header from "@/components/navigation/Header";
 import { Footer } from "@/components/ui/footer-section";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -51,19 +52,21 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100` }>
-        <Suspense fallback={<div style={{ height: 64 }} />}>
-          <Header />
-        </Suspense>
-        {/* Spacer to avoid content under fixed nav (approx 64px for new header) */}
-        <div style={{ height: 64 }} />
-        <div className="min-h-[calc(100svh-64px)] flex flex-col">
-          <div className="flex-1">
-            {children}
+        <NotificationProvider>
+          <Suspense fallback={<div style={{ height: 64 }} />}>
+            <Header />
+          </Suspense>
+          {/* Spacer to avoid content under fixed nav (approx 64px for new header) */}
+          <div style={{ height: 64 }} />
+          <div className="min-h-[calc(100svh-64px)] flex flex-col">
+            <div className="flex-1">
+              {children}
+            </div>
+            <div className="px-4 sm:px-6 lg:px-8 pb-10">
+              <Footer />
+            </div>
           </div>
-          <div className="px-4 sm:px-6 lg:px-8 pb-10">
-            <Footer />
-          </div>
-        </div>
+        </NotificationProvider>
       </body>
     </html>
   );

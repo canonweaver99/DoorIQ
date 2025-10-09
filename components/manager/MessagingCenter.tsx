@@ -34,6 +34,9 @@ export default function MessagingCenter() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isBroadcasting, setIsBroadcasting] = useState(false)
+  const [broadcastMessage, setBroadcastMessage] = useState('')
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false)
   const supabase = createClient()
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
@@ -135,6 +138,8 @@ export default function MessagingCenter() {
       }, (payload: any) => {
         const row = payload.new
         if (row.recipient_id !== currentUser.id) return
+        
+        // Add the message
         setMessages(prev => [...prev, {
           id: row.id,
           text: row.message || row.message_text,
@@ -144,7 +149,18 @@ export default function MessagingCenter() {
           created_at: row.created_at,
           read: !!row.is_read,
         }])
-        markMessagesAsRead(repId)
+        
+        // If this conversation is selected, mark as read immediately
+        if (selectedConversation?.id === repId) {
+          markMessagesAsRead(repId)
+        } else {
+          // Otherwise, increment unread count for that conversation
+          setConversations(prev => prev.map(conv => 
+            conv.id === repId 
+              ? { ...conv, unreadCount: (conv.unreadCount || 0) + 1 } 
+              : conv
+          ))
+        }
       })
       // Outgoing from manager
       .on('postgres_changes', {
@@ -176,10 +192,17 @@ export default function MessagingCenter() {
 
   const markMessagesAsRead = async (repId: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('messages')
         .update({ is_read: true, read_at: new Date().toISOString() })
         .match({ sender_id: repId, recipient_id: currentUser.id, is_read: false })
+      
+      if (!error) {
+        // Update the unread count in the conversations list
+        setConversations(prev => prev.map(conv => 
+          conv.id === repId ? { ...conv, unreadCount: 0 } : conv
+        ))
+      }
     } catch (e) {
       console.error('Failed to mark messages as read:', e)
     }
@@ -247,6 +270,45 @@ export default function MessagingCenter() {
   const filteredConversations = conversations.filter(conv => 
     conv.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleBroadcast = async () => {
+    if (!broadcastMessage.trim() || isBroadcasting) return
+
+    setIsBroadcasting(true)
+    
+    try {
+      // Fetch all reps
+      const { data: reps, error: repsError } = await supabase
+        .from('users')
+        .select('id, full_name')
+        .eq('role', 'rep')
+
+      if (repsError) throw repsError
+
+      // Send message to each rep
+      const messagePromises = reps.map(rep => 
+        supabase.from('messages').insert({
+          sender_id: currentUser.id,
+          recipient_id: rep.id,
+          message: broadcastMessage,
+        })
+      )
+
+      await Promise.all(messagePromises)
+      
+      setBroadcastMessage('')
+      setShowBroadcastModal(false)
+      alert(`Broadcast sent to ${reps.length} reps!`)
+      
+      // Refresh conversations
+      await fetchUserAndConversations()
+    } catch (error) {
+      console.error('Broadcast failed:', error)
+      alert('Failed to send broadcast. Please try again.')
+    } finally {
+      setIsBroadcasting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -325,7 +387,10 @@ export default function MessagingCenter() {
 
         {/* Broadcast Button */}
         <div className="p-4 border-t border-white/10">
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30">
+          <button 
+            onClick={() => setShowBroadcastModal(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30"
+          >
             <Users className="w-4 h-4" />
             Broadcast to All
           </button>
@@ -430,6 +495,63 @@ export default function MessagingCenter() {
           </div>
         )}
       </div>
+
+      {/* Broadcast Modal */}
+      <AnimatePresence>
+        {showBroadcastModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 z-50"
+              onClick={() => setShowBroadcastModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#1e1e30] border border-white/10 rounded-2xl p-6 z-50"
+            >
+              <h3 className="text-xl font-semibold text-white mb-4">Broadcast Message</h3>
+              <p className="text-sm text-slate-400 mb-4">This message will be sent to all reps in your team.</p>
+              
+              <textarea
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                placeholder="Type your broadcast message..."
+                className="w-full h-32 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+              />
+              
+              <div className="flex items-center gap-3 mt-6">
+                <button
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBroadcast}
+                  disabled={!broadcastMessage.trim() || isBroadcasting}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-sm font-semibold text-white transition-all"
+                >
+                  {isBroadcasting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Send Broadcast
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

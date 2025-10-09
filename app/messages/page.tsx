@@ -128,6 +128,8 @@ export default function MessagesPage() {
       }, (payload: any) => {
         const row = payload.new
         if (row.recipient_id !== currentUser.id) return
+        
+        // Add the message
         setMessages(prev => [...prev, {
           id: row.id,
           text: row.message || row.message_text,
@@ -137,7 +139,18 @@ export default function MessagesPage() {
           created_at: row.created_at,
           read: !!row.is_read,
         }])
-        markUnreadAsRead(managerId)
+        
+        // If this conversation is selected, mark as read immediately
+        if (selectedManager?.id === managerId) {
+          markUnreadAsRead(managerId)
+        } else {
+          // Otherwise, increment unread count for that manager
+          setManagers(prev => prev.map(mgr => 
+            mgr.id === managerId 
+              ? { ...mgr, unreadCount: (mgr.unreadCount || 0) + 1 } 
+              : mgr
+          ))
+        }
       })
       .on('postgres_changes', {
         event: 'INSERT',
@@ -167,10 +180,17 @@ export default function MessagesPage() {
 
   const markUnreadAsRead = async (managerId: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('messages')
         .update({ is_read: true, read_at: new Date().toISOString() })
         .match({ sender_id: managerId, recipient_id: currentUser.id, is_read: false })
+      
+      if (!error) {
+        // Update the unread count in the managers list
+        setManagers(prev => prev.map(mgr => 
+          mgr.id === managerId ? { ...mgr, unreadCount: 0 } : mgr
+        ))
+      }
     } catch (e) {
       console.error('Failed to mark messages as read', e)
     }
