@@ -11,8 +11,8 @@ export default function EmailConfirmedPage() {
     const checkSessionAndRedirect = async () => {
       const supabase = createClient()
       
-      // Wait a moment for session to be established
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Wait longer for session to be established
+      await new Promise(resolve => setTimeout(resolve, 2000))
       
       // Check if session exists
       const { data: { session } } = await supabase.auth.getSession()
