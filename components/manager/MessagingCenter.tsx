@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import { Send, Paperclip, Mic, Smile, Search, Users, CheckCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { messageEvents } from '@/lib/events/messageEvents'
 
 interface Message {
   id: string
@@ -48,7 +49,10 @@ export default function MessagingCenter() {
     if (!currentUser || !selectedConversation) return
     loadMessages(selectedConversation.id)
     subscribeToRealtime(selectedConversation.id)
-    markMessagesAsRead(selectedConversation.id)
+    // Mark messages as read with a small delay to ensure they're loaded
+    setTimeout(() => {
+      markMessagesAsRead(selectedConversation.id)
+    }, 100)
     
     return () => {
       if (channelRef.current) {
@@ -202,6 +206,8 @@ export default function MessagingCenter() {
         setConversations(prev => prev.map(conv => 
           conv.id === repId ? { ...conv, unreadCount: 0 } : conv
         ))
+        // Emit event to update header badge
+        messageEvents.emitMessagesRead()
       }
     } catch (e) {
       console.error('Failed to mark messages as read:', e)

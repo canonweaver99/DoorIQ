@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Send, Paperclip, Mic, Smile, Search, CheckCheck, MessageSquare, Phone, Video, MoreVertical, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { messageEvents } from '@/lib/events/messageEvents'
 
 interface Message {
   id: string
@@ -44,7 +45,10 @@ export default function MessagesPage() {
     if (!currentUser || !selectedManager) return
     loadConversation(selectedManager.id)
     subscribeToRealtime(selectedManager.id)
-    markUnreadAsRead(selectedManager.id)
+    // Mark messages as read with a small delay to ensure they're loaded
+    setTimeout(() => {
+      markUnreadAsRead(selectedManager.id)
+    }, 100)
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current)
@@ -190,6 +194,8 @@ export default function MessagesPage() {
         setManagers(prev => prev.map(mgr => 
           mgr.id === managerId ? { ...mgr, unreadCount: 0 } : mgr
         ))
+        // Emit event to update header badge
+        messageEvents.emitMessagesRead()
       }
     } catch (e) {
       console.error('Failed to mark messages as read', e)

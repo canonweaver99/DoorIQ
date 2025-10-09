@@ -98,7 +98,7 @@ function HeaderContent() {
   const profileInitial = profileName.charAt(0).toUpperCase()
   const profileEarnings = parseEarnings(user?.virtual_earnings ?? authMeta?.virtual_earnings)
   const userId = user?.id || authMeta?.id || null
-  const unreadCount = useUnreadMessages(userId)
+  const { unreadCount } = useUnreadMessages(userId)
 
   useEffect(() => {
     setPortalReady(true)
