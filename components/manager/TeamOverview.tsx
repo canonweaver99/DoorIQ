@@ -1,433 +1,286 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Users, TrendingUp, Target, Award, AlertCircle, CheckCircle, Trophy, Clock, ArrowRight, Mail, Calendar, FileText } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Users, TrendingUp, Target, AlertCircle, Mail, Calendar, Trophy, Download, Activity, DollarSign } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 // Mock data
 const teamData = {
-  name: 'Sales Team Alpha',
-  managerName: 'Sarah Johnson',
   totalReps: 24,
-  activeToday: 18,
-  avgScore: 78,
-  weekOverWeekChange: 5.2,
-  topPerformer: {
+  teamAverage: 78,
+  trainingCompletion: 87,
+  activeAlerts: 2,
+  monthlyChange: 8.3,
+  weeklyChange: 5.2,
+  weeklyCompletionChange: 12.5,
+}
+
+const topPerformers = [
+  { 
+    id: 1,
     name: 'Marcus Johnson',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
     score: 92,
-    sessions: 8,
+    trend: 'up',
+    change: '+8%'
   },
-  teamGoals: [
-    { name: 'Complete 100 sessions', current: 87, total: 100 },
-    { name: 'Maintain 80% avg score', current: 78, target: 80 },
-    { name: 'Train all reps on new objections', current: 20, total: 24 },
-  ],
-  alerts: [
-    { id: 1, type: 'warning', message: '3 reps below target score', priority: 'high' },
-    { id: 2, type: 'info', message: '2 training modules expiring soon', priority: 'medium' },
-  ],
-  activities: [
-    { id: 1, type: 'training', user: 'John Doe', action: 'completed training session', score: 85, time: '2 min ago' },
-    { id: 2, type: 'achievement', user: 'Sarah Chen', action: 'reached 7-day streak', time: '15 min ago' },
-    { id: 3, type: 'training', user: 'Marcus Johnson', action: 'completed training session', score: 92, time: '23 min ago' },
-    { id: 4, type: 'issue', user: 'Alex Rivera', action: 'scored below 60%', score: 58, time: '1 hour ago' },
-    { id: 5, type: 'training', user: 'Emma Wilson', action: 'completed training session', score: 88, time: '1 hour ago' },
-  ],
-}
+  { 
+    id: 2,
+    name: 'Sarah Chen',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+    score: 89,
+    trend: 'up',
+    change: '+5%'
+  },
+  { 
+    id: 3,
+    name: 'Alex Rivera',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+    score: 86,
+    trend: 'up',
+    change: '+3%'
+  },
+  { 
+    id: 4,
+    name: 'Emma Wilson',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
+    score: 84,
+    trend: 'down',
+    change: '-2%'
+  },
+  { 
+    id: 5,
+    name: 'John Doe',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
+    score: 82,
+    trend: 'up',
+    change: '+1%'
+  },
+]
+
+// Performance chart data
+const performanceData = [
+  { month: 'Jan', teamAvg: 72, topPerformer: 88, industryAvg: 68 },
+  { month: 'Feb', teamAvg: 68, topPerformer: 85, industryAvg: 67 },
+  { month: 'Mar', teamAvg: 75, topPerformer: 90, industryAvg: 69 },
+  { month: 'Apr', teamAvg: 82, topPerformer: 94, industryAvg: 70 },
+  { month: 'May', teamAvg: 73, topPerformer: 87, industryAvg: 68 },
+  { month: 'Jun', teamAvg: 77, topPerformer: 91, industryAvg: 71 },
+  { month: 'Jul', teamAvg: 79, topPerformer: 89, industryAvg: 69 },
+  { month: 'Aug', teamAvg: 74, topPerformer: 86, industryAvg: 68 },
+  { month: 'Sep', teamAvg: 80, topPerformer: 93, industryAvg: 72 },
+  { month: 'Oct', teamAvg: 76, topPerformer: 88, industryAvg: 70 },
+  { month: 'Nov', teamAvg: 81, topPerformer: 90, industryAvg: 71 },
+  { month: 'Dec', teamAvg: 85, topPerformer: 95, industryAvg: 73 },
+]
 
 export default function TeamOverview() {
-  const [dateRange, setDateRange] = useState('week')
-  const [currentTime, setCurrentTime] = useState(new Date())
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
-    return () => clearInterval(timer)
-  }, [])
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'training':
-        return <Target className="w-4 h-4" />
-      case 'achievement':
-        return <Trophy className="w-4 h-4 text-yellow-400" />
-      case 'issue':
-        return <AlertCircle className="w-4 h-4 text-red-400" />
-      default:
-        return <CheckCircle className="w-4 h-4" />
-    }
-  }
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'training':
-        return 'border-blue-500/30 bg-blue-500/10'
-      case 'achievement':
-        return 'border-yellow-500/30 bg-yellow-500/10'
-      case 'issue':
-        return 'border-red-500/30 bg-red-500/10'
-      default:
-        return 'border-green-500/30 bg-green-500/10'
-    }
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Header with Date Range */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-white mb-1">{teamData.name}</h2>
-          <p className="text-slate-400">Managed by {teamData.managerName}</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {['today', 'week', 'month'].map((range) => (
-            <button
-              key={range}
-              onClick={() => setDateRange(range)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                dateRange === range
-                  ? 'bg-purple-500/20 border border-purple-500/50 text-purple-300'
-                  : 'bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10'
-              }`}
-            >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="space-y-8">
+      {/* TOP METRICS ROW - 4 Minimal Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Reps */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          className="metric-card"
         >
-          <div className="flex items-center justify-between mb-2">
-            <Users className="w-5 h-5 text-purple-400" />
-            <TrendingUp className="w-4 h-4 text-green-400" />
-          </div>
-          <p className="text-3xl font-bold text-white mb-1">{teamData.totalReps}</p>
-          <p className="text-sm text-slate-400">Total Reps</p>
-          <p className="text-xs text-green-400 mt-1">{teamData.activeToday} active today</p>
+          <Users className="w-4 h-4 text-slate-400 mb-4" />
+          <p className="metric-value">{teamData.totalReps}</p>
+          <p className="metric-label">Total Reps</p>
+          <p className="metric-change text-green-400">+{teamData.monthlyChange}% from last month</p>
         </motion.div>
 
+        {/* Team Average */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          className="metric-card"
         >
-          <div className="flex items-center justify-between mb-2">
-            <Target className="w-5 h-5 text-blue-400" />
-            <div className="flex items-center gap-1 text-xs font-semibold text-green-400">
-              <TrendingUp className="w-3 h-3" />
-              +{teamData.weekOverWeekChange}%
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-white mb-1">{teamData.avgScore}%</p>
-          <p className="text-sm text-slate-400">Team Avg Score</p>
+          <Target className="w-4 h-4 text-slate-400 mb-4" />
+          <p className="metric-value">{teamData.teamAverage}%</p>
+          <p className="metric-label">Team Average</p>
+          <p className="metric-change text-green-400">+{teamData.weeklyChange}% from last week</p>
         </motion.div>
 
+        {/* Training Completion */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          className="metric-card"
         >
-          <div className="flex items-center justify-between mb-2">
-            <CheckCircle className="w-5 h-5 text-green-400" />
-          </div>
-          <p className="text-3xl font-bold text-white mb-1">87%</p>
-          <p className="text-sm text-slate-400">Training Completion</p>
+          <Activity className="w-4 h-4 text-slate-400 mb-4" />
+          <p className="metric-value">{teamData.trainingCompletion}%</p>
+          <p className="metric-label">Training Completion</p>
+          <p className="metric-change text-green-400">+{teamData.weeklyCompletionChange}% this week</p>
         </motion.div>
 
+        {/* Active Alerts */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.3 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          className="metric-card cursor-pointer hover:border-amber-500/30"
         >
-          <div className="flex items-center justify-between mb-2">
-            <AlertCircle className="w-5 h-5 text-amber-400" />
-            <span className="px-2 py-1 bg-amber-500/20 border border-amber-500/30 rounded-lg text-xs font-medium text-amber-300">
-              {teamData.alerts.length}
-            </span>
-          </div>
-          <p className="text-3xl font-bold text-white mb-1">{teamData.alerts.length}</p>
-          <p className="text-sm text-slate-400">Active Alerts</p>
+          <AlertCircle className="w-4 h-4 text-amber-400 mb-4" />
+          <p className="metric-value">{teamData.activeAlerts}</p>
+          <p className="metric-label">Active Alerts</p>
+          <p className="metric-change text-slate-400">Click to view details</p>
         </motion.div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Team Performance Cards - 2 columns on large screens */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Active Reps Today */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-green-500/10 rounded-xl border border-green-500/20">
-                <Users className="w-5 h-5 text-green-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Active Reps Today</h3>
-                <p className="text-xs text-slate-400">Live status</p>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              {['In Training', 'In Field', 'Available', 'Offline'].map((status, idx) => (
-                <div key={status} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      idx === 0 ? 'bg-blue-400' : idx === 1 ? 'bg-green-400' : idx === 2 ? 'bg-yellow-400' : 'bg-slate-400'
-                    }`} />
-                    <span className="text-sm text-slate-300">{status}</span>
+      {/* MAIN CONTENT AREA - 2 Columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* LEFT COLUMN - Team Performance Chart (60% / 3 cols) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="lg:col-span-3 performance-chart"
+        >
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-white">Team Performance</h3>
+            <p className="text-sm text-slate-400 mt-1">Monthly average comparison</p>
+          </div>
+
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={performanceData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <XAxis 
+                dataKey="month" 
+                stroke="#6B7280"
+                tick={{ fill: '#6B7280', fontSize: 12 }}
+                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+              />
+              <YAxis 
+                stroke="#6B7280"
+                tick={{ fill: '#6B7280', fontSize: 12 }}
+                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                domain={[0, 100]}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(30, 30, 48, 0.95)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#fff'
+                }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconType="line"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="teamAvg" 
+                stroke="#8B5CF6" 
+                strokeWidth={2}
+                name="Team Avg"
+                dot={{ fill: '#8B5CF6', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="topPerformer" 
+                stroke="#10B981" 
+                strokeWidth={2}
+                name="Top Performer"
+                dot={{ fill: '#10B981', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="industryAvg" 
+                stroke="#6B7280" 
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                name="Industry Avg"
+                dot={{ fill: '#6B7280', r: 3 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* RIGHT COLUMN - Top Performers (40% / 2 cols) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
+          className="lg:col-span-2 overview-card p-6"
+        >
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-white">Top Performers This Week</h3>
+            <p className="text-sm text-slate-400 mt-1">Highest scoring reps</p>
+          </div>
+
+          <ul className="top-performers space-y-0">
+            {topPerformers.map((performer, index) => (
+              <motion.li
+                key={performer.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.6 + index * 0.05 }}
+                className="performer-item"
+              >
+                <div className="flex items-center flex-1 gap-3">
+                  <span className="text-sm font-medium text-slate-500 w-6">{index + 1}</span>
+                  <img
+                    src={performer.avatar}
+                    alt={performer.name}
+                    className="w-8 h-8 rounded-full object-cover ring-2 ring-white/5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{performer.name}</p>
                   </div>
-                  <span className="text-sm font-semibold text-white">
-                    {idx === 0 ? 5 : idx === 1 ? 8 : idx === 2 ? 5 : 6}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-white">{performer.score}%</span>
+                  <span className={`text-xs font-medium ${
+                    performer.trend === 'up' ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {performer.change}
                   </span>
                 </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Top Performer */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.5 }}
-            className="bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-2xl p-6"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-yellow-500/20 rounded-xl border border-yellow-500/30">
-                <Trophy className="w-5 h-5 text-yellow-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Top Performer</h3>
-                <p className="text-xs text-slate-300">This week</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <img
-                src={teamData.topPerformer.avatar}
-                alt={teamData.topPerformer.name}
-                className="w-16 h-16 rounded-2xl object-cover ring-2 ring-purple-500/50"
-              />
-              <div className="flex-1">
-                <p className="text-lg font-semibold text-white">{teamData.topPerformer.name}</p>
-                <div className="flex items-center gap-4 mt-1">
-                  <div>
-                    <p className="text-2xl font-bold text-purple-300">{teamData.topPerformer.score}%</p>
-                    <p className="text-xs text-slate-400">Avg Score</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-white">{teamData.topPerformer.sessions}</p>
-                    <p className="text-xs text-slate-400">Sessions</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Team Goals Progress */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.6 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                <Target className="w-5 h-5 text-blue-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Team Goals</h3>
-                <p className="text-xs text-slate-400">Weekly targets</p>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              {teamData.teamGoals.map((goal, idx) => (
-                <div key={idx}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-300">{goal.name}</span>
-                    <span className="text-sm font-semibold text-white">
-                      {goal.current}/{goal.total || goal.target}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(goal.current / (goal.total || goal.target)) * 100}%` }}
-                      transition={{ duration: 1, delay: 0.7 + idx * 0.1 }}
-                      className={`h-full rounded-full ${
-                        (goal.current / (goal.total || goal.target)) >= 0.8 ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-purple-500 to-indigo-500'
-                      }`}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Alerts & Issues */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.7 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-amber-500/10 rounded-xl border border-amber-500/20">
-                <AlertCircle className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Alerts & Issues</h3>
-                <p className="text-xs text-slate-400">Requires attention</p>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              {teamData.alerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className={`p-4 rounded-xl border ${
-                    alert.priority === 'high' ? 'border-red-500/30 bg-red-500/10' : 'border-amber-500/30 bg-amber-500/10'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm text-white flex-1">{alert.message}</p>
-                    <button className="text-xs font-medium text-purple-400 hover:text-purple-300 transition-colors">
-                      Review
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Real-Time Activity Feed - 1 column on large screens */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
-                <Clock className="w-5 h-5 text-purple-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Live Activity</h3>
-                <p className="text-xs text-slate-400">Real-time updates</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs text-green-400">Live</span>
-            </div>
-          </div>
-
-          <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar">
-            {teamData.activities.map((activity, idx) => (
-              <motion.div
-                key={activity.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.6 + idx * 0.05 }}
-                className={`p-4 rounded-xl border ${getActivityColor(activity.type)}`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-white/10 rounded-lg">
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-white font-medium">{activity.user}</p>
-                    <p className="text-sm text-slate-300">{activity.action}</p>
-                    {activity.score && (
-                      <p className={`text-xs font-semibold mt-1 ${
-                        activity.score >= 80 ? 'text-green-400' : activity.score >= 60 ? 'text-yellow-400' : 'text-red-400'
-                      }`}>
-                        Score: {activity.score}%
-                      </p>
-                    )}
-                    <p className="text-xs text-slate-400 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              </motion.div>
+              </motion.li>
             ))}
-          </div>
+          </ul>
 
-          <button className="w-full mt-4 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl py-3 text-sm font-medium text-white transition-all group">
-            View All Activity
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <button className="w-full mt-6 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+            View All Reps →
           </button>
         </motion.div>
       </div>
 
-      {/* Quick Actions Bar */}
+      {/* BOTTOM ROW - Quick Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.8 }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        transition={{ duration: 0.4, delay: 0.7 }}
+        className="quick-actions"
       >
-        <button className="flex items-center gap-3 bg-[#1e1e30] hover:bg-[#252538] border border-white/10 hover:border-purple-500/50 rounded-2xl p-4 transition-all group">
-          <div className="p-2 bg-purple-500/10 rounded-xl">
-            <Mail className="w-5 h-5 text-purple-400" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-white">Send Team Message</p>
-            <p className="text-xs text-slate-400">Broadcast to all reps</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-slate-400 ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+        <button className="action-card">
+          <Mail className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
+          <p className="text-sm font-medium text-white">Send Team Message</p>
         </button>
 
-        <button className="flex items-center gap-3 bg-[#1e1e30] hover:bg-[#252538] border border-white/10 hover:border-purple-500/50 rounded-2xl p-4 transition-all group">
-          <div className="p-2 bg-blue-500/10 rounded-xl">
-            <Calendar className="w-5 h-5 text-blue-400" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-white">Schedule Training</p>
-            <p className="text-xs text-slate-400">Create team session</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-slate-400 ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+        <button className="action-card">
+          <Calendar className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
+          <p className="text-sm font-medium text-white">Schedule Training</p>
         </button>
 
-        <button className="flex items-center gap-3 bg-[#1e1e30] hover:bg-[#252538] border border-white/10 hover:border-purple-500/50 rounded-2xl p-4 transition-all group">
-          <div className="p-2 bg-green-500/10 rounded-xl">
-            <Trophy className="w-5 h-5 text-green-400" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-white">Create Challenge</p>
-            <p className="text-xs text-slate-400">Gamify training</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-slate-400 ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+        <button className="action-card">
+          <Trophy className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
+          <p className="text-sm font-medium text-white">Create Challenge</p>
         </button>
 
-        <button className="flex items-center gap-3 bg-[#1e1e30] hover:bg-[#252538] border border-white/10 hover:border-purple-500/50 rounded-2xl p-4 transition-all group">
-          <div className="p-2 bg-amber-500/10 rounded-xl">
-            <FileText className="w-5 h-5 text-amber-400" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-white">Export Report</p>
-            <p className="text-xs text-slate-400">Download analytics</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-slate-400 ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+        <button className="action-card">
+          <Download className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
+          <p className="text-sm font-medium text-white">Export Report</p>
         </button>
       </motion.div>
     </div>
   )
 }
-
