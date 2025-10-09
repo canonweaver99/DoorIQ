@@ -68,7 +68,7 @@ export default function LoginPage() {
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/auth/callback?next=/trainer/select-homeowner`,
+          redirectTo: `${origin}/auth/callback`,
         },
       })
 

@@ -58,9 +58,12 @@ export async function GET(request: Request) {
         console.log('✅ User profile already exists')
       }
 
-      // For email confirmation, redirect to confirmation page
-      // This ensures session is properly established before going to home
+      // For email confirmation or if there's a session but no explicit redirect,
+      // go to confirmation page to ensure session is properly established
       if (type === 'signup' || type === 'email') {
+        redirectPath = '/auth/confirmed'
+      } else if (data.session && redirectPath === '/') {
+        // OAuth flow - also go through confirmation page to ensure session pickup
         redirectPath = '/auth/confirmed'
       }
     }

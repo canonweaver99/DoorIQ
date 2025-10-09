@@ -119,7 +119,7 @@ export default function SignUpPage() {
       const { error: signUpError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/auth/callback?next=/`,
+          redirectTo: `${origin}/auth/callback`,
         },
       })
 
