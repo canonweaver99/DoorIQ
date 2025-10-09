@@ -204,15 +204,30 @@ export default function MessagesPage() {
         })
         .select('id, created_at, is_read')
         .single()
-      if (error) throw error
+      
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+      
+      // Replace optimistic with actual if needed
       setMessages(prev => prev.map(m => m.id === optimistic.id ? {
         ...m,
         id: data.id,
         created_at: data.created_at,
         read: !!data.is_read,
       } : m))
-    } catch (e) {
-      console.error('Failed to send message', e)
+    } catch (e: any) {
+      console.error('Failed to send message:', e)
+      console.error('Error details:', {
+        message: e.message,
+        details: e.details,
+        hint: e.hint,
+        code: e.code
+      })
+      // Show error to user
+      alert(`Failed to send message: ${e.message || 'Unknown error'}`)
+      // Revert optimistic update
       setMessages(prev => prev.filter(m => m.id !== optimistic.id))
       setMessageText(textToSend)
     }
