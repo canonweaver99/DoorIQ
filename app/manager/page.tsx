@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Database, MessageSquare, BarChart3, Settings, Home, UserCog } from 'lucide-react'
+import { Users, Database, MessageSquare, BarChart3, Settings, Home, UserCog, BookOpen } from 'lucide-react'
 import TeamOverview from '@/components/manager/TeamOverview'
 import RepManagement from '@/components/manager/RepManagement'
 import KnowledgeBase from '@/components/manager/KnowledgeBase'
