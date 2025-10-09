@@ -1,107 +1,83 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import { Trophy, TrendingUp, TrendingDown } from 'lucide-react'
+import { motion } from "framer-motion";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface LeaderboardEntry {
-  rank: number
-  name: string
-  score: number
-  change: number // position change from last period
-  avatar?: string
+  rank: number;
+  name: string;
+  score: number;
+  change: number;
+  avatar?: string;
 }
 
 interface LeaderboardMiniProps {
-  entries: LeaderboardEntry[]
-  title?: string
+  entries: LeaderboardEntry[];
+  title?: string;
 }
 
-export default function LeaderboardMini({ entries, title = 'Top Performers' }: LeaderboardMiniProps) {
-  const getRankColor = (rank: number) => {
-    if (rank === 1) return 'text-amber-400'
-    if (rank === 2) return 'text-slate-300'
-    if (rank === 3) return 'text-amber-600'
-    return 'text-white/50'
-  }
-
-  const getRankBg = (rank: number) => {
-    if (rank === 1) return 'bg-gradient-to-br from-amber-500/20 to-amber-600/20 border-amber-500/30'
-    if (rank === 2) return 'bg-gradient-to-br from-slate-400/20 to-slate-500/20 border-slate-400/30'
-    if (rank === 3) return 'bg-gradient-to-br from-amber-700/20 to-amber-800/20 border-amber-700/30'
-    return 'bg-white/[0.02] border-white/[0.08]'
-  }
-
+export default function LeaderboardMini({
+  entries,
+  title,
+}: LeaderboardMiniProps) {
   return (
-    <div>
-      <h3 className="text-xs uppercase tracking-wider text-white/50 mb-3 px-1">
-        {title}
-      </h3>
-      <div className="space-y-2">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="rounded-2xl border border-white/10 bg-white/[0.02] p-5"
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/50">
+          {title || "Team Momentum"}
+        </h3>
+        <span className="text-xs text-white/40">Weekly cohort changes</span>
+      </div>
+
+      <div className="mt-4 space-y-3">
         {entries.map((entry, index) => (
           <motion.div
             key={entry.rank}
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -15 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
-            className={`
-              flex items-center gap-3 p-3 rounded-lg border
-              ${getRankBg(entry.rank)}
-              hover:border-white/[0.15] transition-all duration-200
-            `}
+            className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5"
           >
-            {/* Rank */}
-            <div className="flex items-center justify-center w-8 h-8">
-              {entry.rank <= 3 ? (
-                <Trophy className={`w-5 h-5 ${getRankColor(entry.rank)}`} />
-              ) : (
-                <span className={`text-sm font-bold ${getRankColor(entry.rank)}`}>
-                  {entry.rank}
-                </span>
-              )}
-            </div>
-
-            {/* Avatar */}
-            {entry.avatar ? (
-              <img
-                src={entry.avatar}
-                alt={entry.name}
-                className="w-8 h-8 rounded-full"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 
-                            flex items-center justify-center text-white text-xs font-medium">
-                {entry.name.charAt(0)}
-              </div>
-            )}
-
-            {/* Name and score */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {entry.name}
-              </p>
-              <p className="text-xs text-white/50">
-                Score: {entry.score}
-              </p>
-            </div>
-
-            {/* Change indicator */}
-            {entry.change !== 0 && (
-              <div className={`
-                flex items-center gap-1 text-xs font-medium
-                ${entry.change > 0 ? 'text-green-400' : 'text-red-400'}
-              `}>
-                {entry.change > 0 ? (
-                  <TrendingUp className="w-3 h-3" />
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">
+                {String(entry.rank).padStart(2, "0")}
+              </span>
+              <div className="flex items-center gap-2">
+                {entry.avatar ? (
+                  <img
+                    src={entry.avatar}
+                    alt={entry.name}
+                    className="h-8 w-8 rounded-full"
+                  />
                 ) : (
-                  <TrendingDown className="w-3 h-3" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-xs font-medium text-white">
+                    {entry.name.charAt(0)}
+                  </div>
                 )}
-                <span>{Math.abs(entry.change)}</span>
+                <div>
+                  <p className="text-sm font-medium text-white">{entry.name}</p>
+                  <p className="text-xs text-white/40">Score {entry.score}</p>
+                </div>
               </div>
-            )}
+            </div>
+            <div
+              className={`flex items-center gap-1 text-xs font-semibold ${entry.change >= 0 ? "text-emerald-300" : "text-red-300"}`}
+            >
+              {entry.change >= 0 ? (
+                <TrendingUp className="h-3.5 w-3.5" />
+              ) : (
+                <TrendingDown className="h-3.5 w-3.5" />
+              )}
+              <span>{Math.abs(entry.change)}</span>
+            </div>
           </motion.div>
         ))}
       </div>
-    </div>
-  )
+    </motion.div>
+  );
 }
-

@@ -1,184 +1,221 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import { TrendingUp, AlertTriangle, Target, BookOpen, Zap, RefreshCw } from 'lucide-react'
-import { useState } from 'react'
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  AlertTriangle,
+  BrainCircuit,
+  Circle,
+  Clock,
+  Eye,
+  Lightbulb,
+  ListChecks,
+  RefreshCw,
+  Rocket,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
-export type InsightType = 'pattern' | 'anomaly' | 'opportunity' | 'coaching' | 'predictor'
+export type InsightSeverity = "urgent" | "warning" | "opportunity" | "info";
 
-interface Insight {
-  type: InsightType
-  title: string
-  description: string
-  confidence: number
-  priority: 'high' | 'medium' | 'low'
+export interface Insight {
+  id: string;
+  severity: InsightSeverity;
+  title: string;
+  description: string;
+  details: string;
+  confidence: number;
+  actionUrl?: string;
 }
 
 interface AIInsightsPanelProps {
-  insights: Insight[]
-  onRefresh?: () => void
-  refreshing?: boolean
+  insights: Insight[];
+  onRefresh?: () => void;
+  refreshing?: boolean;
+  nextRefreshIn?: number;
 }
 
-const insightIcons = {
-  pattern: TrendingUp,
-  anomaly: AlertTriangle,
-  opportunity: Target,
-  coaching: BookOpen,
-  predictor: Zap
-}
-
-const insightColors = {
-  pattern: {
-    border: 'border-l-purple-500',
-    bg: 'bg-purple-500/5',
-    icon: 'text-purple-400',
-    glow: 'shadow-purple-500/10'
+const severityMeta: Record<
+  InsightSeverity,
+  {
+    label: string;
+    color: string;
+    ring: string;
+    icon: React.ElementType;
+    actionLabel: string;
+  }
+> = {
+  urgent: {
+    label: "Urgent",
+    color: "text-red-300",
+    ring: "border-l-[3px] border-red-500",
+    icon: AlertTriangle,
+    actionLabel: "Escalate",
   },
-  anomaly: {
-    border: 'border-l-red-500',
-    bg: 'bg-red-500/5',
-    icon: 'text-red-400',
-    glow: 'shadow-red-500/10'
+  warning: {
+    label: "Warning",
+    color: "text-orange-300",
+    ring: "border-l-[3px] border-orange-400",
+    icon: Circle,
+    actionLabel: "Investigate",
   },
   opportunity: {
-    border: 'border-l-green-500',
-    bg: 'bg-green-500/5',
-    icon: 'text-green-400',
-    glow: 'shadow-green-500/10'
+    label: "Opportunity",
+    color: "text-emerald-300",
+    ring: "border-l-[3px] border-emerald-400",
+    icon: Rocket,
+    actionLabel: "Activate Playbook",
   },
-  coaching: {
-    border: 'border-l-blue-500',
-    bg: 'bg-blue-500/5',
-    icon: 'text-blue-400',
-    glow: 'shadow-blue-500/10'
+  info: {
+    label: "Info",
+    color: "text-sky-300",
+    ring: "border-l-[3px] border-sky-400",
+    icon: Lightbulb,
+    actionLabel: "Share",
   },
-  predictor: {
-    border: 'border-l-amber-500',
-    bg: 'bg-amber-500/5',
-    icon: 'text-amber-400',
-    glow: 'shadow-amber-500/10'
-  }
-}
+};
 
-export default function AIInsightsPanel({ insights, onRefresh, refreshing = false }: AIInsightsPanelProps) {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(0)
+export default function AIInsightsPanel({
+  insights,
+  onRefresh,
+  refreshing = false,
+  nextRefreshIn = 60,
+}: AIInsightsPanelProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(
+    insights[0]?.id ?? null,
+  );
+  const [timer, setTimer] = useState(nextRefreshIn);
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-500/20 text-red-300 border-red-500/30'
-      case 'medium':
-        return 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-      case 'low':
-        return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-      default:
-        return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
-    }
-  }
+  useEffect(() => {
+    setTimer(nextRefreshIn);
+  }, [nextRefreshIn, insights]);
+
+  useEffect(() => {
+    if (!onRefresh) return;
+    const tick = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          onRefresh();
+          return nextRefreshIn;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [onRefresh, nextRefreshIn]);
+
+  const timerLabel = useMemo(() => {
+    if (!onRefresh) return null;
+    return `Updates in ${timer}s`;
+  }, [timer, onRefresh]);
 
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-4 pb-12">
       {insights.map((insight, index) => {
-        const Icon = insightIcons[insight.type]
-        const colors = insightColors[insight.type]
-        const isExpanded = expandedIndex === index
+        const severity = severityMeta[insight.severity];
+        const Icon = severity.icon;
+        const isExpanded = expandedId === insight.id;
 
         return (
           <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
+            key={insight.id}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
-            className={`
-              bg-white/[0.02] border border-white/[0.08] rounded-xl
-              ${colors.border} border-l-4 overflow-hidden
-              hover:border-white/[0.12] transition-all duration-200
-              ${colors.glow} shadow-lg
-            `}
+            transition={{ duration: 0.35, delay: index * 0.05 }}
+            className={`rounded-2xl border border-white/[0.08] bg-white/[0.02] ${severity.ring} overflow-hidden backdrop-blur-sm`}
           >
             <button
-              onClick={() => setExpandedIndex(isExpanded ? null : index)}
+              onClick={() => setExpandedId(isExpanded ? null : insight.id)}
               className="w-full p-4 text-left"
             >
               <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${colors.bg} mt-0.5`}>
-                  <Icon className={`w-4 h-4 ${colors.icon}`} />
+                <div className="rounded-xl bg-white/[0.06] p-2">
+                  <Icon className={`h-4 w-4 ${severity.color}`} />
                 </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-sm font-medium text-white truncate">
-                      {insight.title}
-                    </h3>
-                    <span className={`
-                      text-xs px-2 py-0.5 rounded-full border uppercase tracking-wider
-                      ${getPriorityBadge(insight.priority)}
-                    `}>
-                      {insight.priority}
-                    </span>
-                  </div>
-                  
-                  <p className={`
-                    text-xs text-white/60 leading-relaxed
-                    ${!isExpanded && 'line-clamp-2'}
-                  `}>
-                    {insight.description}
-                  </p>
-
-                  {/* Confidence bar */}
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-white/40">Confidence</span>
-                      <span className="text-xs text-white/60 font-medium">
-                        {insight.confidence}%
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-xs font-semibold uppercase tracking-[0.3em] ${severity.color}`}
+                      >
+                        {severity.label}
+                      </span>
+                      <span className="text-xs text-white/40">
+                        Confidence {insight.confidence}%
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-                      <motion.div
-                        className={`h-full bg-gradient-to-r ${
-                          insight.confidence >= 80
-                            ? 'from-green-500 to-emerald-500'
-                            : insight.confidence >= 60
-                            ? 'from-blue-500 to-cyan-500'
-                            : 'from-amber-500 to-yellow-500'
-                        }`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${insight.confidence}%` }}
-                        transition={{ duration: 0.8, delay: index * 0.1 }}
-                      />
-                    </div>
+                    <motion.span
+                      initial={{ opacity: 0, y: -2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-xs uppercase tracking-[0.3em] text-white/30"
+                    >
+                      {isExpanded ? "Collapse" : "Expand"}
+                    </motion.span>
                   </div>
+                  <h3 className="text-sm font-semibold text-white">
+                    {insight.title}
+                  </h3>
+                  <p className="text-xs text-white/60">{insight.description}</p>
                 </div>
               </div>
             </button>
+
+            <AnimatePresence initial={false}>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="border-t border-white/[0.06] bg-white/[0.03] px-5 py-4"
+                >
+                  <div className="space-y-3 text-sm text-white/70">
+                    <div className="flex items-start gap-2">
+                      <BrainCircuit className="mt-0.5 h-4 w-4 text-white/40" />
+                      <p>{insight.details}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-semibold text-white transition hover:border-white/20 hover:bg-white/10">
+                        <Eye className="h-4 w-4 text-white/60" />
+                        View Details
+                      </button>
+                      <button className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-gradient-to-r from-purple-500/40 to-pink-500/40 px-3 py-2 text-xs font-semibold text-white transition hover:from-purple-500/60 hover:to-pink-500/60">
+                        <ListChecks className="h-4 w-4 text-white/80" />
+                        {severity.actionLabel}
+                      </button>
+                      <button className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-xs font-semibold text-white/70 transition hover:text-white">
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
-        )
+        );
       })}
 
-      {/* Refresh button */}
       {onRefresh && (
-        <motion.button
-          onClick={onRefresh}
-          disabled={refreshing}
-          className={`
-            w-full py-3 px-4 rounded-xl border border-white/[0.08]
-            bg-white/[0.02] hover:bg-white/[0.04]
-            text-white/70 hover:text-white
-            flex items-center justify-center gap-2
-            transition-all duration-200
-            disabled:opacity-50 disabled:cursor-not-allowed
-          `}
-          whileHover={{ scale: refreshing ? 1 : 1.02 }}
-          whileTap={{ scale: refreshing ? 1 : 0.98 }}
-        >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          <span className="text-sm font-medium">
-            {refreshing ? 'Generating...' : 'Generate New Insights'}
-          </span>
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <motion.button
+            onClick={onRefresh}
+            disabled={refreshing}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] py-3 text-sm font-medium text-white/70 transition hover:bg-white/[0.04] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            whileHover={{ scale: refreshing ? 1 : 1.01 }}
+            whileTap={{ scale: refreshing ? 1 : 0.99 }}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            {refreshing ? "Generating…" : "Generate New Insights"}
+          </motion.button>
+        </div>
+      )}
+
+      {timerLabel && (
+        <div className="pointer-events-none absolute -bottom-2 right-0 flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-xs text-white/50">
+          <Clock className="h-3.5 w-3.5" />
+          {timerLabel}
+        </div>
       )}
     </div>
-  )
+  );
 }
-
