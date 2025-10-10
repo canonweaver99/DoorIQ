@@ -263,6 +263,8 @@ export default function AnalyticsPage() {
         dealDetails={session.deal_details || session.analytics?.deal_details || {}}
         objectionAnalysis={session.analytics?.objection_analysis || {}}
         coachingPlan={session.analytics?.coaching_plan || {}}
+        conversationDynamics={session.analytics?.conversation_dynamics || {}}
+        failureAnalysis={session.analytics?.failure_analysis || {}}
         saleClosed={session.sale_closed || false}
         insightsByCategory={insightsByCategory}
         grading={grading}

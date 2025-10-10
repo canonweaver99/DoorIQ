@@ -1,10 +1,12 @@
 'use client'
 
-import { Users, Target, Shield, HandshakeIcon, DollarSign, ChevronDown, Sparkles, Lightbulb, Loader2, Mic, MessageSquare, HelpCircle, Ear, TrendingUp } from 'lucide-react'
+import { Users, Target, Shield, HandshakeIcon, DollarSign, ChevronDown, Sparkles, Lightbulb, Loader2, Mic, MessageSquare, HelpCircle, Ear, TrendingUp, Activity, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import EarningsBreakdown from './EarningsBreakdown'
 import ObjectionAnalysis from './ObjectionAnalysis'
 import CoachingPlan from './CoachingPlan'
+import ConversationDynamics from './ConversationDynamics'
+import FailureAnalysis from './FailureAnalysis'
 
 interface ScoresViewProps {
   overallScore: number
@@ -71,12 +73,14 @@ interface ScoresViewProps {
   dealDetails?: any
   objectionAnalysis?: any
   coachingPlan?: any
+  conversationDynamics?: any
+  failureAnalysis?: any
   saleClosed?: boolean
   insightsByCategory?: Record<string, Array<{ quote: string; impact: string }>>
   grading?: boolean
 }
 
-export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, earningsData, dealDetails, objectionAnalysis, coachingPlan, saleClosed = false, insightsByCategory = {}, grading = false, enhancedMetrics }: ScoresViewProps) {
+export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, earningsData, dealDetails, objectionAnalysis, coachingPlan, conversationDynamics, failureAnalysis, saleClosed = false, insightsByCategory = {}, grading = false, enhancedMetrics }: ScoresViewProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#10b981' // emerald
     if (score >= 60) return '#3b82f6' // blue
@@ -230,6 +234,32 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
           dealDetails={dealDetails || {}}
           saleClosed={saleClosed}
         />
+      )}
+
+      {/* Conversation Dynamics */}
+      {conversationDynamics && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Activity className="w-5 h-5 text-purple-400" />
+            <div className="text-sm uppercase tracking-[0.25em] text-slate-500">
+              Conversation Dynamics
+            </div>
+          </div>
+          <ConversationDynamics conversationDynamics={conversationDynamics} />
+        </section>
+      )}
+
+      {/* Failure Analysis */}
+      {failureAnalysis && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Zap className="w-5 h-5 text-red-400" />
+            <div className="text-sm uppercase tracking-[0.25em] text-slate-500">
+              Critical Analysis
+            </div>
+          </div>
+          <FailureAnalysis failureAnalysis={failureAnalysis} />
+        </section>
       )}
 
       {/* Objection Analysis */}
