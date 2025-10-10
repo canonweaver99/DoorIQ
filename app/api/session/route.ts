@@ -85,6 +85,29 @@ export async function PATCH(req: Request) {
     }
     
     console.log('✅ PATCH: Session updated successfully:', data.id)
+    
+    // Trigger grading immediately in the background (fire-and-forget)
+    if (formattedTranscript.length > 0) {
+      console.log('🎯 PATCH: Triggering background grading for session:', id)
+      
+      // Fire-and-forget grading request
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/grade/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: id })
+      }).then(resp => {
+        if (resp.ok) {
+          console.log('✅ PATCH: Background grading triggered successfully')
+        } else {
+          console.error('❌ PATCH: Background grading trigger failed:', resp.status)
+        }
+      }).catch(err => {
+        console.error('❌ PATCH: Background grading error:', err)
+      })
+    } else {
+      console.warn('⚠️ PATCH: No transcript to grade')
+    }
+    
     return NextResponse.json({ id: data.id })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })

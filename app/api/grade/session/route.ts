@@ -40,9 +40,25 @@ export async function POST(request: NextRequest) {
     }
     
     if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
-      console.error('❌ No transcript found')
-      return NextResponse.json({ error: 'No transcript to grade' }, { status: 400 })
+      console.error('❌ No transcript found for session:', sessionId)
+      console.error('📊 Session data:', {
+        id: (session as any).id,
+        created_at: (session as any).created_at,
+        ended_at: (session as any).ended_at,
+        transcript_exists: !!(session as any).full_transcript,
+        transcript_length: (session as any).full_transcript?.length || 0
+      })
+      return NextResponse.json({ 
+        error: 'No transcript to grade',
+        details: {
+          transcript_exists: !!(session as any).full_transcript,
+          transcript_length: (session as any).full_transcript?.length || 0
+        }
+      }, { status: 400 })
     }
+    
+    console.log('📊 Transcript found:', (session as any).full_transcript.length, 'lines')
+    console.log('📊 First transcript line:', (session as any).full_transcript[0])
 
     // Fetch knowledge base context for the user
     const { data: knowledgeBase } = await supabase
@@ -78,6 +94,10 @@ export async function POST(request: NextRequest) {
       })
       .join('\n')
 
+    console.log('🤖 Calling OpenAI for grading...')
+    console.log('📝 Formatted transcript length:', formattedTranscript.length, 'characters')
+    console.log('📝 Transcript preview:', formattedTranscript.substring(0, 500))
+    
     // Call OpenAI for comprehensive analysis
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -575,8 +595,20 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('❌ Grading error:', error)
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause
+    })
     return NextResponse.json(
-      { error: error.message || 'Failed to grade session' },
+      { 
+        error: error.message || 'Failed to grade session',
+        details: {
+          type: error.name,
+          message: error.message
+        }
+      },
       { status: 500 }
     )
   }

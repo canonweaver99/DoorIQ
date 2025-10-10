@@ -29,39 +29,12 @@ export default function LoadingPage() {
     }, 3000)
 
     const sessionId = params.sessionId as string
-    let gradingTriggered = false
+    
+    // Set grading status to in-progress immediately (backend already started it)
+    setGradingStatus('in-progress')
+    setStatus('Analyzing your conversation with AI...')
 
-    const triggerGrading = async () => {
-      if (!sessionId) return
-
-      try {
-        setGradingStatus('in-progress')
-        setStatus('Sending transcript for grading...')
-        setLastError(null)
-
-        const resp = await fetch('/api/grade/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
-        })
-
-        if (!resp.ok) {
-          const body = await resp.json().catch(() => null)
-          const message = body?.error || `Grading failed with status ${resp.status}`
-          throw new Error(message)
-        }
-
-        setGradingStatus('completed')
-        setStatus('Grading complete! Finalizing your results...')
-      } catch (error: any) {
-        console.error('Error triggering grading:', error)
-        setLastError(error?.message || 'Unable to start grading')
-        setGradingStatus('error')
-        setStatus('We hit a snag while grading. Retrying shortly...')
-      }
-    }
-
-    // Poll for session readiness
+    // Poll for session grading completion
     const checkSession = async () => {
       try {
         const resp = await fetch(`/api/session?id=${sessionId}`)
@@ -69,34 +42,47 @@ export default function LoadingPage() {
         if (resp.ok) {
           const session = await resp.json()
           
-          // Check if session has been updated with transcript and score
-          if (session.full_transcript && session.full_transcript.length > 0) {
-            if (!gradingTriggered && (!session.analytics || !session.analytics.line_ratings)) {
-              gradingTriggered = true
-              await triggerGrading()
-            }
-
-            if (session.analytics?.line_ratings) {
-              console.log('✅ Session is ready! Redirecting...')
+          console.log('🔍 Loading page: Session check', {
+            has_transcript: !!session.full_transcript,
+            transcript_length: session.full_transcript?.length || 0,
+            has_analytics: !!session.analytics,
+            has_line_ratings: !!session.analytics?.line_ratings,
+            overall_score: session.overall_score
+          })
+          
+          // Check if grading is complete
+          if (session.analytics?.line_ratings && session.analytics.line_ratings.length > 0) {
+            console.log('✅ Grading complete! Redirecting to analytics...')
+            setGradingStatus('completed')
+            setStatus('Grading complete! Loading your results...')
+            
+            // Small delay for UI smoothness
+            setTimeout(() => {
               router.push(`/analytics/${sessionId}`)
-              return true
-            }
-
-            setStatus(gradingStatus === 'in-progress' ? 'Analyzing your conversation...' : 'Processing your conversation...')
+            }, 1000)
+            
+            return true
+          }
+          
+          // Check if transcript exists (if not, there's a problem)
+          if (!session.full_transcript || session.full_transcript.length === 0) {
+            setStatus('Waiting for transcript...')
+            setGradingStatus('idle')
           } else {
-            setStatus('Capturing your conversation details...')
+            // Transcript exists but no grading yet - backend is processing
+            setStatus('AI is analyzing your conversation...')
+            setGradingStatus('in-progress')
           }
         }
       } catch (error) {
         console.error('Error checking session:', error)
+        setLastError('Failed to check session status')
       }
       return false
     }
 
-    // Start checking after 1 second
-    const initialCheck = setTimeout(() => {
-      checkSession()
-    }, 1000)
+    // Start checking immediately
+    checkSession()
 
     // Then poll every 2 seconds
     const pollInterval = setInterval(async () => {
@@ -106,16 +92,17 @@ export default function LoadingPage() {
       }
     }, 2000)
 
-    // Timeout after 15 seconds - redirect anyway
+    // Timeout after 30 seconds - redirect anyway (increased from 15)
     const timeout = setTimeout(() => {
-      console.warn('⚠️ Timeout waiting for session, redirecting anyway...')
+      console.warn('⚠️ Timeout waiting for grading, redirecting anyway...')
+      console.warn('⚠️ This may indicate grading failed or took too long')
+      setLastError('Grading took longer than expected')
       router.push(`/analytics/${params.sessionId}`)
-    }, 15000)
+    }, 30000)
 
     return () => {
       clearInterval(tipInterval)
       clearInterval(pollInterval)
-      clearTimeout(initialCheck)
       clearTimeout(timeout)
     }
   }, [params.sessionId, router, gradingStatus])
