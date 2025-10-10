@@ -1,6 +1,6 @@
 'use client'
 
-import { User, Bot, Lightbulb } from 'lucide-react'
+import { User, Bot, Lightbulb, Clock, AlertTriangle, TrendingUp, Smile, Meh, Frown, Activity } from 'lucide-react'
 
 interface TranscriptLine {
   speaker: 'rep' | 'homeowner' | 'system' | 'user' | 'agent' | 'ai'
@@ -12,11 +12,20 @@ interface TranscriptLine {
 
 interface LineRating {
   line_number: number
+  speaker?: 'rep' | 'customer'
+  timestamp?: string
   effectiveness: 'excellent' | 'good' | 'average' | 'poor'
   score: number
+  sentiment?: 'positive' | 'neutral' | 'negative'
+  customer_engagement?: 'high' | 'medium' | 'low'
+  missed_opportunities?: string[]
+  techniques_used?: string[]
   alternative_lines?: string[]
   improvement_notes?: string
   category?: string
+  words_per_minute?: number
+  filler_words?: string[]
+  is_question?: boolean
 }
 
 interface TranscriptViewProps {
@@ -114,11 +123,81 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
                     : 'bg-slate-900/80 backdrop-blur text-slate-100 border border-slate-700'
                   }
                 `}>
+                  {rating?.timestamp && (
+                    <div className="flex items-center gap-1 mb-2 text-xs text-slate-500">
+                      <Clock className="w-3 h-3" />
+                      <span>{rating.timestamp}</span>
+                    </div>
+                  )}
+                  
                   <p className="leading-relaxed text-[15px]">
                     {getLineText(line)}
                   </p>
+
+                  {/* Enhanced metadata for rep lines */}
+                  {rating && (
+                    <div className="mt-3 pt-3 border-t border-slate-200/20 space-y-2">
+                      {/* Sentiment & Engagement */}
+                      <div className="flex flex-wrap gap-2">
+                        {rating.sentiment && (
+                          <div className="flex items-center gap-1 text-xs">
+                            {rating.sentiment === 'positive' && <Smile className="w-3 h-3 text-green-500" />}
+                            {rating.sentiment === 'neutral' && <Meh className="w-3 h-3 text-slate-500" />}
+                            {rating.sentiment === 'negative' && <Frown className="w-3 h-3 text-red-500" />}
+                            <span className="text-slate-600 capitalize">{rating.sentiment}</span>
+                          </div>
+                        )}
+                        
+                        {rating.customer_engagement && (
+                          <div className="flex items-center gap-1 text-xs">
+                            <Activity className="w-3 h-3 text-blue-500" />
+                            <span className="text-slate-600">Engagement: <span className="capitalize font-medium">{rating.customer_engagement}</span></span>
+                          </div>
+                        )}
+                        
+                        {rating.score !== undefined && (
+                          <div className="flex items-center gap-1 text-xs">
+                            <TrendingUp className="w-3 h-3 text-purple-500" />
+                            <span className="text-slate-600">Score: <span className="font-medium">{rating.score}/100</span></span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Techniques Used */}
+                      {rating.techniques_used && rating.techniques_used.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {rating.techniques_used.map((technique, i) => (
+                            <span 
+                              key={i}
+                              className="px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                            >
+                              {technique}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
+                {/* Missed Opportunities */}
+                {rating && rating.missed_opportunities && rating.missed_opportunities.length > 0 && (
+                  <div className="mt-3 ml-4 p-3 rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-600/10 to-orange-600/10 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-2 text-amber-200">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span className="text-sm font-medium">Missed Opportunities</span>
+                    </div>
+                    <ul className="space-y-1">
+                      {rating.missed_opportunities.map((opportunity, i) => (
+                        <li key={i} className="text-xs text-amber-100/80 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                          {opportunity}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Alternative Lines */}
                 {rating && rating.alternative_lines && rating.alternative_lines.length > 0 && (
                   <div className="mt-3 ml-4 p-4 rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-600/10 to-pink-600/10 backdrop-blur-sm">
                     <div className="flex items-center gap-2 mb-2 text-purple-200">

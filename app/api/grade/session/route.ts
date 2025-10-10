@@ -88,11 +88,17 @@ export async function POST(request: NextRequest) {
           Evaluate each line from the sales rep and provide detailed feedback.
           ${knowledgeContext ? 'Use the provided reference materials to ensure your feedback aligns with company training and best practices.' : ''}
           
-          For each sales rep line, assess:
-          1. Effectiveness: rate as "excellent", "good", "average", or "poor"
-          2. Score: 0-100 based on effectiveness
-          3. Alternative approaches: suggest 1-2 better ways to say it (if not excellent)
-          4. Category: classify into introduction, rapport, discovery, objection_handling, closing, safety, or general
+          For each line in the conversation, assess:
+          1. Speaker: "rep" or "customer"
+          2. Timestamp: estimated time from start (e.g., "00:00:12", "00:02:45")
+          3. Effectiveness: rate as "excellent", "good", "average", or "poor"
+          4. Score: 0-100 based on effectiveness
+          5. Sentiment: "positive", "neutral", or "negative" (emotional tone)
+          6. Customer Engagement: "high", "medium", or "low" (how engaged/interested customer seems)
+          7. Missed Opportunities: array of strings describing what rep could have done better
+          8. Techniques Used: array of technique names (e.g., "mirroring", "empathy", "assumptive_close", "open_question", "value_stacking", "urgency", "social_proof")
+          9. Alternative approaches: suggest 1-2 better ways to say it (if not excellent)
+          10. Category: classify into introduction, rapport, discovery, objection_handling, closing, safety, or general
           
           ENHANCED SCORING CRITERIA:
           
@@ -159,9 +165,67 @@ export async function POST(request: NextRequest) {
           Track: closing-assumption ownership-language certainty-indicators future-pacing.
           Measure: confidence-level commitment-phrases vs permission-seeking wishful-phrasing.
           
+          OBJECTION HANDLING DEEP DIVE:
+          Identify and analyze every objection or concern raised by the customer:
+          
+          For each objection:
+          - Type: price, timing, competition, trust, need, authority, contract_length, chemical_concerns, pet_safety, previous_experience, rental_property, DIY_preference, other
+          - Customer statement: exact quote expressing the objection
+          - Rep response: how the rep responded
+          - Technique used: what objection handling technique (feel_felt_found, reframing, isolation, social_proof, value_restatement, urgency, guarantee, trial_close, acknowledgment, none)
+          - Resolution: "resolved" (customer satisfied), "partial" (addressed but not fully satisfied), "unresolved" (customer still has concern), or "ignored" (rep didn't address it)
+          - Time to resolve: how long in MM:SS from objection to resolution
+          - Effectiveness score: 0-100 on how well the objection was handled
+          
+          Also provide:
+          - Total objections count
+          - Unresolved concerns: array of concerns still not addressed
+          - Objection patterns: brief summary of what customer is most concerned about
+          
+          PERSONALIZED COACHING PLAN:
+          Based on the complete conversation analysis, create a personalized coaching plan:
+          
+          Immediate Fixes (2-4 items):
+          - Issue: specific problem observed (e.g., "Long pauses during price discussion", "Weak trial closes", "Avoided objections")
+          - Practice scenario: exact drill to practice (e.g., "Price confidence drill", "Assumptive close practice")
+          - Resource link: training page URL (use format: /training/[topic] where topic is: price-objections, trial-closes, discovery-questions, objection-handling, rapport-building, closing-techniques, assumptive-language, active-listening)
+          
+          Skill Development (2-3 items):
+          - Skill: specific skill to improve (e.g., "Trial closing", "Discovery questioning", "Objection isolation")
+          - Current level: "beginner", "intermediate", or "advanced"
+          - Target level: "intermediate" or "advanced"
+          - Recommended exercises: array of 2-3 specific exercises (e.g., "assumptive close practice", "alternative choice close", "open-ended question drill")
+          
+          Role-Play Scenarios (2-4 items):
+          - Array of specific scenarios to practice based on weaknesses
+          - Examples: "Handle aggressive price negotiator", "Multi-stakeholder discovery", "Skeptical homeowner with trust issues", "Time-sensitive objection handling", "Pet safety concerns with anxious customer", "Convert DIY preference customer"
+          
           Determine whether a return appointment or inspection was scheduled (return_appointment true/false).
           A sale counts as closed ONLY if the rep secured the deal at the door during this conversation. Scheduling a follow-up or inspection without payment is NOT a closed sale.
           If a sale is not closed, virtual_earnings must be 0 and sale_closed must be false.
+          
+          DYNAMIC EARNINGS CALCULATION:
+          Extract the actual deal value from the conversation. Look for:
+          - Price mentioned by rep ($99/month, $1200/year, $299 initial + $89/month, etc.)
+          - Services sold (basic, standard, premium package)
+          - Contract length (monthly, quarterly, annual, multi-year)
+          - Payment terms and start dates
+          
+          Calculate earnings based on:
+          - Base commission: 30% of total contract value
+          - Bonus modifiers (add to commission):
+            * quick_close: $25 if closed in under 15 minutes
+            * upsell: $50 if sold premium/additional services beyond basic
+            * retention: $30 if secured annual or multi-year contract (not just monthly)
+            * same_day_start: $20 if customer agreed to start today or tomorrow
+            * referral_secured: $25 if rep got referral/neighbor recommendation
+            * perfect_pitch: $50 if overall_score >= 90
+          
+          For total contract value:
+          - One-time: use that value
+          - Monthly: price × contract_length (or × 12 if no length specified)
+          - Annual: annual price × years (or × 1 if one-year)
+          
           ${knowledgeContext}
           
           Return a JSON object with this structure:
@@ -169,8 +233,14 @@ export async function POST(request: NextRequest) {
             "line_ratings": [
               {
                 "line_number": 0,
+                "speaker": "rep",
+                "timestamp": "00:00:12",
                 "effectiveness": "good",
                 "score": 75,
+                "sentiment": "positive",
+                "customer_engagement": "high",
+                "missed_opportunities": ["Could have asked about their budget range", "Missed chance to build urgency"],
+                "techniques_used": ["mirroring", "empathy", "open_question"],
                 "alternative_lines": ["Better way to say this..."],
                 "improvement_notes": "Consider being more specific about...",
                 "category": "introduction",
@@ -237,7 +307,101 @@ export async function POST(request: NextRequest) {
               "improvements": ["Handle price objections more confidently", "Close earlier in the conversation"],
               "specific_tips": ["When they mention price, pivot to value instead of defending"]
             },
-            "virtual_earnings": 75.00,
+            "objection_analysis": {
+              "total_objections": 3,
+              "objections_detail": [
+                {
+                  "type": "price",
+                  "customer_statement": "That seems expensive compared to what I was expecting",
+                  "rep_response": "I understand how you feel. Many of our customers felt the same way initially, but they found that the comprehensive coverage and peace of mind was worth every penny",
+                  "technique_used": "feel_felt_found",
+                  "resolution": "resolved",
+                  "time_to_resolve": "01:23",
+                  "effectiveness_score": 85
+                },
+                {
+                  "type": "timing",
+                  "customer_statement": "I need to think about it",
+                  "rep_response": "I totally understand. What specifically would you like to think about?",
+                  "technique_used": "isolation",
+                  "resolution": "partial",
+                  "time_to_resolve": "00:45",
+                  "effectiveness_score": 70
+                },
+                {
+                  "type": "authority",
+                  "customer_statement": "I need to talk to my spouse first",
+                  "rep_response": "Of course! Is there anything I can clarify that would help your conversation?",
+                  "technique_used": "acknowledgment",
+                  "resolution": "unresolved",
+                  "time_to_resolve": "00:30",
+                  "effectiveness_score": 60
+                }
+              ],
+              "unresolved_concerns": ["spouse approval", "delivery timeframe"],
+              "objection_patterns": "Customer primarily concerned about price justification and decision-making authority. Price objection was well-handled with social proof. Authority objection needs stronger trial close or offer to speak with both decision-makers."
+            },
+            "coaching_plan": {
+              "immediate_fixes": [
+                {
+                  "issue": "Authority objections not being closed effectively",
+                  "practice_scenario": "Multi-stakeholder close drill",
+                  "resource_link": "/training/closing-techniques"
+                },
+                {
+                  "issue": "Tentative language during closing phase",
+                  "practice_scenario": "Assumptive language practice",
+                  "resource_link": "/training/assumptive-language"
+                }
+              ],
+              "skill_development": [
+                {
+                  "skill": "Trial closing",
+                  "current_level": "intermediate",
+                  "target_level": "advanced",
+                  "recommended_exercises": ["assumptive close practice", "alternative choice close", "silence after close"]
+                },
+                {
+                  "skill": "Authority objection handling",
+                  "current_level": "beginner",
+                  "target_level": "intermediate",
+                  "recommended_exercises": ["offer to speak with both parties", "create decision urgency", "trial close before deferral"]
+                }
+              ],
+              "role_play_scenarios": [
+                "Handle customer who needs spouse approval",
+                "Multi-stakeholder discovery with both decision makers",
+                "Convert partial objection resolution to close",
+                "Practice assumptive language during pricing"
+              ]
+            },
+            "earnings_data": {
+              "base_amount": 0,
+              "closed_amount": 1188.00,
+              "commission_rate": 0.30,
+              "commission_earned": 356.40,
+              "bonus_modifiers": {
+                "quick_close": 25,
+                "upsell": 50,
+                "retention": 30,
+                "same_day_start": 20,
+                "referral_secured": 0,
+                "perfect_pitch": 0
+              },
+              "total_earned": 481.40
+            },
+            "deal_details": {
+              "product_sold": "Premium Quarterly Package",
+              "service_type": "quarterly",
+              "base_price": 299.00,
+              "monthly_value": 99.00,
+              "contract_length": 12,
+              "total_contract_value": 1188.00,
+              "payment_method": "card",
+              "add_ons": ["attic treatment", "crawl space"],
+              "start_date": "tomorrow"
+            },
+            "virtual_earnings": 243.80,
             "sale_closed": true,
             "return_appointment": false
           }`
@@ -296,15 +460,32 @@ export async function POST(request: NextRequest) {
       saleClosed = false
     }
 
-    let virtualEarnings = saleClosed && typeof gradingResult.virtual_earnings === 'number'
-      ? gradingResult.virtual_earnings
-      : 0
+    // Extract earnings data with dynamic calculation support
+    const earningsData = gradingResult.earnings_data || {}
+    const dealDetails = gradingResult.deal_details || {}
+    
+    // Use total_earned from earnings_data if available, otherwise fall back to virtual_earnings
+    let virtualEarnings = 0
+    if (saleClosed) {
+      if (earningsData.total_earned && typeof earningsData.total_earned === 'number') {
+        virtualEarnings = earningsData.total_earned
+      } else if (typeof gradingResult.virtual_earnings === 'number') {
+        virtualEarnings = gradingResult.virtual_earnings
+      }
+    }
 
     if (!saleClosed) {
       virtualEarnings = 0
     }
 
-    console.log('💰 Final values:', { saleClosed, returnAppointment, virtualEarnings })
+    console.log('💰 Final values:', { 
+      saleClosed, 
+      returnAppointment, 
+      virtualEarnings,
+      dealValue: dealDetails.total_contract_value,
+      commission: earningsData.commission_earned,
+      bonuses: earningsData.bonus_modifiers
+    })
 
     const calculatedOverall = (() => {
       if (typeof gradingResult.scores?.overall === 'number') {
@@ -348,15 +529,23 @@ export async function POST(request: NextRequest) {
         assumptive_language_score: assumptiveLanguageScore,
         assumptive_language_data: gradingResult.enhanced_metrics?.assumptive_language || {},
         
+        // Dynamic earnings data
         virtual_earnings: virtualEarnings,
+        earnings_data: earningsData,
+        deal_details: dealDetails,
         sale_closed: saleClosed,
         return_appointment: returnAppointment,
+        
         analytics: {
           line_ratings: gradingResult.line_ratings || [],
           feedback: gradingResult.feedback || {},
           enhanced_metrics: gradingResult.enhanced_metrics || {},
+          objection_analysis: gradingResult.objection_analysis || {},
+          coaching_plan: gradingResult.coaching_plan || {},
+          earnings_data: earningsData,
+          deal_details: dealDetails,
           graded_at: now,
-          grading_version: '4.0-enhanced',
+          grading_version: '5.2-coaching-plan',
           scores: gradingResult.scores || {}
         }
       } as any)
@@ -375,9 +564,13 @@ export async function POST(request: NextRequest) {
       scores: gradingResult.scores,
       feedback: gradingResult.feedback,
       lines_graded: gradingResult.line_ratings?.length || 0,
+      objection_analysis: gradingResult.objection_analysis,
+      coaching_plan: gradingResult.coaching_plan,
       sale_closed: saleClosed,
       return_appointment: returnAppointment,
-      virtual_earnings: virtualEarnings
+      virtual_earnings: virtualEarnings,
+      earnings_data: earningsData,
+      deal_details: dealDetails
     })
 
   } catch (error: any) {

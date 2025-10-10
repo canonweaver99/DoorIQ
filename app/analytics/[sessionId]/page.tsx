@@ -21,6 +21,10 @@ interface SessionData {
   introduction_score: number | null
   listening_score: number | null
   virtual_earnings: number | null
+  sale_closed: boolean | null
+  // Dynamic earnings data
+  earnings_data: any | null
+  deal_details: any | null
   // New enhanced metric scores
   speaking_pace_score: number | null
   filler_words_score: number | null
@@ -36,11 +40,20 @@ interface SessionData {
   analytics: {
     line_ratings?: Array<{
       line_number: number
+      speaker?: 'rep' | 'customer'
+      timestamp?: string
       effectiveness: 'excellent' | 'good' | 'average' | 'poor'
       score: number
+      sentiment?: 'positive' | 'neutral' | 'negative'
+      customer_engagement?: 'high' | 'medium' | 'low'
+      missed_opportunities?: string[]
+      techniques_used?: string[]
       alternative_lines?: string[]
       improvement_notes?: string
       category?: string
+      words_per_minute?: number
+      filler_words?: string[]
+      is_question?: boolean
     }>
     feedback?: {
       strengths: string[]
@@ -49,6 +62,36 @@ interface SessionData {
     }
     scores?: Record<string, number>
     enhanced_metrics?: Record<string, any>
+    earnings_data?: any
+    deal_details?: any
+    objection_analysis?: {
+      total_objections?: number
+      objections_detail?: Array<{
+        type: string
+        customer_statement: string
+        rep_response: string
+        technique_used: string
+        resolution: 'resolved' | 'partial' | 'unresolved' | 'ignored'
+        time_to_resolve: string
+        effectiveness_score: number
+      }>
+      unresolved_concerns?: string[]
+      objection_patterns?: string
+    }
+    coaching_plan?: {
+      immediate_fixes?: Array<{
+        issue: string
+        practice_scenario: string
+        resource_link: string
+      }>
+      skill_development?: Array<{
+        skill: string
+        current_level: 'beginner' | 'intermediate' | 'advanced'
+        target_level: 'intermediate' | 'advanced'
+        recommended_exercises: string[]
+      }>
+      role_play_scenarios?: string[]
+    }
   } | null
   what_worked: string[] | null
   what_failed: string[] | null
@@ -216,6 +259,11 @@ export default function AnalyticsPage() {
           specific_tips: []
         }}
         virtualEarnings={session.virtual_earnings || 0}
+        earningsData={session.earnings_data || session.analytics?.earnings_data || {}}
+        dealDetails={session.deal_details || session.analytics?.deal_details || {}}
+        objectionAnalysis={session.analytics?.objection_analysis || {}}
+        coachingPlan={session.analytics?.coaching_plan || {}}
+        saleClosed={session.sale_closed || false}
         insightsByCategory={insightsByCategory}
         grading={grading}
       />

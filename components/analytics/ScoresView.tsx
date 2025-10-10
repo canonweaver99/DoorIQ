@@ -2,6 +2,9 @@
 
 import { Users, Target, Shield, HandshakeIcon, DollarSign, ChevronDown, Sparkles, Lightbulb, Loader2, Mic, MessageSquare, HelpCircle, Ear, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
+import EarningsBreakdown from './EarningsBreakdown'
+import ObjectionAnalysis from './ObjectionAnalysis'
+import CoachingPlan from './CoachingPlan'
 
 interface ScoresViewProps {
   overallScore: number
@@ -64,11 +67,16 @@ interface ScoresViewProps {
     specific_tips: string[]
   }
   virtualEarnings: number
+  earningsData?: any
+  dealDetails?: any
+  objectionAnalysis?: any
+  coachingPlan?: any
+  saleClosed?: boolean
   insightsByCategory?: Record<string, Array<{ quote: string; impact: string }>>
   grading?: boolean
 }
 
-export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, insightsByCategory = {}, grading = false, enhancedMetrics }: ScoresViewProps) {
+export default function ScoresView({ overallScore, scores, feedback, virtualEarnings, earningsData, dealDetails, objectionAnalysis, coachingPlan, saleClosed = false, insightsByCategory = {}, grading = false, enhancedMetrics }: ScoresViewProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#10b981' // emerald
     if (score >= 60) return '#3b82f6' // blue
@@ -204,12 +212,6 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
               </p>
             </div>
 
-            {virtualEarnings > 0 && (
-              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 text-purple-200 font-medium shadow-lg shadow-purple-500/20">
-                <DollarSign className="w-4 h-4" />
-                ${virtualEarnings.toFixed(2)} virtual earnings
-              </div>
-            )}
           </div>
         </div>
 
@@ -220,6 +222,41 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
           </div>
         )}
       </section>
+
+      {/* Earnings Breakdown */}
+      {(virtualEarnings > 0 || saleClosed) && (
+        <EarningsBreakdown 
+          earningsData={earningsData || {}}
+          dealDetails={dealDetails || {}}
+          saleClosed={saleClosed}
+        />
+      )}
+
+      {/* Objection Analysis */}
+      {objectionAnalysis && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-orange-400" />
+            <div className="text-sm uppercase tracking-[0.25em] text-slate-500">
+              Objection Handling Analysis
+            </div>
+          </div>
+          <ObjectionAnalysis objectionAnalysis={objectionAnalysis} />
+        </section>
+      )}
+
+      {/* Coaching Plan */}
+      {coachingPlan && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Target className="w-5 h-5 text-indigo-400" />
+            <div className="text-sm uppercase tracking-[0.25em] text-slate-500">
+              Your Coaching Plan
+            </div>
+          </div>
+          <CoachingPlan coachingPlan={coachingPlan} />
+        </section>
+      )}
 
       {/* Main Metrics Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
