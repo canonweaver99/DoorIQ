@@ -2,9 +2,11 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
-import { Send, Paperclip, Mic, Smile, Search, Users, CheckCheck } from 'lucide-react'
+import { Send, Paperclip, Mic, Smile, Search, Users, CheckCheck, Pin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { messageEvents } from '@/lib/events/messageEvents'
+import { VoiceRecorder } from '@/components/ui/voice-recorder'
+import { FileUpload } from '@/components/ui/file-upload'
 
 interface Message {
   id: string
@@ -14,6 +16,8 @@ interface Message {
   sender_role: 'rep' | 'manager'
   created_at: string
   read: boolean
+  voice_url?: string | null
+  file_attachments?: Array<{ url: string; name: string; type: string; size: number }>
 }
 
 interface Conversation {
@@ -38,6 +42,10 @@ export default function MessagingCenter() {
   const [isBroadcasting, setIsBroadcasting] = useState(false)
   const [broadcastMessage, setBroadcastMessage] = useState('')
   const [showBroadcastModal, setShowBroadcastModal] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [pinNote, setPinNote] = useState('')
+  const [repSessions, setRepSessions] = useState<any[]>([])
+  const [selectedSessionId, setSelectedSessionId] = useState<number | string | null>(null)
   const supabase = createClient()
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
@@ -119,6 +127,8 @@ export default function MessagingCenter() {
         sender_role: m.sender_role,
         created_at: m.created_at,
         read: m.is_read,
+        voice_url: m.voice_url || null,
+        file_attachments: m.file_attachments || [],
       }))
       setMessages(mapped)
     } catch (e) {
@@ -152,6 +162,8 @@ export default function MessagingCenter() {
           sender_role: 'rep',
           created_at: row.created_at,
           read: !!row.is_read,
+          voice_url: row.voice_url || null,
+          file_attachments: row.file_attachments || [],
         }])
         
         // If this conversation is selected, mark as read immediately
@@ -186,6 +198,8 @@ export default function MessagingCenter() {
             sender_role: 'manager',
             created_at: row.created_at,
             read: !!row.is_read,
+            voice_url: row.voice_url || null,
+            file_attachments: row.file_attachments || [],
           }]
         })
       })
@@ -258,6 +272,80 @@ export default function MessagingCenter() {
       alert(`Failed to send message: ${e.message || 'Unknown error'}`)
       setMessages(prev => prev.filter(m => m.id !== optimistic.id))
       setMessageText(textToSend)
+    }
+  }
+
+  const sendVoiceMessage = async (voiceUrl: string) => {
+    if (!selectedConversation || !currentUser) return
+    try {
+      await supabase.from('messages').insert({
+        sender_id: currentUser.id,
+        recipient_id: selectedConversation.id,
+        message: '[Voice message]',
+        voice_url: voiceUrl,
+      })
+    } catch (e) {
+      console.error('Failed to send voice message:', e)
+      alert('Failed to send voice message.')
+    }
+  }
+
+  const sendAttachments = async (files: Array<{ url: string; name: string; type: string; size: number }>) => {
+    if (!selectedConversation || !currentUser || files.length === 0) return
+    try {
+      await supabase.from('messages').insert({
+        sender_id: currentUser.id,
+        recipient_id: selectedConversation.id,
+        message: '[Attachments]',
+        file_attachments: files,
+      })
+    } catch (e) {
+      console.error('Failed to send attachments:', e)
+      alert('Failed to send attachments.')
+    }
+  }
+
+  const openPinModal = async () => {
+    if (!selectedConversation) return
+    setShowPinModal(true)
+    setPinNote('')
+    setSelectedSessionId(null)
+    try {
+      const { data, error } = await supabase
+        .from('training_sessions')
+        .select('id, started_at, overall_score')
+        .eq('user_id', selectedConversation.id)
+        .order('started_at', { ascending: false })
+        .limit(25)
+      if (!error) setRepSessions(data || [])
+    } catch (e) {
+      console.error('Failed to load sessions for pin:', e)
+    }
+  }
+
+  const confirmPin = async () => {
+    if (!currentUser || !selectedConversation || !selectedSessionId) return
+    try {
+      // Create pin record
+      await supabase.from('pinned_sessions').insert({
+        user_id: currentUser.id,
+        session_id: selectedSessionId,
+        note: pinNote || null,
+      })
+
+      // Send a message noting the pin and include metadata for future UI
+      await supabase.from('messages').insert({
+        sender_id: currentUser.id,
+        recipient_id: selectedConversation.id,
+        message: `Pinned session ${selectedSessionId}${pinNote ? ` — ${pinNote}` : ''}`,
+        message_type: 'pin',
+        metadata: { pinned_session_id: selectedSessionId, note: pinNote },
+      })
+
+      setShowPinModal(false)
+    } catch (e) {
+      console.error('Failed to pin session:', e)
+      alert('Failed to pin session.')
     }
   }
 
@@ -450,7 +538,23 @@ export default function MessagingCenter() {
                         ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
                         : 'bg-white/10 text-white border border-white/10'
                     }`}>
-                      <p className="text-sm">{message.text}</p>
+                      {message.voice_url ? (
+                        <audio controls className="w-64">
+                          <source src={message.voice_url} />
+                          Your browser does not support the audio element.
+                        </audio>
+                      ) : (
+                        <p className="text-sm">{message.text}</p>
+                      )}
+                      {message.file_attachments && message.file_attachments.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {message.file_attachments.map((f, i) => (
+                            <a key={i} href={f.url} target="_blank" rel="noreferrer" className="text-xs underline text-slate-200 hover:text-white">
+                              {f.name}
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 px-2">
                       <span className="text-xs text-slate-400">{formatTime(message.created_at)}</span>
@@ -465,10 +569,8 @@ export default function MessagingCenter() {
 
             {/* Message Input */}
             <div className="p-4 border-t border-white/10 bg-white/5">
-              <div className="flex items-center gap-3">
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                  <Paperclip className="w-5 h-5 text-slate-400" />
-                </button>
+              <div className="flex items-center gap-3 relative">
+                <FileUpload onUpload={sendAttachments} />
                 <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                   <Smile className="w-5 h-5 text-slate-400" />
                 </button>
@@ -480,8 +582,13 @@ export default function MessagingCenter() {
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                   className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 />
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                  <Mic className="w-5 h-5 text-slate-400" />
+                <VoiceRecorder onSend={sendVoiceMessage} />
+                <button
+                  onClick={openPinModal}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  title="Pin session"
+                >
+                  <Pin className="w-5 h-5 text-slate-400" />
                 </button>
                 <button
                   onClick={sendMessage}
@@ -553,6 +660,60 @@ export default function MessagingCenter() {
                     </>
                   )}
                 </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      {/* Pin Session Modal */}
+      <AnimatePresence>
+        {showPinModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 z-50"
+              onClick={() => setShowPinModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#1e1e30] border border-white/10 rounded-2xl p-6 z-50"
+            >
+              <h3 className="text-xl font-semibold text-white mb-4">Pin a session</h3>
+              <p className="text-sm text-slate-400 mb-3">Select a recent session for this rep and add an optional note.</p>
+              <div className="max-h-64 overflow-y-auto border border-white/10 rounded-lg">
+                {repSessions.length === 0 ? (
+                  <div className="p-4 text-sm text-slate-400">No sessions found for this rep.</div>
+                ) : (
+                  repSessions.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setSelectedSessionId(s.id)}
+                      className={`w-full text-left px-4 py-2 border-b border-white/5 hover:bg-white/5 ${selectedSessionId === s.id ? 'bg-white/10' : ''}`}
+                    >
+                      <div className="flex items-center justify-between text-sm text-white">
+                        <span>Session {s.id}</span>
+                        <span className="text-slate-400">{new Date(s.started_at).toLocaleString()}</span>
+                      </div>
+                      {s.overall_score != null && (
+                        <div className="text-xs text-slate-400">Score: {s.overall_score}</div>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+              <textarea
+                value={pinNote}
+                onChange={(e) => setPinNote(e.target.value)}
+                placeholder="Add a note (optional)"
+                className="w-full h-24 mt-3 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
+              />
+              <div className="mt-4 flex items-center gap-3">
+                <button onClick={() => setShowPinModal(false)} className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white transition-all">Cancel</button>
+                <button onClick={confirmPin} disabled={!selectedSessionId} className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 disabled:opacity-50 rounded-xl text-sm font-semibold text-white">Pin</button>
               </div>
             </motion.div>
           </>
