@@ -528,11 +528,10 @@ ${knowledgeContext}`
         return gradingResult.scores.overall
       }
 
-      // Include all 9 scores in the overall calculation
+      // Include core sales performance scores only (exclude filler_words and question_ratio)
       const numericScores = [
-        rapportScore, discoveryScore, objectionScore, closeScore,
-        speakingPaceScore, fillerWordsScore, questionRatioScore,
-        activeListeningScore, assumptiveLanguageScore
+        rapportScore, discoveryScore, objectionScore, closeScore, safetyScore,
+        speakingPaceScore, activeListeningScore, assumptiveLanguageScore
       ].filter((value) => typeof value === 'number') as number[]
       
       if (numericScores.length === 0) {
