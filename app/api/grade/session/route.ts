@@ -428,7 +428,7 @@ export async function POST(request: NextRequest) {
   "sale_closed": bool,
   "return_appointment": bool,
   "virtual_earnings": number,
-  "earnings_data": { "base_amount": number, "closed_amount": number, "commission_rate": 0.30, "commission_earned": number, "bonus_modifiers": { "quick_close": number, "upsell": number, "retention": number, "same_day_start": number, "referral_secured": number, "perfect_pitch": number }, "total_earned": number },
+  "earnings_data": { "base_amount": 0, "closed_amount": number, "commission_rate": 0.30, "commission_earned": number, "bonus_modifiers": { "quick_close": 0, "upsell": 0, "retention": 0, "same_day_start": 0, "referral_secured": 0, "perfect_pitch": 0 }, "total_earned": number },
   "deal_details": { "product_sold": "", "service_type": "", "base_price": number, "monthly_value": number, "contract_length": number, "total_contract_value": number, "payment_method": "", "add_ons": [], "start_date": "" },
             "enhanced_metrics": {
               "filler_words": {
@@ -444,7 +444,18 @@ Rules:
 - Create a line_ratings entry for EVERY sales rep line. Include alternative_lines with 1-2 suggested rewrites for lines rated "average" or "poor". Leave alternative_lines empty for "good" or "excellent" lines.
 - Count all filler words (um, uh, like, you know, basically, actually) spoken by the sales rep. Return the total count as filler_word_count AND in enhanced_metrics.filler_words with breakdown by type.
 - DO NOT include filler_words in the scores object. The backend will deduct 1% from overall for each filler word.
-- Earnings: sale_closed true only if customer commits to a paid service. Commission rate must be 0.30. Bonuses remain 0 unless explicitly earned. No sale means total_earned = 0 and virtual_earnings = 0.
+
+EARNINGS CALCULATION:
+- sale_closed true ONLY if customer commits to a paid service (not just appointments)
+- Extract monthly_value and contract_length from conversation
+- Calculate total_contract_value = monthly_value × contract_length (e.g., $100/month × 6 months = $600)
+- Calculate commission_earned = total_contract_value × 0.30
+- For one-time services, use base_price as total_contract_value
+- Set closed_amount to total_contract_value
+- Add bonuses to commission_earned to get total_earned
+- Set virtual_earnings = total_earned
+- No sale means all earnings values = 0
+
 - Return strictly valid JSON with no extra commentary.`
         },
         {
@@ -523,36 +534,74 @@ ${knowledgeContext}`
     }
 
     // Extract all optional data (graceful degradation)
-    const earningsData = gradingResult.earnings_data || {}
-    const dealDetails = gradingResult.deal_details || {}
+    let earningsData = gradingResult.earnings_data || {}
+    let dealDetails = gradingResult.deal_details || {}
     const objectionAnalysis = gradingResult.objection_analysis || {}
     const coachingPlan = gradingResult.coaching_plan || {}
     const enhancedMetrics = gradingResult.enhanced_metrics || {}
     const conversationDynamics = gradingResult.conversation_dynamics || {}
     const failureAnalysis = gradingResult.failure_analysis || {}
     
-    // Use total_earned from earnings_data if available, otherwise fall back to virtual_earnings
+    // Recalculate earnings to ensure correct math (OpenAI sometimes gets this wrong)
     let virtualEarnings = 0
     if (saleClosed) {
-      if (earningsData.total_earned && typeof earningsData.total_earned === 'number') {
-        virtualEarnings = earningsData.total_earned
-      } else if (typeof gradingResult.virtual_earnings === 'number') {
-        virtualEarnings = gradingResult.virtual_earnings
+      const monthlyValue = dealDetails.monthly_value || 0
+      const contractLength = dealDetails.contract_length || 0
+      const basePrice = dealDetails.base_price || 0
+      
+      // Calculate total contract value
+      let totalContractValue = 0
+      if (monthlyValue > 0 && contractLength > 0) {
+        // Monthly contract: $X/month × Y months
+        totalContractValue = monthlyValue * contractLength
+      } else if (basePrice > 0) {
+        // One-time service
+        totalContractValue = basePrice
       }
+      
+      // Calculate commission (30% of total contract value)
+      const commissionEarned = totalContractValue * 0.30
+      
+      // Add bonuses
+      const bonuses = earningsData.bonus_modifiers || {}
+      const totalBonuses = Object.values(bonuses).reduce((sum: number, val: any) => sum + (typeof val === 'number' ? val : 0), 0)
+      
+      // Total earned = commission + bonuses
+      const totalEarned = commissionEarned + totalBonuses
+      
+      // Update earnings data with corrected values
+      earningsData = {
+        ...earningsData,
+        closed_amount: totalContractValue,
+        commission_rate: 0.30,
+        commission_earned: commissionEarned,
+        bonus_modifiers: bonuses,
+        total_earned: totalEarned
+      }
+      
+      // Update deal details
+      dealDetails = {
+        ...dealDetails,
+        total_contract_value: totalContractValue
+      }
+      
+      virtualEarnings = totalEarned
+      
+      console.log('💰 Recalculated earnings:', {
+        monthly_value: monthlyValue,
+        contract_length: contractLength,
+        base_price: basePrice,
+        total_contract_value: totalContractValue,
+        commission_earned: commissionEarned,
+        bonuses: totalBonuses,
+        total_earned: totalEarned
+      })
     }
 
     if (!saleClosed) {
       virtualEarnings = 0
     }
 
-    console.log('💰 Final values:', { 
-      saleClosed, 
-      returnAppointment, 
-      virtualEarnings,
-      dealValue: dealDetails.total_contract_value,
-      commission: earningsData.commission_earned,
-      bonuses: earningsData.bonus_modifiers
-    })
 
     const calculatedOverall = (() => {
       let baseScore = 0
