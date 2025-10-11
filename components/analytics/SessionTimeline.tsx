@@ -20,9 +20,24 @@ interface SessionTimelineProps {
   events: TimelineEvent[]
   lineRatings?: any[]
   onEventClick?: (event: TimelineEvent) => void
+  customerName?: string
+  salesRepName?: string
+  dealOutcome?: {
+    closed: boolean
+    amount: number
+    product: string
+  }
 }
 
-export default function SessionTimeline({ duration, events, lineRatings = [], onEventClick }: SessionTimelineProps) {
+export default function SessionTimeline({ 
+  duration, 
+  events, 
+  lineRatings = [], 
+  onEventClick,
+  customerName = 'Customer',
+  salesRepName = 'Sales Rep',
+  dealOutcome
+}: SessionTimelineProps) {
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null)
   const [hoveredEvent, setHoveredEvent] = useState<number | null>(null)
   const [hoveredZone, setHoveredZone] = useState<number | null>(null)
@@ -112,8 +127,68 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
     }
   }
 
+  // Calculate conversation phases
+  const phases = [
+    { name: 'Discovery', start: 0, end: duration * 0.25, color: '#3b82f6' },
+    { name: 'Building Trust', start: duration * 0.25, end: duration * 0.5, color: '#8b5cf6' },
+    { name: 'Handling Objections', start: duration * 0.5, end: duration * 0.75, color: '#f59e0b' },
+    { name: 'Closing', start: duration * 0.75, end: duration, color: '#10b981' }
+  ]
+
   return (
     <div className="space-y-6">
+      {/* Conversation Context Header */}
+      <div className="rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-400" />
+                <span className="text-lg font-semibold text-white">{formatTime(duration)}</span>
+                <span className="text-sm text-slate-400">conversation</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <span className="text-slate-500">Customer: </span>
+                <span className="text-white font-medium">{customerName}</span>
+              </div>
+              <div className="w-px h-4 bg-slate-700"></div>
+              <div>
+                <span className="text-slate-500">Sales Rep: </span>
+                <span className="text-white font-medium">{salesRepName}</span>
+              </div>
+            </div>
+          </div>
+          
+          {dealOutcome && (
+            <div className={`px-4 py-2 rounded-xl border ${
+              dealOutcome.closed 
+                ? 'bg-emerald-500/10 border-emerald-500/30' 
+                : 'bg-slate-500/10 border-slate-500/30'
+            }`}>
+              <div className="flex items-center gap-2">
+                {dealOutcome.closed ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                ) : (
+                  <Clock className="w-5 h-5 text-slate-400" />
+                )}
+                <div>
+                  <div className={`text-sm font-semibold ${dealOutcome.closed ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    {dealOutcome.closed ? 'Closed' : 'No Sale'}
+                  </div>
+                  {dealOutcome.closed && (
+                    <div className="text-xs text-white">
+                      ${dealOutcome.amount} - {dealOutcome.product}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Enhanced Statistics Bar */}
       <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
         <div className="flex items-center gap-6">
@@ -189,6 +264,25 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
 
       {/* Timeline Track */}
       <div className="relative rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
+        {/* Phase Labels */}
+        <div className="flex mb-4">
+          {phases.map((phase, i) => (
+            <div 
+              key={i}
+              className="flex-1 text-center"
+              style={{ flex: `${((phase.end - phase.start) / duration) * 100}%` }}
+            >
+              <div 
+                className="text-xs font-semibold uppercase tracking-wider mb-1"
+                style={{ color: phase.color }}
+              >
+                {phase.name}
+              </div>
+              <div className="h-1 rounded-full" style={{ background: `${phase.color}40` }}></div>
+            </div>
+          ))}
+        </div>
+
         {/* Time markers */}
         <div className="flex justify-between mb-2 px-2">
           {timeMarkers.map((marker, i) => (
@@ -239,14 +333,17 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
             })}
           </div>
 
-          {/* Animated progress line */}
+          {/* Enhanced engagement gradient overlay */}
           <motion.div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm pointer-events-none"
+            className="absolute top-0 left-0 h-full pointer-events-none"
+            style={{
+              background: 'linear-gradient(to right, #1e3a8a40, #3b82f680, #eab30880, #10b98180, #8b5cf680)'
+            }}
             initial={{ width: '0%' }}
             animate={{ width: '100%' }}
             transition={{ duration: 2, ease: 'easeOut' }}
           >
-            <div className="absolute right-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-purple-400 to-pink-400 shadow-lg shadow-purple-500/50" />
+            <div className="absolute right-0 top-0 bottom-0 w-[4px] bg-gradient-to-b from-purple-400 via-pink-400 to-emerald-400 shadow-lg shadow-purple-500/50" />
           </motion.div>
 
           {/* Event markers */}

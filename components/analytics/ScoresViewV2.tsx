@@ -104,50 +104,125 @@ export default function ScoresViewV2({
     return 'Keep Practicing'
   }
 
-  // Extract key moments from line ratings and dynamics
-  const keyMoments = []
+  // Enhanced categorization of key moments
+  const keyMoments: any[] = []
   
-  // Add excellent lines
-  const excellentLines = lineRatings.filter(r => r.effectiveness === 'excellent').slice(0, 3)
-  excellentLines.forEach(line => {
-    keyMoments.push({
-      type: 'win',
-      line: line.line_number,
-      timestamp: line.timestamp || '00:00',
-      title: 'Excellent Response',
-      description: line.techniques_used?.join(', ') || 'Strong performance',
-      score: line.score
-    })
+  // Categorize lines by technique/category
+  lineRatings.forEach(line => {
+    if (!line.timestamp || line.timestamp === '00:00') return
+    
+    const techniques = line.techniques_used || []
+    const category = line.category || 'general'
+    
+    // Rapport building moments
+    if (category === 'rapport' && line.effectiveness !== 'poor') {
+      keyMoments.push({
+        type: 'win',
+        line: line.line_number,
+        timestamp: line.timestamp,
+        title: '🤝 Rapport Building',
+        description: techniques.join(', ') || 'Building connection with customer',
+        score: line.score,
+        impact: line.effectiveness === 'excellent' ? 'high' : 'medium'
+      })
+    }
+    
+    // Discovery questions
+    if (category === 'discovery' && line.effectiveness !== 'poor') {
+      keyMoments.push({
+        type: 'signal',
+        line: line.line_number,
+        timestamp: line.timestamp,
+        title: '❓ Discovery Question',
+        description: techniques.join(', ') || 'Gathering customer information',
+        score: line.score,
+        impact: 'medium'
+      })
+    }
+    
+    // Objections
+    if (category === 'objection_handling') {
+      keyMoments.push({
+        type: line.effectiveness === 'poor' ? 'critical' : line.effectiveness === 'excellent' ? 'win' : 'opportunity',
+        line: line.line_number,
+        timestamp: line.timestamp,
+        title: line.effectiveness === 'excellent' ? '✅ Objection Overcome' : '🚫 Objection Raised',
+        description: line.improvement_notes || techniques.join(', ') || 'Handling customer concern',
+        score: line.score,
+        impact: 'high'
+      })
+    }
+    
+    // Closing attempts
+    if (category === 'closing') {
+      keyMoments.push({
+        type: line.effectiveness === 'excellent' ? 'win' : 'opportunity',
+        line: line.line_number,
+        timestamp: line.timestamp,
+        title: line.effectiveness === 'excellent' ? '🎯 Close Success' : '🎯 Close Attempt',
+        description: techniques.join(', ') || line.improvement_notes || 'Attempting to close',
+        score: line.score,
+        impact: 'high'
+      })
+    }
+    
+    // Excellent lines that aren't already categorized
+    if (line.effectiveness === 'excellent' && !['rapport', 'discovery', 'objection_handling', 'closing'].includes(category)) {
+      keyMoments.push({
+        type: 'win',
+        line: line.line_number,
+        timestamp: line.timestamp,
+        title: '✨ Value Proposition',
+        description: techniques.join(', ') || 'Strong performance',
+        score: line.score,
+        impact: 'medium'
+      })
+    }
+    
+    // Poor lines for coaching
+    if (line.effectiveness === 'poor' || (line.effectiveness === 'average' && line.missed_opportunities?.length > 0)) {
+      keyMoments.push({
+        type: 'opportunity',
+        line: line.line_number,
+        timestamp: line.timestamp,
+        title: '💡 Coaching Moment',
+        description: line.improvement_notes || line.missed_opportunities?.[0] || 'Could be improved',
+        score: line.score,
+        impact: line.effectiveness === 'poor' ? 'high' : 'medium'
+      })
+    }
   })
 
-  // Add poor/average lines that need work
-  const needsWorkLines = lineRatings.filter(r => r.effectiveness === 'poor' || r.effectiveness === 'average').slice(0, 2)
-  needsWorkLines.forEach(line => {
-    keyMoments.push({
-      type: 'opportunity',
-      line: line.line_number,
-      timestamp: line.timestamp || '00:00',
-      title: 'Coaching Moment',
-      description: line.improvement_notes || 'Could be improved',
-      score: line.score
-    })
-  })
-
-  // Add buying signals
-  conversationDynamics?.buying_signals?.forEach((signal: any) => {
+  // Add buying signals from conversation dynamics
+  conversationDynamics?.buying_signals?.forEach((signal: any, idx: number) => {
     const signalText = typeof signal === 'string' ? signal : (signal.signal || signal.signal_description)
-    keyMoments.push({
-      type: 'signal',
-      line: typeof signal === 'object' ? signal.line : 0,
-      timestamp: '00:00',
-      title: 'Buying Signal',
-      description: signalText,
-      score: 0
-    })
+    const line = typeof signal === 'object' ? signal.line : 0
+    const timestamp = lineRatings[line]?.timestamp || '00:00'
+    
+    if (timestamp !== '00:00') {
+      keyMoments.push({
+        type: 'signal',
+        line,
+        timestamp,
+        title: '✨ Buying Signal',
+        description: signalText,
+        score: 0,
+        impact: 'medium'
+      })
+    }
   })
 
-  // Sort by line number
-  keyMoments.sort((a, b) => a.line - b.line)
+  // Sort by timestamp
+  keyMoments.sort((a, b) => {
+    const aTime = parseTimestamp(a.timestamp)
+    const bTime = parseTimestamp(b.timestamp)
+    return aTime - bTime
+  })
+  
+  function parseTimestamp(ts: string): number {
+    const [mins, secs] = ts.split(':').map(Number)
+    return (mins || 0) * 60 + (secs || 0)
+  }
 
   const coreMetrics = [
     { name: 'Rapport', score: scores.rapport, icon: Users, color: '#10b981' },
@@ -300,6 +375,13 @@ export default function ScoresViewV2({
             duration={durationSeconds}
             events={keyMoments}
             lineRatings={lineRatings}
+            customerName="Austin Rodriguez"
+            salesRepName="Tyler"
+            dealOutcome={saleClosed ? {
+              closed: true,
+              amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
+              product: dealDetails?.product_sold || 'Service'
+            } : undefined}
           />
         </section>
       )}
@@ -386,33 +468,28 @@ export default function ScoresViewV2({
         )}
       </section>
 
-      {/* Bottom Action Bar */}
+      {/* Simplified Bottom Action Bar */}
       <section className="sticky bottom-6 z-20">
         <div className="rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 p-4 shadow-2xl">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors text-sm text-white">
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 hover:from-purple-600/30 hover:to-pink-600/30 transition-colors text-sm text-white font-medium">
                 <Download className="w-4 h-4" />
-                Export Report
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors text-sm text-white">
-                <Share2 className="w-4 h-4" />
-                Share with Coach
+                Export & Share
               </button>
               <Link
-                href="/playbooks"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors text-sm text-white"
+                href="/sessions"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors text-sm text-slate-300"
               >
-                <BookOpen className="w-4 h-4" />
-                View Playbook
+                Back to Sessions
               </Link>
             </div>
 
             <div className="flex items-center gap-2">
-              <button className="p-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors">
+              <button className="p-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors" title="Previous session">
                 <ChevronLeft className="w-5 h-5 text-white" />
               </button>
-              <button className="p-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors">
+              <button className="p-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors" title="Next session">
                 <ChevronRight className="w-5 h-5 text-white" />
               </button>
             </div>
