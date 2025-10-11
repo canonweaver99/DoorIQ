@@ -525,6 +525,7 @@ ${knowledgeContext}`
 
     const calculatedOverall = (() => {
       if (typeof gradingResult.scores?.overall === 'number') {
+        console.log('✅ Using OpenAI overall score:', gradingResult.scores.overall)
         return gradingResult.scores.overall
       }
 
@@ -537,7 +538,9 @@ ${knowledgeContext}`
       if (numericScores.length === 0) {
         return 0
       }
-      return Math.round(numericScores.reduce((sum, value) => sum + value, 0) / numericScores.length)
+      const calculated = Math.round(numericScores.reduce((sum, value) => sum + value, 0) / numericScores.length)
+      console.log('🧮 Calculated overall score from', numericScores.length, 'core metrics:', calculated)
+      return calculated
     })()
 
     const { error: updateError } = await (supabase as any)
