@@ -611,14 +611,14 @@ ${knowledgeContext}`
         baseScore = gradingResult.scores.overall
       } else {
         // Include core sales performance scores only (exclude filler_words and question_ratio)
-        const numericScores = [
+      const numericScores = [
           rapportScore, discoveryScore, objectionScore, closeScore, safetyScore,
           speakingPaceScore, activeListeningScore, assumptiveLanguageScore
-        ].filter((value) => typeof value === 'number') as number[]
-        
-        if (numericScores.length === 0) {
-          return 0
-        }
+      ].filter((value) => typeof value === 'number') as number[]
+      
+      if (numericScores.length === 0) {
+        return 0
+      }
         baseScore = Math.round(numericScores.reduce((sum, value) => sum + value, 0) / numericScores.length)
         console.log('🧮 Calculated overall score from', numericScores.length, 'core metrics:', baseScore)
       }
@@ -633,6 +633,19 @@ ${knowledgeContext}`
       
       return finalScore
     })()
+
+    // Merge timestamps from original transcript into line ratings
+    const lineRatings = gradingResult.line_ratings || []
+    const transcriptWithTimestamps = (session as any).full_transcript || []
+    
+    lineRatings.forEach((rating: any) => {
+      const originalLine = transcriptWithTimestamps[rating.line_number]
+      if (originalLine && originalLine.timestamp) {
+        rating.timestamp = originalLine.timestamp
+      }
+    })
+    
+    console.log('📍 Applied timestamps to', lineRatings.filter((r: any) => r.timestamp && r.timestamp !== '00:00').length, 'line ratings')
 
     const { error: updateError } = await (supabase as any)
       .from('live_sessions')
@@ -666,7 +679,7 @@ ${knowledgeContext}`
         return_appointment: returnAppointment,
         
         analytics: {
-          line_ratings: gradingResult.line_ratings || [],
+          line_ratings: lineRatings,
           feedback: gradingResult.feedback || { strengths: [], improvements: [], specific_tips: [] },
           enhanced_metrics: enhancedMetrics,
           objection_analysis: objectionAnalysis,
