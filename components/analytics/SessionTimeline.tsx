@@ -572,6 +572,7 @@ export default function SessionTimeline({
                     )}
                   </div>
                 )}
+              </div>
             </motion.div>
           )
         })}

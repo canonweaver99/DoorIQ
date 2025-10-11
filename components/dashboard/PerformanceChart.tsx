@@ -1,9 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea, Label } from 'recharts'
 import { useState } from 'react'
-import { Activity } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 interface PerformanceChartProps {
   data: Array<{
@@ -24,18 +24,41 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
     objections: true,
     closing: true,
   })
+  const [hoveredLine, setHoveredLine] = useState<string | null>(null)
 
   const metrics = [
-    { key: 'overall', color: '#8B5CF6', label: 'Overall' },
-    { key: 'rapport', color: '#06B6D4', label: 'Rapport' },
-    { key: 'discovery', color: '#10B981', label: 'Discovery' },
-    { key: 'objections', color: '#F59E0B', label: 'Objections' },
-    { key: 'closing', color: '#EC4899', label: 'Closing' },
+    { key: 'overall', color: '#6366f1', label: 'Overall', strokeWidth: 3 },
+    { key: 'rapport', color: '#10b981', label: 'Rapport', strokeWidth: 2 },
+    { key: 'discovery', color: '#8b5cf6', label: 'Discovery', strokeWidth: 2 },
+    { key: 'objections', color: '#f59e0b', label: 'Objections', strokeWidth: 2 },
+    { key: 'closing', color: '#ec4899', label: 'Closing', strokeWidth: 2 },
   ]
 
   const toggleMetric = (key: string) => {
     setActiveMetrics(prev => ({ ...prev, [key]: !prev[key] }))
   }
+
+  // Calculate analytics
+  const teamAverage = 75
+  const latestValues = data[data.length - 1] || {}
+  const oldestValues = data[0] || {}
+  const trend = latestValues.overall - oldestValues.overall
+  const highestScore = Math.max(...data.map(d => d.overall))
+  const lowestScore = Math.min(...data.map(d => d.overall))
+  const bestCategory = metrics
+    .filter(m => m.key !== 'overall')
+    .reduce((best, curr) => {
+      const currValue = latestValues[curr.key as keyof typeof latestValues] || 0
+      const bestValue = latestValues[best.key as keyof typeof latestValues] || 0
+      return currValue > bestValue ? curr : best
+    })
+  const worstCategory = metrics
+    .filter(m => m.key !== 'overall')
+    .reduce((worst, curr) => {
+      const currValue = latestValues[curr.key as keyof typeof latestValues] || 0
+      const worstValue = latestValues[worst.key as keyof typeof latestValues] || 0
+      return currValue < worstValue ? curr : worst
+    })
 
   return (
     <motion.div
@@ -57,28 +80,41 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
         </div>
       </div>
 
-      {/* Metric Toggle Buttons */}
+      {/* Enhanced Metric Toggle Buttons with Current Values */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {metrics.map(metric => (
-          <button
-            key={metric.key}
-            onClick={() => toggleMetric(metric.key)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-              activeMetrics[metric.key as keyof typeof activeMetrics]
-                ? 'bg-white/10 border border-white/20 text-white'
-                : 'bg-white/5 border border-white/5 text-slate-400'
-            }`}
-            style={{
-              borderColor: activeMetrics[metric.key as keyof typeof activeMetrics] ? metric.color : undefined,
-            }}
-          >
-            <span
-              className="inline-block w-2 h-2 rounded-full mr-2"
-              style={{ backgroundColor: metric.color }}
-            />
-            {metric.label}
-          </button>
-        ))}
+        {metrics.map(metric => {
+          const currentValue = latestValues[metric.key as keyof typeof latestValues] || 0
+          const isActive = activeMetrics[metric.key as keyof typeof activeMetrics]
+          
+          return (
+            <button
+              key={metric.key}
+              onClick={() => toggleMetric(metric.key)}
+              onMouseEnter={() => setHoveredLine(metric.key)}
+              onMouseLeave={() => setHoveredLine(null)}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                isActive
+                  ? 'bg-white/10 border-2 text-white shadow-lg'
+                  : 'bg-white/5 border border-white/5 text-slate-400 hover:bg-white/8'
+              } ${hoveredLine === metric.key ? 'scale-105' : ''}`}
+              style={{
+                borderColor: isActive ? metric.color : undefined,
+                boxShadow: isActive ? `0 0 20px ${metric.color}40` : undefined
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: metric.color }}
+                />
+                <span className={isActive ? 'font-bold' : ''}>{metric.label}</span>
+                {isActive && currentValue > 0 && (
+                  <span className="ml-1 opacity-75">({currentValue}%)</span>
+                )}
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       {/* Chart */}
