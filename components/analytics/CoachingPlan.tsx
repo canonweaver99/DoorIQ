@@ -135,7 +135,8 @@ export default function CoachingPlan({ coachingPlan }: CoachingPlanProps) {
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         </motion.div>
       )}
