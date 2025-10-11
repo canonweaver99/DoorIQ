@@ -50,9 +50,11 @@ export default function SessionTimeline({
     { position: 90, label: 'Close', defaultQuote: 'Deal outcome' }
   ]
   
-  // Try to match key dots to actual events
+  // Try to match key dots to actual events and get conversation quotes
   const mappedDots = keyDots.map((dot, idx) => {
     const targetTime = (duration * dot.position) / 100
+    
+    // Find nearby events
     const nearbyEvents = events.filter(e => {
       const eventTime = parseTimestamp(e.timestamp)
       return Math.abs(eventTime - targetTime) < duration * 0.15 // Within 15% of target
@@ -60,11 +62,29 @@ export default function SessionTimeline({
     
     const matchedEvent = nearbyEvents[0]
     
+    // Find the actual line rating for this event to get the conversation quote
+    let conversationQuote = dot.defaultQuote
+    let feedback = ''
+    
+    if (matchedEvent && matchedEvent.line !== undefined) {
+      const lineRating = lineRatings.find(r => r.line_number === matchedEvent.line)
+      if (lineRating) {
+        // Try to find the actual transcript line
+        // The quote should be the actual text spoken, not just the description
+        conversationQuote = lineRating.improvement_notes || matchedEvent.description || dot.defaultQuote
+        feedback = lineRating.improvement_notes 
+          ? `${lineRating.effectiveness} - ${lineRating.score}/100`
+          : `${lineRating.effectiveness} performance`
+      }
+    }
+    
     return {
       position: dot.position,
       timestamp: matchedEvent?.timestamp || formatTime(targetTime),
       label: matchedEvent?.title || dot.label,
-      quote: matchedEvent?.description || dot.defaultQuote
+      quote: conversationQuote,
+      feedback: feedback || `${matchedEvent?.score || 0}/100`,
+      lineNumber: matchedEvent?.line
     }
   })
 
@@ -178,18 +198,38 @@ export default function SessionTimeline({
                   }}
                 />
                 
-                {/* Hover tooltip */}
+                {/* Enhanced hover tooltip with conversation quote and feedback */}
                 <AnimatePresence>
                   {isHovered && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 w-72 p-4 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-slate-700/50 shadow-2xl pointer-events-none"
+                      className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 w-80 p-5 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-slate-700/50 shadow-2xl pointer-events-none"
                     >
-                      <div className="text-xs font-mono text-purple-400 mb-2">{dot.timestamp}</div>
-                      <div className="text-sm font-semibold text-white mb-2">{dot.label}</div>
-                      <div className="text-sm text-slate-300 italic leading-relaxed">"{dot.quote}"</div>
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-700/50">
+                        <div className="text-xs font-mono text-purple-400">{dot.timestamp}</div>
+                        <div className="text-xs font-semibold text-slate-400">{dot.label}</div>
+                      </div>
+                      
+                      {/* Conversation Quote */}
+                      <div className="mb-3">
+                        <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">What was said:</div>
+                        <div className="text-sm text-slate-200 italic leading-relaxed bg-slate-800/50 p-3 rounded-lg border-l-2 border-purple-500/50">
+                          "{dot.quote}"
+                        </div>
+                      </div>
+                      
+                      {/* AI Feedback */}
+                      {dot.feedback && (
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Feedback:</div>
+                          <div className="text-xs text-slate-300 bg-slate-800/30 p-2 rounded-lg">
+                            {dot.feedback}
+                          </div>
+                        </div>
+                      )}
                       
                       {/* Tooltip arrow */}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">

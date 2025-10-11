@@ -353,7 +353,7 @@ export default function ScoresViewV2({
 
       {/* Enhanced Timeline - "What specific moments mattered?" */}
       {keyMoments.length > 0 && (
-        <section>
+        <section className="rounded-3xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-8">
           <div className="flex items-center gap-3 mb-6">
             <Clock className="w-5 h-5 text-purple-400" />
             <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">Session Timeline</h3>
