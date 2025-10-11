@@ -6,6 +6,304 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
+type JsonSchema = Record<string, any>
+
+const gradingResponseSchema: JsonSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'session_summary',
+    'scores',
+    'line_ratings',
+    'feedback',
+    'conversation_dynamics',
+    'failure_analysis',
+    'objection_analysis',
+    'coaching_plan',
+    'sale_closed',
+    'return_appointment',
+    'virtual_earnings',
+    'earnings_data',
+    'deal_details'
+  ],
+  properties: {
+    session_summary: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        total_lines: { type: 'integer' },
+        rep_lines: { type: 'integer' },
+        customer_lines: { type: 'integer' },
+        objections_detected: { type: 'integer' },
+        questions_asked: { type: 'integer' }
+      }
+    },
+    scores: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        overall: { type: 'number' },
+        rapport: { type: 'number' },
+        discovery: { type: 'number' },
+        objection_handling: { type: 'number' },
+        closing: { type: 'number' },
+        safety: { type: 'number' },
+        introduction: { type: 'number' },
+        listening: { type: 'number' },
+        speaking_pace: { type: 'number' },
+        filler_words: { type: 'number' },
+        question_ratio: { type: 'number' },
+        active_listening: { type: 'number' },
+        assumptive_language: { type: 'number' }
+      }
+    },
+    line_ratings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          line_number: { type: 'integer' },
+          speaker: { type: 'string' },
+          timestamp: { type: 'string' },
+          effectiveness: { type: 'string' },
+          score: { type: 'number' },
+          sentiment: { type: 'string' },
+          customer_engagement: { type: 'string' },
+          missed_opportunities: {
+            type: 'array',
+            items: { type: 'string' }
+          },
+          techniques_used: {
+            type: 'array',
+            items: { type: 'string' }
+          },
+          category: { type: 'string' },
+          improvement_notes: { type: 'string' }
+        }
+      }
+    },
+    feedback: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        strengths: { type: 'array', items: { type: 'string' } },
+        improvements: { type: 'array', items: { type: 'string' } },
+        specific_tips: { type: 'array', items: { type: 'string' } }
+      }
+    },
+    conversation_dynamics: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        interruptions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              who: { type: 'string' },
+              impact: { type: 'string' }
+            }
+          }
+        },
+        energy_shifts: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              from: { type: 'string' },
+              to: { type: 'string' },
+              trigger: { type: 'string' }
+            }
+          }
+        },
+        buying_signals: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              signal_description: { type: 'string' },
+              strength: { type: 'string' }
+            }
+          }
+        },
+        momentum_changes: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              change: { type: 'string' },
+              reason: { type: 'string' }
+            }
+          }
+        },
+        engagement_drops: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              reason: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    failure_analysis: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        critical_moments: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              event: { type: 'string' },
+              customer_reaction: { type: 'string' },
+              rep_recovery_attempted: { type: 'boolean' },
+              success: { type: 'boolean' },
+              better_approach: { type: 'string' }
+            }
+          }
+        },
+        point_of_no_return: {
+          type: 'object',
+          properties: {
+            line: { type: 'integer' },
+            reason: { type: 'string' },
+            could_have_saved: { type: 'boolean' },
+            how: { type: 'string' }
+          }
+        },
+        missed_pivots: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              opportunity: { type: 'string' },
+              suggested_pivot: { type: 'string' }
+            }
+          }
+        },
+        recovery_failures: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              attempt: { type: 'string' },
+              why_failed: { type: 'string' },
+              better_approach: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    objection_analysis: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        total_objections: { type: 'integer' },
+        objections_detail: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              line: { type: 'integer' },
+              type: { type: 'string' },
+              customer_statement: { type: 'string' },
+              rep_response: { type: 'string' },
+              technique: { type: 'string' },
+              resolution: { type: 'string' },
+              time_to_resolve: { type: 'string' },
+              effectiveness: { type: 'number' }
+            }
+          }
+        },
+        unresolved_concerns: { type: 'array', items: { type: 'string' } },
+        objection_patterns: { type: 'string' }
+      }
+    },
+    coaching_plan: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        immediate_fixes: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              issue: { type: 'string' },
+              practice_scenario: { type: 'string' },
+              resource: { type: 'string' }
+            }
+          }
+        },
+        skill_development: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              skill: { type: 'string' },
+              current_level: { type: 'string' },
+              target_level: { type: 'string' },
+              exercises: { type: 'array', items: { type: 'string' } }
+            }
+          }
+        },
+        role_play_scenarios: { type: 'array', items: { type: 'string' } }
+      }
+    },
+    sale_closed: { type: 'boolean' },
+    return_appointment: { type: 'boolean' },
+    virtual_earnings: { type: 'number' },
+    earnings_data: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        base_amount: { type: 'number' },
+        closed_amount: { type: 'number' },
+        commission_rate: { type: 'number' },
+        commission_earned: { type: 'number' },
+        bonus_modifiers: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            quick_close: { type: 'number' },
+            upsell: { type: 'number' },
+            retention: { type: 'number' },
+            same_day_start: { type: 'number' },
+            referral_secured: { type: 'number' },
+            perfect_pitch: { type: 'number' }
+          }
+        },
+        total_earned: { type: 'number' }
+      }
+    },
+    deal_details: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        product_sold: { type: 'string' },
+        service_type: { type: 'string' },
+        base_price: { type: 'number' },
+        monthly_value: { type: 'number' },
+        contract_length: { type: 'number' },
+        total_contract_value: { type: 'number' },
+        payment_method: { type: 'string' },
+        add_ons: { type: 'array', items: { type: 'string' } },
+        start_date: { type: 'string' }
+      }
+    }
+  }
+}
+
 // Check if API key is configured
 if (!process.env.OPENAI_API_KEY) {
   console.error('❌ OPENAI_API_KEY not configured')
@@ -99,95 +397,53 @@ export async function POST(request: NextRequest) {
     console.log('📝 Transcript preview:', formattedTranscript.substring(0, 500))
 
     // Call OpenAI for comprehensive analysis
+    const messages: Array<{ role: string; content: string }> = [
+      {
+        role: "system",
+        content: `You are an expert sales coach for door-to-door pest control. Analyze the transcript and return ONLY valid JSON with this structure:
+
+{
+  "session_summary": { "total_lines": int, "rep_lines": int, "customer_lines": int, "objections_detected": int, "questions_asked": int },
+  "scores": { "overall": int, "rapport": int, "discovery": int, "objection_handling": int, "closing": int, "safety": int, "introduction": int, "listening": int, "speaking_pace": int, "filler_words": int, "question_ratio": int, "active_listening": int, "assumptive_language": int },
+  "line_ratings": [{ "line_number": int, "speaker": "rep/customer", "timestamp": "00:00", "effectiveness": "excellent/good/average/poor", "score": int, "sentiment": "positive/neutral/negative", "customer_engagement": "high/medium/low", "missed_opportunities": [], "techniques_used": [], "category": "rapport/discovery/objection_handling/closing/general", "improvement_notes": "" }],
+  "feedback": { "strengths": [], "improvements": [], "specific_tips": [] },
+  "conversation_dynamics": { "interruptions": [], "energy_shifts": [], "buying_signals": [], "momentum_changes": [], "engagement_drops": [] },
+  "failure_analysis": { "critical_moments": [], "point_of_no_return": { "line": 0, "reason": "", "could_have_saved": false, "how": "" }, "missed_pivots": [], "recovery_failures": [] },
+  "objection_analysis": { "total_objections": int, "objections_detail": [], "unresolved_concerns": [], "objection_patterns": "" },
+  "coaching_plan": { "immediate_fixes": [], "skill_development": [], "role_play_scenarios": [] },
+  "sale_closed": bool,
+  "return_appointment": bool,
+  "virtual_earnings": number,
+  "earnings_data": { "base_amount": 0, "closed_amount": 0, "commission_rate": 0.30, "commission_earned": 0, "bonus_modifiers": { "quick_close": 0, "upsell": 0, "retention": 0, "same_day_start": 0, "referral_secured": 0, "perfect_pitch": 0 }, "total_earned": 0 },
+  "deal_details": { "product_sold": "", "service_type": "", "base_price": 0, "monthly_value": 0, "contract_length": 0, "total_contract_value": 0, "payment_method": "", "add_ons": [], "start_date": "" }
+}
+
+Rules: Only use data from transcript. Rate every rep line. All scores 0-100. Sale closed only if customer commits to payment. Commission rate = 0.30. No sale = $0 earnings.`
+      },
+      {
+        role: "user",
+        content: `TRANSCRIPT:\n${formattedTranscript}`
+      }
+    ]
+
+    if (knowledgeContext) {
+      messages.push({
+        role: "system",
+        content: `Reference materials:
+${knowledgeContext}`
+      })
+    }
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert sales coach analyzing door-to-door pest control sales conversations. 
-
-CRITICAL: Analyze ONLY the actual conversation provided. All data must come from the transcript. Never use example or placeholder values.
-
-CORE ANALYSIS REQUIREMENTS:
-
-For each line assess: speaker(rep/customer), timestamp, effectiveness(excellent/good/average/poor), score(0-100), sentiment(positive/neutral/negative), customer_engagement(high/medium/low), missed_opportunities[], techniques_used[], category(introduction/rapport/discovery/objection_handling/closing/safety/general)
-
-SCORING CRITERIA (each /100):
-
-RAPPORT: personal-connection local-refs name-usage mirroring warmth authenticity. Penalize: over-familiarity fake-friendliness rushed-pleasantries.
-
-DISCOVERY: problem-ID pain-exploration budget-qual decision-makers timeline. Quality: open-ended-ratio follow-up-depth listening. Penalize: interrogation assumptions premature-solutions.
-
-OBJECTIONS: Types: price spouse time competitor DIY rental experience need. Response: acknowledge-validate feel-felt-found reframe value-build urgency social-proof. Penalize: argumentative dismissive pressure desperation.
-
-CLOSING: assumptive-close alternative-choice urgency summary trial-closes. Measure: frequency timing confidence buying-signals. Penalize: weak-language permission-seeking over-aggressive unclear-steps.
-
-PACE: Optimal 140-160WPM. <120=-2pts/10WPM. >200=-3pts/10WPM.
-
-FILLERS: um uh like you-know basically actually. Score: 0-2%=100, 2-5%=80, 5-8%=60, >8%=40.
-
-QUESTIONS: Target 30-40%=100. <20%=60, >50%=80. Track: open/closed/discovery/trial-closes.
-
-LISTENING: Count acknowledgments empathy paraphrasing referencing-earlier. Penalize: non-sequiturs generic-responses.
-
-ASSUMPTIVE: when-we your-technician vs if-you might-consider. Ratio >0.7=100.
-
-CONVERSATION DYNAMICS TRACKING:
-Track between lines:
-- Interruptions: who interrupted, impact(positive/negative)
-- Energy shifts: line, from/to(engaged/skeptical/interested/closed), trigger
-- Buying signals: line, signal description, strength(weak/medium/strong/very_strong)
-- Momentum changes: where conversation accelerated/stalled
-- Engagement drops: when customer checked out mentally
-
-FAILURE ANALYSIS:
-Identify deal-killing moments:
-- Critical moments: line, event, customer_reaction, rep_recovery_attempted, success, better_approach
-- Point of no return: specific line where deal was lost, reason, could_have_saved(true/false), how_to_save
-- Missed pivots: opportunities to redirect that were ignored
-- Recovery failures: attempted saves that made things worse
-
-OBJECTION DETAILS:
-For each: type, customer_statement, rep_response, technique, resolution(resolved/partial/unresolved/ignored), time_to_resolve, effectiveness(0-100)
-
-COACHING PLAN:
-Immediate fixes: issue, practice_scenario, resource(/training/[topic])
-Skill development: skill, current_level, target_level, exercises[]
-Role-play scenarios based on observed weaknesses
-
-EARNINGS RULES:
-- Sale closed = payment commitment at door (not just appointment)
-- No sale = virtual_earnings MUST be 0
-- Extract actual price from conversation
-- Commission: 30% of contract value
-- Bonuses: quick_close($25/<15min), upsell($50/premium), retention($30/annual), same_day($20), referral($25), perfect_pitch($50/score>=90)
-
-DATA EXTRACTION RULES:
-1. Use ONLY information explicitly stated in the provided transcript
-2. For line_ratings: analyze EACH line from the transcript sequentially
-3. For customer_statements: use EXACT quotes from the transcript
-4. For prices/amounts: extract ONLY numbers mentioned in conversation
-5. If information is not in transcript, use empty string "" or 0 or empty array []
-6. Do NOT invent names, prices, or statements not in the transcript
-7. Count actual occurrences (questions, fillers, objections) from the transcript
-8. Timestamps should reflect actual conversation flow (increment realistically)
-
-          ${knowledgeContext}
-          
-Return JSON with ONLY data from the analyzed conversation (no examples or placeholders):`
-        },
-        {
-          role: "user",
-          content: formattedTranscript
-        }
-      ],
+      messages: messages as any,
       response_format: { type: "json_object" },
-      temperature: 0.6,
-      max_tokens: 3500  // Comprehensive analysis needs more tokens
+      max_tokens: 4000,
+      temperature: 0.4
     })
 
     const responseContent = completion.choices[0].message.content || '{}'
-    console.log('📨 Raw OpenAI response:', responseContent)
+    console.log('📨 Raw OpenAI response length:', responseContent.length)
     
     let gradingResult
     try {
