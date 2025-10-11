@@ -110,8 +110,8 @@ export default function ObjectionAnalysis({ objectionAnalysis }: ObjectionAnalys
     return 'text-red-400'
   }
 
-  const resolvedCount = objectionAnalysis.objections_detail?.filter(o => o.resolution === 'resolved').length || 0
-  const unresolvedCount = objectionAnalysis.objections_detail?.filter(o => o.resolution === 'unresolved' || o.resolution === 'ignored').length || 0
+  const resolvedCount = objectionAnalysis.objections_detail?.filter(o => typeof o === 'object' && o.resolution === 'resolved').length || 0
+  const unresolvedCount = objectionAnalysis.objections_detail?.filter(o => typeof o === 'object' && (o.resolution === 'unresolved' || o.resolution === 'ignored')).length || 0
   const resolutionRate = objectionAnalysis.total_objections ? Math.round((resolvedCount / objectionAnalysis.total_objections) * 100) : 0
 
   return (
@@ -180,66 +180,90 @@ export default function ObjectionAnalysis({ objectionAnalysis }: ObjectionAnalys
           Objection Details
         </h4>
 
-        {objectionAnalysis.objections_detail?.map((objection, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 + 0.2 }}
-            className={`rounded-xl p-5 border ${getResolutionColor(objection.resolution)}`}
-          >
-            {/* Objection Header */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{getObjectionTypeLabel(objection.type).split(' ')[0]}</span>
-                <div>
-                  <h5 className="text-lg font-semibold text-white capitalize">
-                    {objection.type.replace(/_/g, ' ')}
-                  </h5>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {objection.time_to_resolve}
-                    </span>
-                    <span className={`text-xs font-semibold ${getScoreColor(objection.effectiveness_score)}`}>
-                      {objection.effectiveness_score}/100
-                    </span>
+        {objectionAnalysis.objections_detail?.map((objection, index) => {
+          // Handle both string and object formats
+          const isString = typeof objection === 'string'
+          const type = isString ? 'general' : (objection.type || 'general')
+          const statement = isString ? objection : (objection.customer_statement || '')
+          const response = isString ? '' : (objection.rep_response || '')
+          const resolution = isString ? 'unknown' : (objection.resolution || 'unknown')
+          const technique = isString ? '' : (objection.technique_used || '')
+          const timeToResolve = isString ? 'N/A' : (objection.time_to_resolve || 'N/A')
+          const effectiveness = isString ? 0 : (objection.effectiveness_score || 0)
+          
+          return (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 + 0.2 }}
+              className={`rounded-xl p-5 border ${getResolutionColor(resolution)}`}
+            >
+              {/* Objection Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{getObjectionTypeLabel(type).split(' ')[0]}</span>
+                  <div>
+                    <h5 className="text-lg font-semibold text-white capitalize">
+                      {type.replace(/_/g, ' ')}
+                    </h5>
+                    {!isString && (
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {timeToResolve}
+                        </span>
+                        {effectiveness > 0 && (
+                          <span className={`text-xs font-semibold ${getScoreColor(effectiveness)}`}>
+                            {effectiveness}/100
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-2">
-                  {getResolutionIcon(objection.resolution)}
-                  <span className="text-sm font-medium text-white capitalize">
-                    {getResolutionLabel(objection.resolution)}
-                  </span>
+                <div className="flex flex-col items-end gap-2">
+                  {!isString && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        {getResolutionIcon(resolution)}
+                        <span className="text-sm font-medium text-white capitalize">
+                          {getResolutionLabel(resolution)}
+                        </span>
+                      </div>
+                      {technique && technique !== 'none' && (
+                        <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-xs text-blue-300">
+                          {technique.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                    </>
+                  )}
                 </div>
-                {objection.technique_used && objection.technique_used !== 'none' && (
-                  <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-xs text-blue-300">
-                    {objection.technique_used.replace(/_/g, ' ')}
-                  </span>
-                )}
               </div>
-            </div>
 
-            {/* Customer Statement */}
-            <div className="mb-3">
-              <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Customer Said:</p>
-              <div className="bg-gray-900/50 rounded-lg p-3 border-l-4 border-red-500/50">
-                <p className="text-sm text-gray-200 italic">"{objection.customer_statement}"</p>
-              </div>
-            </div>
+              {/* Customer Statement */}
+              {statement && (
+                <div className="mb-3">
+                  <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Customer Said:</p>
+                  <div className="bg-gray-900/50 rounded-lg p-3 border-l-4 border-red-500/50">
+                    <p className="text-sm text-gray-200 italic">"{statement}"</p>
+                  </div>
+                </div>
+              )}
 
-            {/* Rep Response */}
-            <div>
-              <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Rep Responded:</p>
-              <div className="bg-gray-900/50 rounded-lg p-3 border-l-4 border-blue-500/50">
-                <p className="text-sm text-gray-200 italic">"{objection.rep_response}"</p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+              {/* Rep Response */}
+              {response && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Rep Responded:</p>
+                  <div className="bg-gray-900/50 rounded-lg p-3 border-l-4 border-blue-500/50">
+                    <p className="text-sm text-gray-200 italic">"{response}"</p>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )
+        })}
       </div>
 
       {/* Unresolved Concerns */}

@@ -95,9 +95,16 @@ export default function CoachingPlan({ coachingPlan }: CoachingPlanProps) {
           </div>
 
           <div className="grid grid-cols-1 gap-3">
-            {coachingPlan.immediate_fixes.map((fix, index) => (
-              <div
-                key={index}
+            {coachingPlan.immediate_fixes.map((fix, index) => {
+              // Handle both string and object formats
+              const isString = typeof fix === 'string'
+              const issue = isString ? fix : (fix.issue || '')
+              const scenario = isString ? '' : (fix.practice_scenario || '')
+              const resource = isString ? '' : (fix.resource || fix.resource_link || '')
+              
+              return (
+                <div
+                  key={index}
                 className="bg-gray-800/30 rounded-xl p-5 border border-orange-500/30 hover:border-orange-500/50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -106,21 +113,25 @@ export default function CoachingPlan({ coachingPlan }: CoachingPlanProps) {
                       <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center text-lg">
                         ⚡
                       </div>
-                      <h5 className="font-semibold text-white">{fix.issue}</h5>
+                      <h5 className="font-semibold text-white">{issue}</h5>
                     </div>
                     
-                    <p className="text-sm text-gray-400 mb-3 ml-10">
-                      Practice: <span className="text-orange-300 font-medium">{fix.practice_scenario}</span>
-                    </p>
+                    {scenario && (
+                      <p className="text-sm text-gray-400 mb-3 ml-10">
+                        Practice: <span className="text-orange-300 font-medium">{scenario}</span>
+                      </p>
+                    )}
 
-                    <Link
-                      href={fix.resource_link}
-                      className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors ml-10"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      Training Resources
-                      <ExternalLink className="w-3 h-3" />
-                    </Link>
+                    {resource && (
+                      <Link
+                        href={resource}
+                        className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors ml-10"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        Training Resources
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -144,48 +155,61 @@ export default function CoachingPlan({ coachingPlan }: CoachingPlanProps) {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {coachingPlan.skill_development.map((skill, index) => (
-              <div
-                key={index}
-                className="bg-gray-800/30 rounded-xl p-5 border border-blue-500/30"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h5 className="text-lg font-semibold text-white mb-2">{skill.skill}</h5>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">Current:</span>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getLevelColor(skill.current_level)}`}>
-                          {getLevelIcon(skill.current_level)} {skill.current_level}
-                        </span>
-                      </div>
-                      <span className="text-gray-600">→</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">Target:</span>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getLevelColor(skill.target_level)}`}>
-                          {getLevelIcon(skill.target_level)} {skill.target_level}
-                        </span>
+            {coachingPlan.skill_development.map((skill, index) => {
+              // Handle both string and object formats
+              const isString = typeof skill === 'string'
+              const skillName = isString ? skill : (skill.skill || '')
+              const currentLevel = isString ? 'intermediate' : (skill.current_level || 'intermediate')
+              const targetLevel = isString ? 'advanced' : (skill.target_level || 'advanced')
+              const exercises = isString ? [] : (skill.exercises || skill.recommended_exercises || [])
+              
+              return (
+                <div
+                  key={index}
+                  className="bg-gray-800/30 rounded-xl p-5 border border-blue-500/30"
+                  >
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h5 className="text-lg font-semibold text-white mb-2">{skillName}</h5>
+                      {!isString && (
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Current:</span>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getLevelColor(currentLevel)}`}>
+                              {getLevelIcon(currentLevel)} {currentLevel}
+                            </span>
+                          </div>
+                          <span className="text-gray-600">→</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Target:</span>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getLevelColor(targetLevel)}`}>
+                              {getLevelIcon(targetLevel)} {targetLevel}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <Award className="w-6 h-6 text-blue-400 opacity-50" />
+                  </div>
+
+                  {exercises.length > 0 && (
+                    <div className="border-t border-gray-700/50 pt-4">
+                      <p className="text-xs text-gray-500 mb-3 uppercase tracking-wider">Recommended Exercises:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {exercises.map((exercise, i) => (
+                          <span
+                            key={i}
+                            className="px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm text-blue-300"
+                          >
+                            {exercise}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                  </div>
-                  <Award className="w-6 h-6 text-blue-400 opacity-50" />
+                  )}
                 </div>
-
-                <div className="border-t border-gray-700/50 pt-4">
-                  <p className="text-xs text-gray-500 mb-3 uppercase tracking-wider">Recommended Exercises:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {skill.recommended_exercises.map((exercise, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm text-blue-300"
-                      >
-                        {exercise}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </motion.div>
       )}

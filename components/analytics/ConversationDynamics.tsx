@@ -69,25 +69,37 @@ export default function ConversationDynamics({ conversationDynamics }: Conversat
             <span className="ml-auto text-sm text-emerald-400">{buying_signals.length} signals</span>
           </div>
           <div className="space-y-3">
-            {buying_signals.map((signal, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-emerald-500/10">
-                <span className="text-xs font-mono text-emerald-400 mt-0.5">L{signal.line}</span>
-                <div className="flex-1">
-                  <p className="text-sm text-white/90">{signal.signal}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-emerald-400">Strength:</span>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      signal.strength === 'very_strong' ? 'bg-emerald-500/30 text-emerald-300' :
-                      signal.strength === 'strong' ? 'bg-emerald-500/20 text-emerald-400' :
-                      signal.strength === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                      'bg-slate-500/20 text-slate-400'
-                    }`}>
-                      {signal.strength.replace('_', ' ')}
-                    </span>
+            {buying_signals.map((signal, i) => {
+              // Handle both object and string formats
+              const isString = typeof signal === 'string'
+              const line = isString ? 0 : (signal.line || 0)
+              const signalText = isString ? signal : (signal.signal || signal.signal_description || '')
+              const strength = isString ? 'medium' : (signal.strength || 'medium')
+              
+              return (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-emerald-500/10">
+                  {!isString && line > 0 && (
+                    <span className="text-xs font-mono text-emerald-400 mt-0.5">L{line}</span>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm text-white/90">{signalText}</p>
+                    {!isString && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-emerald-400">Strength:</span>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          strength === 'very_strong' ? 'bg-emerald-500/30 text-emerald-300' :
+                          strength === 'strong' ? 'bg-emerald-500/20 text-emerald-400' :
+                          strength === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-slate-500/20 text-slate-400'
+                        }`}>
+                          {strength.replace('_', ' ')}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
