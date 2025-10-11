@@ -363,12 +363,20 @@ export default function SessionsPage() {
                       {/* Overall Score - Bigger with Grade */}
                       <div className="text-right">
                         <p className="text-xs text-slate-400 mb-1">Overall Score</p>
-                        <div className="flex items-baseline gap-2">
+                        <div className="flex items-center gap-3">
                           <p className={`text-4xl font-bold ${getScoreColor(session.overall_score)}`}>
                             {session.overall_score || '--'}%
                           </p>
-                          <span className={`text-2xl font-semibold ${getScoreColor(session.overall_score)}`}>
-                            {getScoreLabel(session.overall_score)}
+                          <span className={`text-3xl font-bold ${getScoreColor(session.overall_score)}`}>
+                            {session.overall_score ? 
+                              session.overall_score >= 95 ? 'A+' :
+                              session.overall_score >= 90 ? 'A' :
+                              session.overall_score >= 85 ? 'B+' :
+                              session.overall_score >= 80 ? 'B' :
+                              session.overall_score >= 75 ? 'C+' :
+                              session.overall_score >= 70 ? 'C' :
+                              session.overall_score >= 65 ? 'D' : 'F'
+                            : '--'}
                           </span>
                         </div>
                       </div>
@@ -385,7 +393,7 @@ export default function SessionsPage() {
                   
                   {/* Key Insights */}
                   {insights.length > 0 && (
-                    <div className="border-t border-slate-700 pt-4">
+                    <div className="pt-4">
                       <h4 className="text-sm font-medium text-slate-300 mb-2">Key Insights</h4>
                       <div className="space-y-2">
                         {insights.map((insight, idx) => (
