@@ -405,16 +405,27 @@ export default function ScoresView({ overallScore, scores, feedback, virtualEarn
                     <MessageSquare className="w-4 h-4 text-slate-400" />
                     <span className="text-sm text-slate-300">Filler Words</span>
                   </div>
-                  <span className={`text-2xl font-semibold ${getScoreTextColor(scores.filler_words)}`}>
-                    {scores.filler_words}%
+                  <span className={`text-2xl font-semibold ${scores.filler_words > 10 ? 'text-red-400' : scores.filler_words > 5 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    {scores.filler_words}
                   </span>
                 </div>
-                {enhancedMetrics?.filler_words && (
-                  <div className="space-y-2 text-xs text-slate-400">
-                    <div>{enhancedMetrics.filler_words.total_count} total ({enhancedMetrics.filler_words.per_minute}/min)</div>
-                    <div className="text-slate-500">{enhancedMetrics.filler_words.score_breakdown}</div>
-                  </div>
-                )}
+                <div className="space-y-2 text-xs text-slate-400">
+                  <div className="text-slate-500">-{scores.filler_words}% overall score penalty</div>
+                  {enhancedMetrics?.filler_words && (
+                    <>
+                      <div>{enhancedMetrics.filler_words.per_minute?.toFixed(1)}/min average</div>
+                      {Object.keys(enhancedMetrics.filler_words.common_fillers || {}).length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {Object.entries(enhancedMetrics.filler_words.common_fillers).map(([word, count]) => (
+                            <span key={word} className="px-2 py-0.5 rounded-full bg-slate-800/50 text-slate-400 text-[10px]">
+                              {word}: {count}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </motion.div>
             )}
 

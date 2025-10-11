@@ -398,13 +398,14 @@ export async function POST(request: NextRequest) {
 
     // Call OpenAI for comprehensive analysis
     const messages: Array<{ role: string; content: string }> = [
-      {
-        role: "system",
+        {
+          role: "system",
         content: `You are an expert sales coach for door-to-door pest control. Analyze the transcript and return ONLY valid JSON matching this structure:
 
 {
   "session_summary": { "total_lines": int, "rep_lines": int, "customer_lines": int, "objections_detected": int, "questions_asked": int },
-  "scores": { "overall": int, "rapport": int, "discovery": int, "objection_handling": int, "closing": int, "safety": int, "introduction": int, "listening": int, "speaking_pace": int, "filler_words": int, "question_ratio": int, "active_listening": int, "assumptive_language": int },
+  "scores": { "overall": int, "rapport": int, "discovery": int, "objection_handling": int, "closing": int, "safety": int, "introduction": int, "listening": int, "speaking_pace": int, "question_ratio": int, "active_listening": int, "assumptive_language": int },
+  "filler_word_count": int,
   "line_ratings": [{
     "line_number": int,
     "speaker": "rep/customer",
@@ -429,12 +430,11 @@ export async function POST(request: NextRequest) {
   "virtual_earnings": number,
   "earnings_data": { "base_amount": number, "closed_amount": number, "commission_rate": 0.30, "commission_earned": number, "bonus_modifiers": { "quick_close": number, "upsell": number, "retention": number, "same_day_start": number, "referral_secured": number, "perfect_pitch": number }, "total_earned": number },
   "deal_details": { "product_sold": "", "service_type": "", "base_price": number, "monthly_value": number, "contract_length": number, "total_contract_value": number, "payment_method": "", "add_ons": [], "start_date": "" },
-  "enhanced_metrics": {
-    "filler_words": {
+            "enhanced_metrics": {
+              "filler_words": {
       "total_count": int,
       "per_minute": number,
-      "common_fillers": { "phrase": int },
-      "score_breakdown": ""
+      "common_fillers": { "um": int, "uh": int, "like": int, "you know": int, "basically": int, "actually": int }
     }
   }
 }
@@ -442,12 +442,13 @@ export async function POST(request: NextRequest) {
 Rules:
 - Only extract data explicitly stated in the transcript. If not mentioned, use empty string "", 0, false, or [] where appropriate.
 - Create a line_ratings entry for EVERY sales rep line. Include alternative_lines with 1-2 suggested rewrites for lines rated "average" or "poor". Leave alternative_lines empty for "good" or "excellent" lines.
-- For filler words, return both the percentage score (0-100) and the actual total_count + per_minute values inside enhanced_metrics.filler_words.
+- Count all filler words (um, uh, like, you know, basically, actually) spoken by the sales rep. Return the total count as filler_word_count AND in enhanced_metrics.filler_words with breakdown by type.
+- DO NOT include filler_words in the scores object. The backend will deduct 1% from overall for each filler word.
 - Earnings: sale_closed true only if customer commits to a paid service. Commission rate must be 0.30. Bonuses remain 0 unless explicitly earned. No sale means total_earned = 0 and virtual_earnings = 0.
 - Return strictly valid JSON with no extra commentary.`
-      },
-      {
-        role: "user",
+        },
+        {
+          role: "user",
         content: `TRANSCRIPT:\n${formattedTranscript}`
       }
     ]
@@ -499,17 +500,20 @@ ${knowledgeContext}`
     
     // Enhanced metrics - use if provided, otherwise set to null
     const speakingPaceScore = typeof gradingResult.scores?.speaking_pace === 'number' ? gradingResult.scores.speaking_pace : null
-    const fillerWordsScore = typeof gradingResult.scores?.filler_words === 'number' ? gradingResult.scores.filler_words : null
     const questionRatioScore = typeof gradingResult.scores?.question_ratio === 'number' ? gradingResult.scores.question_ratio : null
     const activeListeningScore = typeof gradingResult.scores?.active_listening === 'number' ? gradingResult.scores.active_listening : null
     const assumptiveLanguageScore = typeof gradingResult.scores?.assumptive_language === 'number' ? gradingResult.scores.assumptive_language : null
+    
+    // Get filler word count from the grading result
+    const fillerWordCount = typeof gradingResult.filler_word_count === 'number' ? gradingResult.filler_word_count : 0
     
     const returnAppointment = typeof gradingResult.return_appointment === 'boolean' ? gradingResult.return_appointment : false
 
     console.log('🔍 Extracted scores:', { 
       rapportScore, discoveryScore, objectionScore, closeScore,
-      speakingPaceScore, fillerWordsScore, questionRatioScore, 
-      activeListeningScore, assumptiveLanguageScore 
+      speakingPaceScore, questionRatioScore, 
+      activeListeningScore, assumptiveLanguageScore,
+      fillerWordCount 
     })
 
     let saleClosed = typeof gradingResult.sale_closed === 'boolean' ? gradingResult.sale_closed : false
@@ -550,23 +554,34 @@ ${knowledgeContext}`
     })
 
     const calculatedOverall = (() => {
+      let baseScore = 0
+      
       if (typeof gradingResult.scores?.overall === 'number') {
         console.log('✅ Using OpenAI overall score:', gradingResult.scores.overall)
-        return gradingResult.scores.overall
+        baseScore = gradingResult.scores.overall
+      } else {
+        // Include core sales performance scores only (exclude filler_words and question_ratio)
+        const numericScores = [
+          rapportScore, discoveryScore, objectionScore, closeScore, safetyScore,
+          speakingPaceScore, activeListeningScore, assumptiveLanguageScore
+        ].filter((value) => typeof value === 'number') as number[]
+        
+        if (numericScores.length === 0) {
+          return 0
+        }
+        baseScore = Math.round(numericScores.reduce((sum, value) => sum + value, 0) / numericScores.length)
+        console.log('🧮 Calculated overall score from', numericScores.length, 'core metrics:', baseScore)
       }
-
-      // Include core sales performance scores only (exclude filler_words and question_ratio)
-      const numericScores = [
-        rapportScore, discoveryScore, objectionScore, closeScore, safetyScore,
-        speakingPaceScore, activeListeningScore, assumptiveLanguageScore
-      ].filter((value) => typeof value === 'number') as number[]
       
-      if (numericScores.length === 0) {
-        return 0
+      // Apply filler word penalty: -1% per filler word
+      const fillerPenalty = fillerWordCount
+      const finalScore = Math.max(0, baseScore - fillerPenalty)
+      
+      if (fillerWordCount > 0) {
+        console.log(`🎙️ Filler word penalty: ${fillerWordCount} words = -${fillerPenalty}% (${baseScore} → ${finalScore})`)
       }
-      const calculated = Math.round(numericScores.reduce((sum, value) => sum + value, 0) / numericScores.length)
-      console.log('🧮 Calculated overall score from', numericScores.length, 'core metrics:', calculated)
-      return calculated
+      
+      return finalScore
     })()
 
     const { error: updateError } = await (supabase as any)
@@ -584,7 +599,7 @@ ${knowledgeContext}`
         // Enhanced metric scores (optional - may be null)
         speaking_pace_score: speakingPaceScore,
         speaking_pace_data: enhancedMetrics.speaking_pace || {},
-        filler_words_score: fillerWordsScore,
+        filler_words_score: fillerWordCount, // Store count, not score
         filler_words_data: enhancedMetrics.filler_words || {},
         question_ratio_score: questionRatioScore,
         question_ratio_data: enhancedMetrics.question_ratio || {},
