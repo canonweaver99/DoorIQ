@@ -44,7 +44,7 @@ export default function SignUpPage() {
     try {
       const supabase = createClient()
       
-      // Step 1: Create auth user
+      // Step 1: Create auth user with auto-confirm
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -52,6 +52,7 @@ export default function SignUpPage() {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: undefined, // Disable email confirmation
         },
       })
 
@@ -83,22 +84,36 @@ export default function SignUpPage() {
           }
         }
 
-        // Step 3: Check if session was created (email confirmation might be required)
-        if (authData.session) {
-          console.log('✅ Session created, redirecting...')
+        // Step 3: Auto sign-in regardless of email confirmation
+        console.log('✅ Account created, auto-signing in...')
+        
+        // Immediately sign in with the credentials
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+        
+        if (signInError) {
+          console.warn('⚠️ Auto sign-in failed:', signInError.message)
+          setError('Account created! Please sign in with your credentials.')
+          setLoading(false)
+          return
+        }
+        
+        if (signInData.session) {
+          console.log('✅ Signed in successfully, redirecting...')
           
-          // Wait a moment for session to be fully established
+          // Wait for session to be established
           await new Promise(resolve => setTimeout(resolve, 800))
           
-          // Use window.location for a full page reload to ensure session is picked up
-          window.location.href = '/'
+          // Redirect to dashboard
+          window.location.href = '/dashboard'
         } else {
-          console.log('⚠️ No session - email confirmation may be required')
-          setError('Account created! Please check your email to confirm your account, then sign in.')
+          setError('Account created! Please sign in with your credentials.')
           setLoading(false)
         }
       } else {
-        setError('Account created but session not established. Please try logging in.')
+        setError('Account creation failed. Please try again.')
         setLoading(false)
       }
     } catch (err: any) {

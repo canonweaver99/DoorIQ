@@ -456,34 +456,6 @@ export default function ScoresViewV2({
         )}
       </section>
 
-      {/* Simplified Bottom Action Bar */}
-      <section className="sticky bottom-6 z-20">
-        <div className="rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 p-4 shadow-2xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 hover:from-purple-600/30 hover:to-pink-600/30 transition-colors text-sm text-white font-medium">
-                <Download className="w-4 h-4" />
-                Export & Share
-              </button>
-              <Link
-                href="/sessions"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors text-sm text-slate-300"
-              >
-                Back to Sessions
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button className="p-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors" title="Previous session">
-                <ChevronLeft className="w-5 h-5 text-white" />
-              </button>
-              <button className="p-2 rounded-xl bg-white/5 border border-slate-700 hover:bg-white/10 transition-colors" title="Next session">
-                <ChevronRight className="w-5 h-5 text-white" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }
