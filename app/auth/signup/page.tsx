@@ -44,17 +44,19 @@ export default function SignUpPage() {
     try {
       const supabase = createClient()
       
-      // Step 1: Create auth user with auto-confirm
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: undefined, // Disable email confirmation
-        },
+      // Step 1: Create user via server (auto-confirm)
+      const adminResp = await fetch('/api/auth/fast-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: fullName })
       })
+      const adminJson = await adminResp.json()
+      if (!adminResp.ok) {
+        throw new Error(adminJson.error || 'Failed to create account')
+      }
+
+      // Mirror in auth client by signing in immediately
+      const { data: authData, error: signUpError } = await supabase.auth.signInWithPassword({ email, password })
 
       if (signUpError) throw signUpError
 
