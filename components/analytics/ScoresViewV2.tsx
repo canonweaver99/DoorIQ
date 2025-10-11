@@ -104,125 +104,113 @@ export default function ScoresViewV2({
     return 'Keep Practicing'
   }
 
-  // Enhanced categorization of key moments
-  const keyMoments: any[] = []
-  
-  // Categorize lines by technique/category
-  lineRatings.forEach(line => {
-    if (!line.timestamp || line.timestamp === '00:00') return
-    
-    const techniques = line.techniques_used || []
-    const category = line.category || 'general'
-    
-    // Rapport building moments
-    if (category === 'rapport' && line.effectiveness !== 'poor') {
-      keyMoments.push({
-        type: 'win',
-        line: line.line_number,
-        timestamp: line.timestamp,
-        title: '🤝 Rapport Building',
-        description: techniques.join(', ') || 'Building connection with customer',
-        score: line.score,
-        impact: line.effectiveness === 'excellent' ? 'high' : 'medium'
-      })
-    }
-    
-    // Discovery questions
-    if (category === 'discovery' && line.effectiveness !== 'poor') {
-      keyMoments.push({
-        type: 'signal',
-        line: line.line_number,
-        timestamp: line.timestamp,
-        title: '❓ Discovery Question',
-        description: techniques.join(', ') || 'Gathering customer information',
-        score: line.score,
-        impact: 'medium'
-      })
-    }
-    
-    // Objections
-    if (category === 'objection_handling') {
-      keyMoments.push({
-        type: line.effectiveness === 'poor' ? 'critical' : line.effectiveness === 'excellent' ? 'win' : 'opportunity',
-        line: line.line_number,
-        timestamp: line.timestamp,
-        title: line.effectiveness === 'excellent' ? '✅ Objection Overcome' : '🚫 Objection Raised',
-        description: line.improvement_notes || techniques.join(', ') || 'Handling customer concern',
-        score: line.score,
-        impact: 'high'
-      })
-    }
-    
-    // Closing attempts
-    if (category === 'closing') {
-      keyMoments.push({
-        type: line.effectiveness === 'excellent' ? 'win' : 'opportunity',
-        line: line.line_number,
-        timestamp: line.timestamp,
-        title: line.effectiveness === 'excellent' ? '🎯 Close Success' : '🎯 Close Attempt',
-        description: techniques.join(', ') || line.improvement_notes || 'Attempting to close',
-        score: line.score,
-        impact: 'high'
-      })
-    }
-    
-    // Excellent lines that aren't already categorized
-    if (line.effectiveness === 'excellent' && !['rapport', 'discovery', 'objection_handling', 'closing'].includes(category)) {
-      keyMoments.push({
-        type: 'win',
-        line: line.line_number,
-        timestamp: line.timestamp,
-        title: '✨ Value Proposition',
-        description: techniques.join(', ') || 'Strong performance',
-        score: line.score,
-        impact: 'medium'
-      })
-    }
-    
-    // Poor lines for coaching
-    if (line.effectiveness === 'poor' || (line.effectiveness === 'average' && line.missed_opportunities?.length > 0)) {
-      keyMoments.push({
-        type: 'opportunity',
-        line: line.line_number,
-        timestamp: line.timestamp,
-        title: '💡 Coaching Moment',
-        description: line.improvement_notes || line.missed_opportunities?.[0] || 'Could be improved',
-        score: line.score,
-        impact: line.effectiveness === 'poor' ? 'high' : 'medium'
-      })
-    }
-  })
-
-  // Add buying signals from conversation dynamics
-  conversationDynamics?.buying_signals?.forEach((signal: any, idx: number) => {
-    const signalText = typeof signal === 'string' ? signal : (signal.signal || signal.signal_description)
-    const line = typeof signal === 'object' ? signal.line : 0
-    const timestamp = lineRatings[line]?.timestamp || '00:00'
-    
-    if (timestamp !== '00:00') {
-      keyMoments.push({
-        type: 'signal',
-        line,
-        timestamp,
-        title: '✨ Buying Signal',
-        description: signalText,
-        score: 0,
-        impact: 'medium'
-      })
-    }
-  })
-
-  // Sort by timestamp
-  keyMoments.sort((a, b) => {
-    const aTime = parseTimestamp(a.timestamp)
-    const bTime = parseTimestamp(b.timestamp)
-    return aTime - bTime
-  })
-  
+  // Extract ONLY high-impact moments (5-7 max) for storytelling
   function parseTimestamp(ts: string): number {
     const [mins, secs] = ts.split(':').map(Number)
     return (mins || 0) * 60 + (secs || 0)
   }
+
+  const keyMoments: any[] = []
+  const validLines = lineRatings.filter(l => l.timestamp && l.timestamp !== '00:00')
+  
+  // 1. First discovery moment (when problem is revealed)
+  const firstDiscovery = validLines.find(l => l.category === 'discovery' && l.score >= 70)
+  if (firstDiscovery) {
+    keyMoments.push({
+      type: 'signal',
+      line: firstDiscovery.line_number,
+      timestamp: firstDiscovery.timestamp,
+      title: '🔍 Problem Discovery',
+      description: `Customer reveals: ${firstDiscovery.techniques_used?.join(', ') || 'fire ant issue'}`,
+      score: firstDiscovery.score,
+      impact: 'high'
+    })
+  }
+
+  // 2. Best rapport/trust building moment
+  const bestRapport = validLines
+    .filter(l => l.category === 'rapport' && l.effectiveness === 'excellent')
+    .sort((a, b) => b.score - a.score)[0]
+  if (bestRapport) {
+    keyMoments.push({
+      type: 'win',
+      line: bestRapport.line_number,
+      timestamp: bestRapport.timestamp,
+      title: '✅ Trust Building',
+      description: `Effective: ${bestRapport.techniques_used?.join(', ') || 'Built connection through shared experience'}`,
+      score: bestRapport.score,
+      impact: 'high'
+    })
+  }
+
+  // 3. First major objection
+  const firstObjection = validLines.find(l => l.category === 'objection_handling')
+  if (firstObjection) {
+    keyMoments.push({
+      type: firstObjection.effectiveness === 'poor' ? 'critical' : 'opportunity',
+      line: firstObjection.line_number,
+      timestamp: firstObjection.timestamp,
+      title: '🚫 Objection Raised',
+      description: firstObjection.effectiveness === 'poor' 
+        ? `Weak: ${firstObjection.improvement_notes || 'Could improve objection handling'}`
+        : `${firstObjection.techniques_used?.join(', ') || 'Customer concern addressed'}`,
+      score: firstObjection.score,
+      impact: 'high'
+    })
+  }
+
+  // 4. Best objection handling (if different from first)
+  const bestObjectionHandling = validLines
+    .filter(l => l.category === 'objection_handling' && l.effectiveness === 'excellent' && l.line_number !== firstObjection?.line_number)
+    .sort((a, b) => b.score - a.score)[0]
+  if (bestObjectionHandling) {
+    keyMoments.push({
+      type: 'win',
+      line: bestObjectionHandling.line_number,
+      timestamp: bestObjectionHandling.timestamp,
+      title: '✅ Objection Overcome',
+      description: `Effective: ${bestObjectionHandling.techniques_used?.join(', ') || 'Successfully addressed concern'}`,
+      score: bestObjectionHandling.score,
+      impact: 'high'
+    })
+  }
+
+  // 5. Closing moment (success or attempt)
+  const closingLine = validLines
+    .filter(l => l.category === 'closing')
+    .sort((a, b) => b.score - a.score)[0]
+  if (closingLine) {
+    keyMoments.push({
+      type: closingLine.effectiveness === 'excellent' ? 'win' : 'opportunity',
+      line: closingLine.line_number,
+      timestamp: closingLine.timestamp,
+      title: closingLine.effectiveness === 'excellent' ? '🎯 Close Success' : '🎯 Close Attempt',
+      description: closingLine.effectiveness === 'excellent'
+        ? `Effective: ${closingLine.techniques_used?.join(', ') || 'Successfully closed'}`
+        : `${closingLine.improvement_notes || 'Close attempt'}`,
+      score: closingLine.score,
+      impact: 'high'
+    })
+  }
+
+  // 6. One critical coaching moment (worst line for learning)
+  const worstLine = validLines
+    .filter(l => l.effectiveness === 'poor' || (l.effectiveness === 'average' && l.missed_opportunities?.length > 0))
+    .sort((a, b) => a.score - b.score)[0]
+  if (worstLine && !keyMoments.some(m => m.line === worstLine.line_number)) {
+    keyMoments.push({
+      type: 'opportunity',
+      line: worstLine.line_number,
+      timestamp: worstLine.timestamp,
+      title: '💡 Critical Coaching Moment',
+      description: `Weak: ${worstLine.improvement_notes || worstLine.missed_opportunities?.[0] || 'Needs improvement'}`,
+      score: worstLine.score,
+      impact: 'high'
+    })
+  }
+
+  // Sort by timestamp
+  keyMoments.sort((a, b) => parseTimestamp(a.timestamp) - parseTimestamp(b.timestamp))
 
   const coreMetrics = [
     { name: 'Rapport', score: scores.rapport, icon: Users, color: '#10b981' },

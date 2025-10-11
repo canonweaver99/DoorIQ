@@ -109,11 +109,11 @@ export default function SessionTimeline({
 
   const getEventColor = (type: string) => {
     switch (type) {
-      case 'win': return { bg: '#10b981', border: '#10b98150' }
-      case 'opportunity': return { bg: '#f59e0b', border: '#f59e0b50' }
-      case 'signal': return { bg: '#3b82f6', border: '#3b82f650' }
-      case 'critical': return { bg: '#ef4444', border: '#ef444450' }
-      default: return { bg: '#6b7280', border: '#6b728050' }
+      case 'win': return { bg: '#10b981', border: '#10b98150', label: 'Progress' }
+      case 'opportunity': return { bg: '#f59e0b', border: '#f59e0b50', label: 'Objection' }
+      case 'signal': return { bg: '#3b82f6', border: '#3b82f650', label: 'Discovery' }
+      case 'critical': return { bg: '#ef4444', border: '#ef444450', label: 'Critical' }
+      default: return { bg: '#6b7280', border: '#6b728050', label: 'Event' }
     }
   }
 
@@ -125,6 +125,13 @@ export default function SessionTimeline({
       case 'critical': return Zap
       default: return Clock
     }
+  }
+  
+  const getScoreImpact = (score: number, baseline: number = 75): string => {
+    const diff = score - baseline
+    if (diff > 10) return `+${diff}`
+    if (diff < -10) return `${diff}`
+    return ''
   }
 
   // Calculate conversation phases
@@ -547,23 +554,24 @@ export default function SessionTimeline({
                   </div>
                   
                   <p className="text-sm text-slate-300 leading-relaxed">{event.description}</p>
-                  
-                  {event.score > 0 && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${event.score}%` }}
-                          transition={{ delay: i * 0.05 + 0.3, duration: 0.5 }}
-                          style={{ background: colors.bg }}
-                        />
-                      </div>
-                      <span className="text-xs text-slate-400 font-mono">{event.score}/100</span>
-                    </div>
-                  )}
                 </div>
-              </div>
+                
+                {/* Score badge in corner instead of progress bar */}
+                {event.score > 0 && (
+                  <div 
+                    className="px-3 py-1.5 rounded-lg font-bold text-sm"
+                    style={{ 
+                      background: `${colors.bg}20`,
+                      color: colors.bg,
+                      border: `1px solid ${colors.border}`
+                    }}
+                  >
+                    {event.score}
+                    {getScoreImpact(event.score) && (
+                      <span className="ml-2 text-xs opacity-75">{getScoreImpact(event.score)}</span>
+                    )}
+                  </div>
+                )}
             </motion.div>
           )
         })}
