@@ -477,7 +477,8 @@ ${knowledgeContext}`
       gradingResult = JSON.parse(responseContent)
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError)
-      console.error('❌ Response content:', responseContent)
+      console.error('❌ Response content (first 2000 chars):', responseContent.substring(0, 2000))
+      console.error('❌ Response content (last 500 chars):', responseContent.substring(Math.max(0, responseContent.length - 500)))
       throw new Error('Failed to parse OpenAI response as JSON')
     }
     
