@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import ScoresView from '@/components/analytics/ScoresView'
+import ScoresViewV2 from '@/components/analytics/ScoresViewV2'
 import TranscriptView from '@/components/analytics/TranscriptView'
 
 interface SessionData {
@@ -229,7 +230,8 @@ export default function AnalyticsPage() {
     }
 
     return (
-      <ScoresView
+      <ScoresViewV2
+        sessionId={session.id}
         overallScore={session.overall_score || 0}
         scores={{
           rapport: session.rapport_score ?? 0,
@@ -239,19 +241,11 @@ export default function AnalyticsPage() {
           safety: session.analytics?.scores?.safety ?? 0,
           introduction: session.analytics?.scores?.introduction ?? 0,
           listening: session.analytics?.scores?.listening ?? 0,
-          // Enhanced metrics from database or analytics
           speaking_pace: session.speaking_pace_score ?? session.analytics?.scores?.speaking_pace,
           filler_words: session.filler_words_score ?? session.analytics?.scores?.filler_words,
           question_ratio: session.question_ratio_score ?? session.analytics?.scores?.question_ratio,
           active_listening: session.active_listening_score ?? session.analytics?.scores?.active_listening,
           assumptive_language: session.assumptive_language_score ?? session.analytics?.scores?.assumptive_language
-        }}
-        enhancedMetrics={session.analytics?.enhanced_metrics || {
-          speaking_pace: session.speaking_pace_data,
-          filler_words: session.filler_words_data,
-          question_ratio: session.question_ratio_data,
-          active_listening: session.active_listening_data,
-          assumptive_language: session.assumptive_language_data
         }}
         feedback={session.analytics?.feedback || {
           strengths: session.what_worked || [],
@@ -261,13 +255,11 @@ export default function AnalyticsPage() {
         virtualEarnings={session.virtual_earnings || 0}
         earningsData={session.earnings_data || session.analytics?.earnings_data || {}}
         dealDetails={session.deal_details || session.analytics?.deal_details || {}}
-        objectionAnalysis={session.analytics?.objection_analysis || {}}
-        coachingPlan={session.analytics?.coaching_plan || {}}
         conversationDynamics={session.analytics?.conversation_dynamics || {}}
         failureAnalysis={session.analytics?.failure_analysis || {}}
         saleClosed={session.sale_closed || false}
-        insightsByCategory={insightsByCategory}
-        grading={grading}
+        lineRatings={session.analytics?.line_ratings || []}
+        agentName={session.agent_name || 'AI Agent'}
       />
     )
   }
