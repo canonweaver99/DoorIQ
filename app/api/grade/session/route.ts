@@ -400,12 +400,25 @@ export async function POST(request: NextRequest) {
     const messages: Array<{ role: string; content: string }> = [
       {
         role: "system",
-        content: `You are an expert sales coach for door-to-door pest control. Analyze the transcript and return ONLY valid JSON with this structure:
+        content: `You are an expert sales coach for door-to-door pest control. Analyze the transcript and return ONLY valid JSON matching this structure:
 
 {
   "session_summary": { "total_lines": int, "rep_lines": int, "customer_lines": int, "objections_detected": int, "questions_asked": int },
   "scores": { "overall": int, "rapport": int, "discovery": int, "objection_handling": int, "closing": int, "safety": int, "introduction": int, "listening": int, "speaking_pace": int, "filler_words": int, "question_ratio": int, "active_listening": int, "assumptive_language": int },
-  "line_ratings": [{ "line_number": int, "speaker": "rep/customer", "timestamp": "00:00", "effectiveness": "excellent/good/average/poor", "score": int, "sentiment": "positive/neutral/negative", "customer_engagement": "high/medium/low", "missed_opportunities": [], "techniques_used": [], "category": "rapport/discovery/objection_handling/closing/general", "improvement_notes": "" }],
+  "line_ratings": [{
+    "line_number": int,
+    "speaker": "rep/customer",
+    "timestamp": "00:00",
+    "effectiveness": "excellent/good/average/poor",
+    "score": int,
+    "sentiment": "positive/neutral/negative",
+    "customer_engagement": "high/medium/low",
+    "missed_opportunities": [],
+    "techniques_used": [],
+    "category": "introduction/rapport/discovery/objection_handling/closing/general",
+    "improvement_notes": "",
+    "alternative_lines": []
+  }],
   "feedback": { "strengths": [], "improvements": [], "specific_tips": [] },
   "conversation_dynamics": { "interruptions": [], "energy_shifts": [], "buying_signals": [], "momentum_changes": [], "engagement_drops": [] },
   "failure_analysis": { "critical_moments": [], "point_of_no_return": { "line": 0, "reason": "", "could_have_saved": false, "how": "" }, "missed_pivots": [], "recovery_failures": [] },
@@ -414,11 +427,24 @@ export async function POST(request: NextRequest) {
   "sale_closed": bool,
   "return_appointment": bool,
   "virtual_earnings": number,
-  "earnings_data": { "base_amount": 0, "closed_amount": 0, "commission_rate": 0.30, "commission_earned": 0, "bonus_modifiers": { "quick_close": 0, "upsell": 0, "retention": 0, "same_day_start": 0, "referral_secured": 0, "perfect_pitch": 0 }, "total_earned": 0 },
-  "deal_details": { "product_sold": "", "service_type": "", "base_price": 0, "monthly_value": 0, "contract_length": 0, "total_contract_value": 0, "payment_method": "", "add_ons": [], "start_date": "" }
+  "earnings_data": { "base_amount": number, "closed_amount": number, "commission_rate": 0.30, "commission_earned": number, "bonus_modifiers": { "quick_close": number, "upsell": number, "retention": number, "same_day_start": number, "referral_secured": number, "perfect_pitch": number }, "total_earned": number },
+  "deal_details": { "product_sold": "", "service_type": "", "base_price": number, "monthly_value": number, "contract_length": number, "total_contract_value": number, "payment_method": "", "add_ons": [], "start_date": "" },
+  "enhanced_metrics": {
+    "filler_words": {
+      "total_count": int,
+      "per_minute": number,
+      "common_fillers": { "phrase": int },
+      "score_breakdown": ""
+    }
+  }
 }
 
-Rules: Only use data from transcript. Rate every rep line. All scores 0-100. Sale closed only if customer commits to payment. Commission rate = 0.30. No sale = $0 earnings.`
+Rules:
+- Only extract data explicitly stated in the transcript. If not mentioned, use empty string "", 0, false, or [] where appropriate.
+- Create a line_ratings entry for EVERY sales rep line. Include alternative_lines with 1-2 suggested rewrites for lines rated "average" or "poor". Leave alternative_lines empty for "good" or "excellent" lines.
+- For filler words, return both the percentage score (0-100) and the actual total_count + per_minute values inside enhanced_metrics.filler_words.
+- Earnings: sale_closed true only if customer commits to a paid service. Commission rate must be 0.30. Bonuses remain 0 unless explicitly earned. No sale means total_earned = 0 and virtual_earnings = 0.
+- Return strictly valid JSON with no extra commentary.`
       },
       {
         role: "user",
