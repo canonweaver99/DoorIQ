@@ -25,8 +25,17 @@ interface SessionTimelineProps {
 export default function SessionTimeline({ duration, events, lineRatings = [], onEventClick }: SessionTimelineProps) {
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null)
   const [hoveredEvent, setHoveredEvent] = useState<number | null>(null)
+  const [hoveredZone, setHoveredZone] = useState<number | null>(null)
   const [filter, setFilter] = useState<string[]>(['win', 'opportunity', 'signal', 'critical'])
   const timelineRef = useRef<HTMLDivElement>(null)
+
+  // Calculate momentum and success rate
+  const successRate = events.length > 0 
+    ? Math.round((events.filter(e => e.type === 'win').length / events.length) * 100)
+    : 0
+  const momentum = events.filter(e => e.type === 'win').length > events.filter(e => e.type === 'opportunity').length
+    ? 'positive'
+    : 'negative'
 
   const durationMinutes = Math.ceil(duration / 60)
   const timeMarkers = Array.from({ length: Math.min(5, durationMinutes + 1) }, (_, i) => ({
@@ -105,25 +114,43 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
 
   return (
     <div className="space-y-6">
-      {/* Statistics Bar */}
-      <div className="flex items-center justify-between">
+      {/* Enhanced Statistics Bar */}
+      <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-slate-400" />
-            <span className="text-sm text-slate-400">Duration: {formatTime(duration)}</span>
+            <span className="text-sm text-slate-400">Duration: <span className="text-white font-medium">{formatTime(duration)}</span></span>
           </div>
+          <div className="h-4 w-px bg-slate-700"></div>
           <div className="flex items-center gap-4 text-xs">
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-              {eventStats.wins} Wins
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <span className="text-white font-medium">{eventStats.wins}</span>
+              <span className="text-slate-400">Wins</span>
             </span>
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-amber-400"></div>
-              {eventStats.opportunities} Opportunities
+            <span className="flex items-center gap-1.5">
+              <AlertCircle className="w-3 h-3 text-amber-400" />
+              <span className="text-white font-medium">{eventStats.opportunities}</span>
+              <span className="text-slate-400">Opportunities</span>
             </span>
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-              {eventStats.signals} Signals
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-blue-400" />
+              <span className="text-white font-medium">{eventStats.signals}</span>
+              <span className="text-slate-400">Signals</span>
+            </span>
+          </div>
+          <div className="h-4 w-px bg-slate-700"></div>
+          <div className="flex items-center gap-2">
+            {momentum === 'positive' ? (
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+            ) : (
+              <TrendingDown className="w-4 h-4 text-amber-400" />
+            )}
+            <span className="text-xs">
+              <span className={momentum === 'positive' ? 'text-emerald-400' : 'text-amber-400'}>
+                {successRate}%
+              </span>
+              <span className="text-slate-400"> success rate</span>
             </span>
           </div>
         </div>
@@ -172,37 +199,55 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
         </div>
 
         {/* Timeline track with performance zones */}
-        <div ref={timelineRef} className="relative h-20 rounded-xl overflow-hidden">
+        <div ref={timelineRef} className="relative h-20 rounded-xl overflow-hidden bg-slate-900/30 border border-slate-800/50">
           {/* Performance zones background */}
           <div className="absolute inset-0 flex">
-            {performanceZones.map((zone, i) => (
-              <div
-                key={i}
-                className="relative transition-all duration-300"
-                style={{
-                  width: `${zone.width}%`,
-                  background: `linear-gradient(to right, ${zone.color}20, ${zone.color}10)`,
-                  borderRight: '1px solid rgba(255,255,255,0.05)'
-                }}
-              >
-                <div 
-                  className="absolute bottom-0 left-0 right-0"
+            {performanceZones.map((zone, i) => {
+              const isHovered = hoveredZone === i
+              return (
+                <div
+                  key={i}
+                  className="relative transition-all duration-300 cursor-pointer group"
                   style={{
-                    height: `${(zone.score / 100) * 100}%`,
-                    background: `${zone.color}40`
+                    width: `${zone.width}%`,
+                    background: `linear-gradient(to bottom, ${zone.color}30, ${zone.color}10)`,
+                    borderRight: i < performanceZones.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none'
                   }}
-                />
-              </div>
-            ))}
+                  onMouseEnter={() => setHoveredZone(i)}
+                  onMouseLeave={() => setHoveredZone(null)}
+                >
+                  {/* Score wave visualization */}
+                  <div 
+                    className="absolute bottom-0 left-0 right-0 transition-all duration-300"
+                    style={{
+                      height: `${(zone.score / 100) * 100}%`,
+                      background: `${zone.color}${isHovered ? '60' : '40'}`,
+                      boxShadow: isHovered ? `0 -4px 20px ${zone.color}40` : 'none'
+                    }}
+                  />
+                  
+                  {/* Hover overlay */}
+                  {isHovered && (
+                    <div className="absolute inset-0 bg-white/5 flex items-center justify-center">
+                      <div className="text-xs font-mono text-white bg-slate-900/90 px-2 py-1 rounded">
+                        {Math.round(zone.score)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
 
-          {/* Progress line */}
+          {/* Animated progress line */}
           <motion.div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500/30 to-pink-500/30 backdrop-blur-sm"
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm pointer-events-none"
             initial={{ width: '0%' }}
             animate={{ width: '100%' }}
             transition={{ duration: 2, ease: 'easeOut' }}
-          />
+          >
+            <div className="absolute right-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-purple-400 to-pink-400 shadow-lg shadow-purple-500/50" />
+          </motion.div>
 
           {/* Event markers */}
           {filteredEvents.map((event, i) => {
@@ -212,12 +257,12 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
             const Icon = getEventIcon(event.type)
             const isHovered = hoveredEvent === i
             const isSelected = selectedEvent === i
-            const size = event.impact === 'high' ? 12 : event.impact === 'medium' ? 10 : 8
+            const size = event.impact === 'high' ? 16 : event.impact === 'medium' ? 12 : 10
 
             return (
               <motion.div
                 key={i}
-                className="absolute top-1/2 -translate-y-1/2 cursor-pointer group"
+                className="absolute top-1/2 -translate-y-1/2 cursor-pointer group z-10"
                 style={{ left: `${position}%` }}
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -227,46 +272,92 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
                 onClick={() => {
                   setSelectedEvent(isSelected ? null : i)
                   onEventClick?.(event)
+                  // Scroll to card
+                  const card = document.getElementById(`event-card-${i}`)
+                  if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
                 }}
               >
-                {/* Vertical line to card */}
+                {/* Pulse animation for important events */}
+                {(event.impact === 'high' || isSelected) && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: colors.bg }}
+                    animate={{
+                      scale: [1, 1.5, 1],
+                      opacity: [0.5, 0, 0.5]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut'
+                    }}
+                  />
+                )}
+
+                {/* Vertical connecting line */}
                 <div 
-                  className="absolute top-full mt-2 w-[2px] h-8 opacity-50"
-                  style={{ background: colors.bg, left: '50%', transform: 'translateX(-50%)' }}
+                  className="absolute top-full mt-0 w-[2px] h-12 transition-all"
+                  style={{ 
+                    background: isHovered || isSelected ? colors.bg : `${colors.bg}40`,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    opacity: isHovered || isSelected ? 1 : 0.3
+                  }}
                 />
 
                 {/* Marker dot */}
                 <motion.div
-                  className="relative rounded-full flex items-center justify-center"
+                  className="relative rounded-full flex items-center justify-center cursor-pointer"
                   style={{
-                    width: size * 4,
-                    height: size * 4,
-                    background: colors.bg,
-                    border: `2px solid ${colors.border}`,
-                    boxShadow: isHovered || isSelected ? `0 0 20px ${colors.bg}` : 'none'
+                    width: size * 3,
+                    height: size * 3,
+                    background: isHovered || isSelected ? colors.bg : `${colors.bg}CC`,
+                    border: `3px solid ${isSelected ? '#fff' : colors.border}`,
+                    boxShadow: isHovered || isSelected ? `0 0 30px ${colors.bg}, 0 0 60px ${colors.bg}40` : `0 0 10px ${colors.bg}40`
                   }}
                   animate={{
-                    scale: isHovered ? 1.3 : isSelected ? 1.2 : 1,
+                    scale: isHovered ? 1.4 : isSelected ? 1.3 : 1,
                   }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <Icon className="w-3 h-3 text-white" />
+                  <Icon className="w-4 h-4 text-white" />
                 </motion.div>
 
-                {/* Hover tooltip */}
+                {/* Enhanced Hover tooltip */}
                 <AnimatePresence>
                   {isHovered && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-48 p-3 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-slate-700 shadow-2xl"
+                      className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-56 p-4 rounded-xl bg-slate-900/98 backdrop-blur-xl border shadow-2xl pointer-events-none"
+                      style={{ borderColor: colors.border }}
                     >
-                      <div className="text-xs text-slate-400 mb-1">{event.timestamp}</div>
-                      <div className="text-sm font-medium text-white mb-1">{event.title}</div>
-                      <div className="text-xs text-slate-300">{event.description}</div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-mono" style={{ color: colors.bg }}>{event.timestamp}</span>
+                        {event.impact && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            event.impact === 'high' ? 'bg-red-500/20 text-red-400' :
+                            event.impact === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-slate-500/20 text-slate-400'
+                          }`}>
+                            {event.impact}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm font-semibold text-white mb-1">{event.title}</div>
+                      <div className="text-xs text-slate-300 leading-relaxed">{event.description}</div>
                       {event.score > 0 && (
-                        <div className="text-xs text-slate-400 mt-2">Score: {event.score}/100</div>
+                        <div className="mt-3 pt-2 border-t border-slate-700">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-400">Performance</span>
+                            <span className="text-white font-medium">{event.score}/100</span>
+                          </div>
+                        </div>
                       )}
+                      <div className="text-[10px] text-slate-500 mt-2 text-center">Click to view details</div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -289,23 +380,29 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
           const colors = getEventColor(event.type)
           const Icon = getEventIcon(event.type)
           const isSelected = selectedEvent === i
+          const isHovered = hoveredEvent === i
 
           return (
             <motion.div
               key={i}
-              id={`event-${i}`}
+              id={`event-card-${i}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
               className={`relative rounded-2xl backdrop-blur-xl border p-5 transition-all cursor-pointer ${
                 isSelected 
-                  ? 'bg-white/10 border-white/30 shadow-lg' 
+                  ? 'bg-white/10 border-white/30 shadow-2xl scale-[1.02]' 
+                  : isHovered
+                  ? 'bg-white/8 border-white/20 shadow-xl'
                   : 'bg-white/5 border-slate-700/50 hover:bg-white/8'
               }`}
               onClick={() => setSelectedEvent(isSelected ? null : i)}
+              onMouseEnter={() => setHoveredEvent(i)}
+              onMouseLeave={() => setHoveredEvent(null)}
               style={{
                 borderLeftWidth: '4px',
-                borderLeftColor: colors.bg
+                borderLeftColor: isSelected || isHovered ? colors.bg : `${colors.bg}80`,
+                boxShadow: isSelected ? `0 0 40px ${colors.bg}40` : 'none'
               }}
             >
               <div className="flex items-start gap-4">
