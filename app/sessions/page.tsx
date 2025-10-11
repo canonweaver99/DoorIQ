@@ -332,7 +332,7 @@ export default function SessionsPage() {
                   key={session.id}
                   className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 hover:border-slate-600 transition-colors shadow-xl"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div>
                       <h3 className="text-lg font-semibold text-white mb-1">
                         {session.agent_name || 'Training Session'}
@@ -346,24 +346,31 @@ export default function SessionsPage() {
                           <Clock className="w-4 h-4 mr-1" />
                           {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}
                         </span>
-                        {session.virtual_earnings !== null && session.virtual_earnings > 0 && (
-                          <span className="flex items-center text-green-500">
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            ${session.virtual_earnings.toFixed(2)} earned
-                          </span>
-                        )}
                       </div>
                     </div>
                     
-                    <div className="mt-4 md:mt-0 flex items-center space-x-4">
-                      <div className="text-center">
-                        <p className="text-sm text-slate-400">Overall Score</p>
-                        <p className={`text-2xl font-bold ${getScoreColor(session.overall_score)}`}>
-                          {session.overall_score || '--'}%
-                        </p>
-                        <p className={`text-xs ${getScoreColor(session.overall_score)}`}>
-                          {getScoreLabel(session.overall_score)}
-                        </p>
+                    <div className="mt-4 md:mt-0 flex items-center gap-6">
+                      {/* Earnings - Bigger */}
+                      {session.virtual_earnings !== null && session.virtual_earnings > 0 && (
+                        <div className="text-right">
+                          <p className="text-xs text-slate-400 mb-1">Earned</p>
+                          <p className="text-3xl font-bold text-emerald-400">
+                            ${session.virtual_earnings.toFixed(2)}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Overall Score - Bigger with Grade */}
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400 mb-1">Overall Score</p>
+                        <div className="flex items-baseline gap-2">
+                          <p className={`text-4xl font-bold ${getScoreColor(session.overall_score)}`}>
+                            {session.overall_score || '--'}%
+                          </p>
+                          <span className={`text-2xl font-semibold ${getScoreColor(session.overall_score)}`}>
+                            {getScoreLabel(session.overall_score)}
+                          </span>
+                        </div>
                       </div>
                       
                       <Link
@@ -373,34 +380,6 @@ export default function SessionsPage() {
                         View Details
                         <ChevronRight className="ml-2 w-4 h-4" />
                       </Link>
-                    </div>
-                  </div>
-                  
-                  {/* Score Breakdown */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div className="bg-slate-900/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Rapport</p>
-                      <p className={`text-lg font-semibold ${getScoreColor(session.rapport_score)}`}>
-                        {session.rapport_score || '--'}%
-                      </p>
-                    </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Discovery</p>
-                      <p className={`text-lg font-semibold ${getScoreColor(session.discovery_score)}`}>
-                        {session.discovery_score || '--'}%
-                      </p>
-                    </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Objection Handling</p>
-                      <p className={`text-lg font-semibold ${getScoreColor(session.objection_handling_score)}`}>
-                        {session.objection_handling_score || '--'}%
-                      </p>
-                    </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Closing</p>
-                      <p className={`text-lg font-semibold ${getScoreColor((session.close_effectiveness_score ?? (session as any).close_score ?? null))}`}>
-                        {(session.close_effectiveness_score ?? (session as any).close_score ?? '--') as any}%
-                      </p>
                     </div>
                   </div>
                   
