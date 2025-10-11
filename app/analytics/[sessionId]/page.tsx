@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import ScoresView from '@/components/analytics/ScoresView'
 import ScoresViewV2 from '@/components/analytics/ScoresViewV2'
 import TranscriptView from '@/components/analytics/TranscriptView'
+import TranscriptViewV2 from '@/components/analytics/TranscriptViewV2'
 
 interface SessionData {
   id: string
@@ -220,12 +221,12 @@ export default function AnalyticsPage() {
 
     if (activeView === 'transcript') {
       return (
-        <div className="bg-[#0b0b0b] border border-gray-800 rounded-3xl">
-          <TranscriptView
-            transcript={session.full_transcript || []}
-            lineRatings={session.analytics?.line_ratings || []}
-          />
-        </div>
+        <TranscriptViewV2
+          transcript={session.full_transcript || []}
+          lineRatings={session.analytics?.line_ratings || []}
+          duration={session.duration_seconds || 600}
+          wordCount={session.full_transcript?.reduce((sum, line) => sum + (line.text || line.message || '').split(' ').length, 0)}
+        />
       )
     }
 

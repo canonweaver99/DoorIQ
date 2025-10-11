@@ -325,39 +325,54 @@ export default function SessionTimeline({ duration, events, lineRatings = [], on
                   <Icon className="w-4 h-4 text-white" />
                 </motion.div>
 
-                {/* Enhanced Hover tooltip */}
+                {/* Enhanced Hover tooltip - positioned below timeline */}
                 <AnimatePresence>
                   {isHovered && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-56 p-4 rounded-xl bg-slate-900/98 backdrop-blur-xl border shadow-2xl pointer-events-none"
-                      style={{ borderColor: colors.border }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full mt-16 left-1/2 -translate-x-1/2 w-64 p-4 rounded-xl bg-slate-900/98 backdrop-blur-xl border shadow-2xl pointer-events-none z-50"
+                      style={{ 
+                        borderColor: colors.border,
+                        boxShadow: `0 20px 60px ${colors.bg}40, 0 0 0 1px ${colors.border}`
+                      }}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-mono" style={{ color: colors.bg }}>{event.timestamp}</span>
+                        <span className="text-xs font-mono font-semibold" style={{ color: colors.bg }}>{event.timestamp}</span>
                         {event.impact && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                            event.impact === 'high' ? 'bg-red-500/20 text-red-400' :
-                            event.impact === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-slate-500/20 text-slate-400'
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium ${
+                            event.impact === 'high' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                            event.impact === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                            'bg-slate-500/20 text-slate-400 border border-slate-500/30'
                           }`}>
-                            {event.impact}
+                            {event.impact} impact
                           </span>
                         )}
                       </div>
                       <div className="text-sm font-semibold text-white mb-1">{event.title}</div>
                       <div className="text-xs text-slate-300 leading-relaxed">{event.description}</div>
                       {event.score > 0 && (
-                        <div className="mt-3 pt-2 border-t border-slate-700">
+                        <div className="mt-3 pt-2 border-t border-slate-700/50">
                           <div className="flex items-center justify-between text-xs">
                             <span className="text-slate-400">Performance</span>
-                            <span className="text-white font-medium">{event.score}/100</span>
+                            <span className="text-white font-semibold">{event.score}/100</span>
+                          </div>
+                          <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all"
+                              style={{ 
+                                width: `${event.score}%`,
+                                background: colors.bg
+                              }}
+                            />
                           </div>
                         </div>
                       )}
-                      <div className="text-[10px] text-slate-500 mt-2 text-center">Click to view details</div>
+                      <div className="text-[10px] text-slate-500 mt-3 text-center flex items-center justify-center gap-1">
+                        <Zap className="w-3 h-3" />
+                        Click to view full details
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
