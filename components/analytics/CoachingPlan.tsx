@@ -105,8 +105,8 @@ export default function CoachingPlan({ coachingPlan }: CoachingPlanProps) {
               return (
                 <div
                   key={index}
-                className="bg-gray-800/30 rounded-xl p-5 border border-orange-500/30 hover:border-orange-500/50 transition-colors"
-              >
+                  className="bg-gray-800/30 rounded-xl p-5 border border-orange-500/30 hover:border-orange-500/50 transition-colors"
+                >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
