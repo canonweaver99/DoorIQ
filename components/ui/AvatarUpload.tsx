@@ -66,9 +66,16 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
 
       // Reset success message after 3 seconds
       setTimeout(() => setUploadSuccess(false), 3000)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading avatar:', error)
-      alert('Error uploading avatar. Please try again.')
+      
+      // Show specific error message
+      const errorMessage = error.message || 'Unknown error'
+      if (errorMessage.includes('Bucket not found') || errorMessage.includes('bucket')) {
+        alert('Avatar storage not configured yet. Please contact support or create the "avatars" bucket in Supabase Storage.')
+      } else {
+        alert(`Error uploading avatar: ${errorMessage}`)
+      }
     } finally {
       setUploading(false)
     }

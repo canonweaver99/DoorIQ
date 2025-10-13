@@ -148,7 +148,7 @@ function HeaderContent() {
       console.log('🔍 Header - Fetched User Data:', userData)
 
       if (userData) {
-        console.log('✅ Header - Setting user with role:', userData.role, 'earnings:', userData.virtual_earnings)
+        console.log('✅ Header - Setting user with role:', (userData as any).role, 'earnings:', (userData as any).virtual_earnings)
         setUser(userData)
         setAuthMeta(null)
       } else {
@@ -213,8 +213,8 @@ function HeaderContent() {
         title: 'Workspace',
         items: [
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-          { name: 'Analytics', href: isManagerLike ? '/manager?tab=analytics' : '/analytics', icon: BarChart3 },
-          { name: 'Playbooks', href: '/playbooks', icon: NotebookPen, badge: 'New' },
+          { name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 },
+          { name: 'Playbooks', href: '/dashboard?tab=learning', icon: NotebookPen },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
         ],
       },
@@ -245,9 +245,7 @@ function HeaderContent() {
       },
     ]
 
-    if (!isManagerLike) {
-      sections[0].items.splice(2, 0, { name: 'AI Insights', href: '/insights', icon: PieChart })
-    }
+    // AI Insights removed per user request
 
     return sections
   }, [isManagerLike, unreadCount])
@@ -261,8 +259,8 @@ function HeaderContent() {
   const profileNavigation = useMemo(() => {
     const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }> = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Analytics', href: isManagerLike ? '/manager?tab=analytics' : '/analytics', icon: BarChart3 },
-      { name: 'Playbooks', href: '/playbooks', icon: NotebookPen },
+      { name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 },
+      { name: 'Playbooks', href: '/dashboard?tab=learning', icon: NotebookPen },
       { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
       { name: 'Documentation', href: '/documentation', icon: BookOpen },
@@ -275,9 +273,7 @@ function HeaderContent() {
       { name: 'User Profile', href: '/profile', icon: UserCircle },
     ]
 
-    if (!isManagerLike) {
-      items.splice(2, 0, { name: 'AI Insights', href: '/insights', icon: PieChart })
-    }
+    // AI Insights removed per user request
 
     return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }>
   }, [isManagerLike, unreadCount])

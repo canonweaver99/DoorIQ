@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useSearchParams } from 'next/navigation'
 import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Calendar, Clock, MessageSquare } from 'lucide-react'
 import TabNavigation from '@/components/dashboard/TabNavigation'
 import OverviewTab from '@/components/dashboard/tabs/OverviewTab'
@@ -122,6 +123,7 @@ const mockData = {
 }
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeTab, setActiveTab] = useState('overview')
   const [userName, setUserName] = useState('Alex')
@@ -131,13 +133,18 @@ export default function DashboardPage() {
     teamRank: 1
   })
 
-  // Load last viewed tab from localStorage
+  // Load tab from URL params or localStorage
   useEffect(() => {
-    const savedTab = localStorage.getItem('dashboardActiveTab')
-    if (savedTab) {
-      setActiveTab(savedTab)
+    const tabParam = searchParams.get('tab')
+    if (tabParam) {
+      setActiveTab(tabParam)
+    } else {
+      const savedTab = localStorage.getItem('dashboardActiveTab')
+      if (savedTab) {
+        setActiveTab(savedTab)
+      }
     }
-  }, [])
+  }, [searchParams])
 
   // Save active tab to localStorage
   useEffect(() => {

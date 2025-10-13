@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
-import { User, Mail, Shield, Bell, Save, LogOut } from 'lucide-react'
+import { Bell, Globe, Moon, Volume2, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import AvatarUpload from '@/components/ui/AvatarUpload'
 
 type UserData = Database['public']['Tables']['users']['Row']
 
@@ -14,10 +13,13 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userData, setUserData] = useState<UserData | null>(null)
-  const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    notifications: true,
+  const [settings, setSettings] = useState({
+    emailNotifications: true,
+    sessionReminders: true,
+    weeklyReports: true,
+    darkMode: true,
+    soundEffects: true,
+    language: 'en',
   })
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
@@ -42,46 +44,26 @@ export default function SettingsPage() {
 
     if (data) {
       setUserData(data)
-      setFormData({
-        full_name: data.full_name,
-        email: data.email,
-        notifications: true, // Default value, you can store this in user preferences
-      })
+      // Load preferences from localStorage or database
+      const savedSettings = localStorage.getItem('userSettings')
+      if (savedSettings) {
+        setSettings(JSON.parse(savedSettings))
+      }
     }
     
     setLoading(false)
   }
 
   const handleSave = async () => {
-    if (!userData) return
-
     setSaving(true)
     setMessage(null)
 
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('users')
-      .update({
-        full_name: formData.full_name,
-        email: formData.email,
-      })
-      .eq('id', userData.id)
-
-    if (error) {
-      setMessage({ type: 'error', text: 'Failed to update profile' })
-    } else {
-      setMessage({ type: 'success', text: 'Profile updated successfully' })
-      // Update local userData
-      setUserData({ ...userData, ...formData })
-    }
-
+    // Save to localStorage
+    localStorage.setItem('userSettings', JSON.stringify(settings))
+    
+    // Could also save to database in a preferences column
+    setMessage({ type: 'success', text: 'Settings saved successfully' })
     setSaving(false)
-  }
-
-  const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/auth/login')
   }
 
   if (loading) {
@@ -97,99 +79,14 @@ export default function SettingsPage() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">Profile</h1>
-          <p className="text-slate-400">Manage your account and preferences</p>
-        </div>
-
-        {/* Avatar Upload Section */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
-          <AvatarUpload 
-            currentAvatarUrl={(userData as any)?.avatar_url}
-            userId={userData?.id || ''}
-            onUploadComplete={(url) => {
-              setUserData({ ...userData!, avatar_url: url } as any)
-            }}
-          />
-        </div>
-
-        {/* Profile Section */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
-          <div className="flex items-center mb-6">
-            <User className="w-5 h-5 text-purple-400 mr-2" />
-            <h2 className="text-xl font-semibold text-white">Profile Information</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Enter your email"
-              />
-            </div>
-
-          </div>
-        </div>
-
-        {/* Account Info Section */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
-          <div className="flex items-center mb-6">
-            <Shield className="w-5 h-5 text-emerald-400 mr-2" />
-            <h2 className="text-xl font-semibold text-white">Account Information</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-slate-300">Role</p>
-                <p className="text-sm text-slate-400 mt-1">
-                  {userData?.role ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1) : 'Rep'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-slate-300">Virtual Earnings</p>
-                <p className="text-sm text-slate-400 mt-1">
-                  ${userData?.virtual_earnings.toFixed(2) || '0.00'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-slate-300">Member Since</p>
-                <p className="text-sm text-slate-400 mt-1">
-                  {userData?.created_at ? new Date(userData.created_at).toLocaleDateString() : 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">Settings</h1>
+          <p className="text-slate-400">Manage your app preferences</p>
         </div>
 
         {/* Notifications Section */}
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
           <div className="flex items-center mb-6">
-            <Bell className="w-5 h-5 text-pink-400 mr-2" />
+            <Bell className="w-5 h-5 text-purple-400 mr-2" />
             <h2 className="text-xl font-semibold text-white">Notifications</h2>
           </div>
 
@@ -203,11 +100,90 @@ export default function SettingsPage() {
               </div>
               <input
                 type="checkbox"
-                checked={formData.notifications}
-                onChange={(e) => setFormData({ ...formData, notifications: e.target.checked })}
+                checked={settings.emailNotifications}
+                onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
                 className="w-5 h-5 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
               />
             </label>
+
+            <label className="flex items-center justify-between cursor-pointer">
+              <div>
+                <p className="text-sm font-medium text-slate-300">Session Reminders</p>
+                <p className="text-sm text-slate-400 mt-1">
+                  Get reminded to practice daily
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.sessionReminders}
+                onChange={(e) => setSettings({ ...settings, sessionReminders: e.target.checked })}
+                className="w-5 h-5 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
+              />
+            </label>
+
+            <label className="flex items-center justify-between cursor-pointer">
+              <div>
+                <p className="text-sm font-medium text-slate-300">Weekly Reports</p>
+                <p className="text-sm text-slate-400 mt-1">
+                  Receive weekly performance summaries
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.weeklyReports}
+                onChange={(e) => setSettings({ ...settings, weeklyReports: e.target.checked })}
+                className="w-5 h-5 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Appearance Section */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
+          <div className="flex items-center mb-6">
+            <Moon className="w-5 h-5 text-indigo-400 mr-2" />
+            <h2 className="text-xl font-semibold text-white">Appearance</h2>
+          </div>
+
+          <div className="space-y-4">
+            <label className="flex items-center justify-between cursor-pointer">
+              <div>
+                <p className="text-sm font-medium text-slate-300">Sound Effects</p>
+                <p className="text-sm text-slate-400 mt-1">
+                  Play sounds during training sessions
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.soundEffects}
+                onChange={(e) => setSettings({ ...settings, soundEffects: e.target.checked })}
+                className="w-5 h-5 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Language Section */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
+          <div className="flex items-center mb-6">
+            <Globe className="w-5 h-5 text-cyan-400 mr-2" />
+            <h2 className="text-xl font-semibold text-white">Language & Region</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Language
+              </label>
+              <select
+                value={settings.language}
+                onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="en">English</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -219,15 +195,7 @@ export default function SettingsPage() {
             className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-5 h-5 mr-2" />
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-white/10 backdrop-blur-sm text-red-400 font-medium rounded-lg hover:bg-white/20 transition-all border border-red-500/30"
-          >
-            <LogOut className="w-5 h-5 mr-2" />
-            Log Out
+            {saving ? 'Saving...' : 'Save Settings'}
           </button>
         </div>
 
