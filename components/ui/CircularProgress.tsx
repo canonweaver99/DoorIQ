@@ -88,7 +88,9 @@ export default function CircularProgress({
       
       {/* Percentage text */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-base font-bold text-white">
+        <span className={`font-bold text-white ${
+          size >= 90 ? 'text-xl' : 'text-base'
+        }`}>
           {Math.round(animatedPercentage)}%
         </span>
       </div>

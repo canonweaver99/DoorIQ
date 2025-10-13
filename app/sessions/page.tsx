@@ -334,8 +334,8 @@ export default function SessionsPage() {
                   className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 hover:border-slate-600 transition-colors shadow-xl"
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-white mb-2">
                         {session.agent_name || 'Training Session'}
                       </h3>
                       <div className="flex items-center space-x-4 text-sm text-slate-400">
@@ -351,23 +351,24 @@ export default function SessionsPage() {
                     </div>
                     
                     <div className="mt-4 md:mt-0 flex items-center gap-6">
-                      {/* Earnings - Bigger */}
-                      {session.virtual_earnings !== null && session.virtual_earnings > 0 && (
-                        <div className="text-right">
-                          <p className="text-xs text-slate-400 mb-1">Earned</p>
-                          <p className="text-3xl font-bold text-emerald-400">
-                            ${session.virtual_earnings.toFixed(2)}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Overall Score - Circular Progress */}
+                      {/* Earnings - Always Show */}
                       <div className="text-right">
-                        <p className="text-xs text-slate-400 mb-2">Overall Score</p>
+                        <p className="text-xs text-slate-400 mb-1">Earned</p>
+                        <p className={`text-3xl font-bold ${
+                          session.virtual_earnings && session.virtual_earnings > 0 
+                            ? 'text-emerald-400' 
+                            : 'text-slate-500'
+                        }`}>
+                          ${session.virtual_earnings ? session.virtual_earnings.toFixed(2) : '0.00'}
+                        </p>
+                      </div>
+                      
+                      {/* Overall Score - Larger Circular Progress */}
+                      <div className="text-right">
                         <CircularProgress 
                           percentage={session.overall_score || 0}
-                          size={60}
-                          strokeWidth={4}
+                          size={90}
+                          strokeWidth={6}
                         />
                       </div>
                       
@@ -381,19 +382,18 @@ export default function SessionsPage() {
                     </div>
                   </div>
                   
-                  {/* Key Insights */}
+                  {/* Key Insights - Smaller */}
                   {insights.length > 0 && (
-                    <div className="pt-4">
-                      <h4 className="text-sm font-medium text-slate-300 mb-2">Key Insights</h4>
-                      <div className="space-y-2">
+                    <div className="pt-3 mt-3 border-t border-slate-700/50">
+                      <div className="space-y-1.5">
                         {insights.map((insight, idx) => (
                           <div
                             key={idx}
-                            className={`flex items-start space-x-2 text-sm ${
-                              insight.type === 'success' ? 'text-green-400' : 'text-yellow-400'
+                            className={`flex items-start space-x-2 text-xs ${
+                              insight.type === 'success' ? 'text-green-400/80' : 'text-yellow-400/80'
                             }`}
                           >
-                            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
                             <span>{insight.text}</span>
                           </div>
                         ))}
