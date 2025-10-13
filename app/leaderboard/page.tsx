@@ -169,7 +169,7 @@ export default function LeaderboardPage() {
 
   const getRowStyles = (rank: number, userId: string) => {
     if (userId === currentUserId) {
-      return 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/50'
+      return 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border-purple-500/50'
     }
     if (rank === 1) {
       return 'bg-yellow-600/10 border-yellow-600/30'
@@ -228,7 +228,7 @@ export default function LeaderboardPage() {
               onClick={() => setTimeframe(period)}
               className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg ${
                 timeframe === period
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-purple-500/50'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/50'
                   : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
               }`}
             >

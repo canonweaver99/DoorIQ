@@ -302,7 +302,7 @@ export default function SessionsPage() {
               onClick={() => setFilter(period)}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg ${
                 filter === period
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-purple-500/50'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/50'
                   : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
               }`}
             >
@@ -318,7 +318,7 @@ export default function SessionsPage() {
               <p className="text-white/70">No sessions found for this period</p>
               <Link
                 href="/trainer/select-homeowner"
-                className="inline-flex items-center mt-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg"
+                className="inline-flex items-center mt-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg"
               >
                 Start Training
                 <ChevronRight className="ml-2 w-4 h-4" />
@@ -374,7 +374,7 @@ export default function SessionsPage() {
                       
                       <Link
                         href={`/analytics/${session.id}`}
-                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-pink-600/30 transition-all border border-purple-500/20"
+                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-indigo-600/30 transition-all border border-purple-500/20"
                       >
                         View Details
                         <ChevronRight className="ml-2 w-4 h-4" />
