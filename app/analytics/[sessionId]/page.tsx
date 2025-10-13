@@ -261,6 +261,7 @@ export default function AnalyticsPage() {
         saleClosed={session.sale_closed || false}
         lineRatings={session.analytics?.line_ratings || []}
         fullTranscript={session.full_transcript || []}
+        timelineKeyMoments={session.analytics?.timeline_key_moments}
         agentName={session.agent_name || 'AI Agent'}
         durationSeconds={session.duration_seconds || 600}
       />

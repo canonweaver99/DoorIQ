@@ -20,6 +20,7 @@ const gradingResponseSchema: JsonSchema = {
     'failure_analysis',
     'objection_analysis',
     'coaching_plan',
+    'timeline_key_moments',
     'sale_closed',
     'return_appointment',
     'virtual_earnings',
@@ -260,6 +261,22 @@ const gradingResponseSchema: JsonSchema = {
         role_play_scenarios: { type: 'array', items: { type: 'string' } }
       }
     },
+    timeline_key_moments: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          position: { type: 'integer' },
+          line_number: { type: 'integer' },
+          timestamp: { type: 'string' },
+          moment_type: { type: 'string' },
+          quote: { type: 'string' },
+          is_positive: { type: 'boolean' }
+        },
+        required: ['position', 'line_number', 'timestamp', 'moment_type', 'quote', 'is_positive']
+      }
+    },
     sale_closed: { type: 'boolean' },
     return_appointment: { type: 'boolean' },
     virtual_earnings: { type: 'number' },
@@ -425,6 +442,14 @@ export async function POST(request: NextRequest) {
   "failure_analysis": { "critical_moments": [], "point_of_no_return": { "line": 0, "reason": "", "could_have_saved": false, "how": "" }, "missed_pivots": [], "recovery_failures": [] },
   "objection_analysis": { "total_objections": int, "objections_detail": [], "unresolved_concerns": [], "objection_patterns": "" },
   "coaching_plan": { "immediate_fixes": [], "skill_development": [], "role_play_scenarios": [] },
+  "timeline_key_moments": [
+    { "position": 15, "line_number": int, "timestamp": "0:00", "moment_type": "Initial Resistance", "quote": "actual customer or rep quote", "is_positive": bool },
+    { "position": 30, "line_number": int, "timestamp": "0:00", "moment_type": "Problem Discovery", "quote": "actual customer or rep quote", "is_positive": bool },
+    { "position": 45, "line_number": int, "timestamp": "0:00", "moment_type": "Trust Building", "quote": "actual customer or rep quote", "is_positive": bool },
+    { "position": 60, "line_number": int, "timestamp": "0:00", "moment_type": "First Objection", "quote": "actual customer or rep quote", "is_positive": bool },
+    { "position": 75, "line_number": int, "timestamp": "0:00", "moment_type": "Critical Moment", "quote": "actual customer or rep quote", "is_positive": bool },
+    { "position": 90, "line_number": int, "timestamp": "0:00", "moment_type": "Close Attempt", "quote": "actual customer or rep quote", "is_positive": bool }
+  ],
   "sale_closed": bool,
   "return_appointment": bool,
   "virtual_earnings": number,
@@ -444,6 +469,24 @@ Rules:
 - Create a line_ratings entry for EVERY sales rep line. Include alternative_lines with 1-2 suggested rewrites for lines rated "average" or "poor". Leave alternative_lines empty for "good" or "excellent" lines.
 - Count all filler words (um, uh, like, you know, basically, actually) spoken by the sales rep. Return the total count as filler_word_count AND in enhanced_metrics.filler_words with breakdown by type.
 - DO NOT include filler_words in the scores object. The backend will deduct 1% from overall for each filler word.
+
+TIMELINE KEY MOMENTS:
+Identify exactly 6 key moments from the conversation for the timeline at these positions:
+- Position 15% (Early): Initial resistance or opening moment - find the first sign of customer interest/disinterest
+- Position 30% (Early-Mid): Problem discovery - when customer reveals their issue or need
+- Position 45% (Mid): Trust building - a rapport moment or emotional connection (or lack thereof)
+- Position 60% (Mid-Late): First major objection - customer's primary concern or pushback
+- Position 75% (Late): Critical turning point - the make-or-break moment that sealed the outcome
+- Position 90% (End): Close attempt - final outcome (success or failure)
+
+For each moment, provide:
+- line_number: The exact line index from the transcript
+- timestamp: Actual timestamp from that line
+- moment_type: Short descriptive label (e.g., "Trust Broken", "Price Objection", "Closed Successfully")
+- quote: The EXACT text spoken by either party at that moment (verbatim from transcript)
+- is_positive: true if moment helped the sale, false if it hurt
+
+For failed sales, identify which moment killed the deal (usually position 75 or earlier) and mark is_positive as false.
 
 EARNINGS CALCULATION:
 - sale_closed true ONLY if customer commits to a paid service (not just appointments)
@@ -686,10 +729,11 @@ ${knowledgeContext}`
           coaching_plan: coachingPlan,
           conversation_dynamics: conversationDynamics,
           failure_analysis: failureAnalysis,
+          timeline_key_moments: gradingResult.timeline_key_moments || [],
           earnings_data: earningsData,
           deal_details: dealDetails,
           graded_at: now,
-          grading_version: '6.0-comprehensive',
+          grading_version: '6.1-with-timeline',
           scores: gradingResult.scores || {}
         }
       } as any)
