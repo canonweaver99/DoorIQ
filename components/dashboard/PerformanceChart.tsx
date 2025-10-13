@@ -140,7 +140,8 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
               stroke="#64748b"
               style={{ fontSize: '12px' }}
               tickLine={false}
-              domain={[0, 100]}
+              domain={[50, 100]}
+              ticks={[50, 60, 70, 80, 90, 100]}
             />
             <Tooltip
               contentStyle={{

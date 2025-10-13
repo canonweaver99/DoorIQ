@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion'
 import { Trophy, Crown, Medal, TrendingUp, TrendingDown, Users, Award, Target } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { LeaderboardEntry } from './types'
 
 interface TeamTabProps {
@@ -15,6 +17,70 @@ interface TeamTabProps {
 }
 
 export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabProps) {
+  const [realTeamData, setRealTeamData] = useState({
+    users: leaderboard,
+    currentUserRank: userRank,
+    stats: teamStats
+  })
+  
+  useEffect(() => {
+    fetchRealTeamData()
+  }, [])
+  
+  const fetchRealTeamData = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) return
+    
+    // Fetch all users with their session data
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, full_name, email, avatar_url')
+    
+    if (!usersData || usersData.length === 0) return
+    
+    // Fetch last week's sessions for all users
+    const oneWeekAgo = new Date()
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+    
+    const { data: allSessions } = await supabase
+      .from('live_sessions')
+      .select('user_id, overall_score')
+      .gte('created_at', oneWeekAgo.toISOString())
+    
+    // Calculate scores per user
+    const userScores = usersData.map(u => {
+      const userSessions = allSessions?.filter(s => s.user_id === u.id) || []
+      const avgScore = userSessions.length > 0
+        ? Math.round(userSessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / userSessions.length)
+        : 0
+      
+      return {
+        id: u.id,
+        name: u.full_name || u.email?.split('@')[0] || 'User',
+        score: avgScore,
+        avatar: u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.full_name || 'User')}&background=6366f1&color=fff`,
+        isCurrentUser: u.id === user.id
+      }
+    }).sort((a, b) => b.score - a.score)
+    
+    const currentUserRank = userScores.findIndex(u => u.isCurrentUser) + 1
+    const avgTeamScore = userScores.length > 0
+      ? Math.round(userScores.reduce((sum, u) => sum + u.score, 0) / userScores.length)
+      : 0
+    const yourScore = userScores.find(u => u.isCurrentUser)?.score || 0
+    
+    setRealTeamData({
+      users: userScores,
+      currentUserRank,
+      stats: {
+        teamSize: userScores.length,
+        avgTeamScore,
+        yourScore
+      }
+    })
+  }
   const getRankIcon = (index: number) => {
     switch (index) {
       case 0:
@@ -27,16 +93,6 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
         return <span className="text-lg font-bold text-slate-400">#{index + 1}</span>
     }
   }
-
-  // Extended leaderboard - show all members
-  const extendedLeaderboard = [
-    ...leaderboard,
-    { id: 6, name: 'John Smith', score: 795, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-    { id: 7, name: 'Lisa Anderson', score: 780, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop' },
-    { id: 8, name: 'Michael Brown', score: 765, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop' },
-    { id: 9, name: 'Rachel Green', score: 750, avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop' },
-    { id: 10, name: 'Tom Wilson', score: 735, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' },
-  ]
 
   return (
     <motion.div
@@ -60,7 +116,7 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
             </div>
             <div>
               <p className="text-sm text-slate-400">Team Size</p>
-              <p className="text-2xl font-bold text-white">{teamStats.teamSize}</p>
+              <p className="text-2xl font-bold text-white">{realTeamData.stats.teamSize}</p>
             </div>
           </div>
           <p className="text-xs text-slate-400">Active members</p>
@@ -78,7 +134,7 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
             </div>
             <div>
               <p className="text-sm text-slate-400">Team Average</p>
-              <p className="text-2xl font-bold text-white">{teamStats.avgTeamScore}%</p>
+              <p className="text-2xl font-bold text-white">{realTeamData.stats.avgTeamScore}%</p>
             </div>
           </div>
           <p className="text-xs text-slate-400">Average score this week</p>
@@ -97,8 +153,8 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
             <div>
               <p className="text-sm text-slate-400">Your Performance</p>
               <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold text-white">{teamStats.yourScore}%</p>
-                {teamStats.yourScore > teamStats.avgTeamScore ? (
+                <p className="text-2xl font-bold text-white">{realTeamData.stats.yourScore}%</p>
+                {realTeamData.stats.yourScore > realTeamData.stats.avgTeamScore ? (
                   <TrendingUp className="w-5 h-5 text-green-400" />
                 ) : (
                   <TrendingDown className="w-5 h-5 text-red-400" />
@@ -107,9 +163,9 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
             </div>
           </div>
           <p className="text-xs text-slate-400">
-            {teamStats.yourScore > teamStats.avgTeamScore
-              ? `${teamStats.yourScore - teamStats.avgTeamScore}% above team average`
-              : `${teamStats.avgTeamScore - teamStats.yourScore}% below team average`}
+            {realTeamData.stats.yourScore > realTeamData.stats.avgTeamScore
+              ? `${realTeamData.stats.yourScore - realTeamData.stats.avgTeamScore}% above team average`
+              : `${realTeamData.stats.avgTeamScore - realTeamData.stats.yourScore}% below team average`}
           </p>
         </motion.div>
       </div>
@@ -122,19 +178,15 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
         className="bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-2xl p-6 backdrop-blur-sm"
       >
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Your Current Ranking</h3>
-            <div className="flex items-center gap-3">
-              <div className="text-5xl font-bold text-purple-400">#{userRank}</div>
-              <div>
-                <p className="text-sm text-slate-300">of {teamStats.teamSize} members</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <TrendingUp className="w-4 h-4 text-green-400" />
-                  <span className="text-sm text-green-400 font-semibold">Up 2 spots this week</span>
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">Your Current Ranking</h3>
+              <div className="flex items-center gap-3">
+                <div className="text-5xl font-bold text-purple-400">#{realTeamData.currentUserRank}</div>
+                <div>
+                  <p className="text-sm text-slate-300">of {realTeamData.stats.teamSize} members</p>
                 </div>
               </div>
             </div>
-          </div>
           <div className="hidden md:block">
             <div className="p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
               <Trophy className="w-16 h-16 text-purple-400" />
@@ -161,7 +213,7 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
         </div>
 
         <div className="space-y-3">
-          {extendedLeaderboard.map((entry, index) => (
+          {realTeamData.users.map((entry, index) => (
             <motion.div
               key={entry.id}
               initial={{ opacity: 0, x: -20 }}
@@ -199,7 +251,7 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
                     }`}>
                       {entry.name}
                     </p>
-                    <p className="text-xs text-slate-400">{entry.score} points</p>
+                    <p className="text-xs text-slate-400">{entry.score}% avg score</p>
                   </div>
 
                   {/* Performance Indicator */}
@@ -207,18 +259,18 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
                     <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg ${
                       index <= 2
                         ? 'bg-green-500/20 border border-green-500/30'
-                        : index >= extendedLeaderboard.length - 3
+                        : index >= realTeamData.users.length - 3
                         ? 'bg-red-500/20 border border-red-500/30'
                         : 'bg-yellow-500/20 border border-yellow-500/30'
                     }`}>
                       <span className={`text-xs font-semibold ${
                         index <= 2
                           ? 'text-green-400'
-                          : index >= extendedLeaderboard.length - 3
+                          : index >= realTeamData.users.length - 3
                           ? 'text-red-400'
                           : 'text-yellow-400'
                       }`}>
-                        {index <= 2 ? 'Top Tier' : index >= extendedLeaderboard.length - 3 ? 'Growth' : 'Mid Tier'}
+                        {index <= 2 ? 'Top Tier' : index >= realTeamData.users.length - 3 ? 'Growth' : 'Mid Tier'}
                       </span>
                     </div>
                   </div>
@@ -229,51 +281,6 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
                       <span className="text-xs font-medium text-purple-300">You</span>
                     </div>
                   )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Recent Team Achievements */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
-            <Award className="w-5 h-5 text-purple-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">Recent Team Achievements</h3>
-            <p className="text-xs text-slate-400">Celebrating our wins together</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {[
-            { user: 'Sarah Chen', achievement: 'Hit 900 points milestone', time: '2 hours ago', icon: '🎯' },
-            { user: 'Marcus Johnson', achievement: '5-day perfect score streak', time: '5 hours ago', icon: '🔥' },
-            { user: 'You', achievement: 'Moved up 2 spots in rankings', time: '1 day ago', icon: '📈' },
-            { user: 'Team', achievement: 'Average score above 80% for the week', time: '2 days ago', icon: '🏆' },
-          ].map((item, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.45 + index * 0.05 }}
-              className="bg-white/5 border border-white/5 rounded-xl p-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">{item.icon}</div>
-                <div className="flex-1">
-                  <p className="text-sm text-white font-medium mb-1">
-                    <span className="text-purple-400">{item.user}</span> {item.achievement}
-                  </p>
-                  <p className="text-xs text-slate-400">{item.time}</p>
                 </div>
               </div>
             </motion.div>

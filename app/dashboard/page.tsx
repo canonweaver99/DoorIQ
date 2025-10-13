@@ -9,6 +9,10 @@ import PerformanceTab from '@/components/dashboard/tabs/PerformanceTab'
 import LearningTab from '@/components/dashboard/tabs/LearningTab'
 import TeamTab from '@/components/dashboard/tabs/TeamTab'
 import MessagesTab from '@/components/dashboard/tabs/MessagesTab'
+import { createClient } from '@/lib/supabase/client'
+import { Database } from '@/lib/supabase/database.types'
+
+type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
 // Mock data
 const mockData = {
@@ -120,6 +124,12 @@ const mockData = {
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeTab, setActiveTab] = useState('overview')
+  const [userName, setUserName] = useState('Alex')
+  const [realStats, setRealStats] = useState({
+    sessionsThisWeek: 0,
+    avgScore: 0,
+    teamRank: 1
+  })
 
   // Load last viewed tab from localStorage
   useEffect(() => {
@@ -138,6 +148,50 @@ export default function DashboardPage() {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000)
     return () => clearInterval(timer)
   }, [])
+  
+  // Fetch real user data
+  useEffect(() => {
+    fetchRealData()
+  }, [])
+  
+  const fetchRealData = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) return
+    
+    // Get user name
+    const { data: userData } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', user.id)
+      .single()
+    
+    if (userData?.full_name) {
+      setUserName(userData.full_name.split(' ')[0] || 'Alex')
+    }
+    
+    // Get sessions from this week
+    const oneWeekAgo = new Date()
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+    
+    const { data: sessions } = await supabase
+      .from('live_sessions')
+      .select('overall_score, created_at')
+      .eq('user_id', user.id)
+      .gte('created_at', oneWeekAgo.toISOString())
+    
+    const sessionsThisWeek = sessions?.length || 0
+    const avgScore = sessions && sessions.length > 0
+      ? Math.round(sessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / sessions.length)
+      : 0
+    
+    setRealStats({
+      sessionsThisWeek,
+      avgScore,
+      teamRank: 1 // Will be calculated when team feature is implemented
+    })
+  }
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Home },
@@ -168,7 +222,7 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent mb-2">
-                Welcome back, {mockData.user.name}! 👋
+                Welcome back, {userName}! 👋
               </h1>
               <div className="flex items-center gap-4 text-slate-400 text-sm">
                 <span className="flex items-center gap-1">
@@ -185,9 +239,9 @@ export default function DashboardPage() {
             {/* Quick Stats Bar */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {[
-                { label: 'Sessions', value: mockData.quickStats.sessionsThisWeek, icon: Target },
-                { label: 'Avg Score', value: `${mockData.quickStats.avgScore}%`, icon: TrendingUp },
-                { label: 'Rank', value: `#${mockData.quickStats.teamRank}`, icon: Award },
+                { label: 'Sessions', value: realStats.sessionsThisWeek, icon: Target },
+                { label: 'Avg Score', value: `${realStats.avgScore}%`, icon: TrendingUp },
+                { label: 'Rank', value: `#${realStats.teamRank}`, icon: Award },
               ].map((stat, idx) => (
                 <motion.div
                   key={stat.label}

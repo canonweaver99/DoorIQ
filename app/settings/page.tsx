@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { User, Mail, Shield, Bell, Save, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 
 type UserData = Database['public']['Tables']['users']['Row']
 
@@ -98,6 +99,17 @@ export default function SettingsPage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">Profile</h1>
           <p className="text-slate-400">Manage your account and preferences</p>
+        </div>
+
+        {/* Avatar Upload Section */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
+          <AvatarUpload 
+            currentAvatarUrl={(userData as any)?.avatar_url}
+            userId={userData?.id || ''}
+            onUploadComplete={(url) => {
+              setUserData({ ...userData!, avatar_url: url } as any)
+            }}
+          />
         </div>
 
         {/* Profile Section */}
