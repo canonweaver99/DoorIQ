@@ -161,11 +161,37 @@ export default function AnalyticsPage() {
       console.log('Transcript:', data.full_transcript)
       console.log('Transcript length:', data.full_transcript?.length)
       console.log('First transcript item:', data.full_transcript?.[0])
+      console.log('Has grading:', !!data.analytics?.line_ratings)
       setSession(data)
       
-      // If transcript exists but no grading, trigger grading
+      // If transcript exists but no grading, trigger grading and poll for completion
       if (data.full_transcript && data.full_transcript.length > 0 && !data.analytics?.line_ratings) {
+        console.log('🎯 No grading found, triggering grading and setting up polling...')
         triggerGrading()
+        
+        // Poll every 3 seconds for grading completion (up to 2 minutes)
+        let pollCount = 0
+        const pollInterval = setInterval(async () => {
+          pollCount++
+          console.log(`🔄 Polling for grading completion (${pollCount * 3}s)...`)
+          
+          const pollResponse = await fetch(`/api/session?id=${sessionId}`)
+          if (pollResponse.ok) {
+            const pollData = await pollResponse.json()
+            if (pollData.analytics?.line_ratings && pollData.analytics.line_ratings.length > 0) {
+              console.log('✅ Grading completed! Refreshing page...')
+              clearInterval(pollInterval)
+              setSession(pollData)
+              setGrading(false)
+            }
+          }
+          
+          // Stop polling after 40 attempts (2 minutes)
+          if (pollCount >= 40) {
+            console.log('⏰ Polling timeout - grading may still be in progress')
+            clearInterval(pollInterval)
+          }
+        }, 3000)
       }
     } catch (error) {
       console.error('Error fetching session:', error)
@@ -289,7 +315,7 @@ export default function AnalyticsPage() {
           </div>
 
           {grading && (
-            <div className="inline-flex items-center gap-3 bg-[#111111] border border-gray-800 rounded-full px-5 py-2 text-gray-300">
+            <div className="inline-flex items-center gap-3 bg-purple-500/10 border border-purple-500/30 rounded-full px-5 py-2 text-purple-300">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm">Analyzing conversation...</span>
             </div>

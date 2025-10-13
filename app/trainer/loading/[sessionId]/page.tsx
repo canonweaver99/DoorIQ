@@ -92,13 +92,13 @@ export default function LoadingPage() {
       }
     }, 2000)
 
-    // Timeout after 30 seconds - redirect anyway (increased from 15)
+    // Timeout after 2 minutes - redirect anyway (grading continues in background)
     const timeout = setTimeout(() => {
-      console.warn('⚠️ Timeout waiting for grading, redirecting anyway...')
-      console.warn('⚠️ This may indicate grading failed or took too long')
-      setLastError('Grading took longer than expected')
+      console.warn('⚠️ Grading still in progress, redirecting to analytics...')
+      console.warn('⚠️ Results will appear when grading completes')
+      setStatus('Still grading... Redirecting to results page')
       router.push(`/analytics/${params.sessionId}`)
-    }, 30000)
+    }, 120000)
 
     return () => {
       clearInterval(tipInterval)
