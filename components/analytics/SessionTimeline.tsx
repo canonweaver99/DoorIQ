@@ -19,6 +19,7 @@ interface SessionTimelineProps {
   duration: number // in seconds
   events: TimelineEvent[]
   lineRatings?: any[]
+  fullTranscript?: Array<{ speaker: string, text: string, timestamp?: string }>
   onEventClick?: (event: TimelineEvent) => void
   customerName?: string
   salesRepName?: string
@@ -27,64 +28,108 @@ interface SessionTimelineProps {
     amount: number
     product: string
   }
+  failurePoint?: number // Line number where deal was lost (if applicable)
 }
 
 export default function SessionTimeline({ 
   duration, 
   events, 
-  lineRatings = [], 
+  lineRatings = [],
+  fullTranscript = [],
   onEventClick,
   customerName = 'Customer',
   salesRepName = 'Sales Rep',
-  dealOutcome
+  dealOutcome,
+  failurePoint
 }: SessionTimelineProps) {
   const [hoveredDot, setHoveredDot] = useState<number | null>(null)
   
-  // Extract exactly 6 key moments from the conversation
-  const keyDots = [
-    { position: 15, label: 'Opening', defaultQuote: 'Initial contact' },
-    { position: 30, label: 'Problem Revealed', defaultQuote: 'Customer shares issue' },
-    { position: 45, label: 'Trust Moment', defaultQuote: 'Connection established' },
-    { position: 60, label: 'Objection', defaultQuote: 'Customer concern' },
-    { position: 75, label: 'Resistance', defaultQuote: 'Final hesitation' },
-    { position: 90, label: 'Close', defaultQuote: 'Deal outcome' }
+  // Define key moment types for the 6 dots
+  const dotDefinitions = [
+    { position: 15, label: 'Initial Resistance', category: 'introduction' },
+    { position: 30, label: 'Problem Discovery', category: 'discovery' },
+    { position: 45, label: 'Trust Building', category: 'rapport' },
+    { position: 60, label: 'First Objection', category: 'objection_handling' },
+    { position: 75, label: 'Critical Moment', category: 'objection_handling' },
+    { position: 90, label: 'Close Attempt', category: 'closing' }
   ]
   
-  // Try to match key dots to actual events and get conversation quotes
-  const mappedDots = keyDots.map((dot, idx) => {
+  // Map dots to actual conversation moments
+  const mappedDots = dotDefinitions.map((dot, idx) => {
     const targetTime = (duration * dot.position) / 100
+    const targetLineIndex = Math.floor((fullTranscript.length * dot.position) / 100)
     
-    // Find nearby events
+    // Find events near this position
     const nearbyEvents = events.filter(e => {
       const eventTime = parseTimestamp(e.timestamp)
-      return Math.abs(eventTime - targetTime) < duration * 0.15 // Within 15% of target
+      return Math.abs(eventTime - targetTime) < duration * 0.15
     })
     
-    const matchedEvent = nearbyEvents[0]
+    // Find line ratings that match this category and are nearby
+    const relevantRatings = lineRatings.filter((r: any) => {
+      const category = (r.category || '').toLowerCase()
+      return category.includes(dot.category) || 
+             Math.abs(r.line_number - targetLineIndex) < fullTranscript.length * 0.1
+    })
     
-    // Find the actual line rating for this event to get the conversation quote
-    let conversationQuote = dot.defaultQuote
-    let feedback = ''
+    // Get the best matching line rating
+    const bestRating = relevantRatings.length > 0 
+      ? relevantRatings.reduce((best: any, curr: any) => {
+          const bestDist = Math.abs(best.line_number - targetLineIndex)
+          const currDist = Math.abs(curr.line_number - targetLineIndex)
+          return currDist < bestDist ? curr : best
+        })
+      : null
     
-    if (matchedEvent && matchedEvent.line !== undefined) {
-      const lineRating = lineRatings.find(r => r.line_number === matchedEvent.line)
-      if (lineRating) {
-        // Try to find the actual transcript line
-        // The quote should be the actual text spoken, not just the description
-        conversationQuote = lineRating.improvement_notes || matchedEvent.description || dot.defaultQuote
-        feedback = lineRating.improvement_notes 
-          ? `${lineRating.effectiveness} - ${lineRating.score}/100`
-          : `${lineRating.effectiveness} performance`
+    // Extract actual quote from transcript
+    let actualQuote = dot.label
+    let actualTimestamp = formatTime(targetTime)
+    let lineNum = targetLineIndex
+    let momentType = dot.label
+    let isSuccess = true
+    
+    if (bestRating && fullTranscript[bestRating.line_number]) {
+      const transcriptLine = fullTranscript[bestRating.line_number]
+      actualQuote = transcriptLine.text || transcriptLine.message || actualQuote
+      actualTimestamp = transcriptLine.timestamp || bestRating.timestamp || actualTimestamp
+      lineNum = bestRating.line_number
+      
+      // Determine success based on effectiveness
+      isSuccess = ['excellent', 'good'].includes(bestRating.effectiveness)
+      
+      // Determine moment type from the rating
+      if (bestRating.category) {
+        momentType = bestRating.category.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
       }
+    } else if (nearbyEvents.length > 0) {
+      const event = nearbyEvents[0]
+      actualTimestamp = event.timestamp
+      lineNum = event.line
+      momentType = event.title
+      isSuccess = event.type !== 'critical'
     }
+    
+    // For the last dot, check if deal closed
+    if (idx === 5) {
+      isSuccess = dealOutcome?.closed || false
+      momentType = dealOutcome?.closed ? 'Closed Successfully' : 'Deal Lost'
+    }
+    
+    // Check if this dot is after the failure point
+    const isAfterFailure = failurePoint !== undefined && lineNum > failurePoint
+    const isFailurePoint = failurePoint !== undefined && Math.abs(lineNum - failurePoint) < fullTranscript.length * 0.05
     
     return {
       position: dot.position,
-      timestamp: matchedEvent?.timestamp || formatTime(targetTime),
-      label: matchedEvent?.title || dot.label,
-      quote: conversationQuote,
-      feedback: feedback || `${matchedEvent?.score || 0}/100`,
-      lineNumber: matchedEvent?.line
+      timestamp: actualTimestamp,
+      label: momentType,
+      quote: actualQuote,
+      lineNumber: lineNum,
+      isSuccess,
+      isAfterFailure,
+      isFailurePoint,
+      effectiveness: bestRating?.effectiveness || 'average',
+      score: bestRating?.score || 50
     }
   })
 
@@ -162,20 +207,47 @@ export default function SessionTimeline({
         </div>
       </div>
 
-      {/* Simplified Timeline with 6 Key Dots */}
+      {/* Enhanced Timeline with 6 Key Dots */}
       <div className="relative py-8">
-        {/* Single gradient bar */}
+        {/* Gradient bar with failure point handling */}
         <div className="relative h-2.5 rounded-full overflow-hidden">
+          {/* Main gradient up to failure point (or full if successful) */}
           <div 
-            className="absolute inset-0"
+            className="absolute inset-y-0 left-0 transition-all duration-500"
             style={{
+              width: failurePoint !== undefined ? `${(failurePoint / fullTranscript.length) * 100}%` : '100%',
               background: 'linear-gradient(to right, #3b82f6, #8b5cf6, #f59e0b, #ef4444)'
             }}
           />
           
+          {/* Grayed out section after failure */}
+          {failurePoint !== undefined && (
+            <div 
+              className="absolute inset-y-0 bg-slate-700/30"
+              style={{
+                left: `${(failurePoint / fullTranscript.length) * 100}%`,
+                right: 0
+              }}
+            />
+          )}
+          
           {/* 6 Key moment dots */}
           {mappedDots.map((dot, i) => {
             const isHovered = hoveredDot === i
+            
+            // Determine dot color
+            let dotColor = 'bg-white'
+            if (dot.isAfterFailure) {
+              dotColor = 'bg-slate-500/50' // Grayed out
+            } else if (dot.isFailurePoint) {
+              dotColor = 'bg-red-500' // Red failure dot
+            } else if (dot.isSuccess) {
+              dotColor = 'bg-green-400' // Success
+            } else if (dot.score >= 60) {
+              dotColor = 'bg-yellow-400' // Neutral
+            } else {
+              dotColor = 'bg-red-400' // Negative
+            }
             
             return (
               <div
@@ -187,29 +259,44 @@ export default function SessionTimeline({
               >
                 {/* Dot */}
                 <motion.div
-                  className="w-5 h-5 rounded-full bg-white cursor-pointer transition-all duration-200"
+                  className={`w-5 h-5 rounded-full cursor-pointer transition-all duration-200 ${dotColor}`}
                   style={{
                     boxShadow: isHovered 
                       ? '0 0 0 4px rgba(255,255,255,0.3), 0 4px 20px rgba(0,0,0,0.4)' 
-                      : '0 2px 8px rgba(0,0,0,0.3)'
+                      : '0 2px 8px rgba(0,0,0,0.3)',
+                    opacity: dot.isAfterFailure ? 0.4 : 1
                   }}
                   animate={{
-                    scale: isHovered ? 1.3 : 1
+                    scale: isHovered ? 1.3 : (dot.isFailurePoint ? [1, 1.1, 1] : 1)
+                  }}
+                  transition={{
+                    scale: dot.isFailurePoint ? {
+                      repeat: Infinity,
+                      duration: 2,
+                      ease: "easeInOut"
+                    } : undefined
                   }}
                 />
                 
-                {/* Enhanced hover tooltip with conversation quote and feedback */}
+                {/* Enhanced hover tooltip */}
                 <AnimatePresence>
                   {isHovered && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 w-80 p-5 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-slate-700/50 shadow-2xl pointer-events-none"
+                      className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 w-80 p-5 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-slate-700/50 shadow-2xl pointer-events-none z-50"
                     >
-                      {/* Header */}
+                      {/* Header with success indicator */}
                       <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-700/50">
-                        <div className="text-xs font-mono text-purple-400">{dot.timestamp}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs font-mono text-purple-400">{dot.timestamp}</div>
+                          {dot.isSuccess ? (
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-red-400" />
+                          )}
+                        </div>
                         <div className="text-xs font-semibold text-slate-400">{dot.label}</div>
                       </div>
                       
@@ -221,13 +308,43 @@ export default function SessionTimeline({
                         </div>
                       </div>
                       
-                      {/* AI Feedback */}
-                      {dot.feedback && (
+                      {/* Performance indicator */}
+                      <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Feedback:</div>
-                          <div className="text-xs text-slate-300 bg-slate-800/30 p-2 rounded-lg">
-                            {dot.feedback}
+                          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Performance:</div>
+                          <div className={`text-xs font-semibold ${
+                            dot.effectiveness === 'excellent' ? 'text-green-400' :
+                            dot.effectiveness === 'good' ? 'text-blue-400' :
+                            dot.effectiveness === 'average' ? 'text-yellow-400' :
+                            'text-red-400'
+                          }`}>
+                            {dot.effectiveness?.toUpperCase()}
                           </div>
+                        </div>
+                        <div className={`text-lg font-bold ${
+                          dot.score >= 80 ? 'text-green-400' :
+                          dot.score >= 60 ? 'text-yellow-400' :
+                          'text-red-400'
+                        }`}>
+                          {dot.score}/100
+                        </div>
+                      </div>
+                      
+                      {/* Deal killer indicator */}
+                      {dot.isFailurePoint && (
+                        <div className="mt-3 pt-3 border-t border-red-500/30 flex items-center gap-2 text-red-400">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="text-xs font-semibold">DEAL KILLER - Sale lost here</span>
+                        </div>
+                      )}
+                      
+                      {/* Success indicator for final dot */}
+                      {i === 5 && dot.isSuccess && dealOutcome?.closed && (
+                        <div className="mt-3 pt-3 border-t border-green-500/30 flex items-center gap-2 text-green-400">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span className="text-xs font-semibold">
+                            CLOSED: ${dealOutcome.amount} - {dealOutcome.product}
+                          </span>
                         </div>
                       )}
                       
@@ -241,6 +358,18 @@ export default function SessionTimeline({
               </div>
             )
           })}
+          
+          {/* Dotted continuation line after failure */}
+          {failurePoint !== undefined && (
+            <div 
+              className="absolute inset-y-0 border-t-2 border-dashed border-slate-600/50"
+              style={{
+                left: `${(failurePoint / fullTranscript.length) * 100}%`,
+                right: 0,
+                top: '50%'
+              }}
+            />
+          )}
         </div>
         
         {/* Time markers */}

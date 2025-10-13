@@ -8,6 +8,7 @@ import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } fr
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
+import CircularProgress from '@/components/ui/CircularProgress'
 
 type Session = Database['public']['Tables']['live_sessions']['Row']
 
@@ -360,25 +361,14 @@ export default function SessionsPage() {
                         </div>
                       )}
                       
-                      {/* Overall Score - Bigger with Grade */}
+                      {/* Overall Score - Circular Progress */}
                       <div className="text-right">
-                        <p className="text-xs text-slate-400 mb-1">Overall Score</p>
-                        <div className="flex items-center gap-3">
-                          <p className={`text-4xl font-bold ${getScoreColor(session.overall_score)}`}>
-                            {session.overall_score || '--'}%
-                          </p>
-                          <span className={`text-3xl font-bold ${getScoreColor(session.overall_score)}`}>
-                            {session.overall_score ? 
-                              session.overall_score >= 95 ? 'A+' :
-                              session.overall_score >= 90 ? 'A' :
-                              session.overall_score >= 85 ? 'B+' :
-                              session.overall_score >= 80 ? 'B' :
-                              session.overall_score >= 75 ? 'C+' :
-                              session.overall_score >= 70 ? 'C' :
-                              session.overall_score >= 65 ? 'D' : 'F'
-                            : '--'}
-                          </span>
-                        </div>
+                        <p className="text-xs text-slate-400 mb-2">Overall Score</p>
+                        <CircularProgress 
+                          percentage={session.overall_score || 0}
+                          size={60}
+                          strokeWidth={4}
+                        />
                       </div>
                       
                       <Link

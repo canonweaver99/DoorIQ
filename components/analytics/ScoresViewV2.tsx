@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Target, Shield, HandshakeIcon, DollarSign, Download, Share2, BookOpen, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Zap, Clock, Award, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react'
+import { Users, Target, Shield, HandshakeIcon, DollarSign, Download, Share2, BookOpen, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Zap, Clock, Award, AlertCircle, CheckCircle2, Sparkles, XCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import SessionTimeline from './SessionTimeline'
@@ -35,6 +35,7 @@ interface ScoresViewV2Props {
   failureAnalysis?: any
   saleClosed?: boolean
   lineRatings?: any[]
+  fullTranscript?: Array<{ speaker: string, text: string, timestamp?: string }>
   agentName?: string
   durationSeconds?: number
 }
@@ -51,6 +52,7 @@ export default function ScoresViewV2({
   failureAnalysis,
   saleClosed,
   lineRatings = [],
+  fullTranscript = [],
   agentName = 'AI Agent',
   durationSeconds = 600
 }: ScoresViewV2Props) {
@@ -296,58 +298,93 @@ export default function ScoresViewV2({
             </div>
           </div>
 
-          {/* Earnings Card */}
-          {saleClosed && virtualEarnings > 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="relative rounded-3xl bg-gradient-to-br from-emerald-900/40 to-green-800/40 backdrop-blur-xl border border-emerald-500/30 p-8 overflow-hidden"
-            >
-              {/* Sparkle background */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-400/20 to-green-400/20 rounded-full blur-3xl"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-4">
-                  <DollarSign className="w-6 h-6 text-emerald-400" />
-                  <span className="text-sm uppercase tracking-[0.25em] text-emerald-400">You Earned</span>
-                </div>
-                
-                <div className="text-5xl font-bold text-white mb-6">
-                  ${animatedEarnings.toFixed(2)}
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Deal Value</span>
-                    <span className="text-white font-medium">${dealDetails?.total_contract_value || dealDetails?.base_price || 0}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Commission (30%)</span>
-                    <span className="text-emerald-400 font-medium">${earningsData?.commission_earned?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  {earningsData?.bonus_modifiers && Object.values(earningsData.bonus_modifiers).some((v: any) => v > 0) && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Bonuses</span>
-                      <span className="text-yellow-400 font-medium">
-                        ${Object.values(earningsData.bonus_modifiers).reduce((a: any, b: any) => a + b, 0)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="pt-3 border-t border-emerald-500/20 flex justify-between">
-                    <span className="text-white font-semibold">Total Virtual Earnings</span>
-                    <span className="text-emerald-400 font-bold text-lg">${virtualEarnings.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                {dealDetails?.product_sold && (
-                  <div className="mt-4 pt-4 border-t border-emerald-500/20">
-                    <div className="text-xs text-slate-400 mb-1">Product Sold</div>
-                    <div className="text-sm text-white">{dealDetails.product_sold}</div>
-                  </div>
+          {/* Earnings Card - Always show */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`relative rounded-3xl backdrop-blur-xl p-8 overflow-hidden ${
+              saleClosed && virtualEarnings > 0
+                ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
+                : 'bg-gradient-to-br from-red-900/40 to-rose-800/40 border border-red-500/30'
+            }`}
+          >
+            {/* Sparkle background */}
+            <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
+              saleClosed && virtualEarnings > 0
+                ? 'bg-gradient-to-br from-emerald-400/20 to-green-400/20'
+                : 'bg-gradient-to-br from-red-400/20 to-rose-400/20'
+            }`}></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                {saleClosed && virtualEarnings > 0 ? (
+                  <>
+                    <DollarSign className="w-6 h-6 text-emerald-400" />
+                    <span className="text-sm uppercase tracking-[0.25em] text-emerald-400">You Earned</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-6 h-6 text-red-400" />
+                    <span className="text-sm uppercase tracking-[0.25em] text-red-400">Close Failed</span>
+                  </>
                 )}
               </div>
-            </motion.div>
-          )}
+              
+              <div className={`text-5xl font-bold text-white mb-6 ${
+                !saleClosed || virtualEarnings === 0 ? 'line-through opacity-50' : ''
+              }`}>
+                ${saleClosed && virtualEarnings > 0 ? animatedEarnings.toFixed(2) : '0.00'}
+              </div>
+
+              {saleClosed && virtualEarnings > 0 ? (
+                <>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Deal Value</span>
+                      <span className="text-white font-medium">${dealDetails?.total_contract_value || dealDetails?.base_price || 0}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Commission (30%)</span>
+                      <span className="text-emerald-400 font-medium">${earningsData?.commission_earned?.toFixed(2) || '0.00'}</span>
+                    </div>
+                    {earningsData?.bonus_modifiers && Object.values(earningsData.bonus_modifiers).some((v: any) => v > 0) && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">Bonuses</span>
+                        <span className="text-yellow-400 font-medium">
+                          ${Object.values(earningsData.bonus_modifiers).reduce((a: any, b: any) => a + b, 0)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="pt-3 border-t border-emerald-500/20 flex justify-between">
+                      <span className="text-white font-semibold">Total Virtual Earnings</span>
+                      <span className="text-emerald-400 font-bold text-lg">${virtualEarnings.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  {dealDetails?.product_sold && (
+                    <div className="mt-4 pt-4 border-t border-emerald-500/20">
+                      <div className="text-xs text-slate-400 mb-1">Product Sold</div>
+                      <div className="text-sm text-white">{dealDetails.product_sold}</div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Potential Deal Value</span>
+                    <span className="text-white/50 font-medium line-through">$--</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Missed Commission</span>
+                    <span className="text-red-400 font-medium">$0.00</span>
+                  </div>
+                  <div className="pt-3 border-t border-red-500/20">
+                    <p className="text-sm text-red-300">No sale was closed this session. Review the feedback below to improve your approach.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -363,13 +400,15 @@ export default function ScoresViewV2({
             duration={durationSeconds}
             events={keyMoments}
             lineRatings={lineRatings}
+            fullTranscript={fullTranscript}
             customerName="Austin Rodriguez"
-            salesRepName="Tyler"
-            dealOutcome={saleClosed ? {
-              closed: true,
+            salesRepName={agentName}
+            dealOutcome={{
+              closed: saleClosed || false,
               amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
               product: dealDetails?.product_sold || 'Service'
-            } : undefined}
+            }}
+            failurePoint={!saleClosed ? failureAnalysis?.point_of_no_return?.line : undefined}
           />
         </section>
       )}

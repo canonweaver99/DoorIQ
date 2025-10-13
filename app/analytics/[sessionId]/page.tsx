@@ -260,6 +260,7 @@ export default function AnalyticsPage() {
         failureAnalysis={session.analytics?.failure_analysis || {}}
         saleClosed={session.sale_closed || false}
         lineRatings={session.analytics?.line_ratings || []}
+        fullTranscript={session.full_transcript || []}
         agentName={session.agent_name || 'AI Agent'}
         durationSeconds={session.duration_seconds || 600}
       />
