@@ -393,7 +393,8 @@ export async function POST(request: NextRequest) {
           .join('\n\n')
     }
 
-    // Format transcript for OpenAI
+    // Format transcript for OpenAI with timestamps
+    const startTime = new Date((session as any).started_at || (session as any).created_at)
     const formattedTranscript = (session as any).full_transcript
       .map((line: any, index: number) => {
         // Normalize speaker names
@@ -405,7 +406,23 @@ export async function POST(request: NextRequest) {
         }
         // Get text from either text or message field
         const text = line.text || line.message || ''
-        return `[${index}] ${speaker}: ${text}`
+        
+        // Calculate relative timestamp (seconds from start)
+        let timestamp = '0:00'
+        if (line.timestamp) {
+          try {
+            const lineTime = new Date(line.timestamp)
+            const secondsFromStart = Math.floor((lineTime.getTime() - startTime.getTime()) / 1000)
+            const mins = Math.floor(secondsFromStart / 60)
+            const secs = secondsFromStart % 60
+            timestamp = `${mins}:${secs.toString().padStart(2, '0')}`
+          } catch (e) {
+            // Fallback to index-based estimation
+            timestamp = `${Math.floor(index / 3)}:${(index % 3) * 20}`
+          }
+        }
+        
+        return `[${index}] (${timestamp}) ${speaker}: ${text}`
       })
       .join('\n')
 
@@ -480,13 +497,41 @@ Identify exactly 6 key moments from the conversation for the timeline at these p
 - Position 90% (End): Close attempt - final outcome (success or failure)
 
 For each moment, provide:
-- line_number: The exact line index from the transcript
-- timestamp: Actual timestamp from that line
+- line_number: The exact line index from the transcript (the number in [brackets])
+- timestamp: Copy the EXACT timestamp from the transcript line at that line_number. The transcript format is "[line_number] (timestamp) Speaker: text" - extract the timestamp from the (parentheses). Examples: "0:05", "1:47", "2:33"
 - moment_type: Short descriptive label (e.g., "Trust Broken", "Price Objection", "Closed Successfully")
-- quote: The EXACT text spoken by either party at that moment (verbatim from transcript)
+- quote: The EXACT text spoken by either party at that moment (verbatim from transcript, everything after "Speaker: ")
 - is_positive: true if moment helped the sale, false if it hurt
 
+CRITICAL: The transcript shows timestamps in parentheses like (1:23). Copy these exactly. Never use "00:00" unless that's the actual timestamp shown.
+
 For failed sales, identify which moment killed the deal (usually position 75 or earlier) and mark is_positive as false.
+
+QUESTION RATIO CALCULATION:
+Count ONLY discovery and clarification questions that end with "?". 
+DO NOT count:
+- Rhetorical questions ("Makes sense, right?", "You know what I mean?")
+- Assumptive trial closes ("Sound good?", "Fair enough?")
+- Tag questions ("Isn't it?", "Don't you think?")
+
+DO count:
+- Open-ended discovery questions ("What concerns do you have?", "How long has this been an issue?")
+- Probing questions ("Tell me more about...", "When did you first notice...?")
+- Needs-based questions ("What's your biggest pest concern?")
+
+Calculate the ratio: (discovery_questions / total_rep_lines) * 100 = percentage
+
+Then score the question_ratio field based on that percentage:
+- 30-40% ratio = 100 points (optimal balance)
+- 40-50% ratio = 90 points (good, slightly high)
+- 50-60% ratio = 75 points (high but acceptable)
+- 20-30% ratio = 80 points (could ask more)
+- 10-20% ratio = 60 points (too much talking)
+- <10% ratio = 30 points (pitch-heavy, not enough discovery)
+- >60% ratio = 60 points (interrogation-style, too aggressive)
+
+IMPORTANT: A rep who asks 11 questions out of 20 total lines has a 55% ratio = 75 points (not 30!)
+Double-check your math before assigning the score.
 
 EARNINGS CALCULATION:
 - sale_closed true ONLY if customer commits to a paid service (not just appointments)
