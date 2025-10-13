@@ -226,9 +226,9 @@ export default function LeaderboardPage() {
             <button
               key={period}
               onClick={() => setTimeframe(period)}
-              className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg ${
+              className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 ${
                 timeframe === period
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/50'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
                   : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
               }`}
             >

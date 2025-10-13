@@ -721,7 +721,7 @@ function HeaderContent() {
                     {isSignedIn && (
                       <button
                         onClick={handleSignOut}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-indigo-600/35 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 disabled:cursor-not-allowed disabled:opacity-70"
                         disabled={signingOut}
                       >
                         <LogOut className="h-4 w-4" />
