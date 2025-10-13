@@ -72,18 +72,28 @@ export function useSessionRecording(sessionId: string | null) {
         return null
       }
 
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get a signed URL (for private bucket access)
+      const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('audio-recordings')
-        .getPublicUrl(filename)
+        .createSignedUrl(filename, 365 * 24 * 60 * 60) // 1 year
 
-      // Update the session with the audio URL
+      if (urlError || !signedUrlData) {
+        console.error('Error getting signed URL:', urlError)
+        return null
+      }
+
+      // Update the session with the audio URL and metadata
       await supabase
         .from('live_sessions')
-        .update({ audio_url: publicUrl })
+        .update({ 
+          audio_url: signedUrlData.signedUrl,
+          audio_duration: Math.floor(blob.size / 16000), // Rough estimate
+          audio_file_size: blob.size,
+          upload_type: 'live_recording'
+        })
         .eq('id', sessionId)
 
-      return publicUrl
+      return signedUrlData.signedUrl
     } catch (error) {
       console.error('Error uploading audio to Supabase:', error)
       return null

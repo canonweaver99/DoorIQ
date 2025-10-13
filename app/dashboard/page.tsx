@@ -3,13 +3,14 @@
 import { useState, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
-import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Calendar, Clock, MessageSquare } from 'lucide-react'
+import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Calendar, Clock, MessageSquare, Upload } from 'lucide-react'
 import TabNavigation from '@/components/dashboard/TabNavigation'
 import OverviewTab from '@/components/dashboard/tabs/OverviewTab'
 import PerformanceTab from '@/components/dashboard/tabs/PerformanceTab'
 import LearningTab from '@/components/dashboard/tabs/LearningTab'
 import TeamTab from '@/components/dashboard/tabs/TeamTab'
 import MessagesTab from '@/components/dashboard/tabs/MessagesTab'
+import UploadTab from '@/components/dashboard/tabs/UploadTab'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 
@@ -213,6 +214,7 @@ function DashboardPageContent() {
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'performance', label: 'Performance', icon: TrendingUp },
     { id: 'learning', label: 'Learning', icon: BookOpen },
+    { id: 'upload', label: 'Upload', icon: Upload },
     { id: 'team', label: 'Team', icon: UsersIcon },
     { id: 'messages', label: 'Messages', icon: MessageSquare },
   ]
@@ -301,6 +303,11 @@ function DashboardPageContent() {
           {activeTab === 'learning' && (
             <LearningTab
               key="learning"
+            />
+          )}
+          {activeTab === 'upload' && (
+            <UploadTab
+              key="upload"
             />
           )}
           {activeTab === 'team' && (

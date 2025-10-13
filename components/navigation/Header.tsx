@@ -31,6 +31,7 @@ import {
   HelpCircle,
   ArrowRight,
   Database as DatabaseIcon,
+  Upload,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef, useMemo } from 'react'
@@ -222,6 +223,7 @@ function HeaderContent() {
         title: 'Training',
         items: [
           { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
+          { name: 'Upload Sales Call', href: '/trainer/upload', icon: Upload },
           { name: 'Session History', href: '/sessions', icon: ClipboardList },
           { name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 },
         ],

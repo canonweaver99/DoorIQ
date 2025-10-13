@@ -8,6 +8,7 @@ import ScoresView from '@/components/analytics/ScoresView'
 import ScoresViewV2 from '@/components/analytics/ScoresViewV2'
 import TranscriptView from '@/components/analytics/TranscriptView'
 import TranscriptViewV2 from '@/components/analytics/TranscriptViewV2'
+import AudioPlayer from '@/components/analytics/AudioPlayer'
 
 interface SessionData {
   id: string
@@ -97,6 +98,8 @@ interface SessionData {
   } | null
   what_worked: string[] | null
   what_failed: string[] | null
+  audio_url: string | null
+  duration_seconds: number | null
 }
 
 export default function AnalyticsPage() {
@@ -257,40 +260,51 @@ export default function AnalyticsPage() {
     }
 
     return (
-      <ScoresViewV2
-        sessionId={session.id}
-        overallScore={session.overall_score || 0}
-        scores={{
-          rapport: session.rapport_score ?? 0,
-          discovery: session.discovery_score ?? 0,
-          objection_handling: session.objection_handling_score ?? 0,
-          closing: session.close_score ?? 0,
-          safety: session.analytics?.scores?.safety ?? 0,
-          introduction: session.analytics?.scores?.introduction ?? 0,
-          listening: session.analytics?.scores?.listening ?? 0,
-          speaking_pace: session.speaking_pace_score ?? session.analytics?.scores?.speaking_pace,
-          filler_words: session.filler_words_score ?? session.analytics?.scores?.filler_words,
-          question_ratio: session.question_ratio_score ?? session.analytics?.scores?.question_ratio,
-          active_listening: session.active_listening_score ?? session.analytics?.scores?.active_listening,
-          assumptive_language: session.assumptive_language_score ?? session.analytics?.scores?.assumptive_language
-        }}
-        feedback={session.analytics?.feedback || {
-          strengths: session.what_worked || [],
-          improvements: session.what_failed || [],
-          specific_tips: []
-        }}
-        virtualEarnings={session.virtual_earnings || 0}
-        earningsData={session.earnings_data || session.analytics?.earnings_data || {}}
-        dealDetails={session.deal_details || session.analytics?.deal_details || {}}
-        conversationDynamics={session.analytics?.conversation_dynamics || {}}
-        failureAnalysis={session.analytics?.failure_analysis || {}}
-        saleClosed={session.sale_closed || false}
-        lineRatings={session.analytics?.line_ratings || []}
-        fullTranscript={session.full_transcript || []}
-        timelineKeyMoments={session.analytics?.timeline_key_moments}
-        agentName={session.agent_name || 'AI Agent'}
-        durationSeconds={session.duration_seconds || 600}
-      />
+      <>
+        <ScoresViewV2
+          sessionId={session.id}
+          overallScore={session.overall_score || 0}
+          scores={{
+            rapport: session.rapport_score ?? 0,
+            discovery: session.discovery_score ?? 0,
+            objection_handling: session.objection_handling_score ?? 0,
+            closing: session.close_score ?? 0,
+            safety: session.analytics?.scores?.safety ?? 0,
+            introduction: session.analytics?.scores?.introduction ?? 0,
+            listening: session.analytics?.scores?.listening ?? 0,
+            speaking_pace: session.speaking_pace_score ?? session.analytics?.scores?.speaking_pace,
+            filler_words: session.filler_words_score ?? session.analytics?.scores?.filler_words,
+            question_ratio: session.question_ratio_score ?? session.analytics?.scores?.question_ratio,
+            active_listening: session.active_listening_score ?? session.analytics?.scores?.active_listening,
+            assumptive_language: session.assumptive_language_score ?? session.analytics?.scores?.assumptive_language
+          }}
+          feedback={session.analytics?.feedback || {
+            strengths: session.what_worked || [],
+            improvements: session.what_failed || [],
+            specific_tips: []
+          }}
+          virtualEarnings={session.virtual_earnings || 0}
+          earningsData={session.earnings_data || session.analytics?.earnings_data || {}}
+          dealDetails={session.deal_details || session.analytics?.deal_details || {}}
+          conversationDynamics={session.analytics?.conversation_dynamics || {}}
+          failureAnalysis={session.analytics?.failure_analysis || {}}
+          saleClosed={session.sale_closed || false}
+          lineRatings={session.analytics?.line_ratings || []}
+          fullTranscript={session.full_transcript || []}
+          timelineKeyMoments={session.analytics?.timeline_key_moments}
+          agentName={session.agent_name || 'AI Agent'}
+          durationSeconds={session.duration_seconds || 600}
+        />
+        {session.audio_url && (
+          <div className="mt-6">
+            <AudioPlayer 
+              audioUrl={session.audio_url}
+              duration={session.duration_seconds}
+              transcript={session.full_transcript}
+            />
+          </div>
+        )}
+      </>
     )
   }
 
