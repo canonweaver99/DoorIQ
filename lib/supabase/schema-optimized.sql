@@ -65,40 +65,44 @@ CREATE TABLE IF NOT EXISTS coaching_tips (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
+-- ============================================================
+-- ARCHIVED GAMIFICATION FEATURES (for future implementation)
+-- ============================================================
 -- Achievements table (for gamification)
-CREATE TABLE IF NOT EXISTS achievements (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  icon TEXT,
-  points INTEGER DEFAULT 10,
-  criteria JSONB,
-  UNIQUE(name)
-);
+-- CREATE TABLE IF NOT EXISTS achievements (
+--   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+--   name TEXT NOT NULL,
+--   description TEXT,
+--   icon TEXT,
+--   points INTEGER DEFAULT 10,
+--   criteria JSONB,
+--   UNIQUE(name)
+-- );
 
 -- User achievements junction table
-CREATE TABLE IF NOT EXISTS user_achievements (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  achievement_id UUID REFERENCES achievements(id) ON DELETE CASCADE,
-  earned_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
-  UNIQUE(user_id, achievement_id)
-);
+-- CREATE TABLE IF NOT EXISTS user_achievements (
+--   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+--   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+--   achievement_id UUID REFERENCES achievements(id) ON DELETE CASCADE,
+--   earned_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+--   UNIQUE(user_id, achievement_id)
+-- );
 
 -- Insert default achievements
 -- Ensure unique index exists for ON CONFLICT to work across existing DBs
-CREATE UNIQUE INDEX IF NOT EXISTS achievements_name_key ON achievements(name);
+-- CREATE UNIQUE INDEX IF NOT EXISTS achievements_name_key ON achievements(name);
 
-INSERT INTO achievements (name, description, icon, points, criteria) VALUES
-  ('First Success', 'Got Austin to schedule an appointment', '🎯', 50, '{"close_success": true}'),
-  ('Speed Runner', 'Closed in under 3 minutes', '⚡', 30, '{"max_duration": 180}'),
-  ('Trust Builder', 'No interruptions full session', '🤝', 40, '{"interruptions": 0}'),
-  ('Safety Star', 'Addressed all safety concerns', '🛡️', 25, '{"safety_concerns_addressed": true}'),
-  ('Persistence Pays', 'Handled 5+ objections successfully', '💪', 35, '{"objections_handled": 5}'),
-  ('Perfect Pitch', 'Achieved 90+ overall score', '⭐', 100, '{"min_score": 90}'),
-  ('Daily Dedication', '7-day practice streak', '🔥', 50, '{"streak_days": 7}'),
-  ('Rising Star', 'Improved score by 20+ points', '📈', 30, '{"score_improvement": 20}')
-ON CONFLICT (name) DO NOTHING;
+-- INSERT INTO achievements (name, description, icon, points, criteria) VALUES
+--   ('First Success', 'Got Austin to schedule an appointment', '🎯', 50, '{"close_success": true}'),
+--   ('Speed Runner', 'Closed in under 3 minutes', '⚡', 30, '{"max_duration": 180}'),
+--   ('Trust Builder', 'No interruptions full session', '🤝', 40, '{"interruptions": 0}'),
+--   ('Safety Star', 'Addressed all safety concerns', '🛡️', 25, '{"safety_concerns_addressed": true}'),
+--   ('Persistence Pays', 'Handled 5+ objections successfully', '💪', 35, '{"objections_handled": 5}'),
+--   ('Perfect Pitch', 'Achieved 90+ overall score', '⭐', 100, '{"min_score": 90}'),
+--   ('Daily Dedication', '7-day practice streak', '🔥', 50, '{"streak_days": 7}'),
+--   ('Rising Star', 'Improved score by 20+ points', '📈', 30, '{"score_improvement": 20}')
+-- ON CONFLICT (name) DO NOTHING;
+-- ============================================================
 
 -- Insert default coaching tips
 INSERT INTO coaching_tips (category, tip, order_index) VALUES

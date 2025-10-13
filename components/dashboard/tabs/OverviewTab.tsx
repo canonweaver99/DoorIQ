@@ -1,12 +1,11 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, Target, Award, Users, ArrowRight } from 'lucide-react'
+import { TrendingUp, Target, Users, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import EnhancedMetricCard from '../overview/EnhancedMetricCard'
 import CriticalActionCard from '../overview/CriticalActionCard'
 import SessionCard from '../overview/SessionCard'
-import DailyFocusWidget from '../overview/DailyFocusWidget'
 import QuickActionsFAB from '../overview/QuickActionsFAB'
 import { MetricCardSkeleton, SessionCardSkeleton, EmptyState } from '../overview/SkeletonLoader'
 import { Session } from './types'
@@ -16,7 +15,6 @@ interface OverviewTabProps {
   metrics: {
     sessionsToday: { value: number; trend: number; trendUp: boolean }
     avgScore: { value: number; trend: number; trendUp: boolean }
-    skillsMastered: { value: number; total: number; percentage: number }
     teamRanking: { value: number; total: number; trend: number; trendUp: boolean }
   }
   recentSessions: Session[]
@@ -82,11 +80,11 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
 
       {/* Enhanced Metrics Grid - Reduced spacing */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <MetricCardSkeleton key={i} />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => <MetricCardSkeleton key={i} />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <EnhancedMetricCard
             title="Sessions Today"
             value={metrics.sessionsToday.value}
@@ -116,24 +114,18 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
             delay={0.05}
           />
           <EnhancedMetricCard
-            title="Skills Mastered"
-            value={metrics.skillsMastered.value}
-            trend={8}
-            trendUp={true}
-            icon={Award}
-            sparklineData={generateSparkline(metrics.skillsMastered.value)}
+            title="Team Ranking"
+            value={`#${metrics.teamRanking.value}`}
+            trend={metrics.teamRanking.trend}
+            trendUp={metrics.teamRanking.trendUp}
+            icon={Users}
+            sparklineData={generateSparkline(metrics.teamRanking.value)}
             historicalData={{
-              sevenDay: metrics.skillsMastered.value,
-              thirtyDay: metrics.skillsMastered.value - 1,
-              allTime: metrics.skillsMastered.value - 3,
+              sevenDay: metrics.teamRanking.value,
+              thirtyDay: metrics.teamRanking.value + 1,
+              allTime: metrics.teamRanking.value + 2,
             }}
             delay={0.1}
-          />
-          <DailyFocusWidget
-            current={metrics.sessionsToday.value}
-            goal={3}
-            type="sessions"
-            delay={0.15}
           />
         </div>
       )}

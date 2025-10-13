@@ -33,33 +33,37 @@ CREATE TABLE IF NOT EXISTS user_patterns (
   CONSTRAINT unique_user_pattern UNIQUE(user_id, category, pattern_type)
 );
 
+-- ============================================================
+-- ARCHIVED GAMIFICATION FEATURES (for future implementation)
+-- ============================================================
 -- Skill progression tracking
-CREATE TABLE IF NOT EXISTS user_skill_progression (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  skill_category TEXT NOT NULL,
-  current_level INTEGER DEFAULT 1 CHECK (current_level BETWEEN 1 AND 10),
-  experience_points INTEGER DEFAULT 0,
-  sessions_at_level INTEGER DEFAULT 0,
-  milestone_reached TEXT,
-  next_milestone TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  CONSTRAINT unique_user_skill UNIQUE(user_id, skill_category)
-);
+-- CREATE TABLE IF NOT EXISTS user_skill_progression (
+--   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+--   skill_category TEXT NOT NULL,
+--   current_level INTEGER DEFAULT 1 CHECK (current_level BETWEEN 1 AND 10),
+--   experience_points INTEGER DEFAULT 0,
+--   sessions_at_level INTEGER DEFAULT 0,
+--   milestone_reached TEXT,
+--   next_milestone TEXT,
+--   created_at TIMESTAMPTZ DEFAULT NOW(),
+--   updated_at TIMESTAMPTZ DEFAULT NOW(),
+--   
+--   CONSTRAINT unique_user_skill UNIQUE(user_id, skill_category)
+-- );
 
 -- Breakthrough moments and achievements
-CREATE TABLE IF NOT EXISTS user_breakthroughs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  session_id UUID REFERENCES live_sessions(id),
-  breakthrough_type TEXT NOT NULL,
-  description TEXT,
-  impact_score INTEGER CHECK (impact_score BETWEEN 1 AND 100),
-  skill_affected TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- CREATE TABLE IF NOT EXISTS user_breakthroughs (
+--   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+--   session_id UUID REFERENCES live_sessions(id),
+--   breakthrough_type TEXT NOT NULL,
+--   description TEXT,
+--   impact_score INTEGER CHECK (impact_score BETWEEN 1 AND 100),
+--   skill_affected TEXT,
+--   created_at TIMESTAMPTZ DEFAULT NOW()
+-- );
+-- ============================================================
 
 -- Performance benchmarks for comparison
 CREATE TABLE IF NOT EXISTS performance_benchmarks (
@@ -103,16 +107,16 @@ CREATE INDEX IF NOT EXISTS idx_session_metrics_session ON session_detailed_metri
 CREATE INDEX IF NOT EXISTS idx_session_metrics_user ON session_detailed_metrics(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_patterns_user ON user_patterns(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_patterns_type ON user_patterns(pattern_type);
-CREATE INDEX IF NOT EXISTS idx_skill_progression_user ON user_skill_progression(user_id);
-CREATE INDEX IF NOT EXISTS idx_breakthroughs_user ON user_breakthroughs(user_id);
-CREATE INDEX IF NOT EXISTS idx_breakthroughs_session ON user_breakthroughs(session_id);
+-- CREATE INDEX IF NOT EXISTS idx_skill_progression_user ON user_skill_progression(user_id); -- ARCHIVED
+-- CREATE INDEX IF NOT EXISTS idx_breakthroughs_user ON user_breakthroughs(user_id); -- ARCHIVED
+-- CREATE INDEX IF NOT EXISTS idx_breakthroughs_session ON user_breakthroughs(session_id); -- ARCHIVED
 CREATE INDEX IF NOT EXISTS idx_performance_trends_user ON user_performance_trends(user_id);
 
 -- RLS Policies
 ALTER TABLE session_detailed_metrics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_patterns ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_skill_progression ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_breakthroughs ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE user_skill_progression ENABLE ROW LEVEL SECURITY; -- ARCHIVED
+-- ALTER TABLE user_breakthroughs ENABLE ROW LEVEL SECURITY; -- ARCHIVED
 ALTER TABLE performance_benchmarks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_performance_trends ENABLE ROW LEVEL SECURITY;
 
@@ -123,11 +127,11 @@ CREATE POLICY "Users can view own metrics" ON session_detailed_metrics
 CREATE POLICY "Users can view own patterns" ON user_patterns
   FOR SELECT USING (user_id = auth.uid()::uuid);
 
-CREATE POLICY "Users can view own progression" ON user_skill_progression
-  FOR SELECT USING (user_id = auth.uid()::uuid);
+-- CREATE POLICY "Users can view own progression" ON user_skill_progression -- ARCHIVED
+--   FOR SELECT USING (user_id = auth.uid()::uuid);
 
-CREATE POLICY "Users can view own breakthroughs" ON user_breakthroughs
-  FOR SELECT USING (user_id = auth.uid()::uuid);
+-- CREATE POLICY "Users can view own breakthroughs" ON user_breakthroughs -- ARCHIVED
+--   FOR SELECT USING (user_id = auth.uid()::uuid);
 
 CREATE POLICY "All users can view benchmarks" ON performance_benchmarks
   FOR SELECT USING (true);
@@ -142,11 +146,11 @@ CREATE POLICY "Service role full access metrics" ON session_detailed_metrics
 CREATE POLICY "Service role full access patterns" ON user_patterns
   FOR ALL USING (auth.role() = 'service_role');
 
-CREATE POLICY "Service role full access progression" ON user_skill_progression
-  FOR ALL USING (auth.role() = 'service_role');
+-- CREATE POLICY "Service role full access progression" ON user_skill_progression -- ARCHIVED
+--   FOR ALL USING (auth.role() = 'service_role');
 
-CREATE POLICY "Service role full access breakthroughs" ON user_breakthroughs
-  FOR ALL USING (auth.role() = 'service_role');
+-- CREATE POLICY "Service role full access breakthroughs" ON user_breakthroughs -- ARCHIVED
+--   FOR ALL USING (auth.role() = 'service_role');
 
 CREATE POLICY "Service role full access benchmarks" ON performance_benchmarks
   FOR ALL USING (auth.role() = 'service_role');

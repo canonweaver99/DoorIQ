@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Zap, Calendar, Clock, MessageSquare } from 'lucide-react'
+import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Calendar, Clock, MessageSquare } from 'lucide-react'
 import TabNavigation from '@/components/dashboard/TabNavigation'
 import OverviewTab from '@/components/dashboard/tabs/OverviewTab'
 import PerformanceTab from '@/components/dashboard/tabs/PerformanceTab'
@@ -15,18 +15,15 @@ const mockData = {
   user: {
     name: 'Alex',
     rank: 3,
-    streak: 7,
   },
   quickStats: {
     sessionsThisWeek: 12,
     avgScore: 78,
-    currentStreak: 7,
     teamRank: 3,
   },
   metrics: {
     sessionsToday: { value: 3, trend: 15, trendUp: true },
     avgScore: { value: 78, trend: 5, trendUp: true },
-    skillsMastered: { value: 8, total: 12, percentage: 67 },
     teamRanking: { value: 3, total: 24, trend: 2, trendUp: true },
   },
   insights: [
@@ -186,11 +183,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick Stats Bar */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {[
                 { label: 'Sessions', value: mockData.quickStats.sessionsThisWeek, icon: Target },
                 { label: 'Avg Score', value: `${mockData.quickStats.avgScore}%`, icon: TrendingUp },
-                { label: 'Streak', value: `${mockData.quickStats.currentStreak}d`, icon: Zap },
                 { label: 'Rank', value: `#${mockData.quickStats.teamRank}`, icon: Award },
               ].map((stat, idx) => (
                 <motion.div
@@ -235,7 +231,6 @@ export default function DashboardPage() {
           {activeTab === 'learning' && (
             <LearningTab
               key="learning"
-              skillsMastered={mockData.metrics.skillsMastered}
             />
           )}
           {activeTab === 'team' && (
