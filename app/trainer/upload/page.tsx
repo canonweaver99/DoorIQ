@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Upload, FileAudio, FileVideo, Loader2, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
+import { AuthenticatedLayout } from '@/components/layout/AuthenticatedLayout'
 
 export default function UploadSessionPage() {
   const [file, setFile] = useState<File | null>(null)
