@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
-import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign } from 'lucide-react'
+import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
@@ -222,6 +222,18 @@ export default function SessionsPage() {
 
   const stats = calculateStats()
 
+  const deleteSession = async (id: string) => {
+    if (!confirm('Delete this session? This cannot be undone.')) return
+    const supabaseUrl = '' // unused; calling our Next API
+    try {
+      const res = await fetch(`/api/session?id=${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      setSessions(prev => prev.filter(s => s.id !== id))
+    } catch (e) {
+      alert('Error deleting session. Please try again.')
+    }
+  }
+
   // Show beautiful sign-in page if not authenticated
   if (isAuthenticated === false) {
     return (
@@ -379,6 +391,13 @@ export default function SessionsPage() {
                         View Details
                         <ChevronRight className="ml-2 w-4 h-4" />
                       </Link>
+                      <button
+                        onClick={() => deleteSession(session.id as string)}
+                        className="inline-flex items-center px-3 py-2 bg-red-500/10 text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20"
+                        title="Delete session"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                   

@@ -140,3 +140,47 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
+
+// DELETE session by ID (owner only)
+export async function DELETE(req: Request) {
+  try {
+    const url = new URL(req.url)
+    const id = url.searchParams.get('id')
+    if (!id) {
+      return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
+    }
+
+    // Verify user
+    const server = await createServerSupabaseClient()
+    const { data: { user } } = await server.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    const supabase = await createServiceSupabaseClient()
+    // Ensure ownership
+    const { data: session, error: fetchErr } = await (supabase as any)
+      .from('live_sessions')
+      .select('id,user_id')
+      .eq('id', id)
+      .single()
+    if (fetchErr || !session) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    }
+    if (session.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { error } = await (supabase as any)
+      .from('live_sessions')
+      .delete()
+      .eq('id', id)
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
+}

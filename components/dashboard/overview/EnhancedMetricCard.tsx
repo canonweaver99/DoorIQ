@@ -54,6 +54,10 @@ export default function EnhancedMetricCard({
   }, [value])
 
   const trendColor = trendUp ? 'text-green-400' : 'text-red-400'
+  // If value is a percentage (string like "78%" or number <=100 with title containing 'Score') show %; otherwise show whole number
+  const isPercentMetric =
+    (typeof value === 'string' && value.toString().trim().endsWith('%')) ||
+    (typeof value === 'number' && title.toLowerCase().includes('score'))
 
   return (
     <motion.div
@@ -76,7 +80,7 @@ export default function EnhancedMetricCard({
           </div>
           <div className={`flex items-center gap-1 ${trendColor}`}>
             {trendUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-            <span className="text-xs font-semibold">{trend}%</span>
+            <span className="text-xs font-semibold">{trendUp ? '+' : ''}{trend}{isPercentMetric ? '%' : ''}</span>
           </div>
         </div>
 
