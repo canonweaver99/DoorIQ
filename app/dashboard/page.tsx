@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import { Home, TrendingUp, BookOpen, Users as UsersIcon, Target, Award, Calendar, Clock, MessageSquare } from 'lucide-react'
@@ -122,7 +122,16 @@ const mockData = {
   ],
 }
 
+// Wrap the searchParams usage in a Suspense boundary to satisfy Next.js CSR bailout
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}> 
+      <DashboardPageContent />
+    </Suspense>
+  )
+}
+
+function DashboardPageContent() {
   const searchParams = useSearchParams()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeTab, setActiveTab] = useState('overview')
