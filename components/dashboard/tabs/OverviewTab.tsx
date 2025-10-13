@@ -1,15 +1,17 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, Target, Users, ArrowRight } from 'lucide-react'
+import { TrendingUp, Target, Users, ArrowRight, Calendar, Clock, ChevronRight, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import EnhancedMetricCard from '../overview/EnhancedMetricCard'
-import CriticalActionCard from '../overview/CriticalActionCard'
-import SessionCard from '../overview/SessionCard'
-import QuickActionsFAB from '../overview/QuickActionsFAB'
-import { MetricCardSkeleton, SessionCardSkeleton, EmptyState } from '../overview/SkeletonLoader'
-import { Session } from './types'
+import CircularProgress from '@/components/ui/CircularProgress'
+import { MetricCardSkeleton, EmptyState } from '../overview/SkeletonLoader'
+import { createClient } from '@/lib/supabase/client'
+import { Database } from '@/lib/supabase/database.types'
 import { useState, useEffect } from 'react'
+import { format } from 'date-fns'
+
+type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
 interface OverviewTabProps {
   metrics: {
@@ -17,43 +19,73 @@ interface OverviewTabProps {
     avgScore: { value: number; trend: number; trendUp: boolean }
     teamRanking: { value: number; total: number; trend: number; trendUp: boolean }
   }
-  recentSessions: Session[]
+  recentSessions: any[]
   insights: Array<{ id: number; text: string; type: string }>
 }
 
 export default function OverviewTab({ metrics, recentSessions, insights }: OverviewTabProps) {
   const [loading, setLoading] = useState(true)
+  const [sessions, setSessions] = useState<LiveSession[]>([])
+  const [realMetrics, setRealMetrics] = useState(metrics)
 
   useEffect(() => {
-    // Simulate data loading
-    const timer = setTimeout(() => setLoading(false), 800)
-    return () => clearTimeout(timer)
+    fetchRealData()
   }, [])
-
-  // Get critical alerts (warnings)
-  const criticalActions = insights
-    .filter(insight => insight.type === 'warning')
-    .map((insight, index) => ({
-      id: insight.id,
-      text: insight.text,
-      severity: index === 0 ? 'high' : 'medium' as 'high' | 'medium' | 'low',
-      timestamp: new Date(Date.now() - Math.random() * 7200000), // Random time in last 2 hours
-    }))
-
-  // Prepare session data with skills and insights
-  const enhancedSessions = recentSessions.slice(0, 4).map(session => ({
-    id: session.id,
-    homeowner: session.homeowner,
-    time: session.time,
-    score: session.score,
-    skills: {
-      rapport: 75 + Math.random() * 25,
-      discovery: 70 + Math.random() * 25,
-      objections: 65 + Math.random() * 25,
-      closing: 70 + Math.random() * 25,
-    },
-    insight: session.feedback.slice(0, 60) + '...',
-  }))
+  
+  const fetchRealData = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      setLoading(false)
+      return
+    }
+    
+    // Fetch recent sessions (last 4)
+    const { data: sessionsData } = await supabase
+      .from('live_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(4)
+    
+    // Calculate real metrics
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const { data: allSessions } = await supabase
+      .from('live_sessions')
+      .select('overall_score, created_at')
+      .eq('user_id', user.id)
+    
+    const todaySessions = allSessions?.filter(s => 
+      new Date(s.created_at) >= today
+    ).length || 0
+    
+    const avgScore = allSessions && allSessions.length > 0
+      ? Math.round(allSessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / allSessions.length)
+      : 0
+    
+    setRealMetrics({
+      sessionsToday: { value: todaySessions, trend: 0, trendUp: true },
+      avgScore: { value: avgScore, trend: 0, trendUp: true },
+      teamRanking: { value: 1, total: 1, trend: 0, trendUp: true }
+    })
+    
+    setSessions(sessionsData || [])
+    setLoading(false)
+  }
+  
+  const getKeyInsight = (session: LiveSession): string => {
+    const feedback = session.analytics?.feedback
+    if (feedback?.strengths?.[0]) {
+      return feedback.strengths[0]
+    }
+    if (feedback?.improvements?.[0]) {
+      return feedback.improvements[0]
+    }
+    return 'Session completed'
+  }
 
   // Generate sparkline data (7 days)
   const generateSparkline = (baseValue: number) => 
@@ -67,18 +99,7 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
       transition={{ duration: 0.3 }}
       className="space-y-6 pb-24"
     >
-      {/* Critical Actions */}
-      {criticalActions.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <CriticalActionCard actions={criticalActions} />
-        </motion.div>
-      )}
-
-      {/* Enhanced Metrics Grid - Reduced spacing */}
+      {/* Enhanced Metrics Grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => <MetricCardSkeleton key={i} />)}
@@ -87,58 +108,58 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <EnhancedMetricCard
             title="Sessions Today"
-            value={metrics.sessionsToday.value}
-            trend={metrics.sessionsToday.trend}
-            trendUp={metrics.sessionsToday.trendUp}
+            value={realMetrics.sessionsToday.value}
+            trend={realMetrics.sessionsToday.trend}
+            trendUp={realMetrics.sessionsToday.trendUp}
             icon={Target}
-            sparklineData={generateSparkline(metrics.sessionsToday.value)}
+            sparklineData={generateSparkline(realMetrics.sessionsToday.value)}
             historicalData={{
-              sevenDay: metrics.sessionsToday.value + 2,
-              thirtyDay: metrics.sessionsToday.value + 15,
-              allTime: metrics.sessionsToday.value + 127,
+              sevenDay: realMetrics.sessionsToday.value,
+              thirtyDay: realMetrics.sessionsToday.value,
+              allTime: sessions.length,
             }}
             delay={0}
           />
           <EnhancedMetricCard
             title="Average Score"
-            value={`${metrics.avgScore.value}%`}
-            trend={metrics.avgScore.trend}
-            trendUp={metrics.avgScore.trendUp}
+            value={`${realMetrics.avgScore.value}%`}
+            trend={realMetrics.avgScore.trend}
+            trendUp={realMetrics.avgScore.trendUp}
             icon={TrendingUp}
-            sparklineData={generateSparkline(metrics.avgScore.value)}
+            sparklineData={generateSparkline(realMetrics.avgScore.value)}
             historicalData={{
-              sevenDay: metrics.avgScore.value,
-              thirtyDay: metrics.avgScore.value - 3,
-              allTime: metrics.avgScore.value - 8,
+              sevenDay: realMetrics.avgScore.value,
+              thirtyDay: realMetrics.avgScore.value,
+              allTime: realMetrics.avgScore.value,
             }}
             delay={0.05}
           />
           <EnhancedMetricCard
-            title="Team Ranking"
-            value={`#${metrics.teamRanking.value}`}
-            trend={metrics.teamRanking.trend}
-            trendUp={metrics.teamRanking.trendUp}
-            icon={Users}
-            sparklineData={generateSparkline(metrics.teamRanking.value)}
+            title="Total Earnings"
+            value={`$${sessions.reduce((sum, s) => sum + (s.virtual_earnings || 0), 0).toFixed(0)}`}
+            trend={0}
+            trendUp={true}
+            icon={Target}
+            sparklineData={generateSparkline(100)}
             historicalData={{
-              sevenDay: metrics.teamRanking.value,
-              thirtyDay: metrics.teamRanking.value + 1,
-              allTime: metrics.teamRanking.value + 2,
+              sevenDay: 0,
+              thirtyDay: 0,
+              allTime: sessions.reduce((sum, s) => sum + (s.virtual_earnings || 0), 0),
             }}
             delay={0.1}
           />
         </div>
       )}
 
-      {/* Recent Sessions - 24px gap from metrics */}
+      {/* Recent Sessions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl p-4 backdrop-blur-sm"
+        className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
       >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-white">Recent Sessions</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-white">Recent Sessions</h3>
           <Link
             href="/sessions"
             className="flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300 transition-colors"
@@ -148,26 +169,85 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
         </div>
 
         {loading ? (
-          <div className="space-y-2">
-            {[...Array(4)].map((_, i) => <SessionCardSkeleton key={i} />)}
-          </div>
-        ) : enhancedSessions.length > 0 ? (
-          <div className="space-y-2">
-            {enhancedSessions.map((session, index) => (
-              <SessionCard
-                key={session.id}
-                session={session}
-                delay={0.25 + index * 0.05}
-              />
+          <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-slate-800/50 rounded-xl animate-pulse" />
             ))}
+          </div>
+        ) : sessions.length > 0 ? (
+          <div className="space-y-4">
+            {sessions.map((session) => {
+              const insight = getKeyInsight(session)
+              const isSuccess = session.analytics?.feedback?.strengths?.[0] === insight
+              
+              return (
+                <div
+                  key={session.id}
+                  className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50 hover:border-slate-600 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-white mb-1">
+                        {session.agent_name || 'Training Session'}
+                      </h4>
+                      <div className="flex items-center gap-3 text-xs text-slate-400 mb-2">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {format(new Date(session.created_at), 'MMM d, yyyy')}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}
+                        </span>
+                      </div>
+                      {/* Key Insight */}
+                      {insight && (
+                        <div className={`flex items-start gap-2 text-xs ${
+                          isSuccess ? 'text-green-400/80' : 'text-yellow-400/80'
+                        }`}>
+                          <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          <span>"{insight}"</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      {/* Earnings */}
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400 mb-1">Earned</p>
+                        <p className={`text-2xl font-bold ${
+                          session.virtual_earnings && session.virtual_earnings > 0 
+                            ? 'text-emerald-400' 
+                            : 'text-slate-500'
+                        }`}>
+                          ${session.virtual_earnings ? session.virtual_earnings.toFixed(2) : '0.00'}
+                        </p>
+                      </div>
+                      
+                      {/* Score */}
+                      <CircularProgress 
+                        percentage={session.overall_score || 0}
+                        size={70}
+                        strokeWidth={5}
+                      />
+                      
+                      <Link
+                        href={`/analytics/${session.id}`}
+                        className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-300 text-sm rounded-lg hover:from-purple-600/30 hover:to-indigo-600/30 transition-all border border-purple-500/20"
+                      >
+                        View
+                        <ChevronRight className="ml-1 w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         ) : (
           <EmptyState message="No sessions yet. Start your first training!" />
         )}
       </motion.div>
-
-      {/* Quick Actions FAB */}
-      <QuickActionsFAB />
     </motion.div>
   )
 }

@@ -318,7 +318,7 @@ export default function SessionsPage() {
               <p className="text-white/70">No sessions found for this period</p>
               <Link
                 href="/trainer/select-homeowner"
-                className="inline-flex items-center mt-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg"
+                className="inline-flex items-center mt-4 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-500 hover:to-purple-500 transition-all shadow-lg"
               >
                 Start Training
                 <ChevronRight className="ml-2 w-4 h-4" />
