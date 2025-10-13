@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Upload, User, Loader2, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -14,17 +14,27 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
   const [uploading, setUploading] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(currentAvatarUrl)
   const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      setUploading(true)
-      setUploadSuccess(false)
-
       if (!event.target.files || event.target.files.length === 0) {
         return
       }
-
       const file = event.target.files[0]
+      // Show local preview first with basic square crop hint
+      const objectUrl = URL.createObjectURL(file)
+      setPreviewUrl(objectUrl)
+    } catch {}
+  }
+
+  const uploadAvatar = async () => {
+    try {
+      if (!fileInputRef.current || !fileInputRef.current.files || fileInputRef.current.files.length === 0) return
+      setUploading(true)
+      setUploadSuccess(false)
+      const file = fileInputRef.current.files[0]
       const fileExt = file.name.split('.').pop()
       const fileName = `${userId}-${Math.random()}.${fileExt}`
       const filePath = `${userId}/${fileName}`
@@ -58,6 +68,7 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
       }
 
       setAvatarUrl(publicUrl)
+      setPreviewUrl(null)
       setUploadSuccess(true)
       
       if (onUploadComplete) {
@@ -86,12 +97,10 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
       <div className="relative">
         {/* Avatar Preview */}
         <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-800 border-4 border-slate-700 flex items-center justify-center">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt="Avatar"
-              className="w-full h-full object-cover"
-            />
+          {previewUrl ? (
+            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+          ) : avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
             <User className="w-16 h-16 text-slate-500" />
           )}
@@ -115,15 +124,36 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
           id="avatar-upload"
           type="file"
           accept="image/*"
-          onChange={uploadAvatar}
+          onChange={onFileSelected}
           disabled={uploading}
           className="hidden"
+          ref={fileInputRef}
         />
       </div>
 
-      <div className="text-center">
-        <p className="text-sm text-slate-300 font-medium">Profile Picture</p>
-        <p className="text-xs text-slate-500 mt-1">Click the icon to upload</p>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="px-3 py-1.5 text-xs rounded-md bg-white/10 border border-white/15 hover:bg-white/15 text-white"
+        >
+          Choose File
+        </button>
+        <button
+          onClick={uploadAvatar}
+          disabled={uploading || !previewUrl}
+          className="px-3 py-1.5 text-xs rounded-md bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white disabled:opacity-50 border border-white/10"
+        >
+          {uploading ? 'Uploading...' : previewUrl ? 'Save Avatar' : 'Upload'}
+        </button>
+        {previewUrl && !uploading && (
+          <button
+            onClick={() => setPreviewUrl(null)}
+            className="px-3 py-1.5 text-xs rounded-md bg-white/10 border border-white/15 hover:bg-white/15 text-white"
+          >
+            Cancel
+          </button>
+        )}
       </div>
 
       {uploadSuccess && (
