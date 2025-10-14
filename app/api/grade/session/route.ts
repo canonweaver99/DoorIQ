@@ -16,8 +16,6 @@ const gradingResponseSchema: JsonSchema = {
     'scores',
     'line_ratings',
     'feedback',
-    'conversation_dynamics',
-    'failure_analysis',
     'objection_analysis',
     'coaching_plan',
     'timeline_key_moments',
@@ -71,16 +69,11 @@ const gradingResponseSchema: JsonSchema = {
           score: { type: 'number' },
           sentiment: { type: 'string' },
           customer_engagement: { type: 'string' },
-          missed_opportunities: {
-            type: 'array',
-            items: { type: 'string' }
-          },
-          techniques_used: {
-            type: 'array',
-            items: { type: 'string' }
-          },
           category: { type: 'string' },
-          improvement_notes: { type: 'string' }
+          alternative_lines: {
+            type: 'array',
+            items: { type: 'string' }
+          }
         }
       }
     },
@@ -95,7 +88,7 @@ const gradingResponseSchema: JsonSchema = {
     },
     conversation_dynamics: {
       type: 'object',
-      additionalProperties: false,
+      additionalProperties: true,
       properties: {
         interruptions: {
           type: 'array',
@@ -156,7 +149,7 @@ const gradingResponseSchema: JsonSchema = {
     },
     failure_analysis: {
       type: 'object',
-      additionalProperties: false,
+      additionalProperties: true,
       properties: {
         critical_moments: {
           type: 'array',
@@ -208,27 +201,9 @@ const gradingResponseSchema: JsonSchema = {
     },
     objection_analysis: {
       type: 'object',
-      additionalProperties: false,
+      additionalProperties: true,
       properties: {
-        total_objections: { type: 'integer' },
-        objections_detail: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              line: { type: 'integer' },
-              type: { type: 'string' },
-              customer_statement: { type: 'string' },
-              rep_response: { type: 'string' },
-              technique: { type: 'string' },
-              resolution: { type: 'string' },
-              time_to_resolve: { type: 'string' },
-              effectiveness: { type: 'number' }
-            }
-          }
-        },
-        unresolved_concerns: { type: 'array', items: { type: 'string' } },
-        objection_patterns: { type: 'string' }
+        total_objections: { type: 'integer' }
       }
     },
     coaching_plan: {
@@ -765,7 +740,7 @@ ${knowledgeContext}`
           earnings_data: earningsData,
           deal_details: dealDetails,
           graded_at: now,
-          grading_version: '6.1-with-timeline',
+          grading_version: '7.0-simplified-fast',
           scores: gradingResult.scores || {}
         }
       } as any)
