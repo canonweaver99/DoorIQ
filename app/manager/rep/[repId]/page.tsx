@@ -90,12 +90,14 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
   }
 
   const getScoreColor = (score: number) => {
+    if (!score || isNaN(score)) return 'text-slate-400'
     if (score >= 80) return 'text-green-400'
     if (score >= 60) return 'text-yellow-400'
     return 'text-red-400'
   }
 
   const formatDuration = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0m'
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     if (hours > 0) return `${hours}h ${minutes}m`
@@ -127,12 +129,14 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
   }
 
   // Prepare chart data for recent sessions
-  const chartData = sessions.slice(0, 10).reverse().map((session, index) => ({
-    session: `Session ${sessions.length - index}`,
-    score: session.overall_score || 0,
-    earnings: session.virtual_earnings || 0,
-    date: new Date(session.created_at).toLocaleDateString()
-  }))
+  const chartData = sessions && sessions.length > 0 
+    ? sessions.slice(0, 10).reverse().map((session, index) => ({
+        session: `#${sessions.length - index}`,
+        score: session.overall_score || 0,
+        earnings: session.virtual_earnings || 0,
+        date: new Date(session.created_at).toLocaleDateString()
+      }))
+    : []
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e]">
@@ -159,22 +163,26 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-                {rep.full_name.charAt(0).toUpperCase()}
+                {rep.full_name?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-white">{rep.full_name}</h1>
-                <p className="text-slate-400">{rep.email}</p>
+                <h1 className="text-2xl font-bold text-white">{rep.full_name || 'Unknown Rep'}</h1>
+                <p className="text-slate-400">{rep.email || 'No email'}</p>
                 <div className="flex items-center gap-4 mt-2">
                   <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm">
                     <User className="w-4 h-4" />
-                    {rep.role}
+                    {rep.role || 'rep'}
                   </span>
-                  <span className="text-sm text-slate-400">
-                    Rep ID: {rep.rep_id}
-                  </span>
-                  <span className="text-sm text-slate-400">
-                    Joined {new Date(rep.created_at).toLocaleDateString()}
-                  </span>
+                  {rep.rep_id && (
+                    <span className="text-sm text-slate-400">
+                      Rep ID: {rep.rep_id}
+                    </span>
+                  )}
+                  {rep.created_at && (
+                    <span className="text-sm text-slate-400">
+                      Joined {new Date(rep.created_at).toLocaleDateString()}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -199,7 +207,7 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
               className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
             >
               <DollarSign className="w-8 h-8 text-green-400 mb-3" />
-              <p className="text-2xl font-bold text-white">${stats.totalEarnings.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-white">${(stats.totalEarnings || 0).toFixed(2)}</p>
               <p className="text-sm text-slate-400">Total Earnings</p>
             </motion.div>
 
@@ -210,8 +218,8 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
               className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
             >
               <Target className="w-8 h-8 text-purple-400 mb-3" />
-              <p className={`text-2xl font-bold ${getScoreColor(stats.averageScore)}`}>
-                {stats.averageScore}%
+              <p className={`text-2xl font-bold ${getScoreColor(stats.averageScore || 0)}`}>
+                {stats.averageScore || 0}%
               </p>
               <p className="text-sm text-slate-400">Average Score</p>
             </motion.div>
@@ -223,8 +231,8 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
               className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
             >
               <Award className="w-8 h-8 text-yellow-400 mb-3" />
-              <p className={`text-2xl font-bold ${getScoreColor(stats.bestScore)}`}>
-                {stats.bestScore}%
+              <p className={`text-2xl font-bold ${getScoreColor(stats.bestScore || 0)}`}>
+                {stats.bestScore || 0}%
               </p>
               <p className="text-sm text-slate-400">Best Score</p>
             </motion.div>
@@ -236,7 +244,7 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
               className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
             >
               <Calendar className="w-8 h-8 text-blue-400 mb-3" />
-              <p className="text-2xl font-bold text-white">{stats.totalSessions}</p>
+              <p className="text-2xl font-bold text-white">{stats.totalSessions || 0}</p>
               <p className="text-sm text-slate-400">Total Sessions</p>
             </motion.div>
           </div>
