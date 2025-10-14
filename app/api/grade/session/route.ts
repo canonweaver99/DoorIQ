@@ -350,17 +350,112 @@ export async function POST(request: NextRequest) {
     console.log('📊 Transcript found:', (session as any).full_transcript.length, 'lines')
     console.log('📊 First transcript line:', (session as any).full_transcript[0])
 
-    // Fetch knowledge base context for the user
+    // Get user's team information
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('team_id')
+      .eq('id', (session as any).user_id)
+      .single()
+
+    let teamGradingConfig = null
+    let teamKnowledgeDocs: any[] = []
+
+    // Fetch team-specific grading configuration and knowledge base
+    if (userProfile?.team_id) {
+      // Get team grading config
+      const { data: config } = await supabase
+        .from('team_grading_configs')
+        .select('*')
+        .eq('team_id', userProfile.team_id)
+        .eq('enabled', true)
+        .single()
+      
+      teamGradingConfig = config
+
+      // Get team knowledge documents
+      const { data: docs } = await supabase
+        .from('team_knowledge_documents')
+        .select('*')
+        .eq('team_id', userProfile.team_id)
+        .eq('use_in_grading', true)
+        .order('created_at', { ascending: false })
+        .limit(10) // Limit to avoid token overflow
+
+      teamKnowledgeDocs = docs || []
+
+      console.log('📚 Team grading config found:', !!teamGradingConfig)
+      console.log('📚 Team knowledge docs:', teamKnowledgeDocs.length)
+    }
+
+    // Also fetch legacy knowledge base context for backward compatibility
     const { data: knowledgeBase } = await supabase
       .from('knowledge_base')
       .select('file_name, content')
       .eq('user_id', (session as any).user_id)
       .eq('is_active', true)
-      .limit(5) // Limit to avoid token overflow
+      .limit(5)
 
-    // Format knowledge base context
+    // Build comprehensive knowledge context
     let knowledgeContext = ''
-    if (knowledgeBase && knowledgeBase.length > 0) {
+    
+    // Add team-specific context if available
+    if (teamGradingConfig) {
+      const contextParts: string[] = []
+      
+      if (teamGradingConfig.company_name || teamGradingConfig.company_mission) {
+        contextParts.push('=== COMPANY INFORMATION ===')
+        if (teamGradingConfig.company_name) {
+          contextParts.push(`Company: ${teamGradingConfig.company_name}`)
+        }
+        if (teamGradingConfig.company_mission) {
+          contextParts.push(`Mission: ${teamGradingConfig.company_mission}`)
+        }
+        if (teamGradingConfig.product_description) {
+          contextParts.push(`Products/Services: ${teamGradingConfig.product_description}`)
+        }
+        if (teamGradingConfig.service_guarantees) {
+          contextParts.push(`Guarantees: ${teamGradingConfig.service_guarantees}`)
+        }
+        if (teamGradingConfig.company_values?.length > 0) {
+          contextParts.push(`Values: ${teamGradingConfig.company_values.join(', ')}`)
+        }
+      }
+
+      if (teamGradingConfig.pricing_info && Array.isArray(teamGradingConfig.pricing_info) && (teamGradingConfig.pricing_info as any).length > 0) {
+        contextParts.push('\n=== PRICING INFORMATION ===')
+        ;(teamGradingConfig.pricing_info as any).forEach((item: any) => {
+          contextParts.push(`${item.name || 'Service'}: $${item.price || 0} ${item.frequency || ''}`)
+          if (item.description) contextParts.push(`  ${item.description}`)
+        })
+      }
+
+      if (teamGradingConfig.objection_handlers && Array.isArray(teamGradingConfig.objection_handlers) && (teamGradingConfig.objection_handlers as any).length > 0) {
+        contextParts.push('\n=== OBJECTION HANDLERS ===')
+        ;(teamGradingConfig.objection_handlers as any).forEach((handler: any) => {
+          contextParts.push(`Objection: "${handler.objection}"`)
+          contextParts.push(`Response: "${handler.response}"`)
+        })
+      }
+
+      if (teamKnowledgeDocs.length > 0) {
+        contextParts.push('\n=== KNOWLEDGE BASE DOCUMENTS ===')
+        teamKnowledgeDocs.forEach((doc: any) => {
+          if (doc.extracted_content) {
+            contextParts.push(`\n[${doc.document_type.toUpperCase()}: ${doc.document_name}]`)
+            // Limit each document to 2000 chars to avoid token overflow
+            const content = doc.extracted_content.substring(0, 2000)
+            contextParts.push(content + (doc.extracted_content.length > 2000 ? '...' : ''))
+          }
+        })
+      }
+
+      if (contextParts.length > 0) {
+        knowledgeContext = '\n\n' + contextParts.join('\n')
+      }
+    }
+    
+    // Add legacy knowledge base if no team config
+    if (!knowledgeContext && knowledgeBase && knowledgeBase.length > 0) {
       knowledgeContext = '\n\nREFERENCE MATERIALS:\n' + 
         (knowledgeBase as any)
           .filter((kb: any) => kb.content)
@@ -409,10 +504,24 @@ export async function POST(request: NextRequest) {
     const openaiStartTime = Date.now()
 
     // Call OpenAI for comprehensive analysis
+    // Build system prompt with team customizations
+    let systemPrompt = `You are an expert sales coach for door-to-door sales. Analyze the transcript and return ONLY valid JSON matching this structure:`
+    
+    // Add team-specific context to prompt
+    if (teamGradingConfig) {
+      systemPrompt = `You are an expert sales coach${teamGradingConfig.company_name ? ` for ${teamGradingConfig.company_name}` : ''}. `
+      
+      if (teamGradingConfig.product_description) {
+        systemPrompt += `The sales rep is selling: ${teamGradingConfig.product_description}. `
+      }
+      
+      systemPrompt += `Analyze the transcript using the company's specific knowledge and standards, and return ONLY valid JSON matching this structure:`
+    }
+
     const messages: Array<{ role: string; content: string }> = [
         {
           role: "system",
-        content: `You are an expert sales coach for door-to-door pest control. Analyze the transcript and return ONLY valid JSON matching this structure:
+        content: systemPrompt + `
 
 {
   "session_summary": { "total_lines": int, "rep_lines": int, "customer_lines": int, "objections_detected": int, "questions_asked": int },
@@ -447,7 +556,7 @@ export async function POST(request: NextRequest) {
 }
 
 SCORING GUIDELINES:
-- Overall (0-100): Average of all category scores
+- Overall (0-100): ${teamGradingConfig?.custom_grading_rubric?.weights ? 'Weighted average based on custom rubric' : 'Average of all category scores'}
 - Rapport (0-100): Connection, trust, warmth, local references
 - Discovery (0-100): Question quality, needs assessment
 - Objection Handling (0-100): Addressing concerns effectively
@@ -459,6 +568,19 @@ SCORING GUIDELINES:
 - Question Ratio (0-100): Balance of questions vs statements (30-40% is ideal)
 - Active Listening (0-100): Reflects understanding
 - Assumptive Language (0-100): "When" not "if" language
+${teamGradingConfig?.custom_grading_rubric?.weights ? `
+CUSTOM SCORING WEIGHTS (Team-Specific):
+${Object.entries(teamGradingConfig.custom_grading_rubric.weights).map(([key, value]) => `- ${key}: ${value}%`).join('\n')}
+` : ''}
+${teamGradingConfig?.custom_grading_rubric?.custom_criteria?.length > 0 ? `
+ADDITIONAL TEAM CRITERIA:
+${(teamGradingConfig.custom_grading_rubric.custom_criteria as any[]).map((c: any) => `- ${c.name}: ${c.description}`).join('\n')}
+` : ''}
+${teamGradingConfig?.custom_grading_rubric?.automatic_fails?.length > 0 ? `
+AUTOMATIC FAILS (Cap score at 50%):
+${(teamGradingConfig.custom_grading_rubric.automatic_fails as any[]).join('\n- ')}
+` : ''}
+${teamGradingConfig?.passing_score ? `PASSING SCORE: ${teamGradingConfig.passing_score}%` : ''}
 
 LINE RATINGS:
 - Rate EVERY sales rep line: excellent/good/average/poor
