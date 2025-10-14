@@ -123,119 +123,30 @@ export default function ScoresViewV2({
 
   let keyMoments: any[] = []
   
-  // If we have pre-generated timeline moments from the LLM, use those
-  if (timelineKeyMoments && timelineKeyMoments.length === 6) {
-    keyMoments = timelineKeyMoments.map(moment => ({
-      type: moment.is_positive ? 'win' : 'critical',
-      line: moment.line_number,
-      timestamp: moment.timestamp,
-      title: moment.moment_type,
-      description: moment.quote,
-      score: lineRatings.find((r: any) => r.line_number === moment.line_number)?.score || 50,
-      impact: 'high'
-    }))
+  // If we have pre-generated timeline moments from the LLM, use those (expecting 3 moments now)
+  if (timelineKeyMoments && timelineKeyMoments.length >= 3) {
+    console.log('✅ Using timeline_key_moments from grading:', timelineKeyMoments.length, 'moments')
+    keyMoments = timelineKeyMoments.map(moment => {
+      // Convert effectiveness to score for timeline display
+      const rating = lineRatings.find((r: any) => r.line_number === moment.line_number)
+      const effectivenessScore = rating?.effectiveness === 'excellent' ? 90 :
+                                  rating?.effectiveness === 'good' ? 75 :
+                                  rating?.effectiveness === 'average' ? 60 : 40
+      
+      return {
+        type: moment.is_positive ? 'win' : 'critical',
+        line: moment.line_number,
+        timestamp: moment.timestamp,
+        title: moment.moment_type,
+        description: moment.quote,
+        score: effectivenessScore,
+        impact: 'high'
+      }
+    })
   } else {
-    // Fallback: Extract from lineRatings (old method)
-    const validLines = lineRatings.filter(l => l.timestamp && l.timestamp !== '00:00')
-    
-    // 1. First discovery moment (when problem is revealed)
-    const firstDiscovery = validLines.find(l => l.category === 'discovery' && l.score >= 70)
-    if (firstDiscovery) {
-      keyMoments.push({
-        type: 'signal',
-        line: firstDiscovery.line_number,
-        timestamp: firstDiscovery.timestamp,
-        title: '🔍 Problem Discovery',
-        description: `Customer reveals: ${firstDiscovery.techniques_used?.join(', ') || 'fire ant issue'}`,
-        score: firstDiscovery.score,
-        impact: 'high'
-      })
-    }
-
-    // 2. Best rapport/trust building moment
-    const bestRapport = validLines
-      .filter(l => l.category === 'rapport' && l.effectiveness === 'excellent')
-      .sort((a, b) => b.score - a.score)[0]
-    if (bestRapport) {
-      keyMoments.push({
-        type: 'win',
-        line: bestRapport.line_number,
-        timestamp: bestRapport.timestamp,
-        title: '✅ Trust Building',
-        description: `Effective: ${bestRapport.techniques_used?.join(', ') || 'Built connection through shared experience'}`,
-        score: bestRapport.score,
-        impact: 'high'
-      })
-    }
-
-    // 3. First major objection
-    const firstObjection = validLines.find(l => l.category === 'objection_handling')
-    if (firstObjection) {
-      keyMoments.push({
-        type: firstObjection.effectiveness === 'poor' ? 'critical' : 'opportunity',
-        line: firstObjection.line_number,
-        timestamp: firstObjection.timestamp,
-        title: '🚫 Objection Raised',
-        description: firstObjection.effectiveness === 'poor' 
-          ? `Weak: ${firstObjection.improvement_notes || 'Could improve objection handling'}`
-          : `${firstObjection.techniques_used?.join(', ') || 'Customer concern addressed'}`,
-        score: firstObjection.score,
-        impact: 'high'
-      })
-    }
-
-    // 4. Best objection handling (if different from first)
-    const bestObjectionHandling = validLines
-      .filter(l => l.category === 'objection_handling' && l.effectiveness === 'excellent' && l.line_number !== firstObjection?.line_number)
-      .sort((a, b) => b.score - a.score)[0]
-    if (bestObjectionHandling) {
-      keyMoments.push({
-        type: 'win',
-        line: bestObjectionHandling.line_number,
-        timestamp: bestObjectionHandling.timestamp,
-        title: '✅ Objection Overcome',
-        description: `Effective: ${bestObjectionHandling.techniques_used?.join(', ') || 'Successfully addressed concern'}`,
-        score: bestObjectionHandling.score,
-        impact: 'high'
-      })
-    }
-
-    // 5. Closing moment (success or attempt)
-    const closingLine = validLines
-      .filter(l => l.category === 'closing')
-      .sort((a, b) => b.score - a.score)[0]
-    if (closingLine) {
-      keyMoments.push({
-        type: closingLine.effectiveness === 'excellent' ? 'win' : 'opportunity',
-        line: closingLine.line_number,
-        timestamp: closingLine.timestamp,
-        title: closingLine.effectiveness === 'excellent' ? '🎯 Close Success' : '🎯 Close Attempt',
-        description: closingLine.effectiveness === 'excellent'
-          ? `Effective: ${closingLine.techniques_used?.join(', ') || 'Successfully closed'}`
-          : `${closingLine.improvement_notes || 'Close attempt'}`,
-        score: closingLine.score,
-        impact: 'high'
-      })
-    }
-
-    // 6. One critical coaching moment (worst line for learning)
-    const worstLine = validLines
-      .filter(l => l.effectiveness === 'poor' || (l.effectiveness === 'average' && l.missed_opportunities?.length > 0))
-      .sort((a, b) => a.score - b.score)[0]
-    if (worstLine && !keyMoments.some(m => m.line === worstLine.line_number)) {
-      keyMoments.push({
-        type: 'opportunity',
-        line: worstLine.line_number,
-        timestamp: worstLine.timestamp,
-        title: '💡 Critical Coaching Moment',
-        description: `Weak: ${worstLine.improvement_notes || worstLine.missed_opportunities?.[0] || 'Needs improvement'}`,
-        score: worstLine.score,
-        impact: 'high'
-      })
-    }
-
-    // Sort by timestamp
-    keyMoments.sort((a, b) => parseTimestamp(a.timestamp) - parseTimestamp(b.timestamp))
+    // Fallback not needed - we always get timeline_key_moments from grading
+    // If missing, just show empty timeline
+    console.log('⚠️ No timeline moments found in analytics')
   }
 
   const coreMetrics = [

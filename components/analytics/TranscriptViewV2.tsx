@@ -161,15 +161,15 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
                         {text}
                       </p>
                       
-                      {/* Score indicator - subtle */}
-                      {rating && isRep && (
-                        <div className={`text-[10px] font-medium mt-1.5 ${
-                          rating.effectiveness === 'excellent' ? 'text-green-400/70' :
-                          rating.effectiveness === 'good' ? 'text-blue-400/70' :
-                          rating.effectiveness === 'average' ? 'text-yellow-400/70' :
-                          'text-red-400/70'
+                      {/* Effectiveness indicator - subtle */}
+                      {rating && isRep && rating.effectiveness && (
+                        <div className={`text-[10px] font-semibold uppercase tracking-wide mt-1.5 ${
+                          rating.effectiveness === 'excellent' ? 'text-green-400' :
+                          rating.effectiveness === 'good' ? 'text-blue-400' :
+                          rating.effectiveness === 'average' ? 'text-yellow-400' :
+                          'text-red-400'
                         }`}>
-                          {rating.score}/100
+                          {rating.effectiveness}
                         </div>
                       )}
                     </div>
