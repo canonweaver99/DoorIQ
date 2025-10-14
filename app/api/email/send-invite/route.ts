@@ -18,16 +18,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    if (!process.env.RESEND_API_KEY) {
-      console.log('⚠️ Resend API key not configured - skipping email')
-      return NextResponse.json({ success: true, skipped: true, reason: 'Email service not configured' })
-    }
-
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const resend = getResendClient()
+    if (!resend) {
+      console.log('⚠️ Resend API key not configured - skipping email')
+      return NextResponse.json({ success: true, skipped: true, reason: 'Email service not configured' })
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'invites@dooriq.com'
