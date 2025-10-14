@@ -46,6 +46,7 @@ interface ScoresViewV2Props {
   }>
   agentName?: string
   durationSeconds?: number
+  audioUrl?: string
 }
 
 export default function ScoresViewV2({
@@ -63,7 +64,8 @@ export default function ScoresViewV2({
   fullTranscript = [],
   timelineKeyMoments,
   agentName = 'AI Agent',
-  durationSeconds = 600
+  durationSeconds = 600,
+  audioUrl
 }: ScoresViewV2Props) {
   const [animatedEarnings, setAnimatedEarnings] = useState(0)
   const [showFillerWordsDropdown, setShowFillerWordsDropdown] = useState(false)
@@ -407,7 +409,7 @@ export default function ScoresViewV2({
               amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
               product: dealDetails?.product_sold || 'Service'
             }}
-            failurePoint={!saleClosed ? failureAnalysis?.point_of_no_return?.line : undefined}
+            audioUrl={audioUrl}
           />
         </section>
       )}

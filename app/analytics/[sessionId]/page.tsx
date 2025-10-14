@@ -296,6 +296,7 @@ export default function AnalyticsPage() {
           timelineKeyMoments={session.analytics?.timeline_key_moments}
           agentName={session.agent_name || 'AI Agent'}
           durationSeconds={session.duration_seconds || 600}
+          audioUrl={session.audio_url}
         />
         {session.audio_url && (
           <div className="mt-6">
