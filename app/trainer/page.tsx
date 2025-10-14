@@ -1059,7 +1059,7 @@ function TrainerPageContent() {
       console.error('❌ Error in endSession:', e)
       setLoading(false)
     }
-  }, [sessionId, duration, transcript, selectedAgent, homeownerName, stopRecording])
+  }, [sessionId, duration, transcript, selectedAgent, homeownerName])
 
   // Separate effect to handle end-session requests (MUST be after endSession declaration)
   useEffect(() => {
