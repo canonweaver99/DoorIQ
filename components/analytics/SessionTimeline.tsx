@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, Play, Pause, MessageSquare, Volume2 } from 'lucide-react'
+import { Clock, Play, Pause, MessageSquare, Volume2, Sparkles } from 'lucide-react'
 
 interface SessionTimelineProps {
   duration: number // in seconds
@@ -28,7 +28,7 @@ export default function SessionTimeline({
   audioUrl
 }: SessionTimelineProps) {
   const [playingSegment, setPlayingSegment] = useState<number | null>(null)
-  const [selectedSegment, setSelectedSegment] = useState<number | null>(null)
+  const [hoveredSegment, setHoveredSegment] = useState<number | null>(null)
   const [audioLoading, setAudioLoading] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -40,7 +40,7 @@ export default function SessionTimeline({
       timestamp: formatTime(duration * 0.2),
       startTime: duration * 0.2,
       title: 'Opening & Rapport',
-      description: 'Building connection and trust',
+      quickTip: 'Build connection with personal touches',
       feedback: {
         good: 'Strong personal connection, used customer name, warm tone',
         improve: 'Add more local references, mirror their energy level',
@@ -53,7 +53,7 @@ export default function SessionTimeline({
       timestamp: formatTime(duration * 0.4),
       startTime: duration * 0.4,
       title: 'Discovery Phase',
-      description: 'Understanding needs and pain points',
+      quickTip: 'Ask open-ended questions',
       feedback: {
         good: 'Asked open-ended questions, listened actively',
         improve: 'Dig deeper into their specific concerns about pests',
@@ -66,7 +66,7 @@ export default function SessionTimeline({
       timestamp: formatTime(duration * 0.6),
       startTime: duration * 0.6,
       title: 'Solution Presentation',
-      description: 'Presenting value and handling objections',
+      quickTip: 'Focus on value, not features',
       feedback: {
         good: 'Clear explanation of services, addressed safety concerns',
         improve: 'More emphasis on unique value proposition',
@@ -79,7 +79,7 @@ export default function SessionTimeline({
       timestamp: formatTime(duration * 0.8),
       startTime: duration * 0.8,
       title: 'Closing Attempt',
-      description: 'Securing commitment and next steps',
+      quickTip: 'Assumptive close works best',
       feedback: {
         good: 'Used assumptive language, created urgency',
         improve: 'Stronger trial close earlier in conversation',
@@ -195,7 +195,7 @@ export default function SessionTimeline({
       {/* Timeline with Segments */}
       <div className="relative">
         {/* Progress Bar */}
-        <div className="relative h-3 rounded-full overflow-hidden bg-slate-800/50">
+        <div className="relative h-2.5 rounded-full overflow-hidden bg-slate-800/50">
           <div 
             className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500"
             style={{ width: '100%' }}
@@ -206,124 +206,137 @@ export default function SessionTimeline({
         <div className="relative -mt-1.5">
           {segments.map((segment) => {
             const isPlaying = playingSegment === segment.id
-            const isSelected = selectedSegment === segment.id
+            const isHovered = hoveredSegment === segment.id
             
             return (
               <div
                 key={segment.id}
                 className="absolute -translate-x-1/2"
                 style={{ left: `${segment.position}%` }}
+                onMouseEnter={() => setHoveredSegment(segment.id)}
+                onMouseLeave={() => setHoveredSegment(null)}
               >
-                {/* Playback Button */}
-                <button
-                  onClick={() => {
-                    if (isPlaying) {
-                      stopAudio()
-                    } else {
-                      playSegment(segment)
-                      setSelectedSegment(segment.id)
-                    }
-                  }}
-                  disabled={!audioUrl || audioLoading}
-                  className={`
-                    relative w-14 h-14 rounded-full flex items-center justify-center
-                    transition-all duration-200 transform
-                    ${audioUrl 
-                      ? 'bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 hover:scale-110 cursor-pointer' 
-                      : 'bg-slate-700 cursor-not-allowed opacity-50'
-                    }
-                    ${isPlaying ? 'scale-110 animate-pulse' : ''}
-                    border-2 border-white/20 shadow-lg
-                  `}
-                >
-                  {audioLoading && playingSegment === segment.id ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : isPlaying ? (
-                    <Pause className="w-6 h-6 text-white" />
-                  ) : (
-                    <Play className="w-6 h-6 text-white ml-0.5" />
-                  )}
-                </button>
+                {/* White Dot */}
+                <div className={`
+                  relative w-5 h-5 rounded-full bg-white 
+                  border-2 border-slate-700/50 shadow-lg 
+                  transition-all duration-200
+                  ${isHovered ? 'scale-110' : ''}
+                  ${isPlaying ? 'ring-4 ring-purple-400/50' : ''}
+                `}>
+                  {/* Inner dot for visual interest */}
+                  <div className="absolute inset-1 rounded-full bg-slate-100" />
+                </div>
 
                 {/* Timestamp */}
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-400">
+                <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-400">
                   {segment.timestamp}
                 </div>
 
-                {/* Feedback Panel */}
+                {/* Hover Card with Play Button */}
                 <AnimatePresence>
-                  {isSelected && (
+                  {isHovered && (
                     <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-96 z-50"
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 z-50"
                     >
-                      <div className="bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-xl p-5 shadow-2xl">
-                        {/* Header */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <h4 className="text-sm font-semibold text-white mb-1">{segment.title}</h4>
-                            <p className="text-xs text-slate-400">{segment.description}</p>
-                          </div>
+                      <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl">
+                        {/* Header with Play Button */}
+                        <div className="flex items-center gap-3 p-4 border-b border-slate-700/50">
+                          {/* Play/Pause Button */}
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedSegment(null)
+                            onClick={() => {
+                              if (isPlaying) {
+                                stopAudio()
+                              } else {
+                                playSegment(segment)
+                              }
                             }}
-                            className="text-slate-400 hover:text-white transition-colors ml-4"
+                            disabled={!audioUrl || audioLoading}
+                            className={`
+                              w-10 h-10 rounded-full flex items-center justify-center
+                              transition-all duration-200
+                              ${audioUrl 
+                                ? 'bg-purple-500 hover:bg-purple-400 cursor-pointer' 
+                                : 'bg-slate-700 cursor-not-allowed opacity-50'
+                              }
+                            `}
                           >
-                            ✕
+                            {audioLoading && playingSegment === segment.id ? (
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : isPlaying ? (
+                              <Pause className="w-4 h-4 text-white" />
+                            ) : (
+                              <Play className="w-4 h-4 text-white ml-0.5" />
+                            )}
                           </button>
-                        </div>
-
-                        {/* Feedback Sections */}
-                        <div className="space-y-3">
-                          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-2 h-2 rounded-full bg-green-400" />
-                              <span className="text-xs font-medium text-green-400">What Worked</span>
-                            </div>
-                            <p className="text-xs text-slate-300">{segment.feedback.good}</p>
-                          </div>
-
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-2 h-2 rounded-full bg-amber-400" />
-                              <span className="text-xs font-medium text-amber-400">Area to Improve</span>
-                            </div>
-                            <p className="text-xs text-slate-300">{segment.feedback.improve}</p>
-                          </div>
-
-                          <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                              <MessageSquare className="w-3 h-3 text-purple-400" />
-                              <span className="text-xs font-medium text-purple-400">Pro Tip</span>
-                            </div>
-                            <p className="text-xs text-slate-300 italic">"{segment.feedback.tip}"</p>
+                          
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-white">{segment.title}</h4>
+                            <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                              <Sparkles className="w-3 h-3 text-purple-400" />
+                              {segment.quickTip}
+                            </p>
                           </div>
                         </div>
 
-                        {/* Listen Status */}
-                        {isPlaying && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="mt-4 pt-4 border-t border-slate-700/50"
-                          >
-                            <div className="flex items-center gap-2 text-xs text-purple-400">
-                              <Volume2 className="w-4 h-4 animate-pulse" />
-                              <span>Playing 15-second segment...</span>
-                            </div>
-                          </motion.div>
-                        )}
+                        {/* Expanded Feedback (shown when playing) */}
+                        <AnimatePresence>
+                          {isPlaying && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="p-4 space-y-3">
+                                {/* What Worked */}
+                                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="w-2 h-2 rounded-full bg-green-400" />
+                                    <span className="text-xs font-medium text-green-400">What Worked</span>
+                                  </div>
+                                  <p className="text-xs text-slate-300">{segment.feedback.good}</p>
+                                </div>
+
+                                {/* Area to Improve */}
+                                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                    <span className="text-xs font-medium text-amber-400">Area to Improve</span>
+                                  </div>
+                                  <p className="text-xs text-slate-300">{segment.feedback.improve}</p>
+                                </div>
+
+                                {/* Pro Tip */}
+                                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <MessageSquare className="w-3 h-3 text-purple-400" />
+                                    <span className="text-xs font-medium text-purple-400">Pro Tip</span>
+                                  </div>
+                                  <p className="text-xs text-slate-300 italic">"{segment.feedback.tip}"</p>
+                                </div>
+
+                                {/* Playing Status */}
+                                <div className="flex items-center gap-2 text-xs text-purple-400 pt-2">
+                                  <Volume2 className="w-4 h-4 animate-pulse" />
+                                  <span>Playing 15-second segment...</span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* Arrow */}
-                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 
-                        border-l-[8px] border-l-transparent
-                        border-r-[8px] border-r-transparent
-                        border-t-[8px] border-t-slate-900/95"
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 
+                        border-l-[6px] border-l-transparent
+                        border-r-[6px] border-r-transparent
+                        border-t-[6px] border-t-slate-900/95"
                       />
                     </motion.div>
                   )}
@@ -334,7 +347,7 @@ export default function SessionTimeline({
         </div>
 
         {/* Time Labels */}
-        <div className="flex justify-between mt-10 text-xs text-slate-500 font-mono">
+        <div className="flex justify-between mt-12 text-xs text-slate-500 font-mono">
           <span>0:00</span>
           <span>{formatTime(duration * 0.25)}</span>
           <span>{formatTime(duration * 0.5)}</span>
