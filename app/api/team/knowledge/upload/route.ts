@@ -37,12 +37,10 @@ export async function POST(request: Request) {
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
     const filePath = `team-${userProfile.team_id}/${timestamp}-${safeName}`
 
-    // Use the existing audio-recordings bucket for now (we'll move to knowledge-base later)
-    // This avoids permission issues with bucket creation
-    const bucketName = 'audio-recordings' // Temporary solution
-    // Must satisfy bucket RLS: auth.uid() must equal the SECOND path segment
-    // Path pattern: documents/{userId}/team-{teamId}/filename
-    const documentFilePath = `documents/${user.id}/${filePath}`
+    // Upload to the dedicated knowledge-base bucket using team folder convention
+    // Path pattern supported by RLS: team-{teamId}/...
+    const bucketName = 'knowledge-base'
+    const documentFilePath = filePath
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
