@@ -57,67 +57,31 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
     if (!supabase) return
     
     try {
-      // Get rep profile
-      const { data: repData, error: repError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', params.repId)
-        .single()
-
-      if (repError || !repData) {
-        console.error('Rep not found:', repError)
-        return
-      }
-
-      setRep(repData)
-
-      // Get rep sessions
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('live_sessions')
-        .select('id, overall_score, virtual_earnings, created_at, agent_name, duration_seconds, sale_closed')
-        .eq('user_id', params.repId)
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-      if (sessionError) {
-        console.error('Sessions error:', sessionError)
-      } else {
-        setSessions(sessionData || [])
-      }
-
-      // Calculate stats
-      if (sessionData && sessionData.length > 0) {
-        const validSessions = sessionData.filter(s => s.overall_score !== null)
-        const totalSessions = validSessions.length
-        const averageScore = validSessions.length > 0 
-          ? Math.round(validSessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / validSessions.length)
-          : 0
-        const totalEarnings = sessionData.reduce((sum, s) => sum + (s.virtual_earnings || 0), 0)
-        const bestScore = Math.max(...validSessions.map(s => s.overall_score || 0))
+      // Use API endpoint for secure, server-side verification
+      const response = await fetch(`/api/manager/rep/${params.repId}`)
+      
+      if (!response.ok) {
+        const error = await response.json()
+        console.error('API Error:', error)
         
-        // Calculate trend (last 5 vs previous 5)
-        const last5 = validSessions.slice(0, 5)
-        const previous5 = validSessions.slice(5, 10)
-        let recentTrend = 0
-        if (last5.length >= 3 && previous5.length >= 3) {
-          const last5Avg = last5.reduce((sum, s) => sum + (s.overall_score || 0), 0) / last5.length
-          const prev5Avg = previous5.reduce((sum, s) => sum + (s.overall_score || 0), 0) / previous5.length
-          recentTrend = Math.round(last5Avg - prev5Avg)
+        if (response.status === 403) {
+          // Access denied - redirect to manager panel
+          window.location.href = '/manager?error=access_denied'
+          return
+        } else if (response.status === 404) {
+          // Rep not found
+          console.error('Rep not found')
+          return
         }
-        
-        const activeDays = new Set(sessionData.map(s => s.created_at.split('T')[0])).size
-        const totalCallTime = sessionData.reduce((sum, s) => sum + (s.duration_seconds || 0), 0)
-
-        setStats({
-          totalSessions,
-          averageScore,
-          totalEarnings,
-          bestScore,
-          recentTrend,
-          activeDays,
-          totalCallTime
-        })
+        throw new Error(error.error || 'Failed to load rep data')
       }
+
+      const data = await response.json()
+      
+      setRep(data.rep)
+      setSessions(data.sessions || [])
+      setStats(data.stats)
+
     } catch (error) {
       console.error('Error loading rep data:', error)
     } finally {
@@ -186,31 +150,41 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
           </div>
         </div>
 
-        {/* Rep Profile Header */}
+        {/* Rep Profile Header - READ-ONLY */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 mb-8"
         >
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-              {rep.full_name.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-white">{rep.full_name}</h1>
-              <p className="text-slate-400">{rep.email}</p>
-              <div className="flex items-center gap-4 mt-2">
-                <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm">
-                  <User className="w-4 h-4" />
-                  {rep.role}
-                </span>
-                <span className="text-sm text-slate-400">
-                  Rep ID: {rep.rep_id}
-                </span>
-                <span className="text-sm text-slate-400">
-                  Joined {new Date(rep.created_at).toLocaleDateString()}
-                </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+                {rep.full_name.charAt(0).toUpperCase()}
               </div>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-white">{rep.full_name}</h1>
+                <p className="text-slate-400">{rep.email}</p>
+                <div className="flex items-center gap-4 mt-2">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm">
+                    <User className="w-4 h-4" />
+                    {rep.role}
+                  </span>
+                  <span className="text-sm text-slate-400">
+                    Rep ID: {rep.rep_id}
+                  </span>
+                  <span className="text-sm text-slate-400">
+                    Joined {new Date(rep.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+              {/* View-only badge */}
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg px-4 py-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                <p className="text-sm font-medium text-blue-300">Manager View</p>
+              </div>
+              <p className="text-xs text-slate-400">View-only dashboard • No editing permissions</p>
             </div>
           </div>
         </motion.div>
@@ -309,14 +283,19 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
           </motion.div>
         )}
 
-        {/* Recent Sessions */}
+        {/* Recent Sessions - READ-ONLY */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
         >
-          <h2 className="text-xl font-semibold text-white mb-6">Recent Sessions</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-white">Recent Sessions</h2>
+            <div className="text-xs text-slate-400 px-3 py-1 bg-slate-700/50 rounded-lg">
+              View-only • {sessions.length} total sessions
+            </div>
+          </div>
           
           {sessions.length > 0 ? (
             <div className="space-y-3">
@@ -324,12 +303,15 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
                 <Link
                   key={session.id}
                   href={`/analytics/${session.id}`}
-                  className="block p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+                  className="block p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                        {index + 1}
+                      </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-white group-hover:text-purple-300 transition-colors">
                           {session.agent_name || `Session ${index + 1}`}
                         </p>
                         <p className="text-xs text-slate-400">
@@ -362,6 +344,7 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
             <div className="text-center py-12">
               <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <p className="text-slate-400">No sessions yet</p>
+              <p className="text-xs text-slate-500 mt-1">This rep hasn't completed any training sessions</p>
             </div>
           )}
         </motion.div>
