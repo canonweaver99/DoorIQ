@@ -9,6 +9,7 @@ import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
 import CircularProgress from '@/components/ui/CircularProgress'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 
 type Session = Database['public']['Tables']['live_sessions']['Row']
 
@@ -20,6 +21,9 @@ export default function SessionsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
   const [authLoading, setAuthLoading] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     fetchSessions()
@@ -222,15 +226,26 @@ export default function SessionsPage() {
 
   const stats = calculateStats()
 
-  const deleteSession = async (id: string) => {
-    if (!confirm('Delete this session? This cannot be undone.')) return
-    const supabaseUrl = '' // unused; calling our Next API
+  const openDeleteModal = (id: string) => {
+    setSessionToDelete(id)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!sessionToDelete) return
+    
+    setIsDeleting(true)
     try {
-      const res = await fetch(`/api/session?id=${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/session?id=${sessionToDelete}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete')
-      setSessions(prev => prev.filter(s => s.id !== id))
+      setSessions(prev => prev.filter(s => s.id !== sessionToDelete))
+      setDeleteModalOpen(false)
+      setSessionToDelete(null)
     } catch (e) {
+      console.error('Delete error:', e)
       alert('Error deleting session. Please try again.')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -392,7 +407,7 @@ export default function SessionsPage() {
                         <ChevronRight className="ml-2 w-4 h-4" />
                       </Link>
                       <button
-                        onClick={() => deleteSession(session.id as string)}
+                        onClick={() => openDeleteModal(session.id as string)}
                         className="inline-flex items-center px-3 py-2 bg-red-500/10 text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20"
                         title="Delete session"
                       >
@@ -425,6 +440,22 @@ export default function SessionsPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false)
+          setSessionToDelete(null)
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Session?"
+        message="Are you sure you want to delete this session? This action cannot be undone and all analytics data will be permanently removed."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

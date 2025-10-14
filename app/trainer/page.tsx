@@ -747,7 +747,7 @@ function TrainerPageContent() {
     } catch (error) {
       console.error('❌ Reconnection error:', error)
       setIsReconnecting(false)
-      alert('Unable to reconnect. Please end the session and start a new one.')
+      setShowSilenceWarning(true) // Keep warning visible
     }
   }
 
