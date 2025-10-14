@@ -167,6 +167,9 @@ export default function AnalyticsPage() {
       console.log('Transcript length:', data.full_transcript?.length)
       console.log('First transcript item:', data.full_transcript?.[0])
       console.log('Has grading:', !!data.analytics?.line_ratings)
+      console.log('🎵 Audio URL:', data.audio_url)
+      console.log('⏱️ Duration:', data.duration_seconds)
+      console.log('📦 Upload type:', data.upload_type)
       setSession(data)
       
       // If transcript exists but no grading, trigger grading and poll for completion

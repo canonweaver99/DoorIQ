@@ -14,7 +14,9 @@ import {
   Activity,
   SkipForward,
   Rewind,
-  Zap
+  Zap,
+  Upload,
+  AlertCircle
 } from 'lucide-react'
 
 interface SessionTimelineProps {
@@ -247,27 +249,69 @@ export default function SessionTimeline({
 
   return (
     <div className="relative py-8">
-      {/* Header */}
+      {/* Conversation Summary Card */}
+      <div className="mb-8 rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
+        <div className="flex items-center justify-between">
+          {/* Left side: Duration and participants */}
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-3">
+              <Clock className="w-5 h-5 text-slate-400" />
+              <span className="text-2xl font-semibold text-white">{formatTime(duration)}</span>
+              <span className="text-sm text-slate-400">conversation</span>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <span className="text-slate-500">Customer: </span>
+                <span className="text-white font-medium">{customerName}</span>
+              </div>
+              <div className="w-px h-4 bg-slate-700"></div>
+              <div>
+                <span className="text-slate-500">Sales Rep: </span>
+                <span className="text-white font-medium">{salesRepName}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Right side: Deal outcome badge */}
+          {dealOutcome && (
+            <div className={`
+              px-6 py-3 rounded-xl font-semibold text-lg
+              ${dealOutcome.closed 
+                ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-400 border-2 border-green-500/50 shadow-lg shadow-green-500/20' 
+                : 'bg-gradient-to-br from-slate-700/20 to-slate-600/20 text-slate-400 border-2 border-slate-600/50'
+              }
+            `}>
+              {dealOutcome.closed 
+                ? `✓ Closed: $${dealOutcome.amount.toLocaleString()}`
+                : 'Not Closed'
+              }
+            </div>
+          )}
+        </div>
+        
+        {/* Audio status indicator */}
+        {!audioUrl && (
+          <div className="mt-4 pt-4 border-t border-slate-700/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <AlertCircle className="w-3.5 h-3.5" />
+                Audio not available for this session
+              </div>
+              <a 
+                href="/trainer/upload"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-xs font-medium transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Upload Audio
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Playback Controls */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-slate-400" />
-              <span className="text-sm font-mono text-slate-400">{formatTime(duration)}</span>
-            </div>
-            {dealOutcome && (
-              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                dealOutcome.closed 
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
-              }`}>
-                {dealOutcome.closed 
-                  ? `Closed: $${dealOutcome.amount.toLocaleString()}`
-                  : 'Not Closed'
-                }
-              </div>
-            )}
-          </div>
           
           {/* Overall Controls */}
           {audioUrl && (
@@ -415,17 +459,21 @@ export default function SessionTimeline({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  playSegment(segment)
+                                  if (audioUrl) {
+                                    playSegment(segment)
+                                  }
                                 }}
-                                disabled={audioLoading}
+                                disabled={audioLoading || !audioUrl}
                                 className={`
                                   p-3 rounded-xl transition-all
+                                  ${!audioUrl ? 'opacity-30 cursor-not-allowed' : ''}
                                   ${playingSegment === segment.id
                                     ? 'bg-red-500/20 hover:bg-red-500/30' 
                                     : 'bg-white/10 hover:bg-white/20'
                                   }
                                   ${audioLoading ? 'opacity-50 cursor-not-allowed' : ''}
                                 `}
+                                title={!audioUrl ? 'Audio not available for this session' : ''}
                               >
                                 {audioLoading ? (
                                   <div className="w-5 h-5 border-2 border-white/30 border-t-white/80 rounded-full animate-spin" />
