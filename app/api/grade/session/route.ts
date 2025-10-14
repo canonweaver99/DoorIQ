@@ -907,6 +907,73 @@ ${knowledgeContext}`
       grading_time_seconds: totalTimeSeconds
     })
 
+    // Send email notifications (fire and forget - don't block response)
+    const userId = (session as any).user_id
+    const grade = calculatedOverall >= 90 ? 'A' : calculatedOverall >= 80 ? 'B' : calculatedOverall >= 70 ? 'C' : calculatedOverall >= 60 ? 'D' : 'F'
+    
+    Promise.all([
+      // Session complete notification
+      import('@/lib/notifications/service').then(({ sendNotification }) => {
+        return sendNotification({
+          type: 'sessionComplete',
+          userId,
+          data: {
+            score: calculatedOverall,
+            grade,
+            bestMoment: gradingResult.feedback?.strengths?.[0],
+            topImprovement: gradingResult.feedback?.improvements?.[0],
+            sessionId,
+            virtualEarnings,
+            saleClosed
+          }
+        })
+      }),
+
+      // Achievement notifications
+      import('@/lib/notifications/service').then(async ({ detectAchievements, sendNotification }) => {
+        const achievements = await detectAchievements(userId, calculatedOverall, saleClosed)
+        for (const achievement of achievements) {
+          await sendNotification({
+            type: 'achievement',
+            userId,
+            data: {
+              achievementType: achievement.type,
+              achievementTitle: achievement.title,
+              achievementDescription: achievement.description,
+              badgeEmoji: achievement.emoji
+            }
+          })
+        }
+      }),
+
+      // Manager notification
+      import('@/lib/notifications/service').then(async ({ getRepManager, sendNotification }) => {
+        const managerId = await getRepManager(userId)
+        if (managerId) {
+          const { data: repData } = await supabase
+            .from('users')
+            .select('full_name')
+            .eq('id', userId)
+            .single()
+
+          return sendNotification({
+            type: 'managerSessionAlert',
+            userId: managerId,
+            data: {
+              repName: repData?.full_name || 'Team Member',
+              score: calculatedOverall,
+              grade,
+              sessionId,
+              highlights: gradingResult.feedback?.strengths?.slice(0, 2) || [],
+              needsWork: gradingResult.feedback?.improvements?.slice(0, 2) || []
+            }
+          })
+        }
+      })
+    ]).catch(error => {
+      console.error('⚠️  Failed to send notifications (non-blocking):', error)
+    })
+
     return NextResponse.json({
       success: true,
       scores: gradingResult.scores,
