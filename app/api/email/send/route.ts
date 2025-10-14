@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialize Resend to avoid build-time errors
+function getResendClient() {
+  if (!process.env.RESEND_API_KEY) {
+    return null
+  }
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,16 +18,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    if (!process.env.RESEND_API_KEY) {
-      console.error('Resend API key not configured')
-      return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
-    }
-
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const resend = getResendClient()
+    if (!resend) {
+      console.error('Resend API key not configured')
+      return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'notifications@dooriq.com'
