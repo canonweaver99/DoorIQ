@@ -60,16 +60,11 @@ const gradingResponseSchema: JsonSchema = {
       type: 'array',
       items: {
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: true,
         properties: {
           line_number: { type: 'integer' },
           speaker: { type: 'string' },
-          timestamp: { type: 'string' },
           effectiveness: { type: 'string' },
-          score: { type: 'number' },
-          sentiment: { type: 'string' },
-          customer_engagement: { type: 'string' },
-          category: { type: 'string' },
           alternative_lines: {
             type: 'array',
             items: { type: 'string' }
@@ -418,12 +413,7 @@ export async function POST(request: NextRequest) {
   "line_ratings": [{
     "line_number": int,
     "speaker": "rep/customer",
-    "timestamp": "00:00",
     "effectiveness": "excellent/good/average/poor",
-    "score": int,
-    "sentiment": "positive/neutral/negative",
-    "customer_engagement": "high/medium/low",
-    "category": "introduction/rapport/discovery/objection_handling/closing/general",
     "alternative_lines": []
   }],
   "feedback": { "strengths": [], "improvements": [], "specific_tips": [] },
@@ -449,63 +439,10 @@ export async function POST(request: NextRequest) {
 }
 
 Rules:
-- Only extract data explicitly stated in the transcript. If not mentioned, use empty string "", 0, false, or [] where appropriate.
-- Create a line_ratings entry for EVERY sales rep line. ONLY include alternative_lines (1-2 suggested rewrites) for lines rated "poor". Leave alternative_lines empty for "average", "good", or "excellent" lines.
-- Count all filler words (um, uh, like, you know, basically, actually) spoken by the sales rep. Return the total count as filler_word_count AND in enhanced_metrics.filler_words with breakdown by type.
-- DO NOT include filler_words in the scores object. The backend will deduct 1% from overall for each filler word.
-
-TIMELINE KEY MOMENTS:
-Identify exactly 3 key moments from the conversation for the timeline at these positions:
-- Position 33% (Early): Opening moment - how did the conversation start? First impression, initial engagement
-- Position 66% (Mid): Key turning point - the most critical moment that influenced the outcome (objection, breakthrough, trust moment, etc.)
-- Position 90% (End): Close attempt - final outcome (success, failure, or appointment set)
-
-For each moment, provide:
-- line_number: The exact line index from the transcript (the number in [brackets])
-- timestamp: Copy the EXACT timestamp from the transcript line at that line_number. The transcript format is "[line_number] (timestamp) Speaker: text" - extract the timestamp from the (parentheses). Examples: "0:05", "1:47", "2:33"
-- moment_type: Short descriptive label (e.g., "Strong Opening", "Price Objection", "Closed Successfully", "Lost Trust")
-- quote: The EXACT text spoken by either party at that moment (verbatim from transcript, everything after "Speaker: ")
-- is_positive: true if moment helped the sale, false if it hurt
-
-CRITICAL: The transcript shows timestamps in parentheses like (1:23). Copy these exactly. Never use "00:00" unless that's the actual timestamp shown.
-
-QUESTION RATIO CALCULATION:
-Count ONLY discovery and clarification questions that end with "?". 
-DO NOT count:
-- Rhetorical questions ("Makes sense, right?", "You know what I mean?")
-- Assumptive trial closes ("Sound good?", "Fair enough?")
-- Tag questions ("Isn't it?", "Don't you think?")
-
-DO count:
-- Open-ended discovery questions ("What concerns do you have?", "How long has this been an issue?")
-- Probing questions ("Tell me more about...", "When did you first notice...?")
-- Needs-based questions ("What's your biggest pest concern?")
-
-Calculate the ratio: (discovery_questions / total_rep_lines) * 100 = percentage
-
-Then score the question_ratio field based on that percentage:
-- 30-40% ratio = 100 points (optimal balance)
-- 40-50% ratio = 90 points (good, slightly high)
-- 50-60% ratio = 75 points (high but acceptable)
-- 20-30% ratio = 80 points (could ask more)
-- 10-20% ratio = 60 points (too much talking)
-- <10% ratio = 30 points (pitch-heavy, not enough discovery)
-- >60% ratio = 60 points (interrogation-style, too aggressive)
-
-IMPORTANT: A rep who asks 11 questions out of 20 total lines has a 55% ratio = 75 points (not 30!)
-Double-check your math before assigning the score.
-
-EARNINGS CALCULATION:
-- sale_closed true ONLY if customer commits to a paid service (not just appointments)
-- Extract monthly_value and contract_length from conversation
-- Calculate total_contract_value = monthly_value × contract_length (e.g., $100/month × 6 months = $600)
-- Calculate commission_earned = total_contract_value × 0.30
-- For one-time services, use base_price as total_contract_value
-- Set closed_amount to total_contract_value
-- Add bonuses to commission_earned to get total_earned
-- Set virtual_earnings = total_earned
-- No sale means all earnings values = 0
-
+- Rate each sales rep line as excellent/good/average/poor. ONLY suggest alternative_lines for "poor" lines.
+- Count filler words (um, uh, like, you know, basically, actually) and return total count.
+- For timeline moments, copy exact timestamps from transcript in parentheses like (1:23).
+- If sale closed, extract pricing details for earnings. Otherwise set all earnings to 0.
 - Return strictly valid JSON with no extra commentary.`
         },
         {
@@ -526,8 +463,8 @@ ${knowledgeContext}`
       model: "gpt-4o-mini",
       messages: messages as any,
       response_format: { type: "json_object" },
-      max_tokens: 2000, // Reduced for faster response (simplified structure)
-      temperature: 0.3 // Lower for more consistent/faster output
+      max_tokens: 1500, // Ultra-simplified structure for 3-5 second grading
+      temperature: 0.2 // Very low for maximum speed and consistency
     })
 
     const responseContent = completion.choices[0].message.content || '{}'
@@ -770,7 +707,7 @@ ${knowledgeContext}`
           earnings_data: earningsData,
           deal_details: dealDetails,
           graded_at: now,
-          grading_version: '7.0-simplified-fast',
+          grading_version: '8.0-ultra-fast',
           scores: gradingResult.scores || {}
         }
       } as any)
