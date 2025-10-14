@@ -929,23 +929,6 @@ ${knowledgeContext}`
         })
       }),
 
-      // Achievement notifications
-      import('@/lib/notifications/service').then(async ({ detectAchievements, sendNotification }) => {
-        const achievements = await detectAchievements(userId, calculatedOverall, saleClosed)
-        for (const achievement of achievements) {
-          await sendNotification({
-            type: 'achievement',
-            userId,
-            data: {
-              achievementType: achievement.type,
-              achievementTitle: achievement.title,
-              achievementDescription: achievement.description,
-              badgeEmoji: achievement.emoji
-            }
-          })
-        }
-      }),
-
       // Manager notification
       import('@/lib/notifications/service').then(async ({ getRepManager, sendNotification }) => {
         const managerId = await getRepManager(userId)
