@@ -209,19 +209,41 @@ export default function MessagingCenter() {
   }
 
   const markMessagesAsRead = async (repId: string) => {
+    if (!currentUser?.id) return
+    
     try {
-      console.log('📖 Marking messages as read for rep:', repId)
+      console.log('📖 Marking messages as read for rep:', repId, 'currentUser:', currentUser.id)
       
-      const { data: updatedMessages, error } = await supabase
+      // First, get the unread messages to mark
+      const { data: unreadMessages } = await supabase
         .from('messages')
-        .update({ is_read: true, read_at: new Date().toISOString() })
+        .select('id')
         .eq('sender_id', repId)
         .eq('recipient_id', currentUser.id)
         .eq('is_read', false)
+      
+      console.log('📬 Found', unreadMessages?.length || 0, 'unread messages to mark')
+      
+      if (!unreadMessages || unreadMessages.length === 0) {
+        console.log('✅ No messages to mark as read')
+        // Still update UI to clear any stale counts
+        setConversations(prev => prev.map(conv => 
+          conv.id === repId ? { ...conv, unreadCount: 0 } : conv
+        ))
+        messageEvents.emitMessagesRead()
+        return
+      }
+      
+      // Update the messages
+      const messageIds = unreadMessages.map(m => m.id)
+      const { data: updatedMessages, error } = await supabase
+        .from('messages')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .in('id', messageIds)
         .select()
       
       if (!error) {
-        console.log('✅ Marked', updatedMessages?.length || 0, 'messages as read')
+        console.log('✅ Successfully marked', updatedMessages?.length || 0, 'messages as read')
         
         // Update the unread count in the conversations list immediately
         setConversations(prev => prev.map(conv => 
@@ -235,15 +257,13 @@ export default function MessagingCenter() {
             : msg
         ))
         
-        // Emit event to update header badge with small delay
-        setTimeout(() => {
-          messageEvents.emitMessagesRead()
-        }, 100)
+        // Emit event to update header badge
+        messageEvents.emitMessagesRead()
       } else {
         console.error('❌ Error marking messages as read:', error)
       }
     } catch (e) {
-      console.error('Failed to mark messages as read:', e)
+      console.error('❌ Failed to mark messages as read:', e)
     }
   }
 
