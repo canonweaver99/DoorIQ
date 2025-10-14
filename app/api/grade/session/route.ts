@@ -446,12 +446,40 @@ export async function POST(request: NextRequest) {
   }
 }
 
-Rules:
-- Rate each sales rep line as excellent/good/average/poor. ONLY suggest alternative_lines for "poor" lines.
-- Count filler words (um, uh, like, you know, basically, actually) and return total count.
-- For timeline moments, copy exact timestamps from transcript in parentheses like (1:23).
-- If sale closed, extract pricing details for earnings. Otherwise set all earnings to 0.
-- Return strictly valid JSON with no extra commentary.`
+SCORING GUIDELINES:
+- Overall (0-100): Average of all category scores
+- Rapport (0-100): Connection, trust, warmth, local references
+- Discovery (0-100): Question quality, needs assessment
+- Objection Handling (0-100): Addressing concerns effectively
+- Closing (0-100): Assumptive language, trial closes, commitment
+- Safety (0-100): Mentioned pet/child safety, guarantees
+- Introduction (0-100): Opening strength, first impression
+- Listening (0-100): Acknowledgment, paraphrasing
+- Speaking Pace (0-100): Appropriate speed, not rushed
+- Question Ratio (0-100): Balance of questions vs statements (30-40% is ideal)
+- Active Listening (0-100): Reflects understanding
+- Assumptive Language (0-100): "When" not "if" language
+
+LINE RATINGS:
+- Rate EVERY sales rep line: excellent/good/average/poor
+- ONLY include alternative_lines array for lines rated "poor"
+- Leave alternative_lines as [] for good/average/excellent lines
+
+TIMELINE (3 moments at 33%, 66%, 90%):
+- Copy EXACT timestamps from transcript format: (1:23)
+- Choose actual impactful lines from those positions
+
+EARNINGS:
+- sale_closed: true ONLY if customer committed to paid service
+- Extract: base_price, monthly_value, contract_length from conversation
+- Calculate: total_contract_value, commission_earned (30%), total_earned
+- commission_rate always 0.30
+
+FILLER WORDS:
+- Count: um, uh, like, you know, basically, actually
+- Return total AND breakdown by type
+
+MUST return valid, complete JSON matching the exact structure above. No commentary.`
         },
         {
           role: "user",
@@ -471,8 +499,8 @@ ${knowledgeContext}`
       model: "gpt-4o-mini",
       messages: messages as any,
       response_format: { type: "json_object" },
-      max_tokens: 1500, // Ultra-simplified structure for 3-5 second grading
-      temperature: 0.2 // Very low for maximum speed and consistency
+      max_tokens: 2500, // Increased from 1500 - need enough tokens for complete JSON
+      temperature: 0.3 // Slightly higher for better JSON generation
     })
 
     const responseContent = completion.choices[0].message.content || '{}'
