@@ -89,17 +89,39 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
       const filePath = `${userId}/${fileName}`
 
       const supabase = createClient()
+      
+      // First verify the bucket exists
+      console.log('🔍 Checking if avatars bucket exists...')
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets()
+      if (bucketsError) {
+        console.error('❌ Failed to list buckets:', bucketsError)
+      } else {
+        console.log('📦 Available buckets:', buckets?.map(b => b.name).join(', '))
+        const avatarsBucket = buckets?.find(b => b.name === 'avatars')
+        if (!avatarsBucket) {
+          throw new Error('Avatars bucket does not exist. Please create it in Supabase Storage dashboard.')
+        }
+        console.log('✅ Avatars bucket found:', avatarsBucket)
+      }
 
       // Upload file to Supabase storage
+      console.log('📤 Uploading to path:', filePath)
+      console.log('📦 File size:', file.size, 'bytes')
+      console.log('📦 File type:', file.type)
+      
       const { error: uploadError, data } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
-          upsert: true
+          upsert: true,
+          contentType: file.type
         })
 
       if (uploadError) {
+        console.error('❌ Upload error:', uploadError)
         throw uploadError
       }
+      
+      console.log('✅ File uploaded successfully:', data)
 
       // Get public URL with cache buster
       const { data: { publicUrl } } = supabase.storage
