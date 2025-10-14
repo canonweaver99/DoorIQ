@@ -210,12 +210,19 @@ export default function MessagingCenter() {
 
   const markMessagesAsRead = async (repId: string) => {
     try {
-      const { error } = await supabase
+      console.log('📖 Marking messages as read for rep:', repId)
+      
+      const { data: updatedMessages, error } = await supabase
         .from('messages')
         .update({ is_read: true, read_at: new Date().toISOString() })
-        .match({ sender_id: repId, recipient_id: currentUser.id, is_read: false })
+        .eq('sender_id', repId)
+        .eq('recipient_id', currentUser.id)
+        .eq('is_read', false)
+        .select()
       
       if (!error) {
+        console.log('✅ Marked', updatedMessages?.length || 0, 'messages as read')
+        
         // Update the unread count in the conversations list immediately
         setConversations(prev => prev.map(conv => 
           conv.id === repId ? { ...conv, unreadCount: 0 } : conv
@@ -223,15 +230,17 @@ export default function MessagingCenter() {
         
         // Update messages state to reflect read status
         setMessages(prev => prev.map(msg =>
-          msg.sender_id === repId && msg.sender_id !== currentUser.id
+          msg.sender_id === repId && !msg.read
             ? { ...msg, read: true }
             : msg
         ))
         
-        // Emit event to update header badge
-        messageEvents.emitMessagesRead()
+        // Emit event to update header badge with small delay
+        setTimeout(() => {
+          messageEvents.emitMessagesRead()
+        }, 100)
       } else {
-        console.error('Error marking messages as read:', error)
+        console.error('❌ Error marking messages as read:', error)
       }
     } catch (e) {
       console.error('Failed to mark messages as read:', e)
