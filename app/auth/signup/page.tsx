@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SignUpComponent, Testimonial } from '@/components/ui/sign-up'
 
@@ -30,6 +30,8 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const inviteToken = searchParams.get('invite')
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -104,6 +106,23 @@ export default function SignUpPage() {
         
         if (signInData.session) {
           console.log('✅ Signed in successfully, redirecting...')
+          
+          // If there's an invite token, accept it
+          if (inviteToken) {
+            try {
+              const inviteResponse = await fetch('/api/invites/accept', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: inviteToken })
+              })
+              
+              if (!inviteResponse.ok) {
+                console.warn('Failed to accept invite:', await inviteResponse.json())
+              }
+            } catch (inviteError) {
+              console.warn('Error accepting invite:', inviteError)
+            }
+          }
           
           // Wait for session to be established
           await new Promise(resolve => setTimeout(resolve, 800))

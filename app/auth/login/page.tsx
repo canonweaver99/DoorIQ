@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
 
@@ -30,6 +30,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const inviteToken = searchParams.get('invite')
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -49,7 +51,23 @@ export default function LoginPage() {
 
       if (signInError) throw signInError
 
-      router.push('/trainer/select-homeowner')
+      // If user came via invite link, accept it now
+      if (inviteToken) {
+        try {
+          const inviteResponse = await fetch('/api/invites/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: inviteToken })
+          })
+          if (!inviteResponse.ok) {
+            console.warn('Failed to accept invite from login:', await inviteResponse.json())
+          }
+        } catch (e) {
+          console.warn('Error accepting invite from login:', e)
+        }
+      }
+
+      router.push('/dashboard')
       router.refresh()
     } catch (err: any) {
       setError(err.message || 'Failed to sign in')

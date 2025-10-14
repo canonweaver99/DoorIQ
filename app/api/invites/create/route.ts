@@ -1,0 +1,83 @@
+import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
+import crypto from 'crypto'
+
+export async function POST(request: Request) {
+  try {
+    const supabase = await createClient()
+    
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { email, role = 'rep' } = body
+
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+    }
+
+    // Get the user's profile to check their team and role
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('team_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !userProfile) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    }
+
+    // Check if user is a manager or admin
+    if (!['manager', 'admin'].includes(userProfile.role)) {
+      return NextResponse.json({ error: 'Only managers and admins can invite teammates' }, { status: 403 })
+    }
+
+    // Check if user has a team
+    if (!userProfile.team_id) {
+      return NextResponse.json({ error: 'You must be part of a team to invite teammates' }, { status: 400 })
+    }
+
+    // Generate a unique token
+    const token = crypto.randomBytes(32).toString('hex')
+    
+    // Set expiration to 7 days from now
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + 7)
+
+    // Create the invite
+    const { data: invite, error: inviteError } = await supabase
+      .from('team_invites')
+      .insert({
+        team_id: userProfile.team_id,
+        invited_by: user.id,
+        email,
+        token,
+        role,
+        expires_at: expiresAt.toISOString(),
+      })
+      .select()
+      .single()
+
+    if (inviteError) {
+      console.error('Error creating invite:', inviteError)
+      return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 })
+    }
+
+    // Generate the invite URL
+    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/invite/${token}`
+
+    return NextResponse.json({ 
+      success: true, 
+      invite,
+      inviteUrl 
+    })
+  } catch (error) {
+    console.error('Error in create invite:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
