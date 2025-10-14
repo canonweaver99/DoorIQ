@@ -297,6 +297,8 @@ if (!process.env.OPENAI_API_KEY) {
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now()
+  
   try {
     const { sessionId } = await request.json()
     
@@ -308,7 +310,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
     }
 
-    console.log('🎯 Starting grading for session:', sessionId)
+    console.log('🎯 ========================================')
+    console.log('🎯 GRADING START for session:', sessionId)
+    console.log('🎯 Start time:', new Date().toISOString())
+    console.log('🎯 ========================================')
     
     const supabase = await createServiceSupabaseClient()
     
@@ -398,7 +403,10 @@ export async function POST(request: NextRequest) {
 
     console.log('🤖 Calling OpenAI for grading...')
     console.log('📝 Formatted transcript length:', formattedTranscript.length, 'characters')
-    console.log('📝 Transcript preview:', formattedTranscript.substring(0, 500))
+    console.log('📝 Transcript lines:', (session as any).full_transcript.length)
+    console.log('📝 Transcript preview:', formattedTranscript.substring(0, 300), '...')
+
+    const openaiStartTime = Date.now()
 
     // Call OpenAI for comprehensive analysis
     const messages: Array<{ role: string; content: string }> = [
@@ -468,7 +476,11 @@ ${knowledgeContext}`
     })
 
     const responseContent = completion.choices[0].message.content || '{}'
-    console.log('📨 Raw OpenAI response length:', responseContent.length)
+    const openaiEndTime = Date.now()
+    const openaiTimeSeconds = ((openaiEndTime - openaiStartTime) / 1000).toFixed(2)
+    
+    console.log('⏱️ OpenAI API call completed in:', openaiTimeSeconds, 'seconds')
+    console.log('📨 Raw OpenAI response length:', responseContent.length, 'characters')
     
     let gradingResult
     try {
@@ -480,11 +492,12 @@ ${knowledgeContext}`
       throw new Error('Failed to parse OpenAI response as JSON')
     }
     
-    console.log('✅ OpenAI grading complete:', {
+    console.log('✅ OpenAI grading parsed successfully:', {
       lines_rated: gradingResult.line_ratings?.length || 0,
-      scores: gradingResult.scores,
+      has_scores: !!gradingResult.scores,
       sale_closed: gradingResult.sale_closed,
-      virtual_earnings: gradingResult.virtual_earnings
+      virtual_earnings: gradingResult.virtual_earnings,
+      openai_time: openaiTimeSeconds + 's'
     })
 
     // Start a transaction to update both tables
@@ -721,15 +734,21 @@ ${knowledgeContext}`
     // Line ratings are stored in the analytics JSONB column, no separate table needed
     console.log(`✅ Stored ${gradingResult.line_ratings?.length || 0} line ratings in analytics column`)
 
-    console.log('✅ Grading saved successfully!')
+    const endTime = Date.now()
+    const totalTimeSeconds = ((endTime - startTime) / 1000).toFixed(2)
+    
+    console.log('✅ ========================================')
+    console.log('✅ GRADING COMPLETE!')
+    console.log('✅ Total time:', totalTimeSeconds, 'seconds')
+    console.log('✅ End time:', new Date().toISOString())
+    console.log('✅ ========================================')
     console.log('📊 Summary:', {
       scores: Object.keys(gradingResult.scores || {}).length,
       line_ratings: gradingResult.line_ratings?.length || 0,
-      has_dynamics: !!conversationDynamics.buying_signals,
-      has_failure_analysis: !!failureAnalysis.critical_moments,
       has_objections: !!objectionAnalysis.total_objections,
       has_coaching: !!coachingPlan.immediate_fixes,
-      virtual_earnings: virtualEarnings
+      virtual_earnings: virtualEarnings,
+      grading_time_seconds: totalTimeSeconds
     })
 
     return NextResponse.json({
