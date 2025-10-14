@@ -265,7 +265,7 @@ function HeaderContent() {
   const quickActions = [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
     { label: 'Review Sessions', href: '/sessions', icon: ClipboardList },
-    { label: 'Invite Teammate', href: '/invite', icon: Users },
+    { label: 'Invite Teammate', href: '/team/invite', icon: Users },
   ]
 
   const profileNavigation = useMemo(() => {
