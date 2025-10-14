@@ -164,7 +164,8 @@ export default function KnowledgeBase() {
         })
 
         if (!uploadRes.ok) {
-          throw new Error('Upload failed')
+          const errorData = await uploadRes.json()
+          throw new Error(errorData.error || 'Upload failed')
         }
 
         const uploadData = await uploadRes.json()
@@ -184,7 +185,8 @@ export default function KnowledgeBase() {
         })
 
         if (!docRes.ok) {
-          throw new Error('Failed to save document')
+          const errorData = await docRes.json()
+          throw new Error(errorData.error || 'Failed to save document')
         }
       }
 
@@ -195,12 +197,12 @@ export default function KnowledgeBase() {
         title: 'Files Uploaded!',
         message: `Successfully uploaded ${Array.from(files).length} file(s).`
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error)
       showToast({
         type: 'error',
         title: 'Upload Failed',
-        message: 'Failed to upload files. Please try again.'
+        message: error.message || 'Failed to upload files. Please try again.'
       })
     } finally {
       setUploading(false)
@@ -573,7 +575,7 @@ function GradingTab({ config, setConfig }: { config: TeamGradingConfig; setConfi
       otherKeys.forEach(k => {
         const proportion = currentWeights[k as keyof typeof weights] / totalOtherWeights
         const adjustment = -difference * proportion
-        currentWeights[k as keyof typeof weights] = Math.max(0, Math.round(currentWeights[k as keyof typeof weights] + adjustment))
+        currentWeights[k as keyof typeof weights] = Math.max(5, Math.round(currentWeights[k as keyof typeof weights] + adjustment))
       })
     }
     
@@ -583,7 +585,7 @@ function GradingTab({ config, setConfig }: { config: TeamGradingConfig; setConfi
       const firstOtherKey = otherKeys[0]
       if (firstOtherKey) {
         currentWeights[firstOtherKey as keyof typeof weights] += (100 - total)
-        currentWeights[firstOtherKey as keyof typeof weights] = Math.max(0, currentWeights[firstOtherKey as keyof typeof weights])
+        currentWeights[firstOtherKey as keyof typeof weights] = Math.max(5, currentWeights[firstOtherKey as keyof typeof weights])
       }
     }
 
@@ -596,13 +598,42 @@ function GradingTab({ config, setConfig }: { config: TeamGradingConfig; setConfi
     })
   }
 
+  const revertToDefaults = () => {
+    const defaultWeights = {
+      rapport_score: 15,
+      objection_handling_score: 25,
+      close_effectiveness_score: 30,
+      needs_discovery_score: 20,
+      introduction_score: 10
+    }
+    
+    setConfig({
+      ...config,
+      custom_grading_rubric: {
+        ...config.custom_grading_rubric!,
+        weights: defaultWeights
+      }
+    })
+  }
+
   const totalWeight = Object.values(weights).reduce((sum, val) => sum + val, 0)
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-white mb-4">Score Weights</h3>
-        <p className="text-sm text-slate-400 mb-4">Adjust the importance of each grading category. Weights automatically balance to total 100%.</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Score Weights</h3>
+            <p className="text-sm text-slate-400">Adjust the importance of each grading category. Weights automatically balance to total 100%.</p>
+          </div>
+          <button
+            onClick={revertToDefaults}
+            className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-all"
+          >
+            <Target className="w-4 h-4" />
+            Reset to Defaults
+          </button>
+        </div>
         <div className="space-y-4">
           {Object.entries(weights).map(([key, value]) => (
             <div key={key} className="space-y-2">
