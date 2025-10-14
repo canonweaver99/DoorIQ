@@ -82,91 +82,29 @@ export default function SessionTimeline({
     }
   }, [])
   
-  // Define key moment types for the 3 dots (simplified for faster grading)
-  const dotDefinitions = [
-    { position: 33, label: 'Opening', category: 'introduction' },
-    { position: 66, label: 'Key Moment', category: 'objection_handling' },
-    { position: 90, label: 'Close Attempt', category: 'closing' }
-  ]
-  
-  // Map dots to actual conversation moments
-  const mappedDots = dotDefinitions.map((dot, idx) => {
-    const targetTime = (duration * dot.position) / 100
-    const targetLineIndex = Math.floor((fullTranscript.length * dot.position) / 100)
+  // Use the events data directly (already contains timeline_key_moments from grading)
+  const mappedDots = events.map((event, idx) => {
+    console.log(`🔍 Mapping event ${idx}:`, event)
     
-    // Find events near this position
-    const nearbyEvents = events.filter(e => {
-      const eventTime = parseTimestamp(e.timestamp)
-      return Math.abs(eventTime - targetTime) < duration * 0.15
-    })
-    
-    // Find line ratings that match this category and are nearby
-    const relevantRatings = lineRatings.filter((r: any) => {
-      const category = (r.category || '').toLowerCase()
-      return category.includes(dot.category) || 
-             Math.abs(r.line_number - targetLineIndex) < fullTranscript.length * 0.1
-    })
-    
-    // Get the best matching line rating
-    const bestRating = relevantRatings.length > 0 
-      ? relevantRatings.reduce((best: any, curr: any) => {
-          const bestDist = Math.abs(best.line_number - targetLineIndex)
-          const currDist = Math.abs(curr.line_number - targetLineIndex)
-          return currDist < bestDist ? curr : best
-        })
-      : null
-    
-    // Extract actual quote from transcript
-    let actualQuote = dot.label
-    let actualTimestamp = formatTime(targetTime)
-    let lineNum = targetLineIndex
-    let momentType = dot.label
-    let isSuccess = true
-    
-    if (bestRating && fullTranscript[bestRating.line_number]) {
-      const transcriptLine = fullTranscript[bestRating.line_number]
-      actualQuote = transcriptLine.text || transcriptLine.message || actualQuote
-      actualTimestamp = transcriptLine.timestamp || bestRating.timestamp || actualTimestamp
-      lineNum = bestRating.line_number
-      
-      // Determine success based on effectiveness
-      isSuccess = ['excellent', 'good'].includes(bestRating.effectiveness)
-      
-      // Determine moment type from the rating
-      if (bestRating.category) {
-        momentType = bestRating.category.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
-      }
-    } else if (nearbyEvents.length > 0) {
-      const event = nearbyEvents[0]
-      actualTimestamp = event.timestamp
-      lineNum = event.line
-      momentType = event.title
-      isSuccess = event.type !== 'critical'
-    }
-    
-    // For the last dot, check if deal closed
-    if (idx === 2) {
-      isSuccess = dealOutcome?.closed || false
-      momentType = dealOutcome?.closed ? 'Closed Successfully' : 'Deal Lost'
-    }
-    
-    // Check if this dot is after the failure point
-    const isAfterFailure = failurePoint !== undefined && lineNum > failurePoint
-    const isFailurePoint = failurePoint !== undefined && Math.abs(lineNum - failurePoint) < fullTranscript.length * 0.05
+    // Calculate position percentage from timestamp
+    const eventTime = parseTimestamp(event.timestamp)
+    const position = (eventTime / duration) * 100
     
     return {
-      position: dot.position,
-      timestamp: actualTimestamp,
-      label: momentType,
-      quote: actualQuote,
-      lineNumber: lineNum,
-      isSuccess,
-      isAfterFailure,
-      isFailurePoint,
-      effectiveness: bestRating?.effectiveness || 'average',
-      score: bestRating?.score || 50
+      position: position,
+      timestamp: event.timestamp,
+      label: event.title,
+      quote: event.description,
+      lineNumber: event.line,
+      isSuccess: event.type === 'win',
+      isAfterFailure: false,
+      isFailurePoint: event.type === 'critical',
+      effectiveness: event.score >= 80 ? 'excellent' : event.score >= 70 ? 'good' : event.score >= 60 ? 'average' : 'poor',
+      score: event.score
     }
   })
+  
+  console.log('✅ Mapped dots:', mappedDots.length, mappedDots)
 
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60)
