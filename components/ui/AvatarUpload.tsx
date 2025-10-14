@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, User, Loader2, CheckCircle2, Crop, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Cropper from 'react-easy-crop'
@@ -22,7 +22,17 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
   const [cropDialogOpen, setCropDialogOpen] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Sync internal state when prop changes (important for when parent updates avatar)
+  useEffect(() => {
+    if (currentAvatarUrl !== avatarUrl) {
+      console.log('🔄 Avatar URL prop changed, updating internal state')
+      setAvatarUrl(currentAvatarUrl)
+      setImageError(false)
+    }
+  }, [currentAvatarUrl])
 
   const onFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -91,10 +101,13 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
         throw uploadError
       }
 
-      // Get public URL
+      // Get public URL with cache buster
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
+
+      // Add timestamp to prevent caching issues
+      const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`
 
       // Update user record
       const { error: updateError } = await supabase
@@ -106,14 +119,27 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
         throw updateError
       }
 
-      setAvatarUrl(publicUrl)
+      console.log('✅ Avatar uploaded successfully!')
+      console.log('📷 Public URL:', publicUrl)
+      console.log('📷 URL with cache buster:', urlWithCacheBuster)
+      
+      // Set avatar URL with cache buster for immediate display
+      setAvatarUrl(urlWithCacheBuster)
       setPreviewUrl(null)
       setCropDialogOpen(false)
       setUploadSuccess(true)
       
+      // Force re-render
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      
+      console.log('📢 Calling onUploadComplete callback')
       if (onUploadComplete) {
         onUploadComplete(publicUrl)
       }
+      
+      console.log('🔄 Avatar state updated, should now display')
 
       // Reset success message after 3 seconds
       setTimeout(() => setUploadSuccess(false), 3000)
@@ -138,9 +164,30 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
         {/* Avatar Preview */}
         <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-800 border-4 border-slate-700 flex items-center justify-center">
           {previewUrl ? (
-            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-          ) : avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            <img 
+              src={previewUrl} 
+              alt="Preview" 
+              className="w-full h-full object-cover"
+              onError={() => {
+                console.error('❌ Preview image failed to load')
+                setPreviewUrl(null)
+              }}
+            />
+          ) : avatarUrl && !imageError ? (
+            <img 
+              src={avatarUrl} 
+              alt="Avatar" 
+              className="w-full h-full object-cover"
+              onError={() => {
+                console.error('❌ Avatar image failed to load:', avatarUrl)
+                setImageError(true)
+              }}
+              onLoad={() => {
+                console.log('✅ Avatar image loaded successfully')
+                setImageError(false)
+              }}
+              key={avatarUrl} // Force re-render when URL changes
+            />
           ) : (
             <User className="w-16 h-16 text-slate-500" />
           )}
