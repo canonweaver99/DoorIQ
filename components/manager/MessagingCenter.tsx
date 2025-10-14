@@ -60,7 +60,7 @@ export default function MessagingCenter() {
     // Mark messages as read with a small delay to ensure they're loaded
     setTimeout(() => {
       markMessagesAsRead(selectedConversation.id)
-    }, 100)
+    }, 500) // Increased delay to ensure messages are fully loaded
     
     return () => {
       if (channelRef.current) {
@@ -216,12 +216,22 @@ export default function MessagingCenter() {
         .match({ sender_id: repId, recipient_id: currentUser.id, is_read: false })
       
       if (!error) {
-        // Update the unread count in the conversations list
+        // Update the unread count in the conversations list immediately
         setConversations(prev => prev.map(conv => 
           conv.id === repId ? { ...conv, unreadCount: 0 } : conv
         ))
+        
+        // Update messages state to reflect read status
+        setMessages(prev => prev.map(msg =>
+          msg.sender_id === repId && msg.sender_id !== currentUser.id
+            ? { ...msg, read: true }
+            : msg
+        ))
+        
         // Emit event to update header badge
         messageEvents.emitMessagesRead()
+      } else {
+        console.error('Error marking messages as read:', error)
       }
     } catch (e) {
       console.error('Failed to mark messages as read:', e)
@@ -466,7 +476,7 @@ export default function MessagingCenter() {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-slate-400 truncate">{conv.lastMessage || 'No messages yet'}</p>
-                      {conv.unreadCount > 0 && (
+                      {(conv.unreadCount || 0) > 0 && (
                         <span className="flex-shrink-0 ml-2 px-2 py-0.5 bg-purple-500 text-white text-xs font-bold rounded-full">
                           {conv.unreadCount}
                         </span>
