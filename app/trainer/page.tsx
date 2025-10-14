@@ -551,6 +551,12 @@ function TrainerPageContent() {
       if (e?.detail) {
         setConnectionStatus(e.detail)
         console.log('🔌 Connection status updated:', e.detail)
+        
+        // Update activity on successful connection
+        if (e.detail === 'connected') {
+          lastAgentActivityRef.current = Date.now()
+        }
+        
         // Fail-safe: end session on error only (not idle)
         if ((e.detail === 'error') && sessionActive) {
           console.log('🛑 Connection error — auto-ending session...')
@@ -594,7 +600,7 @@ function TrainerPageContent() {
     }
   }, [pushFinal, setDelta, sessionActive])
 
-  // Inactivity watchdog: end after 120s of no agent AND no user activity, and no active delta text
+  // Inactivity watchdog: end after 180s of no agent AND no user activity, and no active delta text
   useEffect(() => {
     if (!sessionActive) {
       if (inactivityTimerRef.current) {
@@ -610,13 +616,16 @@ function TrainerPageContent() {
       const now = Date.now()
       const agentIdleMs = now - lastAgentActivityRef.current
       const userIdleMs = now - lastUserActivityRef.current
-      const INACTIVITY_LIMIT_MS = 120_000
+      const INACTIVITY_LIMIT_MS = 180_000 // Increased from 120s to 180s (3 minutes)
       const noActiveDelta = !deltaText
-      if (agentIdleMs >= INACTIVITY_LIMIT_MS && userIdleMs >= INACTIVITY_LIMIT_MS && noActiveDelta) {
+      
+      // Only auto-end if BOTH are inactive AND no delta text AND transcript has content
+      if (agentIdleMs >= INACTIVITY_LIMIT_MS && userIdleMs >= INACTIVITY_LIMIT_MS && noActiveDelta && transcript.length > 0) {
         console.log(`🛑 Agent and user inactive for ${Math.round(INACTIVITY_LIMIT_MS/1000)}s — auto-ending session`)
+        console.log(`📊 Last agent activity: ${Math.round(agentIdleMs/1000)}s ago, Last user activity: ${Math.round(userIdleMs/1000)}s ago`)
         window.dispatchEvent(new CustomEvent('trainer:end-session-requested'))
       }
-    }, 3_000)
+    }, 5_000) // Check every 5s instead of 3s
 
     return () => {
       if (inactivityTimerRef.current) {
@@ -624,7 +633,7 @@ function TrainerPageContent() {
         inactivityTimerRef.current = null
       }
     }
-  }, [sessionActive])
+  }, [sessionActive, deltaText, transcript.length])
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
