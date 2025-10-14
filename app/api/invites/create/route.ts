@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     // Get the user's profile to check their team and role
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
-      .select('team_id, role')
+      .select('team_id, role, full_name, referral_code')
       .eq('id', user.id)
       .single()
 
@@ -67,8 +67,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 })
     }
 
-    // Generate the invite URL
-    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/invite/${token}`
+    // Generate the invite URL with referral code
+    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/invite/${token}?ref=${userProfile.referral_code || ''}`
+
+    // Send invite email via Resend (don't fail if this fails)
+    try {
+      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/email/send-invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          inviteUrl,
+          inviterName: userProfile.full_name || 'Your teammate',
+          role
+        })
+      })
+      
+      if (emailResponse.ok) {
+        console.log('✅ Invite email sent successfully to:', email)
+      } else {
+        console.warn('⚠️ Failed to send invite email, but invite was created')
+      }
+    } catch (emailError) {
+      console.error('⚠️ Email send error:', emailError)
+      // Continue even if email fails
+    }
 
     return NextResponse.json({ 
       success: true, 
