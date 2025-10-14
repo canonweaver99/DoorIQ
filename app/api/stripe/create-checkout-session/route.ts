@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia'
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return null
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-12-18.acacia'
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +18,11 @@ export async function POST(request: NextRequest) {
     
     if (!priceId) {
       return NextResponse.json({ error: 'Price ID required' }, { status: 400 })
+    }
+
+    const stripe = getStripeClient()
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
     }
 
     const supabase = await createServerSupabaseClient()
