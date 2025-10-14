@@ -13,6 +13,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   const conversationRef = useRef<any>(null)
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [currentToken, setCurrentToken] = useState(conversationToken)
 
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
     window.dispatchEvent(new CustomEvent('connection:status', { detail: s === 'connected' ? 'connected' : s === 'connecting' ? 'connecting' : s === 'error' ? 'error' : 'idle' }))
@@ -20,7 +21,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
 
   const start = useCallback(async () => {
     console.log('🎬 start() called')
-    console.log('🎟️ conversationToken:', conversationToken ? conversationToken.substring(0, 30) + '...' : 'MISSING')
+    console.log('🎟️ currentToken:', currentToken ? currentToken.substring(0, 30) + '...' : 'MISSING')
     console.log('🤖 agentId:', agentId)
 
     if (!agentId) {
@@ -31,7 +32,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       return
     }
 
-    if (!conversationToken) {
+    if (!currentToken) {
       console.error('❌ No conversation token provided')
       setErrorMessage('No conversation token provided')
       setStatus('error')
@@ -56,7 +57,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       console.log('🚀 Calling Conversation.startSession with WebRTC...')
       
       const conversation = await Conversation.startSession({
-        conversationToken,
+        conversationToken: currentToken,
         connectionType: 'webrtc',
         
         onConnect: () => {
@@ -363,7 +364,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         alert('Microphone access is blocked. Click the red status pill to retry permission, or allow mic access from the address bar and reload.')
       }
     }
-  }, [agentId, conversationToken])
+  }, [agentId, currentToken])
 
   const stop = useCallback(async () => {
     try {
@@ -385,6 +386,101 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       return () => clearTimeout(id)
     }
   }, [autostart, start])
+
+  // Update token when prop changes
+  useEffect(() => {
+    if (conversationToken !== currentToken) {
+      console.log('🔄 Conversation token updated from props')
+      setCurrentToken(conversationToken)
+    }
+  }, [conversationToken, currentToken])
+
+  // Auto-restart conversation when token changes (after renewal/reconnect)
+  useEffect(() => {
+    if (!currentToken || !conversationRef.current) return
+    
+    // If we have a new token but conversation is already running, it was updated by renewal
+    const tokenChanged = conversationToken !== currentToken
+    if (tokenChanged && conversationRef.current) {
+      console.log('🔄 Token changed during active conversation, triggering restart...')
+      const restart = async () => {
+        try {
+          if (conversationRef.current) {
+            await conversationRef.current.endSession()
+            conversationRef.current = null
+          }
+          await new Promise(resolve => setTimeout(resolve, 500))
+          await start()
+        } catch (error) {
+          console.error('❌ Error restarting conversation:', error)
+        }
+      }
+      restart()
+    }
+  }, [currentToken])
+
+  // Listen for token renewal events
+  useEffect(() => {
+    const handleTokenRenewal = async (e: any) => {
+      const newToken = e.detail?.conversationToken
+      if (!newToken) return
+      
+      console.log('🔄 Token renewed event received, restarting conversation...')
+      
+      try {
+        // Update token in state
+        setCurrentToken(newToken)
+        
+        // End current conversation
+        if (conversationRef.current) {
+          await conversationRef.current.endSession()
+          conversationRef.current = null
+        }
+        
+        // Wait a moment for cleanup
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // The start function will be called automatically by the useEffect watching currentToken
+        console.log('✅ Token updated, conversation will restart automatically')
+      } catch (error) {
+        console.error('❌ Error handling token renewal:', error)
+      }
+    }
+    
+    const handleReconnect = async (e: any) => {
+      const newToken = e.detail?.conversationToken
+      if (!newToken) return
+      
+      console.log('🔄 Reconnect event received')
+      
+      try {
+        // Update token in state
+        setCurrentToken(newToken)
+        
+        // End current conversation
+        if (conversationRef.current) {
+          await conversationRef.current.endSession()
+          conversationRef.current = null
+        }
+        
+        // Wait a moment for cleanup
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // The start function will be called automatically
+        console.log('✅ Token updated for reconnection')
+      } catch (error) {
+        console.error('❌ Error reconnecting:', error)
+      }
+    }
+    
+    window.addEventListener('trainer:token-renewed', handleTokenRenewal as EventListener)
+    window.addEventListener('trainer:reconnect', handleReconnect as EventListener)
+    
+    return () => {
+      window.removeEventListener('trainer:token-renewed', handleTokenRenewal as EventListener)
+      window.removeEventListener('trainer:reconnect', handleReconnect as EventListener)
+    }
+  }, [])
 
   // Cleanup on unmount
   useEffect(() => {
