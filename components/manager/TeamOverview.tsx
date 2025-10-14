@@ -1,136 +1,89 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, TrendingUp, Target, Mail, Calendar, Trophy, Download, Activity, DollarSign } from 'lucide-react'
+import { Users, TrendingUp, Target, Mail, Calendar, Trophy, Download, Activity, DollarSign, UserPlus } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import Link from 'next/link'
 
-// Mock data
-const teamData = {
-  totalReps: 24,
-  activeNow: 18,
-  teamAverage: 78,
-  totalEarned: 24750,
-  monthlyChange: 3,
-  weeklyChange: 5.2,
-  earningsChange: 15.3,
-  activeChange: 3,
+interface TeamStats {
+  totalReps: number
+  activeNow: number
+  teamAverage: number
+  totalEarned: number
+  topPerformers: Array<{
+    id: string
+    name: string
+    email: string
+    score: number
+    sessionCount: number
+    earnings: number
+  }>
 }
 
-const topPerformers = [
-  { 
-    id: 1,
-    name: 'Marcus Johnson',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    score: 92,
-    trend: 'up',
-    change: '+8%'
-  },
-  { 
-    id: 2,
-    name: 'Sarah Chen',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    score: 89,
-    trend: 'up',
-    change: '+5%'
-  },
-  { 
-    id: 3,
-    name: 'Alex Rivera',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-    score: 86,
-    trend: 'up',
-    change: '+3%'
-  },
-  { 
-    id: 4,
-    name: 'Emma Wilson',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
-    score: 84,
-    trend: 'down',
-    change: '-2%'
-  },
-  { 
-    id: 5,
-    name: 'John Doe',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-    score: 82,
-    trend: 'up',
-    change: '+1%'
-  },
-]
-
-// Revenue chart data by time period - Limited ranges for better readability
-// Day view: Last 7 days
-const dailyRevenueData = Array.from({ length: 7 }, (_, i) => {
-  const date = new Date()
-  date.setDate(date.getDate() - (6 - i))
-  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
-  const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return {
-    period: dayName,
-    fullPeriod: dateStr,
-    revenue: Math.floor(3000 + Math.random() * 4000),
-    repsWhoSold: Math.floor(5 + Math.random() * 12),
-    totalSales: Math.floor(8 + Math.random() * 20)
-  }
-})
-
-// Week view: Last 6 weeks
-const weeklyRevenueData = Array.from({ length: 6 }, (_, i) => {
-  const weekStart = new Date()
-  weekStart.setDate(weekStart.getDate() - (5 - i) * 7)
-  const weekEnd = new Date(weekStart)
-  weekEnd.setDate(weekEnd.getDate() + 6)
-  return {
-    period: `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-    fullPeriod: `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-    revenue: Math.floor(18000 + Math.random() * 15000),
-    repsWhoSold: Math.floor(12 + Math.random() * 8),
-    totalSales: Math.floor(45 + Math.random() * 60)
-  }
-})
-
-// Month view: Last 6 months
-const getLastSixMonths = () => {
-  const months = []
-  const now = new Date()
-  
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const monthName = date.toLocaleDateString('en-US', { month: 'short' })
-    months.push({
-      period: monthName,
-      fullPeriod: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-      revenue: Math.floor(58000 + Math.random() * 35000),
-      repsWhoSold: Math.floor(16 + Math.random() * 8),
-      totalSales: Math.floor(220 + Math.random() * 130)
-    })
-  }
-  
-  return months
+interface RevenueDataPoint {
+  period: string
+  fullPeriod: string
+  revenue: number
+  repsWhoSold: number
+  totalSales: number
 }
-
-const monthlyRevenueData = getLastSixMonths()
 
 export default function TeamOverview() {
   const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month'>('month')
-  
-  // Get data based on selected time period
-  const getChartData = () => {
-    switch (timePeriod) {
-      case 'day':
-        return dailyRevenueData
-      case 'week':
-        return weeklyRevenueData
-      case 'month':
-        return monthlyRevenueData
-      default:
-        return monthlyRevenueData
-    }
-  }
+  const [stats, setStats] = useState<TeamStats>({
+    totalReps: 0,
+    activeNow: 0,
+    teamAverage: 0,
+    totalEarned: 0,
+    topPerformers: []
+  })
+  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const chartData = getChartData()
+  // Fetch team stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/team/stats')
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data)
+        }
+      } catch (error) {
+        console.error('Error fetching team stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
+  // Fetch revenue data when time period changes
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        const response = await fetch(`/api/team/revenue?period=${timePeriod}`)
+        if (response.ok) {
+          const data = await response.json()
+          setRevenueData(data.revenueData || [])
+        }
+      } catch (error) {
+        console.error('Error fetching revenue data:', error)
+      }
+    }
+
+    fetchRevenueData()
+  }, [timePeriod])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    )
+  }
   
   return (
     <div className="space-y-8">
@@ -144,9 +97,9 @@ export default function TeamOverview() {
           className="metric-card"
         >
           <DollarSign className="w-4 h-4 text-slate-400 mb-4" />
-          <p className="metric-value">${teamData.totalEarned.toLocaleString()}</p>
+          <p className="metric-value">${stats.totalEarned.toLocaleString()}</p>
           <p className="metric-label">Total Earned</p>
-          <p className="metric-change text-green-400">+{teamData.earningsChange}% from last month</p>
+          <p className="metric-change text-slate-400">Virtual earnings from training</p>
         </motion.div>
 
         {/* Team Average */}
@@ -157,9 +110,9 @@ export default function TeamOverview() {
           className="metric-card"
         >
           <Target className="w-4 h-4 text-slate-400 mb-4" />
-          <p className="metric-value">{teamData.teamAverage}%</p>
+          <p className="metric-value">{stats.teamAverage}%</p>
           <p className="metric-label">Team Average</p>
-          <p className="metric-change text-green-400">+{teamData.weeklyChange}% from last week</p>
+          <p className="metric-change text-slate-400">Average performance score</p>
         </motion.div>
 
         {/* Total Reps */}
@@ -170,9 +123,9 @@ export default function TeamOverview() {
           className="metric-card"
         >
           <Users className="w-4 h-4 text-slate-400 mb-4" />
-          <p className="metric-value">{teamData.totalReps}</p>
+          <p className="metric-value">{stats.totalReps}</p>
           <p className="metric-label">Total Reps</p>
-          <p className="metric-change text-green-400">+{teamData.monthlyChange} from last month</p>
+          <p className="metric-change text-slate-400">Team members</p>
         </motion.div>
 
         {/* Active Now */}
@@ -183,9 +136,9 @@ export default function TeamOverview() {
           className="metric-card"
         >
           <Activity className="w-4 h-4 text-green-400 mb-4" />
-          <p className="metric-value">{teamData.activeNow}</p>
+          <p className="metric-value">{stats.activeNow}</p>
           <p className="metric-label">Active Now</p>
-          <p className="metric-change text-slate-400">+{teamData.activeChange} since last hour</p>
+          <p className="metric-change text-slate-400">Active in last hour</p>
         </motion.div>
       </div>
 
@@ -239,71 +192,81 @@ export default function TeamOverview() {
             </div>
           </div>
 
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
-              <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#06B6D4" stopOpacity={0.6} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis 
-                dataKey="period" 
-                stroke="#6B7280"
-                tick={{ fill: '#6B7280', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                angle={timePeriod === 'week' ? -15 : 0}
-                textAnchor={timePeriod === 'week' ? 'end' : 'middle'}
-                height={timePeriod === 'week' ? 50 : 30}
-              />
-              <YAxis 
-                stroke="#6B7280"
-                tick={{ fill: '#6B7280', fontSize: 11 }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-              />
-              <Tooltip 
-                cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload
-                    return (
-                      <div className="bg-[#1e1e30]/95 border border-white/10 rounded-lg p-3 shadow-xl backdrop-blur-sm">
-                        <p className="text-white font-semibold mb-2">
-                          {data.fullPeriod || data.period}
-                        </p>
-                        <div className="space-y-1">
-                          <p className="text-sm text-purple-300">
-                            Revenue: <span className="font-bold text-white">${data.revenue.toLocaleString()}</span>
+          {revenueData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={revenueData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#06B6D4" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis 
+                  dataKey="period" 
+                  stroke="#6B7280"
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  angle={timePeriod === 'week' ? -15 : 0}
+                  textAnchor={timePeriod === 'week' ? 'end' : 'middle'}
+                  height={timePeriod === 'week' ? 50 : 30}
+                />
+                <YAxis 
+                  stroke="#6B7280"
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  tickFormatter={(value) => value >= 1000 ? `$${(value / 1000).toFixed(0)}k` : `$${value}`}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload
+                      return (
+                        <div className="bg-[#1e1e30]/95 border border-white/10 rounded-lg p-3 shadow-xl backdrop-blur-sm">
+                          <p className="text-white font-semibold mb-2">
+                            {data.fullPeriod || data.period}
                           </p>
-                          <p className="text-sm text-cyan-300">
-                            Reps Who Sold: <span className="font-bold text-white">{data.repsWhoSold}</span>
-                          </p>
-                          <p className="text-sm text-green-300">
-                            Total Sales: <span className="font-bold text-white">{data.totalSales}</span>
-                          </p>
+                          <div className="space-y-1">
+                            <p className="text-sm text-purple-300">
+                              Revenue: <span className="font-bold text-white">${data.revenue.toLocaleString()}</span>
+                            </p>
+                            <p className="text-sm text-cyan-300">
+                              Reps Who Sold: <span className="font-bold text-white">{data.repsWhoSold}</span>
+                            </p>
+                            <p className="text-sm text-green-300">
+                              Total Sales: <span className="font-bold text-white">{data.totalSales}</span>
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  }
-                  return null
-                }}
-              />
-              <Bar 
-                dataKey="revenue" 
-                fill="url(#revenueGradient)"
-                radius={[8, 8, 0, 0]}
-                maxBarSize={60}
-                label={{
-                  position: 'top',
-                  fill: '#9CA3AF',
-                  fontSize: 10,
-                  formatter: (value: number) => `$${(value / 1000).toFixed(1)}k`
-                }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+                      )
+                    }
+                    return null
+                  }}
+                />
+                <Bar 
+                  dataKey="revenue" 
+                  fill="url(#revenueGradient)"
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={60}
+                  label={{
+                    position: 'top',
+                    fill: '#9CA3AF',
+                    fontSize: 10,
+                    formatter: (value: number) => value >= 1000 ? `$${(value / 1000).toFixed(1)}k` : `$${value}`
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[350px] text-slate-400">
+              <div className="text-center">
+                <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No revenue data available yet</p>
+                <p className="text-sm mt-1">Start training sessions to see performance metrics</p>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* RIGHT COLUMN - Top Performers (40% / 2 cols) */}
@@ -314,45 +277,54 @@ export default function TeamOverview() {
           className="lg:col-span-2 overview-card p-6"
         >
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white">Top Performers This Week</h3>
-            <p className="text-sm text-slate-400 mt-1">Highest scoring reps</p>
+            <h3 className="text-lg font-semibold text-white">Top Performers</h3>
+            <p className="text-sm text-slate-400 mt-1">Highest scoring reps (last 30 days)</p>
           </div>
 
-          <ul className="top-performers space-y-0">
-            {topPerformers.map((performer, index) => (
-              <motion.li
-                key={performer.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.6 + index * 0.05 }}
-                className="performer-item"
-              >
-                <div className="flex items-center flex-1 gap-3">
-                  <span className="text-sm font-medium text-slate-500 w-6">{index + 1}</span>
-                  <img
-                    src={performer.avatar}
-                    alt={performer.name}
-                    className="w-8 h-8 rounded-full object-cover ring-2 ring-white/5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{performer.name}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-white">{performer.score}%</span>
-                  <span className={`text-xs font-medium ${
-                    performer.trend === 'up' ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {performer.change}
-                  </span>
-                </div>
-              </motion.li>
-            ))}
-          </ul>
+          {stats.topPerformers.length > 0 ? (
+            <>
+              <ul className="top-performers space-y-0">
+                {stats.topPerformers.map((performer, index) => (
+                  <motion.li
+                    key={performer.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.6 + index * 0.05 }}
+                    className="performer-item"
+                  >
+                    <div className="flex items-center flex-1 gap-3">
+                      <span className="text-sm font-medium text-slate-500 w-6">{index + 1}</span>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold ring-2 ring-white/5">
+                        {performer.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{performer.name}</p>
+                        <p className="text-xs text-slate-400">{performer.sessionCount} sessions</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-white">{performer.score}%</span>
+                    </div>
+                  </motion.li>
+                ))}
+              </ul>
 
-          <button className="w-full mt-6 py-2 text-sm text-slate-400 hover:text-white transition-colors">
-            View All Reps →
-          </button>
+              <Link 
+                href="/manager?tab=reps"
+                className="block w-full mt-6 py-2 text-sm text-center text-slate-400 hover:text-white transition-colors"
+              >
+                View All Reps →
+              </Link>
+            </>
+          ) : (
+            <div className="flex items-center justify-center py-12 text-slate-400">
+              <div className="text-center">
+                <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No performance data yet</p>
+                <p className="text-sm mt-1">Team members need to complete training sessions</p>
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -363,20 +335,20 @@ export default function TeamOverview() {
         transition={{ duration: 0.4, delay: 0.7 }}
         className="quick-actions"
       >
-        <button className="action-card">
+        <Link href="/manager?tab=messages" className="action-card">
           <Mail className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
           <p className="text-sm font-medium text-white">Send Team Message</p>
-        </button>
+        </Link>
 
-        <button className="action-card">
-          <Calendar className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
-          <p className="text-sm font-medium text-white">Schedule Training</p>
-        </button>
+        <Link href="/team/invite" className="action-card">
+          <UserPlus className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
+          <p className="text-sm font-medium text-white">Invite Teammate</p>
+        </Link>
 
-        <button className="action-card">
+        <Link href="/manager?tab=analytics" className="action-card">
           <Trophy className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
-          <p className="text-sm font-medium text-white">Create Challenge</p>
-        </button>
+          <p className="text-sm font-medium text-white">View Analytics</p>
+        </Link>
 
         <button className="action-card">
           <Download className="w-5 h-5 text-slate-400 mb-3 mx-auto" />

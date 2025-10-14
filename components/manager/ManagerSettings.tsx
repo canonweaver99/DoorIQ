@@ -1,15 +1,41 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Bell, Zap, Shield, Plus, Trash, Key } from 'lucide-react'
+import { Users, Bell, Zap, Shield, Plus, Trash, Key, UserPlus, Target } from 'lucide-react'
+import Link from 'next/link'
 
-const teamMembers = [
-  { id: 1, name: 'Sarah Johnson', role: 'Manager', email: 'sarah.j@dooriq.com', permissions: 'Full Access' },
-  { id: 2, name: 'Marcus Johnson', role: 'Senior Rep', email: 'marcus.j@dooriq.com', permissions: 'Rep Access' },
-  { id: 3, name: 'David Martinez', role: 'Rep', email: 'david.m@dooriq.com', permissions: 'Rep Access' },
-]
+interface TeamMember {
+  id: string
+  full_name: string
+  email: string
+  role: string
+  virtual_earnings: number
+  created_at: string
+}
 
 export default function ManagerSettings() {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        const response = await fetch('/api/team/members')
+        if (response.ok) {
+          const data = await response.json()
+          setTeamMembers(data.members || [])
+        }
+      } catch (error) {
+        console.error('Error fetching team members:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTeamMembers()
+  }, [])
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -37,29 +63,50 @@ export default function ManagerSettings() {
             </div>
           </div>
 
-          <div className="space-y-3 mb-4">
-            {teamMembers.map((member, index) => (
-              <div key={member.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-white">{member.name}</p>
-                  <p className="text-xs text-slate-400">{member.email}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-xs font-medium text-purple-300">
-                    {member.role}
-                  </span>
-                  <button className="p-1 hover:bg-white/10 rounded transition-colors">
-                    <Trash className="w-4 h-4 text-red-400" />
-                  </button>
-                </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+            </div>
+          ) : teamMembers.length > 0 ? (
+            <>
+              <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
+                {teamMembers.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{member.full_name}</p>
+                      <p className="text-xs text-slate-400 truncate">{member.email}</p>
+                      <p className="text-xs text-green-400 mt-1">${member.virtual_earnings.toLocaleString()} earned</p>
+                    </div>
+                    <div className="flex items-center gap-3 ml-3">
+                      <span className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-xs font-medium text-purple-300 capitalize">
+                        {member.role}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white transition-all">
-            <Plus className="w-4 h-4" />
-            Add Team Member
-          </button>
+              <Link
+                href="/team/invite"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-medium text-white transition-all shadow-lg shadow-purple-600/30"
+              >
+                <UserPlus className="w-4 h-4" />
+                Invite Team Member
+              </Link>
+            </>
+          ) : (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 mx-auto mb-3 text-slate-600" />
+              <p className="text-slate-400 mb-4">No team members yet</p>
+              <Link
+                href="/team/invite"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-medium text-white transition-all shadow-lg shadow-purple-600/30"
+              >
+                <UserPlus className="w-4 h-4" />
+                Invite Your First Team Member
+              </Link>
+            </div>
+          )}
         </motion.div>
 
         {/* Notification Settings */}
@@ -171,24 +218,20 @@ export default function ManagerSettings() {
 
           <div className="space-y-3">
             {[
-              { name: 'Salesforce CRM', status: 'Connected', color: 'green' },
-              { name: 'Google Calendar', status: 'Connected', color: 'green' },
+              { name: 'Salesforce CRM', status: 'Not Connected', color: 'slate' },
+              { name: 'Google Calendar', status: 'Not Connected', color: 'slate' },
               { name: 'Slack', status: 'Not Connected', color: 'slate' },
               { name: 'Zapier', status: 'Not Connected', color: 'slate' },
             ].map((integration, idx) => (
               <div key={idx} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
                 <div>
                   <p className="text-sm font-semibold text-white">{integration.name}</p>
-                  <p className={`text-xs ${integration.status === 'Connected' ? 'text-green-400' : 'text-slate-400'}`}>
+                  <p className="text-xs text-slate-400">
                     {integration.status}
                   </p>
                 </div>
-                <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  integration.status === 'Connected'
-                    ? 'bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30'
-                    : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30'
-                }`}>
-                  {integration.status === 'Connected' ? 'Disconnect' : 'Connect'}
+                <button className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30">
+                  Connect
                 </button>
               </div>
             ))}
@@ -211,4 +254,3 @@ export default function ManagerSettings() {
     </div>
   )
 }
-
