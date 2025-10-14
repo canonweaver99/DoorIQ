@@ -379,8 +379,8 @@ function TrainerPageContent() {
     return () => observer.disconnect()
   }, [])
 
-  // Audio recording hook
-  const { isRecording, startRecording, stopRecording } = useSessionRecording(sessionId)
+  // Audio recording is now handled inside ElevenLabsConversation component
+  // Removed duplicate hook to prevent conflicts
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const mediaStream = useRef<MediaStream | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
@@ -1016,8 +1016,8 @@ function TrainerPageContent() {
     }
 
     try {
-      // Stop the recording system
-      stopRecording()
+      // Audio recording is now stopped automatically by ElevenLabsConversation onDisconnect
+      // No need to manually stop here
 
       if (signedUrlAbortRef.current) {
         signedUrlAbortRef.current.abort()
