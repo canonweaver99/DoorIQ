@@ -48,23 +48,31 @@ export default function SessionTimeline({
   
   // Animate tooltips in sequence on mount
   useEffect(() => {
+    console.log('🎬 Timeline mounted - starting intro animation')
+    console.log('📊 Events received:', events.length)
+    console.log('📊 Events data:', events)
+    
     // Show first tooltip
     setCurrentlyAnimatingDot(0)
+    console.log('👉 Showing tooltip 0')
     
     // Show second tooltip after 1 second
     const timer1 = setTimeout(() => {
       setCurrentlyAnimatingDot(1)
+      console.log('👉 Showing tooltip 1')
     }, 1000)
     
     // Show third tooltip after 2 seconds
     const timer2 = setTimeout(() => {
       setCurrentlyAnimatingDot(2)
+      console.log('👉 Showing tooltip 2')
     }, 2000)
     
     // Hide all tooltips after 3 seconds
     const timer3 = setTimeout(() => {
       setCurrentlyAnimatingDot(null)
       setShowingIntroAnimation(false)
+      console.log('✅ Intro animation complete - tooltips now only show on hover')
     }, 3500)
     
     return () => {
