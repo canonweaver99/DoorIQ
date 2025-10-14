@@ -949,11 +949,11 @@ function TrainerPageContent() {
       setLoading(false)
       
       // Start recording after session is active
+      // Audio recording is now started automatically by ElevenLabsConversation onConnect
       if (newId) {
-        console.log('🎙️ Starting audio recording...')
-        startRecording()
+        console.log('✅ Session created with ID:', newId)
       } else {
-        console.warn('⚠️ No session ID, skipping recording')
+        console.warn('⚠️ No session ID returned')
       }
 
       durationInterval.current = setInterval(() => {
