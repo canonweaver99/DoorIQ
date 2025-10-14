@@ -45,14 +45,20 @@ export async function GET(request: Request) {
 
     switch (period) {
       case 'day':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days
+        // Show last 7 days with hourly data from 6am-midnight
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
         break
       case 'week':
-        startDate = new Date(now.getTime() - 6 * 7 * 24 * 60 * 60 * 1000) // 6 weeks
+        // Show last 8 weeks, Monday-Sunday
+        const weeksBack = 8
+        const mondayOfThisWeek = new Date(now)
+        mondayOfThisWeek.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1))
+        startDate = new Date(mondayOfThisWeek.getTime() - (weeksBack - 1) * 7 * 24 * 60 * 60 * 1000)
         break
       case 'month':
       default:
-        startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1) // 6 months
+        // Show current month plus last 5 months (6 total)
+        startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1)
         break
     }
 
@@ -79,20 +85,37 @@ export async function GET(request: Request) {
 
       switch (period) {
         case 'day':
-          periodKey = date.toLocaleDateString('en-US', { weekday: 'short' })
-          fullPeriod = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          // Group by hour from 6am-midnight
+          const hour = date.getHours()
+          if (hour < 6) {
+            // Sessions before 6am count as previous day's midnight hour
+            const prevDay = new Date(date)
+            prevDay.setDate(prevDay.getDate() - 1)
+            periodKey = `${prevDay.toLocaleDateString('en-US', { weekday: 'short' })} 11PM`
+            fullPeriod = `${prevDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} 11:00 PM`
+          } else {
+            const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+            const period = hour >= 12 ? 'PM' : 'AM'
+            periodKey = `${date.toLocaleDateString('en-US', { weekday: 'short' })} ${displayHour}${period}`
+            fullPeriod = `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${displayHour}:00 ${period}`
+          }
           break
         case 'week':
-          const weekStart = new Date(date)
-          weekStart.setDate(date.getDate() - date.getDay())
-          periodKey = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-          const weekEnd = new Date(weekStart)
-          weekEnd.setDate(weekEnd.getDate() + 6)
-          fullPeriod = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+          // Group by Monday-Sunday weeks
+          const mondayOfWeek = new Date(date)
+          const daysSinceMonday = date.getDay() === 0 ? 6 : date.getDay() - 1
+          mondayOfWeek.setDate(date.getDate() - daysSinceMonday)
+          mondayOfWeek.setHours(0, 0, 0, 0)
+          
+          const sundayOfWeek = new Date(mondayOfWeek)
+          sundayOfWeek.setDate(sundayOfWeek.getDate() + 6)
+          
+          periodKey = `Week of ${mondayOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+          fullPeriod = `${mondayOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${sundayOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
           break
         case 'month':
         default:
-          periodKey = date.toLocaleDateString('en-US', { month: 'short' })
+          periodKey = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
           fullPeriod = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
           break
       }

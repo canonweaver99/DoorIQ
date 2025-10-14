@@ -60,16 +60,15 @@ export default function RepManagement() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [actionMenuRepId])
 
-  const handleAction = (action: 'message' | 'promote' | 'profile', repId: string) => {
+  const handleAction = (action: 'message' | 'profile', repId: string) => {
     switch (action) {
       case 'message':
-        // placeholder: wire up messaging flow when backend available
-        break
-      case 'promote':
-        // placeholder: integrate promotion flow when role management is ready
+        // Navigate to messages tab for this rep
+        window.location.href = `/manager?tab=messages&rep=${repId}`
         break
       case 'profile':
-        setSelectedRep(reps.find((rep) => rep.id === repId) ?? null)
+        // Navigate to rep's individual dashboard
+        window.location.href = `/manager/rep/${repId}`
         break
     }
     setActionMenuRepId(null)
@@ -362,13 +361,8 @@ export default function RepManagement() {
                             icon: <MessageSquare className="w-4 h-4 text-purple-300" />,
                           },
                           {
-                            key: 'promote' as const,
-                            label: 'Promote to Manager',
-                            icon: <UserCheck className="w-4 h-4 text-blue-300" />,
-                          },
-                          {
                             key: 'profile' as const,
-                            label: 'View Profile',
+                            label: 'View Dashboard',
                             icon: <Eye className="w-4 h-4 text-green-300" />,
                           },
                         ].map((item) => (

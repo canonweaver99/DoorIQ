@@ -6,6 +6,7 @@ import {
   Building2, Package, DollarSign, MessageCircle, ClipboardCheck, Upload, 
   FileText, Save, Plus, Trash2, Edit2, Check, X, Target, Zap
 } from 'lucide-react'
+import { useToast } from '@/components/ui/toast'
 
 type Tab = 'company' | 'pricing' | 'objections' | 'grading' | 'documents'
 
@@ -56,6 +57,7 @@ interface KnowledgeDocument {
 }
 
 export default function KnowledgeBase() {
+  const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<Tab>('company')
   const [config, setConfig] = useState<TeamGradingConfig>({
     company_values: [],
@@ -124,14 +126,22 @@ export default function KnowledgeBase() {
       const data = await response.json()
 
       if (response.ok) {
-        alert('Configuration saved successfully!')
+        showToast({
+          type: 'success',
+          title: 'Configuration Saved!',
+          message: 'Team grading configuration has been updated successfully.'
+        })
       } else {
         console.error('Save error:', data)
         throw new Error(data.details || data.error || 'Failed to save configuration')
       }
     } catch (error: any) {
       console.error('Error saving config:', error)
-      alert(`Failed to save configuration: ${error.message || 'Unknown error'}`)
+      showToast({
+        type: 'error',
+        title: 'Save Failed',
+        message: error.message || 'Failed to save configuration. Please try again.'
+      })
     } finally {
       setSaving(false)
     }
@@ -180,10 +190,18 @@ export default function KnowledgeBase() {
 
       // Reload documents
       await loadData()
-      alert('Files uploaded successfully!')
+      showToast({
+        type: 'success',
+        title: 'Files Uploaded!',
+        message: `Successfully uploaded ${Array.from(files).length} file(s).`
+      })
     } catch (error) {
       console.error('Upload error:', error)
-      alert('Failed to upload files')
+      showToast({
+        type: 'error',
+        title: 'Upload Failed',
+        message: 'Failed to upload files. Please try again.'
+      })
     } finally {
       setUploading(false)
       if (e.target) e.target.value = ''
@@ -200,10 +218,19 @@ export default function KnowledgeBase() {
 
       if (response.ok) {
         setDocuments(docs => docs.filter(d => d.id !== id))
+        showToast({
+          type: 'success',
+          title: 'Document Deleted',
+          message: 'Document has been removed successfully.'
+        })
       }
     } catch (error) {
       console.error('Delete error:', error)
-      alert('Failed to delete document')
+      showToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: 'Failed to delete document. Please try again.'
+      })
     }
   }
 
@@ -530,12 +557,41 @@ function GradingTab({ config, setConfig }: { config: TeamGradingConfig; setConfi
     introduction_score: 10
   }
 
-  const updateWeight = (key: string, value: number) => {
+  const updateWeight = (key: string, newValue: number) => {
+    const currentWeights = { ...weights }
+    const oldValue = currentWeights[key as keyof typeof weights]
+    const difference = newValue - oldValue
+    
+    // Update the changed weight
+    currentWeights[key as keyof typeof weights] = newValue
+    
+    // Distribute the difference across other weights proportionally
+    const otherKeys = Object.keys(currentWeights).filter(k => k !== key)
+    const totalOtherWeights = otherKeys.reduce((sum, k) => sum + currentWeights[k as keyof typeof weights], 0)
+    
+    if (totalOtherWeights > 0) {
+      otherKeys.forEach(k => {
+        const proportion = currentWeights[k as keyof typeof weights] / totalOtherWeights
+        const adjustment = -difference * proportion
+        currentWeights[k as keyof typeof weights] = Math.max(0, Math.round(currentWeights[k as keyof typeof weights] + adjustment))
+      })
+    }
+    
+    // Ensure total is exactly 100
+    const total = Object.values(currentWeights).reduce((sum, val) => sum + val, 0)
+    if (total !== 100) {
+      const firstOtherKey = otherKeys[0]
+      if (firstOtherKey) {
+        currentWeights[firstOtherKey as keyof typeof weights] += (100 - total)
+        currentWeights[firstOtherKey as keyof typeof weights] = Math.max(0, currentWeights[firstOtherKey as keyof typeof weights])
+      }
+    }
+
     setConfig({
       ...config,
       custom_grading_rubric: {
         ...config.custom_grading_rubric!,
-        weights: { ...weights, [key]: value }
+        weights: currentWeights
       }
     })
   }

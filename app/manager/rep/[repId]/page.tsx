@@ -1,387 +1,370 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Database } from '@/lib/supabase/database.types'
-import { useRouter, useParams } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { ArrowLeft, User, TrendingUp, Calendar, Target, Award, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
-import { 
-  ArrowLeft, Calendar, Clock, TrendingUp, MessageSquare, 
-  DollarSign, Target, ChevronRight, Send, AlertCircle 
-} from 'lucide-react'
-import { format } from 'date-fns'
+import { createClient } from '@/lib/supabase/client'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
 
-type User = Database['public']['Tables']['users']['Row']
-type Session = Database['public']['Tables']['live_sessions']['Row']
-type Message = Database['public']['Tables']['messages']['Row'] & {
-  sender: { full_name: string }
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
+interface RepProfile {
+  id: string
+  full_name: string
+  email: string
+  role: string
+  virtual_earnings: number
+  created_at: string
+  rep_id: string
+  avatar_url?: string
 }
 
-export default function RepDetailPage() {
-  const router = useRouter()
-  const params = useParams()
-  const repId = params.repId as string
-  
+interface SessionData {
+  id: string
+  overall_score: number
+  virtual_earnings: number
+  created_at: string
+  agent_name: string
+  duration_seconds: number
+  sale_closed: boolean
+}
+
+interface RepStats {
+  totalSessions: number
+  averageScore: number
+  totalEarnings: number
+  bestScore: number
+  recentTrend: number
+  activeDays: number
+  totalCallTime: number
+}
+
+export default function RepProfilePage({ params }: { params: { repId: string } }) {
+  const [rep, setRep] = useState<RepProfile | null>(null)
+  const [sessions, setSessions] = useState<SessionData[]>([])
+  const [stats, setStats] = useState<RepStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [rep, setRep] = useState<User | null>(null)
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [messages, setMessages] = useState<Message[]>([])
-  const [messageText, setMessageText] = useState('')
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null)
-  const [sending, setSending] = useState(false)
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('month')
+  const supabase = createClient()
 
   useEffect(() => {
-    checkAccess()
-  }, [repId])
+    loadRepData()
+  }, [params.repId])
 
-  const checkAccess = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+  const loadRepData = async () => {
+    if (!supabase) return
     
-    if (!user) {
-      router.push('/auth/login')
-      return
+    try {
+      // Get rep profile
+      const { data: repData, error: repError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', params.repId)
+        .single()
+
+      if (repError || !repData) {
+        console.error('Rep not found:', repError)
+        return
+      }
+
+      setRep(repData)
+
+      // Get rep sessions
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('live_sessions')
+        .select('id, overall_score, virtual_earnings, created_at, agent_name, duration_seconds, sale_closed')
+        .eq('user_id', params.repId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (sessionError) {
+        console.error('Sessions error:', sessionError)
+      } else {
+        setSessions(sessionData || [])
+      }
+
+      // Calculate stats
+      if (sessionData && sessionData.length > 0) {
+        const validSessions = sessionData.filter(s => s.overall_score !== null)
+        const totalSessions = validSessions.length
+        const averageScore = validSessions.length > 0 
+          ? Math.round(validSessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / validSessions.length)
+          : 0
+        const totalEarnings = sessionData.reduce((sum, s) => sum + (s.virtual_earnings || 0), 0)
+        const bestScore = Math.max(...validSessions.map(s => s.overall_score || 0))
+        
+        // Calculate trend (last 5 vs previous 5)
+        const last5 = validSessions.slice(0, 5)
+        const previous5 = validSessions.slice(5, 10)
+        let recentTrend = 0
+        if (last5.length >= 3 && previous5.length >= 3) {
+          const last5Avg = last5.reduce((sum, s) => sum + (s.overall_score || 0), 0) / last5.length
+          const prev5Avg = previous5.reduce((sum, s) => sum + (s.overall_score || 0), 0) / previous5.length
+          recentTrend = Math.round(last5Avg - prev5Avg)
+        }
+        
+        const activeDays = new Set(sessionData.map(s => s.created_at.split('T')[0])).size
+        const totalCallTime = sessionData.reduce((sum, s) => sum + (s.duration_seconds || 0), 0)
+
+        setStats({
+          totalSessions,
+          averageScore,
+          totalEarnings,
+          bestScore,
+          recentTrend,
+          activeDays,
+          totalCallTime
+        })
+      }
+    } catch (error) {
+      console.error('Error loading rep data:', error)
+    } finally {
+      setLoading(false)
     }
-
-    const { data: userData } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    const current = userData as any
-    if (!current || (current.role !== 'manager' && current.role !== 'admin')) {
-      router.push('/')
-      return
-    }
-
-    setCurrentUser(current)
-    fetchRepData()
   }
 
-  const fetchRepData = async () => {
-    const supabase = createClient()
-    
-    // Fetch rep info
-    const { data: repData } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', repId)
-      .single()
-    
-    if (!repData) {
-      router.push('/manager')
-      return
-    }
-    
-    setRep(repData as any)
-    
-    // Fetch sessions
-    const { data: sessionsData } = await supabase
-      .from('live_sessions')
-      .select('*')
-      .eq('user_id', repId)
-      .order('created_at', { ascending: false })
-    
-    setSessions((sessionsData || []) as any)
-    
-    // Fetch messages
-    const { data: messagesData } = await supabase
-      .from('messages')
-      .select(`
-        *,
-        sender:sender_id(full_name)
-      `)
-      .or(`sender_id.eq.${repId},recipient_id.eq.${repId}`)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    
-    setMessages((messagesData as any) || [])
-    
-    // Mark messages as read
-    if (currentUser) {
-      await (supabase as any)
-        .from('messages')
-        .update({ is_read: true })
-        .eq('sender_id', repId)
-        .eq('recipient_id', (currentUser as any).id)
-    }
-    
-    setLoading(false)
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-400'
+    if (score >= 60) return 'text-yellow-400'
+    return 'text-red-400'
   }
 
-  const sendMessage = async () => {
-    if (!messageText.trim() || !currentUser || !rep) return
-
-    setSending(true)
-    const supabase = createClient()
-    
-    const { error } = await (supabase as any)
-      .from('messages')
-      .insert({
-        sender_id: (currentUser as any).id,
-        recipient_id: (rep as any).id,
-        session_id: (selectedSession as any)?.id || (sessions[0] as any)?.id || '',
-        message: messageText.trim()
-      })
-
-    if (!error) {
-      setMessageText('')
-      setSelectedSession(null)
-      fetchRepData() // Refresh messages
-    } else {
-      alert('Failed to send message')
-    }
-    
-    setSending(false)
-  }
-
-  const calculateStats = () => {
-    const scoredSessions = sessions.filter(s => s.overall_score !== null)
-    const avgScore = scoredSessions.length > 0
-      ? Math.round(scoredSessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / scoredSessions.length)
-      : 0
-    
-    const totalEarnings = sessions.reduce((sum, s) => sum + (s.virtual_earnings || 0), 0)
-    
-    const recentTrend = sessions.length >= 2 && sessions[0].overall_score && sessions[1].overall_score
-      ? sessions[0].overall_score - sessions[1].overall_score
-      : 0
-    
-    return { avgScore, totalEarnings, recentTrend, totalSessions: sessions.length }
-  }
-
-  const getScoreColor = (score: number | null) => {
-    if (!score) return 'text-slate-400'
-    if (score >= 80) return 'text-green-500'
-    if (score >= 60) return 'text-yellow-500'
-    return 'text-red-500'
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    if (hours > 0) return `${hours}h ${minutes}m`
+    return `${minutes}m`
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
 
-  const stats = calculateStats()
+  if (!rep) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e] flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white mb-4">Rep Not Found</h1>
+          <Link 
+            href="/manager"
+            className="text-purple-400 hover:text-purple-300 transition-colors"
+          >
+            ← Back to Manager Panel
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Prepare chart data for recent sessions
+  const chartData = sessions.slice(0, 10).reverse().map((session, index) => ({
+    session: `Session ${sessions.length - index}`,
+    score: session.overall_score || 0,
+    earnings: session.virtual_earnings || 0,
+    date: new Date(session.created_at).toLocaleDateString()
+  }))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e]">
+      <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/manager"
-            className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Link>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">{rep?.full_name}</h1>
-              <p className="text-slate-400">{rep?.email}</p>
-            </div>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/manager"
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Manager Panel
+            </Link>
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-slate-400">Average Score</h3>
-              <Target className="w-5 h-5 text-blue-500" />
+        {/* Rep Profile Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 mb-8"
+        >
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+              {rep.full_name.charAt(0).toUpperCase()}
             </div>
-            <p className="text-3xl font-bold text-white">{stats.avgScore}%</p>
-            {stats.recentTrend !== 0 && (
-              <p className={`text-sm mt-1 ${stats.recentTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {stats.recentTrend > 0 ? '+' : ''}{stats.recentTrend}% from last session
-              </p>
-            )}
-          </div>
-          
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-slate-400">Total Earnings</h3>
-              <DollarSign className="w-5 h-5 text-green-500" />
-            </div>
-            <p className="text-3xl font-bold text-white">${stats.totalEarnings.toFixed(2)}</p>
-          </div>
-          
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-slate-400">Sessions</h3>
-              <Calendar className="w-5 h-5 text-indigo-500" />
-            </div>
-            <p className="text-3xl font-bold text-white">{stats.totalSessions}</p>
-          </div>
-          
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-slate-400">Messages</h3>
-              <MessageSquare className="w-5 h-5 text-purple-500" />
-            </div>
-            <p className="text-3xl font-bold text-white">{messages.length}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Sessions List */}
-          <div className="lg:col-span-2">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700">
-              <div className="px-6 py-4 border-b border-slate-700">
-                <h2 className="text-xl font-semibold text-white">Training Sessions</h2>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-white">{rep.full_name}</h1>
+              <p className="text-slate-400">{rep.email}</p>
+              <div className="flex items-center gap-4 mt-2">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm">
+                  <User className="w-4 h-4" />
+                  {rep.role}
+                </span>
+                <span className="text-sm text-slate-400">
+                  Rep ID: {rep.rep_id}
+                </span>
+                <span className="text-sm text-slate-400">
+                  Joined {new Date(rep.created_at).toLocaleDateString()}
+                </span>
               </div>
-              
-              <div className="divide-y divide-slate-700">
-                {sessions.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400">
-                    No sessions found
-                  </div>
-                ) : (
-                  sessions.map((session) => (
-                    <div key={session.id} className="p-6 hover:bg-slate-800/30 transition-colors">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="text-sm text-slate-400">
-                            {format(new Date(session.created_at), 'MMM d, yyyy h:mm a')}
-                          </p>
-                          {session.duration_seconds && (
-                            <p className="text-xs text-slate-500 mt-1">
-                              Duration: {Math.round(session.duration_seconds / 60)} minutes
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-2xl font-bold ${getScoreColor(session.overall_score)}`}>
-                            {session.overall_score || '--'}%
-                          </p>
-                          {session.virtual_earnings !== null && session.virtual_earnings > 0 && (
-                            <p className="text-sm text-green-400 mt-1">
-                              ${session.virtual_earnings.toFixed(2)} earned
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Score Breakdown */}
-                      <div className="grid grid-cols-4 gap-2 mb-3">
-                        <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-xs text-slate-400">Rapport</p>
-                          <p className={`text-sm font-medium ${getScoreColor(session.rapport_score)}`}>
-                            {session.rapport_score || '--'}%
-                          </p>
-                        </div>
-                        <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-xs text-slate-400">Objections</p>
-                          <p className={`text-sm font-medium ${getScoreColor(session.objection_handling_score)}`}>
-                            {session.objection_handling_score || '--'}%
-                          </p>
-                        </div>
-                        <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-xs text-slate-400">Safety</p>
-                          <p className={`text-sm font-medium ${getScoreColor(session.safety_score)}`}>
-                            {session.safety_score || '--'}%
-                          </p>
-                        </div>
-                        <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-xs text-slate-400">Closing</p>
-                          <p className={`text-sm font-medium ${getScoreColor(session.close_effectiveness_score)}`}>
-                            {session.close_effectiveness_score || '--'}%
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex space-x-3">
-                        <Link
-                          href={`/analytics/${session.id}`}
-                          className="text-sm text-blue-400 hover:text-blue-300"
-                        >
-                          View Details →
-                        </Link>
-                        <button
-                          onClick={() => setSelectedSession(session)}
-                          className="text-sm text-indigo-400 hover:text-indigo-300"
-                        >
-                          Send Feedback →
-                        </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            >
+              <DollarSign className="w-8 h-8 text-green-400 mb-3" />
+              <p className="text-2xl font-bold text-white">${stats.totalEarnings.toFixed(2)}</p>
+              <p className="text-sm text-slate-400">Total Earnings</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            >
+              <Target className="w-8 h-8 text-purple-400 mb-3" />
+              <p className={`text-2xl font-bold ${getScoreColor(stats.averageScore)}`}>
+                {stats.averageScore}%
+              </p>
+              <p className="text-sm text-slate-400">Average Score</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            >
+              <Award className="w-8 h-8 text-yellow-400 mb-3" />
+              <p className={`text-2xl font-bold ${getScoreColor(stats.bestScore)}`}>
+                {stats.bestScore}%
+              </p>
+              <p className="text-sm text-slate-400">Best Score</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            >
+              <Calendar className="w-8 h-8 text-blue-400 mb-3" />
+              <p className="text-2xl font-bold text-white">{stats.totalSessions}</p>
+              <p className="text-sm text-slate-400">Total Sessions</p>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Performance Chart */}
+        {chartData.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 mb-8"
+          >
+            <h2 className="text-xl font-semibold text-white mb-6">Recent Performance</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis 
+                  dataKey="session" 
+                  stroke="#6B7280"
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                />
+                <YAxis 
+                  stroke="#6B7280"
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: '#1e1e30',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    color: 'white'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#a855f7" 
+                  strokeWidth={2}
+                  dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </motion.div>
+        )}
+
+        {/* Recent Sessions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+        >
+          <h2 className="text-xl font-semibold text-white mb-6">Recent Sessions</h2>
+          
+          {sessions.length > 0 ? (
+            <div className="space-y-3">
+              {sessions.slice(0, 10).map((session, index) => (
+                <Link
+                  key={session.id}
+                  href={`/analytics/${session.id}`}
+                  className="block p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">
+                          {session.agent_name || `Session ${index + 1}`}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {new Date(session.created_at).toLocaleDateString()} • {formatDuration(session.duration_seconds || 0)}
+                        </p>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Messaging Panel */}
-          <div className="lg:col-span-1">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 sticky top-20">
-              <div className="px-6 py-4 border-b border-slate-700">
-                <h2 className="text-xl font-semibold text-white">Messages</h2>
-              </div>
-              
-              {/* Message Input */}
-              <div className="p-4 border-b border-slate-700">
-                {selectedSession && (
-                  <div className="mb-3 p-2 bg-slate-900/50 rounded text-xs text-slate-400">
-                    Regarding session from {format(new Date(selectedSession.created_at), 'MMM d')}
-                  </div>
-                )}
-                <textarea
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Send feedback or coaching tips..."
-                  className="w-full h-24 px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!messageText.trim() || sending}
-                  className="mt-2 w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  {sending ? 'Sending...' : 'Send Message'}
-                </button>
-              </div>
-              
-              {/* Messages List */}
-              <div className="max-h-96 overflow-y-auto">
-                {messages.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400 text-sm">
-                    No messages yet
-                  </div>
-                ) : (
-                  <div className="p-4 space-y-3">
-                    {messages.map((message) => {
-                      const isFromManager = message.sender_id === currentUser?.id
-                      
-                      return (
-                        <div
-                          key={message.id}
-                          className={`rounded-lg p-3 ${
-                            isFromManager
-                              ? 'bg-blue-600/20 ml-4'
-                              : 'bg-slate-900/50 mr-4'
-                          }`}
-                        >
-                          <p className="text-xs text-slate-400 mb-1">
-                            {isFromManager ? 'You' : message.sender.full_name} •{' '}
-                            {format(new Date(message.created_at), 'MMM d, h:mm a')}
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className={`text-lg font-bold ${getScoreColor(session.overall_score || 0)}`}>
+                          {session.overall_score || 0}%
+                        </p>
+                        {session.sale_closed && (
+                          <p className="text-xs text-green-400">✓ Sale Closed</p>
+                        )}
+                      </div>
+                      {session.virtual_earnings && session.virtual_earnings > 0 && (
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-green-400">
+                            +${session.virtual_earnings.toFixed(2)}
                           </p>
-                          <p className="text-sm text-white">{message.message}</p>
                         </div>
-                      )
-                    })}
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
+                </Link>
+              ))}
             </div>
-          </div>
-        </div>
+          ) : (
+            <div className="text-center py-12">
+              <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400">No sessions yet</p>
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   )

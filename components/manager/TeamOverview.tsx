@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import { Users, TrendingUp, Target, Mail, Calendar, Trophy, Download, Activity, DollarSign, UserPlus } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import Link from 'next/link'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 interface TeamStats {
   totalReps: number
@@ -40,6 +42,7 @@ export default function TeamOverview() {
   })
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
   const [loading, setLoading] = useState(true)
+  const [exportingPDF, setExportingPDF] = useState(false)
 
   // Fetch team stats
   useEffect(() => {
@@ -76,6 +79,89 @@ export default function TeamOverview() {
 
     fetchRevenueData()
   }, [timePeriod])
+
+  const exportToPDF = async () => {
+    setExportingPDF(true)
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      
+      // Add header
+      pdf.setFontSize(20)
+      pdf.setTextColor(139, 92, 246) // Purple
+      pdf.text('DoorIQ Team Performance Report', 20, 25)
+      
+      pdf.setFontSize(12)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, 20, 35)
+      
+      let yPosition = 50
+      
+      // Add team stats
+      pdf.setFontSize(16)
+      pdf.setTextColor(0, 0, 0)
+      pdf.text('Team Statistics', 20, yPosition)
+      yPosition += 15
+      
+      pdf.setFontSize(11)
+      pdf.text(`Total Earned: $${stats.totalEarned.toLocaleString()}`, 20, yPosition)
+      yPosition += 8
+      pdf.text(`Team Average: ${stats.teamAverage}%`, 20, yPosition)
+      yPosition += 8
+      pdf.text(`Total Reps: ${stats.totalReps}`, 20, yPosition)
+      yPosition += 8
+      pdf.text(`Currently Active: ${stats.activeNow}`, 20, yPosition)
+      yPosition += 20
+      
+      // Add top performers
+      if (stats.topPerformers.length > 0) {
+        pdf.setFontSize(16)
+        pdf.setTextColor(0, 0, 0)
+        pdf.text('Top Performers (Last 30 Days)', 20, yPosition)
+        yPosition += 15
+        
+        stats.topPerformers.forEach((performer, index) => {
+          pdf.setFontSize(11)
+          pdf.text(`${index + 1}. ${performer.name}`, 20, yPosition)
+          pdf.text(`${performer.score}%`, 100, yPosition)
+          pdf.text(`${performer.sessionCount} sessions`, 140, yPosition)
+          yPosition += 8
+        })
+        yPosition += 20
+      }
+      
+      // Add revenue data summary
+      if (revenueData.length > 0) {
+        pdf.setFontSize(16)
+        pdf.text('Revenue Summary', 20, yPosition)
+        yPosition += 15
+        
+        const totalRevenue = revenueData.reduce((sum, d) => sum + d.revenue, 0)
+        const totalSales = revenueData.reduce((sum, d) => sum + d.totalSales, 0)
+        
+        pdf.setFontSize(11)
+        pdf.text(`Period: ${timePeriod}`, 20, yPosition)
+        yPosition += 8
+        pdf.text(`Total Revenue: $${totalRevenue.toLocaleString()}`, 20, yPosition)
+        yPosition += 8
+        pdf.text(`Total Sales: ${totalSales}`, 20, yPosition)
+        yPosition += 8
+        pdf.text(`Avg Revenue per Sale: $${totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0}`, 20, yPosition)
+      }
+      
+      // Footer
+      pdf.setFontSize(8)
+      pdf.setTextColor(150, 150, 150)
+      pdf.text('DoorIQ - AI-Powered Sales Training Platform', 20, 280)
+      
+      pdf.save(`dooriq-team-report-${new Date().toISOString().split('T')[0]}.pdf`)
+      
+    } catch (error) {
+      console.error('PDF export error:', error)
+      alert('Failed to export PDF. Please try again.')
+    } finally {
+      setExportingPDF(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -350,9 +436,23 @@ export default function TeamOverview() {
           <p className="text-sm font-medium text-white">View Analytics</p>
         </Link>
 
-        <button className="action-card">
-          <Download className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
-          <p className="text-sm font-medium text-white">Export Report</p>
+        <button 
+          onClick={exportToPDF}
+          disabled={exportingPDF}
+          className="action-card"
+        >
+          {exportingPDF ? (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-5 h-5 border-2 border-slate-400 border-t-purple-400 rounded-full mb-3 mx-auto"
+            />
+          ) : (
+            <Download className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
+          )}
+          <p className="text-sm font-medium text-white">
+            {exportingPDF ? 'Exporting...' : 'Export Report'}
+          </p>
         </button>
       </motion.div>
     </div>
