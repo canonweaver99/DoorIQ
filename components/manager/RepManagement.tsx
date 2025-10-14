@@ -5,22 +5,49 @@ import { useRef, useState, useEffect } from 'react'
 import { Search, Filter, ChevronDown, MoreVertical, Mail, Target, X, TrendingUp, TrendingDown, CheckSquare, UserCheck, MessageSquare, Eye } from 'lucide-react'
 import RepProfileModal from './RepProfileModal'
 
-const mockReps = [
-  { id: 1, name: 'Marcus Johnson', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', status: 'In Training', score: 92, sessionsWeek: 8, trend: 5, trendUp: true, lastActive: '2 min ago' },
-  { id: 2, name: 'Sarah Chen', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', status: 'In Field', score: 88, sessionsWeek: 10, trend: 3, trendUp: true, lastActive: '15 min ago' },
-  { id: 3, name: 'David Martinez', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop', status: 'Available', score: 75, sessionsWeek: 6, trend: -2, trendUp: false, lastActive: '1 hour ago' },
-  { id: 4, name: 'Emma Wilson', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop', status: 'In Training', score: 85, sessionsWeek: 7, trend: 8, trendUp: true, lastActive: '30 min ago' },
-  { id: 5, name: 'Alex Rivera', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop', status: 'Offline', score: 68, sessionsWeek: 4, trend: -5, trendUp: false, lastActive: '2 hours ago' },
-]
+interface Rep {
+  id: string
+  name: string
+  email: string
+  role: string
+  status: string
+  score: number
+  sessionsWeek: number
+  trend: number
+  trendUp: boolean
+  lastActive: string
+  virtualEarnings: number
+}
 
 export default function RepManagement() {
+  const [reps, setReps] = useState<Rep[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('score')
-  const [selectedReps, setSelectedReps] = useState<number[]>([])
-  const [selectedRep, setSelectedRep] = useState<typeof mockReps[0] | null>(null)
-  const [actionMenuRepId, setActionMenuRepId] = useState<number | null>(null)
+  const [selectedReps, setSelectedReps] = useState<string[]>([])
+  const [selectedRep, setSelectedRep] = useState<Rep | null>(null)
+  const [actionMenuRepId, setActionMenuRepId] = useState<string | null>(null)
   const actionMenuRef = useRef<HTMLDivElement | null>(null)
+
+  // Load reps data
+  useEffect(() => {
+    loadReps()
+  }, [])
+
+  const loadReps = async () => {
+    try {
+      const response = await fetch('/api/team/reps')
+      if (response.ok) {
+        const data = await response.json()
+        setReps(data.reps || [])
+      }
+    } catch (error) {
+      console.error('Error loading reps:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -33,7 +60,7 @@ export default function RepManagement() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [actionMenuRepId])
 
-  const handleAction = (action: 'message' | 'promote' | 'profile', repId: number) => {
+  const handleAction = (action: 'message' | 'promote' | 'profile', repId: string) => {
     switch (action) {
       case 'message':
         // placeholder: wire up messaging flow when backend available
@@ -42,7 +69,7 @@ export default function RepManagement() {
         // placeholder: integrate promotion flow when role management is ready
         break
       case 'profile':
-        setSelectedRep(mockReps.find((rep) => rep.id === repId) ?? null)
+        setSelectedRep(reps.find((rep) => rep.id === repId) ?? null)
         break
     }
     setActionMenuRepId(null)
@@ -74,14 +101,60 @@ export default function RepManagement() {
     }
   }
 
-  const toggleRepSelection = (id: number) => {
+  const toggleRepSelection = (id: string) => {
     setSelectedReps(prev =>
       prev.includes(id) ? prev.filter(repId => repId !== id) : [...prev, id]
     )
   }
 
   const toggleSelectAll = () => {
-    setSelectedReps(selectedReps.length === mockReps.length ? [] : mockReps.map(r => r.id))
+    setSelectedReps(selectedReps.length === reps.length ? [] : reps.map(r => r.id))
+  }
+
+  // Filter and sort reps
+  const filteredReps = reps
+    .filter(rep => {
+      // Search filter
+      if (searchQuery && !rep.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false
+      }
+      // Status filter
+      if (statusFilter !== 'all' && rep.status.toLowerCase().replace(' ', '') !== statusFilter) {
+        return false
+      }
+      return true
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'score':
+          return b.score - a.score
+        case 'name':
+          return a.name.localeCompare(b.name)
+        case 'sessions':
+          return b.sessionsWeek - a.sessionsWeek
+        case 'lastActive':
+          return 0 // Could implement time-based sorting
+        default:
+          return 0
+      }
+    })
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    )
+  }
+
+  if (reps.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <UserCheck className="w-16 h-16 text-slate-600 mb-4" />
+        <h3 className="text-xl font-semibold text-white mb-2">No Team Members Yet</h3>
+        <p className="text-slate-400">Invite team members to get started</p>
+      </div>
+    )
   }
 
   return (
@@ -107,8 +180,8 @@ export default function RepManagement() {
           className="px-4 py-3 bg-[#1e1e30] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all appearance-none cursor-pointer"
         >
           <option value="all">All Status</option>
-          <option value="training">In Training</option>
-          <option value="field">In Field</option>
+          <option value="intraining">In Training</option>
+          <option value="infield">In Field</option>
           <option value="available">Available</option>
           <option value="offline">Offline</option>
         </select>
@@ -165,7 +238,7 @@ export default function RepManagement() {
             <div className="col-span-1">
               <input
                 type="checkbox"
-                checked={selectedReps.length === mockReps.length}
+                checked={selectedReps.length === filteredReps.length && filteredReps.length > 0}
                 onChange={toggleSelectAll}
                 className="custom-checkbox"
               />
@@ -193,7 +266,7 @@ export default function RepManagement() {
 
         {/* Table Body */}
         <div className="divide-y divide-white/5">
-          {mockReps.map((rep, index) => (
+          {filteredReps.map((rep, index) => (
             <motion.div
               key={rep.id}
               initial={{ opacity: 0, x: -20 }}
@@ -215,11 +288,9 @@ export default function RepManagement() {
 
                 {/* Profile */}
                 <div className="col-span-3 flex items-center gap-3">
-                  <img
-                    src={rep.avatar}
-                    alt={rep.name}
-                    className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10"
-                  />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/10">
+                    {rep.name.charAt(0).toUpperCase()}
+                  </div>
                   <div>
                     <p className="text-sm font-semibold text-white">{rep.name}</p>
                     <p className="text-xs text-slate-400">{rep.lastActive}</p>
@@ -252,10 +323,12 @@ export default function RepManagement() {
 
                 {/* Trend */}
                 <div className="col-span-1 hidden xl:block">
-                  <div className={`flex items-center gap-1 ${rep.trendUp ? 'text-green-400' : 'text-red-400'}`}>
-                    {rep.trendUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                    <span className="text-sm font-semibold">{Math.abs(rep.trend)}%</span>
-                  </div>
+                  {rep.trend !== 0 && (
+                    <div className={`flex items-center gap-1 ${rep.trendUp ? 'text-green-400' : 'text-red-400'}`}>
+                      {rep.trendUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                      <span className="text-sm font-semibold">{Math.abs(rep.trend)}%</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}
@@ -331,4 +404,3 @@ export default function RepManagement() {
     </div>
   )
 }
-
