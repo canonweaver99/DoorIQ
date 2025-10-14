@@ -123,15 +123,28 @@ export default function ScoresViewV2({
 
   let keyMoments: any[] = []
   
+  console.log('🔍 Timeline check:', {
+    hasTimelineKeyMoments: !!timelineKeyMoments,
+    timelineLength: timelineKeyMoments?.length || 0,
+    timelineData: timelineKeyMoments
+  })
+  
   // If we have pre-generated timeline moments from the LLM, use those (expecting 3 moments now)
-  if (timelineKeyMoments && timelineKeyMoments.length >= 3) {
+  if (timelineKeyMoments && timelineKeyMoments.length >= 1) {
     console.log('✅ Using timeline_key_moments from grading:', timelineKeyMoments.length, 'moments')
     keyMoments = timelineKeyMoments.map(moment => {
       // Convert effectiveness to score for timeline display
-      const rating = lineRatings.find((r: any) => r.line_number === moment.line_number)
+      const rating = lineRatings?.find((r: any) => r.line_number === moment.line_number)
       const effectivenessScore = rating?.effectiveness === 'excellent' ? 90 :
                                   rating?.effectiveness === 'good' ? 75 :
                                   rating?.effectiveness === 'average' ? 60 : 40
+      
+      console.log('📍 Timeline moment:', {
+        line: moment.line_number,
+        timestamp: moment.timestamp,
+        type: moment.moment_type,
+        quote: moment.quote.substring(0, 50) + '...'
+      })
       
       return {
         type: moment.is_positive ? 'win' : 'critical',
@@ -143,10 +156,12 @@ export default function ScoresViewV2({
         impact: 'high'
       }
     })
+    console.log('✅ Mapped', keyMoments.length, 'timeline moments for display')
   } else {
     // Fallback not needed - we always get timeline_key_moments from grading
     // If missing, just show empty timeline
-    console.log('⚠️ No timeline moments found in analytics')
+    console.log('⚠️ No timeline moments found in analytics - timeline will not display')
+    console.log('⚠️ Received timelineKeyMoments:', timelineKeyMoments)
   }
 
   const coreMetrics = [
