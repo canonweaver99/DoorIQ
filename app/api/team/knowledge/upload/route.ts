@@ -37,30 +37,15 @@ export async function POST(request: Request) {
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
     const filePath = `team-${userProfile.team_id}/${timestamp}-${safeName}`
 
-    // First, try to create the bucket if it doesn't exist
-    const { data: buckets } = await supabase.storage.listBuckets()
-    const bucketExists = buckets?.some(bucket => bucket.id === 'knowledge-base')
-    
-    if (!bucketExists) {
-      const { error: bucketError } = await supabase.storage.createBucket('knowledge-base', {
-        public: true,
-        fileSizeLimit: 52428800, // 50MB
-        allowedMimeTypes: ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-      })
-      
-      if (bucketError) {
-        console.error('Bucket creation error:', bucketError)
-        return NextResponse.json({ 
-          error: 'Storage bucket not available. Please contact support.',
-          details: bucketError.message 
-        }, { status: 500 })
-      }
-    }
+    // Use the existing audio-recordings bucket for now (we'll move to knowledge-base later)
+    // This avoids permission issues with bucket creation
+    const bucketName = 'audio-recordings' // Temporary solution
+    const documentFilePath = `documents/${filePath}`
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('knowledge-base')
-      .upload(filePath, file, {
+      .from(bucketName)
+      .upload(documentFilePath, file, {
         contentType: file.type,
         upsert: false
       })
@@ -75,8 +60,8 @@ export async function POST(request: Request) {
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('knowledge-base')
-      .getPublicUrl(filePath)
+      .from(bucketName)
+      .getPublicUrl(documentFilePath)
 
     // Extract text content if it's a supported file type
     let extractedContent = ''
