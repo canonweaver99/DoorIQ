@@ -144,14 +144,21 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
       // Reset success message after 3 seconds
       setTimeout(() => setUploadSuccess(false), 3000)
     } catch (error: any) {
-      console.error('Error uploading avatar:', error)
+      console.error('❌ Error uploading avatar:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        error: error.error
+      })
       
       // Show specific error message
       const errorMessage = error.message || 'Unknown error'
-      if (errorMessage.includes('Bucket not found') || errorMessage.includes('bucket')) {
-        alert('Avatar storage not configured yet. Please contact support or create the "avatars" bucket in Supabase Storage.')
+      if (errorMessage.includes('Bucket not found') || errorMessage.includes('bucket') || errorMessage.includes('new row violates')) {
+        alert('⚠️ Avatar Storage Setup Required\n\nPlease run this SQL in your Supabase SQL Editor:\n\nINSERT INTO storage.buckets (id, name, public) VALUES (\'avatars\', \'avatars\', true) ON CONFLICT DO NOTHING;\n\nOr go to Storage → Create bucket → name: "avatars" → public: true')
+      } else if (error.statusCode === 403 || errorMessage.includes('permission')) {
+        alert('❌ Permission denied. The avatars bucket might not have the correct RLS policies. Please run migration 032_add_avatar_url.sql')
       } else {
-        alert(`Error uploading avatar: ${errorMessage}`)
+        alert(`❌ Error uploading avatar: ${errorMessage}`)
       }
     } finally {
       setUploading(false)
