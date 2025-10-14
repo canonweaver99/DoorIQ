@@ -121,14 +121,17 @@ export default function KnowledgeBase() {
         body: JSON.stringify(config)
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         alert('Configuration saved successfully!')
       } else {
-        throw new Error('Failed to save configuration')
+        console.error('Save error:', data)
+        throw new Error(data.details || data.error || 'Failed to save configuration')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving config:', error)
-      alert('Failed to save configuration')
+      alert(`Failed to save configuration: ${error.message || 'Unknown error'}`)
     } finally {
       setSaving(false)
     }
