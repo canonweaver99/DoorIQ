@@ -560,7 +560,8 @@ export async function POST(request: NextRequest) {
     "filler_words": {
       "total_count": int,
       "per_minute": number,
-      "common_fillers": { "um": int, "uh": int, "like": int, "you know": int, "basically": int, "actually": int }
+      "common_fillers": { "um": int, "uh": int, "uhh": int, "like": int, "erm": int, "err": int, "hmm": int },
+      "locations": [{ "line_number": int, "timestamp": "M:SS", "text": "quote with filler word" }]
     }
   }
 }
@@ -608,8 +609,9 @@ EARNINGS:
 - commission_rate always 0.30
 
 FILLER WORDS:
-- Count: um, uh, like, you know, basically, actually
-- Return total AND breakdown by type
+- Count ONLY these filler words: um, uh, uhh, like, erm, err, hmm
+- Return total AND breakdown by type with line numbers where each occurs
+- Do NOT count: actually, basically, you know, sort of, kind of (normal speech)
 
 MUST return valid, complete JSON matching the exact structure above. No commentary.`
         },

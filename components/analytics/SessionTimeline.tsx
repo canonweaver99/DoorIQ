@@ -74,14 +74,26 @@ export default function SessionTimeline({
   }
 
   const playAudioFrom = (timestamp: string, dotIndex: number) => {
-    if (!audioUrl || !audioRef.current) return
+    if (!audioUrl || !audioRef.current) {
+      console.warn('⚠️ No audio URL available for playback')
+      return
+    }
 
     const [mins, secs] = timestamp.split(':').map(Number)
     const timeInSeconds = (mins * 60) + secs
 
+    console.log('🎵 Playing audio from', timestamp, '(', timeInSeconds, 'seconds )')
+    
     audioRef.current.currentTime = timeInSeconds
     audioRef.current.play()
-    setPlayingDot(dotIndex)
+      .then(() => {
+        console.log('✅ Audio playback started')
+        setPlayingDot(dotIndex)
+      })
+      .catch(err => {
+        console.error('❌ Audio playback failed:', err)
+        setPlayingDot(null)
+      })
 
     audioRef.current.onended = () => setPlayingDot(null)
     audioRef.current.onpause = () => setPlayingDot(null)
@@ -174,14 +186,19 @@ export default function SessionTimeline({
                     <Play className="w-5 h-5 text-white ml-0.5" />
                   )}
                 </motion.div>
+                
+                {/* Timestamp label under button */}
+                <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-400 whitespace-nowrap">
+                  {dot.timestamp}
+                </div>
               </button>
 
-              {/* Feedback panel (shows when selected) */}
+              {/* Feedback panel (shows when selected) - centered above dot */}
               {isSelected && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-80 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 shadow-2xl z-50"
+                  className="absolute bottom-full mb-20 left-1/2 -translate-x-1/2 w-80 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 shadow-2xl z-50"
                 >
                   <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
                     <MessageSquare className="w-4 h-4 text-purple-400" />
@@ -217,8 +234,8 @@ export default function SessionTimeline({
         })}
       </div>
 
-      {/* Time markers - Only show at 0 and end */}
-      <div className="flex justify-between px-1 mt-6 text-xs text-slate-500 font-mono">
+      {/* Time markers - start and end only */}
+      <div className="flex justify-between px-1 mt-12 text-xs text-slate-500 font-mono">
         <span>0:00</span>
         <span></span>
         <span></span>
