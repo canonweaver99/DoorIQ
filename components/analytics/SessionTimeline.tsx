@@ -198,7 +198,11 @@ export default function SessionTimeline({
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute bottom-full mb-20 left-1/2 -translate-x-1/2 w-80 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 shadow-2xl z-50"
+                  className="absolute bottom-full mb-16 left-1/2 -translate-x-1/2 w-80 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 shadow-2xl z-50"
+                  style={{
+                    left: '50%',
+                    transform: 'translateX(-50%)'
+                  }}
                 >
                   <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
                     <MessageSquare className="w-4 h-4 text-purple-400" />
