@@ -572,6 +572,11 @@ SCORING GUIDELINES:
 - Discovery (0-100): Question quality, needs assessment
 - Objection Handling (0-100): Addressing concerns effectively
 - Closing (0-100): Assumptive language, trial closes, commitment
+  * 90-100: Sale closed with payment commitment
+  * 75-89: Appointment/inspection scheduled (strong close attempt)
+  * 60-74: Trial close attempted, commitment sought
+  * 40-59: Asked for the sale but weak
+  * 0-39: Did not attempt to close
 - Safety (0-100): Mentioned pet/child safety, guarantees
 - Introduction (0-100): Opening strength, first impression
 - Listening (0-100): Acknowledgment, paraphrasing
@@ -602,11 +607,14 @@ TIMELINE (3 moments at 33%, 66%, 90%):
 - Copy EXACT timestamps from transcript format: (1:23)
 - Choose actual impactful lines from those positions
 
-EARNINGS:
-- sale_closed: true ONLY if customer committed to paid service
+EARNINGS & COMMITMENT:
+- sale_closed: true ONLY if customer committed to PAID service with payment
+- return_appointment: true if inspection, callback, or follow-up scheduled
+- IMPORTANT: Scheduled inspections are NOT sales (sale_closed = false, return_appointment = true)
 - Extract: base_price, monthly_value, contract_length from conversation
 - Calculate: total_contract_value, commission_earned (30%), total_earned
 - commission_rate always 0.30
+- If only appointment scheduled: virtual_earnings = 0, but return_appointment = true
 
 FILLER WORDS:
 - Count ONLY these filler words: um, uh, uhh, like, erm, err, hmm
@@ -785,23 +793,9 @@ ${knowledgeContext}`
         console.log('🧮 Calculated overall score from', numericScores.length, 'core metrics:', baseScore)
       }
       
-      // Apply duration penalty for sessions that are too short
+      // No duration penalty - quality matters more than length
       const durationSeconds = (session as any).duration_seconds || 0
-      let durationMultiplier = 1.0
-      
-      if (durationSeconds < 120) { // Less than 2 minutes
-        durationMultiplier = 0.6 // Max 60% for very short sessions
-        console.log(`⏱️ Session too short (${durationSeconds}s < 120s): capping at 60%`)
-      } else if (durationSeconds < 180) { // Less than 3 minutes
-        durationMultiplier = 0.75 // Max 75% for short sessions
-        console.log(`⏱️ Short session (${durationSeconds}s < 180s): capping at 75%`)
-      } else if (durationSeconds < 240) { // Less than 4 minutes
-        durationMultiplier = 0.85 // Max 85% for medium sessions
-        console.log(`⏱️ Medium session (${durationSeconds}s < 240s): capping at 85%`)
-      }
-      
-      // Apply duration cap
-      baseScore = Math.round(baseScore * durationMultiplier)
+      console.log(`⏱️ Session duration: ${durationSeconds}s (${Math.floor(durationSeconds / 60)}:${String(durationSeconds % 60).padStart(2, '0')})`)
       
       // Penalize missing critical categories
       const criticalCategories = [rapportScore, discoveryScore, objectionScore, closeScore]
@@ -813,8 +807,8 @@ ${knowledgeContext}`
         baseScore = Math.max(0, baseScore - categoryPenalty)
       }
       
-      // Apply filler word penalty: -1% per filler word
-      const fillerPenalty = fillerWordCount
+      // Apply filler word penalty: -1% per 2 filler words (max -10%)
+      const fillerPenalty = Math.min(Math.floor(fillerWordCount / 2), 10)
       const finalScore = Math.max(0, baseScore - fillerPenalty)
       
       if (fillerWordCount > 0) {

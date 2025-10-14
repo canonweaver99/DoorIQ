@@ -14,9 +14,7 @@ import {
   Activity,
   SkipForward,
   Rewind,
-  Zap,
-  Upload,
-  AlertCircle
+  Zap
 } from 'lucide-react'
 
 interface SessionTimelineProps {
@@ -288,25 +286,6 @@ export default function SessionTimeline({
             </div>
           )}
         </div>
-        
-        {/* Audio status indicator */}
-        {!audioUrl && (
-          <div className="mt-4 pt-4 border-t border-slate-700/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <AlertCircle className="w-3.5 h-3.5" />
-                Audio not available for this session
-              </div>
-              <a 
-                href="/trainer/upload"
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-xs font-medium transition-colors"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                Upload Audio
-              </a>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Playback Controls */}
