@@ -161,6 +161,8 @@ export default function AnalyticsPage() {
       
       const data = await response.json()
       console.log('Session data:', data)
+      console.log('Agent name:', data.agent_name)
+      console.log('User ID:', data.user_id)
       console.log('Transcript:', data.full_transcript)
       console.log('Transcript length:', data.full_transcript?.length)
       console.log('First transcript item:', data.full_transcript?.[0])

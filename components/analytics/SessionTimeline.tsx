@@ -1,26 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, CheckCircle2, AlertCircle } from 'lucide-react'
-
-interface TimelineEvent {
-  type: 'win' | 'opportunity' | 'signal' | 'critical'
-  line: number
-  timestamp: string
-  title: string
-  description: string
-  score: number
-  impact?: 'high' | 'medium' | 'low'
-  duration?: number
-}
+import { useState, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { Clock, Play, Pause, MessageSquare } from 'lucide-react'
 
 interface SessionTimelineProps {
   duration: number // in seconds
-  events: TimelineEvent[]
+  events: any[]
   lineRatings?: any[]
   fullTranscript?: Array<{ speaker: string, text: string, timestamp?: string }>
-  onEventClick?: (event: TimelineEvent) => void
+  onEventClick?: (event: any) => void
   customerName?: string
   salesRepName?: string
   dealOutcome?: {
@@ -28,7 +17,8 @@ interface SessionTimelineProps {
     amount: number
     product: string
   }
-  failurePoint?: number // Line number where deal was lost (if applicable)
+  failurePoint?: number
+  audioUrl?: string
 }
 
 export default function SessionTimeline({ 
@@ -36,75 +26,46 @@ export default function SessionTimeline({
   events, 
   lineRatings = [],
   fullTranscript = [],
-  onEventClick,
   customerName = 'Customer',
   salesRepName = 'Sales Rep',
   dealOutcome,
-  failurePoint
+  audioUrl
 }: SessionTimelineProps) {
-  const [hoveredDot, setHoveredDot] = useState<number | null>(null)
-  const [showingIntroAnimation, setShowingIntroAnimation] = useState(true)
-  const [currentlyAnimatingDot, setCurrentlyAnimatingDot] = useState<number | null>(0)
-  
-  // Animate tooltips in sequence on mount
-  useEffect(() => {
-    console.log('🎬 Timeline mounted - starting intro animation')
-    console.log('📊 Events received:', events.length)
-    console.log('📊 Events data:', events)
-    
-    // Show first tooltip
-    setCurrentlyAnimatingDot(0)
-    console.log('👉 Showing tooltip 0')
-    
-    // Show second tooltip after 1 second
-    const timer1 = setTimeout(() => {
-      setCurrentlyAnimatingDot(1)
-      console.log('👉 Showing tooltip 1')
-    }, 1000)
-    
-    // Show third tooltip after 2 seconds
-    const timer2 = setTimeout(() => {
-      setCurrentlyAnimatingDot(2)
-      console.log('👉 Showing tooltip 2')
-    }, 2000)
-    
-    // Hide all tooltips after 3 seconds
-    const timer3 = setTimeout(() => {
-      setCurrentlyAnimatingDot(null)
-      setShowingIntroAnimation(false)
-      console.log('✅ Intro animation complete - tooltips now only show on hover')
-    }, 3500)
-    
-    return () => {
-      clearTimeout(timer1)
-      clearTimeout(timer2)
-      clearTimeout(timer3)
+  const [playingDot, setPlayingDot] = useState<number | null>(null)
+  const [selectedDot, setSelectedDot] = useState<number | null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+
+  // Create 4 evenly spaced dots (25%, 50%, 75%, 100%)
+  const timelineDots = [
+    { 
+      position: 25, 
+      timestamp: formatTime(duration * 0.25),
+      title: 'Opening',
+      description: 'Introduction & rapport building',
+      feedback: 'Focus on building connection and setting a positive tone'
+    },
+    { 
+      position: 50, 
+      timestamp: formatTime(duration * 0.5),
+      title: 'Discovery',
+      description: 'Needs assessment & questions',
+      feedback: 'Ask quality questions to understand customer needs'
+    },
+    { 
+      position: 75, 
+      timestamp: formatTime(duration * 0.75),
+      title: 'Objection Handling',
+      description: 'Addressing concerns',
+      feedback: 'Listen carefully and address objections with empathy'
+    },
+    { 
+      position: 100, 
+      timestamp: formatTime(duration),
+      title: 'Close',
+      description: 'Final pitch & commitment',
+      feedback: 'Use assumptive language and ask for the sale'
     }
-  }, [])
-  
-  // Use the events data directly (already contains timeline_key_moments from grading)
-  const mappedDots = events.map((event, idx) => {
-    console.log(`🔍 Mapping event ${idx}:`, event)
-    
-    // Calculate position percentage from timestamp
-    const eventTime = parseTimestamp(event.timestamp)
-    const position = (eventTime / duration) * 100
-    
-    return {
-      position: position,
-      timestamp: event.timestamp,
-      label: event.title,
-      quote: event.description,
-      lineNumber: event.line,
-      isSuccess: event.type === 'win',
-      isAfterFailure: false,
-      isFailurePoint: event.type === 'critical',
-      effectiveness: event.score >= 80 ? 'excellent' : event.score >= 70 ? 'good' : event.score >= 60 ? 'average' : 'poor',
-      score: event.score
-    }
-  })
-  
-  console.log('✅ Mapped dots:', mappedDots.length, mappedDots)
+  ]
 
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60)
@@ -112,22 +73,32 @@ export default function SessionTimeline({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  function parseTimestamp(timestamp: string): number {
+  const playAudioFrom = (timestamp: string, dotIndex: number) => {
+    if (!audioUrl || !audioRef.current) return
+
     const [mins, secs] = timestamp.split(':').map(Number)
-    return (mins || 0) * 60 + (secs || 0)
+    const timeInSeconds = (mins * 60) + secs
+
+    audioRef.current.currentTime = timeInSeconds
+    audioRef.current.play()
+    setPlayingDot(dotIndex)
+
+    audioRef.current.onended = () => setPlayingDot(null)
+    audioRef.current.onpause = () => setPlayingDot(null)
   }
 
-  // Time markers for the bottom
-  const timeMarkers = [
-    { position: 0, label: '0:00' },
-    { position: 25, label: formatTime(duration * 0.25) },
-    { position: 50, label: formatTime(duration * 0.5) },
-    { position: 75, label: formatTime(duration * 0.75) },
-    { position: 100, label: formatTime(duration) }
-  ]
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      setPlayingDot(null)
+    }
+  }
 
   return (
     <div className="space-y-6">
+      {/* Hidden audio element */}
+      {audioUrl && <audio ref={audioRef} src={audioUrl} preload="metadata" className="hidden" />}
+
       {/* Conversation Context Header */}
       <div className="rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
         <div className="flex items-center justify-between">
@@ -151,213 +122,114 @@ export default function SessionTimeline({
               </div>
             </div>
           </div>
-          
-          {dealOutcome && (
-            <div className={`px-4 py-2 rounded-xl border ${
-              dealOutcome.closed 
-                ? 'bg-emerald-500/10 border-emerald-500/30' 
-                : 'bg-slate-500/10 border-slate-500/30'
-            }`}>
-              <div className="flex items-center gap-2">
-                {dealOutcome.closed ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                ) : (
-                  <Clock className="w-5 h-5 text-slate-400" />
-                )}
-                <div>
-                  <div className={`text-sm font-semibold ${dealOutcome.closed ? 'text-emerald-400' : 'text-slate-400'}`}>
-                    {dealOutcome.closed ? 'Closed' : 'No Sale'}
-                  </div>
-                  {dealOutcome.closed && (
-                    <div className="text-xs text-white">
-                      ${dealOutcome.amount} - {dealOutcome.product}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Enhanced Timeline with 3 Key Dots */}
+      {/* Simplified Timeline with 4 Audio Playback Dots */}
       <div className="relative py-8">
-        {/* Gradient bar with failure point handling */}
-        <div className="relative h-2.5 rounded-full overflow-hidden">
-          {/* Main gradient up to failure point (or full if successful) */}
-          <div 
-            className="absolute inset-y-0 left-0 transition-all duration-500"
-            style={{
-              width: failurePoint !== undefined ? `${(failurePoint / fullTranscript.length) * 100}%` : '100%',
-              background: 'linear-gradient(to right, #3b82f6, #8b5cf6, #f59e0b, #ef4444)'
-            }}
-          />
+        {/* Gradient bar */}
+        <div className="relative h-2.5 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 via-purple-500 via-orange-500 to-red-500"></div>
+        
+        {/* 4 Audio playback dots */}
+        {timelineDots.map((dot, i) => {
+          const isPlaying = playingDot === i
+          const isSelected = selectedDot === i
           
-          {/* Grayed out section after failure */}
-          {failurePoint !== undefined && (
-            <div 
-              className="absolute inset-y-0 bg-slate-700/30"
-              style={{
-                left: `${(failurePoint / fullTranscript.length) * 100}%`,
-                right: 0
-              }}
-            />
-          )}
-          
-          {/* 3 Key moment dots */}
-          {mappedDots.map((dot, i) => {
-            const isHovered = hoveredDot === i
-            const isAnimating = showingIntroAnimation && currentlyAnimatingDot === i
-            const shouldShowTooltip = isHovered || isAnimating
-            
-            // Determine dot color
-            let dotColor = 'bg-white'
-            if (dot.isAfterFailure) {
-              dotColor = 'bg-slate-500/50' // Grayed out
-            } else if (dot.isFailurePoint) {
-              dotColor = 'bg-red-500' // Red failure dot
-            } else if (dot.isSuccess) {
-              dotColor = 'bg-green-400' // Success
-            } else if (dot.score >= 60) {
-              dotColor = 'bg-yellow-400' // Neutral
-            } else {
-              dotColor = 'bg-red-400' // Negative
-            }
-            
-            return (
-              <div
-                key={i}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10"
-                style={{ left: `${dot.position}%` }}
-                onMouseEnter={() => setHoveredDot(i)}
-                onMouseLeave={() => setHoveredDot(null)}
+          return (
+            <div
+              key={i}
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+              style={{ left: `${dot.position}%` }}
+            >
+              {/* Playback button dot */}
+              <button
+                onClick={() => {
+                  if (isPlaying) {
+                    stopAudio()
+                  } else {
+                    playAudioFrom(dot.timestamp, i)
+                  }
+                  setSelectedDot(isSelected ? null : i)
+                }}
+                className="group relative"
               >
-                {/* Dot */}
                 <motion.div
-                  className={`w-5 h-5 rounded-full cursor-pointer transition-all duration-200 ${dotColor}`}
-                  style={{
-                    boxShadow: isHovered 
-                      ? '0 0 0 4px rgba(255,255,255,0.3), 0 4px 20px rgba(0,0,0,0.4)' 
-                      : '0 2px 8px rgba(0,0,0,0.3)',
-                    opacity: dot.isAfterFailure ? 0.4 : 1
-                  }}
+                  className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 border-2 border-white/20 flex items-center justify-center cursor-pointer shadow-lg hover:shadow-purple-500/50 transition-all"
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.95 }}
                   animate={{
-                    scale: isHovered ? 1.3 : (dot.isFailurePoint ? [1, 1.1, 1] : 1)
+                    scale: isPlaying ? [1, 1.1, 1] : 1
                   }}
                   transition={{
-                    scale: dot.isFailurePoint ? {
+                    scale: isPlaying ? {
                       repeat: Infinity,
-                      duration: 2,
+                      duration: 1,
                       ease: "easeInOut"
                     } : undefined
                   }}
-                />
-                
-                {/* Enhanced tooltip - shows on intro animation or hover */}
-                <AnimatePresence>
-                  {shouldShowTooltip && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                      transition={{ type: "spring", duration: 0.5 }}
-                      className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 w-80 p-5 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-slate-700/50 shadow-2xl pointer-events-none z-50"
-                    >
-                      {/* Header with success indicator */}
-                      <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-700/50">
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs font-mono text-purple-400">{dot.timestamp}</div>
-                          {dot.isSuccess ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <AlertCircle className="w-4 h-4 text-red-400" />
-                          )}
-                        </div>
-                        <div className="text-xs font-semibold text-slate-400">{dot.label}</div>
-                      </div>
-                      
-                      {/* Conversation Quote */}
-                      <div className="mb-3">
-                        <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">What was said:</div>
-                        <div className="text-sm text-slate-200 italic leading-relaxed bg-slate-800/50 p-3 rounded-lg border-l-2 border-purple-500/50">
-                          "{dot.quote}"
-                        </div>
-                      </div>
-                      
-                      {/* Performance indicator */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Performance:</div>
-                          <div className={`text-xs font-semibold ${
-                            dot.effectiveness === 'excellent' ? 'text-green-400' :
-                            dot.effectiveness === 'good' ? 'text-blue-400' :
-                            dot.effectiveness === 'average' ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {dot.effectiveness?.toUpperCase()}
-                          </div>
-                        </div>
-                        <div className={`text-lg font-bold ${
-                          dot.score >= 80 ? 'text-green-400' :
-                          dot.score >= 60 ? 'text-yellow-400' :
-                          'text-red-400'
-                        }`}>
-                          {dot.score}/100
-                        </div>
-                      </div>
-                      
-                      {/* Deal killer indicator */}
-                      {dot.isFailurePoint && (
-                        <div className="mt-3 pt-3 border-t border-red-500/30 flex items-center gap-2 text-red-400">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="text-xs font-semibold">DEAL KILLER - Sale lost here</span>
-                        </div>
-                      )}
-                      
-                      {/* Success indicator for final dot */}
-                      {i === 2 && dot.isSuccess && dealOutcome?.closed && (
-                        <div className="mt-3 pt-3 border-t border-green-500/30 flex items-center gap-2 text-green-400">
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span className="text-xs font-semibold">
-                            CLOSED: ${dealOutcome.amount} - {dealOutcome.product}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Tooltip arrow */}
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-                        <div className="w-3 h-3 bg-slate-900 border-r border-b border-slate-700/50 rotate-45"></div>
-                      </div>
-                    </motion.div>
+                >
+                  {isPlaying ? (
+                    <Pause className="w-5 h-5 text-white" />
+                  ) : (
+                    <Play className="w-5 h-5 text-white ml-0.5" />
                   )}
-                </AnimatePresence>
-              </div>
-            )
-          })}
-          
-          {/* Dotted continuation line after failure */}
-          {failurePoint !== undefined && (
-            <div 
-              className="absolute inset-y-0 border-t-2 border-dashed border-slate-600/50"
-              style={{
-                left: `${(failurePoint / fullTranscript.length) * 100}%`,
-                right: 0,
-                top: '50%'
-              }}
-            />
-          )}
-        </div>
-        
-        {/* Time markers */}
-        <div className="flex justify-between mt-4 px-1">
-          {timeMarkers.map((marker, i) => (
-            <div key={i} className="text-xs text-slate-500 font-mono">
-              {marker.label}
+                </motion.div>
+
+                {/* Timestamp label */}
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-400 whitespace-nowrap">
+                  {dot.timestamp}
+                </div>
+              </button>
+
+              {/* Feedback panel (shows when selected) */}
+              {isSelected && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-80 p-4 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 shadow-2xl z-50"
+                >
+                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
+                    <MessageSquare className="w-4 h-4 text-purple-400" />
+                    <h4 className="text-sm font-semibold text-white">{dot.title}</h4>
+                  </div>
+                  
+                  <p className="text-xs text-slate-400 mb-3">{dot.description}</p>
+                  
+                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                    <div className="text-[10px] uppercase tracking-wider text-purple-400 mb-1">Coach Tip:</div>
+                    <p className="text-xs text-slate-300">{dot.feedback}</p>
+                  </div>
+
+                  {/* Close button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedDot(null)
+                    }}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors"
+                  >
+                    <span className="text-slate-400 text-xs">✕</span>
+                  </button>
+
+                  {/* Arrow pointing to dot */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
+                    <div className="w-3 h-3 bg-slate-900 border-r border-b border-purple-500/30 rotate-45"></div>
+                  </div>
+                </motion.div>
+              )}
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
+
+      {/* Time markers */}
+      <div className="flex justify-between px-1 text-xs text-slate-500 font-mono">
+        <span>0:00</span>
+        <span>{formatTime(duration * 0.25)}</span>
+        <span>{formatTime(duration * 0.5)}</span>
+        <span>{formatTime(duration * 0.75)}</span>
+        <span>{formatTime(duration)}</span>
       </div>
     </div>
   )
 }
-

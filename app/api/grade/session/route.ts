@@ -463,16 +463,26 @@ export async function POST(request: NextRequest) {
           .join('\n\n')
     }
 
+    // Get user's actual name for better grading context
+    const { data: userData } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', (session as any).user_id)
+      .single()
+    
+    const salesRepName = userData?.full_name || 'Sales Rep'
+    const customerName = (session as any).agent_name || 'Homeowner'
+
     // Format transcript for OpenAI with timestamps
     const startTime = new Date((session as any).started_at || (session as any).created_at)
     const formattedTranscript = (session as any).full_transcript
       .map((line: any, index: number) => {
-        // Normalize speaker names
-        let speaker = 'Homeowner'
+        // Normalize speaker names with actual names
+        let speaker = customerName
         if (line.speaker === 'rep' || line.speaker === 'user') {
-          speaker = 'Sales Rep'
+          speaker = salesRepName
         } else if (line.speaker === 'homeowner' || line.speaker === 'agent' || line.speaker === 'ai') {
-          speaker = 'Homeowner'
+          speaker = customerName
         }
         // Get text from either text or message field
         const text = line.text || line.message || ''

@@ -66,6 +66,7 @@ export default function ScoresViewV2({
   durationSeconds = 600
 }: ScoresViewV2Props) {
   const [animatedEarnings, setAnimatedEarnings] = useState(0)
+  const [showFillerWordsDropdown, setShowFillerWordsDropdown] = useState(false)
 
   // Animate earnings counter
   useEffect(() => {
@@ -207,15 +208,63 @@ export default function ScoresViewV2({
                 </div>
               </div>
 
-              {/* Filler Word Penalty */}
+              {/* Filler Word Penalty with Dropdown */}
               {scores.filler_words && scores.filler_words > 0 && (
-                <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Zap className="w-4 h-4 text-amber-400" />
-                    <span className="text-amber-300">
-                      {scores.filler_words} filler words detected = <strong>-{scores.filler_words}% penalty</strong> applied
-                    </span>
-                  </div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setShowFillerWordsDropdown(!showFillerWordsDropdown)}
+                    className="w-full p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Zap className="w-4 h-4 text-amber-400" />
+                        <span className="text-amber-300">
+                          {scores.filler_words} filler words detected = <strong>-{scores.filler_words}% penalty</strong> applied
+                        </span>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: showFillerWordsDropdown ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronRight className="w-4 h-4 text-amber-400" />
+                      </motion.div>
+                    </div>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {showFillerWordsDropdown && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-2 p-4 bg-slate-900/50 border border-amber-500/20 rounded-xl max-h-64 overflow-y-auto">
+                          <h4 className="text-sm font-semibold text-amber-300 mb-3">Filler Word Locations:</h4>
+                          <div className="space-y-2">
+                            {fullTranscript?.filter((line, idx) => {
+                              const text = line.text || line.message || ''
+                              const fillerPattern = /\b(um|uh|like|you know|basically|actually|sort of|kind of)\b/gi
+                              return line.speaker === 'rep' || line.speaker === 'user' ? fillerPattern.test(text) : false
+                            }).map((line, idx) => {
+                              const text = line.text || line.message || ''
+                              const lineIndex = fullTranscript.indexOf(line)
+                              return (
+                                <div key={idx} className="text-xs p-2 bg-amber-500/5 border border-amber-500/10 rounded">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Clock className="w-3 h-3 text-amber-400" />
+                                    <span className="text-amber-400 font-mono">{line.timestamp || `Line ${lineIndex}`}</span>
+                                  </div>
+                                  <p className="text-slate-300">"{text}"</p>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
@@ -351,8 +400,8 @@ export default function ScoresViewV2({
             events={keyMoments}
             lineRatings={lineRatings}
             fullTranscript={fullTranscript}
-            customerName="Austin Rodriguez"
-            salesRepName={agentName}
+            customerName={agentName}
+            salesRepName="Canon Weaver"
             dealOutcome={{
               closed: saleClosed || false,
               amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
