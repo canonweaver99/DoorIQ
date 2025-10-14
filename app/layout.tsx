@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
-import Header from "@/components/navigation/Header";
+import dynamic from 'next/dynamic'
 import { Footer } from "@/components/ui/footer-section";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+
+const Header = dynamic(() => import('@/components/navigation/Header'), { ssr: false })
 
 const inter = Inter({
   variable: "--font-inter",
