@@ -40,7 +40,9 @@ export async function POST(request: Request) {
     // Use the existing audio-recordings bucket for now (we'll move to knowledge-base later)
     // This avoids permission issues with bucket creation
     const bucketName = 'audio-recordings' // Temporary solution
-    const documentFilePath = `documents/${filePath}`
+    // Must satisfy bucket RLS: auth.uid() must equal the SECOND path segment
+    // Path pattern: documents/{userId}/team-{teamId}/filename
+    const documentFilePath = `documents/${user.id}/${filePath}`
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
