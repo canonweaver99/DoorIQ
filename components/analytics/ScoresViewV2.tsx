@@ -255,6 +255,12 @@ export default function ScoresViewV2({
                               const text = line.text || line.message || ''
                               const lineIndex = fullTranscript.indexOf(line)
                               
+                              // Highlight filler words in the text
+                              const highlightedText = text.replace(
+                                /\b(um|uhh?|uh|like|erm|err|hmm)\b/gi,
+                                '<mark class="bg-amber-500/30 text-amber-300 px-1 rounded">$1</mark>'
+                              )
+                              
                               // Format timestamp to simple M:SS format
                               let displayTime = `Line ${lineIndex}`
                               if (line.timestamp) {
@@ -282,12 +288,15 @@ export default function ScoresViewV2({
                               }
                               
                               return (
-                                <div key={idx} className="text-xs p-2 bg-amber-500/5 border border-amber-500/10 rounded">
-                                  <div className="flex items-center gap-2 mb-1">
+                                <div key={idx} className="text-xs p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg hover:bg-amber-500/10 transition-colors">
+                                  <div className="flex items-center gap-2 mb-2">
                                     <Clock className="w-3 h-3 text-amber-400" />
                                     <span className="text-amber-400 font-mono">{displayTime}</span>
                                   </div>
-                                  <p className="text-slate-300">"{text}"</p>
+                                  <p 
+                                    className="text-slate-300 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: `"${highlightedText}"` }}
+                                  />
                                 </div>
                               )
                             })}

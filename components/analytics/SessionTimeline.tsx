@@ -1,15 +1,14 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Clock, Play, Pause, MessageSquare } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Clock, Play, Pause, MessageSquare, Volume2 } from 'lucide-react'
 
 interface SessionTimelineProps {
   duration: number // in seconds
   events: any[]
   lineRatings?: any[]
   fullTranscript?: Array<{ speaker: string, text: string, timestamp?: string }>
-  onEventClick?: (event: any) => void
   customerName?: string
   salesRepName?: string
   dealOutcome?: {
@@ -17,53 +16,75 @@ interface SessionTimelineProps {
     amount: number
     product: string
   }
-  failurePoint?: number
   audioUrl?: string
 }
 
 export default function SessionTimeline({ 
   duration, 
-  events, 
-  lineRatings = [],
   fullTranscript = [],
   customerName = 'Customer',
   salesRepName = 'Sales Rep',
   dealOutcome,
   audioUrl
 }: SessionTimelineProps) {
-  const [playingDot, setPlayingDot] = useState<number | null>(null)
-  const [selectedDot, setSelectedDot] = useState<number | null>(null)
+  const [playingSegment, setPlayingSegment] = useState<number | null>(null)
+  const [selectedSegment, setSelectedSegment] = useState<number | null>(null)
+  const [audioLoading, setAudioLoading] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Create 4 evenly spaced dots (25%, 50%, 75%, 100%)
-  const timelineDots = [
+  // Create 4 timeline segments with feedback
+  const segments = [
     { 
-      position: 25, 
-      timestamp: formatTime(duration * 0.25),
-      title: 'Opening',
-      description: 'Introduction & rapport building',
-      feedback: 'Focus on building connection and setting a positive tone'
+      id: 0,
+      position: 20,
+      timestamp: formatTime(duration * 0.2),
+      startTime: duration * 0.2,
+      title: 'Opening & Rapport',
+      description: 'Building connection and trust',
+      feedback: {
+        good: 'Strong personal connection, used customer name, warm tone',
+        improve: 'Add more local references, mirror their energy level',
+        tip: 'Try mentioning something specific about their neighborhood or recent local events'
+      }
     },
     { 
-      position: 50, 
-      timestamp: formatTime(duration * 0.5),
-      title: 'Discovery',
-      description: 'Needs assessment & questions',
-      feedback: 'Ask quality questions to understand customer needs'
+      id: 1,
+      position: 40,
+      timestamp: formatTime(duration * 0.4),
+      startTime: duration * 0.4,
+      title: 'Discovery Phase',
+      description: 'Understanding needs and pain points',
+      feedback: {
+        good: 'Asked open-ended questions, listened actively',
+        improve: 'Dig deeper into their specific concerns about pests',
+        tip: 'Use phrases like "Tell me more about..." to encourage elaboration'
+      }
     },
     { 
-      position: 75, 
-      timestamp: formatTime(duration * 0.75),
-      title: 'Objection Handling',
-      description: 'Addressing concerns',
-      feedback: 'Listen carefully and address objections with empathy'
+      id: 2,
+      position: 60,
+      timestamp: formatTime(duration * 0.6),
+      startTime: duration * 0.6,
+      title: 'Solution Presentation',
+      description: 'Presenting value and handling objections',
+      feedback: {
+        good: 'Clear explanation of services, addressed safety concerns',
+        improve: 'More emphasis on unique value proposition',
+        tip: 'Use social proof: "Your neighbor at 123 Main St had similar concerns..."'
+      }
     },
     { 
-      position: 100, 
-      timestamp: formatTime(duration),
-      title: 'Close',
-      description: 'Final pitch & commitment',
-      feedback: 'Use assumptive language and ask for the sale'
+      id: 3,
+      position: 80,
+      timestamp: formatTime(duration * 0.8),
+      startTime: duration * 0.8,
+      title: 'Closing Attempt',
+      description: 'Securing commitment and next steps',
+      feedback: {
+        good: 'Used assumptive language, created urgency',
+        improve: 'Stronger trial close earlier in conversation',
+        tip: 'Try: "Based on what you\'ve told me, it sounds like Tuesday would work best?"'
+      }
     }
   ]
 
@@ -73,54 +94,81 @@ export default function SessionTimeline({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const playAudioFrom = (timestamp: string, dotIndex: number) => {
+  const playSegment = async (segment: typeof segments[0]) => {
     if (!audioUrl || !audioRef.current) {
-      console.warn('⚠️ No audio URL available for playback')
+      console.warn('No audio URL available')
       return
     }
 
-    const [mins, secs] = timestamp.split(':').map(Number)
-    const timeInSeconds = (mins * 60) + secs
+    try {
+      setAudioLoading(true)
+      
+      // Set time to segment start minus 5 seconds for context
+      const startTime = Math.max(0, segment.startTime - 5)
+      audioRef.current.currentTime = startTime
+      
+      await audioRef.current.play()
+      setPlayingSegment(segment.id)
+      setAudioLoading(false)
 
-    console.log('🎵 Playing audio from', timestamp, '(', timeInSeconds, 'seconds )')
-    
-    audioRef.current.currentTime = timeInSeconds
-    audioRef.current.play()
-      .then(() => {
-        console.log('✅ Audio playback started')
-        setPlayingDot(dotIndex)
-      })
-      .catch(err => {
-        console.error('❌ Audio playback failed:', err)
-        setPlayingDot(null)
-      })
+      // Stop after 15-20 seconds
+      setTimeout(() => {
+        if (audioRef.current && playingSegment === segment.id) {
+          audioRef.current.pause()
+          setPlayingSegment(null)
+        }
+      }, 15000)
 
-    audioRef.current.onended = () => setPlayingDot(null)
-    audioRef.current.onpause = () => setPlayingDot(null)
+    } catch (err) {
+      console.error('Audio playback failed:', err)
+      setAudioLoading(false)
+      setPlayingSegment(null)
+    }
   }
 
   const stopAudio = () => {
     if (audioRef.current) {
       audioRef.current.pause()
-      setPlayingDot(null)
+      setPlayingSegment(null)
     }
   }
+
+  // Handle audio ended
+  useEffect(() => {
+    if (!audioRef.current) return
+    
+    const handleEnded = () => setPlayingSegment(null)
+    const handlePause = () => setPlayingSegment(null)
+    
+    audioRef.current.addEventListener('ended', handleEnded)
+    audioRef.current.addEventListener('pause', handlePause)
+    
+    return () => {
+      audioRef.current?.removeEventListener('ended', handleEnded)
+      audioRef.current?.removeEventListener('pause', handlePause)
+    }
+  }, [])
 
   return (
     <div className="space-y-6">
       {/* Hidden audio element */}
-      {audioUrl && <audio ref={audioRef} src={audioUrl} preload="metadata" className="hidden" />}
+      {audioUrl && (
+        <audio 
+          ref={audioRef} 
+          src={audioUrl} 
+          preload="metadata" 
+          className="hidden" 
+        />
+      )}
 
-      {/* Conversation Context Header */}
+      {/* Conversation Header */}
       <div className="rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-4 mb-3">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-400" />
-                <span className="text-lg font-semibold text-white">{formatTime(duration)}</span>
-                <span className="text-sm text-slate-400">conversation</span>
-              </div>
+              <Clock className="w-4 h-4 text-slate-400" />
+              <span className="text-lg font-semibold text-white">{formatTime(duration)}</span>
+              <span className="text-sm text-slate-400">conversation</span>
             </div>
             <div className="flex items-center gap-6 text-sm">
               <div>
@@ -134,117 +182,165 @@ export default function SessionTimeline({
               </div>
             </div>
           </div>
+          
+          {!audioUrl && (
+            <div className="text-xs text-slate-500 italic flex items-center gap-2">
+              <Volume2 className="w-3 h-3" />
+              Audio not available for this session
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Simplified Timeline with 4 Audio Playback Dots */}
-      <div className="relative py-8">
-        {/* Gradient bar */}
-        <div className="relative h-2.5 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 via-purple-500 via-orange-500 to-red-500"></div>
+      {/* Timeline with Segments */}
+      <div className="relative">
+        {/* Progress Bar */}
+        <div className="relative h-3 rounded-full overflow-hidden bg-slate-800/50">
+          <div 
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500"
+            style={{ width: '100%' }}
+          />
+        </div>
         
-        {/* 4 Audio playback dots */}
-        {timelineDots.map((dot, i) => {
-          const isPlaying = playingDot === i
-          const isSelected = selectedDot === i
-          
-          return (
-            <div
-              key={i}
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
-              style={{ left: `${dot.position}%` }}
-            >
-              {/* Playback button dot */}
-              <button
-                onClick={() => {
-                  if (isPlaying) {
-                    stopAudio()
-                  } else {
-                    playAudioFrom(dot.timestamp, i)
-                  }
-                  setSelectedDot(isSelected ? null : i)
-                }}
-                className="group relative"
+        {/* Segment Markers */}
+        <div className="relative -mt-1.5">
+          {segments.map((segment) => {
+            const isPlaying = playingSegment === segment.id
+            const isSelected = selectedSegment === segment.id
+            
+            return (
+              <div
+                key={segment.id}
+                className="absolute -translate-x-1/2"
+                style={{ left: `${segment.position}%` }}
               >
-                <motion.div
-                  className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 border-2 border-white/20 flex items-center justify-center cursor-pointer shadow-lg hover:shadow-purple-500/50 transition-all"
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.95 }}
-                  animate={{
-                    scale: isPlaying ? [1, 1.1, 1] : 1
+                {/* Playback Button */}
+                <button
+                  onClick={() => {
+                    if (isPlaying) {
+                      stopAudio()
+                    } else {
+                      playSegment(segment)
+                      setSelectedSegment(segment.id)
+                    }
                   }}
-                  transition={{
-                    scale: isPlaying ? {
-                      repeat: Infinity,
-                      duration: 1,
-                      ease: "easeInOut"
-                    } : undefined
-                  }}
+                  disabled={!audioUrl || audioLoading}
+                  className={`
+                    relative w-14 h-14 rounded-full flex items-center justify-center
+                    transition-all duration-200 transform
+                    ${audioUrl 
+                      ? 'bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 hover:scale-110 cursor-pointer' 
+                      : 'bg-slate-700 cursor-not-allowed opacity-50'
+                    }
+                    ${isPlaying ? 'scale-110 animate-pulse' : ''}
+                    border-2 border-white/20 shadow-lg
+                  `}
                 >
-                  {isPlaying ? (
-                    <Pause className="w-5 h-5 text-white" />
+                  {audioLoading && playingSegment === segment.id ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : isPlaying ? (
+                    <Pause className="w-6 h-6 text-white" />
                   ) : (
-                    <Play className="w-5 h-5 text-white ml-0.5" />
+                    <Play className="w-6 h-6 text-white ml-0.5" />
                   )}
-                </motion.div>
-                
-                {/* Timestamp label under button */}
-                <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-400 whitespace-nowrap">
-                  {dot.timestamp}
+                </button>
+
+                {/* Timestamp */}
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-400">
+                  {segment.timestamp}
                 </div>
-              </button>
 
-              {/* Feedback panel (shows when selected) */}
-              {isSelected && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="absolute left-1/2 -translate-x-1/2 w-80 p-4 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-purple-500/30 shadow-2xl z-[100]"
-                  style={{
-                    bottom: '100%',
-                    marginBottom: '80px'
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
-                    <MessageSquare className="w-4 h-4 text-purple-400" />
-                    <h4 className="text-sm font-semibold text-white">{dot.title}</h4>
-                  </div>
-                  
-                  <p className="text-xs text-slate-400 mb-3">{dot.description}</p>
-                  
-                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                    <div className="text-[10px] uppercase tracking-wider text-purple-400 mb-1">Coach Tip:</div>
-                    <p className="text-xs text-slate-300">{dot.feedback}</p>
-                  </div>
+                {/* Feedback Panel */}
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-96 z-50"
+                    >
+                      <div className="bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-xl p-5 shadow-2xl">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <h4 className="text-sm font-semibold text-white mb-1">{segment.title}</h4>
+                            <p className="text-xs text-slate-400">{segment.description}</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedSegment(null)
+                            }}
+                            className="text-slate-400 hover:text-white transition-colors ml-4"
+                          >
+                            ✕
+                          </button>
+                        </div>
 
-                  {/* Close button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedDot(null)
-                    }}
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors"
-                  >
-                    <span className="text-slate-400 text-xs">✕</span>
-                  </button>
+                        {/* Feedback Sections */}
+                        <div className="space-y-3">
+                          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-2 h-2 rounded-full bg-green-400" />
+                              <span className="text-xs font-medium text-green-400">What Worked</span>
+                            </div>
+                            <p className="text-xs text-slate-300">{segment.feedback.good}</p>
+                          </div>
 
-                  {/* Arrow pointing to dot */}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-                    <div className="w-3 h-3 bg-slate-900 border-r border-b border-purple-500/30 rotate-45"></div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+                          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-2 h-2 rounded-full bg-amber-400" />
+                              <span className="text-xs font-medium text-amber-400">Area to Improve</span>
+                            </div>
+                            <p className="text-xs text-slate-300">{segment.feedback.improve}</p>
+                          </div>
 
-      {/* Time markers - start and end only */}
-      <div className="flex justify-between px-1 mt-12 text-xs text-slate-500 font-mono">
-        <span>0:00</span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span>{formatTime(duration)}</span>
+                          <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <MessageSquare className="w-3 h-3 text-purple-400" />
+                              <span className="text-xs font-medium text-purple-400">Pro Tip</span>
+                            </div>
+                            <p className="text-xs text-slate-300 italic">"{segment.feedback.tip}"</p>
+                          </div>
+                        </div>
+
+                        {/* Listen Status */}
+                        {isPlaying && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="mt-4 pt-4 border-t border-slate-700/50"
+                          >
+                            <div className="flex items-center gap-2 text-xs text-purple-400">
+                              <Volume2 className="w-4 h-4 animate-pulse" />
+                              <span>Playing 15-second segment...</span>
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Arrow */}
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 
+                        border-l-[8px] border-l-transparent
+                        border-r-[8px] border-r-transparent
+                        border-t-[8px] border-t-slate-900/95"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Time Labels */}
+        <div className="flex justify-between mt-10 text-xs text-slate-500 font-mono">
+          <span>0:00</span>
+          <span>{formatTime(duration * 0.25)}</span>
+          <span>{formatTime(duration * 0.5)}</span>
+          <span>{formatTime(duration * 0.75)}</span>
+          <span>{formatTime(duration)}</span>
+        </div>
       </div>
     </div>
   )
