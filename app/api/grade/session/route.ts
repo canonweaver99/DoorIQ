@@ -661,16 +661,44 @@ ${knowledgeContext}`
         baseScore = gradingResult.scores.overall
       } else {
         // Include core sales performance scores only (exclude filler_words and question_ratio)
-      const numericScores = [
+        const numericScores = [
           rapportScore, discoveryScore, objectionScore, closeScore, safetyScore,
           speakingPaceScore, activeListeningScore, assumptiveLanguageScore
-      ].filter((value) => typeof value === 'number') as number[]
-      
-      if (numericScores.length === 0) {
-        return 0
-      }
+        ].filter((value) => typeof value === 'number') as number[]
+        
+        if (numericScores.length === 0) {
+          return 0
+        }
         baseScore = Math.round(numericScores.reduce((sum, value) => sum + value, 0) / numericScores.length)
         console.log('🧮 Calculated overall score from', numericScores.length, 'core metrics:', baseScore)
+      }
+      
+      // Apply duration penalty for sessions that are too short
+      const durationSeconds = (session as any).duration_seconds || 0
+      let durationMultiplier = 1.0
+      
+      if (durationSeconds < 120) { // Less than 2 minutes
+        durationMultiplier = 0.6 // Max 60% for very short sessions
+        console.log(`⏱️ Session too short (${durationSeconds}s < 120s): capping at 60%`)
+      } else if (durationSeconds < 180) { // Less than 3 minutes
+        durationMultiplier = 0.75 // Max 75% for short sessions
+        console.log(`⏱️ Short session (${durationSeconds}s < 180s): capping at 75%`)
+      } else if (durationSeconds < 240) { // Less than 4 minutes
+        durationMultiplier = 0.85 // Max 85% for medium sessions
+        console.log(`⏱️ Medium session (${durationSeconds}s < 240s): capping at 85%`)
+      }
+      
+      // Apply duration cap
+      baseScore = Math.round(baseScore * durationMultiplier)
+      
+      // Penalize missing critical categories
+      const criticalCategories = [rapportScore, discoveryScore, objectionScore, closeScore]
+      const missingCategories = criticalCategories.filter(score => !score || score === 0).length
+      
+      if (missingCategories > 0) {
+        const categoryPenalty = missingCategories * 10 // -10% per missing critical category
+        console.log(`📊 Missing ${missingCategories} critical categories: -${categoryPenalty}%`)
+        baseScore = Math.max(0, baseScore - categoryPenalty)
       }
       
       // Apply filler word penalty: -1% per filler word
@@ -680,6 +708,8 @@ ${knowledgeContext}`
       if (fillerWordCount > 0) {
         console.log(`🎙️ Filler word penalty: ${fillerWordCount} words = -${fillerPenalty}% (${baseScore} → ${finalScore})`)
       }
+      
+      console.log(`🎯 Final overall score: ${finalScore} (duration: ${durationSeconds}s, missing: ${missingCategories}, fillers: ${fillerWordCount})`)
       
       return finalScore
     })()
