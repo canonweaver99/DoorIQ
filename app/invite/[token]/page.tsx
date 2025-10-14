@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Loader2, CheckCircle2, XCircle, UserPlus } from 'lucide-react'
 
 interface InviteData {
@@ -113,7 +112,7 @@ export default function InviteAcceptPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 bg-slate-800/50 border-slate-700 text-center">
+        <div className="max-w-md w-full p-8 bg-slate-800/50 border border-slate-700 text-center rounded-lg">
           <XCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Invalid Invite</h1>
           <p className="text-slate-400 mb-6">{error}</p>
@@ -123,7 +122,7 @@ export default function InviteAcceptPage() {
           >
             Go to Home
           </Button>
-        </Card>
+        </div>
       </div>
     )
   }
@@ -134,7 +133,7 @@ export default function InviteAcceptPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <Card className="max-w-md w-full p-8 bg-slate-800/50 border-slate-700">
+      <div className="max-w-md w-full p-8 bg-slate-800/50 border border-slate-700 rounded-lg">
         <div className="text-center mb-6">
           <UserPlus className="h-16 w-16 text-purple-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">
@@ -205,7 +204,7 @@ export default function InviteAcceptPage() {
             </p>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   )
 }

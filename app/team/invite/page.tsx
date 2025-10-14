@@ -1,10 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
 import { CheckCircle2, Copy, Mail, UserPlus, Loader2 } from 'lucide-react'
 
 export default function InviteTeammatePage() {
@@ -73,20 +70,20 @@ export default function InviteTeammatePage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Create Invite Form */}
-        <Card className="p-6 bg-slate-800/50 border-slate-700">
+        <div className="p-6 bg-slate-800/50 border border-slate-700 rounded-lg">
           <form onSubmit={handleCreateInvite} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
                 Email Address
               </label>
-              <Input
+              <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="teammate@example.com"
                 required
-                className="bg-slate-900 border-slate-700 text-white"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
@@ -129,10 +126,10 @@ export default function InviteTeammatePage() {
               )}
             </Button>
           </form>
-        </Card>
+        </div>
 
         {/* Invite Link Display */}
-        <Card className="p-6 bg-slate-800/50 border-slate-700">
+        <div className="p-6 bg-slate-800/50 border border-slate-700 rounded-lg">
           {inviteUrl ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-green-400 mb-4">
@@ -145,10 +142,10 @@ export default function InviteTeammatePage() {
                   Share this link
                 </label>
                 <div className="flex gap-2">
-                  <Input
+                  <input
                     value={inviteUrl}
                     readOnly
-                    className="bg-slate-900 border-slate-700 text-white flex-1"
+                    className="bg-slate-900 border border-slate-700 text-white flex-1 rounded-md px-3 py-2"
                   />
                   <Button
                     onClick={handleCopyLink}
@@ -189,11 +186,11 @@ export default function InviteTeammatePage() {
               </p>
             </div>
           )}
-        </Card>
+        </div>
       </div>
 
       {/* Instructions */}
-      <Card className="mt-6 p-6 bg-slate-800/50 border-slate-700">
+      <div className="mt-6 p-6 bg-slate-800/50 border border-slate-700 rounded-lg">
         <h2 className="text-lg font-semibold text-white mb-3">How it works</h2>
         <ol className="space-y-2 text-sm text-slate-400">
           <li className="flex gap-2">
@@ -213,7 +210,7 @@ export default function InviteTeammatePage() {
             <span>The recipient will be added to your team when they sign up or log in</span>
           </li>
         </ol>
-      </Card>
+      </div>
     </div>
   )
 }
