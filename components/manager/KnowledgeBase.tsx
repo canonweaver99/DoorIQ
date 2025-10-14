@@ -602,26 +602,33 @@ function GradingTab({ config, setConfig }: { config: TeamGradingConfig; setConfi
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-white mb-4">Score Weights</h3>
+        <p className="text-sm text-slate-400 mb-4">Adjust the importance of each grading category. Weights automatically balance to total 100%.</p>
         <div className="space-y-4">
           {Object.entries(weights).map(([key, value]) => (
-            <div key={key} className="flex items-center gap-4">
-              <label className="flex-1 text-sm text-slate-300 capitalize">
-                {key.replace(/_/g, ' ').replace(' score', '')}
-              </label>
+            <div key={key} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-slate-300 capitalize">
+                  {key.replace(/_/g, ' ').replace(' score', '')}
+                </label>
+                <span className="text-sm font-semibold text-white">{value}%</span>
+              </div>
               <input
                 type="range"
-                min="0"
+                min="5"
                 max="50"
                 value={value}
                 onChange={(e) => updateWeight(key, parseInt(e.target.value))}
-                className="w-48"
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500"
               />
-              <span className="w-16 text-right text-sm font-semibold text-white">{value}%</span>
             </div>
           ))}
         </div>
-        <div className={`mt-4 text-sm ${totalWeight === 100 ? 'text-green-400' : 'text-yellow-400'}`}>
-          Total: {totalWeight}% {totalWeight !== 100 && '(Should equal 100%)'}
+        <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-green-300">Total Weight:</span>
+            <span className="text-sm font-semibold text-green-400">100% ✓</span>
+          </div>
+          <p className="text-xs text-green-300/70 mt-1">Weights automatically balance when you make changes</p>
         </div>
       </div>
 
