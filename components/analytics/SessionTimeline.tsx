@@ -196,9 +196,13 @@ export default function SessionTimeline({
               {/* Feedback panel (shows when selected) */}
               {isSelected && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 p-5 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-purple-500/30 shadow-2xl z-[100]"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute left-1/2 -translate-x-1/2 w-80 p-4 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-purple-500/30 shadow-2xl z-[100]"
+                  style={{
+                    bottom: '100%',
+                    marginBottom: '80px'
+                  }}
                 >
                   <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
                     <MessageSquare className="w-4 h-4 text-purple-400" />

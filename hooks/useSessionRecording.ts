@@ -52,10 +52,15 @@ export function useSessionRecording(sessionId: string | null) {
   }, [sessionId])
 
   const stopRecording = useCallback(() => {
+    console.log('🛑 stopRecording called - isRecording:', isRecording)
     if (mediaRecorderRef.current && isRecording) {
+      console.log('🛑 Stopping MediaRecorder...')
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
       setIsRecording(false)
+      console.log('✅ MediaRecorder stopped, onstop handler will trigger upload')
+    } else {
+      console.warn('⚠️ Cannot stop recording - mediaRecorder or isRecording is false')
     }
   }, [isRecording])
 

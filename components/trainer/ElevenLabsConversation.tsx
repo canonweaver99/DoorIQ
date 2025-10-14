@@ -91,9 +91,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           dispatchStatus('disconnected')
           
           // Stop audio recording when conversation ends
+          console.log('🛑 onDisconnect - isRecording:', isRecording)
           if (isRecording) {
-            console.log('🛑 Stopping audio recording')
+            console.log('🛑 Calling stopRecording from onDisconnect')
             stopRecording()
+          } else {
+            console.warn('⚠️ onDisconnect called but isRecording is false')
           }
         },
         
