@@ -7,23 +7,37 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS teams (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
-  owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 2) Backfill teams from existing users.team_id values (idempotent)
-INSERT INTO teams (id, name, owner_id)
-SELECT DISTINCT u.team_id,
+INSERT INTO teams (id, name)
+SELECT DISTINCT ON (u.team_id)
+       u.team_id,
        COALESCE(
          NULLIF(split_part(u.email, '@', 1), ''),
          'Team'
-       ) || ' Team' AS name,
-       u.id AS owner_id
+       ) || ' Team' AS name
 FROM users u
-LEFT JOIN teams t ON t.id = u.team_id
-WHERE u.team_id IS NOT NULL AND t.id IS NULL;
+WHERE u.team_id IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM teams WHERE id = u.team_id)
+ORDER BY u.team_id, u.created_at ASC;
 
--- 3) Add FK constraint from users.team_id -> teams.id (if not present)
+-- 3) Add owner_id after backfill (set to first user who had this team_id)
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES users(id) ON DELETE SET NULL;
+
+UPDATE teams t
+SET owner_id = (
+  SELECT u.id
+  FROM users u
+  WHERE u.team_id = t.id
+    AND u.role IN ('manager', 'admin')
+  ORDER BY u.created_at ASC
+  LIMIT 1
+)
+WHERE owner_id IS NULL;
+
+-- 4) Add FK constraint from users.team_id -> teams.id (if not present)
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -38,7 +52,7 @@ BEGIN
   END IF;
 END $$;
 
--- 4) Enable RLS and basic policies
+-- 5) Enable RLS and basic policies
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if re-running
