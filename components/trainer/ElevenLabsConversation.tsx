@@ -72,9 +72,16 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           setErrorMessage('')
           
           // Start audio recording when conversation connects
-          if (sessionId && !isRecording) {
-            console.log('🎙️ Starting audio recording for session:', sessionId)
-            startRecording()
+          console.log('🎙️ Checking audio recording - sessionId:', sessionId, 'isRecording:', isRecording)
+          if (sessionId) {
+            if (!isRecording) {
+              console.log('🎙️ Starting audio recording for session:', sessionId)
+              startRecording()
+            } else {
+              console.log('⚠️ Already recording, skipping start')
+            }
+          } else {
+            console.warn('⚠️ No sessionId provided to ElevenLabsConversation - audio will not be recorded')
           }
         },
         
