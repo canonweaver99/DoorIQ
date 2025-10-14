@@ -592,12 +592,7 @@ function TrainerPageContent() {
     window.addEventListener('connection:status', handleConnectionStatus)
     window.addEventListener('agent:end_call', handleEndCall as EventListener)
 
-    ;(window as any).startSessionRecording = () => {
-      startRecording()
-    }
-    ;(window as any).stopSessionRecording = () => {
-      stopRecording()
-    }
+    // Audio recording is managed by ElevenLabsConversation component
 
     return () => {
       window.removeEventListener('agent:message', handleMessage)
@@ -606,8 +601,6 @@ function TrainerPageContent() {
       window.removeEventListener('agent:delta', handleDeltaEvent)
       window.removeEventListener('connection:status', handleConnectionStatus)
       window.removeEventListener('agent:end_call', handleEndCall as EventListener)
-      delete (window as any).startSessionRecording
-      delete (window as any).stopSessionRecording
     }
   }, [pushFinal, setDelta, sessionActive])
 
