@@ -44,13 +44,10 @@ export default function SessionTimeline({
 }: SessionTimelineProps) {
   const [hoveredDot, setHoveredDot] = useState<number | null>(null)
   
-  // Define key moment types for the 6 dots
+  // Define key moment types for the 3 dots (simplified for faster grading)
   const dotDefinitions = [
-    { position: 15, label: 'Initial Resistance', category: 'introduction' },
-    { position: 30, label: 'Problem Discovery', category: 'discovery' },
-    { position: 45, label: 'Trust Building', category: 'rapport' },
-    { position: 60, label: 'First Objection', category: 'objection_handling' },
-    { position: 75, label: 'Critical Moment', category: 'objection_handling' },
+    { position: 33, label: 'Opening', category: 'introduction' },
+    { position: 66, label: 'Key Moment', category: 'objection_handling' },
     { position: 90, label: 'Close Attempt', category: 'closing' }
   ]
   
@@ -110,7 +107,7 @@ export default function SessionTimeline({
     }
     
     // For the last dot, check if deal closed
-    if (idx === 5) {
+    if (idx === 2) {
       isSuccess = dealOutcome?.closed || false
       momentType = dealOutcome?.closed ? 'Closed Successfully' : 'Deal Lost'
     }
@@ -207,7 +204,7 @@ export default function SessionTimeline({
         </div>
       </div>
 
-      {/* Enhanced Timeline with 6 Key Dots */}
+      {/* Enhanced Timeline with 3 Key Dots */}
       <div className="relative py-8">
         {/* Gradient bar with failure point handling */}
         <div className="relative h-2.5 rounded-full overflow-hidden">
@@ -231,7 +228,7 @@ export default function SessionTimeline({
             />
           )}
           
-          {/* 6 Key moment dots */}
+          {/* 3 Key moment dots */}
           {mappedDots.map((dot, i) => {
             const isHovered = hoveredDot === i
             
@@ -339,7 +336,7 @@ export default function SessionTimeline({
                       )}
                       
                       {/* Success indicator for final dot */}
-                      {i === 5 && dot.isSuccess && dealOutcome?.closed && (
+                      {i === 2 && dot.isSuccess && dealOutcome?.closed && (
                         <div className="mt-3 pt-3 border-t border-green-500/30 flex items-center gap-2 text-green-400">
                           <CheckCircle2 className="w-4 h-4" />
                           <span className="text-xs font-semibold">

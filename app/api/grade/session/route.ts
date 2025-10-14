@@ -448,23 +448,15 @@ export async function POST(request: NextRequest) {
     "score": int,
     "sentiment": "positive/neutral/negative",
     "customer_engagement": "high/medium/low",
-    "missed_opportunities": [],
-    "techniques_used": [],
     "category": "introduction/rapport/discovery/objection_handling/closing/general",
-    "improvement_notes": "",
     "alternative_lines": []
   }],
   "feedback": { "strengths": [], "improvements": [], "specific_tips": [] },
-  "conversation_dynamics": { "interruptions": [], "energy_shifts": [], "buying_signals": [], "momentum_changes": [], "engagement_drops": [] },
-  "failure_analysis": { "critical_moments": [], "point_of_no_return": { "line": 0, "reason": "", "could_have_saved": false, "how": "" }, "missed_pivots": [], "recovery_failures": [] },
-  "objection_analysis": { "total_objections": int, "objections_detail": [], "unresolved_concerns": [], "objection_patterns": "" },
+  "objection_analysis": { "total_objections": int },
   "coaching_plan": { "immediate_fixes": [], "skill_development": [], "role_play_scenarios": [] },
   "timeline_key_moments": [
-    { "position": 15, "line_number": int, "timestamp": "0:00", "moment_type": "Initial Resistance", "quote": "actual customer or rep quote", "is_positive": bool },
-    { "position": 30, "line_number": int, "timestamp": "0:00", "moment_type": "Problem Discovery", "quote": "actual customer or rep quote", "is_positive": bool },
-    { "position": 45, "line_number": int, "timestamp": "0:00", "moment_type": "Trust Building", "quote": "actual customer or rep quote", "is_positive": bool },
-    { "position": 60, "line_number": int, "timestamp": "0:00", "moment_type": "First Objection", "quote": "actual customer or rep quote", "is_positive": bool },
-    { "position": 75, "line_number": int, "timestamp": "0:00", "moment_type": "Critical Moment", "quote": "actual customer or rep quote", "is_positive": bool },
+    { "position": 33, "line_number": int, "timestamp": "0:00", "moment_type": "Opening", "quote": "actual customer or rep quote", "is_positive": bool },
+    { "position": 66, "line_number": int, "timestamp": "0:00", "moment_type": "Key Moment", "quote": "actual customer or rep quote", "is_positive": bool },
     { "position": 90, "line_number": int, "timestamp": "0:00", "moment_type": "Close Attempt", "quote": "actual customer or rep quote", "is_positive": bool }
   ],
   "sale_closed": bool,
@@ -472,8 +464,8 @@ export async function POST(request: NextRequest) {
   "virtual_earnings": number,
   "earnings_data": { "base_amount": 0, "closed_amount": number, "commission_rate": 0.30, "commission_earned": number, "bonus_modifiers": { "quick_close": 0, "upsell": 0, "retention": 0, "same_day_start": 0, "referral_secured": 0, "perfect_pitch": 0 }, "total_earned": number },
   "deal_details": { "product_sold": "", "service_type": "", "base_price": number, "monthly_value": number, "contract_length": number, "total_contract_value": number, "payment_method": "", "add_ons": [], "start_date": "" },
-            "enhanced_metrics": {
-              "filler_words": {
+  "enhanced_metrics": {
+    "filler_words": {
       "total_count": int,
       "per_minute": number,
       "common_fillers": { "um": int, "uh": int, "like": int, "you know": int, "basically": int, "actually": int }
@@ -483,29 +475,24 @@ export async function POST(request: NextRequest) {
 
 Rules:
 - Only extract data explicitly stated in the transcript. If not mentioned, use empty string "", 0, false, or [] where appropriate.
-- Create a line_ratings entry for EVERY sales rep line. Include alternative_lines with 1-2 suggested rewrites for lines rated "average" or "poor". Leave alternative_lines empty for "good" or "excellent" lines.
+- Create a line_ratings entry for EVERY sales rep line. ONLY include alternative_lines (1-2 suggested rewrites) for lines rated "poor". Leave alternative_lines empty for "average", "good", or "excellent" lines.
 - Count all filler words (um, uh, like, you know, basically, actually) spoken by the sales rep. Return the total count as filler_word_count AND in enhanced_metrics.filler_words with breakdown by type.
 - DO NOT include filler_words in the scores object. The backend will deduct 1% from overall for each filler word.
 
 TIMELINE KEY MOMENTS:
-Identify exactly 6 key moments from the conversation for the timeline at these positions:
-- Position 15% (Early): Initial resistance or opening moment - find the first sign of customer interest/disinterest
-- Position 30% (Early-Mid): Problem discovery - when customer reveals their issue or need
-- Position 45% (Mid): Trust building - a rapport moment or emotional connection (or lack thereof)
-- Position 60% (Mid-Late): First major objection - customer's primary concern or pushback
-- Position 75% (Late): Critical turning point - the make-or-break moment that sealed the outcome
-- Position 90% (End): Close attempt - final outcome (success or failure)
+Identify exactly 3 key moments from the conversation for the timeline at these positions:
+- Position 33% (Early): Opening moment - how did the conversation start? First impression, initial engagement
+- Position 66% (Mid): Key turning point - the most critical moment that influenced the outcome (objection, breakthrough, trust moment, etc.)
+- Position 90% (End): Close attempt - final outcome (success, failure, or appointment set)
 
 For each moment, provide:
 - line_number: The exact line index from the transcript (the number in [brackets])
 - timestamp: Copy the EXACT timestamp from the transcript line at that line_number. The transcript format is "[line_number] (timestamp) Speaker: text" - extract the timestamp from the (parentheses). Examples: "0:05", "1:47", "2:33"
-- moment_type: Short descriptive label (e.g., "Trust Broken", "Price Objection", "Closed Successfully")
+- moment_type: Short descriptive label (e.g., "Strong Opening", "Price Objection", "Closed Successfully", "Lost Trust")
 - quote: The EXACT text spoken by either party at that moment (verbatim from transcript, everything after "Speaker: ")
 - is_positive: true if moment helped the sale, false if it hurt
 
 CRITICAL: The transcript shows timestamps in parentheses like (1:23). Copy these exactly. Never use "00:00" unless that's the actual timestamp shown.
-
-For failed sales, identify which moment killed the deal (usually position 75 or earlier) and mark is_positive as false.
 
 QUESTION RATIO CALCULATION:
 Count ONLY discovery and clarification questions that end with "?". 
@@ -564,8 +551,8 @@ ${knowledgeContext}`
       model: "gpt-4o-mini",
       messages: messages as any,
       response_format: { type: "json_object" },
-      max_tokens: 4000,
-      temperature: 0.4
+      max_tokens: 2000, // Reduced for faster response (simplified structure)
+      temperature: 0.3 // Lower for more consistent/faster output
     })
 
     const responseContent = completion.choices[0].message.content || '{}'

@@ -21,12 +21,23 @@ export default function LoadingPage() {
   const [status, setStatus] = useState('Saving your session...')
   const [gradingStatus, setGradingStatus] = useState<'idle' | 'in-progress' | 'completed' | 'error'>('idle')
   const [lastError, setLastError] = useState<string | null>(null)
+  const [showSkip, setShowSkip] = useState(false)
+  
+  const handleSkip = () => {
+    console.log('⏭️ User skipped waiting, redirecting to analytics...')
+    router.push(`/analytics/${params.sessionId}`)
+  }
 
   useEffect(() => {
     // Rotate tips every 3 seconds
     const tipInterval = setInterval(() => {
       setCurrentTip((prev) => (prev + 1) % TIPS.length)
     }, 3000)
+    
+    // Show skip button after 10 seconds
+    const skipTimeout = setTimeout(() => {
+      setShowSkip(true)
+    }, 10000)
 
     const sessionId = params.sessionId as string
     
@@ -92,18 +103,19 @@ export default function LoadingPage() {
       }
     }, 2000)
 
-    // Timeout after 2 minutes - redirect anyway (grading continues in background)
+    // Timeout after 30 seconds - redirect anyway (grading continues in background)
     const timeout = setTimeout(() => {
-      console.warn('⚠️ Grading still in progress, redirecting to analytics...')
+      console.warn('⚠️ Grading taking longer than expected, redirecting to analytics...')
       console.warn('⚠️ Results will appear when grading completes')
-      setStatus('Still grading... Redirecting to results page')
+      setStatus('Taking longer than expected... Showing results')
       router.push(`/analytics/${params.sessionId}`)
-    }, 120000)
+    }, 30000) // Reduced from 2 minutes to 30 seconds
 
     return () => {
       clearInterval(tipInterval)
       clearInterval(pollInterval)
       clearTimeout(timeout)
+      clearTimeout(skipTimeout)
     }
   }, [params.sessionId, router, gradingStatus])
 
@@ -162,6 +174,18 @@ export default function LoadingPage() {
               {lastError && <div className="text-rose-300 pl-4">{lastError}</div>}
             </div>
           </motion.div>
+
+          {/* Skip Button */}
+          {showSkip && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={handleSkip}
+              className="mt-6 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-xl text-slate-300 hover:text-white transition-all text-sm font-medium"
+            >
+              View Results Now
+            </motion.button>
+          )}
         </div>
       </div>
     </div>
