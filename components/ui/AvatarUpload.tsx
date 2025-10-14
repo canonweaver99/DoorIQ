@@ -161,6 +161,10 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
         onUploadComplete(publicUrl)
       }
       
+      // Dispatch global event so header and other components can refresh
+      window.dispatchEvent(new CustomEvent('avatar:updated', { detail: { url: publicUrl } }))
+      console.log('📡 Dispatched avatar:updated event')
+      
       console.log('🔄 Avatar state updated, should now display')
 
       // Reset success message after 3 seconds

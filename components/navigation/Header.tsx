@@ -50,6 +50,7 @@ type AuthMeta = {
   full_name?: string | null
   role?: UserRole | null
   virtual_earnings?: number | null
+  avatar_url?: string | null
 }
 
 const normalizeRole = (roleValue: unknown): UserRole | null => {
@@ -98,6 +99,7 @@ function HeaderContent() {
   const profileEmail = user?.email || authMeta?.email || 'team@dooriq.app'
   const profileInitial = profileName.charAt(0).toUpperCase()
   const profileEarnings = parseEarnings(user?.virtual_earnings ?? authMeta?.virtual_earnings)
+  const profileAvatar = (user as any)?.avatar_url || authMeta?.avatar_url || null
   const userId = user?.id || authMeta?.id || null
   const { unreadCount } = useUnreadMessages(userId)
 
@@ -167,6 +169,13 @@ function HeaderContent() {
     // Initial fetch
     fetchUser()
 
+    // Listen for avatar updates
+    const handleAvatarUpdate = () => {
+      console.log('🔄 Avatar updated, refreshing user data...')
+      fetchUser()
+    }
+    window.addEventListener('avatar:updated', handleAvatarUpdate)
+
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -179,6 +188,7 @@ function HeaderContent() {
 
     return () => {
       subscription.unsubscribe()
+      window.removeEventListener('avatar:updated', handleAvatarUpdate)
     }
   }, [])
 
@@ -394,10 +404,24 @@ function HeaderContent() {
 
             <div className="flex items-center gap-3">
               {isSignedIn && (
-                <div className="pl-2 border-l border-white/10">
-                  <p className="text-xs text-slate-300 leading-4">{user?.full_name ?? profileName}</p>
-                  <p className="text-[11px] text-purple-400 font-semibold">${profileEarnings.toFixed(2)} earned</p>
-                </div>
+                <>
+                  <div className="pl-2 border-l border-white/10">
+                    <p className="text-xs text-slate-300 leading-4">{user?.full_name ?? profileName}</p>
+                    <p className="text-[11px] text-purple-400 font-semibold">${profileEarnings.toFixed(2)} earned</p>
+                  </div>
+                  {profileAvatar && (
+                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-purple-500/30">
+                      <img 
+                        src={profileAvatar} 
+                        alt={profileName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none'
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
               )}
               <button
                 ref={sidebarButtonRef}
@@ -569,9 +593,19 @@ function HeaderContent() {
                     {isSignedIn ? (
                       <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 shadow-inner shadow-purple-500/10">
                         <div className="flex items-center gap-3">
-                          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
-                            {profileInitial}
-                          </div>
+                          {profileAvatar ? (
+                            <div className="h-11 w-11 rounded-2xl overflow-hidden border-2 border-purple-500/30">
+                              <img 
+                                src={profileAvatar} 
+                                alt={profileName}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
+                              {profileInitial}
+                            </div>
+                          )}
                           <div>
                             <p className="text-sm font-semibold text-white leading-5">{profileName}</p>
                             <p className="text-xs text-slate-300 leading-4">{profileEmail}</p>
