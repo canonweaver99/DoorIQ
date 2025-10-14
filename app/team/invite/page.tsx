@@ -55,7 +55,8 @@ export default function InviteTeammatePage() {
       const body = encodeURIComponent(
         `You've been invited to join our team on DoorIQ!\n\nClick the link below to accept the invitation:\n${inviteUrl}\n\nThis link will expire in 7 days.`
       )
-      window.location.href = `mailto:?subject=${subject}&body=${body}`
+      // Open Gmail compose window
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank')
     }
   }
 
