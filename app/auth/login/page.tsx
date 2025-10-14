@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
@@ -26,7 +26,7 @@ const testimonials: Testimonial[] = [
   },
 ]
 
-export default function LoginPage() {
+function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -123,6 +123,14 @@ export default function LoginPage() {
       loading={loading}
       error={error}
     />
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center"><div className="text-white">Loading...</div></div>}>
+      <LoginForm />
+    </Suspense>
   )
 }
 

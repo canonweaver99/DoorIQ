@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerSupabaseClient()
     
     // Get the authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
