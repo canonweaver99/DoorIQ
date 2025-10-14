@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertCircle, Sparkles, Zap, Filter } from 'lucide-react'
+import { Clock, CheckCircle2, AlertCircle } from 'lucide-react'
 
 interface TimelineEvent {
   type: 'win' | 'opportunity' | 'signal' | 'critical'
@@ -43,6 +43,36 @@ export default function SessionTimeline({
   failurePoint
 }: SessionTimelineProps) {
   const [hoveredDot, setHoveredDot] = useState<number | null>(null)
+  const [showingIntroAnimation, setShowingIntroAnimation] = useState(true)
+  const [currentlyAnimatingDot, setCurrentlyAnimatingDot] = useState<number | null>(0)
+  
+  // Animate tooltips in sequence on mount
+  useEffect(() => {
+    // Show first tooltip
+    setCurrentlyAnimatingDot(0)
+    
+    // Show second tooltip after 1 second
+    const timer1 = setTimeout(() => {
+      setCurrentlyAnimatingDot(1)
+    }, 1000)
+    
+    // Show third tooltip after 2 seconds
+    const timer2 = setTimeout(() => {
+      setCurrentlyAnimatingDot(2)
+    }, 2000)
+    
+    // Hide all tooltips after 3 seconds
+    const timer3 = setTimeout(() => {
+      setCurrentlyAnimatingDot(null)
+      setShowingIntroAnimation(false)
+    }, 3500)
+    
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
+    }
+  }, [])
   
   // Define key moment types for the 3 dots (simplified for faster grading)
   const dotDefinitions = [
@@ -231,6 +261,8 @@ export default function SessionTimeline({
           {/* 3 Key moment dots */}
           {mappedDots.map((dot, i) => {
             const isHovered = hoveredDot === i
+            const isAnimating = showingIntroAnimation && currentlyAnimatingDot === i
+            const shouldShowTooltip = isHovered || isAnimating
             
             // Determine dot color
             let dotColor = 'bg-white'
@@ -275,13 +307,14 @@ export default function SessionTimeline({
                   }}
                 />
                 
-                {/* Enhanced hover tooltip */}
+                {/* Enhanced tooltip - shows on intro animation or hover */}
                 <AnimatePresence>
-                  {isHovered && (
+                  {shouldShowTooltip && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                      transition={{ type: "spring", duration: 0.5 }}
                       className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 w-80 p-5 rounded-xl bg-slate-900/98 backdrop-blur-xl border border-slate-700/50 shadow-2xl pointer-events-none z-50"
                     >
                       {/* Header with success indicator */}
