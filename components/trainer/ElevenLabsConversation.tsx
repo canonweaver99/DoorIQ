@@ -2,18 +2,23 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Conversation } from '@elevenlabs/client'
+import { useSessionRecording } from '@/hooks/useSessionRecording'
 
 type ElevenLabsConversationProps = {
   agentId: string
   conversationToken: string
   autostart?: boolean
+  sessionId?: string | null
 }
 
-export default function ElevenLabsConversation({ agentId, conversationToken, autostart = true }: ElevenLabsConversationProps) {
+export default function ElevenLabsConversation({ agentId, conversationToken, autostart = true, sessionId = null }: ElevenLabsConversationProps) {
   const conversationRef = useRef<any>(null)
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [currentToken, setCurrentToken] = useState(conversationToken)
+  
+  // Audio recording
+  const { isRecording, startRecording, stopRecording } = useSessionRecording(sessionId)
 
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
     window.dispatchEvent(new CustomEvent('connection:status', { detail: s === 'connected' ? 'connected' : s === 'connecting' ? 'connecting' : s === 'error' ? 'error' : 'idle' }))
@@ -65,12 +70,24 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           setStatus('connected')
           dispatchStatus('connected')
           setErrorMessage('')
+          
+          // Start audio recording when conversation connects
+          if (sessionId && !isRecording) {
+            console.log('🎙️ Starting audio recording for session:', sessionId)
+            startRecording()
+          }
         },
         
         onDisconnect: (reason?: any) => {
           console.log('🔌 Disconnected:', reason)
           setStatus('disconnected')
           dispatchStatus('disconnected')
+          
+          // Stop audio recording when conversation ends
+          if (isRecording) {
+            console.log('🛑 Stopping audio recording')
+            stopRecording()
+          }
         },
         
         onModeChange: (mode: any) => {

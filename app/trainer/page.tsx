@@ -1266,7 +1266,12 @@ function TrainerPageContent() {
 
             {/* ElevenLabs SDK Component */}
             {sessionActive && conversationToken !== null && selectedAgent?.eleven_agent_id && (
-              <ElevenLabsConversation agentId={selectedAgent.eleven_agent_id} conversationToken={conversationToken} autostart />
+              <ElevenLabsConversation 
+                agentId={selectedAgent.eleven_agent_id} 
+                conversationToken={conversationToken} 
+                sessionId={sessionId}
+                autostart 
+              />
             )}
 
             <style jsx global>{`
