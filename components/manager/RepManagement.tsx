@@ -230,7 +230,7 @@ export default function RepManagement() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl overflow-hidden"
+        className="bg-[#1e1e30] border border-white/10 rounded-2xl overflow-visible"
       >
         {/* Table Header */}
         <div className="border-b border-white/10 bg-white/5 px-6 py-4">
@@ -265,7 +265,7 @@ export default function RepManagement() {
         </div>
 
         {/* Table Body */}
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-white/5 overflow-visible">
           {filteredReps.map((rep, index) => (
             <motion.div
               key={rep.id}
