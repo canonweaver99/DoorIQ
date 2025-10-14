@@ -5,6 +5,9 @@ import { motion } from 'framer-motion'
 import { CreditCard, Calendar, AlertCircle, CheckCircle, Loader2, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+// Force dynamic rendering - Stripe features not fully configured yet
+export const dynamic = 'force-dynamic'
+
 interface SubscriptionData {
   status: string
   plan: string

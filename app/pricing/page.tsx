@@ -4,6 +4,9 @@ import { useState } from "react"
 import { PricingSection } from "@/components/ui/pricing"
 import { Loader2 } from "lucide-react"
 
+// Force dynamic rendering - Stripe features not fully configured yet
+export const dynamic = 'force-dynamic'
+
 // Stripe Price IDs - Replace these with your actual price IDs from Stripe Dashboard
 const STRIPE_PRICE_IDS = {
   individual_monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_MONTHLY || 'price_individual_monthly',

@@ -5,6 +5,9 @@ import { motion } from 'framer-motion'
 import { Gift, Copy, Users, DollarSign, CheckCircle, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+// Force dynamic rendering - Referral features need migration
+export const dynamic = 'force-dynamic'
+
 interface ReferralStats {
   referralCode: string
   totalReferrals: number

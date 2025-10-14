@@ -6,6 +6,9 @@ import { Upload, FileAudio, Loader2, CheckCircle, XCircle, ArrowLeft } from 'luc
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+// Force dynamic rendering - Upload feature
+export const dynamic = 'force-dynamic'
+
 export default function UploadTrainingPage() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
