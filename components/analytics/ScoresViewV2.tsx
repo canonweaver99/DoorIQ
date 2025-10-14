@@ -247,16 +247,45 @@ export default function ScoresViewV2({
                           <div className="space-y-2">
                             {fullTranscript?.filter((line, idx) => {
                               const text = line.text || line.message || ''
-                              const fillerPattern = /\b(um|uh|like|you know|basically|actually|sort of|kind of)\b/gi
-                              return line.speaker === 'rep' || line.speaker === 'user' ? fillerPattern.test(text) : false
+                              // Only match standalone filler words (not parts of other words)
+                              const fillerPattern = /\b(um|uhh?|uh|like|erm|err|hmm)\b/gi
+                              const isRepLine = line.speaker === 'rep' || line.speaker === 'user'
+                              return isRepLine && fillerPattern.test(text)
                             }).map((line, idx) => {
                               const text = line.text || line.message || ''
                               const lineIndex = fullTranscript.indexOf(line)
+                              
+                              // Format timestamp to simple M:SS format
+                              let displayTime = `Line ${lineIndex}`
+                              if (line.timestamp) {
+                                try {
+                                  const timestamp = line.timestamp
+                                  // If it's already in M:SS format, use it
+                                  if (/^\d{1,2}:\d{2}$/.test(timestamp)) {
+                                    displayTime = timestamp
+                                  } else {
+                                    // Parse ISO datetime and convert to seconds from start
+                                    const date = new Date(timestamp)
+                                    // Assuming session start is first line timestamp
+                                    const firstLine = fullTranscript[0]
+                                    if (firstLine?.timestamp) {
+                                      const startDate = new Date(firstLine.timestamp)
+                                      const secondsFromStart = Math.floor((date.getTime() - startDate.getTime()) / 1000)
+                                      const mins = Math.floor(secondsFromStart / 60)
+                                      const secs = secondsFromStart % 60
+                                      displayTime = `${mins}:${secs.toString().padStart(2, '0')}`
+                                    }
+                                  }
+                                } catch (e) {
+                                  // Keep default Line X format
+                                }
+                              }
+                              
                               return (
                                 <div key={idx} className="text-xs p-2 bg-amber-500/5 border border-amber-500/10 rounded">
                                   <div className="flex items-center gap-2 mb-1">
                                     <Clock className="w-3 h-3 text-amber-400" />
-                                    <span className="text-amber-400 font-mono">{line.timestamp || `Line ${lineIndex}`}</span>
+                                    <span className="text-amber-400 font-mono">{displayTime}</span>
                                   </div>
                                   <p className="text-slate-300">"{text}"</p>
                                 </div>

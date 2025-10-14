@@ -174,11 +174,6 @@ export default function SessionTimeline({
                     <Play className="w-5 h-5 text-white ml-0.5" />
                   )}
                 </motion.div>
-
-                {/* Timestamp label */}
-                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-400 whitespace-nowrap">
-                  {dot.timestamp}
-                </div>
               </button>
 
               {/* Feedback panel (shows when selected) */}
@@ -222,12 +217,12 @@ export default function SessionTimeline({
         })}
       </div>
 
-      {/* Time markers */}
-      <div className="flex justify-between px-1 text-xs text-slate-500 font-mono">
+      {/* Time markers - Only show at 0 and end */}
+      <div className="flex justify-between px-1 mt-6 text-xs text-slate-500 font-mono">
         <span>0:00</span>
-        <span>{formatTime(duration * 0.25)}</span>
-        <span>{formatTime(duration * 0.5)}</span>
-        <span>{formatTime(duration * 0.75)}</span>
+        <span></span>
+        <span></span>
+        <span></span>
         <span>{formatTime(duration)}</span>
       </div>
     </div>
