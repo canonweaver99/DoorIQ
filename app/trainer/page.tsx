@@ -11,6 +11,7 @@ import CalculatingScore from '@/components/analytics/CalculatingScore'
 import MoneyNotification from '@/components/trainer/MoneyNotification'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react'
 
 interface Agent {
   id: string
@@ -338,9 +339,13 @@ function TrainerPageContent() {
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([])
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle')
+  const [showSilenceWarning, setShowSilenceWarning] = useState(false)
+  const [isReconnecting, setIsReconnecting] = useState(false)
   const lastAgentActivityRef = useRef<number>(Date.now())
   const lastUserActivityRef = useRef<number>(Date.now())
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const tokenRenewalTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const silenceCheckTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const orbColors = getOrbColors(selectedAgent?.name)
 
@@ -415,6 +420,12 @@ function TrainerPageContent() {
       }
       if (mediaStream.current) {
         mediaStream.current.getTracks().forEach(track => track.stop())
+      }
+      if (tokenRenewalTimerRef.current) {
+        clearInterval(tokenRenewalTimerRef.current)
+      }
+      if (silenceCheckTimerRef.current) {
+        clearInterval(silenceCheckTimerRef.current)
       }
       signedUrlAbortRef.current?.abort()
     }
@@ -634,6 +645,111 @@ function TrainerPageContent() {
       }
     }
   }, [sessionActive, deltaText, transcript.length])
+
+  // Token renewal: Refresh conversation token every 9 minutes (before 10-minute expiry)
+  useEffect(() => {
+    if (!sessionActive || !selectedAgent) {
+      if (tokenRenewalTimerRef.current) {
+        clearInterval(tokenRenewalTimerRef.current)
+        tokenRenewalTimerRef.current = null
+      }
+      return
+    }
+
+    // Renew token every 9 minutes (540 seconds)
+    tokenRenewalTimerRef.current = setInterval(async () => {
+      console.log('🔄 Renewing conversation token...')
+      try {
+        const result = await fetchConversationToken(selectedAgent.eleven_agent_id)
+        if (result.canProceed && result.conversationToken) {
+          setConversationToken(result.conversationToken)
+          console.log('✅ Conversation token renewed successfully')
+          
+          // Dispatch event to update the conversation with new token
+          window.dispatchEvent(new CustomEvent('trainer:token-renewed', {
+            detail: { conversationToken: result.conversationToken }
+          }))
+        } else {
+          console.error('❌ Token renewal failed:', result.error)
+        }
+      } catch (error) {
+        console.error('❌ Error renewing token:', error)
+      }
+    }, 540_000) // 9 minutes
+
+    return () => {
+      if (tokenRenewalTimerRef.current) {
+        clearInterval(tokenRenewalTimerRef.current)
+        tokenRenewalTimerRef.current = null
+      }
+    }
+  }, [sessionActive, selectedAgent])
+
+  // Silence detection: Show warning if agent hasn't responded in 30 seconds
+  useEffect(() => {
+    if (!sessionActive) {
+      if (silenceCheckTimerRef.current) {
+        clearInterval(silenceCheckTimerRef.current)
+        silenceCheckTimerRef.current = null
+      }
+      setShowSilenceWarning(false)
+      return
+    }
+
+    silenceCheckTimerRef.current = setInterval(() => {
+      const now = Date.now()
+      const agentIdleMs = now - lastAgentActivityRef.current
+      const SILENCE_WARNING_MS = 30_000 // Show warning after 30s of silence
+      
+      if (agentIdleMs >= SILENCE_WARNING_MS && !showSilenceWarning) {
+        console.warn('⚠️ Agent silent for 30+ seconds, showing warning')
+        setShowSilenceWarning(true)
+      } else if (agentIdleMs < SILENCE_WARNING_MS && showSilenceWarning) {
+        console.log('✅ Agent responded, hiding warning')
+        setShowSilenceWarning(false)
+      }
+    }, 3_000) // Check every 3s
+
+    return () => {
+      if (silenceCheckTimerRef.current) {
+        clearInterval(silenceCheckTimerRef.current)
+        silenceCheckTimerRef.current = null
+      }
+    }
+  }, [sessionActive, showSilenceWarning])
+
+  const handleReconnect = async () => {
+    if (!selectedAgent || !sessionActive) return
+    
+    setIsReconnecting(true)
+    setShowSilenceWarning(false)
+    
+    try {
+      console.log('🔄 Attempting to reconnect...')
+      const result = await fetchConversationToken(selectedAgent.eleven_agent_id)
+      
+      if (result.canProceed && result.conversationToken) {
+        setConversationToken(result.conversationToken)
+        console.log('✅ Reconnected successfully')
+        
+        // Reset activity timers
+        lastAgentActivityRef.current = Date.now()
+        
+        // Dispatch reconnection event
+        window.dispatchEvent(new CustomEvent('trainer:reconnect', {
+          detail: { conversationToken: result.conversationToken }
+        }))
+        
+        setIsReconnecting(false)
+      } else {
+        throw new Error(result.error || 'Reconnection failed')
+      }
+    } catch (error) {
+      console.error('❌ Reconnection error:', error)
+      setIsReconnecting(false)
+      alert('Unable to reconnect. Please end the session and start a new one.')
+    }
+  }
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -1065,6 +1181,48 @@ function TrainerPageContent() {
             )}
           </div>
         </div>
+
+        {/* Silence Warning Banner */}
+        {showSilenceWarning && sessionActive && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-xl backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-yellow-500/20 rounded-full">
+                  <AlertCircle className="w-5 h-5 text-yellow-400 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold">Austin seems quiet</h3>
+                  <p className="text-slate-300 text-sm">No response for 30+ seconds. Try reconnecting or end the session.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleReconnect}
+                  disabled={isReconnecting}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-slate-600 disabled:to-slate-700 text-white font-semibold rounded-lg transition-all shadow-lg disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isReconnecting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Reconnecting...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Reconnect
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={endSession}
+                  className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white font-medium rounded-lg transition-all"
+                >
+                  End Session
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col items-center justify-start pt-6">
