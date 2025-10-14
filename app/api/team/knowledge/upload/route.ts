@@ -53,8 +53,10 @@ export async function POST(request: Request) {
     if (uploadError) {
       console.error('Upload error:', uploadError)
       return NextResponse.json({ 
-        error: 'Failed to upload file. Please try again.',
-        details: uploadError.message 
+        error: 'Failed to upload file to storage.',
+        details: uploadError.message,
+        code: uploadError.code,
+        storageError: uploadError
       }, { status: 500 })
     }
 
@@ -84,9 +86,13 @@ export async function POST(request: Request) {
         extractedContent
       }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in upload:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error.message,
+      stack: error.stack 
+    }, { status: 500 })
   }
 }
 

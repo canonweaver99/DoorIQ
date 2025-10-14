@@ -165,7 +165,8 @@ export default function KnowledgeBase() {
 
         if (!uploadRes.ok) {
           const errorData = await uploadRes.json()
-          throw new Error(errorData.error || 'Upload failed')
+          console.error('Upload API Error:', errorData)
+          throw new Error(errorData.details || errorData.error || 'Upload failed')
         }
 
         const uploadData = await uploadRes.json()
@@ -186,7 +187,8 @@ export default function KnowledgeBase() {
 
         if (!docRes.ok) {
           const errorData = await docRes.json()
-          throw new Error(errorData.error || 'Failed to save document')
+          console.error('Document Save API Error:', errorData)
+          throw new Error(errorData.details || errorData.error || 'Failed to save document')
         }
       }
 
