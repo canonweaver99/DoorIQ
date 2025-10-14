@@ -22,34 +22,32 @@ export async function GET() {
       return NextResponse.json({ documents: [] })
     }
 
-    // Get team documents (owned + shared)
-    const { data: ownedDocs, error: ownedError } = await supabase
-      .from('team_knowledge_documents')
+    // Get documents from knowledge_base table for this team
+    const { data: documents, error: docsError } = await supabase
+      .from('knowledge_base')
       .select('*')
-      .eq('team_id', userProfile.team_id)
+      .eq('is_active', true)
+      .contains('metadata', { team_id: userProfile.team_id })
       .order('created_at', { ascending: false })
 
-    if (ownedError) {
-      console.error('Error fetching documents:', ownedError)
+    if (docsError) {
+      console.error('Error fetching documents:', docsError)
       return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
     }
 
-    // Get shared documents
-    const { data: sharedDocs } = await supabase
-      .from('team_shared_documents')
-      .select(`
-        document_id,
-        team_knowledge_documents (*)
-      `)
-      .eq('shared_with_team_id', userProfile.team_id)
-
-    const sharedDocsList = sharedDocs?.map(s => ({
-      ...(s as any).team_knowledge_documents,
-      is_shared_with_team: true
-    })) || []
+    // Transform to match expected format
+    const transformedDocs = (documents || []).map(doc => ({
+      id: doc.id,
+      document_name: doc.file_name,
+      file_url: doc.file_url,
+      file_size_bytes: doc.file_size,
+      document_type: doc.file_type,
+      use_in_grading: doc.metadata?.use_in_grading ?? true,
+      created_at: doc.created_at
+    }))
 
     return NextResponse.json({ 
-      documents: [...(ownedDocs || []), ...sharedDocsList]
+      documents: transformedDocs
     })
   } catch (error) {
     console.error('Error in GET knowledge:', error)
@@ -84,24 +82,34 @@ export async function POST(request: Request) {
 
     const body = await request.json()
 
+    // Use the simpler knowledge_base table instead of team_knowledge_documents
+    // This avoids the teams table foreign key issue
     const { data: document, error: insertError } = await supabase
-      .from('team_knowledge_documents')
+      .from('knowledge_base')
       .insert({
-        team_id: userProfile.team_id,
-        document_name: body.document_name,
+        user_id: user.id,
+        file_name: body.document_name,
+        file_type: body.document_type || 'other',
+        file_size: body.file_size_bytes || 0,
         file_url: body.file_url,
-        file_size_bytes: body.file_size_bytes,
-        extracted_content: body.extracted_content,
-        document_type: body.document_type || 'other',
-        use_in_grading: body.use_in_grading ?? true,
-        uploaded_by: user.id,
+        content: body.extracted_content || '',
+        metadata: {
+          team_id: userProfile.team_id,
+          use_in_grading: body.use_in_grading ?? true,
+          uploaded_by: user.id
+        },
+        is_active: true
       })
       .select()
       .single()
 
     if (insertError) {
       console.error('Error creating document:', insertError)
-      return NextResponse.json({ error: 'Failed to create document' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to create document',
+        details: insertError.message,
+        code: insertError.code 
+      }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, document })
@@ -140,10 +148,10 @@ export async function DELETE(request: Request) {
     }
 
     const { error: deleteError } = await supabase
-      .from('team_knowledge_documents')
+      .from('knowledge_base')
       .delete()
       .eq('id', documentId)
-      .eq('team_id', userProfile.team_id)
+      .eq('user_id', user.id)
 
     if (deleteError) {
       console.error('Error deleting document:', deleteError)
