@@ -12,19 +12,44 @@ export async function POST(request: Request) {
     }
 
     // Get the invite
-    const { data: invite, error: inviteError } = await supabase
+    const { data: invite, error: inviteError } = await (supabase as any)
       .from('team_invites')
-      .select(`
-        *,
-        team:teams(id, name),
-        inviter:users!team_invites_invited_by_fkey(full_name, email)
-      `)
+      .select('*')
       .eq('token', token)
       .single()
 
     if (inviteError || !invite) {
+      console.error('Invite error:', inviteError)
       return NextResponse.json({ error: 'Invalid invite token' }, { status: 404 })
     }
+
+    // Get team info separately
+    const { data: team, error: teamError } = await (supabase as any)
+      .from('teams')
+      .select('id, name')
+      .eq('id', invite.team_id)
+      .single()
+
+    if (teamError || !team) {
+      console.error('Team error:', teamError)
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
+    }
+
+    // Get inviter info separately
+    const { data: inviter, error: inviterError } = await (supabase as any)
+      .from('users')
+      .select('full_name, email')
+      .eq('id', invite.invited_by)
+      .single()
+
+    if (inviterError || !inviter) {
+      console.error('Inviter error:', inviterError)
+      return NextResponse.json({ error: 'Inviter not found' }, { status: 404 })
+    }
+
+    // Combine the data
+    invite.team = team
+    invite.inviter = inviter
 
     // Check if invite is still valid
     if (invite.status !== 'pending') {
