@@ -357,6 +357,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Doubts everything. Build credibility through proof.',
       difficulty: 'Hard',
       color: 'denary',
+      image: '/agents/sam.png',
     },
     card: {
       age: 55,
