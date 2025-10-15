@@ -285,7 +285,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             src={agent.image}
                             alt={agent.name}
                             fill
-                            className="object-cover"
+                            className="object-cover scale-110"
                             sizes="192px"
                           />
                         </div>

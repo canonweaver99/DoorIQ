@@ -1263,7 +1263,7 @@ function TrainerPageContent() {
                         src={PERSONA_METADATA[selectedAgent.name as AllowedAgentName].bubble.image!}
                         alt={selectedAgent.name}
                         fill
-                        className="object-cover"
+                        className="object-cover scale-110"
                         sizes="320px"
                         priority
                       />
