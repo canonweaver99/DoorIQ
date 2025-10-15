@@ -279,7 +279,17 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
                     {/* Profile Image in Center */}
                     {agent.image && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <motion.div 
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        animate={{
+                          scale: [1, 1.05, 1],
+                        }}
+                        transition={{
+                          duration: 5,
+                          repeat: Number.POSITIVE_INFINITY,
+                          ease: "easeInOut",
+                        }}
+                      >
                         <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
                           <Image
                             src={agent.image}
@@ -289,7 +299,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             sizes="192px"
                           />
                         </div>
-                      </div>
+                      </motion.div>
                     )}
                   </div>
                 </motion.button>

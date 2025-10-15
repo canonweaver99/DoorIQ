@@ -196,8 +196,8 @@ export function BackgroundCircles({
   return (
     <div
       className={clsx(
-        "relative flex h-[70vh] w-full items-center justify-center overflow-hidden",
-        "bg-white dark:bg-black/5",
+        "relative flex h-[400px] w-full items-center justify-center overflow-hidden",
+        "bg-transparent",
         className
       )}
     >
