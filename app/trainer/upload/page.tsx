@@ -47,6 +47,15 @@ export default function UploadTrainingPage() {
     setError(null)
 
     try {
+      // Get auth token
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        throw new Error('Please log in to upload files')
+      }
+
       // Step 1: Upload audio file
       const formData = new FormData()
       formData.append('file', file)
@@ -54,7 +63,7 @@ export default function UploadTrainingPage() {
       const uploadResponse = await fetch('/api/upload/audio', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${(await import('@/lib/supabase/client')).createClient().auth.getSession()}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: formData
       })
@@ -65,16 +74,21 @@ export default function UploadTrainingPage() {
       }
 
       const uploadData = await uploadResponse.json()
-      const audioUrl = uploadData.fileUrl
 
-      // Step 2: Transcribe audio using Whisper
+      // Step 2: Transcribe audio and create session
       setUploading(false)
       setGrading(true)
 
       const transcribeResponse = await fetch('/api/transcribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audioUrl })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          fileUrl: uploadData.fileUrl,
+          filename: uploadData.filename
+        })
       })
 
       if (!transcribeResponse.ok) {
@@ -83,27 +97,9 @@ export default function UploadTrainingPage() {
       }
 
       const transcribeData = await transcribeResponse.json()
-      const transcript = transcribeData.transcript
+      const newSessionId = transcribeData.sessionId
 
-      // Step 3: Create session with transcript
-      const sessionResponse = await fetch('/api/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agentName: 'Uploaded Recording',
-          audioUrl: audioUrl,
-          transcript: transcript
-        })
-      })
-
-      if (!sessionResponse.ok) {
-        throw new Error('Failed to create session')
-      }
-
-      const sessionData = await sessionResponse.json()
-      const newSessionId = sessionData.sessionId
-
-      // Step 4: Grade the session
+      // Step 3: Grade the session
       const gradeResponse = await fetch('/api/grade/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
