@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Bell, Zap, Shield, Plus, Trash, Key, UserPlus, Target } from 'lucide-react'
+import { Users, Bell, Zap, Shield, Plus, Trash, Key, UserPlus, Target, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 
 interface TeamMember {
@@ -20,6 +20,7 @@ export default function ManagerSettings() {
   const [teamName, setTeamName] = useState('')
   const [editingTeamName, setEditingTeamName] = useState(false)
   const [savingTeamName, setSavingTeamName] = useState(false)
+  const [teamNameSaved, setTeamNameSaved] = useState(false)
 
   useEffect(() => {
     fetchTeamData()
@@ -51,6 +52,7 @@ export default function ManagerSettings() {
     if (!teamName.trim()) return
     
     setSavingTeamName(true)
+    setTeamNameSaved(false)
     try {
       const response = await fetch('/api/team/update', {
         method: 'PATCH',
@@ -60,6 +62,9 @@ export default function ManagerSettings() {
 
       if (response.ok) {
         setEditingTeamName(false)
+        setTeamNameSaved(true)
+        // Hide success message after 3 seconds
+        setTimeout(() => setTeamNameSaved(false), 3000)
       } else {
         console.error('Failed to update team name')
       }
@@ -117,6 +122,17 @@ export default function ManagerSettings() {
                 </button>
               )}
             </div>
+            {teamNameSaved && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-2 flex items-center gap-2 text-sm text-green-400"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Team name updated successfully!</span>
+              </motion.div>
+            )}
             <p className="text-xs text-slate-500 mt-2">This name will appear in team invitations and throughout the platform</p>
           </div>
         </div>
