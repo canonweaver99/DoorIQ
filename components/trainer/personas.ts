@@ -140,6 +140,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Already has pest control service. Practice competitive positioning.',
       difficulty: 'Hard',
       color: 'tertiary',
+      image: '/agents/alan.png',
     },
     card: {
       age: 51,
