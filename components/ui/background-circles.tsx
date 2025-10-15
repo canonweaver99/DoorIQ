@@ -237,7 +237,17 @@ export function BackgroundCircles({
         
         {/* Agent Avatar in Center */}
         {currentAgent?.image && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <motion.div 
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            animate={{
+              scale: [1, 1.05, 1],
+            }}
+            transition={{
+              duration: 5,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+          >
             <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
               <Image
                 key={currentAgentIndex}
@@ -249,7 +259,7 @@ export function BackgroundCircles({
                 priority
               />
             </div>
-          </div>
+          </motion.div>
         )}
       </motion.div>
 
