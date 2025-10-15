@@ -237,25 +237,19 @@ export function BackgroundCircles({
         
         {/* Agent Avatar in Center */}
         {currentAgent?.image && (
-          <motion.div
-            key={currentAgentIndex}
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="relative w-[300px] h-[300px] rounded-full overflow-hidden shadow-2xl">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
               <Image
+                key={currentAgentIndex}
                 src={currentAgent.image}
                 alt={currentAgent.name}
                 fill
                 className="object-cover"
-                sizes="300px"
+                sizes="480px"
                 priority
               />
             </div>
-          </motion.div>
+          </div>
         )}
       </motion.div>
 
