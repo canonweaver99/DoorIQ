@@ -77,7 +77,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Direct communicator who asks tough questions and spots pressure tactics instantly.',
       difficulty: 'Moderate',
       color: 'primary',
-      image: '/agents/austin.jpg',
+      image: '/agents/austin.png',
     },
     card: {
       age: 38,
