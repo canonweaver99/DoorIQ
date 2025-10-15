@@ -294,6 +294,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Always in a hurry. Deliver value quickly and respectfully.',
       difficulty: 'Moderate',
       color: 'octonary',
+      image: '/agents/beth.png',
     },
     card: {
       age: 33,
