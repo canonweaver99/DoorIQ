@@ -279,13 +279,13 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
                     {/* Profile Image in Center */}
                     {agent.image && (
-                      <div className="absolute inset-[8px] flex items-center justify-center pointer-events-none">
+                      <div className="absolute inset-[6px] flex items-center justify-center pointer-events-none">
                         <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
                           <Image
                             src={agent.image}
                             alt={agent.name}
                             fill
-                            className="object-cover scale-[2]"
+                            className="object-cover"
                             sizes="192px"
                           />
                         </div>
