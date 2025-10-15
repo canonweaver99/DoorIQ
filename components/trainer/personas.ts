@@ -385,6 +385,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Recently had service done. Practice timing and future booking.',
       difficulty: 'Moderate',
       color: 'duodenary',
+      image: '/agents/jerry.png',
     },
     card: {
       age: 46,
