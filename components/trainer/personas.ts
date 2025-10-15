@@ -172,6 +172,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Wants to end conversation immediately. Master pattern interrupts.',
       difficulty: 'Very Hard',
       color: 'quaternary',
+      image: '/agents/nick.png',
     },
     card: {
       age: 35,
