@@ -2,11 +2,16 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
+import { motion } from 'framer-motion'
+import { ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react'
 import { BackgroundCircles } from '@/components/ui/background-circles'
 import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { FaqSection } from '@/components/ui/faq-section'
 import { TestimonialsColumn, testimonialsData } from '@/components/ui/testimonials-columns-1'
+import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from '@/components/trainer/personas'
+import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {
@@ -58,136 +63,215 @@ function useCountUp(end: number, duration = 2000, startWhen = false) {
   return count
 }
 
+// Create agent data with avatars
+const AGENTS_WITH_AVATARS = ALLOWED_AGENT_ORDER.map((agentName) => {
+  const metadata = PERSONA_METADATA[agentName]
+  return {
+    name: agentName,
+    subtitle: metadata.bubble.subtitle,
+    difficulty: metadata.bubble.difficulty,
+    image: metadata.bubble.image,
+    color: metadata.bubble.color,
+  }
+}).filter((agent) => agent.image)
+
 export default function Home() {
+  const [currentAgentIndex, setCurrentAgentIndex] = useState(0)
+  const currentAgent = AGENTS_WITH_AVATARS[currentAgentIndex]
+  const variantStyles = COLOR_VARIANTS[currentAgent?.color as keyof typeof COLOR_VARIANTS]
+
+  const nextAgent = () => {
+    setCurrentAgentIndex((prev) => (prev + 1) % AGENTS_WITH_AVATARS.length)
+  }
+
+  const prevAgent = () => {
+    setCurrentAgentIndex((prev) => (prev - 1 + AGENTS_WITH_AVATARS.length) % AGENTS_WITH_AVATARS.length)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
-      {/* 1) Hero */}
+      {/* 1) Hero with Agent Avatars */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] animate-gradient-slow">
-          <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+          <div className="absolute inset-0 opacity-20">
             <div className="absolute inset-0" style={{
               backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)',
               backgroundSize: '40px 40px'
             }} />
           </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-full blur-[120px]" />
+          <div className="absolute top-1/3 left-1/3 w-[600px] h-[600px] bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-full blur-[120px]" />
+          <div className="absolute bottom-1/3 right-1/3 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-[120px]" />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
           {/* Social Proof Badge */}
-          <div className="flex justify-center mb-8 animate-fade-in">
-            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-              <span className="text-sm text-white/90">🔥 Join 500+ top-performing reps training daily</span>
+          <div className="flex justify-center mb-6 sm:mb-8">
+            <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 backdrop-blur-md px-4 py-2 rounded-full border border-emerald-500/20">
+              <span className="text-xs sm:text-sm text-white/90">🔥 500+ reps improving close rates daily</span>
             </div>
           </div>
 
           {/* Headline */}
-          <div className="text-center mb-12 animate-fade-up">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-6 leading-tight">
-              The AI Training Ground<br />for Elite Door-to-Door Teams
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 sm:mb-6 leading-tight px-4">
+              <span className="bg-gradient-to-b from-white via-white to-slate-300 bg-clip-text text-transparent">
+                Close
+              </span>{' '}
+              <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                27% More Deals
+              </span>
+              <br />
+              <span className="bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent">
+                With AI Training
+              </span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mx-auto">
-              Train with AI homeowners who argue, stall, and slam doors—just like real life. Your reps practice the hard conversations in a safe space, so they close with confidence when it counts.
+            <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mx-auto px-4">
+              Train with lifelike AI homeowners. Get instant feedback. Watch your close rate climb—backed by real data.
             </p>
           </div>
 
-          {/* Avatar with Floating Cards */}
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-12 mb-12">
+          {/* Agent Avatar Carousel */}
+          <div className="flex items-center justify-center gap-4 sm:gap-8 mb-8 sm:mb-12">
+            {/* Previous Button */}
+            <button
+              onClick={prevAgent}
+              className="p-2 sm:p-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all backdrop-blur-sm"
+              aria-label="Previous agent"
+            >
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </button>
+
+            {/* Agent Avatar with Animated Circles */}
             <div className="relative">
-              <BackgroundCircles 
-                title="" 
-                description="" 
-                ctaPrimaryHref=""
-                ctaPrimaryText=""
-                ctaSecondaryHref=""
-                ctaSecondaryText=""
-              />
-              
-              {/* Floating Feature Cards */}
-              <div className="hidden lg:block">
-                <div className="absolute -left-32 top-1/4 animate-float">
-                  <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-lg border border-white/20 shadow-xl">
-                    <div className="text-sm font-semibold text-white">🎯 Live AI Feedback</div>
-                  </div>
+              <div className="relative h-64 w-64 sm:h-80 sm:w-80 md:h-96 md:w-96">
+                {/* Animated Circles */}
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent"
+                    style={{
+                      borderColor: variantStyles?.border[i]?.replace('border-', '') || 'rgb(255,255,255,0.2)',
+                    }}
+                    animate={{
+                      rotate: 360,
+                      scale: [1, 1.05 + i * 0.05, 1],
+                      opacity: [0.8, 1, 0.8],
+                    }}
+                    transition={{
+                      duration: 5,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "easeInOut",
+                    }}
+                  />
+                ))}
+
+                {/* Agent Avatar */}
+                {currentAgent?.image && (
+                  <motion.div 
+                    key={currentAgentIndex}
+                    className="absolute inset-0 flex items-center justify-center"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ 
+                      opacity: 1, 
+                      scale: [1, 1.05, 1],
+                    }}
+                    transition={{
+                      scale: {
+                        duration: 5,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "easeInOut",
+                      },
+                      opacity: {
+                        duration: 0.3,
+                      }
+                    }}
+                  >
+                    <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                      <Image
+                        src={currentAgent.image}
+                        alt={currentAgent.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 256px, (max-width: 768px) 320px, 384px"
+                        priority
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Agent Info Below */}
+              <div className="text-center mt-6">
+                <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2">{currentAgent?.name}</h3>
+                <p className="text-sm sm:text-base text-slate-400 mb-3">{currentAgent?.subtitle}</p>
+                <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  {currentAgent?.difficulty}
                 </div>
-                <div className="absolute -right-32 top-1/3 animate-float" style={{ animationDelay: '1s' }}>
-                  <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-lg border border-white/20 shadow-xl">
-                    <div className="text-sm font-semibold text-white">🎙️ Voice Analysis</div>
-                  </div>
-                </div>
-                <div className="absolute -left-28 bottom-1/4 animate-float" style={{ animationDelay: '2s' }}>
-                  <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-lg border border-white/20 shadow-xl">
-                    <div className="text-sm font-semibold text-white">⚡ Instant Scoring</div>
-                  </div>
+              </div>
+
+              {/* Agent Counter */}
+              <div className="text-center mt-4">
+                <div className="text-xs text-slate-500">
+                  {currentAgentIndex + 1} / {AGENTS_WITH_AVATARS.length}
                 </div>
               </div>
             </div>
+
+            {/* Next Button */}
+            <button
+              onClick={nextAgent}
+              className="p-2 sm:p-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all backdrop-blur-sm"
+              aria-label="Next agent"
+            >
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </button>
           </div>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-            <Link href="/trainer/select-homeowner">
-              <Button className="w-full sm:w-auto px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all hover:scale-105" size="lg" variant="brand">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 px-4">
+            <Link href="/trainer/select-homeowner" className="w-full sm:w-auto">
+              <Button className="w-full px-8 sm:px-10 py-5 sm:py-6 text-base sm:text-lg font-bold shadow-2xl hover:shadow-emerald-500/25 transition-all hover:scale-105 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500">
                 Start Training Free
               </Button>
             </Link>
-            <Link href="#demo">
-              <Button className="w-full sm:w-auto px-8 py-6 text-lg font-semibold" size="lg" variant="subtle">
-                See It In Action (30 sec)
+            <Link href="#demo" className="w-full sm:w-auto">
+              <Button className="w-full px-8 sm:px-10 py-5 sm:py-6 text-base sm:text-lg font-semibold bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-sm">
+                See Live Demo (30 sec)
               </Button>
             </Link>
           </div>
 
           {/* Trust Indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-white/60 mb-8">
-            <span className="flex items-center gap-1">✓ No credit card required</span>
-            <span className="flex items-center gap-1">✓ 5-minute setup</span>
-            <span className="flex items-center gap-1">✓ Cancel anytime</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-white/60 mb-6 sm:mb-8 px-4">
+            <span className="flex items-center gap-1">✓ No credit card</span>
+            <span className="flex items-center gap-1">✓ 5-min setup</span>
+            <span className="flex items-center gap-1">✓ Results in first session</span>
           </div>
 
-          {/* Live Stats */}
-          <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
+          {/* Quick Stats */}
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-12 justify-center items-center px-4">
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">12,847</div>
-              <div className="text-sm text-slate-400">Sessions Today</div>
+              <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">12,847</div>
+              <div className="text-xs sm:text-sm text-slate-400">Sessions Today</div>
             </div>
-            <div className="hidden sm:block w-px h-12 bg-white/20" />
+            <div className="hidden sm:block w-px h-10 bg-white/10" />
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">+27%</div>
-              <div className="text-sm text-slate-400">Avg Close Rate ↑</div>
+              <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">+27%</div>
+              <div className="text-xs sm:text-sm text-slate-400">Avg Close Rate ↑</div>
             </div>
-            <div className="hidden sm:block w-px h-12 bg-white/20" />
+            <div className="hidden sm:block w-px h-10 bg-white/10" />
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">4.9/5</div>
-              <div className="text-sm text-slate-400">User Rating ⭐</div>
+              <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">4.9/5</div>
+              <div className="text-xs sm:text-sm text-slate-400">User Rating ⭐</div>
             </div>
-          </div>
-
-          {/* Powered By */}
-          <div className="text-center mt-12">
-            <p className="text-xs text-white/50">Powered by enterprise-grade speech + realtime AI</p>
           </div>
         </div>
 
         <style jsx>{`
-          @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @keyframes fade-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-          }
-          .animate-fade-in {
-            animation: fade-in 0.6s ease-out;
-          }
-          .animate-fade-up {
-            animation: fade-up 0.8s ease-out;
+            50% { transform: translateY(-15px); }
           }
           .animate-float {
             animation: float 3s ease-in-out infinite;
