@@ -1258,12 +1258,12 @@ function TrainerPageContent() {
                 {/* Agent Avatar in Center */}
                 {selectedAgent && PERSONA_METADATA[selectedAgent.name as AllowedAgentName]?.bubble?.image && (
                   <div className="absolute inset-[12px] flex items-center justify-center pointer-events-none">
-                    <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                    <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800">
                       <Image
                         src={PERSONA_METADATA[selectedAgent.name as AllowedAgentName].bubble.image!}
                         alt={selectedAgent.name}
                         fill
-                        className="object-cover scale-110"
+                        className="object-cover scale-[1.35]"
                         sizes="320px"
                         priority
                       />
