@@ -9,6 +9,7 @@ export default function InviteTeammatePage() {
   const [role, setRole] = useState<'rep' | 'manager'>('rep')
   const [loading, setLoading] = useState(false)
   const [inviteUrl, setInviteUrl] = useState<string | null>(null)
+  const [invitedEmail, setInvitedEmail] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
@@ -32,6 +33,7 @@ export default function InviteTeammatePage() {
       }
 
       setInviteUrl(data.inviteUrl)
+      setInvitedEmail(email) // Store the email for later use
       setEmail('')
     } catch (err: any) {
       console.error('Error creating invite:', err)
@@ -50,13 +52,13 @@ export default function InviteTeammatePage() {
   }
 
   const handleEmailInvite = () => {
-    if (inviteUrl) {
+    if (inviteUrl && invitedEmail) {
       const subject = encodeURIComponent('Join our DoorIQ team!')
       const body = encodeURIComponent(
         `You've been invited to join our team on DoorIQ!\n\nClick the link below to accept the invitation:\n${inviteUrl}\n\nThis link will expire in 7 days.`
       )
-      // Open Gmail compose window
-      window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank')
+      // Open Gmail compose window with TO field pre-filled
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(invitedEmail)}&su=${subject}&body=${body}`, '_blank')
     }
   }
 
