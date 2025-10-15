@@ -261,6 +261,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Needs spouse approval. Handle the spouse objection.',
       difficulty: 'Moderate',
       color: 'septenary',
+      image: '/agents/susan.png',
     },
     card: {
       age: 39,
