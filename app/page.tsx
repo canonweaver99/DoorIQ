@@ -62,137 +62,20 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       {/* 1) Hero */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] animate-gradient-slow">
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute inset-0" style={{
-              backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)',
-              backgroundSize: '40px 40px'
-            }} />
-          </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-full blur-[120px]" />
-        </div>
-
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Social Proof Badge */}
-          <div className="flex justify-center mb-8 animate-fade-in">
-            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-              <span className="text-sm text-white/90">🔥 Join 500+ top-performing reps training daily</span>
-            </div>
-          </div>
-
-          {/* Headline */}
-          <div className="text-center mb-12 animate-fade-up">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-6 leading-tight">
-              The AI Training Ground<br />for Elite Door-to-Door Teams
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mx-auto">
-              Train with AI homeowners who argue, stall, and slam doors—just like real life. Your reps practice the hard conversations in a safe space, so they close with confidence when it counts.
-            </p>
-          </div>
-
-          {/* Avatar with Floating Cards */}
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-12 mb-12">
-            <div className="relative">
-              <BackgroundCircles 
-                title="" 
-                description="" 
-                ctaPrimaryHref=""
-                ctaPrimaryText=""
-                ctaSecondaryHref=""
-                ctaSecondaryText=""
-              />
-              
-              {/* Floating Feature Cards */}
-              <div className="hidden lg:block">
-                <div className="absolute -left-32 top-1/4 animate-float">
-                  <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-lg border border-white/20 shadow-xl">
-                    <div className="text-sm font-semibold text-white">🎯 Live AI Feedback</div>
-                  </div>
-                </div>
-                <div className="absolute -right-32 top-1/3 animate-float" style={{ animationDelay: '1s' }}>
-                  <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-lg border border-white/20 shadow-xl">
-                    <div className="text-sm font-semibold text-white">🎙️ Voice Analysis</div>
-                  </div>
-                </div>
-                <div className="absolute -left-28 bottom-1/4 animate-float" style={{ animationDelay: '2s' }}>
-                  <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-lg border border-white/20 shadow-xl">
-                    <div className="text-sm font-semibold text-white">⚡ Instant Scoring</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-            <Link href="/trainer/select-homeowner">
-              <Button className="w-full sm:w-auto px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all hover:scale-105" size="lg" variant="brand">
-                Start Training Free
-              </Button>
-            </Link>
-            <Link href="#demo">
-              <Button className="w-full sm:w-auto px-8 py-6 text-lg font-semibold" size="lg" variant="subtle">
-                See It In Action (30 sec)
-              </Button>
-            </Link>
-          </div>
-
-          {/* Trust Indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-white/60 mb-8">
-            <span className="flex items-center gap-1">✓ No credit card required</span>
-            <span className="flex items-center gap-1">✓ 5-minute setup</span>
-            <span className="flex items-center gap-1">✓ Cancel anytime</span>
-          </div>
-
-          {/* Live Stats */}
-          <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">12,847</div>
-              <div className="text-sm text-slate-400">Sessions Today</div>
-            </div>
-            <div className="hidden sm:block w-px h-12 bg-white/20" />
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">+27%</div>
-              <div className="text-sm text-slate-400">Avg Close Rate ↑</div>
-            </div>
-            <div className="hidden sm:block w-px h-12 bg-white/20" />
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">4.9/5</div>
-              <div className="text-sm text-slate-400">User Rating ⭐</div>
-            </div>
-          </div>
-
-          {/* Powered By */}
-          <div className="text-center mt-12">
-            <p className="text-xs text-white/50">Powered by enterprise-grade speech + realtime AI</p>
+      <section className="relative p-0">
+        <div className="w-full">
+          <BackgroundCircles 
+            title="Practice Before You Knock" 
+            description="Lifelike AI homeowners. Instant feedback. Better reps." 
+            ctaPrimaryHref="/trainer/select-homeowner"
+            ctaPrimaryText="Start Training Now"
+            ctaSecondaryHref="#demo"
+            ctaSecondaryText="Watch 30-sec Demo"
+          />
+          <div className="text-center px-4 sm:px-6 lg:px-8 -mt-24 md:-mt-28 lg:-mt-32">
+            <p className="text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
           </div>
         </div>
-
-        <style jsx>{`
-          @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @keyframes fade-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-          }
-          .animate-fade-in {
-            animation: fade-in 0.6s ease-out;
-          }
-          .animate-fade-up {
-            animation: fade-up 0.8s ease-out;
-          }
-          .animate-float {
-            animation: float 3s ease-in-out infinite;
-          }
-        `}</style>
       </section>
 
       {/* 2) Social Proof */}
