@@ -64,14 +64,26 @@ export default function Home() {
       {/* 1) Hero */}
       <section className="relative p-0">
         <div className="w-full">
+          {/* Add headline and description above the circles */}
+          <div className="text-center px-4 sm:px-6 lg:px-8 pt-20 pb-8">
+            <h1 className="text-5xl font-bold tracking-tight md:text-7xl bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-6">
+              The AI Training Ground for Elite Door-to-Door Teams
+            </h1>
+            <p className="text-lg md:text-xl text-slate-300 max-w-4xl mx-auto">
+              Train with AI homeowners who argue, stall, and slam doors—just like real life. Your reps practice the hard conversations in a safe space, so they close with confidence when it counts.
+            </p>
+          </div>
+          
+          {/* BackgroundCircles now only shows the orbs and CTAs */}
           <BackgroundCircles 
-            title="Practice Before You Knock" 
-            description="Lifelike AI homeowners. Instant feedback. Better reps." 
+            title="" 
+            description="" 
             ctaPrimaryHref="/trainer/select-homeowner"
-            ctaPrimaryText="Start Training Now"
+            ctaPrimaryText="Start Free Training Session"
             ctaSecondaryHref="#demo"
-            ctaSecondaryText="Watch 30-sec Demo"
+            ctaSecondaryText="See It In Action (30 sec)"
           />
+          
           <div className="text-center px-4 sm:px-6 lg:px-8 -mt-24 md:-mt-28 lg:-mt-32">
             <p className="text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
           </div>

@@ -196,7 +196,7 @@ export function BackgroundCircles({
   return (
     <div
       className={clsx(
-        "relative flex h-screen w-full items-center justify-center overflow-hidden",
+        "relative flex h-[70vh] w-full items-center justify-center overflow-hidden",
         "bg-white dark:bg-black/5",
         className
       )}
@@ -269,37 +269,41 @@ export function BackgroundCircles({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <h1
-          className={clsx(
-            "text-5xl font-bold tracking-tight md:text-7xl",
-            "bg-gradient-to-b from-slate-950 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent",
-            "drop-shadow-[0_0_32px_rgba(94,234,212,0.4)]"
-          )}
-        >
-          {title}
-        </h1>
+        {title && (
+          <h1
+            className={clsx(
+              "text-5xl font-bold tracking-tight md:text-7xl",
+              "bg-gradient-to-b from-slate-950 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent",
+              "drop-shadow-[0_0_32px_rgba(94,234,212,0.4)]"
+            )}
+          >
+            {title}
+          </h1>
+        )}
 
-        <motion.p
-          className="mt-6 text-lg md:text-xl dark:text-white text-slate-950"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {description}
-        </motion.p>
+        {description && (
+          <motion.p
+            className="mt-6 text-lg md:text-xl dark:text-white text-slate-950"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {description}
+          </motion.p>
+        )}
 
         {(ctaPrimaryHref || ctaSecondaryHref) && (
           <div className="mt-8 flex items-center justify-center gap-4">
             {ctaPrimaryHref && (
               <Link href={ctaPrimaryHref}>
-                <Button className="px-7 py-4" size="lg" variant="brand">
+                <Button className="px-8 py-5 text-lg" size="lg" variant="brand">
                   {ctaPrimaryText ?? "Get Started"}
                 </Button>
               </Link>
             )}
             {ctaSecondaryHref && (
               <Link href={ctaSecondaryHref} onClick={handleSecondaryClick}>
-                <Button className="px-7 py-4" size="lg" variant="subtle">
+                <Button className="px-8 py-5 text-lg" size="lg" variant="subtle">
                   {ctaSecondaryText ?? "Learn More"}
                 </Button>
               </Link>
