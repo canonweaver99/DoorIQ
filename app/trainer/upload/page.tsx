@@ -62,10 +62,8 @@ export default function UploadTrainingPage() {
 
       const uploadResponse = await fetch('/api/upload/audio', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        },
         body: formData
+        // Don't send Authorization header - FormData handles auth differently
       })
 
       if (!uploadResponse.ok) {

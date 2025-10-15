@@ -43,14 +43,10 @@ export async function POST(request: NextRequest) {
     // Create session in database
     const supabase = await createServiceSupabaseClient()
     
-    // Get the authenticated user from the request
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    // Get the authenticated user from server-side
+    const { createServerSupabaseClient } = await import('@/lib/supabase/server')
+    const serverSupabase = await createServerSupabaseClient()
+    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
