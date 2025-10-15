@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a new session
-    const { data: session, error: sessionError } = await supabase
+    const { data: session, error: sessionError } = await (supabase as any)
       .from('live_sessions')
       .insert({
         user_id: user.id,

@@ -361,19 +361,30 @@ export default function SessionsPage() {
                   className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700 hover:border-slate-600 transition-colors shadow-xl"
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-white mb-2">
-                        {session.agent_name || 'Training Session'}
-                      </h3>
-                      <div className="flex items-center space-x-4 text-sm text-slate-400">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {format(new Date(session.created_at), 'MMM d, yyyy')}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}
-                        </span>
+                    <div className="flex-1 flex items-start gap-3">
+                      {/* Delete button - moved to left */}
+                      <button
+                        onClick={() => openDeleteModal(session.id as string)}
+                        className="inline-flex items-center justify-center w-9 h-9 mt-1 bg-red-500/10 text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20"
+                        title="Delete session"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold text-white mb-2">
+                          {session.agent_name || 'Training Session'}
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-slate-400">
+                          <span className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {format(new Date(session.created_at), 'MMM d, yyyy')}
+                          </span>
+                          <span className="flex items-center">
+                            <Clock className="w-4 h-4 mr-1" />
+                            {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     
@@ -406,13 +417,6 @@ export default function SessionsPage() {
                         View Details
                         <ChevronRight className="ml-2 w-4 h-4" />
                       </Link>
-                      <button
-                        onClick={() => openDeleteModal(session.id as string)}
-                        className="inline-flex items-center px-3 py-2 bg-red-500/10 text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20"
-                        title="Delete session"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
                   
