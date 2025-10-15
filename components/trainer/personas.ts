@@ -233,6 +233,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Everything costs too much. Perfect for value framing.',
       difficulty: 'Hard',
       color: 'senary',
+      image: '/agents/tim.png',
     },
     card: {
       age: 44,
@@ -325,6 +326,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Renting the property. Navigate authority and landlord dynamics.',
       difficulty: 'Hard',
       color: 'nonary',
+      image: '/agents/randy.png',
     },
     card: {
       age: 28,
