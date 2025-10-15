@@ -72,6 +72,12 @@ export default function InviteAcceptPage() {
       return
     }
 
+    // Check if the logged-in user's email matches the invited email
+    if (user.email !== invite?.email) {
+      setError(`This invite is for ${invite?.email}. Please log out and sign up with that email, or log in if you already have an account with that email.`)
+      return
+    }
+
     setAccepting(true)
     setError(null)
 
@@ -202,6 +208,24 @@ export default function InviteAcceptPage() {
                 Log in
               </a>
             </p>
+          </div>
+        )}
+
+        {user && user.email !== invite?.email && (
+          <div className="mt-4 text-center">
+            <p className="text-sm text-slate-400 mb-2">
+              You're logged in as {user.email}
+            </p>
+            <button
+              onClick={async () => {
+                const supabase = createClient()
+                await supabase.auth.signOut()
+                router.push(`/auth/signup?invite=${token}`)
+              }}
+              className="text-sm text-purple-400 hover:text-purple-300 underline"
+            >
+              Sign out and create new account
+            </button>
           </div>
         )}
       </div>

@@ -17,24 +17,58 @@ interface TeamMember {
 export default function ManagerSettings() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
+  const [teamName, setTeamName] = useState('')
+  const [editingTeamName, setEditingTeamName] = useState(false)
+  const [savingTeamName, setSavingTeamName] = useState(false)
 
   useEffect(() => {
-    const fetchTeamMembers = async () => {
-      try {
-        const response = await fetch('/api/team/members')
-        if (response.ok) {
-          const data = await response.json()
-          setTeamMembers(data.members || [])
-        }
-      } catch (error) {
-        console.error('Error fetching team members:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTeamMembers()
+    fetchTeamData()
   }, [])
+
+  const fetchTeamData = async () => {
+    try {
+      // Fetch team members
+      const membersResponse = await fetch('/api/team/members')
+      if (membersResponse.ok) {
+        const data = await membersResponse.json()
+        setTeamMembers(data.members || [])
+        
+        // Fetch team info
+        const teamResponse = await fetch('/api/team/info')
+        if (teamResponse.ok) {
+          const teamData = await teamResponse.json()
+          setTeamName(teamData.name || 'My Team')
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching team data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveTeamName = async () => {
+    if (!teamName.trim()) return
+    
+    setSavingTeamName(true)
+    try {
+      const response = await fetch('/api/team/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: teamName })
+      })
+
+      if (response.ok) {
+        setEditingTeamName(false)
+      } else {
+        console.error('Failed to update team name')
+      }
+    } catch (error) {
+      console.error('Error updating team name:', error)
+    } finally {
+      setSavingTeamName(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -43,6 +77,50 @@ export default function ManagerSettings() {
         <h2 className="text-2xl font-bold text-white mb-1">Manager Settings</h2>
         <p className="text-slate-400">Configure team settings, permissions, and integrations</p>
       </div>
+
+      {/* Team Name Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
+            <Shield className="w-5 h-5 text-purple-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white">Team Information</h3>
+            <p className="text-xs text-slate-400">Update your team name and settings</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Team Name</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                onFocus={() => setEditingTeamName(true)}
+                placeholder="My Team"
+                className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+              />
+              {editingTeamName && (
+                <button
+                  onClick={handleSaveTeamName}
+                  disabled={savingTeamName}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/50 text-white rounded-xl font-medium transition-colors"
+                >
+                  {savingTeamName ? 'Saving...' : 'Save'}
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-2">This name will appear in team invitations and throughout the platform</p>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Settings Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
