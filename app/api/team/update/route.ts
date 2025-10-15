@@ -19,20 +19,19 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Team name is required' }, { status: 400 })
     }
 
-    // Get user's team membership and verify they're a manager
-    const { data: membership, error: membershipError } = await (supabase as any)
-      .from('team_members')
+    // Get user's team_id and verify they're a manager
+    const { data: userData, error: userError } = await (supabase as any)
+      .from('users')
       .select('team_id, role')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
+      .eq('id', user.id)
       .single()
 
-    if (membershipError || !membership) {
+    if (userError || !userData || !userData.team_id) {
       return NextResponse.json({ error: 'Not part of a team' }, { status: 404 })
     }
 
     // Check if user is a manager or admin
-    if (!['manager', 'admin'].includes(membership.role)) {
+    if (!['manager', 'admin'].includes(userData.role)) {
       return NextResponse.json({ error: 'Only managers can update team settings' }, { status: 403 })
     }
 
@@ -40,7 +39,7 @@ export async function PATCH(request: Request) {
     const { data: updatedTeam, error: updateError } = await (supabase as any)
       .from('teams')
       .update({ name: name.trim() })
-      .eq('id', membership.team_id)
+      .eq('id', userData.team_id)
       .select()
       .single()
 

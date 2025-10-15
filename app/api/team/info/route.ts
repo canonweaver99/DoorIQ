@@ -12,15 +12,14 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's team membership
-    const { data: membership, error: membershipError } = await (supabase as any)
-      .from('team_members')
+    // Get user's team_id
+    const { data: userData, error: userError } = await (supabase as any)
+      .from('users')
       .select('team_id')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
+      .eq('id', user.id)
       .single()
 
-    if (membershipError || !membership) {
+    if (userError || !userData || !userData.team_id) {
       return NextResponse.json({ error: 'Not part of a team' }, { status: 404 })
     }
 
@@ -28,7 +27,7 @@ export async function GET() {
     const { data: team, error: teamError } = await (supabase as any)
       .from('teams')
       .select('*')
-      .eq('id', membership.team_id)
+      .eq('id', userData.team_id)
       .single()
 
     if (teamError || !team) {
