@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import Script from 'next/script'
 import ElevenLabsConversation from '@/components/trainer/ElevenLabsConversation'
 import { createClient } from '@/lib/supabase/client'
@@ -1253,6 +1254,22 @@ function TrainerPageContent() {
                 <div id="orb-circle-0" className="orb-circle"></div>
                 <div id="orb-circle-1" className="orb-circle"></div>
                 <div id="orb-circle-2" className="orb-circle"></div>
+                
+                {/* Agent Avatar in Center */}
+                {selectedAgent && PERSONA_METADATA[selectedAgent.name as AllowedAgentName]?.bubble?.image && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="relative w-44 h-44 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl">
+                      <Image
+                        src={PERSONA_METADATA[selectedAgent.name as AllowedAgentName].bubble.image!}
+                        alt={selectedAgent.name}
+                        fill
+                        className="object-cover"
+                        sizes="176px"
+                        priority
+                      />
+                    </div>
+                  </div>
+                )}
               </button>
               {/* Removed non-functional status button/text */}
             </div>

@@ -42,6 +42,7 @@ interface PersonaBubbleDetail {
   description: string
   difficulty: BubbleDifficulty
   color: BubbleColorVariant
+  image?: string
 }
 
 interface PersonaCardDetail {
@@ -76,6 +77,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Direct communicator who asks tough questions and spots pressure tactics instantly.',
       difficulty: 'Moderate',
       color: 'primary',
+      image: '/agents/austin.jpg',
     },
     card: {
       age: 38,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { createClient } from '@/lib/supabase/client'
@@ -24,6 +25,7 @@ interface HomeownerAgentDisplay {
   difficulty: DifficultyKey
   color: keyof typeof COLOR_VARIANTS
   description: string
+  image?: string
 }
 const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
   'primary',
@@ -70,6 +72,7 @@ const mapAgentToDisplay = (agent: AgentRow, index: number): HomeownerAgentDispla
   const subtitle = fallback?.bubble.subtitle ?? 'Homeowner Persona'
   const description = fallback?.bubble.description ?? sanitizeDescription(agent.persona)
   const color = fallback?.bubble.color ?? COLOR_CYCLE[index % COLOR_CYCLE.length]
+  const image = fallback?.bubble.image
 
   return {
     id: agent.id,
@@ -79,6 +82,7 @@ const mapAgentToDisplay = (agent: AgentRow, index: number): HomeownerAgentDispla
     difficulty,
     color,
     description,
+    image,
   }
 }
 
@@ -273,6 +277,20 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </motion.div>
                     ))}
 
+                    {/* Profile Image in Center */}
+                    {agent.image && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl">
+                          <Image
+                            src={agent.image}
+                            alt={agent.name}
+                            fill
+                            className="object-cover"
+                            sizes="128px"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.button>
 
