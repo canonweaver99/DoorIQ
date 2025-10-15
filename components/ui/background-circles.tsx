@@ -4,8 +4,10 @@ import { motion } from "framer-motion";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useCallback } from "react";
+import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 
 export interface BackgroundCirclesProps {
   title?: string;
@@ -134,6 +136,16 @@ const AnimatedGrid = () => (
   </motion.div>
 );
 
+// Create agent data with avatars
+const AGENTS_WITH_AVATARS = ALLOWED_AGENT_ORDER.map((agentName) => {
+  const metadata = PERSONA_METADATA[agentName];
+  return {
+    name: agentName,
+    image: metadata.bubble.image,
+    color: metadata.bubble.color,
+  };
+}).filter((agent) => agent.image); // Only include agents with images
+
 export function BackgroundCircles({
   title = "Background Circles",
   description = "Optional Description",
@@ -147,6 +159,7 @@ export function BackgroundCircles({
 }: BackgroundCirclesProps) {
   const variantKeys = Object.keys(COLOR_VARIANTS) as (keyof typeof COLOR_VARIANTS)[];
   const [autoVariant, setAutoVariant] = useState<keyof typeof COLOR_VARIANTS>("octonary");
+  const [currentAgentIndex, setCurrentAgentIndex] = useState(0);
 
   useEffect(() => {
     if (variant) return; // respect explicit variant
@@ -156,12 +169,15 @@ export function BackgroundCircles({
         const next = variantKeys[(idx + 1) % variantKeys.length];
         return next;
       });
+      // Cycle through agents when color changes
+      setCurrentAgentIndex((prev) => (prev + 1) % AGENTS_WITH_AVATARS.length);
     }, autoCycleIntervalMs);
     return () => clearInterval(id);
-  }, [variant, autoCycleIntervalMs]);
+  }, [variant, autoCycleIntervalMs, variantKeys.length]);
 
   const activeVariant = variant ?? autoVariant;
   const variantStyles = COLOR_VARIANTS[activeVariant];
+  const currentAgent = AGENTS_WITH_AVATARS[currentAgentIndex];
 
   const handleSecondaryClick = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -218,6 +234,29 @@ export function BackgroundCircles({
             />
           </motion.div>
         ))}
+        
+        {/* Agent Avatar in Center */}
+        {currentAgent?.image && (
+          <motion.div
+            key={currentAgentIndex}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="relative w-[300px] h-[300px] rounded-full overflow-hidden shadow-2xl">
+              <Image
+                src={currentAgent.image}
+                alt={currentAgent.name}
+                fill
+                className="object-cover"
+                sizes="300px"
+                priority
+              />
+            </div>
+          </motion.div>
+        )}
       </motion.div>
 
       <motion.div
