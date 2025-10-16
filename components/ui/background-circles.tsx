@@ -488,9 +488,9 @@ export function BackgroundCircles({
             key={`far-left-${carouselAgents.farLeft.index}`}
             onClick={() => goToIndex(carouselAgents.farLeft.index)}
             className="relative z-5 cursor-pointer focus:outline-none group/far-left"
-            initial={{ opacity: 0.3, scale: 0.5, x: -30 }}
+            initial={{ opacity: 0.3, scale: 0.5, x: -200 }}
             animate={{ opacity: 0.5, scale: 0.6, x: 0 }}
-            exit={{ opacity: 0.2, scale: 0.5, x: 30 }}
+            exit={{ opacity: 0.2, scale: 0.5, x: 200 }}
             whileHover={{ scale: 0.65, opacity: 0.7, filter: "brightness(1.1)" }}
             whileTap={{ scale: 0.55 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
@@ -509,9 +509,9 @@ export function BackgroundCircles({
             key={`left-${carouselAgents.left.index}`}
             onClick={() => goToIndex(carouselAgents.left.index)}
             className="relative z-10 cursor-pointer focus:outline-none group/left"
-            initial={{ opacity: 0.5, scale: 0.65, x: -20 }}
+            initial={{ opacity: 0.5, scale: 0.65, x: -150 }}
             animate={{ opacity: 0.7, scale: 0.75, x: 0 }}
-            exit={{ opacity: 0.4, scale: 0.65, x: 20 }}
+            exit={{ opacity: 0.4, scale: 0.65, x: 150 }}
             whileHover={{ scale: 0.82, opacity: 0.9, filter: "brightness(1.15)" }}
             whileTap={{ scale: 0.72 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
@@ -529,9 +529,9 @@ export function BackgroundCircles({
           <motion.div 
             key={`center-${carouselAgents.center.index}`}
             className="relative z-20"
-            initial={{ opacity: 0.8, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0.8, scale: 0.95 }}
+            initial={{ opacity: 0.8, scale: 0.95, x: 0 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0.8, scale: 0.95, x: 0 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
           >
             <motion.div
@@ -581,9 +581,9 @@ export function BackgroundCircles({
             key={`right-${carouselAgents.right.index}`}
             onClick={() => goToIndex(carouselAgents.right.index)}
             className="relative z-10 cursor-pointer focus:outline-none group/right"
-            initial={{ opacity: 0.5, scale: 0.65, x: 20 }}
+            initial={{ opacity: 0.5, scale: 0.65, x: 150 }}
             animate={{ opacity: 0.7, scale: 0.75, x: 0 }}
-            exit={{ opacity: 0.4, scale: 0.65, x: -20 }}
+            exit={{ opacity: 0.4, scale: 0.65, x: -150 }}
             whileHover={{ scale: 0.82, opacity: 0.9, filter: "brightness(1.15)" }}
             whileTap={{ scale: 0.72 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
@@ -602,9 +602,9 @@ export function BackgroundCircles({
             key={`far-right-${carouselAgents.farRight.index}`}
             onClick={() => goToIndex(carouselAgents.farRight.index)}
             className="relative z-5 cursor-pointer focus:outline-none group/far-right"
-            initial={{ opacity: 0.3, scale: 0.5, x: 30 }}
+            initial={{ opacity: 0.3, scale: 0.5, x: 200 }}
             animate={{ opacity: 0.5, scale: 0.6, x: 0 }}
-            exit={{ opacity: 0.2, scale: 0.5, x: -30 }}
+            exit={{ opacity: 0.2, scale: 0.5, x: -200 }}
             whileHover={{ scale: 0.65, opacity: 0.7, filter: "brightness(1.1)" }}
             whileTap={{ scale: 0.55 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
