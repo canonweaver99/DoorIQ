@@ -7,10 +7,12 @@ export const runtime = 'nodejs'
 
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
-  if (!process.env.STRIPE_SECRET_KEY) {
+  const secret = process.env.STRIPE_SECRET_KEY?.trim()
+  if (!secret) {
+    console.error('❌ STRIPE_SECRET_KEY not found in environment')
     return null
   }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+  return new Stripe(secret, {
     apiVersion: '2025-09-30.clover'
   })
 }

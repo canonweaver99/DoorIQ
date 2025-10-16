@@ -7,12 +7,20 @@ export const runtime = 'nodejs'
 
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
-  if (!process.env.STRIPE_SECRET_KEY) {
+  const secret = process.env.STRIPE_SECRET_KEY?.trim()
+  if (!secret) {
+    console.error('❌ STRIPE_SECRET_KEY not found in environment')
     return null
   }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-09-30.clover'
-  })
+  console.log('✅ Stripe client initialized with key:', secret.substring(0, 20) + '...')
+  try {
+    return new Stripe(secret, {
+      apiVersion: '2025-09-30.clover'
+    })
+  } catch (error) {
+    console.error('❌ Failed to initialize Stripe:', error)
+    return null
+  }
 }
 
 export async function POST(request: NextRequest) {

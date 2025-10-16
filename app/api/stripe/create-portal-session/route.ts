@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
+// Ensure Node.js runtime so process.env is available
+export const runtime = 'nodejs'
+
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
-  if (!process.env.STRIPE_SECRET_KEY) {
+  const secret = process.env.STRIPE_SECRET_KEY?.trim()
+  if (!secret) {
     return null
   }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+  return new Stripe(secret, {
     apiVersion: '2025-09-30.clover'
   })
 }
