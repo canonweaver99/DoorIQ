@@ -199,8 +199,9 @@ interface PricingPlan {
   period: string;
   features: string[];
   description: string;
-  buttonText: string;
+  buttonText: string | React.ReactNode;
   href: string;
+  onClick?: () => void;
   isPopular?: boolean;
   hasRepSelector?: boolean;
   basePrice?: number;
@@ -516,19 +517,37 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         </ul>
 
         <div className="mt-auto pt-8">
-          <Link
-            href={plan.href}
-            className={cn(
-              buttonVariants({
-                variant: plan.isPopular ? "default" : "outline",
-                size: "lg",
-              }),
-              "w-full",
-            )}
-            onClick={handleCtaClick}
-          >
-            {plan.buttonText}
-          </Link>
+          {plan.onClick ? (
+            <button
+              onClick={() => {
+                handleCtaClick();
+                plan.onClick?.();
+              }}
+              className={cn(
+                buttonVariants({
+                  variant: plan.isPopular ? "default" : "outline",
+                  size: "lg",
+                }),
+                "w-full",
+              )}
+            >
+              {plan.buttonText}
+            </button>
+          ) : (
+            <Link
+              href={plan.href}
+              className={cn(
+                buttonVariants({
+                  variant: plan.isPopular ? "default" : "outline",
+                  size: "lg",
+                }),
+                "w-full",
+              )}
+              onClick={handleCtaClick}
+            >
+              {plan.buttonText}
+            </Link>
+          )}
         </div>
       </div>
     </motion.div>

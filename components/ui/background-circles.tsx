@@ -9,17 +9,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 
-const gradientAnimationStyles = `
-  @keyframes hero-gradient-rotate {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
 export interface BackgroundCirclesProps {
   title?: string;
   description?: string;
@@ -229,14 +218,25 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
                 agentVariantStyles.gradient,
                 "to-transparent opacity-60"
               )}
+              style={{
+                animationName: "hero-gradient-rotate",
+                animationDuration: `${isCenter ? 14 : 18}s`,
+                animationTimingFunction: "linear",
+                animationIterationCount: "infinite",
+              }}
             />
             <div
               className={clsx(
                 "absolute inset-[-8%] rounded-full bg-gradient-to-tr mix-blend-screen",
                 agentVariantStyles.gradient,
-                "to-transparent opacity-40"
+                "to-transparent opacity-35"
               )}
-              style={{ animation: isCenter ? 'hero-gradient-rotate 14s linear infinite' : 'hero-gradient-rotate 18s linear infinite' }}
+              style={{
+                animationName: "hero-gradient-rotate-reverse",
+                animationDuration: `${isCenter ? 16 : 22}s`,
+                animationTimingFunction: "linear",
+                animationIterationCount: "infinite",
+              }}
             />
           </div>
           <Image
@@ -269,27 +269,6 @@ export function BackgroundCircles({
   ctaSecondaryHref,
   ctaSecondaryText,
 }: BackgroundCirclesProps) {
-  // Inject animated gradient keyframe one time in the browser
-  useEffect(() => {
-    const styleId = "hero-gradient-rotate-keyframes";
-    if (typeof document === "undefined") return;
-
-    const existing = document.getElementById(styleId);
-    if (!existing) {
-      const styleTag = document.createElement("style");
-      styleTag.id = styleId;
-      styleTag.textContent = gradientAnimationStyles;
-      document.head.appendChild(styleTag);
-    }
-
-    return () => {
-      const styleTag = document.getElementById(styleId);
-      if (styleTag) {
-        styleTag.remove();
-      }
-    };
-  }, []);
-
   const [currentAgentIndex, setCurrentAgentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [lastInteractionTime, setLastInteractionTime] = useState(Date.now());
@@ -469,6 +448,7 @@ export function BackgroundCircles({
               size="tiny"
               opacity={0.5}
               isCenter={false}
+              onClick={() => handleAvatarClick(carouselAgents.farLeft.index, carouselAgents.farLeft.agent.name)}
             />
           </button>
 
@@ -483,6 +463,7 @@ export function BackgroundCircles({
               size="small"
               opacity={0.7}
               isCenter={false}
+              onClick={() => handleAvatarClick(carouselAgents.left.index, carouselAgents.left.agent.name)}
             />
           </button>
 
@@ -498,6 +479,7 @@ export function BackgroundCircles({
                 size="large"
                 opacity={1}
                 isCenter={true}
+                onClick={() => handleAvatarClick(carouselAgents.center.index, carouselAgents.center.agent.name)}
               />
             </div>
           </div>
@@ -513,6 +495,7 @@ export function BackgroundCircles({
               size="small"
               opacity={0.7}
               isCenter={false}
+              onClick={() => handleAvatarClick(carouselAgents.right.index, carouselAgents.right.agent.name)}
             />
           </button>
 
@@ -527,6 +510,7 @@ export function BackgroundCircles({
               size="tiny"
               opacity={0.5}
               isCenter={false}
+              onClick={() => handleAvatarClick(carouselAgents.farRight.index, carouselAgents.farRight.agent.name)}
             />
           </button>
         </div>
