@@ -146,12 +146,127 @@ const AGENTS_WITH_AVATARS = ALLOWED_AGENT_ORDER.map((agentName) => {
   };
 }).filter((agent) => agent.image); // Only include agents with images
 
+// Avatar with Rings Component for 3D Carousel
+interface AvatarWithRingsProps {
+  agent: typeof AGENTS_WITH_AVATARS[number];
+  variantStyles?: typeof COLOR_VARIANTS[keyof typeof COLOR_VARIANTS];
+  size: 'small' | 'large';
+  opacity: number;
+  isCenter: boolean;
+}
+
+function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter }: AvatarWithRingsProps) {
+  const sizeClasses = size === 'large' 
+    ? 'h-[280px] w-[280px] sm:h-[350px] sm:w-[350px] md:h-[420px] md:w-[420px]'
+    : 'h-[180px] w-[180px] sm:h-[220px] sm:w-[220px] md:h-[260px] md:w-[260px]';
+  
+  const borderWidth = size === 'large' ? 'border-2' : 'border-[1px]';
+  
+  // Get variant styles for side avatars based on their color
+  const agentVariantStyles = variantStyles || COLOR_VARIANTS[agent.color as keyof typeof COLOR_VARIANTS];
+
+  return (
+    <motion.div 
+      className={clsx("relative", sizeClasses)}
+      style={{ opacity }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity, scale: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
+      {isCenter && variantStyles ? (
+        // Center avatar with animated rings
+        <>
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className={clsx(
+                "absolute inset-0 rounded-full bg-gradient-to-br to-transparent",
+                borderWidth,
+                agentVariantStyles.border[i],
+                agentVariantStyles.gradient
+              )}
+              animate={{
+                rotate: 360,
+                scale: [1, 1.05, 1],
+                opacity: [0.7, 0.9, 0.7],
+              }}
+              transition={{
+                rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                opacity: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+              }}
+            >
+              <div
+                className={clsx(
+                  "absolute inset-0 rounded-full mix-blend-screen",
+                  `bg-[radial-gradient(ellipse_at_center,${agentVariantStyles.gradient.replace("from-", "")}/10%,transparent_70%)]`
+                )}
+              />
+            </motion.div>
+          ))}
+        </>
+      ) : (
+        // Side avatars with static rings
+        <>
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className={clsx(
+                "absolute inset-0 rounded-full bg-gradient-to-br to-transparent",
+                borderWidth,
+                agentVariantStyles.border[i],
+                agentVariantStyles.gradient
+              )}
+              style={{ opacity: 0.4 }}
+            >
+              <div
+                className={clsx(
+                  "absolute inset-0 rounded-full mix-blend-screen",
+                  `bg-[radial-gradient(ellipse_at_center,${agentVariantStyles.gradient.replace("from-", "")}/8%,transparent_70%)]`
+                )}
+              />
+            </div>
+          ))}
+        </>
+      )}
+      
+      {/* Agent Avatar */}
+      <motion.div 
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        animate={isCenter ? {
+          scale: [1, 1.05, 1],
+        } : undefined}
+        transition={isCenter ? {
+          duration: 4,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: "easeInOut",
+          delay: 0,
+        } : undefined}
+      >
+        <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+          <Image
+            src={agent.image!}
+            alt={agent.name}
+            fill
+            className="object-cover"
+            sizes={size === 'large' 
+              ? "(max-width: 640px) 280px, (max-width: 768px) 350px, 420px"
+              : "(max-width: 640px) 180px, (max-width: 768px) 220px, 260px"
+            }
+            priority={isCenter}
+          />
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export function BackgroundCircles({
   title = "Background Circles",
   description = "Optional Description",
   className,
   variant,
-  autoCycleIntervalMs = 2500,
+  autoCycleIntervalMs = 4500,
   ctaPrimaryHref,
   ctaPrimaryText,
   ctaSecondaryHref,
@@ -211,19 +326,34 @@ export function BackgroundCircles({
     [ctaSecondaryHref]
   );
 
+  // Get left, center, and right agents for 3D carousel
+  const getCarouselAgents = () => {
+    const leftIndex = (currentAgentIndex - 1 + AGENTS_WITH_AVATARS.length) % AGENTS_WITH_AVATARS.length;
+    const rightIndex = (currentAgentIndex + 1) % AGENTS_WITH_AVATARS.length;
+    
+    return {
+      left: { agent: AGENTS_WITH_AVATARS[leftIndex], index: leftIndex },
+      center: { agent: AGENTS_WITH_AVATARS[currentAgentIndex], index: currentAgentIndex },
+      right: { agent: AGENTS_WITH_AVATARS[rightIndex], index: rightIndex },
+    };
+  };
+
+  const carouselAgents = getCarouselAgents();
+  const centerVariantStyles = COLOR_VARIANTS[activeVariant];
+
   return (
     <div
       className={clsx(
-        "relative flex h-screen w-full flex-col items-center justify-center overflow-hidden",
+        "relative flex h-screen w-full flex-col items-center justify-center overflow-hidden pt-16",
         "bg-white dark:bg-black/5",
         className
       )}
     >
       <AnimatedGrid />
       
-      {/* Title and Description - Above circles with more spacing */}
+      {/* Title and Description - Raised with less bottom spacing */}
       <motion.div
-        className="relative z-10 text-center mb-16 px-4"
+        className="relative z-10 text-center mb-8 px-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -231,7 +361,7 @@ export function BackgroundCircles({
         {title && (
           <h1
             className={clsx(
-              "text-5xl font-bold tracking-tight md:text-7xl mb-6",
+              "text-5xl font-bold tracking-tight md:text-7xl mb-4",
               "bg-gradient-to-b from-slate-950 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent",
               "drop-shadow-[0_0_32px_rgba(94,234,212,0.4)]"
             )}
@@ -252,131 +382,73 @@ export function BackgroundCircles({
         )}
       </motion.div>
 
-      {/* Carousel Container with Pause on Hover */}
+      {/* 3D Carousel Container with Pause on Hover */}
       <div 
-        className="relative group"
+        className="relative w-full max-w-7xl mx-auto px-4"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Background Circles with Agent Avatar - Center */}
-        <motion.div 
-          className="relative h-[320px] w-[320px] sm:h-[400px] sm:w-[400px] md:h-[480px] md:w-[480px]"
-          key={currentAgentIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={`${currentAgentIndex}-${i}`}
-              className={clsx(
-                "absolute inset-0 rounded-full",
-                "border-2 bg-gradient-to-br to-transparent",
-                variantStyles.border[i],
-                variantStyles.gradient
-              )}
-              initial={{ opacity: 0 }}
-              animate={{
-                rotate: 360,
-                scale: [1, 1.05, 1],
-                opacity: [0.7, 0.9, 0.7],
-              }}
-              transition={{
-                opacity: { duration: 0.8 },
-                rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
-                scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
-              }}
-            >
-              <div
-                className={clsx(
-                  "absolute inset-0 rounded-full mix-blend-screen",
-                  `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
-                    "from-",
-                    ""
-                  )}/10%,transparent_70%)]`
-                )}
-              />
-            </motion.div>
-          ))}
+        <div className="relative flex items-center justify-center gap-4 md:gap-8 lg:gap-12">
           
-          {/* Agent Avatar in Center - synchronized with circles */}
-          {currentAgent?.image && (
-            <motion.div 
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-              initial={{ opacity: 0 }}
-              animate={{
-                opacity: 1,
-                scale: [1, 1.05, 1],
-              }}
-              exit={{ opacity: 0 }}
-              transition={{
-                opacity: { duration: 0.8 },
-                scale: {
-                  duration: 4,
-                  repeat: Number.POSITIVE_INFINITY,
-                  ease: "easeInOut",
-                  delay: 0,
-                }
-              }}
-            >
-              <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
-                <Image
-                  key={currentAgentIndex}
-                  src={currentAgent.image}
-                  alt={currentAgent.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 320px, (max-width: 768px) 400px, 480px"
-                  priority
-                />
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* Navigation Arrows - Show on Hover (hidden on mobile) */}
-        <motion.button
-          onClick={goToPrevious}
-          className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 lg:-translate-x-20 bg-white/10 dark:bg-black/20 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/30 text-slate-900 dark:text-white p-3 rounded-full transition-all shadow-lg opacity-0 group-hover:opacity-100"
-          initial={{ opacity: 0 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          aria-label="Previous agent"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </motion.button>
-
-        <motion.button
-          onClick={goToNext}
-          className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 lg:translate-x-20 bg-white/10 dark:bg-black/20 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/30 text-slate-900 dark:text-white p-3 rounded-full transition-all shadow-lg opacity-0 group-hover:opacity-100"
-          initial={{ opacity: 0 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          aria-label="Next agent"
-        >
-          <ChevronRight className="w-6 h-6" />
-        </motion.button>
-
-        {/* Agent Name Display */}
-        {currentAgent && (
-          <motion.div
-            key={`name-${currentAgentIndex}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.5 }}
-            className="absolute -bottom-12 sm:-bottom-14 md:-bottom-16 left-1/2 -translate-x-1/2 text-center w-full px-4"
+          {/* Left Avatar (Previous) */}
+          <motion.button
+            onClick={() => goToIndex(carouselAgents.left.index)}
+            className="relative z-10 cursor-pointer focus:outline-none group/left"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <p className="text-lg sm:text-xl md:text-2xl font-semibold dark:text-white text-slate-900 truncate">
-              {currentAgent.name}
-            </p>
-          </motion.div>
-        )}
+            <AvatarWithRings
+              agent={carouselAgents.left.agent}
+              size="small"
+              opacity={0.5}
+              isCenter={false}
+            />
+          </motion.button>
+
+          {/* Center Avatar (Active) */}
+          <div className="relative z-20">
+            <AvatarWithRings
+              agent={carouselAgents.center.agent}
+              variantStyles={centerVariantStyles}
+              size="large"
+              opacity={1}
+              isCenter={true}
+            />
+            
+            {/* Agent Name - Positioned directly under center avatar */}
+            <motion.div
+              key={`name-${currentAgentIndex}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4 }}
+              className="absolute top-[calc(100%+24px)] left-1/2 -translate-x-1/2 text-center w-max"
+            >
+              <p className="text-lg md:text-xl font-bold dark:text-white text-slate-900 whitespace-nowrap">
+                {carouselAgents.center.agent.name}
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Right Avatar (Next) */}
+          <motion.button
+            onClick={() => goToIndex(carouselAgents.right.index)}
+            className="relative z-10 cursor-pointer focus:outline-none group/right"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <AvatarWithRings
+              agent={carouselAgents.right.agent}
+              size="small"
+              opacity={0.5}
+              isCenter={false}
+            />
+          </motion.button>
+        </div>
       </div>
 
       {/* Navigation Dots */}
-      <div className="relative z-10 flex items-center justify-center gap-2 mt-16 sm:mt-18 md:mt-20 px-4">
+      <div className="relative z-10 flex items-center justify-center gap-2 mt-20 md:mt-24 px-4">
         {AGENTS_WITH_AVATARS.map((_, index) => (
           <button
             key={index}
