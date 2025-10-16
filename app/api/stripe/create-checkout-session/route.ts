@@ -15,7 +15,7 @@ function getStripeClient() {
   console.log('✅ Stripe client initialized with key:', secret.substring(0, 20) + '...')
   try {
     return new Stripe(secret, {
-      apiVersion: '2025-09-30.clover'
+      apiVersion: '2024-06-20'
     })
   } catch (error) {
     console.error('❌ Failed to initialize Stripe:', error)

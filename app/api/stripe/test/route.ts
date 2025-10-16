@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // Try to initialize Stripe
     try {
       const stripe = new Stripe(secretKey, {
-        apiVersion: '2025-09-30.clover'
+        apiVersion: '2024-06-20'
       })
 
       // Try a simple API call

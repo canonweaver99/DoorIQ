@@ -13,7 +13,7 @@ function getStripeClient() {
     return null
   }
   return new Stripe(secret, {
-    apiVersion: '2025-09-30.clover'
+    apiVersion: '2024-06-20'
   })
 }
 
