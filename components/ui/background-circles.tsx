@@ -157,10 +157,10 @@ interface AvatarWithRingsProps {
 
 function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter }: AvatarWithRingsProps) {
   const sizeClasses = size === 'large' 
-    ? 'h-[280px] w-[280px] sm:h-[350px] sm:w-[350px] md:h-[420px] md:w-[420px]'
-    : 'h-[180px] w-[180px] sm:h-[220px] sm:w-[220px] md:h-[260px] md:w-[260px]';
+    ? 'h-[320px] w-[320px] sm:h-[400px] sm:w-[400px] md:h-[480px] md:w-[480px]'
+    : 'h-[240px] w-[240px] sm:h-[300px] sm:w-[300px] md:h-[360px] md:w-[360px]';
   
-  const borderWidth = size === 'large' ? 'border-2' : 'border-[1px]';
+  const borderWidth = size === 'large' ? 'border-2' : 'border-[1.5px]';
   
   // Get variant styles for side avatars based on their color
   const agentVariantStyles = variantStyles || COLOR_VARIANTS[agent.color as keyof typeof COLOR_VARIANTS];
@@ -211,7 +211,7 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter }: Avat
       ) : (
         // Side avatars with static rings
         <>
-          {[0, 1].map((i) => (
+          {[0, 1, 2].map((i) => (
             <div
               key={i}
               className={clsx(
@@ -220,12 +220,12 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter }: Avat
                 agentVariantStyles.border[i],
                 agentVariantStyles.gradient
               )}
-              style={{ opacity: 0.4 }}
+              style={{ opacity: 0.5 }}
             >
               <div
                 className={clsx(
                   "absolute inset-0 rounded-full mix-blend-screen",
-                  `bg-[radial-gradient(ellipse_at_center,${agentVariantStyles.gradient.replace("from-", "")}/8%,transparent_70%)]`
+                  `bg-[radial-gradient(ellipse_at_center,${agentVariantStyles.gradient.replace("from-", "")}/12%,transparent_70%)]`
                 )}
               />
             </div>
@@ -394,7 +394,7 @@ export function BackgroundCircles({
       {/* Title and Description - Balanced spacing */}
       <motion.div
         className="relative z-10 text-center px-4"
-        style={{ marginBottom: '52px' }}
+        style={{ marginBottom: '48px' }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -434,22 +434,22 @@ export function BackgroundCircles({
         dragElastic={0.2}
         onDragEnd={handleDragEnd}
       >
-        <div className="relative flex items-center justify-center gap-4 md:gap-8 lg:gap-12">
+        <div className="relative flex items-center justify-center gap-6 md:gap-10 lg:gap-16">
           
           {/* Left Avatar (Previous) */}
           <motion.button
             onClick={() => goToIndex(carouselAgents.left.index)}
             className="relative z-10 cursor-pointer focus:outline-none group/left"
-            initial={{ opacity: 0.5, scale: 0.65 }}
-            animate={{ opacity: 0.5, scale: 0.65 }}
-            whileHover={{ scale: 0.7, opacity: 0.65 }}
-            whileTap={{ scale: 0.6 }}
+            initial={{ opacity: 0.7, scale: 0.75 }}
+            animate={{ opacity: 0.7, scale: 0.75 }}
+            whileHover={{ scale: 0.8, opacity: 0.85 }}
+            whileTap={{ scale: 0.7 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <AvatarWithRings
               agent={carouselAgents.left.agent}
               size="small"
-              opacity={0.5}
+              opacity={0.7}
               isCenter={false}
             />
           </motion.button>
@@ -457,7 +457,7 @@ export function BackgroundCircles({
           {/* Center Avatar (Active) */}
           <motion.div 
             className="relative z-20"
-            initial={{ opacity: 0.5, scale: 0.9 }}
+            initial={{ opacity: 0.7, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
@@ -477,9 +477,9 @@ export function BackgroundCircles({
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="absolute left-1/2 -translate-x-1/2 text-center"
-              style={{ top: 'calc(100% + 30px)' }}
+              style={{ top: 'calc(100% + 24px)' }}
             >
-              <p className="text-xl md:text-2xl font-bold dark:text-white text-slate-900 whitespace-nowrap tracking-wide drop-shadow-lg" style={{ letterSpacing: '0.5px', fontWeight: 700 }}>
+              <p className="text-xl md:text-2xl font-bold dark:text-white text-slate-900 whitespace-nowrap" style={{ letterSpacing: '0.3px', fontWeight: 700 }}>
                 {carouselAgents.center.agent.name}
               </p>
             </motion.div>
@@ -489,16 +489,16 @@ export function BackgroundCircles({
           <motion.button
             onClick={() => goToIndex(carouselAgents.right.index)}
             className="relative z-10 cursor-pointer focus:outline-none group/right"
-            initial={{ opacity: 0.5, scale: 0.65 }}
-            animate={{ opacity: 0.5, scale: 0.65 }}
-            whileHover={{ scale: 0.7, opacity: 0.65 }}
-            whileTap={{ scale: 0.6 }}
+            initial={{ opacity: 0.7, scale: 0.75 }}
+            animate={{ opacity: 0.7, scale: 0.75 }}
+            whileHover={{ scale: 0.8, opacity: 0.85 }}
+            whileTap={{ scale: 0.7 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <AvatarWithRings
               agent={carouselAgents.right.agent}
               size="small"
-              opacity={0.5}
+              opacity={0.7}
               isCenter={false}
             />
           </motion.button>
