@@ -160,10 +160,10 @@ interface AvatarWithRingsProps {
 
 function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClick, onMouseEnter, onMouseLeave }: AvatarWithRingsProps) {
   const sizeClasses = size === 'large' 
-    ? 'h-[200px] w-[200px] sm:h-[240px] sm:w-[240px] md:h-[280px] md:w-[280px]'
+    ? 'h-[220px] w-[220px] sm:h-[260px] sm:w-[260px] md:h-[300px] md:w-[300px]'
     : size === 'small'
-    ? 'h-[140px] w-[140px] sm:h-[170px] sm:w-[170px] md:h-[200px] md:w-[200px]'
-    : 'h-[100px] w-[100px] sm:h-[120px] sm:w-[120px] md:h-[140px] md:w-[140px]';
+    ? 'h-[130px] w-[130px] sm:h-[155px] sm:w-[155px] md:h-[180px] md:w-[180px]'
+    : 'h-[80px] w-[80px] sm:h-[95px] sm:w-[95px] md:h-[110px] md:w-[110px]';
   
   const borderWidth = size === 'large' ? 'border-2' : size === 'small' ? 'border-[1.5px]' : 'border-[1px]';
   
@@ -214,10 +214,10 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
             fill
             className="object-cover"
             sizes={size === 'large' 
-              ? "(max-width: 640px) 200px, (max-width: 768px) 240px, 280px"
+              ? "(max-width: 640px) 220px, (max-width: 768px) 260px, 300px"
               : size === 'small'
-              ? "(max-width: 640px) 140px, (max-width: 768px) 170px, 200px"
-              : "(max-width: 640px) 100px, (max-width: 768px) 120px, 140px"
+              ? "(max-width: 640px) 130px, (max-width: 768px) 155px, 180px"
+              : "(max-width: 640px) 80px, (max-width: 768px) 95px, 110px"
             }
             priority={isCenter}
           />
