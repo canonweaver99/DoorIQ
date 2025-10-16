@@ -64,7 +64,6 @@ export default function PricingPage() {
       yearlyPrice: "16",
       period: "month",
       features: [
-        "7-day FREE trial",
         "Access to ALL 12 AI training agents",
         "Unlimited practice calls",
         "Advanced analytics & scoring",
@@ -72,7 +71,6 @@ export default function PricingPage() {
         "Custom sales scenarios",
         "Call recording & playback",
         "Performance tracking dashboard",
-        "Priority email & chat support",
         "Export reports (CSV/PDF)",
       ],
       description: "Ideal for individual sales reps",
@@ -87,7 +85,7 @@ export default function PricingPage() {
       isPopular: true,
     },
     {
-      name: "Manager",
+      name: "Team",
       price: "Contact Sales",
       yearlyPrice: "Contact Sales",
       period: "",

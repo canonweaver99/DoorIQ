@@ -165,6 +165,7 @@ function Star({
         repeat: Infinity,
         delay: Math.random() * 5,
       }}
+      suppressHydrationWarning
     />
   );
 }
@@ -233,7 +234,8 @@ export function PricingSection({
   description = "Choose the plan that's right for you. All plans include our core features and support.",
 }: PricingSectionProps) {
   const [isMonthly, setIsMonthly] = useState(true);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedPlanIndex, setSelectedPlanIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null!) as React.RefObject<HTMLDivElement>;
   const [mousePosition, setMousePosition] = useState<{
     x: number | null;
     y: number | null;
@@ -246,19 +248,22 @@ export function PricingSection({
 
   return (
     <PricingContext.Provider value={{ isMonthly, setIsMonthly }}>
-      <div
+      <motion.div
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePosition({ x: null, y: null })}
         className="relative w-full bg-background dark:bg-neutral-950 py-8 sm:py-12"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, ease: "easeOut" }}
       >
         <InteractiveStarfield
           mousePosition={mousePosition}
           containerRef={containerRef}
         />
         <div className="relative z-10 container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl mx-auto text-center space-y-2 mb-6">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-neutral-900 dark:text-white">
+          <div className="max-w-3xl mx-auto text-center space-y-2 mb-4">
+            <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl text-neutral-900 dark:text-white">
               {title}
             </h2>
             <p className="text-muted-foreground text-base whitespace-pre-line">
@@ -266,13 +271,19 @@ export function PricingSection({
             </p>
           </div>
           <PricingToggle />
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 items-start gap-6">
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 items-start gap-6">
             {plans.map((plan, index) => (
-              <PricingCard key={index} plan={plan} index={index} />
+              <PricingCard 
+                key={index} 
+                plan={plan} 
+                index={index}
+                isSelected={selectedPlanIndex === index || (selectedPlanIndex === null && (plan.isPopular ?? false))}
+                onSelect={() => setSelectedPlanIndex(index)}
+              />
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </PricingContext.Provider>
   );
 }
@@ -302,9 +313,9 @@ function PricingToggle() {
 
   return (
     <div className="flex justify-center">
-      <div className="relative flex w-fit items-center rounded-full bg-muted p-1">
+      <div className="relative flex w-fit items-center rounded-full bg-muted p-0.5">
         <motion.div
-          className="absolute left-0 top-0 h-full rounded-full bg-primary p-1"
+          className="absolute left-0 top-0 h-full rounded-full bg-primary p-0.5"
           style={pillStyle}
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
         />
@@ -312,7 +323,7 @@ function PricingToggle() {
           ref={monthlyBtnRef}
           onClick={() => handleToggle(true)}
           className={cn(
-            "relative z-10 rounded-full px-4 sm:px-6 py-2 text-sm font-medium transition-colors",
+            "relative z-10 rounded-full px-3 sm:px-4 py-1.5 text-xs font-medium transition-colors",
             isMonthly
               ? "text-primary-foreground"
               : "text-muted-foreground hover:text-foreground",
@@ -324,7 +335,7 @@ function PricingToggle() {
           ref={annualBtnRef}
           onClick={() => handleToggle(false)}
           className={cn(
-            "relative z-10 rounded-full px-4 sm:px-6 py-2 text-sm font-medium transition-colors",
+            "relative z-10 rounded-full px-3 sm:px-4 py-1.5 text-xs font-medium transition-colors",
             !isMonthly
               ? "text-primary-foreground"
               : "text-muted-foreground hover:text-foreground",
@@ -347,29 +358,22 @@ function PricingToggle() {
 }
 
 // Pricing Card Component
-function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
+function PricingCard({ plan, index, isSelected, onSelect }: { 
+  plan: PricingPlan; 
+  index: number;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
   const { isMonthly } = useContext(PricingContext);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const minReps = plan.minReps || 0;
   const [repCount, setRepCount] = useState(minReps);
+  const [tapCount, setTapCount] = useState(0);
+  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCtaClick = () => {
-    // Fire celebration only for sign-up actions (not sign-in)
-    const isSignUp = plan.href?.includes('/signup') || /sign up/i.test(plan.buttonText || "");
-    const isSignIn = plan.href?.includes('/login') || /sign in|log in/i.test(plan.buttonText || "");
-    
-    if (isSignUp && !isSignIn) {
-      confetti({
-        particleCount: 120,
-        spread: 90,
-        origin: { y: 0.6 },
-        colors: ["#8b5cf6", "#ec4899", "#3b82f6", "#06b6d4"],
-        ticks: 320,
-        gravity: 1,
-        decay: 0.94,
-        startVelocity: 32,
-      });
-    }
+    // Confetti is now only triggered when users return after successful signup/purchase
+    // Not triggered on initial CTA clicks
   };
 
   // Calculate total price for Manager plan with reps
@@ -388,26 +392,53 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
     return base + (repCount * perRep);
   };
 
+  const handleCardClick = () => {
+    setTapCount(prev => prev + 1);
+    
+    if (tapTimeoutRef.current) {
+      clearTimeout(tapTimeoutRef.current);
+    }
+
+    if (tapCount === 1) {
+      // Double tap detected
+      if (plan.onClick) {
+        handleCtaClick();
+        plan.onClick();
+      } else if (plan.href) {
+        window.location.href = plan.href;
+      }
+      setTapCount(0);
+    } else {
+      // Single tap - select card
+      onSelect();
+      tapTimeoutRef.current = setTimeout(() => {
+        setTapCount(0);
+      }, 300);
+    }
+  };
+
   return (
     <motion.div
-      initial={{ y: 50, opacity: 0 }}
-      whileInView={{
-        y: plan.isPopular && isDesktop ? -15 : 0,
-        opacity: 1,
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ 
+        opacity: 1, 
+        y: isSelected && isDesktop ? -10 : (plan.isPopular && isDesktop ? -15 : 0)
       }}
-      viewport={{ once: true }}
+      whileHover={{
+        y: (isSelected && isDesktop ? -10 : (plan.isPopular && isDesktop ? -15 : 0)) - 4,
+        transition: { duration: 0.3, ease: "easeOut" }
+      }}
       transition={{
         duration: 0.6,
-        type: "spring",
-        stiffness: 100,
-        damping: 20,
-        delay: index * 0.15,
+        ease: "easeOut",
+        delay: index * 0.1
       }}
+      onClick={handleCardClick}
       className={cn(
-        "rounded-2xl p-6 flex flex-col relative bg-background/70 backdrop-blur-sm",
-        plan.isPopular
-          ? "border-2 border-primary shadow-xl"
-          : "border border-border",
+        "rounded-2xl p-6 flex flex-col relative bg-background/70 backdrop-blur-sm min-h-[520px] cursor-pointer",
+        isSelected
+          ? "border-2 border-primary shadow-2xl shadow-primary/20"
+          : "border border-border hover:border-primary/30 hover:shadow-lg",
       )}
     >
       {plan.isPopular && (
@@ -421,16 +452,16 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         </div>
       )}
       <div className="flex-1 flex flex-col text-center">
-        <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <h3 className="text-2xl font-bold text-white mt-1">{plan.name}</h3>
+        <p className="mt-2 text-xs font-medium text-slate-400">
           {plan.description}
         </p>
-        <div className="mt-4 flex items-baseline justify-center gap-x-1">
+        <div className="mt-5 flex items-baseline justify-center gap-x-1">
           {typeof calculateTotalPrice() === 'number' ? (
             <>
-              <span className="text-4xl font-bold tracking-tight text-foreground">
+              <span className="text-5xl font-extrabold tracking-tight text-white">
                 <NumberFlow
-                  value={calculateTotalPrice()}
+                  value={calculateTotalPrice() as number}
                   format={{
                     style: "currency",
                     currency: "USD",
@@ -439,18 +470,18 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
                   className="font-variant-numeric: tabular-nums"
                 />
               </span>
-              <span className="text-xs font-semibold leading-6 tracking-wide text-muted-foreground">
+              <span className="text-sm font-semibold leading-6 tracking-wide text-slate-400">
                 / {plan.period}
               </span>
             </>
           ) : (
-            <span className="text-2xl font-bold tracking-tight text-foreground">
+            <span className="text-3xl font-extrabold tracking-tight text-white">
               {plan.price}
             </span>
           )}
         </div>
         {typeof calculateTotalPrice() === 'number' && (
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs font-medium text-slate-400 mt-2">
             {isMonthly ? "Billed Monthly" : "Billed Annually"}
           </p>
         )}
@@ -503,7 +534,7 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
 
         <ul
           role="list"
-          className="mt-4 space-y-2 text-xs leading-5 text-left text-muted-foreground"
+          className="mt-5 space-y-2.5 text-sm leading-5 text-left"
         >
           {plan.features.map((feature) => (
             <li key={feature} className="flex gap-x-2">
@@ -511,21 +542,22 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
                 className="h-4 w-4 flex-none text-primary mt-0.5"
                 aria-hidden="true"
               />
-              {feature}
+              <span className="font-medium text-white">{feature}</span>
             </li>
           ))}
         </ul>
 
-        <div className="mt-auto pt-4">
+        <div className="mt-auto pt-6">
           {plan.onClick ? (
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 handleCtaClick();
                 plan.onClick?.();
               }}
               className={cn(
                 buttonVariants({
-                  variant: plan.isPopular ? "default" : "outline",
+                  variant: isSelected ? "default" : "outline",
                   size: "default",
                 }),
                 "w-full text-sm",
@@ -538,12 +570,15 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
               href={plan.href}
               className={cn(
                 buttonVariants({
-                  variant: plan.isPopular ? "default" : "outline",
+                  variant: isSelected ? "default" : "outline",
                   size: "default",
                 }),
                 "w-full text-sm",
               )}
-              onClick={handleCtaClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCtaClick();
+              }}
             >
               {plan.buttonText}
             </Link>

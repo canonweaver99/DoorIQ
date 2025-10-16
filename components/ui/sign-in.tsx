@@ -43,14 +43,17 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial; delay: string }) => (
-  <div className={`animate-testimonial ${delay} flex items-start gap-3 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-5 w-64 hover:bg-white/10 transition-all duration-300 hover:border-purple-500/30 hover:shadow-[0_8px_32px_rgba(168,85,247,0.2)]`}>
-    <img src={testimonial.avatarSrc} className="h-10 w-10 object-cover rounded-2xl ring-2 ring-white/10" alt="avatar" />
-    <div className="text-sm leading-snug">
-      <p className="flex items-center gap-1 font-medium text-white">{testimonial.name}</p>
-      <p className="text-slate-400 text-xs">{testimonial.handle}</p>
-      <p className="mt-1.5 text-slate-300 text-xs leading-relaxed">{testimonial.text}</p>
+  <a 
+    href="/testimonials"
+    className={`animate-testimonial ${delay} flex items-start gap-2 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 p-2.5 w-56 hover:bg-white/15 transition-all duration-300 hover:border-purple-500/40 hover:shadow-[0_8px_32px_rgba(168,85,247,0.3)] cursor-pointer block`}
+  >
+    <img src={testimonial.avatarSrc} className="h-9 w-9 object-cover rounded-lg ring-2 ring-white/20" alt="avatar" />
+    <div className="text-xs leading-tight">
+      <p className="flex items-center gap-1 font-bold text-white">{testimonial.name}</p>
+      <p className="text-slate-300 text-xs font-medium">{testimonial.handle}</p>
+      <p className="mt-0.5 text-white font-medium leading-snug">&ldquo;{testimonial.text}&rdquo;</p>
     </div>
-  </div>
+  </a>
 );
 
 // --- MAIN COMPONENT ---
@@ -72,15 +75,15 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
   return (
     <div className="h-[100dvh] flex flex-col md:flex-row w-[100dvw] bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28]">
       {/* Left column: sign-in form */}
-      <section className="flex-1 flex items-center justify-center p-8">
+      <section className="flex-1 flex items-center justify-center p-8 pt-4">
         <div className="w-full max-w-md">
-          <div className="flex flex-col gap-6">
-            <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
+          <div className="flex flex-col gap-4">
+            <h1 className="animate-element animate-delay-100 text-3xl md:text-4xl font-semibold leading-tight">
               {title}
             </h1>
-            <p className="animate-element animate-delay-200 text-slate-400 leading-relaxed">{description}</p>
+            <p className="animate-element animate-delay-200 text-slate-400 text-sm leading-snug">{description}</p>
 
-            <form className="space-y-5" onSubmit={onSignIn}>
+            <form className="space-y-3.5" onSubmit={onSignIn}>
               <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Email Address</label>
                 <GlassInputWrapper>
@@ -88,7 +91,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
                     name="email"
                     type="email"
                     placeholder="you@company.com"
-                    className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                    className="w-full bg-transparent text-sm py-3 px-3 rounded-2xl focus:outline-none text-white placeholder-slate-500"
                     required
                   />
                 </GlassInputWrapper>
@@ -102,7 +105,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
-                      className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                      className="w-full bg-transparent text-sm py-3 px-3 pr-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
                       required
                       minLength={6}
                     />
@@ -144,7 +147,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-600 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-4 font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98]"
+                className="animate-element animate-delay-600 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-sm font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -158,7 +161,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
             <button
               onClick={onGoogleSignIn}
               disabled={loading}
-              className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-white/10 rounded-2xl py-4 hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
+              className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-white/10 rounded-xl py-3 text-sm hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
             >
               <GoogleIcon />
               Continue with Google
@@ -180,27 +183,23 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
 
       {/* Right column: hero image + testimonials */}
       {heroImageSrc && (
-        <section className="hidden md:block flex-1 relative p-4">
+        <section className="hidden md:block flex-1 relative -ml-24">
           <div
-            className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center shadow-2xl"
+            className="animate-slide-right animate-delay-300 absolute inset-0 rounded-none bg-cover bg-center shadow-2xl"
             style={{
               backgroundImage: `url(${heroImageSrc})`,
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1)',
             }}
           >
             {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#07030f] via-transparent to-transparent rounded-3xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#07030f] via-transparent to-transparent"></div>
           </div>
           {testimonials.length > 0 && (
-            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-4 px-8 w-full justify-center z-10">
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 px-2 w-full justify-center z-10">
               <TestimonialCard testimonial={testimonials[0]} delay="animate-delay-1000" />
-              {testimonials[1] && (
-                <div className="hidden xl:flex">
-                  <TestimonialCard testimonial={testimonials[1]} delay="animate-delay-1200" />
-                </div>
-              )}
+              {testimonials[1] && <TestimonialCard testimonial={testimonials[1]} delay="animate-delay-1200" />}
               {testimonials[2] && (
-                <div className="hidden 2xl:flex">
+                <div className="hidden xl:flex">
                   <TestimonialCard testimonial={testimonials[2]} delay="animate-delay-1400" />
                 </div>
               )}

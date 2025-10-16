@@ -219,8 +219,8 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
                 "to-transparent opacity-60"
               )}
               style={{
-                "--hero-gradient-speed": isCenter ? "14s" : "20s",
-              } as React.CSSProperties}
+                "--hero-gradient-speed": isCenter ? "14s" : "18s",
+              }}
             />
             <div
               className={clsx(
@@ -229,8 +229,8 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
                 "to-transparent opacity-35"
               )}
               style={{
-                "--hero-gradient-speed": isCenter ? "16s" : "24s",
-              } as React.CSSProperties}
+                "--hero-gradient-speed": isCenter ? "16s" : "22s",
+              }}
             />
           </div>
           <Image

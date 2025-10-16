@@ -22,7 +22,7 @@ const footerLinks: FooterSectionType[] = [
     links: [
       { title: 'Features', href: '#features' },
       { title: 'Pricing', href: '#pricing' },
-      { title: 'Testimonials', href: '#testimonials' },
+      { title: 'Testimonials', href: '/testimonials' },
       { title: 'Documentation', href: '/documentation' },
     ],
   },
