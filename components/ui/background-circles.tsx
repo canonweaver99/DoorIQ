@@ -206,7 +206,10 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
         className="absolute inset-0 flex items-center justify-center pointer-events-none"
       >
         <div 
-          className="relative w-full h-full rounded-full overflow-hidden shadow-2xl"
+          className={clsx(
+            "relative w-full h-full rounded-full overflow-hidden",
+            isCenter ? "shadow-[0_0_40px_rgba(94,234,212,0.4)]" : "shadow-2xl"
+          )}
         >
           <Image
             src={agent.image!}
