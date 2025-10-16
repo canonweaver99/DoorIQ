@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
@@ -146,35 +147,43 @@ const AGENTS_WITH_AVATARS = ALLOWED_AGENT_ORDER.map((agentName) => {
   };
 }).filter((agent) => agent.image); // Only include agents with images
 
-// Avatar with Rings Component for 3D Carousel
+// Avatar with Rings Component for 5-agent Carousel
 interface AvatarWithRingsProps {
   agent: typeof AGENTS_WITH_AVATARS[number];
   variantStyles?: typeof COLOR_VARIANTS[keyof typeof COLOR_VARIANTS];
-  size: 'small' | 'large';
+  size: 'tiny' | 'small' | 'large';
   opacity: number;
   isCenter: boolean;
+  onClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
-function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter }: AvatarWithRingsProps) {
+function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClick, onMouseEnter, onMouseLeave }: AvatarWithRingsProps) {
   const sizeClasses = size === 'large' 
-    ? 'h-[320px] w-[320px] sm:h-[400px] sm:w-[400px] md:h-[480px] md:w-[480px]'
-    : 'h-[240px] w-[240px] sm:h-[300px] sm:w-[300px] md:h-[360px] md:w-[360px]';
+    ? 'h-[280px] w-[280px] sm:h-[350px] sm:w-[350px] md:h-[420px] md:w-[420px]'
+    : size === 'small'
+    ? 'h-[200px] w-[200px] sm:h-[240px] sm:w-[240px] md:h-[300px] md:w-[300px]'
+    : 'h-[140px] w-[140px] sm:h-[180px] sm:w-[180px] md:h-[220px] md:w-[220px]';
   
-  const borderWidth = size === 'large' ? 'border-2' : 'border-[1.5px]';
+  const borderWidth = size === 'large' ? 'border-2' : size === 'small' ? 'border-[1.5px]' : 'border-[1px]';
   
   // Get variant styles for side avatars based on their color
   const agentVariantStyles = variantStyles || COLOR_VARIANTS[agent.color as keyof typeof COLOR_VARIANTS];
 
   return (
     <motion.div 
-      className={clsx("relative", sizeClasses)}
+      className={clsx("relative", sizeClasses, onClick && "cursor-pointer")}
       style={{ opacity }}
       initial={{ opacity: 0.3, scale: 0.8 }}
       animate={{ opacity, scale: 1 }}
       transition={{ 
-        duration: 0.4, 
+        duration: 0.5, 
         ease: [0.4, 0, 0.2, 1]  // Custom easing for smooth natural motion
       }}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {isCenter && variantStyles ? (
         // Center avatar with animated rings
@@ -274,7 +283,7 @@ export function BackgroundCircles({
   description = "Optional Description",
   className,
   variant,
-  autoCycleIntervalMs = 4500,
+  autoCycleIntervalMs = 2500, // Updated to 2.5 seconds
   ctaPrimaryHref,
   ctaPrimaryText,
   ctaSecondaryHref,
@@ -284,6 +293,15 @@ export function BackgroundCircles({
   const [autoVariant, setAutoVariant] = useState<keyof typeof COLOR_VARIANTS>("octonary");
   const [currentAgentIndex, setCurrentAgentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [lastInteractionTime, setLastInteractionTime] = useState(Date.now());
+  const inactivityTimeout = 5000; // 5 seconds of inactivity before resuming auto-rotation
+
+  const router = useRouter();
+
+  const recordInteraction = useCallback(() => {
+    setLastInteractionTime(Date.now());
+    setIsPaused(true);
+  }, []);
 
   const goToNext = useCallback(() => {
     setCurrentAgentIndex((prev) => (prev + 1) % AGENTS_WITH_AVATARS.length);
@@ -306,12 +324,20 @@ export function BackgroundCircles({
   const goToIndex = useCallback((index: number) => {
     setCurrentAgentIndex(index);
     setAutoVariant(variantKeys[index % variantKeys.length]);
-  }, [variantKeys]);
+    recordInteraction();
+  }, [variantKeys, recordInteraction]);
+
+  const handleAgentClick = useCallback((agentName: string) => {
+    // Navigate to trainer with selected agent
+    router.push(`/trainer/select-homeowner?agent=${encodeURIComponent(agentName)}`);
+  }, [router]);
 
   // Drag/swipe handling
   const handleDragEnd = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const SWIPE_THRESHOLD = 50;
     const swipeDistance = info.offset.x;
+    
+    recordInteraction();
     
     if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
       if (swipeDistance > 0) {
@@ -322,24 +348,41 @@ export function BackgroundCircles({
         goToNext();
       }
     }
-  }, [goToNext, goToPrevious]);
+  }, [goToNext, goToPrevious, recordInteraction]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
+        recordInteraction();
         goToPrevious();
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
+        recordInteraction();
         goToNext();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToNext, goToPrevious]);
+  }, [goToNext, goToPrevious, recordInteraction]);
 
+  // Auto-resume after inactivity
+  useEffect(() => {
+    if (variant) return; // respect explicit variant
+    
+    const checkInactivity = setInterval(() => {
+      const timeSinceLastInteraction = Date.now() - lastInteractionTime;
+      if (isPaused && timeSinceLastInteraction > inactivityTimeout) {
+        setIsPaused(false);
+      }
+    }, 1000);
+
+    return () => clearInterval(checkInactivity);
+  }, [variant, lastInteractionTime, isPaused, inactivityTimeout]);
+
+  // Auto-rotation
   useEffect(() => {
     if (variant || isPaused) return; // respect explicit variant or pause
     const id = setInterval(() => {
@@ -366,15 +409,19 @@ export function BackgroundCircles({
     [ctaSecondaryHref]
   );
 
-  // Get left, center, and right agents for 3D carousel
+  // Get 5 agents for carousel: far-left, left, center, right, far-right
   const getCarouselAgents = () => {
+    const farLeftIndex = (currentAgentIndex - 2 + AGENTS_WITH_AVATARS.length) % AGENTS_WITH_AVATARS.length;
     const leftIndex = (currentAgentIndex - 1 + AGENTS_WITH_AVATARS.length) % AGENTS_WITH_AVATARS.length;
     const rightIndex = (currentAgentIndex + 1) % AGENTS_WITH_AVATARS.length;
+    const farRightIndex = (currentAgentIndex + 2) % AGENTS_WITH_AVATARS.length;
     
     return {
+      farLeft: { agent: AGENTS_WITH_AVATARS[farLeftIndex], index: farLeftIndex },
       left: { agent: AGENTS_WITH_AVATARS[leftIndex], index: leftIndex },
       center: { agent: AGENTS_WITH_AVATARS[currentAgentIndex], index: currentAgentIndex },
       right: { agent: AGENTS_WITH_AVATARS[rightIndex], index: rightIndex },
+      farRight: { agent: AGENTS_WITH_AVATARS[farRightIndex], index: farRightIndex },
     };
   };
 
@@ -391,10 +438,10 @@ export function BackgroundCircles({
     >
       <AnimatedGrid />
       
-      {/* Title and Description - Raised higher */}
+      {/* Title and Description - Moved significantly higher */}
       <motion.div
         className="relative z-10 text-center px-4"
-        style={{ marginBottom: '48px', marginTop: '-80px' }}
+        style={{ marginBottom: '60px', marginTop: '-140px' }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -402,11 +449,11 @@ export function BackgroundCircles({
         {title && (
           <h1
             className={clsx(
-              "text-5xl font-bold tracking-tight md:text-7xl",
+              "text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl",
               "bg-gradient-to-b from-slate-950 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent",
               "drop-shadow-[0_0_32px_rgba(94,234,212,0.4)]"
             )}
-            style={{ marginBottom: '18px' }}
+            style={{ marginBottom: '20px' }}
           >
             {title}
           </h1>
@@ -414,7 +461,7 @@ export function BackgroundCircles({
 
         {description && (
           <motion.p
-            className="text-lg md:text-xl dark:text-white text-slate-950"
+            className="text-lg md:text-xl lg:text-2xl dark:text-white text-slate-950 font-medium"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -424,35 +471,57 @@ export function BackgroundCircles({
         )}
       </motion.div>
 
-      {/* 3D Carousel Container with Pause on Hover and Drag/Swipe */}
+      {/* 5-Agent Carousel Container with Pause on Hover and Drag/Swipe */}
       <motion.div 
-        className="relative w-full max-w-7xl mx-auto px-4 cursor-grab active:cursor-grabbing"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
+        className="relative w-full max-w-[1800px] mx-auto px-4 cursor-grab active:cursor-grabbing"
+        onMouseEnter={() => recordInteraction()}
+        onMouseLeave={() => {}}
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.2}
         onDragEnd={handleDragEnd}
       >
-        <div className="relative flex items-center justify-center gap-6 md:gap-10 lg:gap-16">
+        <div className="relative flex items-center justify-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
           <AnimatePresence mode="popLayout">
-          {/* Left Avatar (Previous) */}
+          {/* Far Left Avatar */}
+          <motion.button
+            key={`far-left-${carouselAgents.farLeft.index}`}
+            onClick={() => goToIndex(carouselAgents.farLeft.index)}
+            className="relative z-5 cursor-pointer focus:outline-none group/far-left"
+            initial={{ opacity: 0.3, scale: 0.5, x: -30 }}
+            animate={{ opacity: 0.5, scale: 0.6, x: 0 }}
+            exit={{ opacity: 0.2, scale: 0.5, x: 30 }}
+            whileHover={{ scale: 0.65, opacity: 0.7, filter: "brightness(1.1)" }}
+            whileTap={{ scale: 0.55 }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <AvatarWithRings
+              agent={carouselAgents.farLeft.agent}
+              size="tiny"
+              opacity={0.5}
+              isCenter={false}
+              onClick={() => handleAgentClick(carouselAgents.farLeft.agent.name)}
+            />
+          </motion.button>
+
+          {/* Left Avatar */}
           <motion.button
             key={`left-${carouselAgents.left.index}`}
             onClick={() => goToIndex(carouselAgents.left.index)}
             className="relative z-10 cursor-pointer focus:outline-none group/left"
-            initial={{ opacity: 0.5, scale: 0.7, x: -20 }}
+            initial={{ opacity: 0.5, scale: 0.65, x: -20 }}
             animate={{ opacity: 0.7, scale: 0.75, x: 0 }}
-            exit={{ opacity: 0.3, scale: 0.65, x: 20 }}
-            whileHover={{ scale: 0.8, opacity: 0.85 }}
-            whileTap={{ scale: 0.7 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            exit={{ opacity: 0.4, scale: 0.65, x: 20 }}
+            whileHover={{ scale: 0.82, opacity: 0.9, filter: "brightness(1.15)" }}
+            whileTap={{ scale: 0.72 }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
           >
             <AvatarWithRings
               agent={carouselAgents.left.agent}
               size="small"
               opacity={0.7}
               isCenter={false}
+              onClick={() => handleAgentClick(carouselAgents.left.agent.name)}
             />
           </motion.button>
 
@@ -465,68 +534,104 @@ export function BackgroundCircles({
             exit={{ opacity: 0.8, scale: 0.95 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
           >
-            <AvatarWithRings
-              agent={carouselAgents.center.agent}
-              variantStyles={centerVariantStyles}
-              size="large"
-              opacity={1}
-              isCenter={true}
-            />
+            <motion.div
+              whileHover={{ scale: 1.05, filter: "brightness(1.2) drop-shadow(0 0 30px rgba(94,234,212,0.6))" }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              <AvatarWithRings
+                agent={carouselAgents.center.agent}
+                variantStyles={centerVariantStyles}
+                size="large"
+                opacity={1}
+                isCenter={true}
+                onClick={() => handleAgentClick(carouselAgents.center.agent.name)}
+              />
+            </motion.div>
             
-            {/* Agent Name - Perfectly centered */}
+            {/* Agent Name - Modern styling with better visibility */}
             <motion.div
               key={`name-${currentAgentIndex}`}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute w-full text-center"
+              className="absolute w-full text-center pointer-events-none"
               style={{ 
-                top: 'calc(100% + 28px)',
+                top: 'calc(100% + 32px)',
                 left: '50%',
                 transform: 'translateX(-50%)'
               }}
             >
-              <p className="text-2xl md:text-3xl font-bold dark:text-white text-slate-900" style={{ letterSpacing: '0.02em', fontWeight: 700 }}>
+              <p 
+                className="text-2xl md:text-3xl lg:text-4xl font-bold dark:text-white text-slate-900 drop-shadow-lg"
+                style={{ 
+                  letterSpacing: '0.01em', 
+                  fontWeight: 700,
+                  textShadow: '0 2px 10px rgba(0,0,0,0.3), 0 0 20px rgba(94,234,212,0.2)'
+                }}
+              >
                 {carouselAgents.center.agent.name}
               </p>
             </motion.div>
           </motion.div>
 
-          {/* Right Avatar (Next) */}
+          {/* Right Avatar */}
           <motion.button
             key={`right-${carouselAgents.right.index}`}
             onClick={() => goToIndex(carouselAgents.right.index)}
             className="relative z-10 cursor-pointer focus:outline-none group/right"
-            initial={{ opacity: 0.5, scale: 0.7, x: 20 }}
+            initial={{ opacity: 0.5, scale: 0.65, x: 20 }}
             animate={{ opacity: 0.7, scale: 0.75, x: 0 }}
-            exit={{ opacity: 0.3, scale: 0.65, x: -20 }}
-            whileHover={{ scale: 0.8, opacity: 0.85 }}
-            whileTap={{ scale: 0.7 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            exit={{ opacity: 0.4, scale: 0.65, x: -20 }}
+            whileHover={{ scale: 0.82, opacity: 0.9, filter: "brightness(1.15)" }}
+            whileTap={{ scale: 0.72 }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
           >
             <AvatarWithRings
               agent={carouselAgents.right.agent}
               size="small"
               opacity={0.7}
               isCenter={false}
+              onClick={() => handleAgentClick(carouselAgents.right.agent.name)}
+            />
+          </motion.button>
+
+          {/* Far Right Avatar */}
+          <motion.button
+            key={`far-right-${carouselAgents.farRight.index}`}
+            onClick={() => goToIndex(carouselAgents.farRight.index)}
+            className="relative z-5 cursor-pointer focus:outline-none group/far-right"
+            initial={{ opacity: 0.3, scale: 0.5, x: 30 }}
+            animate={{ opacity: 0.5, scale: 0.6, x: 0 }}
+            exit={{ opacity: 0.2, scale: 0.5, x: -30 }}
+            whileHover={{ scale: 0.65, opacity: 0.7, filter: "brightness(1.1)" }}
+            whileTap={{ scale: 0.55 }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <AvatarWithRings
+              agent={carouselAgents.farRight.agent}
+              size="tiny"
+              opacity={0.5}
+              isCenter={false}
+              onClick={() => handleAgentClick(carouselAgents.farRight.agent.name)}
             />
           </motion.button>
           </AnimatePresence>
         </div>
       </motion.div>
 
-      {/* Navigation Dots - 24px gap from name */}
-      <div className="relative z-10 flex items-center justify-center gap-2 px-4" style={{ marginTop: '24px' }}>
+      {/* Navigation Dots - Increased gap from name to account for larger font */}
+      <div className="relative z-10 flex items-center justify-center gap-2.5 px-4" style={{ marginTop: '80px' }}>
         {AGENTS_WITH_AVATARS.map((_, index) => (
           <button
             key={index}
             onClick={() => goToIndex(index)}
             className={clsx(
-              "rounded-full transition-all duration-300",
+              "rounded-full transition-all duration-300 hover:scale-110",
               index === currentAgentIndex
-                ? "bg-white dark:bg-white w-6 h-2 sm:w-8 sm:h-2"
-                : "bg-white/40 dark:bg-white/40 hover:bg-white/60 dark:hover:bg-white/60 w-2 h-2"
+                ? "bg-white dark:bg-white w-8 h-2.5 sm:w-10 sm:h-3"
+                : "bg-white/40 dark:bg-white/40 hover:bg-white/70 dark:hover:bg-white/70 w-2.5 h-2.5"
             )}
             aria-label={`Go to agent ${index + 1}`}
           />
