@@ -1,8 +1,9 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { AlertCircle, Sparkles } from 'lucide-react'
+import { AlertCircle, TrendingUp } from 'lucide-react'
+import { useState } from 'react'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 interface SessionLimitBannerProps {
   sessionsRemaining: number
@@ -10,75 +11,84 @@ interface SessionLimitBannerProps {
   sessionsUsed: number
 }
 
-export default function SessionLimitBanner({ 
+export function SessionLimitBanner({ 
   sessionsRemaining, 
-  sessionsLimit,
+  sessionsLimit, 
   sessionsUsed 
 }: SessionLimitBannerProps) {
-  const percentage = (sessionsUsed / sessionsLimit) * 100
-  const isUrgent = sessionsRemaining <= 2
-  const isWarning = sessionsRemaining <= 5 && sessionsRemaining > 2
+  const [dismissed, setDismissed] = useState(false)
 
-  if (sessionsRemaining > 5) return null
+  if (dismissed || sessionsRemaining > 3) return null
+
+  const percentage = (sessionsUsed / sessionsLimit) * 100
+  const isNearLimit = sessionsRemaining <= 2
+  const isAtLimit = sessionsRemaining === 0
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`border rounded-xl p-4 mb-6 ${
-        isUrgent 
-          ? 'bg-gradient-to-r from-red-600/20 to-orange-600/20 border-red-500/30'
-          : 'bg-gradient-to-r from-yellow-600/20 to-orange-600/20 border-yellow-500/30'
-      }`}
-    >
-      <div className="flex items-start gap-4">
-        <div className={`p-2 bg-white/10 rounded-lg ${
-          isUrgent ? 'text-red-400' : 'text-yellow-400'
+    <div className={`relative ${
+      isNearLimit 
+        ? 'bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30' 
+        : 'bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30'
+    } border rounded-lg p-4 mb-6 shadow-sm`}>
+      {!isAtLimit && (
+        <button
+          onClick={() => setDismissed(true)}
+          className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Dismiss banner"
+        >
+          ✕
+        </button>
+      )}
+
+      <div className="flex items-start gap-4 pr-8">
+        <div className={`mt-0.5 ${
+          isNearLimit ? 'text-red-500' : 'text-yellow-500'
         }`}>
-          <AlertCircle className="w-5 h-5" />
+          <AlertCircle className="h-6 w-6" />
         </div>
-        
+
         <div className="flex-1">
-          <h3 className={`font-semibold mb-1 ${
-            isUrgent ? 'text-red-300' : 'text-yellow-300'
-          }`}>
-            {sessionsRemaining === 0 
-              ? 'Session Limit Reached'
-              : `Only ${sessionsRemaining} Session${sessionsRemaining !== 1 ? 's' : ''} Remaining`
-            }
+          <h3 className="font-semibold text-lg mb-1">
+            {isAtLimit 
+              ? '🚫 Session Limit Reached' 
+              : `⚠️ ${sessionsRemaining} Session${sessionsRemaining !== 1 ? 's' : ''} Remaining`}
           </h3>
-          
-          <p className="text-sm text-slate-300 mb-3">
-            {sessionsRemaining === 0
-              ? `You've used all ${sessionsLimit} practice sessions for this month. Upgrade to get unlimited sessions!`
-              : `You've used ${sessionsUsed} of ${sessionsLimit} practice sessions this month. Upgrade for unlimited access!`
-            }
+          <p className="text-sm text-muted-foreground mb-3">
+            {isAtLimit ? (
+              <>You've used all <strong>{sessionsLimit} practice sessions</strong> for this month. Upgrade to Premium for unlimited sessions!</>
+            ) : (
+              <>You've used <strong>{sessionsUsed} of {sessionsLimit}</strong> practice sessions this month. Upgrade for unlimited sessions!</>
+            )}
           </p>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-white/10 rounded-full h-2 mb-3 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${percentage}%` }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              className={`h-full rounded-full ${
-                isUrgent 
-                  ? 'bg-gradient-to-r from-red-500 to-orange-500'
-                  : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+          {/* Progress bar */}
+          <div className="mb-3 bg-muted rounded-full h-2 overflow-hidden">
+            <div 
+              className={`h-full transition-all duration-500 ${
+                percentage >= 90 ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                percentage >= 70 ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+                'bg-gradient-to-r from-yellow-500 to-yellow-600'
               }`}
+              style={{ width: `${percentage}%` }}
             />
           </div>
 
-          <Link
-            href="/pricing"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-lg text-sm font-semibold text-white transition-all"
-          >
-            <Sparkles className="w-4 h-4" />
-            Upgrade to Unlimited - Start Free Trial
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/pricing">
+              <Button 
+                size="sm" 
+                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+              >
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Upgrade to Premium
+              </Button>
+            </Link>
+            <div className="text-xs text-muted-foreground">
+              Resets on the 1st of next month
+            </div>
+          </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
-

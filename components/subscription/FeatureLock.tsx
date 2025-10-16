@@ -5,58 +5,55 @@ import { ReactNode } from 'react'
 
 interface FeatureLockProps {
   isLocked: boolean
-  children: ReactNode
-  blurContent?: boolean
-  showBadge?: boolean
   onClick?: () => void
+  children: ReactNode
+  blurAmount?: 'sm' | 'md' | 'lg'
 }
 
-/**
- * Component that wraps features and shows a lock overlay when the feature is not accessible
- */
-export default function FeatureLock({ 
+export function FeatureLock({ 
   isLocked, 
+  onClick, 
   children, 
-  blurContent = true,
-  showBadge = true,
-  onClick 
+  blurAmount = 'md' 
 }: FeatureLockProps) {
   if (!isLocked) {
     return <>{children}</>
   }
 
+  const blurClass = {
+    sm: 'blur-sm',
+    md: 'blur-md',
+    lg: 'blur-lg'
+  }[blurAmount]
+
   return (
     <div className="relative">
-      {/* Content with optional blur */}
-      <div className={blurContent ? 'blur-sm pointer-events-none select-none' : 'opacity-50 pointer-events-none select-none'}>
+      {/* Blurred content */}
+      <div className={`${blurClass} pointer-events-none select-none`}>
         {children}
       </div>
 
-      {/* Lock Overlay */}
+      {/* Overlay */}
       <div 
-        className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-xl cursor-pointer group"
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center cursor-pointer group"
         onClick={onClick}
       >
-        {showBadge && (
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg group-hover:scale-105 transition-transform flex items-center gap-2">
-            <Lock className="w-4 h-4" />
-            Premium Feature - Click to Upgrade
+        <div className="text-center space-y-4 p-8">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Lock className="h-8 w-8 text-primary" />
           </div>
-        )}
+          <div>
+            <h3 className="text-xl font-semibold mb-2">Premium Feature</h3>
+            <p className="text-muted-foreground mb-4">
+              Upgrade to unlock this feature
+            </p>
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg group-hover:shadow-lg transition-all">
+              <Lock className="h-4 w-4" />
+              <span className="font-semibold">Unlock Now</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
-
-/**
- * Inline badge for locked features
- */
-export function PremiumBadge({ className = '' }: { className?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold rounded-full ${className}`}>
-      <Lock className="w-3 h-3" />
-      Premium
-    </span>
-  )
-}
-

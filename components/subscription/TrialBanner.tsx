@@ -1,111 +1,88 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { Clock, Sparkles, X } from 'lucide-react'
+import { X, Clock, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 interface TrialBannerProps {
   daysRemaining: number
   trialEndsAt: string
-  onDismiss?: () => void
 }
 
-export default function TrialBanner({ daysRemaining, trialEndsAt, onDismiss }: TrialBannerProps) {
+export function TrialBanner({ daysRemaining, trialEndsAt }: TrialBannerProps) {
   const [dismissed, setDismissed] = useState(false)
-
-  const handleDismiss = () => {
-    setDismissed(true)
-    onDismiss?.()
-  }
 
   if (dismissed) return null
 
-  const urgency = daysRemaining <= 2 ? 'high' : daysRemaining <= 4 ? 'medium' : 'low'
+  const isEndingSoon = daysRemaining <= 3
 
-  const colors = {
-    high: {
-      bg: 'bg-gradient-to-r from-red-600/20 to-orange-600/20',
-      border: 'border-red-500/30',
-      text: 'text-red-300',
-      icon: 'text-red-400'
-    },
-    medium: {
-      bg: 'bg-gradient-to-r from-yellow-600/20 to-orange-600/20',
-      border: 'border-yellow-500/30',
-      text: 'text-yellow-300',
-      icon: 'text-yellow-400'
-    },
-    low: {
-      bg: 'bg-gradient-to-r from-blue-600/20 to-indigo-600/20',
-      border: 'border-blue-500/30',
-      text: 'text-blue-300',
-      icon: 'text-blue-400'
-    }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    })
   }
 
-  const style = colors[urgency]
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className={`${style.bg} border ${style.border} rounded-xl p-4 mb-6 relative`}
-    >
+    <div className={`relative ${
+      isEndingSoon 
+        ? 'bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/30' 
+        : 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/30'
+    } border rounded-lg p-4 mb-6 shadow-sm`}>
       <button
-        onClick={handleDismiss}
-        className="absolute top-2 right-2 p-1 hover:bg-white/10 rounded-lg transition-colors"
+        onClick={() => setDismissed(true)}
+        className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="Dismiss banner"
       >
-        <X className="w-4 h-4 text-slate-400" />
+        <X className="h-4 w-4" />
       </button>
 
       <div className="flex items-start gap-4 pr-8">
-        <div className={`p-2 bg-white/10 rounded-lg ${style.icon}`}>
-          {urgency === 'high' ? (
-            <Clock className="w-5 h-5" />
+        <div className={`mt-0.5 ${
+          isEndingSoon ? 'text-orange-500' : 'text-blue-500'
+        }`}>
+          {isEndingSoon ? (
+            <Clock className="h-6 w-6" />
           ) : (
-            <Sparkles className="w-5 h-5" />
+            <Sparkles className="h-6 w-6" />
           )}
         </div>
-        
+
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className={`font-semibold ${style.text}`}>
-              {urgency === 'high' 
-                ? `Trial Ending Soon - ${daysRemaining} Day${daysRemaining !== 1 ? 's' : ''} Left!`
-                : urgency === 'medium'
-                ? `${daysRemaining} Days Left in Your Free Trial`
-                : 'Free Trial Active'
-              }
-            </h3>
-          </div>
-          
-          <p className="text-sm text-slate-300 mb-3">
-            {urgency === 'high' 
-              ? `Your trial ends on ${new Date(trialEndsAt).toLocaleDateString()}. Continue enjoying all premium features!`
-              : urgency === 'medium'
-              ? `Your free trial will end on ${new Date(trialEndsAt).toLocaleDateString()}. You'll be automatically subscribed to continue.`
-              : `You have ${daysRemaining} days to explore all premium features. Your trial ends on ${new Date(trialEndsAt).toLocaleDateString()}.`
-            }
+          <h3 className="font-semibold text-lg mb-1">
+            {isEndingSoon ? '⏰ Trial Ending Soon!' : '🎉 You\'re on a Free Trial'}
+          </h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            {daysRemaining === 0 ? (
+              <>Your trial ends <strong>today</strong> ({formatDate(trialEndsAt)}). Upgrade now to continue accessing all premium features!</>
+            ) : daysRemaining === 1 ? (
+              <>You have <strong>1 day</strong> left in your free trial (ends {formatDate(trialEndsAt)}). Upgrade to keep unlimited access!</>
+            ) : isEndingSoon ? (
+              <>You have <strong>{daysRemaining} days</strong> left in your free trial (ends {formatDate(trialEndsAt)}). Upgrade to keep unlimited access!</>
+            ) : (
+              <>You have <strong>{daysRemaining} days</strong> left to explore all premium features. Your trial ends on {formatDate(trialEndsAt)}.</>
+            )}
           </p>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/billing"
-              className="text-sm font-medium text-white hover:text-slate-200 transition-colors"
-            >
-              Manage Subscription →
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/billing">
+              <Button 
+                size="sm" 
+                variant={isEndingSoon ? "default" : "outline"}
+                className={isEndingSoon ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600' : ''}
+              >
+                {isEndingSoon ? 'Upgrade Now' : 'Manage Subscription'}
+              </Button>
             </Link>
-            {urgency !== 'low' && (
-              <span className="text-sm text-slate-400">
-                Cancel anytime before {new Date(trialEndsAt).toLocaleDateString()}
-              </span>
-            )}
+            <Link href="/pricing" className="text-sm text-primary hover:underline">
+              View Pricing
+            </Link>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
-

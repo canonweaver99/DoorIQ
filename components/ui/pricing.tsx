@@ -202,8 +202,11 @@ interface PricingPlan {
   description: string;
   buttonText: string | React.ReactNode;
   href: string;
-  onClick?: () => void;
+  onClick?: () => void; // Backwards compatibility
+  onClickMonthly?: () => void;
+  onClickYearly?: () => void;
   isPopular?: boolean;
+  isCurrentPlan?: boolean;
   hasRepSelector?: boolean;
   basePrice?: number;
   yearlyBasePrice?: number;
@@ -252,7 +255,7 @@ export function PricingSection({
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePosition({ x: null, y: null })}
-        className="relative w-full bg-background dark:bg-neutral-950 py-8 sm:py-12"
+        className="relative w-full bg-background dark:bg-neutral-950 pt-8 sm:pt-12 pb-16 sm:pb-20"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, ease: "easeOut" }}
@@ -372,8 +375,7 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
   const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCtaClick = () => {
-    // Confetti is now only triggered when users return after successful signup/purchase
-    // Not triggered on initial CTA clicks
+    // Confetti is triggered on successful return, not here
   };
 
   // Calculate total price for Manager plan with reps
@@ -401,7 +403,15 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
 
     if (tapCount === 1) {
       // Double tap detected
-      if (plan.onClick) {
+      const hasDualHandlers = plan.onClickMonthly || plan.onClickYearly;
+      if (hasDualHandlers) {
+        handleCtaClick();
+        if (isMonthly) {
+          (plan.onClickMonthly || plan.onClick || (() => {}))();
+        } else {
+          (plan.onClickYearly || plan.onClick || (() => {}))();
+        }
+      } else if (plan.onClick) {
         handleCtaClick();
         plan.onClick();
       } else if (plan.href) {
@@ -426,22 +436,32 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
       }}
       whileHover={{
         y: (isSelected && isDesktop ? -10 : (plan.isPopular && isDesktop ? -15 : 0)) - 4,
-        transition: { duration: 0.3, ease: "easeOut" }
+        transition: { duration: 0.2, ease: "easeOut" }
       }}
       transition={{
-        duration: 0.6,
+        duration: 0.2,
         ease: "easeOut",
         delay: index * 0.1
       }}
       onClick={handleCardClick}
       className={cn(
-        "rounded-2xl p-6 flex flex-col relative bg-background/70 backdrop-blur-sm min-h-[520px] cursor-pointer",
+        "rounded-2xl p-6 flex flex-col relative bg-background/70 backdrop-blur-sm min-h-[479px] cursor-pointer",
         isSelected
           ? "border-2 border-primary shadow-2xl shadow-primary/20"
           : "border border-border hover:border-primary/30 hover:shadow-lg",
       )}
     >
-      {plan.isPopular && (
+      {plan.isCurrentPlan && (
+        <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2">
+          <div className="bg-gradient-to-r from-green-600 to-emerald-600 py-1 px-3 rounded-full flex items-center gap-1 shadow-lg">
+            <LucideStar className="text-white h-3.5 w-3.5 fill-current" />
+            <span className="text-white text-xs font-semibold">
+              Current Plan
+            </span>
+          </div>
+        </div>
+      )}
+      {plan.isPopular && !plan.isCurrentPlan && (
         <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2">
           <div className="bg-primary py-1 px-3 rounded-full flex items-center gap-1">
             <LucideStar className="text-primary-foreground h-3.5 w-3.5 fill-current" />
@@ -453,7 +473,7 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
       )}
       <div className="flex-1 flex flex-col text-center">
         <h3 className="text-2xl font-bold text-white mt-1">{plan.name}</h3>
-        <p className="mt-2 text-xs font-medium text-slate-400">
+        <p className="mt-2 text-sm font-medium text-slate-400">
           {plan.description}
         </p>
         <div className="mt-5 flex items-baseline justify-center gap-x-1">
@@ -480,6 +500,7 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
             </span>
           )}
         </div>
+        
         {typeof calculateTotalPrice() === 'number' && (
           <p className="text-xs font-medium text-slate-400 mt-2">
             {isMonthly ? "Billed Monthly" : "Billed Annually"}
@@ -534,7 +555,7 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
 
         <ul
           role="list"
-          className="mt-5 space-y-2.5 text-sm leading-5 text-left"
+          className="mt-5 space-y-2 text-sm leading-5 text-left"
         >
           {plan.features.map((feature) => (
             <li key={feature} className="flex gap-x-2">
@@ -548,12 +569,20 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
         </ul>
 
         <div className="mt-auto pt-6">
-          {plan.onClick ? (
+          {(plan.onClick || plan.onClickMonthly || plan.onClickYearly) ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleCtaClick();
-                plan.onClick?.();
+                if (plan.onClickMonthly || plan.onClickYearly) {
+                  if (isMonthly) {
+                    plan.onClickMonthly?.();
+                  } else {
+                    plan.onClickYearly?.();
+                  }
+                } else {
+                  plan.onClick?.();
+                }
               }}
               className={cn(
                 buttonVariants({
@@ -561,6 +590,10 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
                   size: "default",
                 }),
                 "w-full text-sm",
+                // Style current plan button differently
+                plan.isCurrentPlan 
+                  ? "cursor-default bg-gradient-to-r from-green-600 to-emerald-600 text-white border-green-600 hover:from-green-600 hover:to-emerald-600"
+                  : ""
               )}
             >
               {plan.buttonText}

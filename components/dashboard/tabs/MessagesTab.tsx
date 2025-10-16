@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Send, Paperclip, Mic, Smile, Search, CheckCheck, AlertCircle } from 'lucide-react'
+import { Send, Paperclip, Mic, Smile, Search, CheckCheck, AlertCircle, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { messageEvents } from '@/lib/events/messageEvents'
 

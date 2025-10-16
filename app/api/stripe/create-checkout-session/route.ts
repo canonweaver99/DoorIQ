@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
+// Ensure Node.js runtime so process.env is available
+export const runtime = 'nodejs'
+
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
   if (!process.env.STRIPE_SECRET_KEY) {
     return null
   }
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-12-18.acacia'
+    apiVersion: '2025-09-30.clover'
   })
 }
 
@@ -73,7 +76,7 @@ export async function POST(request: NextRequest) {
       mode: 'subscription',
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pricing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pricing?canceled=true`,
       metadata: {
         supabase_user_id: user.id

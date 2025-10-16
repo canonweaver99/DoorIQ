@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-export async function GET(request: NextRequest, { params }: { params: { repId: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ repId: string }> }) {
   try {
     const supabase = await createServerSupabaseClient()
+    const { repId } = await context.params
     
     // Verify authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: { repId: s
     const { data: repData, error: repError } = await supabase
       .from('users')
       .select('*')
-      .eq('id', params.repId)
+      .eq('id', repId)
       .single()
 
     if (repError || !repData) {
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: { repId: s
     const { data: sessions, error: sessionError } = await supabase
       .from('live_sessions')
       .select('id, overall_score, virtual_earnings, created_at, agent_name, duration_seconds, sale_closed')
-      .eq('user_id', params.repId)
+      .eq('user_id', repId)
       .order('created_at', { ascending: false })
       .limit(50)
 

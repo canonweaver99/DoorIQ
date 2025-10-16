@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
-  { params }: { params: { repId: string } }
+  context: { params: Promise<{ repId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const repId = params.repId
+    const { repId } = await context.params
 
     // Get rep info
     const { data: rep, error: repError } = await supabase

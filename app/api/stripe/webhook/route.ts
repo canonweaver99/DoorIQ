@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 
+// Ensure Node.js runtime so process.env is available
+export const runtime = 'nodejs'
+
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
   if (!process.env.STRIPE_SECRET_KEY) {
     return null
   }
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-12-18.acacia'
+    apiVersion: '2025-09-30.clover'
   })
 }
 
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
             subscription_id: subscription.id,
             subscription_plan: subscription.items.data[0]?.price.id,
             stripe_price_id: subscription.items.data[0]?.price.id,
-            subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            subscription_current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
             trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
             trial_start_date: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null
           })
@@ -129,7 +132,7 @@ export async function POST(request: NextRequest) {
             subscription_id: subscription.id,
             subscription_plan: subscription.items.data[0]?.price.id,
             stripe_price_id: subscription.items.data[0]?.price.id,
-            subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            subscription_current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
             trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
             subscription_cancel_at_period_end: subscription.cancel_at_period_end
           })
@@ -146,10 +149,10 @@ export async function POST(request: NextRequest) {
         // Check if subscription was canceled
         if (subscription.cancel_at_period_end && !previousAttributes?.cancel_at_period_end) {
           await logSubscriptionEvent(supabase, userId, 'subscription_cancel_scheduled', {
-            cancel_at: subscription.current_period_end
+            cancel_at: (subscription as any).current_period_end
           })
           await sendNotificationEmail(userId, 'subscription_cancel_scheduled', {
-            cancelAt: subscription.current_period_end
+            cancelAt: (subscription as any).current_period_end
           })
         }
 
@@ -206,7 +209,7 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
-        const subscription = invoice.subscription as string
+        const subscription = invoice.subscription as unknown as string
         
         if (subscription) {
           const sub = await stripe.subscriptions.retrieve(subscription)
@@ -242,7 +245,7 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
-        const subscription = invoice.subscription as string
+        const subscription = invoice.subscription as unknown as string
         
         if (subscription) {
           const sub = await stripe.subscriptions.retrieve(subscription)

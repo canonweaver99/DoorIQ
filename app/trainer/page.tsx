@@ -8,12 +8,14 @@ import Script from 'next/script'
 import ElevenLabsConversation from '@/components/trainer/ElevenLabsConversation'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
-import CalculatingScore from '@/components/analytics/CalculatingScore'
+// import CalculatingScore from '@/components/analytics/CalculatingScore'
 import MoneyNotification from '@/components/trainer/MoneyNotification'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 import { AlertCircle, Loader2, RefreshCw } from 'lucide-react'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
+import { TrialBanner, SessionLimitBanner, PaywallModal } from '@/components/subscription'
 
 interface Agent {
   id: string
@@ -369,11 +371,16 @@ function TrainerPageContent() {
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle')
   const [showSilenceWarning, setShowSilenceWarning] = useState(false)
   const [isReconnecting, setIsReconnecting] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
   const lastAgentActivityRef = useRef<number>(Date.now())
   const lastUserActivityRef = useRef<number>(Date.now())
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null)
   const tokenRenewalTimerRef = useRef<NodeJS.Timeout | null>(null)
   const silenceCheckTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Subscription and session limit hooks
+  const subscription = useSubscription()
+  const sessionLimit = useSessionLimit()
 
   const orbColors = getOrbColors(selectedAgent?.name)
 
@@ -911,6 +918,16 @@ function TrainerPageContent() {
         }
       } catch {}
 
+      // Check session limit for non-premium users
+      if (!subscription.hasActiveSubscription && !sessionLimit.loading) {
+        if (!sessionLimit.canStartSession) {
+          console.warn('🚫 Session limit reached')
+          setShowPaywall(true)
+          setLoading(false)
+          return
+        }
+      }
+
       console.log('🎬 Starting training session...')
       console.log('Selected agent:', selectedAgent.name, selectedAgent.eleven_agent_id)
 
@@ -973,6 +990,16 @@ function TrainerPageContent() {
       // Audio recording is now started automatically by ElevenLabsConversation onConnect
       if (newId) {
         console.log('✅ Session created with ID:', newId)
+        
+        // Increment session count for free tier users
+        if (!subscription.hasActiveSubscription) {
+          try {
+            await fetch('/api/session/increment', { method: 'POST' })
+            await sessionLimit.refresh()
+          } catch (error) {
+            console.error('Error incrementing session count:', error)
+          }
+        }
       } else {
         console.warn('⚠️ No session ID returned')
       }
@@ -1137,6 +1164,29 @@ function TrainerPageContent() {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 py-8 min-h-screen flex flex-col">
+        {/* Subscription Banners */}
+        {subscription.isTrialing && subscription.trialEndsAt && (
+          <TrialBanner
+            daysRemaining={subscription.daysRemainingInTrial || 0}
+            trialEndsAt={subscription.trialEndsAt}
+          />
+        )}
+        
+        {!subscription.loading && !subscription.hasActiveSubscription && !sessionLimit.loading && (
+          <SessionLimitBanner
+            sessionsRemaining={sessionLimit.sessionsRemaining}
+            sessionsLimit={sessionLimit.sessionsLimit}
+            sessionsUsed={sessionLimit.sessionsUsed}
+          />
+        )}
+
+        {/* Paywall Modal */}
+        <PaywallModal
+          isOpen={showPaywall}
+          onClose={() => setShowPaywall(false)}
+          reason="session_limit"
+        />
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

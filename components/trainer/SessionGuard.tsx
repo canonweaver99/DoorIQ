@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactNode } from 'react'
 import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
-import PaywallModal from '@/components/subscription/PaywallModal'
-import TrialBanner from '@/components/subscription/TrialBanner'
-import SessionLimitBanner from '@/components/subscription/SessionLimitBanner'
+import { PaywallModal } from '@/components/subscription/PaywallModal'
+import { TrialBanner } from '@/components/subscription/TrialBanner'
+import { SessionLimitBanner } from '@/components/subscription/SessionLimitBanner'
 
 interface SessionGuardProps {
   children: ReactNode

@@ -1,26 +1,116 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { PricingSection } from "@/components/ui/pricing"
-import { Loader2 } from "lucide-react"
+import { Loader2, CheckCircle, X, Crown } from "lucide-react"
+import confetti from "canvas-confetti"
+import { useSubscription } from "@/hooks/useSubscription"
+import { createClient } from "@/lib/supabase/client"
 
-// Stripe Price IDs - Replace these with your actual price IDs from Stripe Dashboard
+// Stripe Price IDs - Get these from your Stripe Dashboard
+// For now, you can use the Stripe Payment Link directly or extract the price ID
 const STRIPE_PRICE_IDS = {
-  individual_monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_MONTHLY || 'price_individual_monthly',
-  individual_yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_YEARLY || 'price_individual_yearly'
+  // Hard-wire user's test price ID so Checkout Session API is always used locally
+  individual_monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_MONTHLY || 'price_1SIxYr1WkNBozaYxGzx9YffP',
+  individual_yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_YEARLY || 'price_1SIyLY1WkNBozaYxld3E6aWS'
 }
 
-export default function PricingPage() {
-  const [loading, setLoading] = useState<string | null>(null)
+// Stripe Payment Link (as provided by user)
+// This can be used directly or you can extract the price ID from your dashboard
+const PAYMENT_LINK = 'https://buy.stripe.com/test_eVq5kw4h46yu7VB6RJes000'
 
-  const handleCheckout = async (priceId: string) => {
+function PricingPageContent() {
+  const [loading, setLoading] = useState<string | null>(null)
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false)
+  const searchParams = useSearchParams()
+  const subscription = useSubscription()
+  const router = useRouter()
+  const supabase = createClient()
+  // Mirror pricing toggle state from pricing component
+  const [isMonthly, setIsMonthlyState] = useState(true)
+
+  useEffect(() => {
+    const success = searchParams.get('success')
+    
+    if (success === 'true') {
+      setShowSuccessBanner(true)
+      
+      // Trigger confetti celebration!
+      const duration = 3000
+      const animationEnd = Date.now() + duration
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
+
+      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min
+
+      const interval = window.setInterval(() => {
+        const timeLeft = animationEnd - Date.now()
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval)
+        }
+
+        const particleCount = 50 * (timeLeft / duration)
+        
+        // Confetti from left
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        })
+        
+        // Confetti from right
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        })
+      }, 250)
+
+      // Auto-hide banner after 10 seconds
+      const timeout = setTimeout(() => {
+        setShowSuccessBanner(false)
+      }, 10000)
+
+      return () => {
+        clearInterval(interval)
+        clearTimeout(timeout)
+      }
+    }
+  }, [searchParams])
+
+  const handleCheckout = async (priceId: string, usePaymentLink: boolean = false) => {
     setLoading(priceId)
     try {
+      // Ensure user is authenticated before starting checkout
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push(`/auth/login?next=/pricing`)
+        return
+      }
+
+      // If using payment link directly (for testing)
+      if (usePaymentLink && PAYMENT_LINK) {
+        window.location.href = PAYMENT_LINK
+        return
+      }
+
+      // Otherwise use the regular checkout session API
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceId })
       })
+
+      if (response.status === 401) {
+        router.push(`/auth/login?next=/pricing`)
+        return
+      }
+
+      if (response.status === 503) {
+        alert('Stripe not configured. Set STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in .env.local, then restart dev server.')
+        return
+      }
 
       const { url, error } = await response.json()
       
@@ -40,6 +130,18 @@ export default function PricingPage() {
     }
   }
 
+  // Check if user has active subscription (including trial)
+  const hasActiveSubscription = subscription.hasActiveSubscription
+  const isCurrentPlan = (planName: string) => {
+    if (planName === "Free" && !hasActiveSubscription && !subscription.loading) {
+      return true
+    }
+    if (planName === "Individual" && hasActiveSubscription) {
+      return true
+    }
+    return false
+  }
+
   const plans = [
     {
       name: "Free",
@@ -55,8 +157,15 @@ export default function PricingPage() {
         "Basic objection handling scenarios",
       ],
       description: "Perfect for getting started",
-      buttonText: "Get Started Free",
-      href: "/auth/signup",
+      buttonText: isCurrentPlan("Free") ? (
+        <span className="flex items-center gap-2">
+          <Crown className="w-4 h-4" />
+          Current Plan
+        </span>
+      ) : "Get Started Free",
+      href: isCurrentPlan("Free") ? "#" : "/auth/signup",
+      onClick: isCurrentPlan("Free") ? () => {} : undefined,
+      isCurrentPlan: isCurrentPlan("Free"),
     },
     {
       name: "Individual",
@@ -74,15 +183,23 @@ export default function PricingPage() {
         "Export reports (CSV/PDF)",
       ],
       description: "Ideal for individual sales reps",
-      buttonText: loading === STRIPE_PRICE_IDS.individual_monthly ? (
+      buttonText: isCurrentPlan("Individual") ? (
+        <span className="flex items-center gap-2">
+          <Crown className="w-4 h-4" />
+          Current Plan
+        </span>
+      ) : (loading === STRIPE_PRICE_IDS.individual_monthly || loading === STRIPE_PRICE_IDS.individual_yearly) ? (
         <span className="flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" />
           Processing...
         </span>
       ) : "Start Free Trial",
       href: "#",
-      onClick: () => handleCheckout(STRIPE_PRICE_IDS.individual_monthly),
-      isPopular: true,
+      // Use monthly or yearly checkout based on toggle
+      onClickMonthly: isCurrentPlan("Individual") ? () => {} : () => handleCheckout(STRIPE_PRICE_IDS.individual_monthly, false),
+      onClickYearly: isCurrentPlan("Individual") ? () => {} : () => handleCheckout(STRIPE_PRICE_IDS.individual_yearly, false),
+      isPopular: !isCurrentPlan("Individual"),
+      isCurrentPlan: isCurrentPlan("Individual"),
     },
     {
       name: "Team",
@@ -108,12 +225,72 @@ export default function PricingPage() {
   ]
 
   return (
-    <PricingSection
-      plans={plans}
-      title="Find the Perfect Plan"
-      description="Choose the plan that fits your sales team's needs. Start with a 7-day free trial!"
-    />
+    <>
+      {/* Success Banner */}
+      {showSuccessBanner && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] max-w-lg w-full mx-4">
+          <div className="relative">
+            {/* Glow effect behind card */}
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/40 to-green-600/40 rounded-3xl blur-2xl" />
+            
+            {/* Main card */}
+            <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-green-900 text-white rounded-2xl shadow-[0_20px_70px_-10px_rgba(16,185,129,0.5)] border border-emerald-700/50 p-7 backdrop-blur-xl animate-in slide-in-from-top duration-500">
+              <button
+                onClick={() => setShowSuccessBanner(false)}
+                className="absolute top-4 right-4 text-emerald-200 hover:text-white transition-colors rounded-full p-1 hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-start gap-5">
+                <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                  <CheckCircle className="w-8 h-8 text-white" strokeWidth={2.5} />
+                </div>
+                
+                <div className="flex-1 pt-0.5">
+                  <h3 className="font-bold text-2xl mb-2 text-white">Welcome to Premium!</h3>
+                  <p className="text-emerald-100 text-sm leading-relaxed mb-4">
+                    Your <span className="font-semibold text-white">7-day free trial</span> has started! You now have unlimited access to all 12 AI training agents and premium features.
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2.5">
+                    <a
+                      href="/trainer/select-homeowner"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-emerald-900 rounded-xl font-semibold text-sm hover:bg-emerald-50 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                    >
+                      Start Training →
+                    </a>
+                    <a
+                      href="/billing"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white rounded-xl font-medium text-sm hover:bg-white/20 transition-all border border-white/20 backdrop-blur-sm"
+                    >
+                      Manage Subscription
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PricingSection
+        plans={plans}
+        title="Find the Perfect Plan"
+        description="Choose the plan that fits your sales team's needs. Start with a 7-day free trial!"
+      />
+    </>
   )
 }
 
-
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <PricingPageContent />
+    </Suspense>
+  )
+}
