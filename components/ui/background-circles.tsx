@@ -548,32 +548,6 @@ export function BackgroundCircles({
                 onClick={() => handleAgentClick(carouselAgents.center.agent.name)}
               />
             </motion.div>
-            
-            {/* Agent Name - Modern styling with better visibility */}
-            <motion.div
-              key={`name-${currentAgentIndex}`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute w-full text-center pointer-events-none"
-              style={{ 
-                top: 'calc(100% + 32px)',
-                left: '50%',
-                transform: 'translateX(-50%)'
-              }}
-            >
-              <p 
-                className="text-2xl md:text-3xl lg:text-4xl font-bold dark:text-white text-slate-900 drop-shadow-lg"
-                style={{ 
-                  letterSpacing: '0.01em', 
-                  fontWeight: 700,
-                  textShadow: '0 2px 10px rgba(0,0,0,0.3), 0 0 20px rgba(94,234,212,0.2)'
-                }}
-              >
-                {carouselAgents.center.agent.name}
-              </p>
-            </motion.div>
           </motion.div>
 
           {/* Right Avatar */}
