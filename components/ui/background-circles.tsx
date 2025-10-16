@@ -196,75 +196,16 @@ export function BackgroundCircles({
   return (
     <div
       className={clsx(
-        "relative flex h-screen w-full items-center justify-center overflow-hidden",
+        "relative flex h-screen w-full flex-col items-center justify-center overflow-hidden",
         "bg-white dark:bg-black/5",
         className
       )}
     >
       <AnimatedGrid />
-      <motion.div className="absolute h-[480px] w-[480px]">
-        {[0, 1, 2].map((i) => (
-          <motion.div
-            key={i}
-            className={clsx(
-              "absolute inset-0 rounded-full",
-              "border-2 bg-gradient-to-br to-transparent",
-              variantStyles.border[i],
-              variantStyles.gradient
-            )}
-            animate={{
-              rotate: 360,
-              scale: [1, 1.05 + i * 0.05, 1],
-              opacity: [0.8, 1, 0.8],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            }}
-          >
-            <div
-              className={clsx(
-                "absolute inset-0 rounded-full mix-blend-screen",
-                `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
-                  "from-",
-                  ""
-                )}/10%,transparent_70%)]`
-              )}
-            />
-          </motion.div>
-        ))}
-        
-        {/* Agent Avatar in Center */}
-        {currentAgent?.image && (
-          <motion.div 
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            animate={{
-              scale: [1, 1.05, 1],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            }}
-          >
-            <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
-              <Image
-                key={currentAgentIndex}
-                src={currentAgent.image}
-                alt={currentAgent.name}
-                fill
-                className="object-cover"
-                sizes="480px"
-                priority
-              />
-            </div>
-          </motion.div>
-        )}
-      </motion.div>
-
+      
+      {/* Title and Description - Above circles */}
       <motion.div
-        className="relative z-10 text-center"
+        className="relative z-10 text-center mb-12"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -291,26 +232,109 @@ export function BackgroundCircles({
             {description}
           </motion.p>
         )}
+      </motion.div>
 
-        {(ctaPrimaryHref || ctaSecondaryHref) && (
-          <div className="mt-8 flex items-center justify-center gap-4">
-            {ctaPrimaryHref && (
-              <Link href={ctaPrimaryHref}>
-                <Button className="px-8 py-5 text-lg" size="lg" variant="brand">
-                  {ctaPrimaryText ?? "Get Started"}
-                </Button>
-              </Link>
+      {/* Background Circles with Agent Avatar - Center */}
+      <motion.div 
+        className="relative h-[480px] w-[480px]"
+        key={currentAgentIndex}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={`${currentAgentIndex}-${i}`}
+            className={clsx(
+              "absolute inset-0 rounded-full",
+              "border-2 bg-gradient-to-br to-transparent",
+              variantStyles.border[i],
+              variantStyles.gradient
             )}
-            {ctaSecondaryHref && (
-              <Link href={ctaSecondaryHref} onClick={handleSecondaryClick}>
-                <Button className="px-8 py-5 text-lg" size="lg" variant="subtle">
-                  {ctaSecondaryText ?? "Learn More"}
-                </Button>
-              </Link>
-            )}
-          </div>
+            initial={{ opacity: 0 }}
+            animate={{
+              rotate: 360,
+              scale: [1, 1.05, 1],
+              opacity: [0.7, 0.9, 0.7],
+            }}
+            transition={{
+              opacity: { duration: 0.8 },
+              rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+              scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+            }}
+          >
+            <div
+              className={clsx(
+                "absolute inset-0 rounded-full mix-blend-screen",
+                `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
+                  "from-",
+                  ""
+                )}/10%,transparent_70%)]`
+              )}
+            />
+          </motion.div>
+        ))}
+        
+        {/* Agent Avatar in Center - synchronized with circles */}
+        {currentAgent?.image && (
+          <motion.div 
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{
+              opacity: 1,
+              scale: [1, 1.05, 1],
+            }}
+            exit={{ opacity: 0 }}
+            transition={{
+              opacity: { duration: 0.8 },
+              scale: {
+                duration: 4,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+                delay: 0,
+              }
+            }}
+          >
+            <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+              <Image
+                key={currentAgentIndex}
+                src={currentAgent.image}
+                alt={currentAgent.name}
+                fill
+                className="object-cover"
+                sizes="480px"
+                priority
+              />
+            </div>
+          </motion.div>
         )}
       </motion.div>
+
+      {/* CTA Buttons - Below circles */}
+      {(ctaPrimaryHref || ctaSecondaryHref) && (
+        <motion.div 
+          className="relative z-10 mt-12 flex items-center justify-center gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+        >
+          {ctaPrimaryHref && (
+            <Link href={ctaPrimaryHref}>
+              <Button className="px-8 py-5 text-lg" size="lg" variant="brand">
+                {ctaPrimaryText ?? "Get Started"}
+              </Button>
+            </Link>
+          )}
+          {ctaSecondaryHref && (
+            <Link href={ctaSecondaryHref} onClick={handleSecondaryClick}>
+              <Button className="px-8 py-5 text-lg" size="lg" variant="subtle">
+                {ctaSecondaryText ?? "Learn More"}
+              </Button>
+            </Link>
+          )}
+        </motion.div>
+      )}
 
       <div className="absolute inset-0 [mask-image:radial-gradient(90%_60%_at_50%_50%,#000_40%,transparent)]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#0F766E/30%,transparent_70%)] blur-[120px]" />

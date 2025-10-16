@@ -254,15 +254,23 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                           variantStyles.border[i],
                           variantStyles.gradient
                         )}
-                        animate={{
+                        animate={isHovered ? {
                           rotate: 360,
-                          scale: isHovered ? [1, 1.1 + i * 0.05, 1] : [1, 1.05 + i * 0.05, 1],
-                          opacity: isSelected ? [1, 1, 1] : [0.7, 1, 0.7],
+                          scale: 1,
+                          opacity: 1,
+                        } : {
+                          rotate: 360,
+                          scale: [1, 1.05, 1],
+                          opacity: isSelected ? [1, 1, 1] : [0.7, 0.9, 0.7],
                         }}
-                        transition={{
-                          duration: isHovered ? 3 : 5,
-                          repeat: Number.POSITIVE_INFINITY,
-                          ease: "easeInOut",
+                        transition={isHovered ? {
+                          rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                          scale: { duration: 0.3 },
+                          opacity: { duration: 0.3 },
+                        } : {
+                          rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                          scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                          opacity: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
                         }}
                       >
                         <div
@@ -277,17 +285,22 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </motion.div>
                     ))}
 
-                    {/* Profile Image in Center */}
+                    {/* Profile Image in Center - synchronized with circles */}
                     {agent.image && (
                       <motion.div 
                         className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                        animate={{
+                        animate={isHovered ? {
+                          scale: 1,
+                        } : {
                           scale: [1, 1.05, 1],
                         }}
-                        transition={{
-                          duration: 5,
+                        transition={isHovered ? {
+                          duration: 0.3,
+                        } : {
+                          duration: 4,
                           repeat: Number.POSITIVE_INFINITY,
                           ease: "easeInOut",
+                          delay: 0,
                         }}
                       >
                         <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">

@@ -13,6 +13,7 @@ import MoneyNotification from '@/components/trainer/MoneyNotification'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 import { AlertCircle, Loader2, RefreshCw } from 'lucide-react'
+import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 
 interface Agent {
   id: string
@@ -317,9 +318,35 @@ const ORB_COLORS: Record<string, {
   },
 }
 
+// Convert COLOR_VARIANTS to CSS color values for the orb
+const getOrbColorsFromVariant = (variantKey: keyof typeof COLOR_VARIANTS) => {
+  const variantMapping = {
+    primary: { start: '#34d399', mid: '#10b981', end: '#059669' },      // emerald/green
+    secondary: { start: '#a78bfa', mid: '#8b5cf6', end: '#7c3aed' },    // violet
+    tertiary: { start: '#fbbf24', mid: '#f59e0b', end: '#d97706' },     // amber/yellow
+    quaternary: { start: '#c084fc', mid: '#a855f7', end: '#9333ea' },   // purple
+    quinary: { start: '#f87171', mid: '#ef4444', end: '#dc2626' },      // red
+    senary: { start: '#60a5fa', mid: '#3b82f6', end: '#2563eb' },       // blue
+    septenary: { start: '#9ca3af', mid: '#6b7280', end: '#4b5563' },    // gray
+    octonary: { start: '#fb7185', mid: '#f43f5e', end: '#e11d48' },     // rose/pink
+    nonary: { start: '#fcd34d', mid: '#f59e0b', end: '#d97706' },       // amber/yellow
+    denary: { start: '#c084fc', mid: '#a855f7', end: '#9333ea' },       // purple
+    duodenary: { start: '#22d3ee', mid: '#06b6d4', end: '#0891b2' },    // cyan
+    undenary: { start: '#a78bfa', mid: '#8b5cf6', end: '#7c3aed' },     // violet
+  }
+  return variantMapping[variantKey] || variantMapping.primary
+}
+
 const getOrbColors = (name?: string) => {
-  if (!name) return ORB_COLORS.Austin
-  return ORB_COLORS[name] ?? ORB_COLORS.Austin
+  if (!name) {
+    const defaultVariant = PERSONA_METADATA['Austin']?.bubble?.color || 'primary'
+    return getOrbColorsFromVariant(defaultVariant as keyof typeof COLOR_VARIANTS)
+  }
+  const agent = PERSONA_METADATA[name as AllowedAgentName]
+  if (agent?.bubble?.color) {
+    return getOrbColorsFromVariant(agent.bubble.color as keyof typeof COLOR_VARIANTS)
+  }
+  return getOrbColorsFromVariant('primary')
 }
 
 function TrainerPageContent() {
@@ -1323,87 +1350,87 @@ function TrainerPageContent() {
                 inset: 0;
                 border-radius: 9999px;
                 border: 2px solid;
-                background: linear-gradient(135deg, ${orbColors.idle.start}30 0%, transparent 100%);
+                background: linear-gradient(135deg, ${orbColors.start}30 0%, transparent 100%);
                 pointer-events: none;
               }
               
               #orb-circle-0 {
-                border-color: ${orbColors.idle.start}60;
-                animation: rotate-scale-0 5s ease-in-out infinite;
+                border-color: ${orbColors.start}60;
+                animation: rotate-scale-0 4s ease-in-out infinite;
               }
               
               #orb-circle-1 {
-                border-color: ${orbColors.idle.mid}50;
-                animation: rotate-scale-1 5s ease-in-out infinite;
+                border-color: ${orbColors.mid}50;
+                animation: rotate-scale-1 4s ease-in-out infinite;
               }
               
               #orb-circle-2 {
-                border-color: ${orbColors.idle.end}30;
-                animation: rotate-scale-2 5s ease-in-out infinite;
+                border-color: ${orbColors.end}30;
+                animation: rotate-scale-2 4s ease-in-out infinite;
               }
               
-              /* Active state - brighter, faster animation */
+              /* Active state - brighter */
               #conversation-orb.active .orb-circle {
-                background: linear-gradient(135deg, ${orbColors.active.start}40 0%, transparent 100%);
+                background: linear-gradient(135deg, ${orbColors.start}40 0%, transparent 100%);
               }
               
               #conversation-orb.active #orb-circle-0 {
-                border-color: ${orbColors.active.start}80;
-                animation: rotate-scale-0-active 3s ease-in-out infinite;
+                border-color: ${orbColors.start}80;
+                animation: rotate-scale-0-active 4s ease-in-out infinite;
               }
               
               #conversation-orb.active #orb-circle-1 {
-                border-color: ${orbColors.active.mid}70;
-                animation: rotate-scale-1-active 3s ease-in-out infinite;
+                border-color: ${orbColors.mid}70;
+                animation: rotate-scale-1-active 4s ease-in-out infinite;
               }
               
               #conversation-orb.active #orb-circle-2 {
-                border-color: ${orbColors.active.end}50;
-                animation: rotate-scale-2-active 3s ease-in-out infinite;
+                border-color: ${orbColors.end}50;
+                animation: rotate-scale-2-active 4s ease-in-out infinite;
               }
               
-              /* Rotation and scale animations - idle state */
+              /* Rotation and scale animations - synchronized breathing */
               @keyframes rotate-scale-0 {
                 0%, 100% {
                   transform: rotate(0deg) scale(1);
-                  opacity: 0.8;
+                  opacity: 0.7;
                 }
                 50% {
-                  transform: rotate(360deg) scale(1.05);
-                  opacity: 1;
+                  transform: rotate(180deg) scale(1.05);
+                  opacity: 0.9;
                 }
               }
               
               @keyframes rotate-scale-1 {
                 0%, 100% {
                   transform: rotate(0deg) scale(1);
-                  opacity: 0.8;
+                  opacity: 0.7;
                 }
                 50% {
-                  transform: rotate(360deg) scale(1.1);
-                  opacity: 1;
+                  transform: rotate(180deg) scale(1.05);
+                  opacity: 0.9;
                 }
               }
               
               @keyframes rotate-scale-2 {
                 0%, 100% {
                   transform: rotate(0deg) scale(1);
-                  opacity: 0.8;
+                  opacity: 0.7;
                 }
                 50% {
-                  transform: rotate(360deg) scale(1.15);
-                  opacity: 1;
+                  transform: rotate(180deg) scale(1.05);
+                  opacity: 0.9;
                 }
               }
               
-              /* Rotation and scale animations - active state (faster) */
+              /* Active state animations - same breathing, more visible */
               @keyframes rotate-scale-0-active {
                 0%, 100% {
                   transform: rotate(0deg) scale(1);
-                  opacity: 0.9;
+                  opacity: 0.8;
                 }
                 50% {
-                  transform: rotate(360deg) scale(1.08);
+                  transform: rotate(180deg) scale(1.05);
                   opacity: 1;
                 }
               }
@@ -1411,10 +1438,10 @@ function TrainerPageContent() {
               @keyframes rotate-scale-1-active {
                 0%, 100% {
                   transform: rotate(0deg) scale(1);
-                  opacity: 0.9;
+                  opacity: 0.8;
                 }
                 50% {
-                  transform: rotate(360deg) scale(1.13);
+                  transform: rotate(180deg) scale(1.05);
                   opacity: 1;
                 }
               }
@@ -1422,10 +1449,10 @@ function TrainerPageContent() {
               @keyframes rotate-scale-2-active {
                 0%, 100% {
                   transform: rotate(0deg) scale(1);
-                  opacity: 0.9;
+                  opacity: 0.8;
                 }
                 50% {
-                  transform: rotate(360deg) scale(1.18);
+                  transform: rotate(180deg) scale(1.05);
                   opacity: 1;
                 }
               }
