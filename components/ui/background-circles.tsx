@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import clsx from "clsx";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -169,9 +169,12 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter }: Avat
     <motion.div 
       className={clsx("relative", sizeClasses)}
       style={{ opacity }}
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0.3, scale: 0.8 }}
       animate={{ opacity, scale: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      transition={{ 
+        duration: 0.4, 
+        ease: [0.4, 0, 0.2, 1]  // Custom easing for smooth natural motion
+      }}
     >
       {isCenter && variantStyles ? (
         // Center avatar with animated rings
@@ -243,19 +246,24 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter }: Avat
           delay: 0,
         } : undefined}
       >
-        <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+        <motion.div 
+          className="relative w-full h-full rounded-full overflow-hidden shadow-2xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
           <Image
             src={agent.image!}
             alt={agent.name}
             fill
-            className="object-cover"
+            className="object-cover transition-opacity duration-300"
             sizes={size === 'large' 
               ? "(max-width: 640px) 280px, (max-width: 768px) 350px, 420px"
               : "(max-width: 640px) 180px, (max-width: 768px) 220px, 260px"
             }
             priority={isCenter}
           />
-        </div>
+        </motion.div>
       </motion.div>
     </motion.div>
   );
@@ -299,6 +307,38 @@ export function BackgroundCircles({
     setCurrentAgentIndex(index);
     setAutoVariant(variantKeys[index % variantKeys.length]);
   }, [variantKeys]);
+
+  // Drag/swipe handling
+  const handleDragEnd = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const SWIPE_THRESHOLD = 50;
+    const swipeDistance = info.offset.x;
+    
+    if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
+      if (swipeDistance > 0) {
+        // Swiped right, go to previous
+        goToPrevious();
+      } else {
+        // Swiped left, go to next
+        goToNext();
+      }
+    }
+  }, [goToNext, goToPrevious]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goToPrevious();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goToNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goToNext, goToPrevious]);
 
   useEffect(() => {
     if (variant || isPaused) return; // respect explicit variant or pause
@@ -344,16 +384,17 @@ export function BackgroundCircles({
   return (
     <div
       className={clsx(
-        "relative flex h-screen w-full flex-col items-center justify-center overflow-hidden pt-16",
+        "relative flex h-screen w-full flex-col items-center justify-center overflow-hidden",
         "bg-white dark:bg-black/5",
         className
       )}
     >
       <AnimatedGrid />
       
-      {/* Title and Description - Raised with less bottom spacing */}
+      {/* Title and Description - Balanced spacing */}
       <motion.div
-        className="relative z-10 text-center mb-8 px-4"
+        className="relative z-10 text-center px-4"
+        style={{ marginBottom: '52px' }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -361,10 +402,11 @@ export function BackgroundCircles({
         {title && (
           <h1
             className={clsx(
-              "text-5xl font-bold tracking-tight md:text-7xl mb-4",
+              "text-5xl font-bold tracking-tight md:text-7xl",
               "bg-gradient-to-b from-slate-950 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent",
               "drop-shadow-[0_0_32px_rgba(94,234,212,0.4)]"
             )}
+            style={{ marginBottom: '18px' }}
           >
             {title}
           </h1>
@@ -382,11 +424,15 @@ export function BackgroundCircles({
         )}
       </motion.div>
 
-      {/* 3D Carousel Container with Pause on Hover */}
-      <div 
-        className="relative w-full max-w-7xl mx-auto px-4"
+      {/* 3D Carousel Container with Pause on Hover and Drag/Swipe */}
+      <motion.div 
+        className="relative w-full max-w-7xl mx-auto px-4 cursor-grab active:cursor-grabbing"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
       >
         <div className="relative flex items-center justify-center gap-4 md:gap-8 lg:gap-12">
           
@@ -394,8 +440,11 @@ export function BackgroundCircles({
           <motion.button
             onClick={() => goToIndex(carouselAgents.left.index)}
             className="relative z-10 cursor-pointer focus:outline-none group/left"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0.5, scale: 0.65 }}
+            animate={{ opacity: 0.5, scale: 0.65 }}
+            whileHover={{ scale: 0.7, opacity: 0.65 }}
+            whileTap={{ scale: 0.6 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <AvatarWithRings
               agent={carouselAgents.left.agent}
@@ -406,7 +455,12 @@ export function BackgroundCircles({
           </motion.button>
 
           {/* Center Avatar (Active) */}
-          <div className="relative z-20">
+          <motion.div 
+            className="relative z-20"
+            initial={{ opacity: 0.5, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
             <AvatarWithRings
               agent={carouselAgents.center.agent}
               variantStyles={centerVariantStyles}
@@ -415,27 +469,31 @@ export function BackgroundCircles({
               isCenter={true}
             />
             
-            {/* Agent Name - Positioned directly under center avatar */}
+            {/* Agent Name - Enhanced styling and positioning */}
             <motion.div
               key={`name-${currentAgentIndex}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.4 }}
-              className="absolute top-[calc(100%+24px)] left-1/2 -translate-x-1/2 text-center w-max"
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="absolute left-1/2 -translate-x-1/2 text-center"
+              style={{ top: 'calc(100% + 30px)' }}
             >
-              <p className="text-lg md:text-xl font-bold dark:text-white text-slate-900 whitespace-nowrap">
+              <p className="text-xl md:text-2xl font-bold dark:text-white text-slate-900 whitespace-nowrap tracking-wide drop-shadow-lg" style={{ letterSpacing: '0.5px', fontWeight: 700 }}>
                 {carouselAgents.center.agent.name}
               </p>
             </motion.div>
-          </div>
+          </motion.div>
 
           {/* Right Avatar (Next) */}
           <motion.button
             onClick={() => goToIndex(carouselAgents.right.index)}
             className="relative z-10 cursor-pointer focus:outline-none group/right"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0.5, scale: 0.65 }}
+            animate={{ opacity: 0.5, scale: 0.65 }}
+            whileHover={{ scale: 0.7, opacity: 0.65 }}
+            whileTap={{ scale: 0.6 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <AvatarWithRings
               agent={carouselAgents.right.agent}
@@ -445,10 +503,10 @@ export function BackgroundCircles({
             />
           </motion.button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Navigation Dots */}
-      <div className="relative z-10 flex items-center justify-center gap-2 mt-20 md:mt-24 px-4">
+      {/* Navigation Dots - 24px gap from name */}
+      <div className="relative z-10 flex items-center justify-center gap-2 px-4" style={{ marginTop: '24px' }}>
         {AGENTS_WITH_AVATARS.map((_, index) => (
           <button
             key={index}
@@ -464,10 +522,11 @@ export function BackgroundCircles({
         ))}
       </div>
 
-      {/* CTA Buttons - Below dots */}
+      {/* CTA Buttons - 36px gap from dots */}
       {(ctaPrimaryHref || ctaSecondaryHref) && (
         <motion.div 
-          className="relative z-10 mt-8 flex items-center justify-center gap-4 flex-wrap px-4"
+          className="relative z-10 flex items-center justify-center gap-4 flex-wrap px-4"
+          style={{ marginTop: '36px' }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
