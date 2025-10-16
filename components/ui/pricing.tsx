@@ -250,23 +250,23 @@ export function PricingSection({
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePosition({ x: null, y: null })}
-        className="relative w-full bg-background dark:bg-neutral-950 py-20 sm:py-24"
+        className="relative w-full bg-background dark:bg-neutral-950 py-8 sm:py-12"
       >
         <InteractiveStarfield
           mousePosition={mousePosition}
           containerRef={containerRef}
         />
         <div className="relative z-10 container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl mx-auto text-center space-y-4 mb-12">
-            <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl text-neutral-900 dark:text-white">
+          <div className="max-w-3xl mx-auto text-center space-y-2 mb-6">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-neutral-900 dark:text-white">
               {title}
             </h2>
-            <p className="text-muted-foreground text-lg whitespace-pre-line">
+            <p className="text-muted-foreground text-base whitespace-pre-line">
               {description}
             </p>
           </div>
           <PricingToggle />
-          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 items-start gap-8">
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 items-start gap-6">
             {plans.map((plan, index) => (
               <PricingCard key={index} plan={plan} index={index} />
             ))}
@@ -392,7 +392,7 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
     <motion.div
       initial={{ y: 50, opacity: 0 }}
       whileInView={{
-        y: plan.isPopular && isDesktop ? -20 : 0,
+        y: plan.isPopular && isDesktop ? -15 : 0,
         opacity: 1,
       }}
       viewport={{ once: true }}
@@ -404,7 +404,7 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
         delay: index * 0.15,
       }}
       className={cn(
-        "rounded-2xl p-8 flex flex-col relative bg-background/70 backdrop-blur-sm",
+        "rounded-2xl p-6 flex flex-col relative bg-background/70 backdrop-blur-sm",
         plan.isPopular
           ? "border-2 border-primary shadow-xl"
           : "border border-border",
@@ -412,23 +412,23 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
     >
       {plan.isPopular && (
         <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2">
-          <div className="bg-primary py-1.5 px-4 rounded-full flex items-center gap-1.5">
-            <LucideStar className="text-primary-foreground h-4 w-4 fill-current" />
-            <span className="text-primary-foreground text-sm font-semibold">
+          <div className="bg-primary py-1 px-3 rounded-full flex items-center gap-1">
+            <LucideStar className="text-primary-foreground h-3.5 w-3.5 fill-current" />
+            <span className="text-primary-foreground text-xs font-semibold">
               Most Popular
             </span>
           </div>
         </div>
       )}
       <div className="flex-1 flex flex-col text-center">
-        <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
           {plan.description}
         </p>
-        <div className="mt-6 flex items-baseline justify-center gap-x-1">
+        <div className="mt-4 flex items-baseline justify-center gap-x-1">
           {typeof calculateTotalPrice() === 'number' ? (
             <>
-              <span className="text-5xl font-bold tracking-tight text-foreground">
+              <span className="text-4xl font-bold tracking-tight text-foreground">
                 <NumberFlow
                   value={calculateTotalPrice()}
                   format={{
@@ -439,32 +439,32 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
                   className="font-variant-numeric: tabular-nums"
                 />
               </span>
-              <span className="text-sm font-semibold leading-6 tracking-wide text-muted-foreground">
+              <span className="text-xs font-semibold leading-6 tracking-wide text-muted-foreground">
                 / {plan.period}
               </span>
             </>
           ) : (
-            <span className="text-3xl font-bold tracking-tight text-foreground">
+            <span className="text-2xl font-bold tracking-tight text-foreground">
               {plan.price}
             </span>
           )}
         </div>
         {typeof calculateTotalPrice() === 'number' && (
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-muted-foreground mt-1">
             {isMonthly ? "Billed Monthly" : "Billed Annually"}
           </p>
         )}
 
         {/* Rep Selector for Manager Plan */}
         {plan.hasRepSelector && (
-          <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
-            <label htmlFor={`rep-count-${index}`} className="block text-sm font-medium text-foreground mb-2">
+          <div className="mt-3 p-3 rounded-lg border border-border bg-muted/30">
+            <label htmlFor={`rep-count-${index}`} className="block text-xs font-medium text-foreground mb-2">
               Number of Sales Reps
             </label>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setRepCount(Math.max(minReps, repCount - 1))}
-                className="w-10 h-10 rounded-md border border-border bg-background hover:bg-muted transition-colors flex items-center justify-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 rounded-md border border-border bg-background hover:bg-muted transition-colors flex items-center justify-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 aria-label="Decrease rep count"
                 disabled={repCount <= minReps}
               >
@@ -477,17 +477,17 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
                 max="999"
                 value={repCount}
                 onChange={(e) => setRepCount(Math.max(minReps, Math.min(999, parseInt(e.target.value) || minReps)))}
-                className="flex-1 h-10 text-center rounded-md border border-border bg-background px-3 text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 h-8 text-center rounded-md border border-border bg-background px-2 text-foreground text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
                 onClick={() => setRepCount(Math.min(999, repCount + 1))}
-                className="w-10 h-10 rounded-md border border-border bg-background hover:bg-muted transition-colors flex items-center justify-center font-semibold"
+                className="w-8 h-8 rounded-md border border-border bg-background hover:bg-muted transition-colors flex items-center justify-center font-semibold text-sm"
                 aria-label="Increase rep count"
               >
                 +
               </button>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground mt-1.5">
               {repCount > minReps ? (
                 <>
                   Base: ${isMonthly ? plan.basePrice : plan.yearlyBasePrice} + {repCount} rep{repCount !== 1 ? 's' : ''} × ${isMonthly ? plan.repPrice : plan.yearlyRepPrice}
@@ -503,12 +503,12 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
 
         <ul
           role="list"
-          className="mt-8 space-y-3 text-sm leading-6 text-left text-muted-foreground"
+          className="mt-4 space-y-2 text-xs leading-5 text-left text-muted-foreground"
         >
           {plan.features.map((feature) => (
-            <li key={feature} className="flex gap-x-3">
+            <li key={feature} className="flex gap-x-2">
               <Check
-                className="h-6 w-5 flex-none text-primary"
+                className="h-4 w-4 flex-none text-primary mt-0.5"
                 aria-hidden="true"
               />
               {feature}
@@ -516,7 +516,7 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
           ))}
         </ul>
 
-        <div className="mt-auto pt-8">
+        <div className="mt-auto pt-4">
           {plan.onClick ? (
             <button
               onClick={() => {

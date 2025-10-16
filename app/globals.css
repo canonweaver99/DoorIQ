@@ -519,3 +519,13 @@ body {
     transform: rotate(-360deg);
   }
 }
+
+.hero-gradient-spin {
+  --hero-gradient-speed: 18s;
+  animation: hero-gradient-rotate var(--hero-gradient-speed) linear infinite;
+}
+
+.hero-gradient-spin.reverse {
+  --hero-gradient-speed: 22s;
+  animation: hero-gradient-rotate-reverse var(--hero-gradient-speed) linear infinite;
+}

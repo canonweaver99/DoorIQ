@@ -214,29 +214,23 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
           <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
             <div
               className={clsx(
-                "absolute inset-[-12%] rounded-full bg-gradient-to-br mix-blend-screen",
+                "absolute inset-[-12%] rounded-full bg-gradient-to-br mix-blend-screen hero-gradient-spin",
                 agentVariantStyles.gradient,
                 "to-transparent opacity-60"
               )}
               style={{
-                animationName: "hero-gradient-rotate",
-                animationDuration: `${isCenter ? 14 : 18}s`,
-                animationTimingFunction: "linear",
-                animationIterationCount: "infinite",
-              }}
+                "--hero-gradient-speed": isCenter ? "14s" : "20s",
+              } as React.CSSProperties}
             />
             <div
               className={clsx(
-                "absolute inset-[-8%] rounded-full bg-gradient-to-tr mix-blend-screen",
+                "absolute inset-[-8%] rounded-full bg-gradient-to-tr mix-blend-screen hero-gradient-spin reverse",
                 agentVariantStyles.gradient,
                 "to-transparent opacity-35"
               )}
               style={{
-                animationName: "hero-gradient-rotate-reverse",
-                animationDuration: `${isCenter ? 16 : 22}s`,
-                animationTimingFunction: "linear",
-                animationIterationCount: "infinite",
-              }}
+                "--hero-gradient-speed": isCenter ? "16s" : "24s",
+              } as React.CSSProperties}
             />
           </div>
           <Image
