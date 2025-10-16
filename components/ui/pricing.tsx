@@ -255,7 +255,7 @@ export function PricingSection({
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePosition({ x: null, y: null })}
-        className="relative w-full bg-background dark:bg-neutral-950 pt-8 sm:pt-12 pb-16 sm:pb-20"
+        className="relative w-full min-h-screen bg-background dark:bg-neutral-950 pt-12 sm:pt-16 pb-16 sm:pb-20 flex items-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, ease: "easeOut" }}
@@ -274,7 +274,7 @@ export function PricingSection({
             </p>
           </div>
           <PricingToggle />
-          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 items-start gap-6">
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 items-stretch gap-6">
             {plans.map((plan, index) => (
               <PricingCard 
                 key={index} 
@@ -445,7 +445,7 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
       }}
       onClick={handleCardClick}
       className={cn(
-        "rounded-2xl p-6 flex flex-col relative bg-background/70 backdrop-blur-sm min-h-[479px] cursor-pointer",
+        "rounded-2xl p-6 flex flex-col relative bg-background/70 backdrop-blur-sm min-h-[560px] lg:min-h-[640px] cursor-pointer",
         isSelected
           ? "border-2 border-primary shadow-2xl shadow-primary/20"
           : "border border-border hover:border-primary/30 hover:shadow-lg",

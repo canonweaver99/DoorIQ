@@ -6,16 +6,23 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code')
   const token_hash = requestUrl.searchParams.get('token_hash')
   const type = requestUrl.searchParams.get('type')
+  const checkoutIntent = requestUrl.searchParams.get('checkout')
 
   console.log('🔗 Auth callback triggered:', {
     code: !!code,
     token_hash: !!token_hash,
     type,
+    checkoutIntent: !!checkoutIntent,
     origin: requestUrl.origin
   })
 
   // Default redirect destination after successful authentication
   let redirectPath = requestUrl.searchParams.get('next') || '/'
+  
+  // Preserve checkout intent in redirect
+  if (checkoutIntent && redirectPath) {
+    redirectPath += `${redirectPath.includes('?') ? '&' : '?'}checkout=${checkoutIntent}`
+  }
 
   if (code) {
     const supabase = await createServerSupabaseClient()

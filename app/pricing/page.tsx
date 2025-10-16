@@ -32,6 +32,23 @@ function PricingPageContent() {
 
   useEffect(() => {
     const success = searchParams.get('success')
+    const checkoutIntent = searchParams.get('checkout')
+    
+    // If user just authenticated and has a pending checkout, automatically proceed
+    if (checkoutIntent && !success) {
+      const priceId = decodeURIComponent(checkoutIntent)
+      console.log('🛒 Resuming checkout after auth:', priceId)
+      
+      // Small delay to ensure auth state is fully loaded
+      setTimeout(() => {
+        handleCheckout(priceId, false)
+      }, 500)
+      
+      // Clean up URL params
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('checkout')
+      window.history.replaceState({}, '', newUrl.toString())
+    }
     
     if (success === 'true') {
       setShowSuccessBanner(true)
@@ -85,7 +102,9 @@ function PricingPageContent() {
       // Ensure user is authenticated before starting checkout
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push(`/auth/login?next=/pricing`)
+        // Store the intended purchase in URL params for seamless redirect after auth
+        const checkoutIntent = encodeURIComponent(priceId)
+        router.push(`/auth/login?next=/pricing&checkout=${checkoutIntent}`)
         return
       }
 
@@ -103,7 +122,9 @@ function PricingPageContent() {
       })
 
       if (response.status === 401) {
-        router.push(`/auth/login?next=/pricing`)
+        // Store the intended purchase for seamless redirect after auth
+        const checkoutIntent = encodeURIComponent(priceId)
+        router.push(`/auth/login?next=/pricing&checkout=${checkoutIntent}`)
         return
       }
 

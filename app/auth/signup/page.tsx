@@ -32,6 +32,8 @@ function SignUpForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite')
+  const nextUrl = searchParams.get('next')
+  const checkoutIntent = searchParams.get('checkout')
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -127,8 +129,16 @@ function SignUpForm() {
           // Wait for session to be established
           await new Promise(resolve => setTimeout(resolve, 800))
           
-          // Redirect to dashboard
-          window.location.href = '/dashboard'
+          // Redirect to intended destination or dashboard
+          if (nextUrl) {
+            let redirectUrl = nextUrl
+            if (checkoutIntent) {
+              redirectUrl += `${nextUrl.includes('?') ? '&' : '?'}checkout=${checkoutIntent}`
+            }
+            window.location.href = redirectUrl
+          } else {
+            window.location.href = '/dashboard'
+          }
         } else {
           setError('Account created! Please sign in with your credentials.')
           setLoading(false)
@@ -152,10 +162,19 @@ function SignUpForm() {
       const supabase = createClient()
       const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
 
+      // Preserve redirect params in OAuth callback
+      let callbackUrl = `${origin}/auth/callback`
+      if (nextUrl || checkoutIntent) {
+        const params = new URLSearchParams()
+        if (nextUrl) params.set('next', nextUrl)
+        if (checkoutIntent) params.set('checkout', checkoutIntent)
+        callbackUrl += `?${params.toString()}`
+      }
+
       const { error: signUpError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/auth/callback`,
+          redirectTo: callbackUrl,
         },
       })
 
@@ -167,7 +186,15 @@ function SignUpForm() {
   }
 
   const handleSignIn = () => {
-    router.push('/auth/login')
+    // Preserve redirect params when switching to login
+    let loginUrl = '/auth/login'
+    if (nextUrl || checkoutIntent) {
+      const params = new URLSearchParams()
+      if (nextUrl) params.set('next', nextUrl)
+      if (checkoutIntent) params.set('checkout', checkoutIntent)
+      loginUrl += `?${params.toString()}`
+    }
+    router.push(loginUrl)
   }
 
   return (

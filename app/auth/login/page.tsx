@@ -32,6 +32,8 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite')
+  const nextUrl = searchParams.get('next')
+  const checkoutIntent = searchParams.get('checkout')
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -67,7 +69,16 @@ function LoginForm() {
         }
       }
 
-      router.push('/dashboard')
+      // Redirect to the intended destination with checkout parameter if present
+      if (nextUrl) {
+        let redirectUrl = nextUrl
+        if (checkoutIntent) {
+          redirectUrl += `${nextUrl.includes('?') ? '&' : '?'}checkout=${checkoutIntent}`
+        }
+        router.push(redirectUrl)
+      } else {
+        router.push('/dashboard')
+      }
       router.refresh()
     } catch (err: any) {
       setError(err.message || 'Failed to sign in')
@@ -83,10 +94,19 @@ function LoginForm() {
       const supabase = createClient()
       const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
 
+      // Preserve redirect params in OAuth callback
+      let callbackUrl = `${origin}/auth/callback`
+      if (nextUrl || checkoutIntent) {
+        const params = new URLSearchParams()
+        if (nextUrl) params.set('next', nextUrl)
+        if (checkoutIntent) params.set('checkout', checkoutIntent)
+        callbackUrl += `?${params.toString()}`
+      }
+
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/auth/callback`,
+          redirectTo: callbackUrl,
         },
       })
 
@@ -103,7 +123,15 @@ function LoginForm() {
   }
 
   const handleCreateAccount = () => {
-    router.push('/auth/signup')
+    // Preserve redirect params when switching to signup
+    let signupUrl = '/auth/signup'
+    if (nextUrl || checkoutIntent) {
+      const params = new URLSearchParams()
+      if (nextUrl) params.set('next', nextUrl)
+      if (checkoutIntent) params.set('checkout', checkoutIntent)
+      signupUrl += `?${params.toString()}`
+    }
+    router.push(signupUrl)
   }
 
   return (
