@@ -238,8 +238,6 @@ export function BackgroundCircles({
   ctaSecondaryHref,
   ctaSecondaryText,
 }: BackgroundCirclesProps) {
-  const variantKeys = Object.keys(COLOR_VARIANTS) as (keyof typeof COLOR_VARIANTS)[];
-  const [autoVariant, setAutoVariant] = useState<keyof typeof COLOR_VARIANTS>("octonary");
   const [currentAgentIndex, setCurrentAgentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [lastInteractionTime, setLastInteractionTime] = useState(Date.now());
@@ -254,27 +252,16 @@ export function BackgroundCircles({
 
   const goToNext = useCallback(() => {
     setCurrentAgentIndex((prev) => (prev + 1) % AGENTS_WITH_AVATARS.length);
-    setAutoVariant((prev) => {
-      const idx = variantKeys.indexOf(prev);
-      const next = variantKeys[(idx + 1) % variantKeys.length];
-      return next;
-    });
-  }, [variantKeys]);
+  }, []);
 
   const goToPrevious = useCallback(() => {
     setCurrentAgentIndex((prev) => (prev - 1 + AGENTS_WITH_AVATARS.length) % AGENTS_WITH_AVATARS.length);
-    setAutoVariant((prev) => {
-      const idx = variantKeys.indexOf(prev);
-      const next = variantKeys[(idx - 1 + variantKeys.length) % variantKeys.length];
-      return next;
-    });
-  }, [variantKeys]);
+  }, []);
 
   const goToIndex = useCallback((index: number) => {
     setCurrentAgentIndex(index);
-    setAutoVariant(variantKeys[index % variantKeys.length]);
     recordInteraction();
-  }, [variantKeys, recordInteraction]);
+  }, [recordInteraction]);
 
   const handleAgentClick = useCallback((agentName: string) => {
     // Navigate to trainer with selected agent
@@ -323,9 +310,10 @@ export function BackgroundCircles({
     return () => clearInterval(id);
   }, [variant, autoCycleIntervalMs, isPaused, goToNext]);
 
-  const activeVariant = variant ?? autoVariant;
-  const variantStyles = COLOR_VARIANTS[activeVariant];
   const currentAgent = AGENTS_WITH_AVATARS[currentAgentIndex];
+  // Use the agent's assigned color from metadata, or fall back to variant prop
+  const activeVariant = variant ?? (currentAgent.color as keyof typeof COLOR_VARIANTS);
+  const variantStyles = COLOR_VARIANTS[activeVariant];
 
   const handleSecondaryClick = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>) => {
