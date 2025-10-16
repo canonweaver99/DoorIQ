@@ -9,6 +9,17 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 
+const gradientAnimationStyles = `
+  @keyframes hero-gradient-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
 export interface BackgroundCirclesProps {
   title?: string;
   description?: string;
@@ -208,14 +219,31 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
         <div 
           className={clsx(
             "relative w-full h-full rounded-full overflow-hidden",
-            isCenter ? "shadow-[0_0_40px_rgba(94,234,212,0.4)]" : "shadow-2xl"
+            isCenter ? "shadow-[0_0_20px_rgba(94,234,212,0.2)]" : "shadow-2xl"
           )}
         >
+          <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
+            <div
+              className={clsx(
+                "absolute inset-[-12%] rounded-full bg-gradient-to-br mix-blend-screen",
+                agentVariantStyles.gradient,
+                "to-transparent opacity-60"
+              )}
+            />
+            <div
+              className={clsx(
+                "absolute inset-[-8%] rounded-full bg-gradient-to-tr mix-blend-screen",
+                agentVariantStyles.gradient,
+                "to-transparent opacity-40"
+              )}
+              style={{ animation: isCenter ? 'hero-gradient-rotate 14s linear infinite' : 'hero-gradient-rotate 18s linear infinite' }}
+            />
+          </div>
           <Image
             src={agent.image!}
             alt={agent.name}
             fill
-            className="object-cover"
+            className="object-cover relative z-10"
             sizes={size === 'large' 
               ? "(max-width: 640px) 220px, (max-width: 768px) 260px, 300px"
               : size === 'small'
@@ -241,6 +269,27 @@ export function BackgroundCircles({
   ctaSecondaryHref,
   ctaSecondaryText,
 }: BackgroundCirclesProps) {
+  // Inject animated gradient keyframe one time in the browser
+  useEffect(() => {
+    const styleId = "hero-gradient-rotate-keyframes";
+    if (typeof document === "undefined") return;
+
+    const existing = document.getElementById(styleId);
+    if (!existing) {
+      const styleTag = document.createElement("style");
+      styleTag.id = styleId;
+      styleTag.textContent = gradientAnimationStyles;
+      document.head.appendChild(styleTag);
+    }
+
+    return () => {
+      const styleTag = document.getElementById(styleId);
+      if (styleTag) {
+        styleTag.remove();
+      }
+    };
+  }, []);
+
   const [currentAgentIndex, setCurrentAgentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [lastInteractionTime, setLastInteractionTime] = useState(Date.now());
@@ -252,6 +301,11 @@ export function BackgroundCircles({
     setLastInteractionTime(Date.now());
     setIsPaused(true);
   }, []);
+
+  const handleAgentClick = useCallback((agentName: string) => {
+    // Navigate to trainer with selected agent
+    router.push(`/trainer/select-homeowner?agent=${encodeURIComponent(agentName)}`);
+  }, [router]);
 
   const goToNext = useCallback(() => {
     setCurrentAgentIndex((prev) => (prev + 1) % AGENTS_WITH_AVATARS.length);
@@ -266,10 +320,13 @@ export function BackgroundCircles({
     recordInteraction();
   }, [recordInteraction]);
 
-  const handleAgentClick = useCallback((agentName: string) => {
-    // Navigate to trainer with selected agent
-    router.push(`/trainer/select-homeowner?agent=${encodeURIComponent(agentName)}`);
-  }, [router]);
+  const handleAvatarClick = useCallback((index: number, agentName: string) => {
+    if (index === currentAgentIndex) {
+      handleAgentClick(agentName);
+    } else {
+      goToIndex(index);
+    }
+  }, [currentAgentIndex, goToIndex, handleAgentClick]);
 
 
   // Keyboard navigation
@@ -404,7 +461,7 @@ export function BackgroundCircles({
           {/* Far Left Avatar */}
           <button
             key={`far-left-${carouselAgents.farLeft.index}`}
-            onClick={() => goToIndex(carouselAgents.farLeft.index)}
+            onClick={() => handleAvatarClick(carouselAgents.farLeft.index, carouselAgents.farLeft.agent.name)}
             className="relative z-5 cursor-pointer focus:outline-none group/far-left"
           >
             <AvatarWithRings
@@ -412,14 +469,13 @@ export function BackgroundCircles({
               size="tiny"
               opacity={0.5}
               isCenter={false}
-              onClick={() => handleAgentClick(carouselAgents.farLeft.agent.name)}
             />
           </button>
 
           {/* Left Avatar */}
           <button
             key={`left-${carouselAgents.left.index}`}
-            onClick={() => goToIndex(carouselAgents.left.index)}
+            onClick={() => handleAvatarClick(carouselAgents.left.index, carouselAgents.left.agent.name)}
             className="relative z-10 cursor-pointer focus:outline-none group/left"
           >
             <AvatarWithRings
@@ -427,7 +483,6 @@ export function BackgroundCircles({
               size="small"
               opacity={0.7}
               isCenter={false}
-              onClick={() => handleAgentClick(carouselAgents.left.agent.name)}
             />
           </button>
 
@@ -443,7 +498,6 @@ export function BackgroundCircles({
                 size="large"
                 opacity={1}
                 isCenter={true}
-                onClick={() => handleAgentClick(carouselAgents.center.agent.name)}
               />
             </div>
           </div>
@@ -451,7 +505,7 @@ export function BackgroundCircles({
           {/* Right Avatar */}
           <button
             key={`right-${carouselAgents.right.index}`}
-            onClick={() => goToIndex(carouselAgents.right.index)}
+            onClick={() => handleAvatarClick(carouselAgents.right.index, carouselAgents.right.agent.name)}
             className="relative z-10 cursor-pointer focus:outline-none group/right"
           >
             <AvatarWithRings
@@ -459,14 +513,13 @@ export function BackgroundCircles({
               size="small"
               opacity={0.7}
               isCenter={false}
-              onClick={() => handleAgentClick(carouselAgents.right.agent.name)}
             />
           </button>
 
           {/* Far Right Avatar */}
           <button
             key={`far-right-${carouselAgents.farRight.index}`}
-            onClick={() => goToIndex(carouselAgents.farRight.index)}
+            onClick={() => handleAvatarClick(carouselAgents.farRight.index, carouselAgents.farRight.agent.name)}
             className="relative z-5 cursor-pointer focus:outline-none group/far-right"
           >
             <AvatarWithRings
@@ -474,7 +527,6 @@ export function BackgroundCircles({
               size="tiny"
               opacity={0.5}
               isCenter={false}
-              onClick={() => handleAgentClick(carouselAgents.farRight.agent.name)}
             />
           </button>
         </div>
