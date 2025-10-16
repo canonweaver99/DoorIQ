@@ -526,9 +526,9 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
               className={cn(
                 buttonVariants({
                   variant: plan.isPopular ? "default" : "outline",
-                  size: "lg",
+                  size: "default",
                 }),
-                "w-full",
+                "w-full text-sm",
               )}
             >
               {plan.buttonText}
@@ -539,9 +539,9 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
               className={cn(
                 buttonVariants({
                   variant: plan.isPopular ? "default" : "outline",
-                  size: "lg",
+                  size: "default",
                 }),
-                "w-full",
+                "w-full text-sm",
               )}
               onClick={handleCtaClick}
             >
