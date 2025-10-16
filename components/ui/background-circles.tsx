@@ -391,10 +391,10 @@ export function BackgroundCircles({
     >
       <AnimatedGrid />
       
-      {/* Title and Description - Balanced spacing */}
+      {/* Title and Description - Raised higher */}
       <motion.div
         className="relative z-10 text-center px-4"
-        style={{ marginBottom: '48px' }}
+        style={{ marginBottom: '48px', marginTop: '-80px' }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
