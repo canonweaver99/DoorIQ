@@ -29,7 +29,7 @@ export interface SessionLimitData {
 /**
  * Hook to get current user's subscription status
  */
-export function useSubscription(): SubscriptionData {
+export function useSubscription(): SubscriptionData & { refetch: () => Promise<void> } {
   const [data, setData] = useState<SubscriptionData>({
     status: 'none',
     trialEndsAt: null,
@@ -42,55 +42,58 @@ export function useSubscription(): SubscriptionData {
     loading: true
   })
 
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        setData(prev => ({ ...prev, loading: false }))
-        return
-      }
-
-      const { data: subscription } = await supabase
-        .from('users')
-        .select('subscription_status, trial_ends_at, subscription_current_period_end, subscription_cancel_at_period_end')
-        .eq('id', user.id)
-        .single()
-
-      if (subscription) {
-        const status = (subscription.subscription_status || 'none') as SubscriptionStatus
-        const trialEndsAt = subscription.trial_ends_at
-        const isTrialing = status === 'trialing' && trialEndsAt ? new Date(trialEndsAt) > new Date() : false
-        const hasActiveSubscription = status === 'active' || isTrialing
-
-        let daysRemainingInTrial: number | null = null
-        if (isTrialing && trialEndsAt) {
-          const now = new Date()
-          const trialEnd = new Date(trialEndsAt)
-          daysRemainingInTrial = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-        }
-
-        setData({
-          status,
-          trialEndsAt,
-          currentPeriodEnd: subscription.subscription_current_period_end,
-          cancelAtPeriodEnd: subscription.subscription_cancel_at_period_end || false,
-          hasActiveSubscription,
-          isTrialing,
-          isPastDue: status === 'past_due',
-          daysRemainingInTrial,
-          loading: false
-        })
-      } else {
-        setData(prev => ({ ...prev, loading: false }))
-      }
+  const fetchSubscription = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      setData(prev => ({ ...prev, loading: false }))
+      return
     }
 
+    const { data: subscription } = await supabase
+      .from('users')
+      .select('subscription_status, trial_ends_at, subscription_current_period_end, subscription_cancel_at_period_end')
+      .eq('id', user.id)
+      .single()
+
+    if (subscription) {
+      const status = (subscription.subscription_status || 'none') as SubscriptionStatus
+      const trialEndsAt = subscription.trial_ends_at
+      const isTrialing = status === 'trialing' && trialEndsAt ? new Date(trialEndsAt) > new Date() : false
+      const hasActiveSubscription = status === 'active' || isTrialing
+
+      let daysRemainingInTrial: number | null = null
+      if (isTrialing && trialEndsAt) {
+        const now = new Date()
+        const trialEnd = new Date(trialEndsAt)
+        daysRemainingInTrial = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      }
+
+      setData({
+        status,
+        trialEndsAt,
+        currentPeriodEnd: subscription.subscription_current_period_end,
+        cancelAtPeriodEnd: subscription.subscription_cancel_at_period_end || false,
+        hasActiveSubscription,
+        isTrialing,
+        isPastDue: status === 'past_due',
+        daysRemainingInTrial,
+        loading: false
+      })
+    } else {
+      setData(prev => ({ ...prev, loading: false }))
+    }
+  }
+
+  useEffect(() => {
     fetchSubscription()
   }, [])
 
-  return data
+  return {
+    ...data,
+    refetch: fetchSubscription
+  }
 }
 
 /**

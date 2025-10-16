@@ -32,6 +32,7 @@ function PricingPageContent() {
 
   useEffect(() => {
     const success = searchParams.get('success')
+    const sessionId = searchParams.get('session_id')
     const checkoutIntent = searchParams.get('checkout')
     
     // If user just authenticated and has a pending checkout, automatically proceed
@@ -48,6 +49,30 @@ function PricingPageContent() {
       const newUrl = new URL(window.location.href)
       newUrl.searchParams.delete('checkout')
       window.history.replaceState({}, '', newUrl.toString())
+    }
+    
+    // Sync subscription status after successful checkout
+    if (success === 'true' && sessionId) {
+      console.log('🔄 Syncing subscription for session:', sessionId)
+      
+      fetch('/api/stripe/sync-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log('✅ Subscription synced successfully')
+            // Refresh subscription status
+            subscription.refetch?.()
+          } else {
+            console.error('❌ Failed to sync subscription:', data.error)
+          }
+        })
+        .catch(error => {
+          console.error('❌ Error syncing subscription:', error)
+        })
     }
     
     if (success === 'true') {

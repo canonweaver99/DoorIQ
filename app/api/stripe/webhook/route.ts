@@ -79,6 +79,66 @@ export async function POST(request: NextRequest) {
 
   try {
     switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session
+        const userId = session.metadata?.supabase_user_id
+
+        console.log('✅ Checkout session completed:', {
+          sessionId: session.id,
+          userId,
+          customerId: session.customer,
+          subscriptionId: session.subscription
+        })
+
+        if (!userId) {
+          console.error('❌ No user ID in checkout session metadata')
+          break
+        }
+
+        // Get the subscription details
+        if (session.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+          
+          const updateData = {
+            subscription_status: subscription.status,
+            subscription_id: subscription.id,
+            subscription_plan: subscription.items.data[0]?.price.id,
+            stripe_price_id: subscription.items.data[0]?.price.id,
+            stripe_customer_id: session.customer as string,
+            subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+            trial_start_date: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null
+          }
+
+          console.log('📝 Updating user subscription:', updateData)
+
+          const { error: updateError } = await supabase
+            .from('users')
+            .update(updateData)
+            .eq('id', userId)
+
+          if (updateError) {
+            console.error('❌ Error updating user subscription:', updateError)
+          } else {
+            console.log('✅ User subscription updated successfully')
+          }
+
+          // Log event
+          await logSubscriptionEvent(supabase, userId, 'trial_started', {
+            subscription_id: subscription.id,
+            trial_ends_at: subscription.trial_end
+          })
+
+          // Send welcome email
+          await sendNotificationEmail(userId, 'trial_started', {
+            trialEndsAt: subscription.trial_end
+          })
+
+          console.log(`✅ Trial started for user ${userId}`)
+        }
+        break
+      }
+
       case 'customer.subscription.created': {
         const subscription = event.data.object as Stripe.Subscription
         const userId = subscription.metadata.supabase_user_id
