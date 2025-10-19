@@ -41,10 +41,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No customer found' }, { status: 404 })
     }
 
+    // Determine base URL from request origin (handles dev port changes)
+    const origin =
+      request.headers.get('origin') ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      'http://localhost:3000'
+
     // Create portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: profile.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/billing`
+      return_url: `${origin}/billing`
     })
 
     return NextResponse.json({ url: session.url })

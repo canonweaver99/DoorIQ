@@ -9,6 +9,7 @@
     "test:grading": "tsx scripts/test-grading-pipeline.ts"
   },
   "dependencies": {
+    "@calcom/atoms": "^1.10.0",
     "@clerk/nextjs": "^6.32.2",
     "@elevenlabs/client": "^0.7.1",
     "@elevenlabs/react": "^0.6.3",

@@ -1,11 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 
@@ -122,7 +123,7 @@ export const COLOR_VARIANTS = {
 
 const AnimatedGrid = () => (
   <motion.div
-    className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,transparent_30%,black)]"
+    className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,transparent_30%,black)]"
     animate={{
       backgroundPosition: ["0% 0%", "100% 100%"],
     }}
@@ -146,6 +147,8 @@ const AGENTS_WITH_AVATARS = ALLOWED_AGENT_ORDER.map((agentName) => {
   };
 }).filter((agent) => agent.image); // Only include agents with images
 
+const TOTAL_AGENTS = AGENTS_WITH_AVATARS.length;
+
 // Avatar with Rings Component for 5-agent Carousel
 interface AvatarWithRingsProps {
   agent: typeof AGENTS_WITH_AVATARS[number];
@@ -160,10 +163,10 @@ interface AvatarWithRingsProps {
 
 function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClick, onMouseEnter, onMouseLeave }: AvatarWithRingsProps) {
   const sizeClasses = size === 'large' 
-    ? 'h-[220px] w-[220px] sm:h-[260px] sm:w-[260px] md:h-[300px] md:w-[300px]'
+    ? 'h-[180px] w-[180px] sm:h-[240px] sm:w-[240px] md:h-[300px] md:w-[300px]'
     : size === 'small'
-    ? 'h-[130px] w-[130px] sm:h-[155px] sm:w-[155px] md:h-[180px] md:w-[180px]'
-    : 'h-[80px] w-[80px] sm:h-[95px] sm:w-[95px] md:h-[110px] md:w-[110px]';
+    ? 'h-[110px] w-[110px] sm:h-[150px] sm:w-[150px] md:h-[190px] md:w-[190px]'
+    : 'h-[70px] w-[70px] sm:h-[95px] sm:w-[95px] md:h-[120px] md:w-[120px]';
   
   const borderWidth = size === 'large' ? 'border-2' : size === 'small' ? 'border-[1.5px]' : 'border-[1px]';
   
@@ -266,6 +269,7 @@ export function BackgroundCircles({
   const [currentAgentIndex, setCurrentAgentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [lastInteractionTime, setLastInteractionTime] = useState(Date.now());
+  const [direction, setDirection] = useState<1 | -1>(1);
   const inactivityTimeout = 5000; // 5 seconds of inactivity before resuming auto-rotation
 
   const router = useRouter();
@@ -281,17 +285,31 @@ export function BackgroundCircles({
   }, [router]);
 
   const goToNext = useCallback(() => {
-    setCurrentAgentIndex((prev) => (prev + 1) % AGENTS_WITH_AVATARS.length);
+    if (TOTAL_AGENTS === 0) return;
+    setDirection(1);
+    setCurrentAgentIndex((prev) => (prev + 1) % TOTAL_AGENTS);
   }, []);
 
   const goToPrevious = useCallback(() => {
-    setCurrentAgentIndex((prev) => (prev - 1 + AGENTS_WITH_AVATARS.length) % AGENTS_WITH_AVATARS.length);
+    if (TOTAL_AGENTS === 0) return;
+    setDirection(-1);
+    setCurrentAgentIndex((prev) => (prev - 1 + TOTAL_AGENTS) % TOTAL_AGENTS);
   }, []);
 
   const goToIndex = useCallback((index: number) => {
+    if (TOTAL_AGENTS === 0) return;
+    if (index === currentAgentIndex) {
+      recordInteraction();
+      return;
+    }
+
+    const forwardSteps = (index - currentAgentIndex + TOTAL_AGENTS) % TOTAL_AGENTS;
+    const backwardSteps = (currentAgentIndex - index + TOTAL_AGENTS) % TOTAL_AGENTS;
+    setDirection(forwardSteps <= backwardSteps ? 1 : -1);
+
     setCurrentAgentIndex(index);
     recordInteraction();
-  }, [recordInteraction]);
+  }, [currentAgentIndex, recordInteraction]);
 
   const handleAvatarClick = useCallback((index: number, agentName: string) => {
     if (index === currentAgentIndex) {
@@ -300,6 +318,16 @@ export function BackgroundCircles({
       goToIndex(index);
     }
   }, [currentAgentIndex, goToIndex, handleAgentClick]);
+
+  const handleNextClick = useCallback(() => {
+    recordInteraction();
+    goToNext();
+  }, [recordInteraction, goToNext]);
+
+  const handlePreviousClick = useCallback(() => {
+    recordInteraction();
+    goToPrevious();
+  }, [recordInteraction, goToPrevious]);
 
 
   // Keyboard navigation
@@ -363,22 +391,43 @@ export function BackgroundCircles({
   );
 
   // Get 5 agents for carousel: far-left, left, center, right, far-right
-  const getCarouselAgents = () => {
-    const farLeftIndex = (currentAgentIndex - 2 + AGENTS_WITH_AVATARS.length) % AGENTS_WITH_AVATARS.length;
-    const leftIndex = (currentAgentIndex - 1 + AGENTS_WITH_AVATARS.length) % AGENTS_WITH_AVATARS.length;
-    const rightIndex = (currentAgentIndex + 1) % AGENTS_WITH_AVATARS.length;
-    const farRightIndex = (currentAgentIndex + 2) % AGENTS_WITH_AVATARS.length;
-    
-    return {
-      farLeft: { agent: AGENTS_WITH_AVATARS[farLeftIndex], index: farLeftIndex },
-      left: { agent: AGENTS_WITH_AVATARS[leftIndex], index: leftIndex },
-      center: { agent: AGENTS_WITH_AVATARS[currentAgentIndex], index: currentAgentIndex },
-      right: { agent: AGENTS_WITH_AVATARS[rightIndex], index: rightIndex },
-      farRight: { agent: AGENTS_WITH_AVATARS[farRightIndex], index: farRightIndex },
-    };
+  if (TOTAL_AGENTS === 0) {
+    return null;
+  }
+
+  type SlotName = "farLeft" | "left" | "center" | "right" | "farRight";
+
+  const slotConfig: Record<SlotName, { size: AvatarWithRingsProps["size"]; opacity: number; zIndex: number; scale: number }> = {
+    farLeft: { size: "tiny", opacity: 0.75, zIndex: 5, scale: 0.92 },
+    left: { size: "small", opacity: 0.9, zIndex: 10, scale: 0.98 },
+    center: { size: "large", opacity: 1, zIndex: 20, scale: 1 },
+    right: { size: "small", opacity: 0.9, zIndex: 10, scale: 0.98 },
+    farRight: { size: "tiny", opacity: 0.75, zIndex: 5, scale: 0.92 },
   };
 
-  const carouselAgents = getCarouselAgents();
+  const carouselAgents = useMemo(() => {
+    if (TOTAL_AGENTS === 0) {
+      return [] as Array<{ agent: typeof AGENTS_WITH_AVATARS[number]; index: number; slot: SlotName }>;
+    }
+
+    const offsets: Array<{ offset: number; slot: SlotName }> = [
+      { offset: -2, slot: "farLeft" },
+      { offset: -1, slot: "left" },
+      { offset: 0, slot: "center" },
+      { offset: 1, slot: "right" },
+      { offset: 2, slot: "farRight" },
+    ];
+
+    return offsets.map(({ offset, slot }) => {
+      const agentIndex = (currentAgentIndex + offset + TOTAL_AGENTS) % TOTAL_AGENTS;
+      return {
+        agent: AGENTS_WITH_AVATARS[agentIndex],
+        index: agentIndex,
+        slot,
+      };
+    });
+  }, [currentAgentIndex]);
+
   const centerVariantStyles = COLOR_VARIANTS[activeVariant];
 
   return (
@@ -430,82 +479,80 @@ export function BackgroundCircles({
         onMouseEnter={() => recordInteraction()}
         onMouseLeave={() => {}}
       >
-        <div className="relative flex items-center justify-center gap-1 sm:gap-2 md:gap-4 lg:gap-6">
-          {/* Far Left Avatar */}
+        <div className="relative flex items-center justify-center gap-3 sm:gap-4 md:gap-6">
           <button
-            key={`far-left-${carouselAgents.farLeft.index}`}
-            onClick={() => handleAvatarClick(carouselAgents.farLeft.index, carouselAgents.farLeft.agent.name)}
-            className="relative z-5 cursor-pointer focus:outline-none group/far-left"
+            type="button"
+            onClick={handlePreviousClick}
+            aria-label="View previous agent"
+            className="group/arrow-left flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/80 text-slate-900 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus-visible:ring-offset-slate-950 z-50 relative cursor-pointer"
           >
-            <AvatarWithRings
-              agent={carouselAgents.farLeft.agent}
-              size="tiny"
-              opacity={0.5}
-              isCenter={false}
-              onClick={() => handleAvatarClick(carouselAgents.farLeft.index, carouselAgents.farLeft.agent.name)}
-            />
+            <ArrowLeft className="h-5 w-5 transition group-hover/arrow-left:-translate-x-0.5 pointer-events-none" strokeWidth={1.75} />
           </button>
 
-          {/* Left Avatar */}
-          <button
-            key={`left-${carouselAgents.left.index}`}
-            onClick={() => handleAvatarClick(carouselAgents.left.index, carouselAgents.left.agent.name)}
-            className="relative z-10 cursor-pointer focus:outline-none group/left"
-          >
-            <AvatarWithRings
-              agent={carouselAgents.left.agent}
-              size="small"
-              opacity={0.7}
-              isCenter={false}
-              onClick={() => handleAvatarClick(carouselAgents.left.index, carouselAgents.left.agent.name)}
-            />
-          </button>
+          <AnimatePresence initial={false} custom={direction} mode="wait">
+            <motion.div
+              key={currentAgentIndex}
+              custom={direction}
+              variants={{
+                enter: (dir: 1 | -1) => ({ x: dir * 70, opacity: 0, scale: 0.98 }),
+                center: { x: 0, opacity: 1, scale: 1 },
+                exit: (dir: 1 | -1) => ({ x: dir * -70, opacity: 0, scale: 0.98 })
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: "spring", stiffness: 220, damping: 24 }}
+              className="flex items-center justify-center gap-6 md:gap-8 lg:gap-10 xl:gap-12"
+            >
+            {carouselAgents.map(({ agent, index, slot }) => {
+              const config = slotConfig[slot];
+              return (
+                <motion.div
+                  layout
+                  transition={{ type: "spring", stiffness: 240, damping: 30 }}
+                  key={slot}
+                  className={clsx(
+                    "flex items-center justify-center",
+                    slot === "center" ? "z-20" : "z-10"
+                  )}
+                  style={{
+                    transform: `scale(${config.scale})`,
+                    opacity: config.opacity,
+                  }}
+                >
+                  <button
+                    onClick={() => handleAvatarClick(index, agent.name)}
+                    className={clsx(
+                      "focus:outline-none",
+                      slot === "farLeft" ? "group/far-left" :
+                      slot === "left" ? "group/left" :
+                      slot === "right" ? "group/right" :
+                      slot === "farRight" ? "group/far-right" : undefined
+                    )}
+                    style={{ zIndex: config.zIndex }}
+                  >
+                    <AvatarWithRings
+                      agent={agent}
+                      variantStyles={slot === "center" ? centerVariantStyles : undefined}
+                      size={config.size}
+                      opacity={config.opacity}
+                      isCenter={slot === "center"}
+                      onClick={() => handleAvatarClick(index, agent.name)}
+                    />
+                  </button>
+                </motion.div>
+              );
+            })}
+            </motion.div>
+          </AnimatePresence>
 
-          {/* Center Avatar (Active) */}
-          <div 
-            key={`center-${carouselAgents.center.index}`}
-            className="relative z-20"
-          >
-            <div>
-              <AvatarWithRings
-                agent={carouselAgents.center.agent}
-                variantStyles={centerVariantStyles}
-                size="large"
-                opacity={1}
-                isCenter={true}
-                onClick={() => handleAvatarClick(carouselAgents.center.index, carouselAgents.center.agent.name)}
-              />
-            </div>
-          </div>
-
-          {/* Right Avatar */}
           <button
-            key={`right-${carouselAgents.right.index}`}
-            onClick={() => handleAvatarClick(carouselAgents.right.index, carouselAgents.right.agent.name)}
-            className="relative z-10 cursor-pointer focus:outline-none group/right"
+            type="button"
+            onClick={handleNextClick}
+            aria-label="View next agent"
+            className="group/arrow-right flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/80 text-slate-900 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus-visible:ring-offset-slate-950 z-50 relative cursor-pointer"
           >
-            <AvatarWithRings
-              agent={carouselAgents.right.agent}
-              size="small"
-              opacity={0.7}
-              isCenter={false}
-              onClick={() => handleAvatarClick(carouselAgents.right.index, carouselAgents.right.agent.name)}
-            />
-          </button>
-
-          {/* Far Right Avatar */}
-          <button
-            key={`far-right-${carouselAgents.farRight.index}`}
-            onClick={() => handleAvatarClick(carouselAgents.farRight.index, carouselAgents.farRight.agent.name)}
-            className="relative z-5 cursor-pointer focus:outline-none group/far-right"
-          >
-            <AvatarWithRings
-              agent={carouselAgents.farRight.agent}
-              size="tiny"
-              opacity={0.5}
-              isCenter={false}
-              onClick={() => handleAvatarClick(carouselAgents.farRight.index, carouselAgents.farRight.agent.name)}
-            />
+            <ArrowRight className="h-5 w-5 transition group-hover/arrow-right:translate-x-0.5 pointer-events-none" strokeWidth={1.75} />
           </button>
         </div>
       </div>

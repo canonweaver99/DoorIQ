@@ -90,6 +90,7 @@ function HeaderContent() {
   const sidebarRef = useRef<HTMLDivElement | null>(null)
   const sidebarButtonRef = useRef<HTMLButtonElement | null>(null)
   const [portalReady, setPortalReady] = useState(false)
+  const [showNeedHand, setShowNeedHand] = useState(true)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -736,20 +737,29 @@ function HeaderContent() {
                   </nav>
 
                   <div className="px-6 pb-6">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 mb-4 text-xs text-slate-300">
-                      <p className="font-semibold text-white text-sm mb-1">Need a hand?</p>
-                      <p className="leading-relaxed">Chat with a live coach or browse the knowledge base for quick answers.</p>
-                      <button
-                        onClick={() => {
-                          router.push('/support')
-                          setIsSidebarOpen(false)
-                        }}
-                        className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
-                      >
-                        Message Support
-                        <MessageCircle className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                    {showNeedHand && (
+                      <div className="relative rounded-2xl border border-white/10 bg-white/5 px-5 py-4 mb-4 text-xs text-slate-300">
+                        <button
+                          onClick={() => setShowNeedHand(false)}
+                          className="absolute top-3 right-3 rounded-full bg-white/10 text-slate-400 p-1 hover:bg-white/20 hover:text-white transition"
+                          aria-label="Dismiss help section"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                        <p className="font-semibold text-white text-sm mb-1">Need a hand?</p>
+                        <p className="leading-relaxed">Chat with a live coach or browse the knowledge base for quick answers.</p>
+                        <button
+                          onClick={() => {
+                            router.push('/support')
+                            setIsSidebarOpen(false)
+                          }}
+                          className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
+                        >
+                          Message Support
+                          <MessageCircle className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                     {isSignedIn && (
                       <button
                         onClick={handleSignOut}

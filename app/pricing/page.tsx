@@ -266,7 +266,7 @@ function PricingPageContent() {
       ],
       description: "For sales managers and teams",
       buttonText: "Contact Sales",
-      href: "mailto:sales@dooriq.com",
+      href: "/contact-sales",
     },
   ]
 

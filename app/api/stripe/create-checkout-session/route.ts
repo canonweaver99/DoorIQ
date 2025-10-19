@@ -71,6 +71,13 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
     }
 
+    // Determine base URL from request origin (handles dev port changes),
+    // falling back to configured env var or localhost.
+    const origin =
+      request.headers.get('origin') ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      'http://localhost:3000'
+
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -84,8 +91,8 @@ export async function POST(request: NextRequest) {
       mode: 'subscription',
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pricing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pricing?canceled=true`,
+      success_url: `${origin}/pricing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/pricing?canceled=true`,
       metadata: {
         supabase_user_id: user.id
       },

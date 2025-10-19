@@ -255,7 +255,7 @@ export function PricingSection({
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePosition({ x: null, y: null })}
-        className="relative w-full min-h-screen bg-background dark:bg-neutral-950 pt-12 sm:pt-16 pb-16 sm:pb-20 flex items-center"
+        className="relative w-full min-h-screen bg-background dark:bg-neutral-950 pt-4 sm:pt-6 pb-12 sm:pb-16 flex items-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, ease: "easeOut" }}
@@ -264,17 +264,17 @@ export function PricingSection({
           mousePosition={mousePosition}
           containerRef={containerRef}
         />
-        <div className="relative z-10 container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl mx-auto text-center space-y-2 mb-4">
-            <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl text-neutral-900 dark:text-white">
+        <div className="relative z-10 container mx-auto px-4 md:px-6 max-w-7xl">
+          <div className="max-w-3xl mx-auto text-center space-y-1 mb-3">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl lg:text-5xl text-neutral-900 dark:text-white">
               {title}
             </h2>
-            <p className="text-muted-foreground text-base whitespace-pre-line">
+            <p className="text-muted-foreground text-sm sm:text-base whitespace-pre-line">
               {description}
             </p>
           </div>
           <PricingToggle />
-          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 items-stretch gap-6">
+          <div className="mt-14 grid grid-cols-1 lg:grid-cols-3 items-stretch gap-4 lg:gap-5">
             {plans.map((plan, index) => (
               <PricingCard 
                 key={index} 
@@ -432,23 +432,20 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
       initial={{ opacity: 0, y: 20 }}
       animate={{ 
         opacity: 1, 
-        y: isSelected && isDesktop ? -10 : (plan.isPopular && isDesktop ? -15 : 0)
-      }}
-      whileHover={{
-        y: (isSelected && isDesktop ? -10 : (plan.isPopular && isDesktop ? -15 : 0)) - 4,
-        transition: { duration: 0.2, ease: "easeOut" }
+        y: 0,
+        scale: isSelected ? 1.06 : 1
       }}
       transition={{
-        duration: 0.2,
+        duration: 0.18,
         ease: "easeOut",
-        delay: index * 0.1
+        delay: 0
       }}
       onClick={handleCardClick}
       className={cn(
-        "rounded-2xl p-6 flex flex-col relative bg-background/70 backdrop-blur-sm min-h-[560px] lg:min-h-[640px] cursor-pointer",
+        "rounded-xl p-5 flex flex-col relative bg-background/70 backdrop-blur-sm min-h-[480px] lg:min-h-[520px] cursor-pointer",
         isSelected
-          ? "border-2 border-primary shadow-2xl shadow-primary/20"
-          : "border border-border hover:border-primary/30 hover:shadow-lg",
+          ? "border-2 border-primary shadow-2xl shadow-primary/20 z-10"
+          : "border border-border",
       )}
     >
       {plan.isCurrentPlan && (
@@ -472,14 +469,14 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
         </div>
       )}
       <div className="flex-1 flex flex-col text-center">
-        <h3 className="text-2xl font-bold text-white mt-1">{plan.name}</h3>
-        <p className="mt-2 text-sm font-medium text-slate-400">
+        <h3 className="text-xl font-bold text-white mt-1">{plan.name}</h3>
+        <p className="mt-1.5 text-xs font-medium text-slate-400">
           {plan.description}
         </p>
-        <div className="mt-5 flex items-baseline justify-center gap-x-1">
+        <div className="mt-3 flex items-baseline justify-center gap-x-1">
           {typeof calculateTotalPrice() === 'number' ? (
             <>
-              <span className="text-5xl font-extrabold tracking-tight text-white">
+              <span className="text-4xl font-extrabold tracking-tight text-white">
                 <NumberFlow
                   value={calculateTotalPrice() as number}
                   format={{
@@ -490,12 +487,12 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
                   className="font-variant-numeric: tabular-nums"
                 />
               </span>
-              <span className="text-sm font-semibold leading-6 tracking-wide text-slate-400">
+              <span className="text-xs font-semibold leading-6 tracking-wide text-slate-400">
                 / {plan.period}
               </span>
             </>
           ) : (
-            <span className="text-3xl font-extrabold tracking-tight text-white">
+            <span className="text-2xl font-extrabold tracking-tight text-white">
               {plan.price}
             </span>
           )}
@@ -555,12 +552,12 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
 
         <ul
           role="list"
-          className="mt-6 space-y-3 sm:space-y-3.5 text-base leading-7 text-left"
+          className="mt-4 space-y-2 text-sm leading-6 text-left"
         >
           {plan.features.map((feature) => (
-            <li key={feature} className="flex gap-x-3">
+            <li key={feature} className="flex gap-x-2">
               <Check
-                className="h-5 w-5 flex-none text-primary mt-0.5"
+                className="h-4 w-4 flex-none text-primary mt-0.5"
                 aria-hidden="true"
               />
               <span className="font-medium text-white/95">{feature}</span>
@@ -568,7 +565,7 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
           ))}
         </ul>
 
-        <div className="mt-auto pt-6">
+        <div className="mt-auto pt-4">
           {(plan.onClick || plan.onClickMonthly || plan.onClickYearly) ? (
             <button
               onClick={(e) => {
