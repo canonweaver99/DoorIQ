@@ -576,26 +576,26 @@ function HeaderContent() {
                   exit={{ opacity: 0, x: 64 }}
                   transition={{ type: 'spring', stiffness: 280, damping: 24 }}
                 >
-                  <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+                  <div className="px-4 pt-3 pb-2 flex items-center justify-between">
                     <div>
-                      <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">Account</p>
-                      <h2 className="mt-2 text-lg font-semibold text-white">DoorIQ Control Center</h2>
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Account</p>
+                      <h2 className="mt-1 text-base font-semibold text-white">DoorIQ Control Center</h2>
                     </div>
                     <button
                       onClick={() => setIsSidebarOpen(false)}
-                      className="rounded-full bg-white/10 text-slate-300 p-2 hover:bg-white/20 transition"
+                      className="rounded-full bg-white/10 text-slate-300 p-1.5 hover:bg-white/20 transition"
                       aria-label="Close account navigation"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  <div className="px-6">
+                  <div className="px-4">
                     {isSignedIn ? (
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 shadow-inner shadow-purple-500/10">
-                        <div className="flex items-center gap-3">
+                      <div className="rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-inner shadow-purple-500/10">
+                        <div className="flex items-center gap-2.5">
                           {profileAvatar ? (
-                            <div className="h-11 w-11 rounded-2xl overflow-hidden border-2 border-purple-500/30">
+                            <div className="h-8 w-8 rounded-xl overflow-hidden border border-purple-500/30">
                               <img 
                                 src={profileAvatar} 
                                 alt={profileName}
@@ -603,40 +603,40 @@ function HeaderContent() {
                               />
                             </div>
                           ) : (
-                            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
+                            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-xs font-semibold">
                               {profileInitial}
                             </div>
                           )}
-                          <div>
-                            <p className="text-sm font-semibold text-white leading-5">{profileName}</p>
-                            <p className="text-xs text-slate-300 leading-4">{profileEmail}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-white leading-tight truncate">{profileName}</p>
+                            <p className="text-[10px] text-slate-300 leading-tight truncate">{profileEmail}</p>
                           </div>
                         </div>
-                        <div className="mt-4 flex items-center justify-between text-xs text-slate-300">
+                        <div className="mt-2.5 flex items-center justify-between text-xs text-slate-300">
                           <div>
-                            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Earnings</p>
-                            <p className="mt-1 text-base font-semibold text-white">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
+                            <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400">Earnings</p>
+                            <p className="mt-0.5 text-sm font-semibold text-white">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                           </div>
                           <button
                             onClick={() => router.push('/leaderboard')}
-                            className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-slate-200 hover:bg-white/10 transition"
+                            className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] uppercase tracking-[0.15em] text-slate-200 hover:bg-white/10 transition"
                           >
                             Leaderboard
-                            <ArrowRight className="h-3 w-3" />
+                            <ArrowRight className="h-2.5 w-2.5" />
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 shadow-inner shadow-purple-500/10">
-                        <p className="text-sm font-semibold text-white mb-3">Get Started with DoorIQ</p>
-                        <p className="text-xs text-slate-300 leading-relaxed mb-4">Sign in to track your progress, compete on the leaderboard, and unlock all features.</p>
-                        <div className="space-y-2">
+                      <div className="rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-inner shadow-purple-500/10">
+                        <p className="text-xs font-semibold text-white mb-2">Get Started with DoorIQ</p>
+                        <p className="text-[10px] text-slate-300 leading-snug mb-3">Sign in to track your progress, compete on the leaderboard, and unlock all features.</p>
+                        <div className="space-y-1.5">
                           <button
                             onClick={() => {
                               router.push('/auth/login')
                               setIsSidebarOpen(false)
                             }}
-                            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
+                            className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
                           >
                             Sign In
                           </button>
@@ -645,7 +645,7 @@ function HeaderContent() {
                               router.push('/auth/signup')
                               setIsSidebarOpen(false)
                             }}
-                            className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                            className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
                           >
                             Sign Up
                           </button>
@@ -654,8 +654,8 @@ function HeaderContent() {
                     )}
                   </div>
 
-                  <div className="px-6 pt-6">
-                    <div className="grid grid-cols-3 gap-3">
+                  <div className="px-4 pt-3">
+                    <div className="grid grid-cols-3 gap-2">
                       {quickActions.map((action) => {
                         const Icon = action.icon
                         return (
@@ -665,10 +665,10 @@ function HeaderContent() {
                               router.push(action.href)
                               setIsSidebarOpen(false)
                             }}
-                            className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/5 bg-white/5 px-3 py-4 text-xs text-slate-200 transition hover:bg-white/10 hover:border-white/15"
+                            className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-white/5 bg-white/5 px-2 py-2.5 text-[10px] text-slate-200 transition hover:bg-white/10 hover:border-white/15"
                           >
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/40 to-indigo-500/40 text-white">
-                              <Icon className="h-4 w-4" />
+                            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/40 to-indigo-500/40 text-white">
+                              <Icon className="h-3.5 w-3.5" />
                             </span>
                             <span className="text-center leading-tight font-medium">{action.label}</span>
                           </button>
@@ -677,8 +677,8 @@ function HeaderContent() {
                     </div>
                   </div>
 
-                  <nav className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
-                    <div className="space-y-6">
+                  <nav className="flex-1 overflow-y-auto px-4 pt-3 pb-2">
+                    <div className="space-y-3">
                       {sidebarSections.map((section) => {
                         // Filter items based on user role
                         const visibleItems = section.items.filter(item => {
@@ -693,8 +693,8 @@ function HeaderContent() {
 
                         return (
                           <div key={section.title}>
-                            <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500 mb-3">{section.title}</p>
-                            <div className="space-y-2.5">
+                            <p className="text-[9px] uppercase tracking-[0.25em] text-slate-500 mb-1.5">{section.title}</p>
+                            <div className="space-y-1">
                               {visibleItems.map((item) => {
                                 const Icon = item.icon
                                 const active = isActive(item.href)
@@ -705,23 +705,23 @@ function HeaderContent() {
                                       router.push(item.href)
                                       setIsSidebarOpen(false)
                                     }}
-                                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm transition-all ${
+                                    className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm transition-all ${
                                       active
-                                        ? 'border-white/25 bg-white/10 text-white shadow-[0_18px_48px_rgba(109,40,217,0.25)]'
+                                        ? 'border-white/25 bg-white/10 text-white shadow-[0_8px_24px_rgba(109,40,217,0.2)]'
                                         : 'border-white/5 text-slate-200 hover:border-white/15 hover:bg-white/5'
                                     }`}
                                   >
-                                    <span className="flex items-center gap-3">
-                                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white">
-                                        <Icon className="h-4 w-4" />
+                                    <span className="flex items-center gap-2.5">
+                                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white shrink-0">
+                                        <Icon className="h-3.5 w-3.5" />
                                       </span>
-                                      <span className="text-sm font-medium tracking-tight">{item.name}</span>
+                                      <span className="text-xs font-medium tracking-tight">{item.name}</span>
                                     </span>
                                     {item.badge && (
-                                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                      <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
                                         item.name === 'Messages' && Number(item.badge) > 0
                                           ? 'bg-purple-500 text-white'
-                                          : 'bg-purple-500/20 text-purple-200 uppercase tracking-[0.2em]'
+                                          : 'bg-purple-500/20 text-purple-200 uppercase tracking-[0.15em]'
                                       }`}>
                                         {item.badge}
                                       </span>
@@ -736,37 +736,38 @@ function HeaderContent() {
                     </div>
                   </nav>
 
-                  <div className="px-6 pb-6">
+                  <div className="px-4 pb-3">
                     {showNeedHand && (
-                      <div className="relative rounded-2xl border border-white/10 bg-white/5 px-5 py-4 mb-4 text-xs text-slate-300">
+                      <div className="relative rounded-xl border border-white/10 bg-white/5 px-3 py-2 mb-2 text-xs text-slate-300">
                         <button
                           onClick={() => setShowNeedHand(false)}
-                          className="absolute top-3 right-3 rounded-full bg-white/10 text-slate-400 p-1 hover:bg-white/20 hover:text-white transition"
+                          className="absolute top-2 right-2 rounded-full bg-white/10 text-slate-400 p-0.5 hover:bg-white/20 hover:text-white transition"
                           aria-label="Dismiss help section"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-2.5 h-2.5" />
                         </button>
-                        <p className="font-semibold text-white text-sm mb-1">Need a hand?</p>
-                        <p className="leading-relaxed">Chat with a live coach or browse the knowledge base for quick answers.</p>
-                        <button
-                          onClick={() => {
-                            router.push('/support')
-                            setIsSidebarOpen(false)
-                          }}
-                          className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
-                        >
-                          Message Support
-                          <MessageCircle className="h-3.5 w-3.5" />
-                        </button>
+                        <div className="flex items-center justify-between gap-2 pr-6">
+                          <p className="font-semibold text-white text-[11px]">Need help?</p>
+                          <button
+                            onClick={() => {
+                              router.push('/support')
+                              setIsSidebarOpen(false)
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-2.5 py-1 text-[9px] font-semibold text-white shadow-sm shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
+                          >
+                            Support
+                            <MessageCircle className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
                       </div>
                     )}
                     {isSignedIn && (
                       <button
                         onClick={handleSignOut}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-3 py-2 text-xs font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 disabled:cursor-not-allowed disabled:opacity-70"
                         disabled={signingOut}
                       >
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className="h-3.5 w-3.5" />
                         <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
                       </button>
                     )}

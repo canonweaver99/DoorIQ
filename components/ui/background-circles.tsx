@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import clsx from "clsx";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
@@ -404,11 +404,11 @@ export function BackgroundCircles({
   type SlotName = "farLeft" | "left" | "center" | "right" | "farRight";
 
   const slotConfig: Record<SlotName, { size: AvatarWithRingsProps["size"]; opacity: number; zIndex: number; scale: number }> = {
-    farLeft: { size: "tiny", opacity: 0.75, zIndex: 5, scale: 0.92 },
-    left: { size: "small", opacity: 0.9, zIndex: 10, scale: 0.98 },
+    farLeft: { size: "tiny", opacity: 0.8, zIndex: 5, scale: 0.55 },
+    left: { size: "small", opacity: 0.9, zIndex: 10, scale: 0.8 },
     center: { size: "large", opacity: 1, zIndex: 20, scale: 1 },
-    right: { size: "small", opacity: 0.9, zIndex: 10, scale: 0.98 },
-    farRight: { size: "tiny", opacity: 0.75, zIndex: 5, scale: 0.92 },
+    right: { size: "small", opacity: 0.9, zIndex: 10, scale: 0.8 },
+    farRight: { size: "tiny", opacity: 0.8, zIndex: 5, scale: 0.55 },
   };
 
   const carouselAgents = useMemo(() => {
@@ -480,105 +480,83 @@ export function BackgroundCircles({
       </motion.div>
 
       {/* 5-Agent Carousel Container */}
-      <div 
-        className="relative w-full max-w-[1200px] mx-auto px-4"
-        onMouseEnter={() => recordInteraction()}
-        onMouseLeave={() => {}}
-      >
-        <div className="relative flex items-center justify-center gap-3 sm:gap-4 md:gap-6">
+      <div className="relative w-full max-w-[1800px] mx-auto px-4">
+        <div className="relative flex items-center justify-center gap-4 md:gap-8">
           <button
             type="button"
             onClick={handlePreviousClick}
             aria-label="View previous agent"
-            className="group/arrow-left flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/80 text-slate-900 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus-visible:ring-offset-slate-950 z-50 relative cursor-pointer"
+            className="group/arrow-left flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/80 text-slate-900 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus-visible:ring-offset-slate-950 z-50 relative cursor-pointer shrink-0"
           >
             <ArrowLeft className="h-5 w-5 transition group-hover/arrow-left:-translate-x-0.5 pointer-events-none" strokeWidth={1.75} />
           </button>
 
-          <AnimatePresence initial={false} custom={direction} mode="wait">
-            <motion.div
-              key={currentAgentIndex}
-              custom={direction}
-              variants={{
-                enter: (dir: 1 | -1) => ({ x: dir * 70, opacity: 0, scale: 0.98 }),
-                center: { x: 0, opacity: 1, scale: 1 },
-                exit: (dir: 1 | -1) => ({ x: dir * -70, opacity: 0, scale: 0.98 })
-              }}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ type: "spring", stiffness: 220, damping: 24 }}
-              className="flex items-center justify-center gap-6 md:gap-8 lg:gap-10 xl:gap-12"
-            >
-            {carouselAgents.map(({ agent, index, slot }) => {
-              const config = slotConfig[slot];
-              return (
-                <motion.div
-                  layout
-                  transition={{ type: "spring", stiffness: 240, damping: 30 }}
-                  key={slot}
-                  className={clsx(
-                    "flex items-center justify-center",
-                    slot === "center" ? "z-20" : "z-10"
-                  )}
-                  style={{
-                    transform: `scale(${config.scale})`,
-                    opacity: config.opacity,
-                  }}
-                >
-                  <button
-                    onClick={() => handleAvatarClick(index, agent.name)}
-                    className={clsx(
-                      "focus:outline-none",
-                      slot === "farLeft" ? "group/far-left" :
-                      slot === "left" ? "group/left" :
-                      slot === "right" ? "group/right" :
-                      slot === "farRight" ? "group/far-right" : undefined
-                    )}
-                    style={{ zIndex: config.zIndex }}
+          <div className="relative flex-1 max-w-6xl" style={{ height: '400px' }}>
+            <div className="absolute inset-0 flex items-center justify-center">
+              {carouselAgents.map(({ agent, index, slot }) => {
+                const config = slotConfig[slot];
+                const isCenter = slot === "center";
+                
+                const positions = {
+                  farLeft: '-350%',
+                  left: '-150%',
+                  center: '0%',
+                  right: '150%',
+                  farRight: '350%',
+                };
+
+                return (
+                  <motion.div
+                    key={slot}
+                    className="absolute flex items-center justify-center will-change-transform"
+                    style={{
+                      x: positions[slot],
+                      zIndex: config.zIndex,
+                    }}
                   >
-                    <AvatarWithRings
-                      agent={agent}
-                      variantStyles={slot === "center" ? centerVariantStyles : undefined}
-                      size={config.size}
-                      opacity={config.opacity}
-                      isCenter={slot === "center"}
-                      onClick={() => handleAvatarClick(index, agent.name)}
-                    />
-                  </button>
-                </motion.div>
-              );
-            })}
-            </motion.div>
-          </AnimatePresence>
+                    <motion.div
+                      animate={{
+                        scale: config.scale,
+                        opacity: config.opacity,
+                      }}
+                      transition={{
+                        type: "tween",
+                        duration: 0.8,
+                        ease: [0.25, 0.1, 0.25, 1],
+                      }}
+                    >
+                      <button
+                        onClick={() => handleAvatarClick(index, agent.name)}
+                        className="focus:outline-none transition-transform hover:scale-105 active:scale-95"
+                        aria-label={isCenter ? `Select ${agent.name}` : `View ${agent.name}`}
+                      >
+                        <AvatarWithRings
+                          agent={agent}
+                          variantStyles={isCenter ? centerVariantStyles : undefined}
+                          size={config.size}
+                          opacity={config.opacity}
+                          isCenter={isCenter}
+                        />
+                      </button>
+                    </motion.div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
 
           <button
             type="button"
             onClick={handleNextClick}
             aria-label="View next agent"
-            className="group/arrow-right flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/80 text-slate-900 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus-visible:ring-offset-slate-950 z-50 relative cursor-pointer"
+            className="group/arrow-right flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/80 text-slate-900 shadow-lg backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus-visible:ring-offset-slate-950 z-50 relative cursor-pointer shrink-0"
           >
             <ArrowRight className="h-5 w-5 transition group-hover/arrow-right:translate-x-0.5 pointer-events-none" strokeWidth={1.75} />
           </button>
         </div>
       </div>
 
-      {/* Navigation Dots */}
-      <div className="relative z-10 flex items-center justify-center gap-2.5 px-4" style={{ marginTop: '50px' }}>
-        {AGENTS_WITH_AVATARS.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToIndex(index)}
-            className={clsx(
-              "rounded-full transition-all duration-300 hover:scale-110",
-              index === currentAgentIndex
-                ? "bg-white dark:bg-white w-8 h-2.5 sm:w-10 sm:h-3"
-                : "bg-white/40 dark:bg-white/40 hover:bg-white/70 dark:hover:bg-white/70 w-2.5 h-2.5"
-            )}
-            aria-label={`Go to agent ${index + 1}`}
-          />
-        ))}
-      </div>
+      {/* Navigation Dots removed per request */}
 
       {/* CTA Buttons */}
       {(ctaPrimaryHref || ctaSecondaryHref) && (

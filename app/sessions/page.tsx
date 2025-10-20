@@ -24,11 +24,11 @@ export default function SessionsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [circleSize, setCircleSize] = useState(90)
+  const [circleSize, setCircleSize] = useState(64)
 
   useEffect(() => {
     const handleResize = () => {
-      setCircleSize(window.innerWidth >= 1024 ? 90 : 75)
+      setCircleSize(window.innerWidth >= 1024 ? 64 : 56)
     }
     
     // Set initial size
@@ -297,53 +297,53 @@ export default function SessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] py-6 lg:py-8 xl:py-10">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] py-4 lg:py-6 xl:py-8">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6 pt-3">
-          <h1 className="text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-3 drop-shadow-lg leading-tight">Your Training Sessions</h1>
-          <p className="text-lg lg:text-xl text-slate-400 drop-shadow-md">Review your past sessions and track your improvement</p>
+        <div className="mb-4 pt-3">
+          <h1 className="text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-2 drop-shadow-lg leading-[1.15] pb-0.5">Your Training Sessions</h1>
+          <p className="text-sm lg:text-base text-slate-400 drop-shadow-md">Review your past sessions and track your improvement</p>
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5 xl:gap-6 mb-6">
-          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 lg:p-5 xl:p-6 border border-slate-700 shadow-xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 lg:gap-4 xl:gap-5 mb-4">
+          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-1.5">
-              <h3 className="text-sm font-medium text-slate-400">Average Score</h3>
-              <TrendingUp className="w-4 h-4 lg:w-5 lg:h-5 text-purple-400" />
+              <h3 className="text-xs lg:text-sm font-medium text-slate-400">Average Score</h3>
+              <TrendingUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-purple-400" />
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-white">{stats.avgScore}%</p>
-            <p className="text-xs lg:text-sm text-slate-400 mt-1">
+            <p className="text-lg lg:text-xl font-bold text-white">{stats.avgScore}%</p>
+            <p className="text-[11px] lg:text-xs text-slate-400 mt-0.5 lg:mt-1">
               {stats.avgScore >= 80 ? 'Excellent performance' : 'Keep practicing!'}
             </p>
           </div>
           
-          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 lg:p-5 xl:p-6 border border-slate-700 shadow-xl">
+          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-1.5">
-              <h3 className="text-sm font-medium text-slate-400">Total Earnings</h3>
-              <DollarSign className="w-4 h-4 lg:w-5 lg:h-5 text-emerald-400" />
+              <h3 className="text-xs lg:text-sm font-medium text-slate-400">Total Earnings</h3>
+              <DollarSign className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-emerald-400" />
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-white">${stats.totalEarnings.toFixed(2)}</p>
-            <p className="text-xs lg:text-sm text-slate-400 mt-1">Virtual cash earned</p>
+            <p className="text-lg lg:text-xl font-bold text-white">${stats.totalEarnings.toFixed(2)}</p>
+            <p className="text-[11px] lg:text-xs text-slate-400 mt-0.5 lg:mt-1">Virtual cash earned</p>
           </div>
           
-          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 lg:p-5 xl:p-6 border border-slate-700 shadow-xl">
+          <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-slate-700 shadow-xl">
             <div className="flex items-center justify-between mb-1.5">
-              <h3 className="text-sm font-medium text-slate-400">Sessions</h3>
-              <Calendar className="w-4 h-4 lg:w-5 lg:h-5 text-pink-400" />
+              <h3 className="text-xs lg:text-sm font-medium text-slate-400">Sessions</h3>
+              <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-pink-400" />
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-white">{stats.sessionsCount}</p>
-            <p className="text-xs lg:text-sm text-slate-400 mt-1">Completed this {filter}</p>
+            <p className="text-lg lg:text-xl font-bold text-white">{stats.sessionsCount}</p>
+            <p className="text-[11px] lg:text-xs text-slate-400 mt-0.5 lg:mt-1">Completed this {filter}</p>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-3 lg:space-x-4 mb-5">
+        <div className="flex space-x-2.5 lg:space-x-3.5 mb-4">
           {(['week', 'month', 'all'] as const).map((period) => (
             <button
               key={period}
               onClick={() => setFilter(period)}
-              className={`px-4 lg:px-6 py-2 lg:py-2.5 rounded-xl font-semibold text-sm lg:text-base transition-all duration-200 ${
+              className={`px-3 lg:px-4 py-1.5 lg:py-1.5 rounded-xl font-semibold text-xs lg:text-sm transition-all duration-200 ${
                 filter === period
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
                   : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
@@ -355,7 +355,7 @@ export default function SessionsPage() {
         </div>
 
         {/* Sessions List */}
-        <div className="space-y-3 lg:space-y-4">
+        <div className="space-y-2 lg:space-y-3">
           {sessions.length === 0 ? (
             <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 lg:p-8 text-center border border-slate-700 shadow-xl">
               <p className="text-white/70">No sessions found for this period</p>
@@ -374,21 +374,21 @@ export default function SessionsPage() {
               return (
                 <div
                   key={session.id}
-                  className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 lg:p-5 xl:p-6 border border-slate-700 hover:border-slate-600 transition-colors shadow-xl"
+                  className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-slate-700 hover:border-slate-600 transition-colors shadow-xl"
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div className="flex-1 flex items-start gap-2 lg:gap-3">
                       {/* Delete button - moved to left */}
                       <button
                         onClick={() => openDeleteModal(session.id as string)}
-                        className="inline-flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 mt-0.5 lg:mt-1 bg-red-500/10 text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20"
+                        className="inline-flex items-center justify-center w-6 h-6 lg:w-7 lg:h-7 mt-0.5 lg:mt-1 bg-red-500/10 text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20"
                         title="Delete session"
                       >
                         <Trash2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                       </button>
                       
                       <div className="flex-1">
-                        <h3 className="text-xl lg:text-2xl font-bold text-white mb-1.5 lg:mb-2">
+                        <h3 className="text-base lg:text-lg font-bold text-white mb-1 lg:mb-1.5">
                           {session.agent_name || 'Training Session'}
                         </h3>
                         <div className="flex items-center space-x-3 lg:space-x-4 text-xs lg:text-sm text-slate-400">
@@ -404,11 +404,11 @@ export default function SessionsPage() {
                       </div>
                     </div>
                     
-                    <div className="mt-3 md:mt-0 flex items-center gap-4 lg:gap-5 xl:gap-6">
+                    <div className="mt-3 md:mt-0 flex items-center gap-3 lg:gap-3.5 xl:gap-4">
                       {/* Earnings - Always Show */}
                       <div className="text-right">
-                        <p className="text-xs text-slate-400 mb-0.5 lg:mb-1">Earned</p>
-                        <p className={`text-2xl lg:text-3xl font-bold ${
+                        <p className="text-[10px] lg:text-[11px] text-slate-400 mb-0.5 lg:mb-1">Earned</p>
+                        <p className={`text-lg lg:text-xl font-bold ${
                           session.virtual_earnings && session.virtual_earnings > 0 
                             ? 'text-emerald-400' 
                             : 'text-slate-500'
@@ -428,18 +428,18 @@ export default function SessionsPage() {
                       
                       <Link
                         href={`/analytics/${session.id}`}
-                        className="inline-flex items-center px-3 lg:px-4 py-1.5 lg:py-2 text-sm lg:text-base bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-indigo-600/30 transition-all border border-purple-500/20"
+                        className="inline-flex items-center px-2.5 lg:px-3 py-1.5 lg:py-1.5 text-xs lg:text-sm bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-indigo-600/30 transition-all border border-purple-500/20"
                       >
                         View Details
-                        <ChevronRight className="ml-1 lg:ml-2 w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                        <ChevronRight className="ml-1 lg:ml-1 w-3.5 h-3.5 lg:w-3.5 lg:h-3.5" />
                       </Link>
                     </div>
                   </div>
                   
                   {/* Key Insights - Smaller */}
                   {insights.length > 0 && (
-                    <div className="pt-2.5 lg:pt-3 mt-2.5 lg:mt-3 border-t border-slate-700/50">
-                      <div className="space-y-1 lg:space-y-1.5">
+                    <div className="pt-1.5 lg:pt-2 mt-1.5 lg:mt-2 border-t border-slate-700/50">
+                      <div className="space-y-0.5 lg:space-y-1">
                         {insights.map((insight, idx) => (
                           <div
                             key={idx}

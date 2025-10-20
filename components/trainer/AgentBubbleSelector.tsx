@@ -26,6 +26,11 @@ interface HomeownerAgentDisplay {
   color: keyof typeof COLOR_VARIANTS
   description: string
   image?: string
+  sessionCount?: number
+  bestScore?: number | null
+  avgDuration?: number | null
+  isLocked?: boolean
+  isMastered?: boolean
 }
 const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
   'primary',
@@ -44,7 +49,7 @@ const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
 type DifficultyKey = 'Easy' | 'Moderate' | 'Hard' | 'Very Hard' | 'Expert'
 const DIFFICULTY_BADGES: Record<DifficultyKey, string> = {
   Easy: 'bg-green-500/20 text-green-300 border border-green-500/30',
-  Moderate: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  Moderate: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30',
   Hard: 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
   'Very Hard': 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
   Expert: 'bg-red-500/20 text-red-300 border border-red-500/30',
@@ -114,26 +119,106 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   const supabase = createClient()
   const [agents, setAgents] = useState<HomeownerAgentDisplay[]>([])
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'all' | 'difficulty' | 'unplayed' | 'struggles'>('all')
+  const [sortedAgents, setSortedAgents] = useState<HomeownerAgentDisplay[]>([])
+  const [suggestedAgent, setSuggestedAgent] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchAgents = async () => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      // Fetch agents
       const { data, error } = await supabase
         .from('agents')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: true })
+      
+      // Fetch user's sessions for stats
+      let sessions: any[] = []
+      if (user) {
+        const { data: sessionData } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { descending: true })
+        if (sessionData) sessions = sessionData
+      }
+      
       if (!error && data) {
-        const filtered = data.filter((agent) => Boolean(agent.eleven_agent_id) && ALLOWED_AGENT_SET.has(agent.name as AllowedAgentName))
-        const sorted = filtered.sort((a, b) => ALLOWED_AGENT_ORDER.indexOf(a.name as AllowedAgentName) - ALLOWED_AGENT_ORDER.indexOf(b.name as AllowedAgentName))
+        const filtered = data.filter((agent: AgentRow) => Boolean(agent.eleven_agent_id) && ALLOWED_AGENT_SET.has(agent.name as AllowedAgentName))
+        const sorted = filtered.sort((a: AgentRow, b: AgentRow) => ALLOWED_AGENT_ORDER.indexOf(a.name as AllowedAgentName) - ALLOWED_AGENT_ORDER.indexOf(b.name as AllowedAgentName))
 
-        const hydrated = sorted
-          .map((agent, index) => mapAgentToDisplay(agent as AgentRow, index))
+        const hydrated = sorted.map((agent: AgentRow, index: number) => {
+          const agentSessions = sessions.filter((s: any) => s.agent_name === agent.name)
+          const completedSessions = agentSessions.filter(s => s.grade !== null)
+          const bestScore = completedSessions.length > 0 
+            ? Math.max(...completedSessions.map(s => s.grade || 0))
+            : null
+          const avgDuration = completedSessions.length > 0
+            ? Math.round(completedSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / completedSessions.length / 60)
+            : null
+          
+          // Progressive unlock logic
+          const agentOrder = ALLOWED_AGENT_ORDER.indexOf(agent.name as AllowedAgentName)
+          const isLocked = agentOrder > 2 && completedSessions.length === 0 && sessions.length < agentOrder
+          const isMastered = completedSessions.length >= 5 && bestScore && bestScore >= 80
+          
+          return {
+            ...mapAgentToDisplay(agent as AgentRow, index),
+            sessionCount: agentSessions.length,
+            bestScore,
+            avgDuration,
+            isLocked,
+            isMastered
+          }
+        })
         setAgents(hydrated)
+        setSortedAgents(hydrated)
+        
+        // Determine suggested agent based on user analytics
+        const unplayedAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.sessionCount || a.sessionCount === 0)
+        const lowScoreAgents = hydrated.filter((a: HomeownerAgentDisplay) => a.bestScore && a.bestScore < 70).sort((a: HomeownerAgentDisplay, b: HomeownerAgentDisplay) => (a.bestScore || 0) - (b.bestScore || 0))
+        const availableAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.isLocked)
+        
+        if (lowScoreAgents.length > 0) {
+          // Suggest the agent with lowest score for improvement
+          setSuggestedAgent(lowScoreAgents[0].name)
+        } else if (unplayedAgents.length > 0) {
+          // Suggest next unplayed agent
+          setSuggestedAgent(unplayedAgents[0].name)
+        } else if (availableAgents.length > 0) {
+          // Suggest random available agent
+          setSuggestedAgent(availableAgents[Math.floor(Math.random() * availableAgents.length)].name)
+        }
       }
       setLoading(false)
     }
     fetchAgents()
   }, [])
+  
+  // Apply filtering
+  useEffect(() => {
+    let filtered = [...agents]
+    
+    switch (filter) {
+      case 'difficulty':
+        const difficultyOrder = ['Easy', 'Moderate', 'Hard', 'Very Hard', 'Expert']
+        filtered.sort((a, b) => difficultyOrder.indexOf(a.difficulty) - difficultyOrder.indexOf(b.difficulty))
+        break
+      case 'unplayed':
+        filtered.sort((a, b) => (a.sessionCount || 0) - (b.sessionCount || 0))
+        break
+      case 'struggles':
+        filtered.sort((a, b) => (a.bestScore || 100) - (b.bestScore || 100))
+        break
+      default:
+        filtered = [...agents]
+    }
+    
+    setSortedAgents(filtered)
+  }, [filter, agents])
 
   const handleRandomAgent = () => {
     if (agents.length === 0) return
@@ -189,26 +274,80 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center">
       <AnimatedGrid />
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-20">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16 flex flex-col items-center gap-6"
+          className="text-center mb-6 flex flex-col items-center gap-2"
         >
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-4 pb-2 leading-tight">
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent pb-1 leading-tight">
             Choose Your Challenge
           </h1>
-          <p className="text-lg text-slate-400">
+          <p className="text-sm text-slate-400">
             Select a homeowner to begin your training session
           </p>
+        </motion.div>
+
+        {/* Filter Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mb-6 flex flex-wrap items-center justify-center gap-2"
+        >
+          <button
+            onClick={() => setFilter('all')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              filter === 'all'
+                ? "bg-white/20 text-white border border-white/30"
+                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+            )}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilter('difficulty')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              filter === 'difficulty'
+                ? "bg-white/20 text-white border border-white/30"
+                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+            )}
+          >
+            By Difficulty
+          </button>
+          <button
+            onClick={() => setFilter('unplayed')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              filter === 'unplayed'
+                ? "bg-white/20 text-white border border-white/30"
+                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+            )}
+          >
+            Unplayed First
+          </button>
+          <button
+            onClick={() => setFilter('struggles')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              filter === 'struggles'
+                ? "bg-white/20 text-white border border-white/30"
+                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+            )}
+          >
+            Your Struggles
+          </button>
+          <div className="w-px h-4 bg-slate-700" />
           <button
             type="button"
             onClick={handleRandomAgent}
             disabled={loading || agents.length === 0}
             className={cn(
-              "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all",
+              "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
               "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white",
               "hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400",
               "shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50",
@@ -219,32 +358,56 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           </button>
         </motion.div>
 
-        {/* Agent Bubbles Grid */}
-        <div className="flex flex-wrap justify-center gap-8 mb-12">
-          {agents.map((agent, index) => {
+        {/* Agent Bubbles Grid - 4 rows x 3 columns */}
+        <div className="grid grid-cols-3 gap-5 mb-8 max-w-5xl mx-auto">
+          {sortedAgents.map((agent, index) => {
             const variantKey = agent.color as keyof typeof COLOR_VARIANTS
             const variantStyles = COLOR_VARIANTS[variantKey]
             const isHovered = hoveredAgent === agent.id
             const isSelected = selectedAgent === agent.agentId
+            
+            // Stronger background with border for more contrast
+            const cardBg = agent.difficulty === 'Easy' 
+              ? 'bg-gradient-to-br from-green-500/15 to-emerald-500/10 border border-green-500/20' :
+              agent.difficulty === 'Moderate' 
+              ? 'bg-gradient-to-br from-yellow-500/15 to-amber-500/10 border border-yellow-500/20' :
+              agent.difficulty === 'Hard' 
+              ? 'bg-gradient-to-br from-orange-500/15 to-red-500/10 border border-orange-500/20' :
+              'bg-gradient-to-br from-red-500/15 to-rose-500/10 border border-red-500/20'
 
             return (
               <motion.div
                 key={agent.id}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="flex flex-col items-center"
+                transition={{ duration: 0.5, delay: index * 0.05 }}
+                className={cn(
+                  "flex flex-col items-center relative rounded-xl p-3 select-none focus:outline-none",
+                  cardBg,
+                  agent.isLocked ? "opacity-40 grayscale cursor-not-allowed" : "cursor-pointer"
+                )}
+                role="button"
+                tabIndex={agent.isLocked ? -1 : 0}
+                onClick={() => !agent.isLocked && handleSelectAgent(agent.agentId, agent.name)}
+                onKeyDown={(e) => {
+                  if (agent.isLocked) return
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleSelectAgent(agent.agentId, agent.name)
+                  }
+                }}
+                onMouseEnter={() => setHoveredAgent(agent.id)}
+                onMouseLeave={() => setHoveredAgent(null)}
               >
                 {/* Animated Bubble */}
                 <motion.button
-                  onClick={() => handleSelectAgent(agent.agentId, agent.name)}
-                  onMouseEnter={() => setHoveredAgent(agent.id)}
-                  onMouseLeave={() => setHoveredAgent(null)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative mb-6 focus:outline-none group"
+                  whileHover={!agent.isLocked ? { scale: 1.05 } : {}}
+                  whileTap={!agent.isLocked ? { scale: 0.95 } : {}}
+                  disabled={agent.isLocked}
+                  tabIndex={-1}
+                  className={cn("relative mb-3 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
                 >
-                  <div className="relative h-48 w-48 mx-auto">
+                  <div className="relative h-32 w-32 mx-auto">
                     {/* Concentric circles */}
                     {[0, 1, 2].map((i) => (
                       <motion.div
@@ -309,7 +472,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             alt={agent.name}
                             fill
                             className="object-cover"
-                            sizes="192px"
+                            sizes="128px"
                           />
                         </div>
                       </motion.div>
@@ -317,22 +480,85 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </div>
                 </motion.button>
 
+                {/* Suggested Badge */}
+                {suggestedAgent === agent.name && !agent.isLocked && (
+                  <div className="absolute top-1 right-1 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-500/40">
+                    <span className="text-[10px] text-yellow-200 font-semibold">⭐ Suggested</span>
+                  </div>
+                )}
+                
+                {/* Locked Badge */}
+                {agent.isLocked && (
+                  <div className="absolute top-1 right-1 bg-slate-800/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-700">
+                    <span className="text-[10px] text-slate-300">🔒 Locked</span>
+                  </div>
+                )}
+                
+                {/* Mastered Badge */}
+                {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
+                  <div className="absolute top-1 right-1 bg-yellow-500/20 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-yellow-500/30">
+                    <span className="text-[10px] text-yellow-300">🏆</span>
+                  </div>
+                )}
+
                 {/* Agent Info */}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 + 0.2 }}
+                  transition={{ delay: index * 0.05 + 0.2 }}
                   className="text-center"
                 >
-                  <h3 className="text-2xl font-bold text-white mb-1">{agent.name}</h3>
-                  <p className="text-sm text-slate-400 mb-2">{agent.subtitle}</p>
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <h3 className="text-lg font-bold text-white">{agent.name}</h3>
+                    {/* Difficulty dot indicator */}
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      agent.difficulty === 'Easy' ? 'bg-green-400' :
+                      agent.difficulty === 'Moderate' ? 'bg-yellow-400' :
+                      agent.difficulty === 'Hard' ? 'bg-orange-400' :
+                      'bg-red-400'
+                    )} />
+                  </div>
+                  <p className="text-xs text-slate-400 mb-1.5">{agent.subtitle}</p>
+                  
+                  {/* Quick Stats - Visible Without Hovering */}
+                  {(agent.sessionCount && agent.sessionCount > 0) ? (
+                    <div className="mb-2 space-y-0.5">
+                      <div className="text-[10px] text-slate-300">
+                        Completed {agent.sessionCount}x
+                        {agent.bestScore && <span className="text-green-400 ml-1">• Best: {agent.bestScore}%</span>}
+                      </div>
+                      {agent.avgDuration && (
+                        <div className="text-[10px] text-slate-500">
+                          ~{agent.avgDuration} min avg
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mb-2">
+                      <div className="text-[10px] text-indigo-300 font-medium">
+                        ✨ Not yet attempted
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className={cn(
-                    "inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3",
+                    "inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold mb-2",
                     DIFFICULTY_BADGES[agent.difficulty] ?? DIFFICULTY_BADGES.Moderate
                   )}>
                     {agent.difficulty}
                   </div>
-                  <p className="text-sm text-slate-500 max-w-xs mx-auto">{agent.description}</p>
+                  
+                  {/* Description in smaller text */}
+                  <p className="text-[10px] text-slate-500 max-w-[200px] mx-auto leading-tight">{agent.description}</p>
+                  
+                  {/* "Why practice this?" hint */}
+                  <div className="mt-1.5 text-[10px] text-indigo-300 italic">
+                    {agent.difficulty === 'Easy' ? 'Build confidence' :
+                     agent.difficulty === 'Moderate' ? 'Learn objections' :
+                     agent.difficulty === 'Hard' ? 'Master tough situations' :
+                     'Elite training'}
+                  </div>
                 </motion.div>
               </motion.div>
             )
@@ -344,9 +570,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="text-center mt-12"
+          className="text-center mt-6"
         >
-          <p className="text-sm text-slate-500">
+          <p className="text-xs text-slate-500">
             Hover over a bubble to see it animate • Click to start your session
           </p>
         </motion.div>

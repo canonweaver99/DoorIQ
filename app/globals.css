@@ -20,7 +20,7 @@
   }
 }
 
-@import "tw-animate-css";
+/* tw-animate-css imported at top */
 
 :root {
   --background: 222.2 84% 4.9%;

@@ -142,14 +142,14 @@ export default function LeaderboardPage() {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Crown className="w-6 h-6 text-yellow-500" />
+        return <Crown className="w-5 h-5 text-yellow-500" />
       case 2:
-        return <Medal className="w-6 h-6 text-slate-400" />
+        return <Medal className="w-5 h-5 text-slate-400" />
       case 3:
-        return <Award className="w-6 h-6 text-orange-600" />
+        return <Award className="w-5 h-5 text-orange-600" />
       default:
         return (
-          <div className="w-6 h-6 flex items-center justify-center text-slate-400 font-bold">
+          <div className="w-5 h-5 flex items-center justify-center text-slate-400 text-xs font-bold">
             {rank}
           </div>
         )
@@ -192,23 +192,23 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] py-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] py-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg">Leaderboard</h1>
+        <div className="text-center mb-4">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg">Leaderboard</h1>
             <button
               onClick={handleManualRefresh}
               disabled={refreshing}
-              className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-200 disabled:opacity-50 shadow-lg hover:scale-105 disabled:hover:scale-100"
+              className="p-2 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-200 disabled:opacity-50 shadow-lg hover:scale-105 disabled:hover:scale-100"
               title="Refresh leaderboard"
             >
-              <RefreshCw className={`w-5 h-5 text-white ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-white ${refreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
-          <p className="text-xl text-slate-400 drop-shadow-md">See how you rank against your team</p>
-          <p className="text-sm text-slate-500 mt-2">
+          <p className="text-base text-slate-400 drop-shadow-md">See how you rank against your team</p>
+          <p className="text-xs text-slate-500 mt-1">
             Last updated: {lastUpdated.toLocaleTimeString()}
             <span className="ml-2 inline-flex items-center gap-1">
               <span className="relative flex h-2 w-2">
@@ -221,12 +221,12 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Timeframe Selector */}
-        <div className="flex justify-center space-x-4 mb-12">
+        <div className="flex justify-center space-x-2 mb-4">
           {(['week', 'month', 'all'] as const).map((period) => (
             <button
               key={period}
               onClick={() => setTimeframe(period)}
-              className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 timeframe === period
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
                   : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
@@ -239,67 +239,67 @@ export default function LeaderboardPage() {
 
         {/* Top 3 Podium */}
         {leaderboard.length >= 3 && (
-          <div className="grid grid-cols-3 gap-4 mb-12 max-w-3xl mx-auto">
+          <div className="grid grid-cols-3 gap-2 mb-4 max-w-3xl mx-auto">
             {/* 2nd Place */}
             <div className="order-1 md:order-1">
-              <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border-2 border-slate-600 text-center transform translate-y-8 shadow-2xl">
-                <Medal className="w-12 h-12 text-slate-400 mx-auto mb-3 drop-shadow-lg" />
-                <h3 className="font-bold text-white mb-1 drop-shadow">{leaderboard[1].full_name}</h3>
-                <p className="text-2xl font-bold text-slate-300 mb-1 drop-shadow">
+              <div className="bg-slate-900/80 backdrop-blur-xl rounded-xl p-3 border-2 border-slate-600 text-center transform translate-y-4 shadow-2xl">
+                <Medal className="w-8 h-8 text-slate-400 mx-auto mb-2 drop-shadow-lg" />
+                <h3 className="text-xs font-bold text-white mb-0.5 drop-shadow truncate">{leaderboard[1].full_name}</h3>
+                <p className="text-lg font-bold text-slate-300 mb-0.5 drop-shadow">
                   ${leaderboard[1].virtual_earnings.toFixed(2)}
                 </p>
-                <p className="text-sm text-slate-400 drop-shadow">2nd Place</p>
+                <p className="text-[10px] text-slate-400 drop-shadow">2nd Place</p>
               </div>
             </div>
 
             {/* 1st Place */}
             <div className="order-2 md:order-2">
-              <div className="bg-gradient-to-br from-yellow-600/30 to-yellow-700/30 backdrop-blur-xl rounded-2xl p-6 border-2 border-yellow-500/70 text-center transform scale-110 shadow-2xl shadow-yellow-500/20">
-                <Crown className="w-16 h-16 text-yellow-400 mx-auto mb-3 drop-shadow-lg" />
-                <h3 className="font-bold text-white text-lg mb-1 drop-shadow">{leaderboard[0].full_name}</h3>
-                <p className="text-3xl font-bold text-yellow-400 mb-1 drop-shadow-lg">
+              <div className="bg-gradient-to-br from-yellow-600/30 to-yellow-700/30 backdrop-blur-xl rounded-xl p-3 border-2 border-yellow-500/70 text-center transform scale-105 shadow-2xl shadow-yellow-500/20">
+                <Crown className="w-10 h-10 text-yellow-400 mx-auto mb-2 drop-shadow-lg" />
+                <h3 className="text-sm font-bold text-white mb-0.5 drop-shadow truncate">{leaderboard[0].full_name}</h3>
+                <p className="text-xl font-bold text-yellow-400 mb-0.5 drop-shadow-lg">
                   ${leaderboard[0].virtual_earnings.toFixed(2)}
                 </p>
-                <p className="text-sm text-yellow-400 drop-shadow">1st Place</p>
+                <p className="text-[10px] text-yellow-400 drop-shadow">1st Place</p>
               </div>
             </div>
 
             {/* 3rd Place */}
             <div className="order-3 md:order-3">
-              <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border-2 border-orange-600/70 text-center transform translate-y-8 shadow-2xl shadow-orange-600/10">
-                <Award className="w-12 h-12 text-orange-500 mx-auto mb-3 drop-shadow-lg" />
-                <h3 className="font-bold text-white mb-1 drop-shadow">{leaderboard[2].full_name}</h3>
-                <p className="text-2xl font-bold text-orange-400 mb-1 drop-shadow">
+              <div className="bg-slate-900/80 backdrop-blur-xl rounded-xl p-3 border-2 border-orange-600/70 text-center transform translate-y-4 shadow-2xl shadow-orange-600/10">
+                <Award className="w-8 h-8 text-orange-500 mx-auto mb-2 drop-shadow-lg" />
+                <h3 className="text-xs font-bold text-white mb-0.5 drop-shadow truncate">{leaderboard[2].full_name}</h3>
+                <p className="text-lg font-bold text-orange-400 mb-0.5 drop-shadow">
                   ${leaderboard[2].virtual_earnings.toFixed(2)}
                 </p>
-                <p className="text-sm text-orange-400 drop-shadow">3rd Place</p>
+                <p className="text-[10px] text-orange-400 drop-shadow">3rd Place</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Full Leaderboard Table */}
-        <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
+        <div className="bg-slate-900/80 backdrop-blur-xl rounded-xl border border-slate-700 overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-950/70">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                     Rank
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                     Sales Rep
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                     Earnings
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                     Sessions
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                     Avg Score
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                     Trend
                   </th>
                 </tr>
@@ -310,36 +310,36 @@ export default function LeaderboardPage() {
                     key={user.id}
                     className={`${getRowStyles(user.rank, user.id)} transition-colors`}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
                         {getRankIcon(user.rank)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-white">
+                        <div className="text-xs font-medium text-white">
                           {user.full_name}
                           {user.id === currentUserId && (
-                            <span className="ml-2 text-xs text-purple-400">(You)</span>
+                            <span className="ml-1 text-[10px] text-purple-400">(You)</span>
                           )}
                         </div>
-                        <div className="text-xs text-slate-400">{user.email}</div>
+                        <div className="text-[10px] text-slate-400">{user.email}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-lg font-bold text-green-400">
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-sm font-bold text-green-400">
                         ${user.virtual_earnings.toFixed(2)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-slate-300">{user.sessionsCount}</div>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-xs text-slate-300">{user.sessionsCount}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-slate-300">
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-xs text-slate-300">
                         {user.avgScore > 0 ? `${user.avgScore}%` : '-'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       {getRankChange(user)}
                     </td>
                   </tr>
@@ -350,9 +350,9 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Motivational Message */}
-        <div className="mt-12 text-center">
-          <div className="inline-block bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 rounded-2xl px-8 py-6 shadow-xl">
-            <p className="text-white/80 drop-shadow">
+        <div className="mt-4 text-center">
+          <div className="inline-block bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 rounded-xl px-4 py-3 shadow-xl">
+            <p className="text-sm text-white/80 drop-shadow">
               Keep practicing to climb the ranks and earn more virtual cash! 🚀
             </p>
           </div>
