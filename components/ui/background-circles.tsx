@@ -181,10 +181,10 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* Static rings for all avatars */}
+      {/* Animated rings for all avatars */}
       <>
         {[0, 1, 2].map((i) => (
-          <div
+          <motion.div
             key={i}
             className={clsx(
               "absolute inset-0 rounded-full bg-gradient-to-br to-transparent",
@@ -192,6 +192,12 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
               agentVariantStyles.border[i],
               agentVariantStyles.gradient
             )}
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+            }}
             style={{ opacity: isCenter ? 0.7 : 0.5 }}
           >
             <div
@@ -200,7 +206,7 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
                 `bg-[radial-gradient(ellipse_at_center,${agentVariantStyles.gradient.replace("from-", "")}/12%,transparent_70%)]`
               )}
             />
-          </div>
+          </motion.div>
         ))}
       </>
       
