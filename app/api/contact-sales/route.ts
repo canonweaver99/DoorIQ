@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/send'
 
 export async function POST(request: NextRequest) {
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get Supabase client
-    const supabase = createClient()
+    // Get Supabase server client (uses request cookies for auth)
+    const supabase = await createServerSupabaseClient()
 
     // Save lead to database
     const { data: lead, error: dbError } = await supabase
