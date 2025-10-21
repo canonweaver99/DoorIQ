@@ -7,6 +7,14 @@ import { Footer } from "@/components/ui/footer-section";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ToastProvider } from "@/components/ui/toast";
 
+// Resolve a canonical base URL for metadata to remove Next.js warnings in dev
+const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  vercelUrl ||
+  'http://localhost:3001'
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -21,6 +29,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DoorIQ - Practice Your Sales Pitch",
   description: "Master door-to-door sales with realistic AI voice interactions.",
+  metadataBase: new URL(siteUrl),
   icons: {
     icon: '/icon.svg',
   },

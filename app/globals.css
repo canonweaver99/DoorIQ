@@ -18,6 +18,59 @@
   .tab-transition {
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
   }
+
+  /* Large monitor optimization - keeps content focused and readable */
+  .container-responsive {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container-responsive {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-responsive {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .container-responsive {
+      max-width: 1600px;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    .container-responsive {
+      max-width: 1800px;
+      padding-left: 4rem;
+      padding-right: 4rem;
+    }
+  }
+
+  /* Narrower container for reading-focused content */
+  .container-reading {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .container-reading {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
 }
 
 /* tw-animate-css imported at top */

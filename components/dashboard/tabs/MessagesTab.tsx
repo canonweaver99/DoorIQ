@@ -2,9 +2,11 @@
 
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Send, Paperclip, Mic, Smile, Search, CheckCheck, AlertCircle, MessageSquare } from 'lucide-react'
+import { Send, Paperclip, Mic, Smile, Search, CheckCheck, AlertCircle, MessageSquare, Crown, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { messageEvents } from '@/lib/events/messageEvents'
+import { useSubscription } from '@/hooks/useSubscription'
+import Link from 'next/link'
 
 interface Message {
   id: string
@@ -24,6 +26,7 @@ interface Manager {
 }
 
 export default function MessagesTab() {
+  const subscription = useSubscription()
   const [messages, setMessages] = useState<Message[]>([])
   const [managers, setManagers] = useState<Manager[]>([])
   const [selectedManager, setSelectedManager] = useState<Manager | null>(null)
@@ -32,6 +35,46 @@ export default function MessagesTab() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   const supabase = createClient()
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  
+  // Show upgrade prompt if user is not subscribed
+  if (!subscription.loading && !subscription.hasActiveSubscription) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center justify-center min-h-[60vh]"
+      >
+        <div className="max-w-md text-center space-y-6 p-8">
+          <div className="flex items-center justify-center w-20 h-20 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl">
+            <Lock className="w-10 h-10 text-white" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Premium Feature
+            </h2>
+            <p className="text-slate-300 text-lg mb-2">
+              Coach messaging is available for Individual and Team subscribers
+            </p>
+            <p className="text-slate-400 text-sm">
+              Get real-time feedback from your sales manager and track your progress with unlimited messaging.
+            </p>
+          </div>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-indigo-400 hover:to-purple-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+          >
+            <Crown className="w-5 h-5" />
+            Upgrade to Premium
+          </Link>
+          <p className="text-slate-500 text-xs">
+            Unlock unlimited practice • Cancel anytime
+          </p>
+        </div>
+      </motion.div>
+    )
+  }
 
   useEffect(() => {
     fetchUserAndManagers()

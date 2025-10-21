@@ -196,11 +196,11 @@ function PricingPageContent() {
       period: "month",
       features: [
         "Access to 3 AI training agents",
-        "Up to 10 practice calls/month",
-        "Basic performance analytics",
-        "Email support",
-        "Standard response templates",
+        "10 practice call credits/month",
+        "Full analytics for your sessions",
         "Basic objection handling scenarios",
+        "Email support",
+        "Dashboard overview only",
       ],
       description: "Perfect for getting started",
       buttonText: isCurrentPlan("Free") ? (
@@ -222,10 +222,10 @@ function PricingPageContent() {
         "Access to ALL 12 AI training agents",
         "Unlimited practice calls",
         "Advanced analytics & scoring",
-        "Real-time feedback & coaching",
-        "Custom sales scenarios",
+        "Full dashboard access (Performance, Learning, etc.)",
+        "Sales call upload & analysis",
         "Call recording & playback",
-        "Performance tracking dashboard",
+        "Coach messaging system",
         "Export reports (CSV/PDF)",
       ],
       description: "Ideal for individual sales reps",
@@ -239,7 +239,7 @@ function PricingPageContent() {
           <Loader2 className="w-4 h-4 animate-spin" />
           Processing...
         </span>
-      ) : "Start Free Trial",
+      ) : "Purchase",
       href: "#",
       // Use monthly or yearly checkout based on toggle
       onClickMonthly: isCurrentPlan("Individual") ? () => {} : () => handleCheckout(STRIPE_PRICE_IDS.individual_monthly, false),
@@ -296,7 +296,7 @@ function PricingPageContent() {
                 <div className="flex-1 pt-0.5">
                   <h3 className="font-bold text-2xl mb-2 text-white">Welcome to Premium!</h3>
                   <p className="text-emerald-100 text-sm leading-relaxed mb-4">
-                    Your <span className="font-semibold text-white">7-day free trial</span> has started! You now have unlimited access to all 12 AI training agents and premium features.
+                    Your <span className="font-semibold text-white">subscription</span> is now active! You now have unlimited access to all 12 AI training agents and premium features.
                   </p>
                   
                   <div className="flex flex-wrap gap-2.5">
@@ -323,7 +323,7 @@ function PricingPageContent() {
       <PricingSection
         plans={plans}
         title="Find the Perfect Plan"
-        description="Choose the plan that fits your sales team's needs. Start with a 7-day free trial!"
+        description="Choose the plan that fits your sales team's needs."
       />
     </>
   )

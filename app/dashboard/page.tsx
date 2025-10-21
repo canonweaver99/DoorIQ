@@ -11,8 +11,11 @@ import LearningTab from '@/components/dashboard/tabs/LearningTab'
 import TeamTab from '@/components/dashboard/tabs/TeamTab'
 import MessagesTab from '@/components/dashboard/tabs/MessagesTab'
 import UploadTab from '@/components/dashboard/tabs/UploadTab'
+import DailyRewardBanner from '@/components/dashboard/DailyRewardBanner'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
+import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
+import { useRouter } from 'next/navigation'
 
 type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
@@ -134,6 +137,9 @@ export default function DashboardPage() {
 
 function DashboardPageContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const subscription = useSubscription()
+  const sessionLimit = useSessionLimit()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeTab, setActiveTab] = useState('overview')
   const [userName, setUserName] = useState('Alex')
@@ -142,6 +148,8 @@ function DashboardPageContent() {
     avgScore: 0,
     teamRank: 1
   })
+  
+  const isPaidUser = subscription.hasActiveSubscription
 
   // Load tab from URL params or localStorage
   useEffect(() => {
@@ -211,12 +219,12 @@ function DashboardPageContent() {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Home },
-    { id: 'performance', label: 'Performance', icon: TrendingUp },
-    { id: 'learning', label: 'Learning', icon: BookOpen },
-    { id: 'upload', label: 'Upload', icon: Upload },
-    { id: 'team', label: 'Team', icon: UsersIcon },
-    { id: 'messages', label: 'Messages', icon: MessageSquare },
+    { id: 'overview', label: 'Overview', icon: Home, locked: false },
+    { id: 'performance', label: 'Performance', icon: TrendingUp, locked: !isPaidUser },
+    { id: 'learning', label: 'Learning', icon: BookOpen, locked: !isPaidUser },
+    { id: 'upload', label: 'Upload', icon: Upload, locked: !isPaidUser },
+    { id: 'team', label: 'Team', icon: UsersIcon, locked: !isPaidUser },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, locked: !isPaidUser },
   ]
 
   const formatDate = (date: Date) => {
@@ -278,6 +286,9 @@ function DashboardPageContent() {
             </div>
           </div>
         </motion.div>
+
+        {/* Daily Reward Banner */}
+        <DailyRewardBanner />
 
         {/* Tab Navigation */}
         <TabNavigation tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />

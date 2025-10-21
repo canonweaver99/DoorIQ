@@ -1,12 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { LucideIcon } from 'lucide-react'
+import { LucideIcon, Lock } from 'lucide-react'
 
 interface Tab {
   id: string
   label: string
   icon: LucideIcon
+  locked?: boolean
+  isPremium?: boolean
 }
 
 interface TabNavigationProps {
@@ -29,15 +31,20 @@ export default function TabNavigation({ tabs, activeTab, onChange }: TabNavigati
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              onClick={() => onChange(tab.id)}
+              onClick={() => !tab.locked && onChange(tab.id)}
+              disabled={tab.locked}
               className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                isActive
+                tab.locked
+                  ? 'text-slate-600 cursor-not-allowed opacity-60'
+                  : isActive
                   ? 'text-white'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
+              title={tab.locked ? 'Upgrade to unlock this feature' : undefined}
             >
-              <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${isActive ? 'text-purple-400' : 'text-slate-400'}`} />
+              <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${tab.locked ? 'text-slate-600' : isActive ? 'text-purple-400' : 'text-slate-400'}`} />
               <span className="hidden sm:inline">{tab.label}</span>
+              {tab.locked && <Lock className="w-3 h-3 text-amber-500" />}
               
               {/* Active indicator */}
               {isActive && (

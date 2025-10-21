@@ -255,7 +255,7 @@ export function PricingSection({
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePosition({ x: null, y: null })}
-        className="relative w-full min-h-screen bg-background dark:bg-neutral-950 pt-4 sm:pt-6 pb-12 sm:pb-16 flex items-center"
+        className="relative w-full min-h-screen bg-background dark:bg-neutral-950 pt-4 sm:pt-6 2xl:pt-16 pb-12 sm:pb-16 flex items-center 2xl:items-start"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, ease: "easeOut" }}
@@ -264,7 +264,7 @@ export function PricingSection({
           mousePosition={mousePosition}
           containerRef={containerRef}
         />
-        <div className="relative z-10 container mx-auto px-4 md:px-6 max-w-7xl">
+        <div className="relative z-10 container-responsive">
           <div className="max-w-3xl mx-auto text-center space-y-1 mb-3">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl lg:text-5xl text-neutral-900 dark:text-white">
               {title}
@@ -282,6 +282,7 @@ export function PricingSection({
                 index={index}
                 isSelected={selectedPlanIndex === index || (selectedPlanIndex === null && (plan.isPopular ?? false))}
                 onSelect={() => setSelectedPlanIndex(index)}
+                isCenterCard={index === 1}
               />
             ))}
           </div>
@@ -361,11 +362,12 @@ function PricingToggle() {
 }
 
 // Pricing Card Component
-function PricingCard({ plan, index, isSelected, onSelect }: { 
+function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: { 
   plan: PricingPlan; 
   index: number;
   isSelected: boolean;
   onSelect: () => void;
+  isCenterCard?: boolean;
 }) {
   const { isMonthly } = useContext(PricingContext);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -442,7 +444,9 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
       }}
       onClick={handleCardClick}
       className={cn(
-        "rounded-xl p-5 flex flex-col relative bg-background/70 backdrop-blur-sm min-h-[480px] lg:min-h-[520px] cursor-pointer",
+        "rounded-xl p-5 flex flex-col relative bg-background/70 backdrop-blur-sm cursor-pointer h-full",
+        "min-h-[520px] lg:min-h-[560px] 2xl:min-h-[640px]",
+        isCenterCard ? "2xl:p-7 2xl:scale-105" : "",
         isSelected
           ? "border-2 border-primary shadow-2xl shadow-primary/20 z-10"
           : "border border-border",
@@ -469,14 +473,14 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
         </div>
       )}
       <div className="flex-1 flex flex-col text-center">
-        <h3 className="text-xl font-bold text-white mt-1">{plan.name}</h3>
-        <p className="mt-1.5 text-xs font-medium text-slate-400">
+        <h3 className="text-2xl font-bold text-white mt-1">{plan.name}</h3>
+        <p className="mt-1.5 text-sm font-medium text-slate-400">
           {plan.description}
         </p>
         <div className="mt-3 flex items-baseline justify-center gap-x-1">
           {typeof calculateTotalPrice() === 'number' ? (
             <>
-              <span className="text-4xl font-extrabold tracking-tight text-white">
+              <span className="text-5xl font-extrabold tracking-tight text-white">
                 <NumberFlow
                   value={calculateTotalPrice() as number}
                   format={{
@@ -487,19 +491,19 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
                   className="font-variant-numeric: tabular-nums"
                 />
               </span>
-              <span className="text-xs font-semibold leading-6 tracking-wide text-slate-400">
+              <span className="text-sm font-semibold leading-6 tracking-wide text-slate-400">
                 / {plan.period}
               </span>
             </>
           ) : (
-            <span className="text-2xl font-extrabold tracking-tight text-white">
+            <span className="text-3xl font-extrabold tracking-tight text-white">
               {plan.price}
             </span>
           )}
         </div>
         
         {typeof calculateTotalPrice() === 'number' && (
-          <p className="text-xs font-medium text-slate-400 mt-2">
+          <p className="text-sm font-medium text-slate-400 mt-2">
             {isMonthly ? "Billed Monthly" : "Billed Annually"}
           </p>
         )}
@@ -552,15 +556,15 @@ function PricingCard({ plan, index, isSelected, onSelect }: {
 
         <ul
           role="list"
-          className="mt-4 space-y-2 text-sm leading-6 text-left"
+          className="mt-4 space-y-2.5 text-sm leading-6 text-left"
         >
           {plan.features.map((feature) => (
-            <li key={feature} className="flex gap-x-2">
+            <li key={feature} className="flex gap-x-2.5">
               <Check
-                className="h-4 w-4 flex-none text-primary mt-0.5"
+                className="h-5 w-5 flex-none text-primary mt-0.5"
                 aria-hidden="true"
               />
-              <span className="font-medium text-white/95">{feature}</span>
+              <span className="font-medium text-white/95 text-base">{feature}</span>
             </li>
           ))}
         </ul>

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, Target, Users, ArrowRight, Calendar, Clock, ChevronRight, AlertCircle } from 'lucide-react'
+import { TrendingUp, Target, Users, ArrowRight, Calendar, Clock, ChevronRight, AlertCircle, Zap, Crown } from 'lucide-react'
 import Link from 'next/link'
 import EnhancedMetricCard from '../overview/EnhancedMetricCard'
 import CircularProgress from '@/components/ui/CircularProgress'
@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
+import { useSessionLimit, useSubscription } from '@/hooks/useSubscription'
 
 type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
@@ -27,6 +28,8 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
   const [loading, setLoading] = useState(true)
   const [sessions, setSessions] = useState<LiveSession[]>([])
   const [realMetrics, setRealMetrics] = useState(metrics)
+  const sessionLimit = useSessionLimit()
+  const subscription = useSubscription()
 
   useEffect(() => {
     fetchRealData()
@@ -99,6 +102,45 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
       transition={{ duration: 0.3 }}
       className="space-y-6 pb-24"
     >
+      {/* Free User Credits Banner */}
+      {!subscription.hasActiveSubscription && !sessionLimit.loading && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-pink-600/20 border border-indigo-500/30 rounded-2xl p-6 backdrop-blur-sm"
+        >
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Zap className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1">
+                  {sessionLimit.sessionsRemaining} Practice Credits Remaining
+                </h3>
+                <p className="text-sm text-slate-300">
+                  {sessionLimit.sessionsUsed} of {sessionLimit.sessionsLimit} used this month • Resets monthly
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold text-sm hover:from-indigo-400 hover:to-purple-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              <Crown className="w-4 h-4" />
+              Upgrade for Unlimited
+            </Link>
+          </div>
+          {sessionLimit.sessionsRemaining <= 3 && sessionLimit.sessionsRemaining > 0 && (
+            <div className="mt-4 flex items-center gap-2 text-amber-300 text-sm">
+              <AlertCircle className="w-4 h-4" />
+              <span>Running low on credits! Upgrade now to keep practicing.</span>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* Enhanced Metrics Grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
