@@ -582,3 +582,42 @@ body {
   --hero-gradient-speed: 22s;
   animation: hero-gradient-rotate-reverse var(--hero-gradient-speed) linear infinite;
 }
+
+/* Door prompt animations */
+.door-prompt { 
+  position: relative; 
+  transition: transform .2s ease; 
+}
+
+.door-prompt:hover { 
+  transform: scale(1.01); 
+}
+
+/* Click "knock" nudge */
+.door-knock { 
+  animation: knock 280ms ease-in-out; 
+}
+
+@keyframes knock {
+  0%   { transform: translateY(0) scale(1); }
+  25%  { transform: translateY(1px) scale(.998) rotate(-.15deg); }
+  50%  { transform: translateY(-1px) scale(1.002) rotate(.15deg); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Door opening animation */
+.door-opening {
+  animation: doorSwingOpen 0.8s ease-out forwards;
+}
+
+@keyframes doorSwingOpen {
+  0% {
+    transform: perspective(1000px) rotateY(0deg);
+    transform-origin: left center;
+  }
+  100% {
+    transform: perspective(1000px) rotateY(-90deg);
+    transform-origin: left center;
+    opacity: 0;
+  }
+}
