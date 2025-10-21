@@ -99,8 +99,8 @@ export async function POST(request: NextRequest) {
       subscription_data: {
         metadata: {
           supabase_user_id: user.id
-        },
-        trial_period_days: 7 // 7-day free trial
+        }
+        // No trial - immediate billing
       }
     })
 

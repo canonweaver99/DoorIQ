@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { BackgroundCircles } from '@/components/ui/background-circles'
+import { ScrollingAgentCarousel } from '@/components/ui/scrolling-agent-carousel'
 import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { FaqSection } from '@/components/ui/faq-section'
@@ -62,19 +62,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       {/* 1) Hero */}
-      <section className="relative p-0">
-        <div className="w-full">
-          <BackgroundCircles 
-            title="Practice Before You Knock" 
-            description="Lifelike AI homeowners. Instant feedback. Better reps." 
-            ctaPrimaryHref="/trainer/select-homeowner"
-            ctaPrimaryText="Start Training Now"
-            ctaSecondaryHref="#demo"
-            ctaSecondaryText="Watch 30-sec Demo"
-          />
-          <div className="text-center px-4 sm:px-6 lg:px-8 -mt-24 md:-mt-28 lg:-mt-32">
-            <p className="text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
-          </div>
+      <section className="relative p-0 h-screen">
+        <ScrollingAgentCarousel 
+          title="Practice Before You Knock" 
+          description="Lifelike AI homeowners. Instant feedback. Better reps." 
+          ctaPrimaryHref="/trainer/select-homeowner"
+          ctaPrimaryText="Start Training Now"
+          ctaSecondaryHref="#demo"
+          ctaSecondaryText="Watch 30-sec Demo"
+        />
+        <div className="absolute bottom-28 md:bottom-32 left-0 right-0 text-center px-4 sm:px-6 lg:px-8 z-30 pointer-events-none">
+          <p className="text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
         </div>
       </section>
 

@@ -135,6 +135,20 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         .eq('is_active', true)
         .order('created_at', { ascending: true })
       
+      // Check subscription status
+      let hasActiveSubscription = false
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('subscription_status, trial_ends_at')
+          .eq('id', user.id)
+          .single()
+        
+        const status = userData?.subscription_status
+        const isTrialing = status === 'trialing' && userData?.trial_ends_at && new Date(userData.trial_ends_at) > new Date()
+        hasActiveSubscription = status === 'active' || isTrialing
+      }
+      
       // Fetch user's sessions for stats
       let sessions: any[] = []
       if (user) {
@@ -160,9 +174,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             ? Math.round(completedSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / completedSessions.length / 60)
             : null
           
-          // Progressive unlock logic
+          // Progressive unlock logic - paid users get all agents, free users unlock progressively
           const agentOrder = ALLOWED_AGENT_ORDER.indexOf(agent.name as AllowedAgentName)
-          const isLocked = agentOrder > 2 && completedSessions.length === 0 && sessions.length < agentOrder
+          const isLocked = !hasActiveSubscription && agentOrder > 2 && completedSessions.length === 0 && sessions.length < agentOrder
           const isMastered = completedSessions.length >= 5 && bestScore && bestScore >= 80
           
           return {

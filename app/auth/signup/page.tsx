@@ -48,7 +48,7 @@ function SignUpForm() {
     try {
       const supabase = createClient()
       
-      // Step 1: Create user via server (auto-confirm)
+      // Step 1: Create user via server (requires email confirmation)
       const adminResp = await fetch('/api/auth/fast-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,94 +59,9 @@ function SignUpForm() {
         throw new Error(adminJson.error || 'Failed to create account')
       }
 
-      // Mirror in auth client by signing in immediately
-      const { data: authData, error: signUpError } = await supabase.auth.signInWithPassword({ email, password })
-
-      if (signUpError) throw signUpError
-
-      console.log('📝 Signup response:', {
-        user: !!authData.user,
-        session: !!authData.session,
-        userId: authData.user?.id
-      })
-
-      // Step 2: Create user profile in users table
-      if (authData.user) {
-        const res = await fetch('/api/users/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: authData.user.id,
-            email: authData.user.email,
-            full_name: fullName,
-          })
-        })
-        
-        const json = await res.json()
-        if (!res.ok && res.status !== 200) {
-          // If user already exists (duplicate), that's okay - might be re-signup
-          if (json.message !== 'User already exists') {
-            throw new Error(json.error || 'Failed to create user profile')
-          }
-        }
-
-        // Step 3: Auto sign-in regardless of email confirmation
-        console.log('✅ Account created, auto-signing in...')
-        
-        // Immediately sign in with the credentials
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        })
-        
-        if (signInError) {
-          console.warn('⚠️ Auto sign-in failed:', signInError.message)
-          setError('Account created! Please sign in with your credentials.')
-          setLoading(false)
-          return
-        }
-        
-        if (signInData.session) {
-          console.log('✅ Signed in successfully, redirecting...')
-          
-          // If there's an invite token, accept it
-          if (inviteToken) {
-            try {
-              const inviteResponse = await fetch('/api/invites/accept', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: inviteToken })
-              })
-              
-              if (!inviteResponse.ok) {
-                console.warn('Failed to accept invite:', await inviteResponse.json())
-              }
-            } catch (inviteError) {
-              console.warn('Error accepting invite:', inviteError)
-            }
-          }
-          
-          // Wait for session to be established
-          await new Promise(resolve => setTimeout(resolve, 800))
-          
-          // Redirect to intended destination or dashboard
-          if (nextUrl) {
-            let redirectUrl = nextUrl
-            if (checkoutIntent) {
-              redirectUrl += `${nextUrl.includes('?') ? '&' : '?'}checkout=${checkoutIntent}`
-            }
-            window.location.href = redirectUrl
-          } else {
-            window.location.href = '/dashboard'
-          }
-        } else {
-          setError('Account created! Please sign in with your credentials.')
-          setLoading(false)
-        }
-      } else {
-        setError('Account creation failed. Please try again.')
-        setLoading(false)
-      }
+      // Show success message and redirect to confirmation page
+      router.push(`/auth/confirmed?email=${encodeURIComponent(email)}`)
+      return
     } catch (err: any) {
       console.error('Signup error:', err)
       setError(err.message || 'Failed to create account')

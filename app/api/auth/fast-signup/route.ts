@@ -13,11 +13,11 @@ export async function POST(req: Request) {
 
     const supabase = await createServiceSupabaseClient()
 
-    // Create user with email confirmed so sign-in works immediately
+    // Create user with email verification required
     const { data, error } = await (supabase as any).auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: { full_name }
     })
 
