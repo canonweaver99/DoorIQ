@@ -367,7 +367,7 @@ function TrainerPageContent() {
                   ))}
                   
                   {/* Avatar container */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="absolute inset-0 flex items-center justify-center">
                     <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
                       {loading ? (
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">

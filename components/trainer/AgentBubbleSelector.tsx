@@ -515,16 +515,16 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </div>
                 )}
 
-                {/* Agent Info */}
+                {/* Agent Info - Simplified */}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 + 0.2 }}
-                  className="text-center"
+                  className="text-center space-y-2"
                 >
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                  {/* Name and difficulty */}
+                  <div className="flex items-center justify-center gap-1.5">
                     <h3 className="text-lg font-bold text-white">{agent.name}</h3>
-                    {/* Difficulty dot indicator */}
                     <div className={cn(
                       "w-1.5 h-1.5 rounded-full",
                       agent.difficulty === 'Easy' ? 'bg-green-400' :
@@ -533,46 +533,23 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       'bg-red-400'
                     )} />
                   </div>
-                  <p className="text-xs text-slate-400 mb-1.5">{agent.subtitle}</p>
                   
-                  {/* Quick Stats - Visible Without Hovering */}
+                  {/* Combined summary */}
+                  <p className="text-xs text-slate-400 max-w-[220px] mx-auto leading-snug px-2">
+                    {agent.description}
+                  </p>
+                  
+                  {/* Stats if available */}
                   {(agent.sessionCount && agent.sessionCount > 0) ? (
-                    <div className="mb-2 space-y-0.5">
-                      <div className="text-[10px] text-slate-300">
-                        Completed {agent.sessionCount}x
-                        {agent.bestScore && <span className="text-green-400 ml-1">• Best: {agent.bestScore}%</span>}
-                      </div>
-                      {agent.avgDuration && (
-                        <div className="text-[10px] text-slate-500">
-                          ~{agent.avgDuration} min avg
-                        </div>
-                      )}
+                    <div className="text-[10px] text-slate-500">
+                      {agent.sessionCount}x played
+                      {agent.bestScore && <span className="text-green-400 ml-1">• Best: {agent.bestScore}%</span>}
                     </div>
                   ) : (
-                    <div className="mb-2">
-                      <div className="text-[10px] text-indigo-300 font-medium">
-                        ✨ Not yet attempted
-                      </div>
+                    <div className="text-[10px] text-indigo-300/80">
+                      ✨ Not yet attempted
                     </div>
                   )}
-                  
-                  <div className={cn(
-                    "inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold mb-2",
-                    DIFFICULTY_BADGES[agent.difficulty] ?? DIFFICULTY_BADGES.Moderate
-                  )}>
-                    {agent.difficulty}
-                  </div>
-                  
-                  {/* Description in smaller text */}
-                  <p className="text-[10px] text-slate-500 max-w-[200px] mx-auto leading-tight">{agent.description}</p>
-                  
-                  {/* "Why practice this?" hint */}
-                  <div className="mt-1.5 text-[10px] text-indigo-300 italic">
-                    {agent.difficulty === 'Easy' ? 'Build confidence' :
-                     agent.difficulty === 'Moderate' ? 'Learn objections' :
-                     agent.difficulty === 'Hard' ? 'Master tough situations' :
-                     'Elite training'}
-                  </div>
                 </motion.div>
               </motion.div>
             )

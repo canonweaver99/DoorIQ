@@ -276,14 +276,16 @@ export function PricingSection({
           <PricingToggle />
           <div className="mt-14 grid grid-cols-1 lg:grid-cols-3 items-stretch gap-4 lg:gap-5">
             {plans.map((plan, index) => (
-              <PricingCard 
-                key={index} 
-                plan={plan} 
-                index={index}
-                isSelected={selectedPlanIndex === index || (selectedPlanIndex === null && (plan.isPopular ?? false))}
-                onSelect={() => setSelectedPlanIndex(index)}
-                isCenterCard={index === 1}
-              />
+              <div key={`card-wrapper-${index}`} className="origin-top scale-[0.9]">
+                <PricingCard 
+                  key={index} 
+                  plan={plan} 
+                  index={index}
+                  isSelected={selectedPlanIndex === index || (selectedPlanIndex === null && (plan.isPopular ?? false))}
+                  onSelect={() => setSelectedPlanIndex(index)}
+                  isCenterCard={index === 1}
+                />
+              </div>
             ))}
           </div>
         </div>
