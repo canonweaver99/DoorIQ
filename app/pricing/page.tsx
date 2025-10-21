@@ -244,7 +244,7 @@ function PricingPageContent() {
       // Use monthly or yearly checkout based on toggle
       onClickMonthly: isCurrentPlan("Individual") ? () => {} : () => handleCheckout(STRIPE_PRICE_IDS.individual_monthly, false),
       onClickYearly: isCurrentPlan("Individual") ? () => {} : () => handleCheckout(STRIPE_PRICE_IDS.individual_yearly, false),
-      isPopular: !isCurrentPlan("Individual"),
+      isPopular: false,
       isCurrentPlan: isCurrentPlan("Individual"),
     },
     {
@@ -267,6 +267,7 @@ function PricingPageContent() {
       description: "For sales managers and teams",
       buttonText: "Contact Sales",
       href: "/contact-sales",
+      isPopular: true,
     },
   ]
 
