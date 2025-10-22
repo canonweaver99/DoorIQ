@@ -33,6 +33,12 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon.svg',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
   openGraph: {
     title: "DoorIQ - Practice Your Sales Pitch",
     description: "Master door-to-door sales with realistic AI voice interactions.",

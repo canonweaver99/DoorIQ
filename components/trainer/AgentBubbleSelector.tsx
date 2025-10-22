@@ -240,7 +240,16 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     handleSelectAgent(randomAgent.agentId, randomAgent.name)
   }
 
-  const handleSelectAgent = (agentId: string, agentName: string) => {
+  const handleSelectAgent = async (agentId: string, agentName: string) => {
+    // Check if user is logged in first
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      // Redirect to sign in page, preserving the intended agent selection
+      router.push(`/auth/login?next=/trainer?agent=${agentId}&name=${encodeURIComponent(agentName)}`)
+      return
+    }
+    
     setSelectedAgent(agentId)
 
     if (typeof window !== 'undefined') {

@@ -114,6 +114,13 @@ function TrainerPageContent() {
     return () => window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
   }, [sessionActive])
 
+  // Auto-scroll transcript to bottom when new messages arrive
+  useEffect(() => {
+    if (transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }
+  }, [transcript])
+
   const fetchConversationToken = async (agentId: string): Promise<{ conversationToken: string | null; canProceed: boolean; error?: string }> => {
     signedUrlAbortRef.current?.abort()
     const controller = new AbortController()
@@ -309,7 +316,7 @@ function TrainerPageContent() {
       />
 
       {/* Top Controls Bar */}
-      <div className="w-full p-6 flex justify-between items-center">
+      <div className="w-full px-6 py-3 flex justify-between items-center">
         <button
           onClick={endSession}
           disabled={loading || !sessionActive}
@@ -323,13 +330,13 @@ function TrainerPageContent() {
       </div>
 
       {/* Main Content Area - Split Screen */}
-      <div className="flex-1 flex gap-6 px-6 pb-6">
+      <div className="flex-1 flex gap-6 px-6 pb-3 overflow-hidden">
         
         {/* Left Side - Agent and Transcript - 50% width */}
-        <div className="flex-1 flex flex-col space-y-6 max-w-[50%]">
+        <div className="flex-1 flex flex-col space-y-4 max-w-[50%]">
         
         {/* Agent Orb/Bubble with Animated Rings */}
-        <div className="flex flex-col items-center pt-4">
+        <div className="flex flex-col items-center">
           {(() => {
             const agentMeta = selectedAgent?.name ? PERSONA_METADATA[selectedAgent.name as AllowedAgentName] : null
             const colorVariant = agentMeta?.bubble.color || 'primary'
@@ -341,7 +348,7 @@ function TrainerPageContent() {
                   id="conversation-orb"
                   onClick={!sessionActive && !loading ? startSession : undefined}
                   className={`
-                    relative w-64 h-64
+                    relative w-56 h-56
                     ${!sessionActive && !loading ? 'cursor-pointer' : ''}
                   `}
                 >
@@ -403,7 +410,7 @@ function TrainerPageContent() {
                 
                 {/* Knock Button - replaces name/subtitle when not active */}
                 {selectedAgent && (
-                  <div className="mt-6 text-center">
+                  <div className="mt-3 text-center">
                     {!sessionActive && !loading ? (
                       <button
                         onClick={startSession}
