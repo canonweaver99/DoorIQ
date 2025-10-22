@@ -6,6 +6,28 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
+// In-memory cache for team grading configs (5 minute TTL)
+const teamConfigCache = new Map<string, { data: any; expires: number }>()
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
+function getCachedTeamConfig(teamId: string) {
+  const cached = teamConfigCache.get(teamId)
+  if (cached && cached.expires > Date.now()) {
+    console.log('💾 Using cached team config for team:', teamId)
+    return cached.data
+  }
+  teamConfigCache.delete(teamId)
+  return null
+}
+
+function setCachedTeamConfig(teamId: string, data: any) {
+  console.log('💾 Caching team config for team:', teamId)
+  teamConfigCache.set(teamId, {
+    data,
+    expires: Date.now() + CACHE_TTL_MS
+  })
+}
+
 type JsonSchema = Record<string, any>
 
 const gradingResponseSchema: JsonSchema = {
@@ -359,41 +381,81 @@ export async function POST(request: NextRequest) {
 
     let teamGradingConfig = null
     let teamKnowledgeDocs: any[] = []
+    let knowledgeBase: any[] = []
 
-    // Fetch team-specific grading configuration and knowledge base
+    // Fetch team-specific grading configuration and knowledge base in parallel
     if (userProfile?.team_id) {
-      // Get team grading config
-      const { data: config } = await supabase
-        .from('team_grading_configs')
-        .select('*')
-        .eq('team_id', userProfile.team_id)
-        .eq('enabled', true)
-        .single()
+      // Try to get team config from cache first
+      const cachedConfig = getCachedTeamConfig(userProfile.team_id)
       
-      teamGradingConfig = config
-
-      // Get team knowledge documents
-      const { data: docs } = await supabase
-        .from('team_knowledge_documents')
-        .select('*')
-        .eq('team_id', userProfile.team_id)
-        .eq('use_in_grading', true)
-        .order('created_at', { ascending: false })
-        .limit(10) // Limit to avoid token overflow
-
-      teamKnowledgeDocs = docs || []
+      if (cachedConfig) {
+        teamGradingConfig = cachedConfig
+        // Still fetch docs and knowledge base in parallel
+        const [docsResult, kbResult] = await Promise.all([
+          supabase
+            .from('team_knowledge_documents')
+            .select('*')
+            .eq('team_id', userProfile.team_id)
+            .eq('use_in_grading', true)
+            .order('created_at', { ascending: false })
+            .limit(10),
+          supabase
+            .from('knowledge_base')
+            .select('file_name, content')
+            .eq('user_id', (session as any).user_id)
+            .eq('is_active', true)
+            .limit(5)
+        ])
+        
+        teamKnowledgeDocs = docsResult.data || []
+        knowledgeBase = kbResult.data || []
+      } else {
+        // Parallel fetch: team config, team docs, and legacy knowledge base
+        const [configResult, docsResult, kbResult] = await Promise.all([
+          supabase
+            .from('team_grading_configs')
+            .select('*')
+            .eq('team_id', userProfile.team_id)
+            .eq('enabled', true)
+            .single(),
+          supabase
+            .from('team_knowledge_documents')
+            .select('*')
+            .eq('team_id', userProfile.team_id)
+            .eq('use_in_grading', true)
+            .order('created_at', { ascending: false })
+            .limit(10),
+          supabase
+            .from('knowledge_base')
+            .select('file_name, content')
+            .eq('user_id', (session as any).user_id)
+            .eq('is_active', true)
+            .limit(5)
+        ])
+        
+        teamGradingConfig = configResult.data
+        teamKnowledgeDocs = docsResult.data || []
+        knowledgeBase = kbResult.data || []
+        
+        // Cache the team config for future use
+        if (teamGradingConfig) {
+          setCachedTeamConfig(userProfile.team_id, teamGradingConfig)
+        }
+      }
 
       console.log('📚 Team grading config found:', !!teamGradingConfig)
       console.log('📚 Team knowledge docs:', teamKnowledgeDocs.length)
+    } else {
+      // If no team, just fetch legacy knowledge base
+      const { data: kb } = await supabase
+        .from('knowledge_base')
+        .select('file_name, content')
+        .eq('user_id', (session as any).user_id)
+        .eq('is_active', true)
+        .limit(5)
+      
+      knowledgeBase = kb || []
     }
-
-    // Also fetch legacy knowledge base context for backward compatibility
-    const { data: knowledgeBase } = await supabase
-      .from('knowledge_base')
-      .select('file_name, content')
-      .eq('user_id', (session as any).user_id)
-      .eq('is_active', true)
-      .limit(5)
 
     // Build comprehensive knowledge context
     let knowledgeContext = ''
@@ -641,7 +703,7 @@ ${knowledgeContext}`
       model: "gpt-4o-mini",
       messages: messages as any,
       response_format: { type: "json_object" },
-      max_tokens: 2500, // Increased from 1500 - need enough tokens for complete JSON
+      max_tokens: 1500, // Optimized for faster response time
       temperature: 0.3 // Slightly higher for better JSON generation
     })
 
