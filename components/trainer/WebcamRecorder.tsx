@@ -21,6 +21,17 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
     startWebcam()
   }, [])
 
+  // Ensure stream is attached to video element when it changes
+  useEffect(() => {
+    if (streamRef.current && videoRef.current && !videoRef.current.srcObject) {
+      console.log('📹 Attaching stream to video element')
+      videoRef.current.srcObject = streamRef.current
+      videoRef.current.play().catch(err => {
+        console.error('❌ Video play error:', err)
+      })
+    }
+  }, [isWebcamActive])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -43,10 +54,23 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
         audio: true
       })
 
-      console.log('✅ Camera access granted')
+      console.log('✅ Camera access granted', {
+        streamId: stream.id,
+        videoTracks: stream.getVideoTracks().length,
+        audioTracks: stream.getAudioTracks().length
+      })
+      
       streamRef.current = stream
       
+      // Set states first to trigger the useEffect
+      setIsWebcamActive(true)
+      setHasPermission(true)
+      setIsRequestingPermission(false)
+      setError(null)
+      
+      // Then attach stream to video element
       if (videoRef.current) {
+        console.log('📹 Setting srcObject on video element')
         videoRef.current.srcObject = stream
         // Explicitly play the video to ensure it displays
         try {
@@ -55,12 +79,9 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
         } catch (playError) {
           console.error('⚠️ Video play error (might auto-recover):', playError)
         }
+      } else {
+        console.warn('⚠️ Video ref is null, will retry in useEffect')
       }
-
-      setIsWebcamActive(true)
-      setHasPermission(true)
-      setIsRequestingPermission(false)
-      setError(null)
     } catch (err: any) {
       console.error('❌ Error accessing webcam:', err)
       setIsRequestingPermission(false)
