@@ -431,7 +431,7 @@ function TestimonialsSection() {
       animate={controls}
       variants={staggerContainer}
     >
-      <motion.div className="flex justify-center" variants={fadeInUp}>
+      <div className="flex justify-center">
         <motion.div 
           className="border py-1 px-4 rounded-lg"
           whileHover={{ scale: 1.05 }}
@@ -439,14 +439,13 @@ function TestimonialsSection() {
         >
           Testimonials
         </motion.div>
-      </motion.div>
+      </div>
 
-      <motion.h3 
+      <h3 
         className="text-center text-[56px] leading-[1.1] tracking-tight font-geist mt-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
-        variants={fadeInUp}
       >
         What Sales Teams Say About <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span>
-      </motion.h3>
+      </h3>
 
       <motion.div 
         className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden"

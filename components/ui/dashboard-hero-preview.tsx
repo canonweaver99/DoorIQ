@@ -208,25 +208,26 @@ export function DashboardHeroPreview() {
                              fill="white"
                            />
                            {/* Tooltip */}
-                          <g transform={`translate(${hoveredPoint.x}, ${hoveredPoint.y - 50})`}>
-                            <foreignObject x="-60" y="-30" width="120" height="60">
+                          <g transform={`translate(${hoveredPoint.x}, ${hoveredPoint.y - 55})`}>
+                            <foreignObject x="-70" y="-35" width="140" height="70" style={{ overflow: 'visible' }}>
                               <div
                                 xmlns="http://www.w3.org/1999/xhtml"
                                 style={{
                                   background: 'rgba(0,0,0,0.95)',
                                   border: '1px solid #A855F7',
                                   borderRadius: 8,
-                                  padding: '8px 10px',
+                                  padding: '10px 12px',
                                   boxShadow: '0 4px 20px rgba(168, 85, 247, 0.3)',
                                   display: 'flex',
                                   flexDirection: 'column',
-                                  gap: '4px',
-                                  minWidth: 'fit-content'
+                                  gap: '5px',
+                                  width: 'max-content',
+                                  maxWidth: '140px'
                                 }}
                               >
-                                <div style={{ color: '#A855F7', fontWeight: 700, fontSize: 16, textAlign: 'center' }}>{hoveredPoint.value}%</div>
-                                <div style={{ color: '#94a3b8', fontSize: 10, textAlign: 'center', whiteSpace: 'nowrap' }}>47 Sessions</div>
-                                <div style={{ color: '#10b981', fontSize: 10, textAlign: 'center', fontWeight: 600 }}>$4,238 Earned</div>
+                                <div style={{ color: '#A855F7', fontWeight: 700, fontSize: 18, textAlign: 'center', lineHeight: 1 }}>{hoveredPoint.value}%</div>
+                                <div style={{ color: '#94a3b8', fontSize: 11, textAlign: 'center', whiteSpace: 'nowrap', lineHeight: 1.2 }}>47 Sessions</div>
+                                <div style={{ color: '#10b981', fontSize: 11, textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap', lineHeight: 1.2 }}>$4,238 Earned</div>
                               </div>
                             </foreignObject>
                           </g>
