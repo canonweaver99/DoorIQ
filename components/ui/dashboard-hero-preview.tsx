@@ -135,17 +135,56 @@ export function DashboardHeroPreview() {
                     <span>0%</span>
                   </div>
                   
-                  <div className="ml-10 h-full pb-12 relative" ref={chartRef}>
-                    {/* Predefined snap points along the line (Mon..Sun) */}
-                    {/* x coordinates are in SVG space (0..280), y values approximate the curve */}
-                    {(() => null)()}
-                     <svg 
-                       viewBox="0 0 280 240" 
-                       className="w-full h-full absolute inset-0" 
-                       preserveAspectRatio="none"
-                       onMouseMove={(e) => {
-                         if (!chartRef.current) return
-                         const rect = chartRef.current.getBoundingClientRect()
+                   <div className="ml-10 h-full pb-12 relative" ref={chartRef}>
+                    {/* Tooltip overlay - positioned absolutely */}
+                    {hoveredPoint && chartRef.current && (() => {
+                      const rect = chartRef.current.getBoundingClientRect()
+                      const pixelX = (hoveredPoint.x / 280) * rect.width
+                      const pixelY = (hoveredPoint.y / 240) * rect.height
+                      
+                      return (
+                        <div
+                          className="absolute pointer-events-none"
+                          style={{
+                            left: pixelX,
+                            top: pixelY - 60,
+                            transform: 'translateX(-50%)',
+                            zIndex: 50
+                          }}
+                        >
+                          <div className="relative">
+                            <div className="bg-black/95 border border-purple-500 rounded-lg px-3 py-2 shadow-lg shadow-purple-500/30">
+                              <div className="text-purple-400 font-bold text-lg text-center leading-tight mb-1">
+                                {hoveredPoint.value}%
+                              </div>
+                              <div className="text-slate-400 text-xs text-center whitespace-nowrap">
+                                47 Sessions
+                              </div>
+                              <div className="text-green-400 text-xs text-center font-semibold whitespace-nowrap">
+                                $4,238 Earned
+                              </div>
+                            </div>
+                            {/* Dot on chart */}
+                            <div 
+                              className="absolute w-3 h-3 bg-pink-500 rounded-full border-2 border-white"
+                              style={{
+                                left: '50%',
+                                top: '100%',
+                                transform: 'translate(-50%, 60px)'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })()}
+                    
+                    <svg 
+                      viewBox="0 0 280 240" 
+                      className="w-full h-full absolute inset-0" 
+                      preserveAspectRatio="none"
+                      onMouseMove={(e) => {
+                        if (!chartRef.current) return
+                        const rect = chartRef.current.getBoundingClientRect()
                         const x = e.clientX - rect.left
                         // Map mouse X to SVG X
                         const relX = (x / rect.width) * 280
@@ -164,9 +203,9 @@ export function DashboardHeroPreview() {
                         })
                         const percentage = Math.max(0, Math.min(100, Math.round(100 - (nearest.y / 240) * 100)))
                         setHoveredPoint({ x: nearest.x, y: nearest.y, value: percentage })
-                       }}
-                       onMouseLeave={() => setHoveredPoint(null)}
-                     >
+                      }}
+                      onMouseLeave={() => setHoveredPoint(null)}
+                    >
                        <defs>
                          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                            <stop offset="0%" stopColor="#A855F7" />
@@ -182,82 +221,13 @@ export function DashboardHeroPreview() {
                          d="M 0 150 C 20 135, 35 110, 50 90 C 65 70, 80 80, 95 75 C 110 70, 125 55, 140 50 C 155 45, 170 60, 185 65 C 200 70, 215 80, 230 75 C 245 70, 260 55, 280 45 L 280 240 L 0 240 Z"
                          fill="url(#areaGradient)"
                        />
-                       <path
-                         d="M 0 150 C 20 135, 35 110, 50 90 C 65 70, 80 80, 95 75 C 110 70, 125 55, 140 50 C 155 45, 170 60, 185 65 C 200 70, 215 80, 230 75 C 245 70, 260 55, 280 45"
-                         fill="none"
-                         stroke="url(#lineGradient)"
-                         strokeWidth="3"
-                         strokeLinecap="round"
-                       />
-                       
-                       {/* Tracking bubble on the line */}
-                       {hoveredPoint && (
-                         <>
-                           {/* Dot on the line */}
-                           <circle
-                             cx={hoveredPoint.x}
-                             cy={hoveredPoint.y}
-                             r="6"
-                             fill="#EC4899"
-                             className="animate-pulse"
-                           />
-                           <circle
-                             cx={hoveredPoint.x}
-                             cy={hoveredPoint.y}
-                             r="4"
-                             fill="white"
-                           />
-                           {/* Tooltip */}
-                          <g transform={`translate(${hoveredPoint.x}, ${hoveredPoint.y - 40})`}>
-                            <rect
-                              x="-60"
-                              y="-28"
-                              width="120"
-                              height="56"
-                              rx="8"
-                              fill="rgba(0,0,0,0.95)"
-                              stroke="#A855F7"
-                              strokeWidth="1"
-                              filter="drop-shadow(0 4px 20px rgba(168, 85, 247, 0.3))"
-                            />
-                            <text
-                              x="0"
-                              y="-10"
-                              textAnchor="middle"
-                              style={{
-                                fill: '#A855F7',
-                                fontWeight: 700,
-                                fontSize: '18px'
-                              }}
-                            >
-                              {hoveredPoint.value}%
-                            </text>
-                            <text
-                              x="0"
-                              y="5"
-                              textAnchor="middle"
-                              style={{
-                                fill: '#94a3b8',
-                                fontSize: '11px'
-                              }}
-                            >
-                              47 Sessions
-                            </text>
-                            <text
-                              x="0"
-                              y="20"
-                              textAnchor="middle"
-                              style={{
-                                fill: '#10b981',
-                                fontWeight: 600,
-                                fontSize: '11px'
-                              }}
-                            >
-                              $4,238 Earned
-                            </text>
-                          </g>
-                         </>
-                       )}
+                      <path
+                        d="M 0 150 C 20 135, 35 110, 50 90 C 65 70, 80 80, 95 75 C 110 70, 125 55, 140 50 C 155 45, 170 60, 185 65 C 200 70, 215 80, 230 75 C 245 70, 260 55, 280 45"
+                        fill="none"
+                        stroke="url(#lineGradient)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
                      </svg>
                      
                      <div className="absolute -bottom-2 left-0 right-0 flex justify-between text-sm font-bold text-white">
