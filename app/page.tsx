@@ -2,11 +2,16 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { ScrollingAgentCarousel } from '@/components/ui/scrolling-agent-carousel'
+import { motion } from 'framer-motion'
+import { HeroSection } from '@/components/ui/hero-section-dark'
+import { InteractiveDemoSection } from '@/components/ui/interactive-demo-section'
+import { MeetHomeownersSection } from '@/components/ui/meet-homeowners-section'
 import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { FaqSection } from '@/components/ui/faq-section'
 import { TestimonialsColumn, testimonialsData } from '@/components/ui/testimonials-columns-1'
+import { Target, Zap, TrendingUp, Users, CheckCircle2, BarChart3 } from 'lucide-react'
+import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {
@@ -61,42 +66,47 @@ function useCountUp(end: number, duration = 2000, startWhen = false) {
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
-      {/* 1) Hero */}
-      <section className="relative p-0 h-screen">
-        <ScrollingAgentCarousel 
-          title="Practice Before You Knock" 
-          description="Lifelike AI homeowners. Instant feedback. Better reps." 
-          ctaPrimaryHref="/trainer/select-homeowner"
-          ctaPrimaryText="Start Training Now"
-          ctaSecondaryHref="#demo"
-          ctaSecondaryText="Watch 30-sec Demo"
-        />
-        <div className="absolute bottom-28 md:bottom-32 left-0 right-0 text-center px-4 sm:px-6 lg:px-8 z-30 pointer-events-none">
-          <p className="text-sm text-white/70 drop-shadow">Powered by enterprise-grade speech + realtime AI.</p>
-        </div>
-      </section>
+      {/* 1) New Hero Section */}
+      <HeroSection
+        title="Over 10,000+ Pitches Practiced"
+        titleHref="/pricing"
+        subtitle={{
+          regular: "Master Door to Door Sales with ",
+          gradient: "AI-Powered Training",
+        }}
+        description="Practice with AI homeowners that challenge you like real prospects, get instant feedback on every pitch"
+        ctaText="Try Your First AI Roleplay Free"
+        ctaHref="/trainer/select-homeowner"
+        ctaSecondaryText="Watch Demo"
+        ctaSecondaryHref="#dooriq-action"
+        bottomImage={undefined}
+        gridOptions={{
+          angle: 65,
+          opacity: 0.3,
+          cellSize: 50,
+          lightLineColor: "#4a4a4a",
+          darkLineColor: "#2a2a2a",
+        }}
+      />
 
-      {/* 2) Social Proof */}
+      {/* 2) Problem/Solution Section */}
+      <ProblemSolutionSection />
+
+      {/* 3) Interactive Demo */}
+      <InteractiveDemoSection />
+
+      {/* 4) Meet Our Homeowners */}
+      <MeetHomeownersSection />
+
+      {/* 5) Social Proof */}
       <SocialProofSection />
 
-      {/* 3) How It Works (3 steps) */}
-      <HowItWorksSection />
-
-      {/* 4) Results / ROI */}
+      {/* 6) Results / ROI */}
       <ResultsSection />
 
-      {/* Demo anchor placeholder */}
-      <section id="demo" className="py-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="aspect-video w-full rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
-            30-sec demo coming soon
-          </div>
-        </div>
-      </section>
-
+      {/* 8) FAQ */}
       <FaqSection
-        title="Frequently Asked Questions"
-        description="Get quick answers as you evaluate DoorIQ for your team."
+        title="FAQ"
         items={faqItems}
         contactInfo={{
           title: 'Still need help?',
@@ -109,112 +119,226 @@ export default function Home() {
   );
 }
 
-// Animated Sections
-function SocialProofSection() {
-  const [ref, isInView] = useInView(0.2)
+// Problem/Solution Section
+function ProblemSolutionSection() {
+  const { ref, controls } = useScrollAnimation(0.2)
   
+  const problems = [
+    {
+      icon: Target,
+      title: "Inconsistent Training",
+      description: "Managers don't have time to role-play with every rep, so training quality varies wildly across your team.",
+      color: "red"
+    },
+    {
+      icon: Zap,
+      title: "Slow Ramp Time",
+      description: "New reps take months to get comfortable handling objections, costing you deals and momentum.",
+      color: "orange"
+    },
+    {
+      icon: TrendingUp,
+      title: "No Performance Data",
+      description: "You have no objective way to measure who's improving, who's struggling, or what specific skills need work.",
+      color: "yellow"
+    }
+  ]
+
+  const solutions = [
+    {
+      icon: Users,
+      title: "24/7 Unlimited Practice",
+      description: "Every rep gets unlimited, on-demand practice with AI homeowners who behave like real prospects.",
+      color: "blue"
+    },
+    {
+      icon: CheckCircle2,
+      title: "Instant Skill Development",
+      description: "Immediate, objective feedback on tone, pacing, objection handling, and rapport. Reps improve faster.",
+      color: "purple"
+    },
+    {
+      icon: BarChart3,
+      title: "Clear Performance Metrics",
+      description: "Track every rep's progress with detailed analytics. Know exactly who needs help and where.",
+      color: "green"
+    }
+  ]
+
   return (
-    <section className="py-16" ref={ref}>
-      <div className={`transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <TestimonialsSection />
+    <motion.section 
+      ref={ref}
+      className="py-16 md:py-20 bg-gradient-to-b from-[#02010A] to-[#0A0420]"
+      initial="hidden"
+      animate={controls}
+      variants={staggerContainer}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div className="text-center mb-12" variants={fadeInUp}>
+          <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            The <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Challenge</span> Every Sales Manager Faces
+          </h2>
+          <p className="text-lg text-slate-300 max-w-3xl mx-auto">
+            You know your team needs practice. But between recruiting, coaching, and hitting quotas, there's never enough time.
+          </p>
+        </motion.div>
+
+        {/* Problems */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20"
+          variants={staggerContainer}
+        >
+          {problems.map((problem, index) => (
+            <motion.div
+              key={index}
+              variants={staggerItem}
+              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+              className="p-6 rounded-xl bg-red-900/10 border border-red-500/20"
+            >
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+                <problem.icon className="w-6 h-6 text-red-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">{problem.title}</h3>
+              <p className="text-white">{problem.description}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Divider */}
+        <motion.div 
+          className="flex items-center justify-center mb-20"
+          variants={fadeInScale}
+        >
+          <div className="h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent w-full max-w-md" />
+          <div className="mx-4 text-2xl font-bold text-purple-400">→</div>
+          <div className="h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent w-full max-w-md" />
+        </motion.div>
+
+        {/* Solutions */}
+        <motion.div 
+          className="text-center mb-12"
+          variants={fadeInUp}
+        >
+          <h3 className="text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span> Solves This
+          </h3>
+        </motion.div>
+
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          variants={staggerContainer}
+        >
+          {solutions.map((solution, index) => (
+            <motion.div
+              key={index}
+              variants={staggerItem}
+              whileHover={{ y: -10, transition: { duration: 0.2 } }}
+            >
+              <GlowCard
+                glowColor={solution.color === 'blue' ? 'blue' : solution.color === 'purple' ? 'purple' : 'green'}
+                customSize
+                className="p-8 h-full"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mb-4">
+                  <solution.icon className="w-6 h-6 text-purple-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">{solution.title}</h3>
+                <p className="text-white">{solution.description}</p>
+              </GlowCard>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        <motion.div 
+          className="text-center mt-12"
+          variants={fadeInUp}
+        >
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Link href="/auth/signup" className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-6 py-3 text-base font-semibold backdrop-blur-sm">
+              Get Started Free
+            </Link>
+          </motion.div>
+        </motion.div>
       </div>
-    </section>
+    </motion.section>
   )
 }
 
-function HowItWorksSection() {
-  const [ref, isInView] = useInView(0.2)
+// Animated Sections
+function SocialProofSection() {
+  const { ref, controls } = useScrollAnimation(0.2)
   
   return (
-    <section className="py-20" ref={ref}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className={`text-4xl font-bold text-slate-100 text-center transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          Your New Training Loop
-        </h2>
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              title: "Train with AI Homeowners",
-              body: "Have real voice conversations with an AI homeowner who interrupts, hesitates, and pushes back like the real world."
-            },
-            {
-              title: "Get Instant Feedback", 
-              body: "Objective scoring on tone, pace, discovery, and objection handling - with concrete next steps."
-            },
-            {
-              title: "Make Virtual Money",
-              body: "Climb the leaderboard and earn virtual rewards. Compete with teammates and track your ranking as you improve your close rate."
-            }
-          ].map((item, index) => (
-            <GlowCard
-              key={index}
-              glowColor={index === 0 ? 'blue' : index === 1 ? 'purple' : 'green'}
-              customSize
-              className={`transition-all duration-1000 h-full min-h-[240px] md:min-h-[280px] p-6 md:p-8 ${
-                isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-              }`}
-              style={{ transitionDelay: `${index * 200}ms` } as React.CSSProperties}
-            >
-              <div className="flex flex-col h-full justify-center">
-                <h3 className="text-2xl md:text-3xl font-semibold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow">
-                  {item.title}
-                </h3>
-                <p className="mt-4 text-base md:text-lg text-slate-200/90 leading-relaxed">
-                  {item.body}
-                </p>
-              </div>
-            </GlowCard>
-          ))}
-        </div>
-      </div>
-    </section>
+    <motion.section 
+      className="py-16" 
+      ref={ref}
+      initial="hidden"
+      animate={controls}
+      variants={fadeInUp}
+    >
+      <TestimonialsSection />
+    </motion.section>
   )
 }
 
 function ResultsSection() {
-  const [ref, isInView] = useInView(0.2)
+  const { ref, controls } = useScrollAnimation(0.2)
   
   return (
-    <section className="py-20" ref={ref}>
+    <motion.section 
+      className="py-16 md:py-20" 
+      ref={ref}
+      initial="hidden"
+      animate={controls}
+      variants={staggerContainer}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className={`text-4xl font-bold text-slate-100 text-center transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          Numbers That Move the Leaderboard
-        </h2>
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.h2 
+          className="text-[56px] leading-[1.1] tracking-tight font-geist text-center bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+          variants={fadeInUp}
+        >
+          Results That Move the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Needle</span>
+        </motion.h2>
+        <motion.div 
+          className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          variants={staggerContainer}
+        >
           <AnimatedStatCard 
             value={27} 
             suffix="%" 
             prefix="+"
             label="average improvement in close-rate after five sessions" 
-            startAnimation={isInView}
             delay={0}
           />
           <AnimatedStatCard 
             value={40} 
             suffix="%" 
             label="less manager time spent on live shadowing" 
-            startAnimation={isInView}
-            delay={200}
+            delay={100}
           />
           <AnimatedStatCard 
             value={2} 
             suffix="×" 
             label="faster ramp for new reps" 
-            startAnimation={isInView}
-            delay={400}
+            delay={200}
           />
           <AnimatedStatCard 
             rawValue="< 10 min"
             label="to run a high-impact practice session" 
-            startAnimation={isInView}
-            delay={600}
+            delay={300}
           />
-        </div>
-        <p className={`text-center text-slate-300 mt-10 max-w-3xl mx-auto transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '800ms' }}>
+        </motion.div>
+        <motion.p 
+          className="text-center text-white mt-10 max-w-3xl mx-auto"
+          variants={fadeInUp}
+        >
           Give your team the reps that actually matter - the hard ones.
-        </p>
+        </motion.p>
       </div>
-    </section>
+    </motion.section>
   )
 }
 
@@ -224,7 +348,6 @@ function AnimatedStatCard({
   prefix = '', 
   suffix = '', 
   label, 
-  startAnimation, 
   delay = 0 
 }: { 
   value?: number
@@ -232,40 +355,68 @@ function AnimatedStatCard({
   prefix?: string
   suffix?: string
   label: string
-  startAnimation: boolean
   delay?: number
 }) {
-  const animatedValue = useCountUp(value || 0, 2000, startAnimation)
+  const [hasAnimated, setHasAnimated] = useState(false)
+  const [displayValue, setDisplayValue] = useState(0)
   
   // Determine glow color based on delay for variety
   const getGlowColor = () => {
     if (delay === 0) return 'blue';
-    if (delay === 200) return 'purple';
-    if (delay === 400) return 'green';
+    if (delay === 100) return 'purple';
+    if (delay === 200) return 'green';
     return 'orange';
   };
   
   return (
-    <GlowCard
-      glowColor={getGlowColor()}
-      customSize
-      className={`text-center transition-all duration-1000 h-full ${
-        startAnimation ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}
-      style={{ transitionDelay: `${delay}ms` } as React.CSSProperties}
+    <motion.div
+      variants={staggerItem}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      onViewportEnter={() => {
+        if (!hasAnimated && value) {
+          setHasAnimated(true)
+          // Animate counting
+          const duration = 2000
+          const steps = 60
+          const increment = value / steps
+          let current = 0
+          
+          const timer = setInterval(() => {
+            current += increment
+            if (current >= value) {
+              setDisplayValue(value)
+              clearInterval(timer)
+            } else {
+              setDisplayValue(Math.floor(current))
+            }
+          }, duration / steps)
+        }
+      }}
+      viewport={{ once: true, amount: 0.5 }}
     >
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-4xl font-bold text-slate-100">
-          {rawValue || `${prefix}${animatedValue}${suffix}`}
+      <GlowCard
+        glowColor={getGlowColor()}
+        customSize
+        className="text-center h-full"
+      >
+        <div className="flex flex-col items-center justify-center h-full">
+          <motion.div 
+            className="text-4xl font-bold text-slate-100"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: delay / 1000, duration: 0.5 }}
+          >
+            {rawValue || `${prefix}${displayValue}${suffix}`}
+          </motion.div>
+          <div className="mt-2 text-slate-300 text-sm">{label}</div>
         </div>
-        <div className="mt-2 text-slate-300 text-sm">{label}</div>
-      </div>
-    </GlowCard>
+      </GlowCard>
+    </motion.div>
   )
 }
 
 function TestimonialsSection() {
-  const [ref, isInView] = useInView(0.2)
+  const { ref, controls } = useScrollAnimation(0.2)
 
   const columnSize = Math.ceil(testimonialsData.length / 3)
   const firstColumn = testimonialsData.slice(0, columnSize)
@@ -273,30 +424,59 @@ function TestimonialsSection() {
   const thirdColumn = testimonialsData.slice(columnSize * 2)
 
   return (
-    <div
+    <motion.div
       ref={ref}
-      className={`transition-all duration-1000 mt-12 ${
-        isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}
+      className="mt-12"
+      initial="hidden"
+      animate={controls}
+      variants={staggerContainer}
     >
-      <div className="flex justify-center">
-        <div className="border py-1 px-4 rounded-lg">Testimonials</div>
-      </div>
+      <motion.div className="flex justify-center" variants={fadeInUp}>
+        <motion.div 
+          className="border py-1 px-4 rounded-lg"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.2 }}
+        >
+          Testimonials
+        </motion.div>
+      </motion.div>
 
-      <h3 className="text-center text-3xl md:text-4xl font-semibold text-white mt-6">
-        What teams say about DoorIQ
-      </h3>
+      <motion.h3 
+        className="text-center text-[56px] leading-[1.1] tracking-tight font-geist mt-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+        variants={fadeInUp}
+      >
+        What Sales Teams Say About <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span>
+      </motion.h3>
 
-      <div className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden">
-        <TestimonialsColumn testimonials={firstColumn} duration={18} />
+      <motion.div 
+        className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden"
+        variants={{
+          hidden: { opacity: 0, y: 50 },
+          visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+              duration: 0.8,
+              staggerChildren: 0.2
+            }
+          }
+        }}
+      >
+        <motion.div variants={staggerItem}>
+          <TestimonialsColumn testimonials={firstColumn} duration={18} />
+        </motion.div>
         {secondColumn.length > 0 && (
-          <TestimonialsColumn testimonials={secondColumn} className="hidden md:block" duration={22} />
+          <motion.div variants={staggerItem} className="hidden md:block">
+            <TestimonialsColumn testimonials={secondColumn} duration={22} />
+          </motion.div>
         )}
         {thirdColumn.length > 0 && (
-          <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={20} />
+          <motion.div variants={staggerItem} className="hidden lg:block">
+            <TestimonialsColumn testimonials={thirdColumn} duration={20} />
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
