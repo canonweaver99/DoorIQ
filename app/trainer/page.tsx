@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import ElevenLabsConversation from '@/components/trainer/ElevenLabsConversation'
+import WebcamRecorder from '@/components/trainer/WebcamRecorder'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
@@ -79,10 +80,8 @@ function TrainerPageContent() {
       timestamp: new Date(),
     }
     setTranscript(prev => [...prev, entry])
-
-    setTimeout(() => {
-      transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, 100)
+    
+    // Removed auto-scroll behavior - user can manually scroll if needed
   }, [])
 
   useEffect(() => {
@@ -323,11 +322,14 @@ function TrainerPageContent() {
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col items-center justify-start px-6 py-8 space-y-8">
+      {/* Main Content Area - Split Screen */}
+      <div className="flex-1 flex gap-6 px-6 pb-6">
+        
+        {/* Left Side - Agent and Transcript */}
+        <div className="flex-1 flex flex-col space-y-6">
         
         {/* Agent Orb/Bubble with Animated Rings */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center pt-4">
           {(() => {
             const agentMeta = selectedAgent?.name ? PERSONA_METADATA[selectedAgent.name as AllowedAgentName] : null
             const colorVariant = agentMeta?.bubble.color || 'primary'
@@ -425,47 +427,56 @@ function TrainerPageContent() {
         </div>
 
         {/* Live Transcript */}
-        <div className="w-full max-w-4xl">
-          <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 min-h-[450px] max-h-[500px] overflow-y-auto custom-scrollbar">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 flex-1 flex flex-col overflow-hidden">
             <h3 className="text-slate-400 text-sm font-semibold mb-4 uppercase tracking-wide">Live Transcript</h3>
             
-            {transcript.length === 0 ? (
-              <div className="text-center text-slate-500 py-12">
-                {sessionActive ? (
-                  <p>Waiting for conversation to begin...</p>
-                ) : (
-                  <p>Click the orb above to start your practice session with {selectedAgent?.name || 'the agent'}</p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {transcript.map((entry) => {
-                  const isUser = entry.speaker === 'user'
-                  return (
-                    <div
-                      key={entry.id}
-                      className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}
-                    >
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              {transcript.length === 0 ? (
+                <div className="text-center text-slate-500 py-12">
+                  {sessionActive ? (
+                    <p>Waiting for conversation to begin...</p>
+                  ) : (
+                    <p>Click the orb above to start your practice session with {selectedAgent?.name || 'the agent'}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {transcript.map((entry) => {
+                    const isUser = entry.speaker === 'user'
+                    return (
                       <div
-                        className={`max-w-[75%] px-4 py-2.5 rounded-xl ${
-                          isUser
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-slate-700/80 text-slate-100'
-                        }`}
+                        key={entry.id}
+                        className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}
                       >
-                        <div className="text-[10px] font-semibold mb-1 opacity-60 uppercase tracking-wide">
-                          {isUser ? 'You' : selectedAgent?.name || 'Agent'}
+                        <div
+                          className={`max-w-[75%] px-4 py-2.5 rounded-xl ${
+                            isUser
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-slate-700/80 text-slate-100'
+                          }`}
+                        >
+                          <div className="text-[10px] font-semibold mb-1 opacity-60 uppercase tracking-wide">
+                            {isUser ? 'You' : selectedAgent?.name || 'Agent'}
+                          </div>
+                          <div className="text-sm leading-relaxed">{entry.text}</div>
                         </div>
-                        <div className="text-sm leading-relaxed">{entry.text}</div>
                       </div>
-                    </div>
-                  )
-                })}
-                <div ref={transcriptEndRef} />
-              </div>
-            )}
+                    )
+                  })}
+                  <div ref={transcriptEndRef} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
+        </div>
+
+        {/* Right Side - Webcam */}
+        <div className="w-[480px] flex flex-col">
+          <WebcamRecorder sessionActive={sessionActive} />
+        </div>
+        
       </div>
 
       {/* Hidden ElevenLabs Component */}
