@@ -1,0 +1,375 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.9.2
+2 info using node@v22.17.1
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/canonweaver/DoorIQ/.npmrc
+5 silly config load:file:/Users/canonweaver/.npmrc
+6 silly config load:file:/usr/local/etc/npmrc
+7 verbose title npm install
+8 verbose argv "install" "--cache" ".npm-cache" "--no-audit" "--no-fund"
+9 verbose logfile logs-max:10 dir:/Users/canonweaver/DoorIQ/.npm-cache/_logs/2025-10-22T21_26_43_718Z-
+10 verbose logfile /Users/canonweaver/DoorIQ/.npm-cache/_logs/2025-10-22T21_26_43_718Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 silly idealTree buildDeps
+14 silly fetch manifest typescript@>= 4.5.5 < 5
+15 silly packumentCache full:https://registry.npmjs.org/typescript cache-miss
+16 http fetch GET 200 https://registry.npmjs.org/npm 388ms
+17 http fetch GET 200 https://registry.npmjs.org/typescript 732ms (cache updated)
+18 silly packumentCache full:https://registry.npmjs.org/typescript set size:undefined disposed:false
+19 warn ERESOLVE overriding peer dependency {
+19 warn ERESOLVE   code: 'ERESOLVE',
+19 warn ERESOLVE   edge: {
+19 warn ERESOLVE     type: 'peerOptional',
+19 warn ERESOLVE     name: 'typescript',
+19 warn ERESOLVE     spec: '>= 4.5.5 < 5',
+19 warn ERESOLVE     error: 'INVALID',
+19 warn ERESOLVE     from: {
+19 warn ERESOLVE       name: 'class-variance-authority',
+19 warn ERESOLVE       version: '0.4.0',
+19 warn ERESOLVE       location: 'node_modules/@calcom/atoms/node_modules/class-variance-authority',
+19 warn ERESOLVE       isWorkspace: false,
+19 warn ERESOLVE       dependents: [Array]
+19 warn ERESOLVE     }
+19 warn ERESOLVE   },
+19 warn ERESOLVE   dep: {
+19 warn ERESOLVE     name: 'typescript',
+19 warn ERESOLVE     version: '4.9.5',
+19 warn ERESOLVE     whileInstalling: {
+19 warn ERESOLVE       name: 'class-variance-authority',
+19 warn ERESOLVE       version: '0.4.0',
+19 warn ERESOLVE       path: '/Users/canonweaver/DoorIQ/node_modules/@calcom/atoms/node_modules/class-variance-authority'
+19 warn ERESOLVE     },
+19 warn ERESOLVE     location: 'node_modules/typescript',
+19 warn ERESOLVE     isWorkspace: false,
+19 warn ERESOLVE     dependents: [ [Object] ]
+19 warn ERESOLVE   },
+19 warn ERESOLVE   force: false,
+19 warn ERESOLVE   isMine: false,
+19 warn ERESOLVE   strictPeerDeps: false,
+19 warn ERESOLVE   current: {
+19 warn ERESOLVE     name: 'typescript',
+19 warn ERESOLVE     version: '5.9.2',
+19 warn ERESOLVE     location: 'node_modules/typescript',
+19 warn ERESOLVE     isWorkspace: false,
+19 warn ERESOLVE     dependents: [
+19 warn ERESOLVE       [Object], [Object],
+19 warn ERESOLVE       [Object], [Object],
+19 warn ERESOLVE       [Object], [Object],
+19 warn ERESOLVE       [Object], [Object],
+19 warn ERESOLVE       [Object], [Object],
+19 warn ERESOLVE       [Object], [Object],
+19 warn ERESOLVE       [Object], [Object],
+19 warn ERESOLVE       [Object]
+19 warn ERESOLVE     ]
+19 warn ERESOLVE   },
+19 warn ERESOLVE   peerConflict: {
+19 warn ERESOLVE     current: {
+19 warn ERESOLVE       name: 'typescript',
+19 warn ERESOLVE       version: '5.9.2',
+19 warn ERESOLVE       location: 'node_modules/typescript',
+19 warn ERESOLVE       isWorkspace: false,
+19 warn ERESOLVE       dependents: [Array]
+19 warn ERESOLVE     },
+19 warn ERESOLVE     peer: {
+19 warn ERESOLVE       name: 'typescript',
+19 warn ERESOLVE       version: '4.9.5',
+19 warn ERESOLVE       whileInstalling: [Object],
+19 warn ERESOLVE       location: 'node_modules/typescript',
+19 warn ERESOLVE       isWorkspace: false,
+19 warn ERESOLVE       dependents: [Array]
+19 warn ERESOLVE     }
+19 warn ERESOLVE   }
+19 warn ERESOLVE }
+20 silly reify moves {}
+21 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-win32-x64-msvc
+22 silly reify mark deleted [
+22 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-win32-x64-msvc'
+22 silly reify ]
+23 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-win32-ia32-msvc
+24 silly reify mark deleted [
+24 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-win32-ia32-msvc'
+24 silly reify ]
+25 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-win32-arm64-msvc
+26 silly reify mark deleted [
+26 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-win32-arm64-msvc'
+26 silly reify ]
+27 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-wasm32-wasi
+28 silly reify mark deleted [
+28 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-wasm32-wasi'
+28 silly reify ]
+29 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@napi-rs/wasm-runtime
+30 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@napi-rs/wasm-runtime' ]
+31 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@emnapi/core
+32 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@emnapi/core' ]
+33 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@tybys/wasm-util
+34 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@tybys/wasm-util' ]
+35 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@emnapi/wasi-threads
+36 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@emnapi/wasi-threads' ]
+37 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-x64-musl
+38 silly reify mark deleted [
+38 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-x64-musl'
+38 silly reify ]
+39 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-x64-gnu
+40 silly reify mark deleted [
+40 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-x64-gnu'
+40 silly reify ]
+41 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-s390x-gnu
+42 silly reify mark deleted [
+42 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-s390x-gnu'
+42 silly reify ]
+43 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-riscv64-musl
+44 silly reify mark deleted [
+44 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-riscv64-musl'
+44 silly reify ]
+45 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-riscv64-gnu
+46 silly reify mark deleted [
+46 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-riscv64-gnu'
+46 silly reify ]
+47 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-ppc64-gnu
+48 silly reify mark deleted [
+48 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-ppc64-gnu'
+48 silly reify ]
+49 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-arm64-musl
+50 silly reify mark deleted [
+50 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-arm64-musl'
+50 silly reify ]
+51 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-arm64-gnu
+52 silly reify mark deleted [
+52 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-arm64-gnu'
+52 silly reify ]
+53 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-arm-musleabihf
+54 silly reify mark deleted [
+54 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-arm-musleabihf'
+54 silly reify ]
+55 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-arm-gnueabihf
+56 silly reify mark deleted [
+56 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-linux-arm-gnueabihf'
+56 silly reify ]
+57 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-freebsd-x64
+58 silly reify mark deleted [
+58 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-freebsd-x64'
+58 silly reify ]
+59 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-darwin-x64
+60 silly reify mark deleted [
+60 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-darwin-x64'
+60 silly reify ]
+61 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-android-arm64
+62 silly reify mark deleted [
+62 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-android-arm64'
+62 silly reify ]
+63 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-android-arm-eabi
+64 silly reify mark deleted [
+64 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@unrs/resolver-binding-android-arm-eabi'
+64 silly reify ]
+65 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@next/swc-win32-x64-msvc
+66 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@next/swc-win32-x64-msvc' ]
+67 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@next/swc-win32-arm64-msvc
+68 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@next/swc-win32-arm64-msvc' ]
+69 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@next/swc-linux-x64-musl
+70 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@next/swc-linux-x64-musl' ]
+71 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@next/swc-linux-x64-gnu
+72 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@next/swc-linux-x64-gnu' ]
+73 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@next/swc-linux-arm64-musl
+74 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@next/swc-linux-arm64-musl' ]
+75 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@next/swc-linux-arm64-gnu
+76 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@next/swc-linux-arm64-gnu' ]
+77 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@next/swc-darwin-x64
+78 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@next/swc-darwin-x64' ]
+79 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-win32-x64
+80 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-win32-x64' ]
+81 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-win32-ia32
+82 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-win32-ia32' ]
+83 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-win32-arm64
+84 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-win32-arm64' ]
+85 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-wasm32
+86 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-wasm32' ]
+87 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-linuxmusl-x64
+88 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-linuxmusl-x64' ]
+89 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-linuxmusl-arm64
+90 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-linuxmusl-arm64' ]
+91 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-x64
+92 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-x64' ]
+93 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-s390x
+94 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-s390x' ]
+95 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-ppc64
+96 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-ppc64' ]
+97 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-arm64
+98 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-arm64' ]
+99 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-arm
+100 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-linux-arm' ]
+101 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linuxmusl-x64
+102 silly reify mark deleted [
+102 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linuxmusl-x64'
+102 silly reify ]
+103 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linuxmusl-arm64
+104 silly reify mark deleted [
+104 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linuxmusl-arm64'
+104 silly reify ]
+105 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-x64
+106 silly reify mark deleted [
+106 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-x64'
+106 silly reify ]
+107 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-s390x
+108 silly reify mark deleted [
+108 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-s390x'
+108 silly reify ]
+109 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-ppc64
+110 silly reify mark deleted [
+110 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-ppc64'
+110 silly reify ]
+111 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-arm64
+112 silly reify mark deleted [
+112 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-arm64'
+112 silly reify ]
+113 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-arm
+114 silly reify mark deleted [
+114 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-linux-arm'
+114 silly reify ]
+115 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-darwin-x64
+116 silly reify mark deleted [
+116 silly reify   '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-libvips-darwin-x64'
+116 silly reify ]
+117 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@img/sharp-darwin-x64
+118 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@img/sharp-darwin-x64' ]
+119 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/win32-x64
+120 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/win32-x64' ]
+121 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/win32-ia32
+122 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/win32-ia32' ]
+123 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/win32-arm64
+124 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/win32-arm64' ]
+125 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/sunos-x64
+126 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/sunos-x64' ]
+127 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/openharmony-arm64
+128 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/openharmony-arm64' ]
+129 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/openbsd-x64
+130 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/openbsd-x64' ]
+131 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/openbsd-arm64
+132 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/openbsd-arm64' ]
+133 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/netbsd-x64
+134 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/netbsd-x64' ]
+135 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/netbsd-arm64
+136 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/netbsd-arm64' ]
+137 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-x64
+138 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-x64' ]
+139 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-s390x
+140 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-s390x' ]
+141 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-riscv64
+142 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-riscv64' ]
+143 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-ppc64
+144 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-ppc64' ]
+145 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-mips64el
+146 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-mips64el' ]
+147 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-loong64
+148 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-loong64' ]
+149 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-ia32
+150 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-ia32' ]
+151 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-arm64
+152 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-arm64' ]
+153 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-arm
+154 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/linux-arm' ]
+155 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/freebsd-x64
+156 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/freebsd-x64' ]
+157 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/freebsd-arm64
+158 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/freebsd-arm64' ]
+159 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/darwin-x64
+160 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/darwin-x64' ]
+161 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/android-x64
+162 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/android-x64' ]
+163 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/android-arm64
+164 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/android-arm64' ]
+165 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/android-arm
+166 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/android-arm' ]
+167 verbose reify failed optional dependency /Users/canonweaver/DoorIQ/node_modules/@esbuild/aix-ppc64
+168 silly reify mark deleted [ '/Users/canonweaver/DoorIQ/node_modules/@esbuild/aix-ppc64' ]
+169 http cache @tybys/wasm-util@https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.1.tgz 0ms (cache hit)
+170 http cache @napi-rs/wasm-runtime@https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.12.tgz 0ms (cache hit)
+171 http cache @emnapi/wasi-threads@https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.1.0.tgz 0ms (cache hit)
+172 http cache @emnapi/core@https://registry.npmjs.org/@emnapi/core/-/core-1.5.0.tgz 0ms (cache hit)
+173 silly tarball no local data for @napi-rs/wasm-runtime@https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.12.tgz. Extracting by manifest.
+174 http fetch GET 200 https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.12.tgz 185ms (cache miss)
+175 silly ADD
+176 silly ADD
+177 silly ADD
+178 silly ADD
+179 silly ADD
+180 silly ADD
+181 silly ADD
+182 silly ADD
+183 silly ADD
+184 silly ADD
+185 silly ADD
+186 silly ADD
+187 silly ADD
+188 silly ADD
+189 silly ADD
+190 silly ADD
+191 silly ADD
+192 silly ADD
+193 silly ADD
+194 silly ADD
+195 silly ADD
+196 silly ADD
+197 silly ADD
+198 silly ADD
+199 silly ADD
+200 silly ADD
+201 silly ADD
+202 silly ADD
+203 silly ADD
+204 silly ADD
+205 silly ADD
+206 silly ADD
+207 silly ADD
+208 silly ADD
+209 silly ADD
+210 silly ADD
+211 silly ADD
+212 silly ADD
+213 silly ADD
+214 silly ADD
+215 silly ADD
+216 silly ADD
+217 silly ADD
+218 silly ADD
+219 silly ADD
+220 silly ADD
+221 silly ADD
+222 silly ADD
+223 silly ADD
+224 silly ADD
+225 silly ADD
+226 silly ADD
+227 silly ADD
+228 silly ADD
+229 silly ADD
+230 silly ADD
+231 silly ADD
+232 silly ADD
+233 silly ADD
+234 silly ADD
+235 silly ADD
+236 silly ADD
+237 silly ADD
+238 silly ADD
+239 silly ADD
+240 silly ADD
+241 silly ADD
+242 silly ADD
+243 silly ADD
+244 silly ADD
+245 silly ADD
+246 silly ADD
+247 silly ADD
+248 silly ADD
+249 verbose cwd /Users/canonweaver/DoorIQ
+250 verbose os Darwin 24.6.0
+251 verbose node v22.17.1
+252 verbose npm  v10.9.2
+253 notice
+253 notice New major version of npm available! 10.9.2 -> 11.6.2
+253 notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+253 notice To update run: npm install -g npm@11.6.2
+253 notice  { force: true, [Symbol(proc-log.meta)]: true }
+254 verbose exit 0
+255 info ok

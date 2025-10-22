@@ -92,10 +92,10 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] z-10 mx-auto w-full" style={{ paddingLeft: '80px', paddingRight: '80px' }}>
             {/* Split Screen: Copy Left, Live Session Right */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start pt-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center pt-8">
               {/* Left Side - Copy */}
               <motion.div 
-                className="space-y-5 text-center flex flex-col items-center justify-start" 
+                className="space-y-5 text-center flex flex-col items-center justify-center" 
                 style={{ paddingRight: '40px' }}
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -126,55 +126,12 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     {subtitle.gradient}
                   </span>
                 </motion.h2>
-                <motion.p 
-                  className="text-gray-600 dark:text-gray-300/80 text-base"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.6 }}
-                >
-                  {description}
-                </motion.p>
-
-                {/* Industry Grid - 4x2 */}
-                <motion.div 
-                  className="grid grid-cols-2 gap-3 w-full"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                >
-                  {[
-                    "Solar",
-                    "Pest Control",
-                    "Roofing",
-                    "Internet",
-                    "Security",
-                    "HVAC",
-                    "Windows",
-                    "Home Services"
-                  ].map((industry, index) => (
-                    <motion.div
-                      key={industry}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.6 + index * 0.08, duration: 0.4 }}
-                    >
-                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <svg className="w-2.5 h-2.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span className="text-xs text-white font-medium">{industry}</span>
-                    </motion.div>
-                  ))}
-                </motion.div>
-
-                {/* CTAs */}
+                {/* CTAs moved directly under sub header */}
                 <motion.div 
                   className="flex items-center justify-center gap-4 flex-wrap pt-2"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.1, duration: 0.6 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
                 >
                   {/* Primary CTA */}
                   <motion.span 
@@ -192,7 +149,6 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                       </a>
                     </div>
                   </motion.span>
-                  
                   {/* Secondary CTA */}
                   {ctaSecondaryText && (
                     <motion.span 
@@ -218,6 +174,45 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                       </div>
                     </motion.span>
                   )}
+                </motion.div>
+                <motion.p 
+                  className="text-gray-600 dark:text-gray-300/80 text-base"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                >
+                  {description}
+                </motion.p>
+                {/* Industry Grid moved beneath all left-column content and reduced to 6 */}
+                <motion.div 
+                  className="grid grid-cols-2 gap-3 w-full"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8, duration: 0.8 }}
+                >
+                  {[
+                    "Solar",
+                    "Pest Control",
+                    "Roofing",
+                    "Security",
+                    "HVAC",
+                    "Windows"
+                  ].map((industry, index) => (
+                    <motion.div
+                      key={industry}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.9 + index * 0.08, duration: 0.4 }}
+                    >
+                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <svg className="w-2.5 h-2.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-xs text-white font-medium">{industry}</span>
+                    </motion.div>
+                  ))}
                 </motion.div>
               </motion.div>
 

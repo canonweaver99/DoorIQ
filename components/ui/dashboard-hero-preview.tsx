@@ -135,7 +135,10 @@ export function DashboardHeroPreview() {
                     <span>0%</span>
                   </div>
                   
-                   <div className="ml-10 h-full pb-12 relative" ref={chartRef}>
+                  <div className="ml-10 h-full pb-12 relative" ref={chartRef}>
+                    {/* Predefined snap points along the line (Mon..Sun) */}
+                    {/* x coordinates are in SVG space (0..280), y values approximate the curve */}
+                    {(() => null)()}
                      <svg 
                        viewBox="0 0 280 240" 
                        className="w-full h-full absolute inset-0" 
@@ -143,14 +146,24 @@ export function DashboardHeroPreview() {
                        onMouseMove={(e) => {
                          if (!chartRef.current) return
                          const rect = chartRef.current.getBoundingClientRect()
-                         const x = e.clientX - rect.left
-                         const y = e.clientY - rect.top
-                         // Calculate relative position in SVG coordinates
-                         const relX = (x / rect.width) * 280
-                         const relY = (y / rect.height) * 240
-                         // Calculate rough percentage based on Y position
-                         const percentage = Math.max(0, Math.min(100, Math.round(100 - (y / rect.height) * 100)))
-                         setHoveredPoint({ x: relX, y: relY, value: percentage })
+                        const x = e.clientX - rect.left
+                        // Map mouse X to SVG X
+                        const relX = (x / rect.width) * 280
+                        // Snap to nearest predefined data point on the line
+                        const snapPoints = [
+                          { x: 0, y: 150 },
+                          { x: 50, y: 90 },
+                          { x: 95, y: 75 },
+                          { x: 140, y: 50 },
+                          { x: 185, y: 65 },
+                          { x: 230, y: 75 },
+                          { x: 280, y: 45 },
+                        ]
+                        const nearest = snapPoints.reduce((prev, curr) => {
+                          return Math.abs(curr.x - relX) < Math.abs(prev.x - relX) ? curr : prev
+                        })
+                        const percentage = Math.max(0, Math.min(100, Math.round(100 - (nearest.y / 240) * 100)))
+                        setHoveredPoint({ x: nearest.x, y: nearest.y, value: percentage })
                        }}
                        onMouseLeave={() => setHoveredPoint(null)}
                      >
@@ -195,27 +208,28 @@ export function DashboardHeroPreview() {
                              fill="white"
                            />
                            {/* Tooltip */}
-                           <g transform={`translate(${hoveredPoint.x}, ${hoveredPoint.y - 30})`}>
-                             <rect
-                               x="-25"
-                               y="-15"
-                               width="50"
-                               height="24"
-                               rx="4"
-                               fill="rgba(0, 0, 0, 0.9)"
-                               stroke="#A855F7"
-                               strokeWidth="1"
-                             />
-                             <text
-                               x="0"
-                               y="2"
-                               textAnchor="middle"
-                               className="text-xs font-bold fill-white"
-                               style={{ fontSize: '12px' }}
-                             >
-                               {hoveredPoint.value}%
-                             </text>
-                           </g>
+                          <g transform={`translate(${hoveredPoint.x}, ${hoveredPoint.y - 50})`}>
+                            <foreignObject x="-60" y="-30" width="120" height="60">
+                              <div
+                                xmlns="http://www.w3.org/1999/xhtml"
+                                style={{
+                                  background: 'rgba(0,0,0,0.95)',
+                                  border: '1px solid #A855F7',
+                                  borderRadius: 8,
+                                  padding: '8px 10px',
+                                  boxShadow: '0 4px 20px rgba(168, 85, 247, 0.3)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '4px',
+                                  minWidth: 'fit-content'
+                                }}
+                              >
+                                <div style={{ color: '#A855F7', fontWeight: 700, fontSize: 16, textAlign: 'center' }}>{hoveredPoint.value}%</div>
+                                <div style={{ color: '#94a3b8', fontSize: 10, textAlign: 'center', whiteSpace: 'nowrap' }}>47 Sessions</div>
+                                <div style={{ color: '#10b981', fontSize: 10, textAlign: 'center', fontWeight: 600 }}>$4,238 Earned</div>
+                              </div>
+                            </foreignObject>
+                          </g>
                          </>
                        )}
                      </svg>

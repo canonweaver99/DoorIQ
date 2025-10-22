@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 const AGENT_BASE_SIZE_PX = 240; // smaller base size
 const ITEM_SPACING_PX = 280; // adjusted spacing for smaller agents
 const CENTER_OFFSET_PX = AGENT_BASE_SIZE_PX / 2;
-const SCROLL_SPEED_PX_PER_FRAME = 0.75; // continuous scroll speed
+const SCROLL_SPEED_PX_PER_FRAME = 1.5; // continuous scroll speed - increased for faster carousel
 
 // Visual tuning - extreme shrinking at edges for intense effect
 const SCALE_MIN = 0.15; // extremely small at far edges
