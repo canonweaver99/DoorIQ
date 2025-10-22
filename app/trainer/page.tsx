@@ -325,8 +325,8 @@ function TrainerPageContent() {
       {/* Main Content Area - Split Screen */}
       <div className="flex-1 flex gap-6 px-6 pb-6">
         
-        {/* Left Side - Agent and Transcript */}
-        <div className="flex-1 flex flex-col space-y-6">
+        {/* Left Side - Agent and Transcript - 50% width */}
+        <div className="flex-1 flex flex-col space-y-6 max-w-[50%]">
         
         {/* Agent Orb/Bubble with Animated Rings */}
         <div className="flex flex-col items-center pt-4">
@@ -472,8 +472,8 @@ function TrainerPageContent() {
         </div>
         </div>
 
-        {/* Right Side - Webcam */}
-        <div className="w-[480px] flex flex-col">
+        {/* Right Side - Webcam - 50% width */}
+        <div className="flex-1 flex flex-col max-w-[50%]">
           <WebcamRecorder sessionActive={sessionActive} />
         </div>
         

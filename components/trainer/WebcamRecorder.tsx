@@ -11,16 +11,15 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
   const [isWebcamActive, setIsWebcamActive] = useState(false)
   const [isMicActive, setIsMicActive] = useState(true)
   const [hasPermission, setHasPermission] = useState(false)
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
-  // Start webcam when session becomes active
+  // Request camera permission immediately on component mount
   useEffect(() => {
-    if (sessionActive && !isWebcamActive) {
-      startWebcam()
-    }
-  }, [sessionActive])
+    startWebcam()
+  }, [])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -31,6 +30,10 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
 
   const startWebcam = async () => {
     try {
+      setIsRequestingPermission(true)
+      setError(null)
+      console.log('🎥 Requesting camera access...')
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -40,18 +43,36 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
         audio: true
       })
 
+      console.log('✅ Camera access granted')
       streamRef.current = stream
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream
+        // Explicitly play the video to ensure it displays
+        try {
+          await videoRef.current.play()
+          console.log('✅ Video playing')
+        } catch (playError) {
+          console.error('⚠️ Video play error (might auto-recover):', playError)
+        }
       }
 
       setIsWebcamActive(true)
       setHasPermission(true)
+      setIsRequestingPermission(false)
       setError(null)
-    } catch (err) {
-      console.error('Error accessing webcam:', err)
-      setError('Unable to access camera. Please check permissions.')
+    } catch (err: any) {
+      console.error('❌ Error accessing webcam:', err)
+      setIsRequestingPermission(false)
+      
+      // Provide more specific error messages
+      if (err.name === 'NotAllowedError') {
+        setError('Camera permission denied. Please allow camera access in your browser settings.')
+      } else if (err.name === 'NotFoundError') {
+        setError('No camera found. Please connect a camera and try again.')
+      } else {
+        setError('Unable to access camera. Please check permissions and try again.')
+      }
       setIsWebcamActive(false)
     }
   }
@@ -98,7 +119,13 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
 
       {/* Video Container */}
       <div className="flex-1 relative bg-slate-900/50 flex items-center justify-center p-4">
-        {error ? (
+        {isRequestingPermission ? (
+          <div className="text-center text-slate-400">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-3"></div>
+            <p className="text-sm">Requesting camera permission...</p>
+            <p className="text-xs text-slate-500 mt-2">Please allow access in your browser</p>
+          </div>
+        ) : error ? (
           <div className="text-center text-slate-400 max-w-sm">
             <CameraOff className="w-12 h-12 mx-auto mb-3 text-slate-600" />
             <p className="text-sm">{error}</p>
@@ -113,14 +140,12 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
           <div className="text-center text-slate-400">
             <CameraOff className="w-12 h-12 mx-auto mb-3 text-slate-600" />
             <p className="text-sm mb-4">Camera is off</p>
-            {sessionActive && (
-              <button
-                onClick={startWebcam}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
-              >
-                Turn On Camera
-              </button>
-            )}
+            <button
+              onClick={startWebcam}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
+            >
+              Turn On Camera
+            </button>
           </div>
         ) : (
           <div className="relative w-full h-full flex items-center justify-center">
