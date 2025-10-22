@@ -208,28 +208,53 @@ export function DashboardHeroPreview() {
                              fill="white"
                            />
                            {/* Tooltip */}
-                          <g transform={`translate(${hoveredPoint.x}, ${hoveredPoint.y - 55})`}>
-                            <foreignObject x="-70" y="-35" width="140" height="70" style={{ overflow: 'visible' }}>
-                              <div
-                                xmlns="http://www.w3.org/1999/xhtml"
-                                style={{
-                                  background: 'rgba(0,0,0,0.95)',
-                                  border: '1px solid #A855F7',
-                                  borderRadius: 8,
-                                  padding: '10px 12px',
-                                  boxShadow: '0 4px 20px rgba(168, 85, 247, 0.3)',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '5px',
-                                  width: 'max-content',
-                                  maxWidth: '140px'
-                                }}
-                              >
-                                <div style={{ color: '#A855F7', fontWeight: 700, fontSize: 18, textAlign: 'center', lineHeight: 1 }}>{hoveredPoint.value}%</div>
-                                <div style={{ color: '#94a3b8', fontSize: 11, textAlign: 'center', whiteSpace: 'nowrap', lineHeight: 1.2 }}>47 Sessions</div>
-                                <div style={{ color: '#10b981', fontSize: 11, textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap', lineHeight: 1.2 }}>$4,238 Earned</div>
-                              </div>
-                            </foreignObject>
+                          <g transform={`translate(${hoveredPoint.x}, ${hoveredPoint.y - 40})`}>
+                            <rect
+                              x="-60"
+                              y="-28"
+                              width="120"
+                              height="56"
+                              rx="8"
+                              fill="rgba(0,0,0,0.95)"
+                              stroke="#A855F7"
+                              strokeWidth="1"
+                              filter="drop-shadow(0 4px 20px rgba(168, 85, 247, 0.3))"
+                            />
+                            <text
+                              x="0"
+                              y="-10"
+                              textAnchor="middle"
+                              style={{
+                                fill: '#A855F7',
+                                fontWeight: 700,
+                                fontSize: '18px'
+                              }}
+                            >
+                              {hoveredPoint.value}%
+                            </text>
+                            <text
+                              x="0"
+                              y="5"
+                              textAnchor="middle"
+                              style={{
+                                fill: '#94a3b8',
+                                fontSize: '11px'
+                              }}
+                            >
+                              47 Sessions
+                            </text>
+                            <text
+                              x="0"
+                              y="20"
+                              textAnchor="middle"
+                              style={{
+                                fill: '#10b981',
+                                fontWeight: 600,
+                                fontSize: '11px'
+                              }}
+                            >
+                              $4,238 Earned
+                            </text>
                           </g>
                          </>
                        )}
