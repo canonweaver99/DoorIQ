@@ -139,20 +139,21 @@ export function DashboardHeroPreview() {
                     {/* Tooltip overlay - positioned absolutely */}
                     {hoveredPoint && chartRef.current && (() => {
                       const rect = chartRef.current.getBoundingClientRect()
-                      const pixelX = (hoveredPoint.x / 280) * rect.width
-                      const pixelY = (hoveredPoint.y / 240) * rect.height
+                      const pixelX = (hoveredPoint.x / 280) * (rect.width - 40) // Adjust for left margin
+                      const pixelY = (hoveredPoint.y / 240) * (rect.height - 48) // Adjust for bottom padding
                       
                       return (
-                        <div
-                          className="absolute pointer-events-none"
-                          style={{
-                            left: pixelX,
-                            top: pixelY - 60,
-                            transform: 'translateX(-50%)',
-                            zIndex: 50
-                          }}
-                        >
-                          <div className="relative">
+                        <>
+                          {/* Tooltip */}
+                          <div
+                            className="absolute pointer-events-none"
+                            style={{
+                              left: pixelX,
+                              top: pixelY - 70,
+                              transform: 'translateX(-50%)',
+                              zIndex: 50
+                            }}
+                          >
                             <div className="bg-black/95 border border-purple-500 rounded-lg px-3 py-2 shadow-lg shadow-purple-500/30">
                               <div className="text-purple-400 font-bold text-lg text-center leading-tight mb-1">
                                 {hoveredPoint.value}%
@@ -164,17 +165,18 @@ export function DashboardHeroPreview() {
                                 $4,238 Earned
                               </div>
                             </div>
-                            {/* Dot on chart */}
-                            <div 
-                              className="absolute w-3 h-3 bg-pink-500 rounded-full border-2 border-white"
-                              style={{
-                                left: '50%',
-                                top: '100%',
-                                transform: 'translate(-50%, 60px)'
-                              }}
-                            />
                           </div>
-                        </div>
+                          {/* Dot on the line */}
+                          <div 
+                            className="absolute w-3 h-3 bg-pink-500 rounded-full border-2 border-white pointer-events-none animate-pulse"
+                            style={{
+                              left: pixelX,
+                              top: pixelY,
+                              transform: 'translate(-50%, -50%)',
+                              zIndex: 49
+                            }}
+                          />
+                        </>
                       )
                     })()}
                     
