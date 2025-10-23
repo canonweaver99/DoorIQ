@@ -330,13 +330,13 @@ function TrainerPageContent() {
       </div>
 
       {/* Main Content Area - Split Screen */}
-      <div className="flex-1 flex gap-6 px-6 pb-3 overflow-hidden">
+      <div className="flex-1 flex gap-6 px-6 pb-3 pt-4 overflow-hidden">
         
         {/* Left Side - Agent and Transcript - 50% width */}
         <div className="flex-1 flex flex-col space-y-4 max-w-[50%]">
         
         {/* Agent Orb/Bubble with Animated Rings */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center pt-4">
           {(() => {
             const agentMeta = selectedAgent?.name ? PERSONA_METADATA[selectedAgent.name as AllowedAgentName] : null
             const colorVariant = agentMeta?.bubble.color || 'primary'

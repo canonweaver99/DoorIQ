@@ -5,6 +5,7 @@ import { Users, Target, Shield, HandshakeIcon, DollarSign, Download, Share2, Boo
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import SessionTimeline from './SessionTimeline'
+import CoachingChat from './CoachingChat'
 
 interface ScoresViewV2Props {
   sessionId: string
@@ -451,6 +452,17 @@ export default function ScoresViewV2({
           />
         </section>
       )}
+
+      {/* AI Coaching Chat - Below Timeline */}
+      <CoachingChat
+        sessionId={sessionId}
+        overallScore={overallScore}
+        scores={scores}
+        feedback={feedback}
+        fullTranscript={fullTranscript}
+        saleClosed={saleClosed}
+        virtualEarnings={virtualEarnings}
+      />
 
       {/* Patterns - "What patterns should I recognize?" */}
       <section>

@@ -252,6 +252,49 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 Track every rep's performance in real-time with detailed analytics and insights
               </p>
             </motion.div>
+
+            {/* Features Pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mb-12"
+            >
+              <h3 className="text-2xl font-semibold text-center text-white mb-6">Features</h3>
+              <div className="flex flex-wrap justify-center gap-3 max-w-5xl mx-auto">
+                {[
+                  "AI-Powered Roleplay",
+                  "Real-Time Feedback",
+                  "Performance Analytics",
+                  "Speech Analysis",
+                  "Objection Handling",
+                  "Call Recording",
+                  "Team Leaderboards",
+                  "Custom Scenarios",
+                  "Progress Tracking",
+                  "Export Reports",
+                  "Manager Insights",
+                  "Mobile Friendly",
+                  "Unlimited Practice",
+                  "Instant Grading",
+                  "Knowledge Base"
+                ].map((feature, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    className="px-5 py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default"
+                  >
+                    {feature}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
             <motion.div
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
