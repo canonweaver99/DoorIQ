@@ -1,12 +1,23 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
 
 export function DashboardHeroPreview() {
   const [activeTab, setActiveTab] = useState('overview')
   const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; value: number } | null>(null)
-  const [expandedCard, setExpandedCard] = useState<string | null>(null)
+  const [chartTimeRange, setChartTimeRange] = useState<'day' | 'week' | 'month'>('week')
+  
+  // Individual state for each card
+  const [isOverallOpen, setIsOverallOpen] = useState(false)
+  const [isRapportOpen, setIsRapportOpen] = useState(false)
+  const [isDiscoveryOpen, setIsDiscoveryOpen] = useState(false)
+  const [isObjectionOpen, setIsObjectionOpen] = useState(false)
+  const [isClosingOpen, setIsClosingOpen] = useState(false)
+  
   const chartRef = useRef<HTMLDivElement>(null)
+  const chartContainerRef = useRef<HTMLDivElement>(null)
+  const isChartInView = useInView(chartContainerRef, { once: false, amount: 0.5 })
   
   // Calculate date range
   const startDate = new Date('2024-09-08')
@@ -70,58 +81,202 @@ export function DashboardHeroPreview() {
 
         {/* Tab Content */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Top Metrics Row - 5 cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {[
-                { id: 'overall', title: 'Overall', value: '83%', change: '+7%', color: 'pink', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', feedback: 'Strong performance! Focus on consistency across all areas.' },
-                { id: 'rapport', title: 'Rapport', value: '88%', change: '+5%', color: 'emerald', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', feedback: 'Excellent rapport building! Try more personalized questions early on.' },
-                { id: 'discovery', title: 'Discovery', value: '82%', change: '+13%', color: 'blue', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', feedback: 'Great improvement! Focus on digging deeper into pain points.' },
-                { id: 'objection', title: 'Objection', value: '79%', change: '+8%', color: 'amber', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', feedback: 'Good progress! Reframe price concerns as value discussions.' },
-                { id: 'closing', title: 'Closing', value: '85%', change: '+6%', color: 'purple', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', feedback: 'Strong closing! Use more assumptive language and urgency.' },
-              ].map((metric) => (
-                <div 
-                  key={metric.id}
-                  onClick={() => setExpandedCard(expandedCard === metric.id ? null : metric.id)}
-                  className={`bg-gradient-to-br from-${metric.color}-900/20 to-${metric.color}-800/10 rounded-xl p-4 border border-${metric.color}-500/20 cursor-pointer hover:border-${metric.color}-500/40 transition-all ${expandedCard === metric.id ? 'ring-2 ring-' + metric.color + '-500/50' : ''}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className={`text-xs font-semibold text-${metric.color}-300`}>{metric.title}</h3>
-                    <div className="flex items-center gap-1">
-                      <svg className={`w-4 h-4 text-${metric.color}-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d={metric.icon} />
-                      </svg>
-                      <svg 
-                        className={`w-3 h-3 text-${metric.color}-400 transition-transform ${expandedCard === metric.id ? 'rotate-180' : ''}`} 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor" 
-                        strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="text-2xl font-bold text-white mb-1 tabular-nums">{metric.value}</div>
-                  <p className="text-xs font-medium text-green-400">{metric.change} from last week</p>
-                  
-                  {expandedCard === metric.id && (
-                    <div className="mt-3 pt-3 border-t border-white/10">
-                      <p className="text-xs font-semibold text-purple-400 mb-1">AI Feedback</p>
-                      <p className="text-xs text-slate-300 leading-relaxed">{metric.feedback}</p>
-                    </div>
-                  )}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 items-start">
+              {/* Overall Card */}
+              <div 
+                onClick={() => setIsOverallOpen(!isOverallOpen)}
+                className={`relative rounded-xl p-4 border border-white cursor-pointer hover:border-white/80 transition-all ${isOverallOpen ? 'ring-2 ring-white/50' : ''}`}
+                style={{
+                  background: 'radial-gradient(ellipse at top, rgba(88, 28, 135, 0.4) 0%, rgba(59, 7, 100, 0.3) 30%, rgba(0, 0, 0, 1) 70%), radial-gradient(ellipse at bottom right, rgba(147, 51, 234, 0.2) 0%, transparent 50%), #000000'
+                }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-purple-200 uppercase tracking-wide">Overall Score</h3>
+                  <svg className={`w-3 h-3 text-purple-300 transition-transform ${isOverallOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
                 </div>
-              ))}
+                <div className="text-3xl font-bold text-white mb-2 tabular-nums">83%</div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <p className="text-xs font-semibold text-green-400">+7% from last week</p>
+                </div>
+                {isOverallOpen && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 pt-3 border-t border-white/20 overflow-hidden"
+                  >
+                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">Focus on consistency across all areas. Your rapport and discovery skills show promise.</p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Rapport Card */}
+              <div 
+                onClick={() => setIsRapportOpen(!isRapportOpen)}
+                className={`bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 rounded-xl p-4 border border-emerald-500/20 cursor-pointer hover:border-emerald-500/40 transition-all ${isRapportOpen ? 'ring-2 ring-emerald-500/50' : ''}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-emerald-200 uppercase tracking-wide">Rapport</h3>
+                  <svg className={`w-3 h-3 text-emerald-300 transition-transform ${isRapportOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="text-3xl font-bold text-white mb-2 tabular-nums">88%</div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <p className="text-xs font-semibold text-green-400">+5% from last week</p>
+                </div>
+                {isRapportOpen && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 pt-3 border-t border-emerald-500/20 overflow-hidden"
+                  >
+                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">Incorporate personalized questions within the first 30 seconds. Reference specific details about their property.</p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Discovery Card */}
+              <div 
+                onClick={() => setIsDiscoveryOpen(!isDiscoveryOpen)}
+                className={`bg-gradient-to-br from-blue-900/20 to-blue-800/10 rounded-xl p-4 border border-blue-500/20 cursor-pointer hover:border-blue-500/40 transition-all ${isDiscoveryOpen ? 'ring-2 ring-blue-500/50' : ''}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-blue-200 uppercase tracking-wide">Discovery</h3>
+                  <svg className={`w-3 h-3 text-blue-300 transition-transform ${isDiscoveryOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="text-3xl font-bold text-white mb-2 tabular-nums">82%</div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <p className="text-xs font-semibold text-green-400">+13% from last week</p>
+                </div>
+                {isDiscoveryOpen && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 pt-3 border-t border-blue-500/20 overflow-hidden"
+                  >
+                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">Dig deeper into pain points with follow-up questions about specific frustrations.</p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Objection Card */}
+              <div 
+                onClick={() => setIsObjectionOpen(!isObjectionOpen)}
+                className={`bg-gradient-to-br from-amber-900/20 to-amber-800/10 rounded-xl p-4 border border-amber-500/20 cursor-pointer hover:border-amber-500/40 transition-all ${isObjectionOpen ? 'ring-2 ring-amber-500/50' : ''}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-amber-200 uppercase tracking-wide">Objection</h3>
+                  <svg className={`w-3 h-3 text-amber-300 transition-transform ${isObjectionOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="text-3xl font-bold text-white mb-2 tabular-nums">79%</div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <p className="text-xs font-semibold text-green-400">+8% from last week</p>
+                </div>
+                {isObjectionOpen && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 pt-3 border-t border-amber-500/20 overflow-hidden"
+                  >
+                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">Reframe price concerns as investment discussions. Pivot to ROI and break down savings.</p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Closing Card */}
+              <div 
+                onClick={() => setIsClosingOpen(!isClosingOpen)}
+                className={`bg-gradient-to-br from-pink-900/20 to-pink-800/10 rounded-xl p-4 border border-pink-500/20 cursor-pointer hover:border-pink-500/40 transition-all ${isClosingOpen ? 'ring-2 ring-pink-500/50' : ''}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-pink-200 uppercase tracking-wide">Closing</h3>
+                  <svg className={`w-3 h-3 text-pink-300 transition-transform ${isClosingOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="text-3xl font-bold text-white mb-2 tabular-nums">85%</div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <p className="text-xs font-semibold text-green-400">+6% from last week</p>
+                </div>
+                {isClosingOpen && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 pt-3 border-t border-pink-500/20 overflow-hidden"
+                  >
+                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">Use assumptive language in your close. Replace questions with statements like 'When we install this'.</p>
+                  </motion.div>
+                )}
+              </div>
             </div>
 
-            {/* Bottom Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Chart */}
-              <div className="lg:col-span-2 bg-gradient-to-br from-purple-900/10 to-transparent rounded-xl p-5 border border-purple-500/10">
-                <h3 className="text-lg font-bold text-white mb-4">Overall Performance Overview</h3>
-                <div className="relative h-64">
-                  <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-xs font-semibold text-white">
+            {/* Bottom Section - Graph under Overall Score */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Left Column - Performance Overview under Overall Score */}
+              <div ref={chartContainerRef} className="lg:col-span-3 pt-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-1">Performance Overview</h3>
+                    <p className="text-sm text-gray-400">Weekly trend analysis</p>
+                  </div>
+                  {/* Time Range Tabs */}
+                  <div className="flex gap-1 bg-white/5 rounded-lg p-1">
+                    {(['day', 'week', 'month'] as const).map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setChartTimeRange(range)}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                          chartTimeRange === range
+                            ? 'bg-purple-500 text-white'
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {range.charAt(0).toUpperCase() + range.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="relative" style={{ height: '353px' }}>
+                  {/* Y-Axis */}
+                  <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs font-bold text-gray-300 pr-2 border-r border-gray-700">
                     <span>100%</span>
                     <span>75%</span>
                     <span>50%</span>
@@ -129,78 +284,41 @@ export function DashboardHeroPreview() {
                     <span>0%</span>
                   </div>
                   
-                   <div className="ml-10 h-full pb-12 relative" ref={chartRef}>
+                   <div className="ml-12 mr-0 h-full pb-8 relative border-b border-gray-700" ref={chartRef}>
                     {/* Tooltip overlay - positioned absolutely */}
                     {hoveredPoint && chartRef.current && (() => {
                       const rect = chartRef.current.getBoundingClientRect()
-                      const pixelX = (hoveredPoint.x / 280) * (rect.width - 40) // Adjust for left margin
-                      const pixelY = (hoveredPoint.y / 240) * (rect.height - 48) // Adjust for bottom padding
+                      const pixelX = (hoveredPoint.x / 350) * rect.width
+                      const pixelY = (hoveredPoint.y / 240) * (rect.height - 32)
                       
                       return (
-                        <>
-                          {/* Tooltip */}
-                          <div
-                            className="absolute pointer-events-none"
-                            style={{
-                              left: pixelX,
-                              top: pixelY - 70,
-                              transform: 'translateX(-50%)',
-                              zIndex: 50
-                            }}
-                          >
-                            <div className="bg-black/95 border border-purple-500 rounded-lg px-3 py-2 shadow-lg shadow-purple-500/30">
-                              <div className="text-purple-400 font-bold text-lg text-center leading-tight mb-1">
-                                {hoveredPoint.value}%
-                              </div>
-                              <div className="text-slate-400 text-xs text-center whitespace-nowrap">
-                                47 Sessions
-                              </div>
-                              <div className="text-green-400 text-xs text-center font-semibold whitespace-nowrap">
-                                $4,238 Earned
-                              </div>
+                        <div
+                          className="absolute pointer-events-none z-50"
+                          style={{
+                            left: pixelX,
+                            top: pixelY - 80,
+                            transform: 'translateX(-50%)',
+                          }}
+                        >
+                          <div className="bg-black/95 border border-purple-500 rounded-lg px-3 py-2 shadow-lg shadow-purple-500/30">
+                            <div className="text-purple-400 font-bold text-lg text-center leading-tight mb-1">
+                              {hoveredPoint.value}%
+                            </div>
+                            <div className="text-slate-400 text-xs text-center whitespace-nowrap">
+                              47 Sessions
+                            </div>
+                            <div className="text-green-400 text-xs text-center font-semibold whitespace-nowrap">
+                              $4,238 Earned
                             </div>
                           </div>
-                          {/* Dot on the line */}
-                          <div 
-                            className="absolute w-3 h-3 bg-pink-500 rounded-full border-2 border-white pointer-events-none animate-pulse"
-                            style={{
-                              left: pixelX,
-                              top: pixelY,
-                              transform: 'translate(-50%, -50%)',
-                              zIndex: 49
-                            }}
-                          />
-                        </>
+                        </div>
                       )
                     })()}
                     
                     <svg 
-                      viewBox="0 0 280 240" 
+                      viewBox="0 0 350 240" 
                       className="w-full h-full absolute inset-0" 
                       preserveAspectRatio="none"
-                      onMouseMove={(e) => {
-                        if (!chartRef.current) return
-                        const rect = chartRef.current.getBoundingClientRect()
-                        const x = e.clientX - rect.left
-                        // Map mouse X to SVG X
-                        const relX = (x / rect.width) * 280
-                        // Snap to nearest predefined data point on the line
-                        const snapPoints = [
-                          { x: 0, y: 150 },
-                          { x: 50, y: 90 },
-                          { x: 95, y: 75 },
-                          { x: 140, y: 50 },
-                          { x: 185, y: 65 },
-                          { x: 230, y: 75 },
-                          { x: 280, y: 45 },
-                        ]
-                        const nearest = snapPoints.reduce((prev, curr) => {
-                          return Math.abs(curr.x - relX) < Math.abs(prev.x - relX) ? curr : prev
-                        })
-                        const percentage = Math.max(0, Math.min(100, Math.round(100 - (nearest.y / 240) * 100)))
-                        setHoveredPoint({ x: nearest.x, y: nearest.y, value: percentage })
-                      }}
-                      onMouseLeave={() => setHoveredPoint(null)}
                     >
                        <defs>
                          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -214,91 +332,183 @@ export function DashboardHeroPreview() {
                          </linearGradient>
                        </defs>
                        <path
-                         d="M 0 150 C 20 135, 35 110, 50 90 C 65 70, 80 80, 95 75 C 110 70, 125 55, 140 50 C 155 45, 170 60, 185 65 C 200 70, 215 80, 230 75 C 245 70, 260 55, 280 45 L 280 240 L 0 240 Z"
+                         d="M 25 150 C 50 135, 60 110, 75 90 C 100 72, 115 78, 125 75 C 150 72, 165 55, 175 50 C 200 45, 215 60, 225 65 C 250 70, 265 78, 275 75 C 300 72, 315 55, 325 45 L 325 240 L 25 240 Z"
                          fill="url(#areaGradient)"
                        />
-                      <path
-                        d="M 0 150 C 20 135, 35 110, 50 90 C 65 70, 80 80, 95 75 C 110 70, 125 55, 140 50 C 155 45, 170 60, 185 65 C 200 70, 215 80, 230 75 C 245 70, 260 55, 280 45"
+                      <motion.path
+                        d="M 25 150 C 50 135, 60 110, 75 90 C 100 72, 115 78, 125 75 C 150 72, 165 55, 175 50 C 200 45, 215 60, 225 65 C 250 70, 265 78, 275 75 C 300 72, 315 55, 325 45"
                         fill="none"
                         stroke="url(#lineGradient)"
                         strokeWidth="3"
                         strokeLinecap="round"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={isChartInView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+                        transition={{ duration: 1.5, ease: "easeInOut" }}
                       />
+                      {/* Animated data points */}
+                      {[
+                        { cx: 25, cy: 150, value: 38 },    // Mon
+                        { cx: 75, cy: 90, value: 63 },     // Tue
+                        { cx: 125, cy: 75, value: 69 },    // Wed
+                        { cx: 175, cy: 50, value: 79 },    // Thu
+                        { cx: 225, cy: 65, value: 73 },    // Fri
+                        { cx: 275, cy: 75, value: 69 },    // Sat
+                        { cx: 325, cy: 45, value: 81 },    // Sun
+                      ].map((point, index) => (
+                        <motion.circle
+                          key={index}
+                          cx={point.cx}
+                          cy={point.cy}
+                          r="5"
+                          fill="#EC4899"
+                          stroke="white"
+                          strokeWidth="2"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={isChartInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+                          transition={{
+                            delay: isChartInView ? 1.5 + (index * 0.1) : 0,
+                            duration: 0.5,
+                            type: "spring",
+                            stiffness: 260,
+                            damping: 20
+                          }}
+                          style={{ cursor: 'pointer' }}
+                          onMouseEnter={() => setHoveredPoint({ x: point.cx, y: point.cy, value: point.value })}
+                          onMouseLeave={() => setHoveredPoint(null)}
+                        />
+                      ))}
                      </svg>
                      
-                     <div className="absolute -bottom-2 left-0 right-0 flex justify-between text-sm font-bold text-white">
-                       {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                         <span key={day}>{day}</span>
+                     <div className="absolute bottom-0 left-0 right-0 text-xs font-bold text-gray-300">
+                       {[
+                         { day: 'Mon', position: '7.14%' },   // 25/350
+                         { day: 'Tue', position: '21.43%' },  // 75/350
+                         { day: 'Wed', position: '35.71%' },  // 125/350
+                         { day: 'Thu', position: '50%' },     // 175/350
+                         { day: 'Fri', position: '64.29%' },  // 225/350
+                         { day: 'Sat', position: '78.57%' },  // 275/350
+                         { day: 'Sun', position: '92.86%' },  // 325/350
+                       ].map((item) => (
+                         <span key={item.day} className="absolute text-center" style={{ left: item.position, transform: 'translateX(-50%)' }}>{item.day}</span>
                        ))}
                      </div>
                    </div>
                 </div>
               </div>
 
-              {/* Recent Sessions */}
-              <div className="bg-gradient-to-br from-pink-900/10 to-transparent rounded-xl p-5 border border-pink-500/10">
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-white mb-1">Recent Sessions</h3>
-                  <p className="text-xs font-medium text-gray-400">Top performing this month.</p>
-                </div>
+              {/* Right Column - Recent Sessions + Notifications */}
+              <div className="lg:col-span-2 space-y-4">
+                {/* Recent Sessions */}
+                <div className="bg-gradient-to-br from-pink-900/5 to-transparent rounded-xl p-4 border border-pink-500/20">
+                  <h3 className="text-base font-bold text-white mb-3">Recent Sessions</h3>
                 
-                <div className="space-y-3">
-                  {[
-                    { name: 'Skeptical Sam', earned: '93', percent: 87, avatar: '/agents/sam.png', color: 'from-purple-500/30' },
-                    { name: 'Busy Beth', earned: '78', percent: 73, avatar: '/agents/beth.png', color: 'from-red-500/30' },
-                    { name: 'Too Expensive Tim', earned: '89', percent: 84, avatar: '/agents/tim.png', color: 'from-blue-500/30' },
-                    { name: 'Think About It Tina', earned: '85', percent: 81, avatar: '/agents/tina.png', color: 'from-purple-500/30' },
-                    { name: 'Not Interested Nick', earned: '82', percent: 76, avatar: '/agents/nick.png', color: 'from-purple-500/30' }
-                  ].map((session, index) => {
-                    const circumference = 2 * Math.PI * 20
-                    const strokeDashoffset = circumference - (session.percent / 100) * circumference
-                    
-                    return (
-                      <div key={index} className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                          <div className="relative">
-                            <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${session.color} to-transparent blur-sm`}></div>
-                            <img 
-                              src={session.avatar}
-                              alt={session.name}
-                              className="relative w-9 h-9 rounded-full ring-2 ring-white/10 flex-shrink-0"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-white">{session.name}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2.5 flex-shrink-0">
-                          <div className="relative w-11 h-11">
-                            <svg className="w-full h-full -rotate-90" viewBox="0 0 48 48">
-                              <defs>
-                                <linearGradient id={`scoreGrad-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                  <stop offset="0%" stopColor="#A855F7" />
-                                  <stop offset="100%" stopColor="#EC4899" />
-                                </linearGradient>
-                              </defs>
-                              <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.1)" strokeWidth="4" fill="none" />
-                              <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
-                                stroke={getColor(session.percent)}
-                                strokeWidth="4"
-                                strokeDasharray={circumference}
-                                strokeDashoffset={strokeDashoffset}
-                                strokeLinecap="round"
-                                fill="none"
+                  <div className="space-y-2.5">
+                    {[
+                      { name: 'Skeptical Sam', earned: '93', percent: 87, avatar: '/agents/sam.png', color: 'from-purple-500/30' },
+                      { name: 'Too Expensive Tim', earned: '89', percent: 84, avatar: '/agents/tim.png', color: 'from-blue-500/30' },
+                      { name: 'Think About It Tina', earned: '85', percent: 81, avatar: '/agents/tina.png', color: 'from-purple-500/30' }
+                    ].map((session, index) => {
+                      const circumference = 2 * Math.PI * 16
+                      const strokeDashoffset = circumference - (session.percent / 100) * circumference
+                      
+                      return (
+                        <div key={index} className="flex items-center justify-between gap-2.5">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className="relative">
+                              <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${session.color} to-transparent blur-sm`}></div>
+                              <img 
+                                src={session.avatar}
+                                alt={session.name}
+                                className="relative w-8 h-8 rounded-full ring-2 ring-white/10 flex-shrink-0"
                               />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-[10px] font-bold text-white">{session.percent}%</span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-semibold text-white truncate">{session.name}</div>
                             </div>
                           </div>
-                           <div className="text-sm font-semibold text-green-400 tabular-nums">+${session.earned}</div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="relative w-9 h-9">
+                              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="16" stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="none" />
+                                <circle
+                                  cx="18"
+                                  cy="18"
+                                  r="16"
+                                  stroke={getColor(session.percent)}
+                                  strokeWidth="3"
+                                  strokeDasharray={circumference}
+                                  strokeDashoffset={strokeDashoffset}
+                                  strokeLinecap="round"
+                                  fill="none"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-[9px] font-bold text-white">{session.percent}%</span>
+                              </div>
+                            </div>
+                             <div className="text-sm font-bold text-green-400 tabular-nums">+${session.earned}</div>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Notifications */}
+                <div className="bg-gradient-to-br from-blue-900/5 to-transparent rounded-xl p-4 border border-blue-500/20">
+                  <h3 className="text-base font-bold text-white mb-3">Notifications</h3>
+                
+                  <div className="space-y-2.5">
+                    {[
+                      { 
+                        type: 'manager', 
+                        title: 'Message from Manager',
+                        message: 'Great work this week! Objection handling improved.',
+                        time: '2h ago',
+                        icon: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z'
+                      },
+                      { 
+                        type: 'leaderboard', 
+                        title: 'New Leader!',
+                        message: 'Sarah Chen took #1 with 892 points.',
+                        time: '5h ago',
+                        icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'
+                      },
+                      { 
+                        type: 'achievement', 
+                        title: 'Achievement Unlocked',
+                        message: 'Earned "Closer Pro" badge.',
+                        time: '1d ago',
+                        icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z'
+                      }
+                    ].map((notif, index) => {
+                      const colorMap: Record<string, { bg: string; border: string; hoverBorder: string; iconBg: string; iconColor: string }> = {
+                        manager: { bg: 'bg-purple-500/10', border: 'border-purple-500/30', hoverBorder: 'hover:border-purple-500/50', iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600', iconColor: 'text-white' },
+                        leaderboard: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', hoverBorder: 'hover:border-emerald-500/50', iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600', iconColor: 'text-white' },
+                        achievement: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', hoverBorder: 'hover:border-amber-500/50', iconBg: 'bg-gradient-to-br from-amber-400 to-amber-500', iconColor: 'text-white' }
+                      }
+                      const colorClasses = colorMap[notif.type] || colorMap.manager
+                      
+                      return (
+                        <div key={index} className={`p-2.5 rounded-lg ${colorClasses.bg} border ${colorClasses.border} ${colorClasses.hoverBorder} transition-colors cursor-pointer`}>
+                          <div className="flex items-start gap-2">
+                            <div className={`w-7 h-7 rounded-lg ${colorClasses.iconBg} flex items-center justify-center flex-shrink-0`}>
+                              <svg className={`w-3.5 h-3.5 ${colorClasses.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d={notif.icon} />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-0.5">
+                                <h4 className="text-xs font-bold text-white">{notif.title}</h4>
+                                <span className="text-[10px] text-gray-400 font-medium">{notif.time}</span>
+                              </div>
+                              <p className="text-[11px] text-gray-300 leading-relaxed">{notif.message}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
