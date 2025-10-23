@@ -106,13 +106,13 @@ export default function Home() {
 
       {/* 8) FAQ */}
       <FaqSection
-        title="FAQ"
+        title="Frequently Asked Questions"
         items={faqItems}
         contactInfo={{
           title: 'Still need help?',
           description: 'Reach out and our crew will walk you through a live session.',
           buttonText: 'Contact Support',
-          onContact: () => window.open('mailto:hello@dooriq.com', '_blank')
+          onContact: () => window.open('mailto:support@dooriq.ai?subject=Support%20Request&body=Hi%20DoorIQ%20Team,%0D%0A%0D%0AI%20need%20help%20with:%0D%0A%0D%0A', '_blank')
         }}
       />
     </div>

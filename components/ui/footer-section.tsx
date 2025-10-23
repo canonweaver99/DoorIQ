@@ -20,8 +20,8 @@ const footerLinks: FooterSectionType[] = [
   {
     label: 'Product',
     links: [
-      { title: 'Features', href: '#features' },
-      { title: 'Pricing', href: '#pricing' },
+      { title: 'Features', href: '/#features' },
+      { title: 'Pricing', href: '/pricing' },
       { title: 'Testimonials', href: '/testimonials' },
       { title: 'Documentation', href: '/documentation' },
     ],
@@ -38,7 +38,7 @@ const footerLinks: FooterSectionType[] = [
   {
     label: 'Resources',
     links: [
-      { title: 'Contact Us', href: '/support' },
+      { title: 'Contact Us', href: 'mailto:support@dooriq.ai?subject=Support%20Request&body=Hi%20DoorIQ%20Team,%0D%0A%0D%0AI%20need%20help%20with:%0D%0A%0D%0A' },
       { title: 'Help', href: '/help' },
     ],
   },

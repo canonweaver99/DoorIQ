@@ -16,23 +16,17 @@ export function LiveSessionPreview() {
   const [visibleMessages, setVisibleMessages] = useState<number>(3)
   const transcriptRef = useRef<HTMLDivElement>(null)
   
-  // Simulate conversation flow
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSpeaker(prev => prev === 'austin' ? 'salesrep' : 'austin')
-    }, 3500)
-    
-    return () => clearInterval(interval)
-  }, [])
-
-  // Simulate messages appearing
+  // Simulate conversation flow - sync with transcript
   useEffect(() => {
     const interval = setInterval(() => {
       setVisibleMessages(prev => {
-        if (prev >= transcript.length) return 3
-        return prev + 1
+        const nextIndex = prev >= fullTranscript.length ? 0 : prev
+        if (nextIndex < fullTranscript.length) {
+          setCurrentSpeaker(fullTranscript[nextIndex].speaker)
+        }
+        return nextIndex >= fullTranscript.length ? 1 : prev + 1
       })
-    }, 4000)
+    }, 3000) // Show new message every 3 seconds
     
     return () => clearInterval(interval)
   }, [])
@@ -44,13 +38,27 @@ export function LiveSessionPreview() {
     }
   }, [visibleMessages])
 
-  const transcript: TranscriptEntry[] = [
-    { speaker: 'salesrep', text: "Hi! I'm Jake from Solar Solutions. I noticed you have a south-facing roof - perfect for solar panels!", time: '0:12' },
-    { speaker: 'austin', text: "Oh, I'm not really interested. Solar is too expensive.", time: '0:18' },
-    { speaker: 'salesrep', text: "I understand your concern. What if I told you that you could save 40% on your electric bill with zero upfront cost?", time: '0:25' },
-    { speaker: 'austin', text: "Zero upfront? How does that work exactly?", time: '0:32' },
-    { speaker: 'salesrep', text: "Great question! We offer a solar lease program where we install everything for free, and you just pay a lower monthly rate than your current electric bill.", time: '0:38' },
-    { speaker: 'austin', text: "That does sound interesting. Tell me more about how the savings work.", time: '0:45' },
+  const fullTranscript: TranscriptEntry[] = [
+    { speaker: 'salesrep', text: "Hey there! How's it going today?", time: '0:03' },
+    { speaker: 'austin', text: "Pretty good, just got back from my kid's baseball game. What can I do for ya?", time: '0:06' },
+    { speaker: 'salesrep', text: "Oh nice, baseball! How'd they do?", time: '0:11' },
+    { speaker: 'austin', text: "Won 7 to 4! My boy hit a double in the third, I was goin' nuts.", time: '0:14' },
+    { speaker: 'salesrep', text: "That's awesome! There's nothing like watching your kids play. I'm Jake, by the way.", time: '0:19' },
+    { speaker: 'austin', text: "Name's Austin. Good to meet ya.", time: '0:25' },
+    { speaker: 'salesrep', text: "You too, man. So hey, I'm actually out here today talking to homeowners about their energy bills. Have you noticed yours going up lately?", time: '0:28' },
+    { speaker: 'austin', text: "I mean, yeah, it's Texas in the summer. They're always high.", time: '0:36' },
+    { speaker: 'salesrep', text: "Right? It's brutal. That's actually why I'm here. We've been helping folks in the neighborhood cut their bills by 20 to 30 percent with solar. Have you ever looked into it?", time: '0:40' },
+    { speaker: 'austin', text: "Solar, huh? I've thought about it, but I figured it was expensive.", time: '0:50' },
+    { speaker: 'salesrep', text: "I totally get that. Most people think the same thing. But here's the thing, you're not paying anything upfront. We basically just swap what you're paying the electric company and redirect it to owning your own power instead.", time: '0:55' },
+    { speaker: 'austin', text: "So no money down?", time: '1:05' },
+    { speaker: 'salesrep', text: "Zero. And honestly, most folks end up paying less per month than they're paying right now. You got a few minutes? I can show you real quick what it'd look like for your house specifically.", time: '1:08' },
+    { speaker: 'austin', text: "I guess I got a few minutes. What do you need to know?", time: '1:18' },
+    { speaker: 'salesrep', text: "Just a quick look at your last electric bill if you got it handy. That'll tell me everything I need to know.", time: '1:21' },
+    { speaker: 'austin', text: "Alright, let me grab it. Come on in for a sec, it's hot as hell out here.", time: '1:28' },
+    { speaker: 'salesrep', text: "Appreciate that, man. Yeah, it's a scorcher today.", time: '1:34' },
+    { speaker: 'austin', text: "So how long you been doing this solar thing?", time: '1:38' },
+    { speaker: 'salesrep', text: "About three years now. Started because my own bill was killing me, figured if it worked for me, I should help other people save too.", time: '1:42' },
+    { speaker: 'austin', text: "Makes sense. Alright, here's last month's bill.", time: '1:51' },
   ]
 
   return (
@@ -69,7 +77,7 @@ export function LiveSessionPreview() {
       {/* Main Content - 3-Way Split Layout */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Section: 50/50 Split - Austin Left, Sales Rep Right */}
-        <div className="grid grid-cols-2 gap-0 border-b border-purple-500/20" style={{ minHeight: '300px' }}>
+        <div className="grid grid-cols-2 gap-0 border-b border-purple-500/20" style={{ minHeight: '240px' }}>
           {/* Left: Agent (Austin) */}
           <div className="flex flex-col items-center justify-center p-6 border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent">
             <div className="relative mb-6">
@@ -186,20 +194,20 @@ export function LiveSessionPreview() {
         </div>
 
         {/* Bottom Section: Transcript (Full Width) - Fixed Height (label removed) */}
-        <div className="bg-black/30 flex flex-col relative" style={{ height: '300px', minHeight: '300px', maxHeight: '300px' }}>
+        <div className="bg-black/30 flex flex-col relative" style={{ height: '360px', minHeight: '360px', maxHeight: '360px' }}>
           
           {/* Bottom fade gradient overlay */}
-          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
           
           <div 
             ref={transcriptRef}
-            className="flex-1 overflow-y-auto px-4 py-4 pb-6 space-y-1.5 custom-scrollbar"
+            className="flex-1 overflow-y-auto px-4 py-4 pb-12 space-y-1.5 custom-scrollbar"
             style={{
               scrollBehavior: 'smooth',
-              height: '300px'
+              height: '360px'
             }}
           >
-            {transcript.slice(0, visibleMessages).map((entry, index) => {
+            {fullTranscript.slice(0, visibleMessages).map((entry, index) => {
               const isRep = entry.speaker === 'salesrep'
               
               return (
@@ -219,7 +227,7 @@ export function LiveSessionPreview() {
                       }`}
                     >
                       {/* Message Text */}
-                      <p className={`text-xs leading-[1.4] ${
+                      <p className={`text-xs leading-[1.4] font-semibold ${
                         isRep ? 'text-white' : 'text-slate-200'
                       }`}>
                         {entry.text}
