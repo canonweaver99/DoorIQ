@@ -92,7 +92,7 @@ export async function checkSessionLimit(userId: string): Promise<{
         canStartSession: false,
         sessionsRemaining: 0,
         sessionsUsed: 0,
-        sessionsLimit: 10,
+        sessionsLimit: 5,
       }
     }
 
@@ -104,7 +104,7 @@ export async function checkSessionLimit(userId: string): Promise<{
       .single()
 
     const sessionsUsed = limitData?.sessions_this_month || 0
-    const sessionsLimit = limitData?.sessions_limit || 10
+    const sessionsLimit = limitData?.sessions_limit || 5
     const sessionsRemaining = Math.max(0, sessionsLimit - sessionsUsed)
 
     return {
@@ -119,7 +119,7 @@ export async function checkSessionLimit(userId: string): Promise<{
       canStartSession: false,
       sessionsRemaining: 0,
       sessionsUsed: 0,
-      sessionsLimit: 10,
+      sessionsLimit: 5,
     }
   }
 }

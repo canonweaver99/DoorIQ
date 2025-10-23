@@ -569,7 +569,7 @@ function HeaderContent() {
                 <motion.div
                   key="sidebar-panel"
                   ref={sidebarRef}
-                  className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-lg flex-col overflow-hidden border-l border-white/10 bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)]"
+                  className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[435px] flex-col overflow-hidden border-l border-white/10 bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)]"
                   role="menu"
                   initial={{ opacity: 0, x: 64 }}
                   animate={{ opacity: 1, x: 0 }}

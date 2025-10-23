@@ -1,7 +1,7 @@
 # Admin Credit Management Guide
 
 ## Overview
-Free users have a monthly limit of 10 practice call credits. As an admin, you can grant additional credits to users.
+Free users have a monthly limit of 5 practice call credits. As an admin, you can grant additional credits to users.
 
 ## How to Grant Credits
 

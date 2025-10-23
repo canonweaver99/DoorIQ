@@ -168,7 +168,7 @@ function ProblemSolutionSection() {
   return (
     <motion.section 
       ref={ref}
-      className="py-16 md:py-20 bg-gradient-to-b from-[#02010A] to-[#0A0420]"
+      className="py-16 md:py-20 relative"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}

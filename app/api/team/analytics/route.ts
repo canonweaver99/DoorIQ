@@ -36,7 +36,7 @@ export async function GET() {
     // Get all sessions for team
     const { data: allSessions } = await supabase
       .from('live_sessions')
-      .select('overall_score, rapport_score, needs_discovery_score, objection_handling_score, close_effectiveness_score, created_at, user_id')
+      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, user_id')
       .in('user_id', memberIds)
       .not('overall_score', 'is', null)
       .order('created_at', { ascending: true })
@@ -77,9 +77,9 @@ export async function GET() {
     // Calculate skill distribution
     const skillScores = {
       rapport: allSessions.filter(s => s.rapport_score).map(s => s.rapport_score!),
-      discovery: allSessions.filter(s => s.needs_discovery_score).map(s => s.needs_discovery_score!),
+      discovery: allSessions.filter(s => s.discovery_score).map(s => s.discovery_score!),
       objection: allSessions.filter(s => s.objection_handling_score).map(s => s.objection_handling_score!),
-      closing: allSessions.filter(s => s.close_effectiveness_score).map(s => s.close_effectiveness_score!)
+      closing: allSessions.filter(s => s.close_score).map(s => s.close_score!)
     }
 
     const skillDistribution = [

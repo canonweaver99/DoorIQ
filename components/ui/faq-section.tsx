@@ -164,12 +164,12 @@ const FaqItem = React.forwardRef<
       <Button
         variant="ghost"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-6 py-4 h-auto justify-between hover:bg-transparent"
+        className="w-full px-8 py-6 h-auto justify-between hover:bg-transparent"
       >
         <h3
           className={cn(
-            "text-base font-medium transition-colors duration-200 text-left",
-            "text-foreground/70",
+            "text-lg font-medium transition-colors duration-200 text-left",
+            "text-foreground",
             isOpen && "text-foreground",
           )}
         >
@@ -187,7 +187,7 @@ const FaqItem = React.forwardRef<
             isOpen ? "text-primary" : "text-muted-foreground",
           )}
         >
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="h-5 w-5" />
         </motion.div>
       </Button>
       <AnimatePresence initial={false}>
@@ -205,12 +205,12 @@ const FaqItem = React.forwardRef<
               transition: { duration: 0.2, ease: "easeIn" },
             }}
           >
-            <div className="px-6 pb-4 pt-2">
+            <div className="px-8 pb-6 pt-2">
               <motion.p
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -10, opacity: 0 }}
-                className="text-sm text-muted-foreground leading-relaxed"
+                className="text-base text-foreground leading-relaxed"
               >
                 {answer}
               </motion.p>

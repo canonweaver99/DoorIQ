@@ -104,7 +104,7 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
     canStartSession: true,
     sessionsRemaining: 0,
     sessionsUsed: 0,
-    sessionsLimit: 10,
+    sessionsLimit: 5,
     isUnlimited: false,
     loading: true
   })
@@ -150,7 +150,7 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
         .single()
 
       const sessionsUsed = limitData?.sessions_this_month || 0
-      const sessionsLimit = limitData?.sessions_limit || 10
+      const sessionsLimit = limitData?.sessions_limit || 5
       const sessionsRemaining = Math.max(0, sessionsLimit - sessionsUsed)
       const canStartSession = sessionsUsed < sessionsLimit
 
