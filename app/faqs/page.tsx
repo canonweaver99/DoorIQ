@@ -42,10 +42,6 @@ const items = [
 export default function FaqsPage() {
   return (
     <div className="min-h-[60vh]">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold">FAQs</h1>
-        <p className="mt-2 text-slate-300">Common questions about setup, training, and analytics.</p>
-      </div>
       <FaqSection title="Frequently Asked Questions" items={items} />
     </div>
   )

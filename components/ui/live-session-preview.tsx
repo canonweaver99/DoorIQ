@@ -14,6 +14,7 @@ type TranscriptEntry = {
 export function LiveSessionPreview() {
   const [currentSpeaker, setCurrentSpeaker] = useState<'austin' | 'salesrep'>('salesrep')
   const [visibleMessages, setVisibleMessages] = useState<number>(3)
+  const [currentTime, setCurrentTime] = useState<number>(3)
   const transcriptRef = useRef<HTMLDivElement>(null)
   
   // Simulate conversation flow - sync with transcript
@@ -24,11 +25,24 @@ export function LiveSessionPreview() {
         if (nextIndex < fullTranscript.length) {
           setCurrentSpeaker(fullTranscript[nextIndex].speaker)
         }
+        // Reset time when conversation restarts
+        if (nextIndex >= fullTranscript.length) {
+          setCurrentTime(3)
+        }
         return nextIndex >= fullTranscript.length ? 1 : prev + 1
       })
     }, 3000) // Show new message every 3 seconds
     
     return () => clearInterval(interval)
+  }, [])
+
+  // Timer that counts up
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(prev => prev + 1)
+    }, 1000)
+    
+    return () => clearInterval(timer)
   }, [])
 
   // Auto-scroll transcript
@@ -61,8 +75,14 @@ export function LiveSessionPreview() {
     { speaker: 'austin', text: "Makes sense. Alright, here's last month's bill.", time: '1:51' },
   ]
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
   return (
-    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden" style={{ minHeight: 'calc(100vh - 160px)', maxHeight: 'calc(100vh - 160px)' }}>
+    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden" style={{ minHeight: 'calc(100vh - 140px)', maxHeight: 'calc(100vh - 140px)', transform: 'scale(1.02)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
         <div className="flex items-center gap-2">
@@ -70,7 +90,7 @@ export function LiveSessionPreview() {
           <span className="text-sm font-semibold text-white">Live Session - Solar Solutions Pitch</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-400">
-          <span>Duration: 2:45</span>
+          <span>Duration: {formatTime(currentTime)}</span>
         </div>
       </div>
 
@@ -194,7 +214,7 @@ export function LiveSessionPreview() {
         </div>
 
         {/* Bottom Section: Transcript (Full Width) - Fixed Height (label removed) */}
-        <div className="bg-black/30 flex flex-col relative" style={{ height: '360px', minHeight: '360px', maxHeight: '360px' }}>
+        <div className="bg-black/30 flex flex-col relative" style={{ height: '360px', minHeight: '360px', maxHeight: '360px', marginTop: '16px' }}>
           
           {/* Bottom fade gradient overlay */}
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />

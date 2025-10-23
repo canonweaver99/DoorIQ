@@ -52,39 +52,39 @@ export default function TestimonialsPage() {
           </p>
         </div>
 
-        {/* Testimonials - One per row */}
-        <div className="space-y-6 max-w-5xl mx-auto">
+        {/* Testimonials - Smaller cards to show 4 at once */}
+        <div className="space-y-4 max-w-4xl mx-auto">
           {extendedTestimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="group p-10 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/20"
+              className="group p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/20"
             >
               {/* Stars */}
-              <div className="flex gap-1 mb-6">
+              <div className="flex gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
                   />
                 ))}
               </div>
 
               {/* Testimonial Text */}
-              <p className="text-white font-medium text-lg leading-relaxed mb-8">
+              <p className="text-white font-medium text-base leading-relaxed mb-5">
                 &ldquo;{testimonial.expandedText}&rdquo;
               </p>
 
               {/* Author */}
-              <div className="flex items-center gap-4 pt-6 border-t border-white/10">
+              <div className="flex items-center gap-3 pt-4 border-t border-white/10">
                 <img
                   src={testimonial.image}
                   alt={testimonial.name}
-                  className="w-16 h-16 rounded-full ring-2 ring-white/20"
+                  className="w-12 h-12 rounded-full ring-2 ring-white/20"
                 />
                 <div>
-                  <p className="font-bold text-white text-lg">{testimonial.name}</p>
-                  <p className="text-sm text-slate-400 font-medium">{testimonial.role}</p>
-                  <p className="text-sm text-purple-400 font-semibold mt-1">{testimonial.company}</p>
+                  <p className="font-bold text-white text-base">{testimonial.name}</p>
+                  <p className="text-xs text-slate-400 font-medium">{testimonial.role}</p>
+                  <p className="text-xs text-purple-400 font-semibold mt-0.5">{testimonial.company}</p>
                 </div>
               </div>
             </div>

@@ -286,7 +286,6 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    whileHover={{ scale: 1.05, y: -2 }}
                     className="px-5 py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default"
                   >
                     {feature}

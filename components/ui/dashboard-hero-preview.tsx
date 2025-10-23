@@ -5,6 +5,7 @@ import { useState, useRef } from 'react'
 export function DashboardHeroPreview() {
   const [activeTab, setActiveTab] = useState('overview')
   const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; value: number } | null>(null)
+  const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const chartRef = useRef<HTMLDivElement>(null)
   
   // Calculate date range
@@ -70,55 +71,48 @@ export function DashboardHeroPreview() {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Top Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              {/* Rapport */}
-              <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 rounded-xl p-5 border border-emerald-500/20">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-emerald-300">Rapport</h3>
-                  <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+            {/* Top Metrics Row - 5 cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[
+                { id: 'overall', title: 'Overall', value: '83%', change: '+7%', color: 'pink', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', feedback: 'Strong performance! Focus on consistency across all areas.' },
+                { id: 'rapport', title: 'Rapport', value: '88%', change: '+5%', color: 'emerald', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', feedback: 'Excellent rapport building! Try more personalized questions early on.' },
+                { id: 'discovery', title: 'Discovery', value: '82%', change: '+13%', color: 'blue', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', feedback: 'Great improvement! Focus on digging deeper into pain points.' },
+                { id: 'objection', title: 'Objection', value: '79%', change: '+8%', color: 'amber', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', feedback: 'Good progress! Reframe price concerns as value discussions.' },
+                { id: 'closing', title: 'Closing', value: '85%', change: '+6%', color: 'purple', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', feedback: 'Strong closing! Use more assumptive language and urgency.' },
+              ].map((metric) => (
+                <div 
+                  key={metric.id}
+                  onClick={() => setExpandedCard(expandedCard === metric.id ? null : metric.id)}
+                  className={`bg-gradient-to-br from-${metric.color}-900/20 to-${metric.color}-800/10 rounded-xl p-4 border border-${metric.color}-500/20 cursor-pointer hover:border-${metric.color}-500/40 transition-all ${expandedCard === metric.id ? 'ring-2 ring-' + metric.color + '-500/50' : ''}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className={`text-xs font-semibold text-${metric.color}-300`}>{metric.title}</h3>
+                    <div className="flex items-center gap-1">
+                      <svg className={`w-4 h-4 text-${metric.color}-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d={metric.icon} />
+                      </svg>
+                      <svg 
+                        className={`w-3 h-3 text-${metric.color}-400 transition-transform ${expandedCard === metric.id ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor" 
+                        strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-white mb-1 tabular-nums">{metric.value}</div>
+                  <p className="text-xs font-medium text-green-400">{metric.change} from last week</p>
+                  
+                  {expandedCard === metric.id && (
+                    <div className="mt-3 pt-3 border-t border-white/10">
+                      <p className="text-xs font-semibold text-purple-400 mb-1">AI Feedback</p>
+                      <p className="text-xs text-slate-300 leading-relaxed">{metric.feedback}</p>
+                    </div>
+                  )}
                 </div>
-                 <div className="text-3xl font-bold text-white mb-1.5 tabular-nums">88%</div>
-                 <p className="text-xs font-medium text-green-400">+5% from last week</p>
-               </div>
-
-               {/* Discovery */}
-               <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 rounded-xl p-5 border border-blue-500/20">
-                 <div className="flex items-center justify-between mb-3">
-                   <h3 className="text-sm font-semibold text-blue-300">Discovery</h3>
-                   <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                   </svg>
-                 </div>
-                 <div className="text-3xl font-bold text-white mb-1.5 tabular-nums">82%</div>
-                 <p className="text-xs font-medium text-green-400">+13% from last week</p>
-               </div>
-
-               {/* Objection Handling */}
-               <div className="bg-gradient-to-br from-amber-900/20 to-amber-800/10 rounded-xl p-5 border border-amber-500/20">
-                 <div className="flex items-center justify-between mb-3">
-                   <h3 className="text-sm font-semibold text-amber-300">Objection Handling</h3>
-                   <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                   </svg>
-                 </div>
-                 <div className="text-3xl font-bold text-white mb-1.5 tabular-nums">79%</div>
-                 <p className="text-xs font-medium text-green-400">+8% from last week</p>
-               </div>
-
-               {/* Closing */}
-               <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 rounded-xl p-5 border border-purple-500/20">
-                 <div className="flex items-center justify-between mb-3">
-                   <h3 className="text-sm font-semibold text-purple-300">Closing</h3>
-                   <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                   </svg>
-                 </div>
-                 <div className="text-3xl font-bold text-white mb-1.5 tabular-nums">85%</div>
-                 <p className="text-xs font-medium text-green-400">+6% from last week</p>
-               </div>
+              ))}
             </div>
 
             {/* Bottom Section */}
