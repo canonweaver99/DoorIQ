@@ -208,7 +208,7 @@ export function InteractiveDemoSection() {
                   <div className="flex-1">
                     <div className={`text-xs text-slate-500 mb-1 transition-all duration-500 ${activeStep === index ? 'opacity-100' : 'opacity-70'}`}>Step {step.id}</div>
                     <h3 className={`font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'text-lg' : 'text-base'}`}>{step.title}</h3>
-                    <p className={`text-sm text-slate-300 transition-all duration-300 overflow-hidden ${activeStep === index ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>{step.description}</p>
+                    <p className={`text-sm transition-all duration-300 overflow-hidden ${activeStep === index ? 'max-h-40 opacity-100 mt-2 text-white' : 'max-h-0 opacity-0 text-slate-300'}`}>{step.description}</p>
                   </div>
                 </div>
                 </GlowCard>

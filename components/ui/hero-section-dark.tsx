@@ -261,7 +261,6 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mb-12"
             >
-              <h3 className="text-2xl font-semibold text-center text-white mb-6">Features</h3>
               <div className="flex flex-wrap justify-center gap-3 max-w-5xl mx-auto">
                 {[
                   "AI-Powered Roleplay",

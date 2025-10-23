@@ -10,6 +10,7 @@ interface GlowCardProps {
   width?: string | number;
   height?: string | number;
   customSize?: boolean; // When true, ignores size prop and uses width/height or className
+  onClick?: () => void;
 }
 
 const glowColorMap = {
@@ -33,7 +34,8 @@ const GlowCard: React.FC<GlowCardProps> = ({
   size = 'md',
   width,
   height,
-  customSize = false
+  customSize = false,
+  onClick
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -192,6 +194,7 @@ const GlowCard: React.FC<GlowCardProps> = ({
         ref={cardRef}
         data-glow
         style={getInlineStyles()}
+        onClick={onClick}
         className={`
           ${getSizeClasses()}
           ${!customSize ? 'aspect-[3/4]' : ''}
@@ -203,6 +206,7 @@ const GlowCard: React.FC<GlowCardProps> = ({
           p-4 
           gap-4 
           backdrop-blur-[5px]
+          ${onClick ? 'cursor-pointer' : ''}
           ${className}
         `}
       >

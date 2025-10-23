@@ -3,13 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Mic, Volume2, Sparkles } from 'lucide-react'
+import { Mic, Volume2 } from 'lucide-react'
 
 type TranscriptEntry = {
   speaker: 'austin' | 'salesrep'
   text: string
   time: string
-  isAIInsight?: boolean
 }
 
 export function LiveSessionPreview() {
@@ -48,10 +47,10 @@ export function LiveSessionPreview() {
   const transcript: TranscriptEntry[] = [
     { speaker: 'salesrep', text: "Hi! I'm Jake from Solar Solutions. I noticed you have a south-facing roof - perfect for solar panels!", time: '0:12' },
     { speaker: 'austin', text: "Oh, I'm not really interested. Solar is too expensive.", time: '0:18' },
-    { speaker: 'salesrep', text: "AI Insight: Price objection detected - emphasize ROI and financing options", time: '0:20', isAIInsight: true },
     { speaker: 'salesrep', text: "I understand your concern. What if I told you that you could save 40% on your electric bill with zero upfront cost?", time: '0:25' },
     { speaker: 'austin', text: "Zero upfront? How does that work exactly?", time: '0:32' },
     { speaker: 'salesrep', text: "Great question! We offer a solar lease program where we install everything for free, and you just pay a lower monthly rate than your current electric bill.", time: '0:38' },
+    { speaker: 'austin', text: "That does sound interesting. Tell me more about how the savings work.", time: '0:45' },
   ]
 
   return (
@@ -174,15 +173,13 @@ export function LiveSessionPreview() {
                     <div className="absolute inset-[-12%] rounded-full bg-gradient-to-br from-green-500 via-teal-500 to-transparent opacity-60 mix-blend-screen animate-spin-slow" />
                     <div className="absolute inset-[-8%] rounded-full bg-gradient-to-tr from-teal-500 via-green-500 to-transparent opacity-35 mix-blend-screen animate-spin-reverse" />
                   </div>
-                  {/* Sales Rep Avatar - using a placeholder headshot */}
-                  <div className="relative w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-slate-700 to-slate-800">
-                    {/* Placeholder avatar - professional salesman silhouette */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-600/20 to-teal-600/20">
-                      <svg className="w-24 h-24 text-green-300/60" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                      </svg>
-                    </div>
-                  </div>
+                  {/* Sales Rep Avatar */}
+                  <Image
+                    src="/agents/nick.png"
+                    alt="Jake M. - Sales Rep"
+                    fill
+                    className="object-cover relative z-10"
+                  />
                 </div>
               </div>
               
@@ -196,12 +193,6 @@ export function LiveSessionPreview() {
                   <Volume2 className="w-6 h-6 text-white animate-pulse" />
                 </motion.div>
               )}
-              
-              {/* Recording indicator */}
-              <div className="absolute -top-2 -right-2 flex items-center gap-1.5 bg-red-500 px-2.5 py-1.5 rounded-full shadow-lg">
-                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                <span className="text-xs text-white font-bold">REC</span>
-              </div>
             </div>
             
             <h3 className="text-xl font-bold text-white mb-1">Jake M.</h3>
@@ -239,50 +230,41 @@ export function LiveSessionPreview() {
             }}
           >
             {transcript.slice(0, visibleMessages).map((entry, index) => {
-              if (entry.isAIInsight) {
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex items-start gap-2 p-2.5 rounded-lg bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/40"
-                  >
-                    <Sparkles className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-yellow-400">AI Insight</span>
-                        <span className="text-[10px] text-slate-500">{entry.time}</span>
-                      </div>
-                      <p className="text-xs text-yellow-200/90 leading-relaxed">{entry.text}</p>
-        </div>
-                  </motion.div>
-                )
-              }
+              const isRep = entry.speaker === 'salesrep'
               
               return (
                 <motion.div
-                key={index}
-                  initial={{ opacity: 0, x: entry.speaker === 'salesrep' ? -10 : 10 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className={`flex ${entry.speaker === 'salesrep' ? 'justify-start' : 'justify-end'}`}
+                  className={`flex ${isRep ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[85%] p-2.5 rounded-lg ${
-                    entry.speaker === 'salesrep'
-                      ? 'bg-green-500/20 border border-green-500/30' 
-                      : 'bg-purple-500/20 border border-purple-500/30'
-                  }`}>
-                  <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-semibold ${
-                        entry.speaker === 'salesrep' ? 'text-green-400' : 'text-purple-400'
-                    }`}>
-                        {entry.speaker === 'salesrep' ? 'Sales Rep' : 'Austin'}
-                    </span>
-                    <span className="text-[10px] text-slate-500">{entry.time}</span>
+                  <div className={`max-w-[75%]`}>
+                    <div
+                      className={`rounded-2xl px-4 py-2.5 backdrop-blur-sm ${
+                        isRep
+                          ? 'bg-purple-500/10 border border-purple-500/20'
+                          : 'bg-slate-800/50 border border-slate-700/30'
+                      }`}
+                    >
+                      {/* Timestamp */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[10px] font-mono ${
+                          isRep ? 'text-purple-400/60' : 'text-slate-500'
+                        }`}>
+                          {entry.time}
+                        </span>
+                      </div>
+                      
+                      {/* Message Text */}
+                      <p className={`text-sm leading-[1.5] ${
+                        isRep ? 'text-white' : 'text-slate-200'
+                      }`}>
+                        {entry.text}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-white/90 leading-relaxed">{entry.text}</p>
-                </div>
                 </motion.div>
               )
             })}
