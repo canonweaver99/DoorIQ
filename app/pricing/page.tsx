@@ -215,8 +215,8 @@ function PricingPageContent() {
     },
     {
       name: "Individual",
-      price: "20",
-      yearlyPrice: "16",
+      price: "50",
+      yearlyPrice: "40",
       period: "month",
       features: [
         "Access to ALL AI training agents",
