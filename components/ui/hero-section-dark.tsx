@@ -268,15 +268,15 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   "Performance Analytics",
                   "Speech Analysis",
                   "Objection Handling",
-                  "Call Recording",
+                  "Upload Pitch Recordings",
                   "Team Leaderboards",
-                  "Custom Scenarios",
+                  "Custom Grading",
                   "Progress Tracking",
                   "Export Reports",
                   "Manager Insights",
                   "Mobile Friendly",
                   "Unlimited Practice",
-                  "Instant Grading",
+                  "In-App Messaging",
                   "Knowledge Base"
                 ].map((feature, index) => (
                   <motion.div

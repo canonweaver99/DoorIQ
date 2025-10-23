@@ -54,7 +54,7 @@ export function LiveSessionPreview() {
   ]
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden" style={{ minHeight: 'calc(100vh - 160px)', maxHeight: 'calc(100vh - 160px)', transform: 'scale(1.05)', transformOrigin: 'center' }}>
+    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden" style={{ minHeight: 'calc(100vh - 160px)', maxHeight: 'calc(100vh - 160px)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
         <div className="flex items-center gap-2">
@@ -73,18 +73,16 @@ export function LiveSessionPreview() {
           {/* Left: Agent (Austin) */}
           <div className="flex flex-col items-center justify-center p-6 border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent">
             <div className="relative mb-6">
-              {/* Breathing animated rings */}
+              {/* Animated rings */}
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
                   className="absolute inset-0 rounded-full border-2 bg-gradient-to-br from-blue-500 via-purple-500 to-transparent"
                   animate={{
                     rotate: 360,
-                    scale: currentSpeaker === 'austin' ? [1, 1.05, 1] : 1,
                   }}
                   transition={{
                     rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-                    scale: currentSpeaker === 'austin' ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {},
                   }}
                   style={{ opacity: 0.6 }}
                 >
@@ -143,18 +141,16 @@ export function LiveSessionPreview() {
           {/* Right: Sales Rep (Jake M.) */}
           <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-950/20 to-transparent relative">
             <div className="relative mb-6">
-              {/* Breathing animated rings */}
+              {/* Animated rings */}
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
                   className="absolute inset-0 rounded-full border-2 bg-gradient-to-br from-green-500 via-teal-500 to-transparent"
                   animate={{
                     rotate: -360,
-                    scale: currentSpeaker === 'salesrep' ? [1, 1.05, 1] : 1,
                   }}
                   transition={{
                     rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-                    scale: currentSpeaker === 'salesrep' ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {},
                   }}
                   style={{ opacity: 0.6 }}
                 >
@@ -175,7 +171,7 @@ export function LiveSessionPreview() {
                   </div>
                   {/* Sales Rep Avatar */}
                   <Image
-                    src="/agents/nick.png"
+                    src="/sales-rep-hero.png"
                     alt="Jake M. - Sales Rep"
                     fill
                     className="object-cover relative z-10"
@@ -211,11 +207,8 @@ export function LiveSessionPreview() {
           </div>
         </div>
 
-        {/* Bottom Section: Live Transcript (Full Width) - Fixed Height */}
+        {/* Bottom Section: Transcript (Full Width) - Fixed Height (label removed) */}
         <div className="bg-black/30 flex flex-col relative" style={{ height: '300px', minHeight: '300px', maxHeight: '300px' }}>
-          <div className="px-4 py-2 border-b border-purple-500/10 flex-shrink-0">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Transcript</h4>
-          </div>
           
           {/* Fade gradient overlays */}
           <div className="absolute top-10 left-0 right-0 h-8 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-10" />
@@ -226,7 +219,7 @@ export function LiveSessionPreview() {
             className="flex-1 overflow-y-auto px-4 py-3 space-y-2 custom-scrollbar"
             style={{
               scrollBehavior: 'smooth',
-              height: 'calc(300px - 42px)' // Subtract header height
+              height: '300px'
             }}
           >
             {transcript.slice(0, visibleMessages).map((entry, index) => {
@@ -248,15 +241,6 @@ export function LiveSessionPreview() {
                           : 'bg-slate-800/50 border border-slate-700/30'
                       }`}
                     >
-                      {/* Timestamp */}
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-mono ${
-                          isRep ? 'text-purple-400/60' : 'text-slate-500'
-                        }`}>
-                          {entry.time}
-                        </span>
-                      </div>
-                      
                       {/* Message Text */}
                       <p className={`text-sm leading-[1.5] ${
                         isRep ? 'text-white' : 'text-slate-200'
