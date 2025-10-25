@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { motion, AnimatePresence, useAnimation } from "framer-motion"
 import { ChevronDown, Mail } from "lucide-react"
 import { useInView } from "framer-motion"
@@ -56,7 +57,7 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
         }}
         {...props}
       >
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 50 },
@@ -76,16 +77,39 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
             ) : null}
           </motion.div>
 
-          <motion.div className="w-full max-w-3xl space-y-3">
-            {items.map((item, index) => (
-              <FaqItem
-                key={index}
-                question={item.question}
-                answer={item.answer}
-                index={index}
-              />
-            ))}
-          </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch w-full">
+            <motion.div className="w-full space-y-3">
+              {items.map((item, index) => (
+                <FaqItem
+                  key={index}
+                  question={item.question}
+                  answer={item.answer}
+                  index={index}
+                />
+              ))}
+            </motion.div>
+
+            <motion.div 
+              variants={{
+                hidden: { opacity: 0, x: 50 },
+                visible: { 
+                  opacity: 1, 
+                  x: 0,
+                  transition: { duration: 0.8, ease: "easeOut" }
+                }
+              }}
+              className="w-full flex items-end justify-end lg:sticky lg:top-24"
+            >
+              <div className="relative w-full max-w-md aspect-square rounded-2xl overflow-hidden border border-white/10">
+                <Image
+                  src="/website image 5.png"
+                  alt="Support representative"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </motion.div>
+          </div>
 
           {contactInfo ? (
             <motion.div
@@ -99,18 +123,18 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
               }}
               className="max-w-md mx-auto mt-12 p-6 rounded-lg text-center"
             >
-              <div className="inline-flex items-center justify-center p-1.5 rounded-full mb-4">
-                <Mail className="h-4 w-4" />
+              <div className="inline-flex items-center justify-center p-2 rounded-full mb-5">
+                <Mail className="h-6 w-6" />
               </div>
-              <p className="text-sm font-medium text-foreground mb-1">
+              <p className="text-xl font-semibold text-foreground mb-2">
                 {contactInfo.title}
               </p>
-              <p className="text-xs text-muted-foreground mb-4">
+              <p className="text-base text-muted-foreground mb-6">
                 {contactInfo.description}
               </p>
               <motion.button
                 onClick={contactInfo.onContact}
-                className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-6 py-2.5 text-sm font-semibold backdrop-blur-sm duration-300"
+                className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-8 py-3 text-base font-semibold backdrop-blur-sm duration-300"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
               >

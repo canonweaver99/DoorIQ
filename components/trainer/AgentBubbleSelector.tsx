@@ -389,14 +389,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             const isHovered = hoveredAgent === agent.id
             const isSelected = selectedAgent === agent.agentId
             
-            // Stronger background with border for more contrast
-            const cardBg = agent.difficulty === 'Easy' 
-              ? 'bg-gradient-to-br from-green-500/15 to-emerald-500/10 border border-green-500/20' :
-              agent.difficulty === 'Moderate' 
-              ? 'bg-gradient-to-br from-yellow-500/15 to-amber-500/10 border border-yellow-500/20' :
-              agent.difficulty === 'Hard' 
-              ? 'bg-gradient-to-br from-orange-500/15 to-red-500/10 border border-orange-500/20' :
-              'bg-gradient-to-br from-red-500/15 to-rose-500/10 border border-red-500/20'
+            // Uniform grey background - difficulty shown via dot color
+            const cardBg = 'bg-[#1a1a1a] border border-[#2a2a2a]'
 
             return (
               <motion.div
@@ -532,19 +526,20 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   className="text-center space-y-2"
                 >
                   {/* Name and difficulty */}
-                  <div className="flex items-center justify-center gap-1.5">
+                  <div className="flex items-center justify-center gap-2">
                     <h3 className="text-lg font-bold text-white">{agent.name}</h3>
                     <div className={cn(
-                      "w-1.5 h-1.5 rounded-full",
+                      "w-2 h-2 rounded-full",
                       agent.difficulty === 'Easy' ? 'bg-green-400' :
                       agent.difficulty === 'Moderate' ? 'bg-yellow-400' :
                       agent.difficulty === 'Hard' ? 'bg-orange-400' :
+                      agent.difficulty === 'Very Hard' ? 'bg-blue-400' :
                       'bg-red-400'
                     )} />
                   </div>
                   
                   {/* Combined summary */}
-                  <p className="text-xs text-slate-400 max-w-[220px] mx-auto leading-snug px-2">
+                  <p className="text-xs text-white/70 max-w-[220px] mx-auto leading-snug px-2">
                     {agent.description}
                   </p>
                   

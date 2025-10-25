@@ -5,9 +5,10 @@ import { Camera, CameraOff, Mic, MicOff } from 'lucide-react'
 
 interface WebcamRecorderProps {
   sessionActive: boolean
+  duration?: number
 }
 
-export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
+export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRecorderProps) {
   const [isWebcamActive, setIsWebcamActive] = useState(false)
   const [isMicActive, setIsMicActive] = useState(true)
   const [hasPermission, setHasPermission] = useState(false)
@@ -15,6 +16,12 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
   const [error, setError] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   // Request camera permission immediately on component mount
   useEffect(() => {
@@ -131,11 +138,14 @@ export default function WebcamRecorder({ sessionActive }: WebcamRecorderProps) {
 
   return (
     <div className="h-full flex flex-col bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-slate-700/50">
+      {/* Header with Timer */}
+      <div className="px-4 py-3 border-b border-slate-700/50 flex items-center justify-between">
         <h3 className="text-slate-300 text-sm font-semibold uppercase tracking-wide">
           Your Camera
         </h3>
+        <div className="text-sm text-slate-400 font-mono">
+          {sessionActive ? formatDuration(duration) : '0:00'}
+        </div>
       </div>
 
       {/* Video Container */}

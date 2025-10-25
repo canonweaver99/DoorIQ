@@ -57,39 +57,33 @@ export function DashboardHeroPreview() {
           </button>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - Only Overview shown */}
         <div className="flex gap-6 mb-6 border-b border-white/10 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 px-1 text-sm font-semibold whitespace-nowrap transition-colors ${
-                activeTab === tab.id
-                  ? 'text-white border-b-2 border-purple-500'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={tab.icon} />
-                </svg>
-                {tab.label}
-              </span>
-            </button>
-          ))}
+          <div className="pb-3 px-1 text-sm font-semibold whitespace-nowrap text-white border-b-2 border-purple-500">
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Overview
+            </span>
+          </div>
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="space-y-8">
-            {/* Top Metrics Row - 5 cards */}
+        {/* Tab Content - Overview Only */}
+        <div className="space-y-8">
+            {/* Top Metrics Row - 5 cards (matte style) */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 items-start">
               {/* Overall Card */}
               <div 
                 onClick={() => setIsOverallOpen(!isOverallOpen)}
-                className={`relative rounded-xl p-4 border border-white cursor-pointer hover:border-white/80 transition-all ${isOverallOpen ? 'ring-2 ring-white/50' : ''}`}
-                style={{
-                  background: 'radial-gradient(ellipse at top, rgba(88, 28, 135, 0.4) 0%, rgba(59, 7, 100, 0.3) 30%, rgba(0, 0, 0, 1) 70%), radial-gradient(ellipse at bottom right, rgba(147, 51, 234, 0.2) 0%, transparent 50%), #000000'
+                className="rounded-lg cursor-pointer transition-all"
+                style={{ 
+                  backgroundColor: '#2a1a3a',
+                  border: '2px solid #4a2a6a',
+                  boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
+                  outline: 'none',
+                  padding: '16px',
+                  transform: 'scale(0.95)'
                 }}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -111,7 +105,8 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 border-t border-white/20 overflow-hidden"
+                    className="mt-3 pt-3 overflow-hidden"
+                    style={{ borderTop: '1px solid #4a2a6a' }}
                   >
                     <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
                     <p className="text-[11px] text-slate-300 leading-relaxed">Focus on consistency across all areas. Your rapport and discovery skills show promise.</p>
@@ -122,7 +117,15 @@ export function DashboardHeroPreview() {
               {/* Rapport Card */}
               <div 
                 onClick={() => setIsRapportOpen(!isRapportOpen)}
-                className={`bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 rounded-xl p-4 border border-emerald-500/20 cursor-pointer hover:border-emerald-500/40 transition-all ${isRapportOpen ? 'ring-2 ring-emerald-500/50' : ''}`}
+                className="rounded-lg cursor-pointer transition-all"
+                style={{ 
+                  backgroundColor: '#1a3a2a',
+                  border: '2px solid #2a6a4a',
+                  boxShadow: 'inset 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
+                  outline: 'none',
+                  padding: '16px',
+                  transform: 'scale(0.95)'
+                }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-semibold text-emerald-200 uppercase tracking-wide">Rapport</h3>
@@ -143,7 +146,8 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 border-t border-emerald-500/20 overflow-hidden"
+                    className="mt-3 pt-3 overflow-hidden"
+                    style={{ borderTop: '1px solid #2a6a4a' }}
                   >
                     <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
                     <p className="text-[11px] text-slate-300 leading-relaxed">Incorporate personalized questions within the first 30 seconds. Reference specific details about their property.</p>
@@ -154,7 +158,15 @@ export function DashboardHeroPreview() {
               {/* Discovery Card */}
               <div 
                 onClick={() => setIsDiscoveryOpen(!isDiscoveryOpen)}
-                className={`bg-gradient-to-br from-blue-900/20 to-blue-800/10 rounded-xl p-4 border border-blue-500/20 cursor-pointer hover:border-blue-500/40 transition-all ${isDiscoveryOpen ? 'ring-2 ring-blue-500/50' : ''}`}
+                className="rounded-lg cursor-pointer transition-all"
+                style={{ 
+                  backgroundColor: '#1a2a3a',
+                  border: '2px solid #2a4a6a',
+                  boxShadow: 'inset 0 0 20px rgba(59, 130, 246, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
+                  outline: 'none',
+                  padding: '16px',
+                  transform: 'scale(0.95)'
+                }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-semibold text-blue-200 uppercase tracking-wide">Discovery</h3>
@@ -175,7 +187,8 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 border-t border-blue-500/20 overflow-hidden"
+                    className="mt-3 pt-3 overflow-hidden"
+                    style={{ borderTop: '1px solid #2a4a6a' }}
                   >
                     <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
                     <p className="text-[11px] text-slate-300 leading-relaxed">Dig deeper into pain points with follow-up questions about specific frustrations.</p>
@@ -186,7 +199,15 @@ export function DashboardHeroPreview() {
               {/* Objection Card */}
               <div 
                 onClick={() => setIsObjectionOpen(!isObjectionOpen)}
-                className={`bg-gradient-to-br from-amber-900/20 to-amber-800/10 rounded-xl p-4 border border-amber-500/20 cursor-pointer hover:border-amber-500/40 transition-all ${isObjectionOpen ? 'ring-2 ring-amber-500/50' : ''}`}
+                className="rounded-lg cursor-pointer transition-all"
+                style={{ 
+                  backgroundColor: '#3a2a1a',
+                  border: '2px solid #6a4a2a',
+                  boxShadow: 'inset 0 0 20px rgba(245, 158, 11, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
+                  outline: 'none',
+                  padding: '16px',
+                  transform: 'scale(0.95)'
+                }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-semibold text-amber-200 uppercase tracking-wide">Objection</h3>
@@ -207,7 +228,8 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 border-t border-amber-500/20 overflow-hidden"
+                    className="mt-3 pt-3 overflow-hidden"
+                    style={{ borderTop: '1px solid #6a4a2a' }}
                   >
                     <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
                     <p className="text-[11px] text-slate-300 leading-relaxed">Reframe price concerns as investment discussions. Pivot to ROI and break down savings.</p>
@@ -218,7 +240,15 @@ export function DashboardHeroPreview() {
               {/* Closing Card */}
               <div 
                 onClick={() => setIsClosingOpen(!isClosingOpen)}
-                className={`bg-gradient-to-br from-pink-900/20 to-pink-800/10 rounded-xl p-4 border border-pink-500/20 cursor-pointer hover:border-pink-500/40 transition-all ${isClosingOpen ? 'ring-2 ring-pink-500/50' : ''}`}
+                className="rounded-lg cursor-pointer transition-all"
+                style={{ 
+                  backgroundColor: '#3a1a2a',
+                  border: '2px solid #6a2a4a',
+                  boxShadow: 'inset 0 0 20px rgba(236, 72, 153, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
+                  outline: 'none',
+                  padding: '16px',
+                  transform: 'scale(0.95)'
+                }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-semibold text-pink-200 uppercase tracking-wide">Closing</h3>
@@ -239,7 +269,8 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 border-t border-pink-500/20 overflow-hidden"
+                    className="mt-3 pt-3 overflow-hidden"
+                    style={{ borderTop: '1px solid #6a2a4a' }}
                   >
                     <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
                     <p className="text-[11px] text-slate-300 leading-relaxed">Use assumptive language in your close. Replace questions with statements like 'When we install this'.</p>
@@ -251,7 +282,7 @@ export function DashboardHeroPreview() {
             {/* Bottom Section - Graph under Overall Score */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
               {/* Left Column - Performance Overview under Overall Score */}
-              <div ref={chartContainerRef} className="lg:col-span-3 pt-6">
+              <div ref={chartContainerRef} className="lg:col-span-3 pt-4" style={{ maxWidth: '98%' }}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-xl font-bold text-white mb-1">Performance Overview</h3>
@@ -277,11 +308,11 @@ export function DashboardHeroPreview() {
                 <div className="relative" style={{ height: '353px' }}>
                   {/* Y-Axis */}
                   <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs font-bold text-gray-300 pr-2 border-r border-gray-700">
-                    <span>100%</span>
-                    <span>75%</span>
-                    <span>50%</span>
-                    <span>25%</span>
-                    <span>0%</span>
+                    <span className="text-white text-sm">100%</span>
+                    <span className="text-white text-sm">75%</span>
+                    <span className="text-white text-sm">50%</span>
+                    <span className="text-white text-sm">25%</span>
+                    <span className="text-white text-sm">0%</span>
                   </div>
                   
                    <div className="ml-12 mr-0 h-full pb-8 relative border-b border-gray-700" ref={chartRef}>
@@ -290,6 +321,16 @@ export function DashboardHeroPreview() {
                       const rect = chartRef.current.getBoundingClientRect()
                       const pixelX = (hoveredPoint.x / 350) * rect.width
                       const pixelY = (hoveredPoint.y / 240) * (rect.height - 32)
+                      
+                      // Red-green color scale based on percentage
+                      const getPercentColor = (pct: number) => {
+                        if (pct >= 85) return '#10b981' // green-500
+                        if (pct >= 75) return '#22c55e' // green-400
+                        if (pct >= 65) return '#84cc16' // lime-500
+                        if (pct >= 55) return '#eab308' // yellow-500
+                        if (pct >= 45) return '#f97316' // orange-500
+                        return '#ef4444' // red-500
+                      }
                       
                       return (
                         <div
@@ -300,8 +341,8 @@ export function DashboardHeroPreview() {
                             transform: 'translateX(-50%)',
                           }}
                         >
-                          <div className="bg-black/95 border border-purple-500 rounded-lg px-3 py-2 shadow-lg shadow-purple-500/30">
-                            <div className="text-purple-400 font-bold text-lg text-center leading-tight mb-1">
+                          <div className="bg-black/95 border rounded-lg px-3 py-2 shadow-lg" style={{ borderColor: getPercentColor(hoveredPoint.value) }}>
+                            <div className="font-bold text-lg text-center leading-tight mb-1" style={{ color: getPercentColor(hoveredPoint.value) }}>
                               {hoveredPoint.value}%
                             </div>
                             <div className="text-slate-400 text-xs text-center whitespace-nowrap">
@@ -389,7 +430,7 @@ export function DashboardHeroPreview() {
                          { day: 'Sat', position: '78.57%' },  // 275/350
                          { day: 'Sun', position: '92.86%' },  // 325/350
                        ].map((item) => (
-                         <span key={item.day} className="absolute text-center" style={{ left: item.position, transform: 'translateX(-50%)' }}>{item.day}</span>
+                         <span key={item.day} className="absolute text-center text-white text-sm" style={{ left: item.position, transform: 'translateX(-50%)' }}>{item.day}</span>
                        ))}
                      </div>
                    </div>
@@ -399,7 +440,7 @@ export function DashboardHeroPreview() {
               {/* Right Column - Recent Sessions + Notifications */}
               <div className="lg:col-span-2 space-y-4">
                 {/* Recent Sessions */}
-                <div className="bg-gradient-to-br from-pink-900/5 to-transparent rounded-xl p-4 border border-pink-500/20">
+                <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
                   <h3 className="text-base font-bold text-white mb-3">Recent Sessions</h3>
                 
                   <div className="space-y-2.5">
@@ -455,7 +496,7 @@ export function DashboardHeroPreview() {
                 </div>
 
                 {/* Notifications */}
-                <div className="bg-gradient-to-br from-blue-900/5 to-transparent rounded-xl p-4 border border-blue-500/20">
+                <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
                   <h3 className="text-base font-bold text-white mb-3">Notifications</h3>
                 
                   <div className="space-y-2.5">
@@ -482,27 +523,33 @@ export function DashboardHeroPreview() {
                         icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z'
                       }
                     ].map((notif, index) => {
-                      const colorMap: Record<string, { bg: string; border: string; hoverBorder: string; iconBg: string; iconColor: string }> = {
-                        manager: { bg: 'bg-purple-500/10', border: 'border-purple-500/30', hoverBorder: 'hover:border-purple-500/50', iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600', iconColor: 'text-white' },
-                        leaderboard: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', hoverBorder: 'hover:border-emerald-500/50', iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600', iconColor: 'text-white' },
-                        achievement: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', hoverBorder: 'hover:border-amber-500/50', iconBg: 'bg-gradient-to-br from-amber-400 to-amber-500', iconColor: 'text-white' }
+                      const colorMap: Record<string, { bg: string; iconBg: string }> = {
+                        manager: { bg: 'rgba(168, 85, 247, 0.2)', iconBg: 'rgba(168, 85, 247, 0.2)' },
+                        leaderboard: { bg: 'rgba(16, 185, 129, 0.2)', iconBg: 'rgba(16, 185, 129, 0.2)' },
+                        achievement: { bg: 'rgba(245, 158, 11, 0.2)', iconBg: 'rgba(245, 158, 11, 0.2)' }
                       }
-                      const colorClasses = colorMap[notif.type] || colorMap.manager
+                      const colors = colorMap[notif.type] || colorMap.manager
+                      const iconColors: Record<string, string> = {
+                        manager: '#a855f7',
+                        leaderboard: '#10b981',
+                        achievement: '#f59e0b'
+                      }
+                      const iconColor = iconColors[notif.type] || iconColors.manager
                       
                       return (
-                        <div key={index} className={`p-2.5 rounded-lg ${colorClasses.bg} border ${colorClasses.border} ${colorClasses.hoverBorder} transition-colors cursor-pointer`}>
-                          <div className="flex items-start gap-2">
-                            <div className={`w-7 h-7 rounded-lg ${colorClasses.iconBg} flex items-center justify-center flex-shrink-0`}>
-                              <svg className={`w-3.5 h-3.5 ${colorClasses.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <div key={index} className="p-3 rounded-lg border border-[#2a2a2a] transition-colors cursor-pointer" style={{ backgroundColor: colors.bg }}>
+                          <div className="flex items-start gap-2.5">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.iconBg }}>
+                              <svg className="w-4 h-4" style={{ color: iconColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d={notif.icon} />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-0.5">
+                              <div className="flex items-center justify-between mb-1">
                                 <h4 className="text-xs font-bold text-white">{notif.title}</h4>
-                                <span className="text-[10px] text-gray-400 font-medium">{notif.time}</span>
+                                <span className="text-[10px] text-white/60 font-medium">{notif.time}</span>
                               </div>
-                              <p className="text-[11px] text-gray-300 leading-relaxed">{notif.message}</p>
+                              <p className="text-xs text-white leading-relaxed">{notif.message}</p>
                             </div>
                           </div>
                         </div>
@@ -513,110 +560,6 @@ export function DashboardHeroPreview() {
               </div>
             </div>
           </div>
-        )}
-
-        {/* Performance Tab */}
-        {activeTab === 'performance' && (
-          <div className="min-h-[400px] bg-gradient-to-br from-blue-900/5 to-transparent rounded-xl p-8 border border-blue-500/10">
-            <h3 className="text-2xl font-bold text-white mb-6">Detailed Performance Metrics</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { label: 'Overall Average', value: '83%', color: 'text-green-400' },
-                { label: 'Sessions Completed', value: '47', color: 'text-blue-400' },
-                { label: 'Improvement Rate', value: '+12%', color: 'text-purple-400' },
-                { label: 'Consistency Score', value: '91%', color: 'text-emerald-400' },
-              ].map((metric, i) => (
-                <div key={i} className="bg-white/5 rounded-lg p-5 border border-white/10">
-                  <p className="text-xs text-gray-400 mb-2">{metric.label}</p>
-                  <p className={`text-3xl font-bold ${metric.color}`}>{metric.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Learning Tab */}
-        {activeTab === 'learning' && (
-          <div className="min-h-[400px] bg-gradient-to-br from-purple-900/5 to-transparent rounded-xl p-8 border border-purple-500/10">
-            <h3 className="text-2xl font-bold text-white mb-6">Coaching Tips & Resources</h3>
-            <div className="space-y-4">
-              {[
-                { title: 'Handling Price Objections', desc: 'Learn proven techniques to overcome budget concerns', progress: 75 },
-                { title: 'Building Instant Rapport', desc: 'Master the first 30 seconds of every conversation', progress: 90 },
-                { title: 'Advanced Closing Techniques', desc: 'Close more deals with assumptive language', progress: 60 },
-              ].map((item, i) => (
-                <div key={i} className="bg-white/5 rounded-lg p-5 border border-white/10">
-                  <h4 className="text-base font-semibold text-white mb-1">{item.title}</h4>
-                  <p className="text-sm text-gray-400 mb-3">{item.desc}</p>
-                  <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-purple-600 to-pink-600" style={{ width: `${item.progress}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Upload Tab */}
-        {activeTab === 'upload' && (
-          <div className="min-h-[400px] bg-gradient-to-br from-indigo-900/5 to-transparent rounded-xl p-8 border border-indigo-500/10 flex flex-col items-center justify-center">
-            <svg className="w-16 h-16 text-purple-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <h3 className="text-2xl font-bold text-white mb-2">Upload Training Materials</h3>
-            <p className="text-gray-400 text-center max-w-md mb-6">Drop your sales scripts, playbooks, or training videos here to enhance AI training</p>
-            <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all">
-              Choose Files
-            </button>
-          </div>
-        )}
-
-        {/* Team Tab */}
-        {activeTab === 'team' && (
-          <div className="min-h-[400px] bg-gradient-to-br from-emerald-900/5 to-transparent rounded-xl p-8 border border-emerald-500/10">
-            <h3 className="text-2xl font-bold text-white mb-6">Team Leaderboard</h3>
-            <div className="space-y-3">
-              {[
-                { rank: 1, name: 'Sarah Chen', score: 892, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-                { rank: 2, name: 'Marcus Johnson', score: 875, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' },
-                { rank: 3, name: 'Alex Rivera (You)', score: 840, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop', isYou: true },
-                { rank: 4, name: 'David Martinez', score: 825, avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop' },
-                { rank: 5, name: 'Emma Wilson', score: 810, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
-              ].map((member) => (
-                <div key={member.rank} className={`flex items-center justify-between p-4 rounded-lg ${member.isYou ? 'bg-purple-500/10 border-2 border-purple-500/30' : 'bg-white/5 border border-white/10'}`}>
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl font-bold text-purple-400">#{member.rank}</div>
-                    <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full ring-2 ring-white/20" />
-                    <span className="text-base font-semibold text-white">{member.name}</span>
-                  </div>
-                  <div className="text-xl font-bold text-purple-300">{member.score}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Messages Tab */}
-        {activeTab === 'messages' && (
-          <div className="min-h-[400px] bg-gradient-to-br from-pink-900/5 to-transparent rounded-xl p-8 border border-pink-500/10">
-            <h3 className="text-2xl font-bold text-white mb-6">Team Messages</h3>
-            <div className="space-y-4">
-              {[
-                { from: 'Manager', msg: 'Great job on handling objections this week!', time: '2h ago', unread: true },
-                { from: 'Coach Sarah', msg: 'New training module available for closing techniques', time: '1d ago', unread: true },
-                { from: 'System', msg: 'You earned a new achievement badge', time: '2d ago', unread: false },
-              ].map((message, i) => (
-                <div key={i} className={`p-5 rounded-lg border ${message.unread ? 'bg-purple-500/5 border-purple-500/20' : 'bg-white/5 border-white/10'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-base font-semibold text-white">{message.from}</span>
-                    <span className="text-xs text-gray-500">{message.time}</span>
-                  </div>
-                  <p className="text-sm text-gray-300">{message.msg}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

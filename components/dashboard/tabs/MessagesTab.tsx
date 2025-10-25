@@ -378,8 +378,8 @@ export default function MessagesTab() {
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs text-purple-300 font-medium">Pro Tip</p>
-              <p className="text-xs text-slate-400">Regular check-ins with your manager lead to 23% better performance!</p>
+              <p className="text-sm text-purple-300 font-bold">Pro Tip</p>
+              <p className="text-sm text-white leading-relaxed">Regular check-ins with your manager lead to 23% better performance!</p>
             </div>
           </div>
         </div>
@@ -425,14 +425,14 @@ export default function MessagesTab() {
                 >
                   <div className={`max-w-[70%] ${message.sender_id === currentUser?.id ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
                     {message.sender_id !== currentUser?.id && (
-                      <span className="text-xs text-slate-400 px-2">{message.sender_name}</span>
+                      <span className="text-sm text-white/70 px-2 font-medium">{message.sender_name}</span>
                     )}
                     <div className={`px-4 py-3 rounded-2xl ${
                       message.sender_id === currentUser?.id
                         ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
                         : 'bg-white/10 text-white border border-white/10'
                     }`}>
-                      <p className="text-sm">{message.text}</p>
+                      <p className="text-base leading-relaxed">{message.text}</p>
                     </div>
                     <div className="flex items-center gap-2 px-2">
                       <span className="text-xs text-slate-400">{formatTime(message.created_at)}</span>

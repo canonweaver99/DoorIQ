@@ -225,6 +225,7 @@ function HeaderContent() {
         title: 'Workspace',
         items: [
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+          { name: 'New Dashboard', href: '/new-dashboard', icon: PieChart },
           { name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 },
           { name: 'Playbooks', href: '/dashboard?tab=learning', icon: NotebookPen },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },

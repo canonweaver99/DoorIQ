@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { HeroSection } from '@/components/ui/hero-section-dark'
@@ -74,7 +75,7 @@ export default function Home() {
           regular: "Master Door to Door Sales with ",
           gradient: "AI-Powered Training",
         }}
-        description="Practice with AI homeowners that challenge you like real prospects, get instant feedback on every pitch"
+        description="Practice with AI homeowners • Get instant feedback • Close more deals"
         ctaText="Try Your First AI Roleplay Free"
         ctaHref="/trainer/select-homeowner"
         ctaSecondaryText="Watch Demo"
@@ -174,13 +175,26 @@ function ProblemSolutionSection() {
       variants={staggerContainer}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div className="text-center mb-12" variants={fadeInUp}>
-          <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-            The <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Challenge</span> Every Sales Manager Faces
-          </h2>
-          <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-            You know your team needs practice. But between recruiting, coaching, and hitting quotas, there's never enough time.
-          </p>
+        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12" variants={fadeInUp}>
+          <div className="text-center lg:text-left">
+            <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Challenge</span> Every Sales Manager Faces
+            </h2>
+            <p className="text-lg text-slate-300">
+              You know your team needs practice. But between recruiting, coaching, and hitting quotas, there's never enough time.
+            </p>
+          </div>
+          <motion.div 
+            className="relative h-96 rounded-2xl overflow-hidden border border-white/10"
+            variants={fadeInScale}
+          >
+            <Image
+              src="/website image 1.png"
+              alt="Door-to-door sales challenge"
+              fill
+              className="object-cover"
+            />
+          </motion.div>
         </motion.div>
 
         {/* Problems */}
@@ -195,11 +209,13 @@ function ProblemSolutionSection() {
               whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
               className="p-6 rounded-xl bg-red-900/10 border border-red-500/20"
             >
-              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
-                <problem.icon className="w-6 h-6 text-red-400" />
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 flex-shrink-0 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <problem.icon className="w-6 h-6 text-red-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">{problem.title}</h3>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">{problem.title}</h3>
-              <p className="text-white">{problem.description}</p>
+              <p className="text-base text-white leading-relaxed">{problem.description}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -216,12 +232,25 @@ function ProblemSolutionSection() {
 
         {/* Solutions */}
         <motion.div 
-          className="text-center mb-12"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12"
           variants={fadeInUp}
         >
-          <h3 className="text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span> Solves This
-          </h3>
+          <motion.div 
+            className="relative h-96 rounded-2xl overflow-hidden border border-white/10 lg:order-1"
+            variants={fadeInScale}
+          >
+            <Image
+              src="/Website image 3.png"
+              alt="Confident sales rep after training"
+              fill
+              className="object-cover"
+            />
+          </motion.div>
+          <div className="text-center lg:text-left lg:order-2">
+            <h3 className="text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span> Solves This
+            </h3>
+          </div>
         </motion.div>
 
         <motion.div 
@@ -232,18 +261,20 @@ function ProblemSolutionSection() {
             <motion.div
               key={index}
               variants={staggerItem}
-              whileHover={{ y: -10, transition: { duration: 0.2 } }}
+              whileHover={{ y: -5, transition: { duration: 0.2 } }}
             >
               <GlowCard
                 glowColor={solution.color === 'blue' ? 'blue' : solution.color === 'purple' ? 'purple' : 'green'}
                 customSize
                 className="p-8 h-full"
               >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mb-4">
-                  <solution.icon className="w-6 h-6 text-purple-400" />
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
+                    <solution.icon className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">{solution.title}</h3>
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{solution.title}</h3>
-                <p className="text-white">{solution.description}</p>
+                <p className="text-base text-white leading-relaxed">{solution.description}</p>
               </GlowCard>
             </motion.div>
           ))}
@@ -296,12 +327,25 @@ function ResultsSection() {
       variants={staggerContainer}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.h2 
-          className="text-[56px] leading-[1.1] tracking-tight font-geist text-center bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
-          variants={fadeInUp}
-        >
-          Results That Move the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Needle</span>
-        </motion.h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
+          <motion.h2 
+            className="text-[56px] leading-[1.1] tracking-tight font-geist text-center lg:text-left bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+            variants={fadeInUp}
+          >
+            Results That Move the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Needle</span>
+          </motion.h2>
+          <motion.div 
+            className="relative h-96 rounded-2xl overflow-hidden border border-white/10"
+            variants={fadeInScale}
+          >
+            <Image
+              src="/website image 4.png"
+              alt="Successful sales rep"
+              fill
+              className="object-cover"
+            />
+          </motion.div>
+        </div>
         <motion.div 
           className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
           variants={staggerContainer}
@@ -371,7 +415,6 @@ function AnimatedStatCard({
   return (
     <motion.div
       variants={staggerItem}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
       onViewportEnter={() => {
         if (!hasAnimated && value) {
           setHasAnimated(true)
@@ -408,7 +451,7 @@ function AnimatedStatCard({
           >
             {rawValue || `${prefix}${displayValue}${suffix}`}
           </motion.div>
-          <div className="mt-2 text-slate-300 text-sm">{label}</div>
+          <div className="mt-2 text-white text-base">{label}</div>
         </div>
       </GlowCard>
     </motion.div>
@@ -418,10 +461,9 @@ function AnimatedStatCard({
 function TestimonialsSection() {
   const { ref, controls } = useScrollAnimation(0.2)
 
-  const columnSize = Math.ceil(testimonialsData.length / 3)
+  const columnSize = Math.ceil(testimonialsData.length / 2)
   const firstColumn = testimonialsData.slice(0, columnSize)
-  const secondColumn = testimonialsData.slice(columnSize, columnSize * 2)
-  const thirdColumn = testimonialsData.slice(columnSize * 2)
+  const secondColumn = testimonialsData.slice(columnSize)
 
   return (
     <motion.div
@@ -464,16 +506,9 @@ function TestimonialsSection() {
         <motion.div variants={staggerItem}>
           <TestimonialsColumn testimonials={firstColumn} duration={18} />
         </motion.div>
-        {secondColumn.length > 0 && (
-          <motion.div variants={staggerItem} className="hidden md:block">
-            <TestimonialsColumn testimonials={secondColumn} duration={22} />
-          </motion.div>
-        )}
-        {thirdColumn.length > 0 && (
-          <motion.div variants={staggerItem} className="hidden lg:block">
-            <TestimonialsColumn testimonials={thirdColumn} duration={20} />
-          </motion.div>
-        )}
+        <motion.div variants={staggerItem}>
+          <TestimonialsColumn testimonials={secondColumn} duration={22} />
+        </motion.div>
       </motion.div>
     </motion.div>
   )

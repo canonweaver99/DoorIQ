@@ -92,11 +92,11 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] z-10 mx-auto w-full" style={{ paddingLeft: '80px', paddingRight: '80px' }}>
             {/* Split Screen: Copy Left, Live Session Right */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center pt-8">
+            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] gap-12 items-center pt-8">
               {/* Left Side - Copy */}
               <motion.div 
                 className="space-y-5 text-center flex flex-col items-center justify-center" 
-                style={{ paddingRight: '40px' }}
+                style={{ paddingRight: '0px' }}
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
@@ -109,14 +109,13 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   transition={{ delay: 0.2, duration: 0.6 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <h1 className="text-sm text-gray-600 dark:text-gray-400 group font-geist px-5 py-2 bg-gradient-to-tr from-zinc-300/20 via-gray-400/20 to-transparent dark:from-zinc-300/5 dark:via-gray-400/5 border-[2px] border-black/5 dark:border-white/5 rounded-3xl cursor-pointer hover:border-purple-500/30 transition-all flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-purple-400" />
+                  <h1 className="text-base text-white group font-geist px-6 py-3 bg-gradient-to-tr from-zinc-300/20 via-gray-400/20 to-transparent dark:from-zinc-300/5 dark:via-gray-400/5 border-[2px] border-black/5 dark:border-white/5 rounded-3xl cursor-pointer hover:border-purple-500/30 transition-all flex items-center gap-2">
                     {title}
                     <ChevronRight className="inline w-4 h-4 ml-1 group-hover:translate-x-1 duration-300" />
                   </h1>
                 </motion.a>
                 <motion.h2 
-                  className="text-[48px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+                  className="text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
@@ -176,7 +175,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   )}
                 </motion.div>
                 <motion.p 
-                  className="text-gray-600 dark:text-gray-300/80 text-base"
+                  className="text-white text-lg"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.6 }}
@@ -200,7 +199,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   ].map((industry, index) => (
                     <motion.div
                       key={industry}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10"
+                      className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.9 + index * 0.08, duration: 0.4 }}
@@ -210,7 +209,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
-                      <span className="text-xs text-white font-medium">{industry}</span>
+                      <span className="text-base text-white font-semibold">{industry}</span>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -218,7 +217,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
 
               {/* Right Side - Live Session (Expanded) */}
               <motion.div 
-                className="w-full h-full mt-8" 
+                className="w-full h-full mt-3" 
                 style={{ paddingLeft: '40px' }}
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}

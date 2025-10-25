@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Volume2 } from 'lucide-react'
+import { Volume2, Mic, Video, Settings, Maximize2 } from 'lucide-react'
 
 type TranscriptEntry = {
   speaker: 'austin' | 'salesrep'
@@ -13,23 +13,31 @@ type TranscriptEntry = {
 
 export function LiveSessionPreview() {
   const [currentSpeaker, setCurrentSpeaker] = useState<'austin' | 'salesrep'>('salesrep')
-  const [visibleMessages, setVisibleMessages] = useState<number>(3)
+  const [visibleMessages, setVisibleMessages] = useState<number>(0)
   const [currentTime, setCurrentTime] = useState<number>(3)
   const transcriptRef = useRef<HTMLDivElement>(null)
+  const [repImageSrc, setRepImageSrc] = useState<string>('/billy.png')
+  const handleRepImageError = () => {
+    setRepImageSrc(prev => (prev === '/billy.png' ? '/dipshit.png' : '/sales-rep-hero.png'))
+  }
   
   // Simulate conversation flow - sync with transcript
   useEffect(() => {
     const interval = setInterval(() => {
       setVisibleMessages(prev => {
-        const nextIndex = prev >= fullTranscript.length ? 0 : prev
-        if (nextIndex < fullTranscript.length) {
-          setCurrentSpeaker(fullTranscript[nextIndex].speaker)
-        }
-        // Reset time when conversation restarts
-        if (nextIndex >= fullTranscript.length) {
+        // When we reach the end, restart from the beginning
+        if (prev >= fullTranscript.length) {
           setCurrentTime(3)
+          setCurrentSpeaker('salesrep')
+          return 1
         }
-        return nextIndex >= fullTranscript.length ? 1 : prev + 1
+        
+        // Set current speaker for the next message
+        if (prev < fullTranscript.length) {
+          setCurrentSpeaker(fullTranscript[prev].speaker)
+        }
+        
+        return prev + 1
       })
     }, 3000) // Show new message every 3 seconds
     
@@ -84,7 +92,7 @@ export function LiveSessionPreview() {
   return (
     <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden" style={{ minHeight: 'calc(100vh - 140px)', maxHeight: 'calc(100vh - 140px)', transform: 'scale(1.02)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
           <span className="text-sm font-semibold text-white">Live Session - Solar Solutions Pitch</span>
@@ -97,134 +105,91 @@ export function LiveSessionPreview() {
       {/* Main Content - 3-Way Split Layout */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Section: 50/50 Split - Austin Left, Sales Rep Right */}
-        <div className="grid grid-cols-2 gap-0 border-b border-purple-500/20" style={{ minHeight: '240px' }}>
+        <div className="grid grid-cols-2 gap-0" style={{ minHeight: '240px' }}>
           {/* Left: Agent (Austin) */}
-          <div className="flex flex-col items-center justify-center p-6 border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent">
-            <div className="relative mb-6">
-              {/* Animated rings */}
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="absolute inset-0 rounded-full border-2 bg-gradient-to-br from-blue-500 via-purple-500 to-transparent"
-                  animate={{
-                    rotate: 360,
-                  }}
-                  transition={{
-                    rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-                  }}
-                  style={{ opacity: 0.6 }}
-                >
-                  <div className="absolute inset-0 rounded-full mix-blend-screen bg-[radial-gradient(ellipse_at_center,rgba(147,51,234,0.12),transparent_70%)]" />
-                </motion.div>
-              ))}
-              
-              {/* Avatar with Rotating Gradient Background */}
-              <div className={`relative w-40 h-40 rounded-full transition-all duration-500 ${
-                currentSpeaker === 'austin' ? 'scale-105' : 'scale-100'
-              }`}>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 blur-xl opacity-50" />
-                <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-purple-500/50">
-                  {/* Rotating gradient overlay */}
-                  <div className="absolute inset-0 rounded-full overflow-hidden">
-                    <div className="absolute inset-[-12%] rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-transparent opacity-60 mix-blend-screen animate-spin-slow" />
-                    <div className="absolute inset-[-8%] rounded-full bg-gradient-to-tr from-purple-500 via-blue-500 to-transparent opacity-35 mix-blend-screen animate-spin-reverse" />
-                  </div>
-                  {/* Agent profile image */}
-                  <Image
-                    src="/agents/austin.png"
-                    alt="Austin - The Skeptic"
-                    fill
-                    className="object-cover relative z-10"
-                  />
-                </div>
+          <div className="flex flex-col items-center justify-end p-0 border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent relative">
+            {/* Austin Image - Fill entire rectangle */}
+            <div className="absolute inset-0">
+              <div className="relative w-full h-full">
+                <Image
+                  src="/AUSTIN FINAL.png"
+                  alt="Austin"
+                  fill
+                  sizes="(min-width: 1024px) 480px, 100vw"
+                  className="object-cover"
+                  style={{ objectFit: 'cover', objectPosition: 'center 35%' }}
+                />
+
+                {/* Speaking indicator removed for Austin per request */}
               </div>
-              
-              {/* Speaking indicator */}
-              {currentSpeaker === 'austin' && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg"
-                >
-                  <Volume2 className="w-6 h-6 text-white animate-pulse" />
-                </motion.div>
-              )}
             </div>
-            
-            <h3 className="text-xl font-bold text-white mb-1">Austin</h3>
-            <p className="text-sm text-purple-400">The Skeptic</p>
           </div>
 
           {/* Right: Sales Rep (Jake M.) */}
-          <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-950/20 to-transparent relative">
-            <div className="relative mb-6">
-              {/* Animated rings */}
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="absolute inset-0 rounded-full border-2 bg-gradient-to-br from-green-500 via-teal-500 to-transparent"
-                  animate={{
-                    rotate: -360,
-                  }}
-                  transition={{
-                    rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-                  }}
-                  style={{ opacity: 0.6 }}
-                >
-                  <div className="absolute inset-0 rounded-full mix-blend-screen bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.12),transparent_70%)]" />
-                </motion.div>
-              ))}
-              
-              {/* Sales Rep Avatar with Rotating Gradient Background */}
-              <div className={`relative w-40 h-40 rounded-full transition-all duration-500 ${
-                currentSpeaker === 'salesrep' ? 'scale-105' : 'scale-100'
-              }`}>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-green-500 to-teal-500 blur-xl opacity-50" />
-                <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-green-500/50">
-                  {/* Rotating gradient overlay */}
-                  <div className="absolute inset-0 rounded-full overflow-hidden">
-                    <div className="absolute inset-[-12%] rounded-full bg-gradient-to-br from-green-500 via-teal-500 to-transparent opacity-60 mix-blend-screen animate-spin-slow" />
-                    <div className="absolute inset-[-8%] rounded-full bg-gradient-to-tr from-teal-500 via-green-500 to-transparent opacity-35 mix-blend-screen animate-spin-reverse" />
+          <div className="flex flex-col items-center justify-end p-0 bg-gradient-to-br from-green-950/20 to-transparent relative">
+            {/* Sales Rep Webcam POV - Fill entire rectangle */}
+            <div className="absolute inset-0">
+              <div className="relative w-full h-full">
+                <Image
+                  src={repImageSrc}
+                  alt="Sales Rep"
+                  fill
+                  sizes="(min-width: 1024px) 480px, 100vw"
+                  onError={handleRepImageError}
+                  className="object-cover"
+                  style={{ objectFit: 'cover', objectPosition: 'center 65%' }}
+                />
+
+                {/* Webcam UI Overlay */}
+                <div className="pointer-events-none">
+                  {/* Top status bar */}
+                  <div className="absolute top-0 left-0 right-0 px-2.5 py-1.5 flex items-center justify-between bg-black/30 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      <span className="text-[11px] text-white/90 font-medium">Webcam • Billy</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-white/85 px-1 py-0.5 rounded bg-white/10">HD</span>
+                      <Settings className="w-3.5 h-3.5 text-white/90" />
+                    </div>
                   </div>
-                  {/* Sales Rep Avatar */}
-                  <Image
-                    src="/sales-rep-hero.png"
-                    alt="Jake M. - Sales Rep"
-                    fill
-                    className="object-cover relative z-10"
-                  />
+
+                  {/* Bottom controls */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md rounded-full px-2.5 py-1.5">
+                      <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
+                        <Mic className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
+                        <Video className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="hidden md:inline text-[10px] text-white/80 ml-1">LIVE</span>
+                    </div>
+                    <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
+                      <Maximize2 className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  </div>
                 </div>
               </div>
-              
-              {/* Speaking indicator */}
-              {currentSpeaker === 'salesrep' && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center shadow-lg"
-                >
-                  <Volume2 className="w-6 h-6 text-white animate-pulse" />
-                </motion.div>
-              )}
             </div>
-            
-            <h3 className="text-xl font-bold text-white mb-1">Jake M.</h3>
-            <p className="text-sm text-green-400">Sales Rep</p>
           </div>
         </div>
 
+        {/* Divider line - sits right below the text labels */}
+        <div className="border-b border-purple-500/20 mt-0" />
+
         {/* Bottom Section: Transcript (Full Width) - Fixed Height (label removed) */}
-        <div className="bg-black/30 flex flex-col relative" style={{ height: '360px', minHeight: '360px', maxHeight: '360px', marginTop: '16px' }}>
+        <div className="flex flex-col relative" style={{ height: '280px', minHeight: '280px', maxHeight: '280px', marginTop: '24px' }}>
           
           {/* Bottom fade gradient overlay */}
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
           
           <div 
             ref={transcriptRef}
-            className="flex-1 overflow-y-auto px-4 py-4 pb-12 space-y-1.5 custom-scrollbar"
+            className="flex-1 overflow-y-auto px-4 pb-12 space-y-1.5 custom-scrollbar"
             style={{
               scrollBehavior: 'smooth',
-              height: '360px'
+              height: '280px'
             }}
           >
             {fullTranscript.slice(0, visibleMessages).map((entry, index) => {
@@ -238,17 +203,17 @@ export function LiveSessionPreview() {
                   transition={{ duration: 0.3 }}
                   className={`flex ${isRep ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[70%]`}>
+                  <div className={`max-w-[75%]`}>
                     <div
-                      className={`rounded-xl px-3 py-2 backdrop-blur-sm ${
+                      className={`rounded-xl px-4 py-3 backdrop-blur-sm ${
                         isRep
-                          ? 'bg-purple-500/10 border border-purple-500/20'
-                          : 'bg-slate-800/50 border border-slate-700/30'
+                          ? 'bg-purple-600/50 border-2 border-purple-400/50'
+                          : 'bg-slate-700/80 border-2 border-slate-500/50'
                       }`}
                     >
                       {/* Message Text */}
-                      <p className={`text-xs leading-[1.4] font-semibold ${
-                        isRep ? 'text-white' : 'text-slate-200'
+                      <p className={`text-sm leading-[1.5] font-semibold ${
+                        isRep ? 'text-white' : 'text-white'
                       }`}>
                         {entry.text}
                       </p>

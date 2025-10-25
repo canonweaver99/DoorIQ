@@ -236,7 +236,7 @@ function DashboardPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#0a0a0a] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[1600px] mx-auto">
         {/* Header Section */}
         <motion.div
@@ -247,10 +247,10 @@ function DashboardPageContent() {
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent mb-2">
-                Welcome back, {userName}! 👋
+              <h1 className="text-4xl font-bold text-white mb-2">
+                Welcome back, {userName}
               </h1>
-              <div className="flex items-center gap-4 text-slate-400 text-sm">
+              <div className="flex items-center gap-4 text-white/70 text-sm">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   {formatDate(currentTime)}

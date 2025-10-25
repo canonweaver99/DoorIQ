@@ -76,7 +76,7 @@ export function Footer() {
                     <li key={link.title}>
                       <a
                         href={link.href}
-                        className="hover:text-foreground inline-flex items-center transition-all duration-300"
+                        className="hover:text-white inline-flex items-center transition-all duration-300"
                       >
                         {link.icon && <link.icon className="me-1 size-4" />}
                         {link.title}

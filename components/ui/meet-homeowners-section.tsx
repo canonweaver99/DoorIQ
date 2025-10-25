@@ -154,43 +154,34 @@ export function MeetHomeownersSection() {
           variants={staggerContainer}
         >
             <motion.div 
-              className="flex flex-col items-center p-6 rounded-lg bg-white/5 border border-white/10"
+              className="flex flex-col items-center p-6 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/30"
               variants={staggerItem}
               whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
             >
-              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-purple-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Authentic Interactions</h3>
-              <p className="text-sm text-white text-center">
+              <h3 className="text-xl font-semibold text-white mb-3">Authentic Interactions</h3>
+              <p className="text-base text-white text-center">
                 Each homeowner interrupts, hesitates, and pushes back just like real prospects
               </p>
             </motion.div>
             
             <motion.div 
-              className="flex flex-col items-center p-6 rounded-lg bg-white/5 border border-white/10"
+              className="flex flex-col items-center p-6 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/30"
               variants={staggerItem}
               whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
             >
-              <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-4">
-                <Target className="w-6 h-6 text-blue-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Scenario-Based Learning</h3>
-              <p className="text-sm text-white text-center">
+              <h3 className="text-xl font-semibold text-white mb-3">Scenario-Based Learning</h3>
+              <p className="text-base text-white text-center">
                 Target specific objections and situations your team struggles with most
               </p>
             </motion.div>
             
             <motion.div 
-              className="flex flex-col items-center p-6 rounded-lg bg-white/5 border border-white/10"
+              className="flex flex-col items-center p-6 rounded-lg bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/30"
               variants={staggerItem}
               whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
             >
-              <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
-                <TrendingUp className="w-6 h-6 text-green-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Measurable Progress</h3>
-              <p className="text-sm text-white text-center">
+              <h3 className="text-xl font-semibold text-white mb-3">Measurable Progress</h3>
+              <p className="text-base text-white text-center">
                 Track improvement across your team with objective scoring and detailed analytics
               </p>
             </motion.div>

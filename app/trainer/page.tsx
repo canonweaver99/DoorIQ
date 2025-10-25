@@ -324,9 +324,6 @@ function TrainerPageContent() {
         >
           {loading ? 'Ending...' : 'End Session'}
         </button>
-        <div className="text-sm text-slate-400 font-mono">
-          {sessionActive ? formatDuration(duration) : '0:00'}
-        </div>
       </div>
 
       {/* Main Content Area - Split Screen */}
@@ -481,7 +478,7 @@ function TrainerPageContent() {
 
         {/* Right Side - Webcam - 50% width */}
         <div className="flex-1 flex flex-col max-w-[50%]">
-          <WebcamRecorder sessionActive={sessionActive} />
+          <WebcamRecorder sessionActive={sessionActive} duration={duration} />
         </div>
         
       </div>
