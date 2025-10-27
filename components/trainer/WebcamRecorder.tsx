@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff } from 'lucide-react'
+import { Camera, CameraOff, Mic, MicOff, Video } from 'lucide-react'
 
 interface WebcamRecorderProps {
   sessionActive: boolean
@@ -189,19 +189,9 @@ export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRe
   }
 
   return (
-    <div className="h-full flex flex-col bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden">
-      {/* Header with Timer */}
-      <div className="px-4 py-3 border-b border-slate-700/50 flex items-center justify-between">
-        <h3 className="text-slate-300 text-sm font-semibold uppercase tracking-wide">
-          Your Camera
-        </h3>
-        <div className="text-sm text-slate-400 font-mono">
-          {sessionActive ? formatDuration(duration) : '0:00'}
-        </div>
-      </div>
-
-      {/* Video Container */}
-      <div className="flex-1 relative bg-slate-900/50 flex items-center justify-center p-4">
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* Video Container - Full Size */}
+      <div className="flex-1 relative bg-slate-900/30 flex items-center justify-center">
         {isRequestingPermission ? (
           <div className="text-center text-slate-400">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-3"></div>
@@ -237,48 +227,62 @@ export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRe
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover rounded-xl shadow-2xl"
+              className="w-full h-full object-cover"
               style={{
                 transform: 'scale(1)',
                 transformOrigin: 'center center'
               }}
             />
             
-            {/* Recording indicator */}
-            {sessionActive && isWebcamActive && (
-              <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600/90 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                <span className="text-white text-xs font-medium">Recording</span>
+            {/* Webcam UI Overlay */}
+            <div className="pointer-events-none absolute inset-0">
+              {/* Top status bar */}
+              <div className="absolute top-0 left-0 right-0 px-3 py-2 flex items-center justify-between bg-black/30 backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-xs text-white/90 font-medium">
+                    {sessionActive ? 'Recording' : 'Webcam'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-white/85 px-1.5 py-0.5 rounded bg-white/10">HD</span>
+                </div>
               </div>
-            )}
+
+              {/* Bottom controls */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-auto">
+                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-3 py-2">
+                  <button
+                    onClick={toggleMic}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                      isMicActive 
+                        ? 'bg-white/10 hover:bg-white/20' 
+                        : 'bg-red-600 hover:bg-red-500'
+                    }`}
+                    title={isMicActive ? 'Mute microphone' : 'Unmute microphone'}
+                  >
+                    {isMicActive ? <Mic className="w-4 h-4 text-white" /> : <MicOff className="w-4 h-4 text-white" />}
+                  </button>
+                  <button
+                    onClick={toggleWebcam}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                      isWebcamActive 
+                        ? 'bg-white/10 hover:bg-white/20' 
+                        : 'bg-red-600 hover:bg-red-500'
+                    }`}
+                    title="Turn off camera"
+                  >
+                    {isWebcamActive ? <Video className="w-4 h-4 text-white" /> : <CameraOff className="w-4 h-4 text-white" />}
+                  </button>
+                  {sessionActive && (
+                    <span className="text-[10px] text-white/80 ml-1 font-medium">LIVE</span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Controls */}
-      {isWebcamActive && (
-        <div className="px-4 py-4 border-t border-slate-700/50 flex items-center justify-center gap-3">
-          <button
-            onClick={toggleMic}
-            className={`p-3 rounded-full transition-all ${
-              isMicActive
-                ? 'bg-slate-700 hover:bg-slate-600 text-white'
-                : 'bg-red-600 hover:bg-red-500 text-white'
-            }`}
-            title={isMicActive ? 'Mute microphone' : 'Unmute microphone'}
-          >
-            {isMicActive ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-          </button>
-
-          <button
-            onClick={toggleWebcam}
-            className="p-3 rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-all"
-            title="Turn off camera"
-          >
-            <CameraOff className="w-5 h-5" />
-          </button>
-        </div>
-      )}
     </div>
   )
 }
