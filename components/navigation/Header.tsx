@@ -178,7 +178,7 @@ function HeaderContent() {
     window.addEventListener('avatar:updated', handleAvatarUpdate)
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         fetchUser()
       } else if (event === 'SIGNED_OUT') {
@@ -198,9 +198,13 @@ function HeaderContent() {
       { name: 'Home', href: '/', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
       { name: 'Sessions', href: '/sessions', icon: FileText },
-      { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
       { name: 'Pricing', href: '/pricing', icon: Trophy },
     ]
+
+    // Only show Leaderboard for users on a team plan (have a team_id)
+    if (user?.team_id) {
+      navItems.splice(3, 0, { name: 'Leaderboard', href: '/leaderboard', icon: Trophy })
+    }
 
     if (userRole === 'manager' || userRole === 'admin') {
       const insertIndex = Math.min(4, navItems.length)
@@ -212,7 +216,7 @@ function HeaderContent() {
     }
 
     return navItems
-  }, [userRole])
+  }, [userRole, user?.team_id])
 
   const isManagerLike = userRole === 'manager' || userRole === 'admin'
 
@@ -237,7 +241,7 @@ function HeaderContent() {
           { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
           { name: 'Upload Sales Call', href: '/trainer/upload', icon: Upload },
           { name: 'Session History', href: '/sessions', icon: ClipboardList },
-          { name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 },
+          ...(user?.team_id ? [{ name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 }] : []),
         ],
       },
       {

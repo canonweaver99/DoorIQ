@@ -344,7 +344,7 @@ function TrainerPageContent() {
         <div className="flex-1 flex flex-col overflow-hidden">
           
           {/* Top Section: Split View - Agent Left, Webcam Right */}
-          <div className="grid grid-cols-2 gap-0 border-b border-purple-500/20" style={{ minHeight: '45%' }}>
+          <div className="grid grid-cols-2 gap-0 border-b border-purple-500/20" style={{ minHeight: '40%' }}>
             
             {/* Left: Agent */}
             <div className="relative border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent">
@@ -361,12 +361,12 @@ function TrainerPageContent() {
                   <div className="relative w-full h-full">
                     {selectedAgent?.name && (
                       <Image
-                        src={selectedAgent.name === 'Austin' ? '/AUSTIN FINAL.png' : `/agents/${selectedAgent.name.toLowerCase()}.png`}
+                        src={selectedAgent.name === 'Austin' ? '/Austin Boss.png' : `/agents/${selectedAgent.name.toLowerCase()}.png`}
                         alt={selectedAgent.name}
                         fill
                         sizes="(min-width: 1024px) 50vw, 100vw"
                         className="object-cover"
-                        style={{ objectFit: 'cover', objectPosition: 'center 35%' }}
+                        style={{ objectFit: 'cover', objectPosition: 'center center' }}
                         priority
                       />
                     )}
@@ -394,7 +394,7 @@ function TrainerPageContent() {
           </div>
 
           {/* Bottom Section: Live Transcript */}
-          <div className="flex flex-col relative flex-1 px-6 py-4" style={{ minHeight: '45%' }}>
+          <div className="flex flex-col relative flex-1 px-6 py-3" style={{ minHeight: '50%' }}>
             
             {/* Bottom fade gradient overlay */}
             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
@@ -405,7 +405,7 @@ function TrainerPageContent() {
                   {sessionActive ? (
                     <p>Waiting for conversation to begin...</p>
                   ) : (
-                    <p>Click the orb above to start your practice session with {selectedAgent?.name || 'the agent'}</p>
+                    <p>Knock on {selectedAgent?.name || 'the agent'}'s door to start your practice session</p>
                   )}
                 </div>
               ) : (

@@ -274,7 +274,7 @@ export function PricingSection({
             </p>
           </div>
           <PricingToggle />
-          <div className="mt-14 grid grid-cols-1 lg:grid-cols-3 items-stretch gap-4 lg:gap-5">
+          <div className="mt-14 grid grid-cols-1 lg:grid-cols-3 items-stretch gap-4 lg:gap-3">
             {plans.map((plan, index) => (
               <div key={`card-wrapper-${index}`} className="origin-top scale-[0.9]">
                 <PricingCard 

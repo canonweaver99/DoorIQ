@@ -315,7 +315,7 @@ export function DashboardHeroPreview() {
                     <span className="text-white text-sm">0%</span>
                   </div>
                   
-                   <div className="ml-12 mr-0 h-full pb-8 relative border-b border-gray-700" ref={chartRef}>
+                   <div className="ml-12 h-full pb-8 relative border-b border-gray-700" ref={chartRef} style={{ paddingRight: '25px' }}>
                     {/* Tooltip overlay - positioned absolutely */}
                     {hoveredPoint && chartRef.current && (() => {
                       const rect = chartRef.current.getBoundingClientRect()
@@ -359,7 +359,7 @@ export function DashboardHeroPreview() {
                     <svg 
                       viewBox="0 0 350 240" 
                       className="w-full h-full absolute inset-0" 
-                      preserveAspectRatio="none"
+                      preserveAspectRatio="xMidYMid meet"
                     >
                        <defs>
                          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -373,11 +373,11 @@ export function DashboardHeroPreview() {
                          </linearGradient>
                        </defs>
                        <path
-                         d="M 25 150 C 50 135, 60 110, 75 90 C 100 72, 115 78, 125 75 C 150 72, 165 55, 175 50 C 200 45, 215 60, 225 65 C 250 70, 265 78, 275 75 C 300 72, 315 55, 325 45 L 325 240 L 25 240 Z"
+                         d="M 0 148.8 C 29 119, 44 104, 58.33 88.8 C 87 82, 102 78, 116.67 74.4 C 146 60, 161 56, 175 50.4 C 204 58, 219 63, 233.33 64.8 C 262 72, 277 75, 291.67 74.4 C 320 52, 335 48, 350 45.6 L 350 240 L 0 240 Z"
                          fill="url(#areaGradient)"
                        />
                       <motion.path
-                        d="M 25 150 C 50 135, 60 110, 75 90 C 100 72, 115 78, 125 75 C 150 72, 165 55, 175 50 C 200 45, 215 60, 225 65 C 250 70, 265 78, 275 75 C 300 72, 315 55, 325 45"
+                        d="M 0 148.8 C 29 119, 44 104, 58.33 88.8 C 87 82, 102 78, 116.67 74.4 C 146 60, 161 56, 175 50.4 C 204 58, 219 63, 233.33 64.8 C 262 72, 277 75, 291.67 74.4 C 320 52, 335 48, 350 45.6"
                         fill="none"
                         stroke="url(#lineGradient)"
                         strokeWidth="3"
@@ -388,13 +388,13 @@ export function DashboardHeroPreview() {
                       />
                       {/* Animated data points */}
                       {[
-                        { cx: 25, cy: 150, value: 38 },    // Mon
-                        { cx: 75, cy: 90, value: 63 },     // Tue
-                        { cx: 125, cy: 75, value: 69 },    // Wed
-                        { cx: 175, cy: 50, value: 79 },    // Thu
-                        { cx: 225, cy: 65, value: 73 },    // Fri
-                        { cx: 275, cy: 75, value: 69 },    // Sat
-                        { cx: 325, cy: 45, value: 81 },    // Sun
+                        { cx: 0, cy: 148.8, value: 38 },        // Mon - 38%
+                        { cx: 58.33, cy: 88.8, value: 63 },    // Tue - 63%
+                        { cx: 116.67, cy: 74.4, value: 69 },   // Wed - 69%
+                        { cx: 175, cy: 50.4, value: 79 },      // Thu - 79%
+                        { cx: 233.33, cy: 64.8, value: 73 },   // Fri - 73%
+                        { cx: 291.67, cy: 74.4, value: 69 },   // Sat - 69%
+                        { cx: 350, cy: 45.6, value: 81 },      // Sun - 81%
                       ].map((point, index) => (
                         <motion.circle
                           key={index}
@@ -420,17 +420,26 @@ export function DashboardHeroPreview() {
                       ))}
                      </svg>
                      
-                     <div className="absolute bottom-0 left-0 right-0 text-xs font-bold text-gray-300">
+                     <div className="absolute bottom-0 left-0 right-0 text-xs font-bold text-gray-300 h-6">
                        {[
-                         { day: 'Mon', position: '7.14%' },   // 25/350
-                         { day: 'Tue', position: '21.43%' },  // 75/350
-                         { day: 'Wed', position: '35.71%' },  // 125/350
-                         { day: 'Thu', position: '50%' },     // 175/350
-                         { day: 'Fri', position: '64.29%' },  // 225/350
-                         { day: 'Sat', position: '78.57%' },  // 275/350
-                         { day: 'Sun', position: '92.86%' },  // 325/350
+                         { day: 'Mon', cx: 25 },
+                         { day: 'Tue', cx: 75 },
+                         { day: 'Wed', cx: 125 },
+                         { day: 'Thu', cx: 175 },
+                         { day: 'Fri', cx: 225 },
+                         { day: 'Sat', cx: 275 },
+                         { day: 'Sun', cx: 325 },
                        ].map((item) => (
-                         <span key={item.day} className="absolute text-center text-white text-sm" style={{ left: item.position, transform: 'translateX(-50%)' }}>{item.day}</span>
+                         <span 
+                           key={item.day} 
+                           className="absolute text-center text-white text-sm font-semibold" 
+                           style={{ 
+                             left: `calc(${(item.cx / 350) * 100}%)`, 
+                             transform: 'translateX(-50%)'
+                           }}
+                         >
+                           {item.day}
+                         </span>
                        ))}
                      </div>
                    </div>
@@ -441,34 +450,40 @@ export function DashboardHeroPreview() {
               <div className="lg:col-span-2 space-y-4">
                 {/* Recent Sessions */}
                 <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
-                  <h3 className="text-base font-bold text-white mb-3">Recent Sessions</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-white">Recent Sessions</h3>
+                    <button className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium">
+                      View All →
+                    </button>
+                  </div>
                 
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {[
-                      { name: 'Skeptical Sam', earned: '93', percent: 87, avatar: '/agents/sam.png', color: 'from-purple-500/30' },
-                      { name: 'Too Expensive Tim', earned: '89', percent: 84, avatar: '/agents/tim.png', color: 'from-blue-500/30' },
-                      { name: 'Think About It Tina', earned: '85', percent: 81, avatar: '/agents/tina.png', color: 'from-purple-500/30' }
+                      { name: 'Skeptical Sam', earned: '93', percent: 87, avatar: '/agents/sam.png', color: 'from-purple-500/30', time: '2h ago' },
+                      { name: 'Too Expensive Tim', earned: '89', percent: 84, avatar: '/agents/tim.png', color: 'from-blue-500/30', time: '5h ago' },
+                      { name: 'Think About It Tina', earned: '85', percent: 81, avatar: '/agents/tina.png', color: 'from-pink-500/30', time: '1d ago' }
                     ].map((session, index) => {
                       const circumference = 2 * Math.PI * 16
                       const strokeDashoffset = circumference - (session.percent / 100) * circumference
                       
                       return (
-                        <div key={index} className="flex items-center justify-between gap-2.5">
+                        <div key={index} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#222222] hover:bg-[#2a2a2a] transition-colors border border-white/5">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="relative">
-                              <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${session.color} to-transparent blur-sm`}></div>
+                              <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${session.color} to-transparent blur-md`}></div>
                               <img 
                                 src={session.avatar}
                                 alt={session.name}
-                                className="relative w-8 h-8 rounded-full ring-2 ring-white/10 flex-shrink-0"
+                                className="relative w-8 h-8 rounded-full ring-2 ring-white/20 flex-shrink-0"
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-semibold text-white truncate">{session.name}</div>
+                              <div className="text-xs font-semibold text-white truncate">{session.name}</div>
+                              <div className="text-[10px] text-white/50 mt-0.5">{session.time}</div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <div className="relative w-9 h-9">
+                            <div className="relative w-8 h-8">
                               <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                                 <circle cx="18" cy="18" r="16" stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="none" />
                                 <circle
@@ -487,7 +502,7 @@ export function DashboardHeroPreview() {
                                 <span className="text-[9px] font-bold text-white">{session.percent}%</span>
                               </div>
                             </div>
-                             <div className="text-sm font-bold text-green-400 tabular-nums">+${session.earned}</div>
+                            <div className="text-xs font-bold text-green-400 tabular-nums">+${session.earned}</div>
                           </div>
                         </div>
                       )
@@ -497,9 +512,9 @@ export function DashboardHeroPreview() {
 
                 {/* Notifications */}
                 <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
-                  <h3 className="text-base font-bold text-white mb-3">Notifications</h3>
+                  <h3 className="text-sm font-bold text-white mb-2">Notifications</h3>
                 
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {[
                       { 
                         type: 'manager', 
@@ -537,19 +552,19 @@ export function DashboardHeroPreview() {
                       const iconColor = iconColors[notif.type] || iconColors.manager
                       
                       return (
-                        <div key={index} className="p-3 rounded-lg border border-[#2a2a2a] transition-colors cursor-pointer" style={{ backgroundColor: colors.bg }}>
-                          <div className="flex items-start gap-2.5">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.iconBg }}>
-                              <svg className="w-4 h-4" style={{ color: iconColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <div key={index} className="p-2 rounded-lg border border-[#2a2a2a] transition-colors cursor-pointer" style={{ backgroundColor: colors.bg }}>
+                          <div className="flex items-start gap-2">
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.iconBg }}>
+                              <svg className="w-3.5 h-3.5" style={{ color: iconColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d={notif.icon} />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="text-xs font-bold text-white">{notif.title}</h4>
-                                <span className="text-[10px] text-white/60 font-medium">{notif.time}</span>
+                              <div className="flex items-center justify-between mb-0.5">
+                                <h4 className="text-[11px] font-bold text-white">{notif.title}</h4>
+                                <span className="text-[9px] text-white/60 font-medium">{notif.time}</span>
                               </div>
-                              <p className="text-xs text-white leading-relaxed">{notif.message}</p>
+                              <p className="text-[10px] text-white leading-relaxed">{notif.message}</p>
                             </div>
                           </div>
                         </div>
