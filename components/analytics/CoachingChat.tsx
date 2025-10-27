@@ -38,6 +38,21 @@ const SUGGESTED_QUESTIONS = [
     id: 'next_practice',
     label: "What should I focus on in my next practice session?",
     icon: "🚀"
+  },
+  {
+    id: 'rapport_building',
+    label: "How did I do building rapport?",
+    icon: "🤝"
+  },
+  {
+    id: 'missed_opportunities',
+    label: "What opportunities did I miss?",
+    icon: "👀"
+  },
+  {
+    id: 'best_moments',
+    label: "What were my best moments in this call?",
+    icon: "⭐"
   }
 ]
 
@@ -75,7 +90,8 @@ export default function CoachingChat({
             feedback,
             saleClosed,
             virtualEarnings,
-            transcriptLength: fullTranscript.length
+            transcriptLength: fullTranscript.length,
+            transcript: fullTranscript // Send actual transcript for quotes
           }
         })
       })
@@ -155,13 +171,13 @@ export default function CoachingChat({
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+                  className={`max-w-[80%] px-5 py-4 rounded-2xl ${
                     message.role === 'user'
                       ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white'
                       : 'bg-slate-800/60 border border-slate-700/50 text-slate-200'
                   }`}
                 >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-base leading-relaxed whitespace-pre-wrap font-medium">{message.content}</p>
                 </div>
                 {message.role === 'user' && (
                   <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
@@ -195,7 +211,7 @@ export default function CoachingChat({
       {/* Question Buttons */}
       <div className="px-6 py-4 border-t border-slate-700/50 bg-slate-900/40">
         <p className="text-xs text-slate-400 mb-3 uppercase tracking-wider">Quick Questions</p>
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {SUGGESTED_QUESTIONS.map((q) => (
             <button
               key={q.id}
@@ -204,7 +220,7 @@ export default function CoachingChat({
               className="flex items-center gap-3 px-4 py-3 bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700/50 hover:border-purple-500/50 rounded-xl text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <span className="text-xl">{q.icon}</span>
-              <span className="text-sm text-slate-300 group-hover:text-white transition-colors">
+              <span className="text-sm text-slate-300 group-hover:text-white transition-colors font-medium">
                 {q.label}
               </span>
             </button>

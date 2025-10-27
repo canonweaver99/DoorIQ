@@ -404,11 +404,6 @@ export default function SessionTimeline({
                     </div>
                   </motion.div>
 
-                  {/* Timestamp */}
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-500">
-                    {segment.timestamp}
-                  </div>
-
                   {/* Hover Playback Card */}
                   <AnimatePresence>
                     {hoveredSegment === segment.id && (
@@ -464,15 +459,6 @@ export default function SessionTimeline({
                                 </div>
                               </div>
                             </div>
-
-                            {/* Time Range */}
-                            <div className="mt-3 pt-3 border-t border-slate-700/50">
-                              <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                                <span>{segment.timestamp}</span>
-                                <span>•</span>
-                                <span>{formatTime(segment.endTime - segment.startTime)}</span>
-                              </div>
-                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -485,7 +471,7 @@ export default function SessionTimeline({
         </div>
 
         {/* Time markers */}
-        <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-xs font-mono text-slate-500">
+        <div className="absolute -bottom-6 left-0 right-0 flex justify-between text-xs font-mono text-slate-500">
           <span>0:00</span>
           <span>{formatTime(duration / 2)}</span>
           <span>{formatTime(duration)}</span>

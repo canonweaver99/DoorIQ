@@ -17,7 +17,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
     }
 
-    const { overallScore, scores, feedback, saleClosed, virtualEarnings, transcriptLength } = sessionContext
+    const { overallScore, scores, feedback, saleClosed, virtualEarnings, transcriptLength, transcript } = sessionContext
+
+    // Format transcript for context (limit to key exchanges to save tokens)
+    let transcriptContext = ''
+    if (transcript && transcript.length > 0) {
+      const keyExchanges = transcript.slice(0, 20) // First 20 lines for context
+      transcriptContext = '\n\nTRANSCRIPT EXCERPT (for reference/quotes):\n' + 
+        keyExchanges.map((line: any, idx: number) => 
+          `[${idx}] ${line.speaker === 'user' || line.speaker === 'rep' ? 'Rep' : 'Customer'}: ${line.text || line.message}`
+        ).join('\n')
+    }
 
     // Build context prompt
     const contextPrompt = `You are an expert sales coach providing personalized feedback to a sales rep based on their practice session.
@@ -37,8 +47,14 @@ ${feedback.strengths?.map((s: string) => `- ${s}`).join('\n') || 'N/A'}
 
 AREAS FOR IMPROVEMENT:
 ${feedback.improvements?.map((i: string) => `- ${i}`).join('\n') || 'N/A'}
+${transcriptContext}
 
-Provide a specific, actionable, and encouraging response to the following question. Keep your response concise (2-3 paragraphs max), focused, and practical. Use a coaching tone that motivates while being direct about what needs improvement.
+RESPONSE GUIDELINES:
+- Keep response to 2-3 SHORT paragraphs (150-200 words max)
+- ALWAYS quote specific lines from the transcript as evidence (use "quotes")
+- Be direct and actionable, not verbose
+- Reference actual conversation moments
+- No generic advice - make it feel personal to THIS call
 
 QUESTION: ${question}`
 
@@ -47,7 +63,7 @@ QUESTION: ${question}`
       messages: [
         {
           role: 'system',
-          content: 'You are an expert door-to-door sales coach. Provide specific, actionable feedback that helps reps improve their skills. Be encouraging but honest. Focus on practical techniques they can apply immediately.'
+          content: 'You are an expert door-to-door sales coach. Give CONCISE, specific feedback (2-3 short paragraphs max). Always include direct quotes from the transcript as evidence. Be encouraging but honest. Focus on practical techniques they can apply immediately. Make it feel like you actually listened to THEIR call.'
         },
         {
           role: 'user',
@@ -55,7 +71,7 @@ QUESTION: ${question}`
         }
       ],
       temperature: 0.7,
-      max_tokens: 400
+      max_tokens: 300 // Reduced for more concise responses
     })
 
     const answer = completion.choices[0].message.content || "I'm sorry, I couldn't generate a response. Please try again."

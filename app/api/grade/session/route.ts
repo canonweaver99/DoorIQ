@@ -626,9 +626,20 @@ export async function POST(request: NextRequest) {
     "effectiveness": "excellent/good/average/poor",
     "alternative_lines": []
   }],
-  "feedback": { "strengths": [], "improvements": [], "specific_tips": [] },
-  "objection_analysis": { "total_objections": int },
-  "coaching_plan": { "immediate_fixes": [], "skill_development": [], "role_play_scenarios": [] },
+  "feedback": { 
+    "strengths": ["SPECIFIC examples with exact details from conversation"], 
+    "improvements": ["SPECIFIC issues with concrete examples"], 
+    "specific_tips": ["ACTIONABLE tips with context"] 
+  },
+  "objection_analysis": { 
+    "total_objections": int,
+    "objections": [{"objection": "EXACT customer quote", "response": "How rep responded", "effectiveness": "good/poor"}]
+  },
+  "coaching_plan": { 
+    "immediate_fixes": [{"issue": "SPECIFIC issue with example", "practice_scenario": "Concrete scenario", "resource": ""}], 
+    "skill_development": [], 
+    "role_play_scenarios": ["SPECIFIC scenario based on actual conversation topics"] 
+  },
   "timeline_key_moments": [
     { "position": 33, "line_number": int, "timestamp": "0:00", "moment_type": "Opening", "quote": "actual customer or rep quote", "is_positive": bool },
     { "position": 66, "line_number": int, "timestamp": "0:00", "moment_type": "Key Moment", "quote": "actual customer or rep quote", "is_positive": bool },
@@ -685,6 +696,7 @@ LINE RATINGS:
 - Rate EVERY sales rep line: excellent/good/average/poor
 - ONLY include alternative_lines array for lines rated "poor"
 - Leave alternative_lines as [] for good/average/excellent lines
+- Alternative lines should be SPECIFIC to the context (reference what customer just said)
 
 TIMELINE (3 moments at 33%, 66%, 90%):
 - Copy EXACT timestamps from transcript format: (1:23)
@@ -703,6 +715,19 @@ FILLER WORDS:
 - Count ONLY these filler words: um, uh, uhh, like, erm, err, hmm
 - Return total AND breakdown by type with line numbers where each occurs
 - Do NOT count: actually, basically, you know, sort of, kind of (normal speech)
+
+CRITICAL - FEEDBACK MUST BE HYPER-SPECIFIC:
+- ALWAYS reference actual names mentioned (customer's name, family members, pets, etc.)
+- ALWAYS quote or reference specific topics discussed (sports teams, hobbies, local events, etc.)
+- For strengths: Say WHAT they did well WITH the exact detail. Example: "Great rapport building when discussing UT football and his son Miguel's interest in the team"
+- For improvements: Cite SPECIFIC missed opportunities. Example: "When customer mentioned Miguel's baseball game, could have asked what position he plays to build deeper connection"
+- For tips: Give ACTIONABLE advice tied to actual conversation moments. Example: "Next time customer mentions family activity, ask 2-3 follow-up questions before pivoting to business"
+- NEVER use generic feedback like "build rapport" or "ask better questions" or "improve communication"
+- ALWAYS include at least one proper noun (name, place, team, etc.) in each feedback item when possible
+- Reference EXACT objections raised and how they were or weren't handled
+- Quote actual phrases/words used in the conversation within feedback
+- Make the rep feel like you actually watched THEIR specific conversation, not a template
+- Each strength/improvement should be unique to THIS conversation, not applicable to every sales call
 
 MUST return valid, complete JSON matching the exact structure above. No commentary.`
         },
