@@ -71,7 +71,7 @@ export const COLOR_VARIANTS = {
 
 const agents = [
   { name: "Alan", fullName: "Already Got It Alan", src: "/agents/alan.png", color: "tertiary" },
-  { name: "Austin", fullName: "Austin", src: "/agents/austin.png", color: "primary" },
+  { name: "Austin", fullName: "Austin", src: "/Austin No Backround.png", color: "primary" },
   { name: "Beth", fullName: "Busy Beth", src: "/agents/beth.png", color: "octonary" },
   { name: "Dave", fullName: "DIY Dave", src: "/agents/dave.png", color: "quinary" },
   { name: "Jerry", fullName: "Just Treated Jerry", src: "/agents/jerry.png", color: "duodenary" },
