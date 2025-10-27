@@ -39,6 +39,33 @@ export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRe
     }
   }, [isWebcamActive])
 
+  // Monitor and lock zoom throughout the session
+  useEffect(() => {
+    if (!streamRef.current || !sessionActive) return
+    
+    const videoTrack = streamRef.current.getVideoTracks()[0]
+    if (!videoTrack) return
+    
+    // Check and lock zoom every 2 seconds during active session
+    const zoomCheckInterval = setInterval(async () => {
+      try {
+        const settings = videoTrack.getSettings()
+        // @ts-ignore
+        if (settings.zoom && settings.zoom !== 1.0) {
+          console.warn('⚠️ Zoom detected at', settings.zoom, '- resetting to 1.0')
+          await videoTrack.applyConstraints({
+            // @ts-ignore
+            advanced: [{ zoom: 1.0 }]
+          })
+        }
+      } catch (error) {
+        // Silently fail if zoom control not supported
+      }
+    }, 2000)
+    
+    return () => clearInterval(zoomCheckInterval)
+  }, [sessionActive])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -56,7 +83,13 @@ export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRe
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: 'user'
+          facingMode: 'user',
+          // Disable auto-zoom/auto-framing features
+          pan: false,
+          tilt: false,
+          zoom: false,
+          // @ts-ignore - Advanced constraint not in all type definitions
+          advanced: [{ zoom: 1.0 }]
         },
         audio: true
       })
@@ -79,6 +112,25 @@ export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRe
       if (videoRef.current) {
         console.log('📹 Setting srcObject on video element')
         videoRef.current.srcObject = stream
+        
+        // Lock video settings to prevent zoom
+        const videoTrack = stream.getVideoTracks()[0]
+        if (videoTrack) {
+          const capabilities = videoTrack.getCapabilities()
+          console.log('📹 Video capabilities:', capabilities)
+          
+          // Apply constraints to lock zoom at 1.0 if supported
+          try {
+            await videoTrack.applyConstraints({
+              // @ts-ignore - Advanced constraints
+              advanced: [{ zoom: 1.0 }]
+            })
+            console.log('✅ Zoom locked at 1.0')
+          } catch (constraintError) {
+            console.log('ℹ️ Zoom lock not supported on this device')
+          }
+        }
+        
         // Explicitly play the video to ensure it displays
         try {
           await videoRef.current.play()
@@ -186,6 +238,10 @@ export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRe
               playsInline
               muted
               className="w-full h-full object-cover rounded-xl shadow-2xl"
+              style={{
+                transform: 'scale(1)',
+                transformOrigin: 'center center'
+              }}
             />
             
             {/* Recording indicator */}

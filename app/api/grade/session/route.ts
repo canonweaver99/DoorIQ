@@ -369,15 +369,37 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     
-    console.log('📊 Transcript found:', (session as any).full_transcript.length, 'lines')
+    const transcriptLength = (session as any).full_transcript.length
+    console.log('📊 Transcript found:', transcriptLength, 'lines')
     console.log('📊 First transcript line:', (session as any).full_transcript[0])
+    
+    // Warn if transcript is very long (may take longer to process)
+    if (transcriptLength > 500) {
+      console.warn('⚠️  Large transcript detected:', transcriptLength, 'lines - grading may take longer')
+    }
+    
+    // For extremely long transcripts (>1000 lines), sample key portions
+    let transcriptToGrade = (session as any).full_transcript
+    if (transcriptLength > 1000) {
+      console.warn('⚠️  Very large transcript (>1000 lines) - sampling key sections')
+      // Take first 300, middle 400, last 300 lines
+      transcriptToGrade = [
+        ...(session as any).full_transcript.slice(0, 300),
+        ...(session as any).full_transcript.slice(Math.floor(transcriptLength / 2) - 200, Math.floor(transcriptLength / 2) + 200),
+        ...(session as any).full_transcript.slice(-300)
+      ]
+      console.log('📊 Sampled transcript to', transcriptToGrade.length, 'lines')
+    }
 
-    // Get user's team information
+    // Get user's team information and actual name in a single query
     const { data: userProfile } = await supabase
       .from('users')
-      .select('team_id')
+      .select('team_id, full_name')
       .eq('id', (session as any).user_id)
       .single()
+    
+    const salesRepName = userProfile?.full_name || 'Sales Rep'
+    const customerName = (session as any).agent_name || 'Homeowner'
 
     let teamGradingConfig = null
     let teamKnowledgeDocs: any[] = []
@@ -398,13 +420,13 @@ export async function POST(request: NextRequest) {
             .eq('team_id', userProfile.team_id)
             .eq('use_in_grading', true)
             .order('created_at', { ascending: false })
-            .limit(10),
+            .limit(5), // Reduced to 5 for faster queries
           supabase
             .from('knowledge_base')
             .select('file_name, content')
             .eq('user_id', (session as any).user_id)
             .eq('is_active', true)
-            .limit(5)
+            .limit(3) // Reduced to 3 for faster queries
         ])
         
         teamKnowledgeDocs = docsResult.data || []
@@ -424,13 +446,13 @@ export async function POST(request: NextRequest) {
             .eq('team_id', userProfile.team_id)
             .eq('use_in_grading', true)
             .order('created_at', { ascending: false })
-            .limit(10),
+            .limit(5), // Reduced to 5 for faster queries
           supabase
             .from('knowledge_base')
             .select('file_name, content')
             .eq('user_id', (session as any).user_id)
             .eq('is_active', true)
-            .limit(5)
+            .limit(3) // Reduced to 3 for faster queries
         ])
         
         teamGradingConfig = configResult.data
@@ -452,7 +474,7 @@ export async function POST(request: NextRequest) {
         .select('file_name, content')
         .eq('user_id', (session as any).user_id)
         .eq('is_active', true)
-        .limit(5)
+        .limit(3) // Reduced to 3 for faster queries
       
       knowledgeBase = kb || []
     }
@@ -501,14 +523,21 @@ export async function POST(request: NextRequest) {
 
       if (teamKnowledgeDocs.length > 0) {
         contextParts.push('\n=== KNOWLEDGE BASE DOCUMENTS ===')
-        teamKnowledgeDocs.forEach((doc: any) => {
-          if (doc.extracted_content) {
+        let totalChars = 0
+        const maxTotalChars = 6000 // Limit total knowledge base to ~1500 tokens
+        
+        for (const doc of teamKnowledgeDocs) {
+          if (doc.extracted_content && totalChars < maxTotalChars) {
             contextParts.push(`\n[${doc.document_type.toUpperCase()}: ${doc.document_name}]`)
-            // Limit each document to 2000 chars to avoid token overflow
-            const content = doc.extracted_content.substring(0, 2000)
-            contextParts.push(content + (doc.extracted_content.length > 2000 ? '...' : ''))
+            // Limit each document and track total
+            const maxDocChars = Math.min(1500, maxTotalChars - totalChars)
+            const content = doc.extracted_content.substring(0, maxDocChars)
+            contextParts.push(content + (doc.extracted_content.length > maxDocChars ? '...' : ''))
+            totalChars += content.length
           }
-        })
+        }
+        
+        console.log(`📚 Knowledge context: ${totalChars} chars from ${teamKnowledgeDocs.length} docs`)
       }
 
       if (contextParts.length > 0) {
@@ -525,19 +554,9 @@ export async function POST(request: NextRequest) {
           .join('\n\n')
     }
 
-    // Get user's actual name for better grading context
-    const { data: userData } = await supabase
-      .from('users')
-      .select('full_name')
-      .eq('id', (session as any).user_id)
-      .single()
-    
-    const salesRepName = userData?.full_name || 'Sales Rep'
-    const customerName = (session as any).agent_name || 'Homeowner'
-
     // Format transcript for OpenAI with timestamps
-    const startTime = new Date((session as any).started_at || (session as any).created_at)
-    const formattedTranscript = (session as any).full_transcript
+    const sessionStartTime = new Date((session as any).started_at || (session as any).created_at)
+    const formattedTranscript = transcriptToGrade
       .map((line: any, index: number) => {
         // Normalize speaker names with actual names
         let speaker = customerName
@@ -554,7 +573,7 @@ export async function POST(request: NextRequest) {
         if (line.timestamp) {
           try {
             const lineTime = new Date(line.timestamp)
-            const secondsFromStart = Math.floor((lineTime.getTime() - startTime.getTime()) / 1000)
+            const secondsFromStart = Math.floor((lineTime.getTime() - sessionStartTime.getTime()) / 1000)
             const mins = Math.floor(secondsFromStart / 60)
             const secs = secondsFromStart % 60
             timestamp = `${mins}:${secs.toString().padStart(2, '0')}`
@@ -699,13 +718,40 @@ ${knowledgeContext}`
       })
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: messages as any,
-      response_format: { type: "json_object" },
-      max_tokens: 1500, // Optimized for faster response time
-      temperature: 0.3 // Slightly higher for better JSON generation
-    })
+    // Retry logic for OpenAI API calls
+    let completion
+    let retryCount = 0
+    const maxRetries = 3
+    
+    while (retryCount < maxRetries) {
+      try {
+        completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: messages as any,
+          response_format: { type: "json_object" },
+          max_tokens: 4000, // Increased for comprehensive grading
+          temperature: 0.2, // Lower for more consistent JSON
+          timeout: 90000 // 90 second timeout
+        })
+        break // Success, exit retry loop
+      } catch (apiError: any) {
+        retryCount++
+        console.error(`❌ OpenAI API error (attempt ${retryCount}/${maxRetries}):`, apiError.message)
+        
+        if (retryCount >= maxRetries) {
+          throw new Error(`OpenAI API failed after ${maxRetries} attempts: ${apiError.message}`)
+        }
+        
+        // Wait before retry (exponential backoff)
+        const waitTime = Math.min(1000 * Math.pow(2, retryCount), 5000)
+        console.log(`⏳ Retrying in ${waitTime}ms...`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+      }
+    }
+    
+    if (!completion) {
+      throw new Error('Failed to get completion from OpenAI after retries')
+    }
 
     const responseContent = completion.choices[0].message.content || '{}'
     const openaiEndTime = Date.now()
@@ -1036,22 +1082,47 @@ ${knowledgeContext}`
     })
 
   } catch (error: any) {
-    console.error('❌ Grading error:', error)
-    console.error('❌ Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      cause: error.cause
-    })
+    const errorTime = Date.now()
+    const errorDuration = ((errorTime - startTime) / 1000).toFixed(2)
+    
+    console.error('❌ ========================================')
+    console.error('❌ GRADING FAILED')
+    console.error('❌ Error after:', errorDuration, 'seconds')
+    console.error('❌ ========================================')
+    console.error('❌ Error type:', error.name)
+    console.error('❌ Error message:', error.message)
+    console.error('❌ Error stack:', error.stack)
+    
+    // Log additional context for debugging
+    if (error.code) console.error('❌ Error code:', error.code)
+    if (error.status) console.error('❌ Error status:', error.status)
+    if (error.response) console.error('❌ Error response:', error.response)
+    
+    // Provide helpful error messages based on error type
+    let userMessage = error.message || 'Failed to grade session'
+    let statusCode = 500
+    
+    if (error.message?.includes('OpenAI')) {
+      userMessage = 'OpenAI API error - please try again'
+      statusCode = 503
+    } else if (error.message?.includes('parse')) {
+      userMessage = 'Failed to parse grading response - please try again'
+      statusCode = 502
+    } else if (error.message?.includes('timeout')) {
+      userMessage = 'Request timed out - session may be too long'
+      statusCode = 504
+    }
+    
     return NextResponse.json(
       { 
-        error: error.message || 'Failed to grade session',
+        error: userMessage,
         details: {
           type: error.name,
-          message: error.message
+          message: error.message,
+          duration: errorDuration + 's'
         }
       },
-      { status: 500 }
+      { status: statusCode }
     )
   }
 }

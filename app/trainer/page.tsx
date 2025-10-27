@@ -326,14 +326,25 @@ function TrainerPageContent() {
         </button>
       </div>
 
-      {/* Main Content Area - Split Screen */}
-      <div className="flex-1 flex gap-6 px-6 pb-3 pt-4 overflow-hidden">
+      {/* Main Content Area - Redesigned Layout */}
+      <div className="flex-1 flex flex-col gap-6 px-6 pb-6 pt-4 overflow-hidden">
         
-        {/* Left Side - Agent and Transcript - 50% width */}
-        <div className="flex-1 flex flex-col space-y-4 max-w-[50%]">
-        
-        {/* Agent Orb/Bubble with Animated Rings */}
-        <div className="flex flex-col items-center pt-4">
+        {/* Top Row - Two Equal Cards Side by Side */}
+        <div className="flex gap-6 h-[45%] min-h-[400px]">
+          
+          {/* Left Card - Agent */}
+          <div className="flex-1 bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-slate-700/50 flex items-center justify-center">
+              <h3 className="text-slate-300 text-sm font-semibold uppercase tracking-wide">
+                {selectedAgent?.name || 'Agent'}
+              </h3>
+            </div>
+            
+            {/* Agent Container */}
+            <div className="flex-1 relative bg-slate-900/50 flex items-center justify-center p-4">
+            {/* Agent Orb/Bubble with Animated Rings */}
+            <div className="flex flex-col items-center justify-center flex-1">
           {(() => {
             const agentMeta = selectedAgent?.name ? PERSONA_METADATA[selectedAgent.name as AllowedAgentName] : null
             const colorVariant = agentMeta?.bubble.color || 'primary'
@@ -345,7 +356,7 @@ function TrainerPageContent() {
                   id="conversation-orb"
                   onClick={!sessionActive && !loading ? startSession : undefined}
                   className={`
-                    relative w-56 h-56
+                    relative w-48 h-48
                     ${!sessionActive && !loading ? 'cursor-pointer' : ''}
                   `}
                 >
@@ -428,10 +439,18 @@ function TrainerPageContent() {
               </div>
             )
           })()}
+            </div>
+            </div>
+          </div>
+          
+          {/* Right Card - Webcam */}
+          <div className="flex-1">
+            <WebcamRecorder sessionActive={sessionActive} duration={duration} />
+          </div>
         </div>
 
-        {/* Live Transcript */}
-        <div className="flex-1 flex flex-col min-h-0">
+        {/* Bottom Row - Live Transcript Centered */}
+        <div className="flex-1 flex flex-col min-h-0 max-w-6xl mx-auto w-full">
           <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 flex-1 flex flex-col overflow-hidden">
             <h3 className="text-slate-400 text-sm font-semibold mb-4 uppercase tracking-wide">Live Transcript</h3>
             
@@ -474,13 +493,6 @@ function TrainerPageContent() {
             </div>
           </div>
         </div>
-        </div>
-
-        {/* Right Side - Webcam - 50% width */}
-        <div className="flex-1 flex flex-col max-w-[50%]">
-          <WebcamRecorder sessionActive={sessionActive} duration={duration} />
-        </div>
-        
       </div>
 
       {/* Hidden ElevenLabs Component */}
