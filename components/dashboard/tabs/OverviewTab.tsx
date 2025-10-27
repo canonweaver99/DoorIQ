@@ -217,7 +217,7 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
             ))}
           </div>
         ) : sessions.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
             {sessions.map((session) => {
               const insight = getKeyInsight(session)
               const isSuccess = session.analytics?.feedback?.strengths?.[0] === insight
@@ -225,7 +225,7 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
               return (
                 <div
                   key={session.id}
-                  className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50 hover:border-slate-600 transition-colors"
+                  className="bg-gradient-to-br from-slate-900/80 to-slate-900/40 rounded-xl p-5 border border-slate-700/60 hover:border-purple-500/40 transition-all shadow-lg hover:shadow-purple-500/10"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">

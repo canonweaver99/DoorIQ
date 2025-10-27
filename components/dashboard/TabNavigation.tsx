@@ -15,9 +15,10 @@ interface TabNavigationProps {
   tabs: Tab[]
   activeTab: string
   onChange: (tabId: string) => void
+  demoMode?: boolean
 }
 
-export default function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
+export default function TabNavigation({ tabs, activeTab, onChange, demoMode = false }: TabNavigationProps) {
   return (
     <div className="sticky top-0 z-20 bg-[#0a0a1a]/80 backdrop-blur-xl border-b border-white/10 mb-8">
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -31,16 +32,18 @@ export default function TabNavigation({ tabs, activeTab, onChange }: TabNavigati
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              onClick={() => !tab.locked && onChange(tab.id)}
-              disabled={tab.locked}
+              onClick={() => !tab.locked && !demoMode && onChange(tab.id)}
+              disabled={tab.locked || demoMode}
               className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-all duration-300 ${
                 tab.locked
                   ? 'text-slate-600 cursor-not-allowed opacity-60'
+                  : demoMode
+                  ? (isActive ? 'text-white cursor-default' : 'text-slate-400 cursor-default')
                   : isActive
                   ? 'text-white'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title={tab.locked ? 'Upgrade to unlock this feature' : undefined}
+              title={tab.locked ? 'Upgrade to unlock this feature' : demoMode ? 'Demo mode - tabs for display only' : undefined}
             >
               <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${tab.locked ? 'text-slate-600' : isActive ? 'text-purple-400' : 'text-slate-400'}`} />
               <span className="hidden sm:inline">{tab.label}</span>

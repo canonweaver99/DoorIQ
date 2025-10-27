@@ -108,8 +108,7 @@ export const TestimonialsColumn = ({
             {testimonials.map(({ text, image, name, role }, testimonialIndex) => (
               <a
                 href="/testimonials"
-                className="p-8 rounded-3xl border shadow-lg max-w-xs w-full cursor-pointer hover:border-primary/50 transition-all duration-300 block"
-                style={{ transform: 'scale(0.75)' }}
+                className="p-10 rounded-3xl border shadow-lg shadow-primary/10 max-w-xs w-full cursor-pointer hover:border-primary/50 hover:shadow-primary/20 transition-all duration-300 block"
                 key={`${loopIndex}-${testimonialIndex}`}
               >
                 <div>{text}</div>

@@ -77,7 +77,7 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
             ) : null}
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch w-full">
             <motion.div className="w-full space-y-3">
               {items.map((item, index) => (
                 <FaqItem

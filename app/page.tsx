@@ -461,9 +461,10 @@ function AnimatedStatCard({
 function TestimonialsSection() {
   const { ref, controls } = useScrollAnimation(0.2)
 
-  const columnSize = Math.ceil(testimonialsData.length / 2)
+  const columnSize = Math.ceil(testimonialsData.length / 3)
   const firstColumn = testimonialsData.slice(0, columnSize)
-  const secondColumn = testimonialsData.slice(columnSize)
+  const secondColumn = testimonialsData.slice(columnSize, columnSize * 2)
+  const thirdColumn = testimonialsData.slice(columnSize * 2)
 
   return (
     <motion.div
@@ -506,9 +507,16 @@ function TestimonialsSection() {
         <motion.div variants={staggerItem}>
           <TestimonialsColumn testimonials={firstColumn} duration={18} />
         </motion.div>
-        <motion.div variants={staggerItem}>
-          <TestimonialsColumn testimonials={secondColumn} duration={22} />
-        </motion.div>
+        {secondColumn.length > 0 && (
+          <motion.div variants={staggerItem} className="hidden md:block">
+            <TestimonialsColumn testimonials={secondColumn} duration={22} />
+          </motion.div>
+        )}
+        {thirdColumn.length > 0 && (
+          <motion.div variants={staggerItem} className="hidden lg:block">
+            <TestimonialsColumn testimonials={thirdColumn} duration={20} />
+          </motion.div>
+        )}
       </motion.div>
     </motion.div>
   )

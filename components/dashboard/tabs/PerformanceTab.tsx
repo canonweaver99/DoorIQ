@@ -395,7 +395,7 @@ export default function PerformanceTab({ performanceData, insights, sessions }: 
             <span>0%</span>
           </div>
           
-          <div className="ml-12 mr-0 h-full pb-8 relative border-b border-[#2a2a2a]" ref={chartRef}>
+          <div className="ml-12 mr-0 h-full pb-8 relative border-b border-[#2a2a2a] w-[95%]" ref={chartRef}>
             {/* Tooltip overlay */}
             {hoveredPoint && chartRef.current && (() => {
               const rect = chartRef.current.getBoundingClientRect()
