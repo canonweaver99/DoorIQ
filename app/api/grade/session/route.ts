@@ -3,7 +3,9 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 90000, // 90 second timeout
+  maxRetries: 2 // SDK-level retries
 })
 
 // In-memory cache for team grading configs (5 minute TTL)
@@ -730,8 +732,7 @@ ${knowledgeContext}`
           messages: messages as any,
           response_format: { type: "json_object" },
           max_tokens: 4000, // Increased for comprehensive grading
-          temperature: 0.2, // Lower for more consistent JSON
-          timeout: 90000 // 90 second timeout
+          temperature: 0.2 // Lower for more consistent JSON
         })
         break // Success, exit retry loop
       } catch (apiError: any) {

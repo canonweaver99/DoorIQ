@@ -91,10 +91,12 @@ export async function PATCH(req: Request) {
       console.log('🎯 PATCH: Triggering background grading for session:', id)
       console.log('📝 PATCH: Transcript has', formattedTranscript.length, 'lines')
       
-      // Determine base URL (works in both development and production)
+      // Determine base URL using request host header (works with any port)
+      const host = req.headers.get('host') || 'localhost:3000'
+      const protocol = host.includes('localhost') ? 'http' : 'https'
       const baseUrl = process.env.VERCEL_URL 
         ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        : `${protocol}://${host}`
       
       console.log('🌐 Using API URL:', baseUrl)
       
@@ -103,8 +105,8 @@ export async function PATCH(req: Request) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: id }),
-        // Important: Set a reasonable timeout
-        signal: AbortSignal.timeout(60000) // 60 second timeout
+        // Important: Set a reasonable timeout (increased for retries)
+        signal: AbortSignal.timeout(120000) // 120 second timeout (2 minutes)
       }).then(async resp => {
         if (resp.ok) {
           console.log('✅ PATCH: Background grading completed successfully')
