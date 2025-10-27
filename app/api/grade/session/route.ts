@@ -414,52 +414,46 @@ export async function POST(request: NextRequest) {
       
       if (cachedConfig) {
         teamGradingConfig = cachedConfig
-        // Still fetch docs and knowledge base in parallel
-        const [docsResult, kbResult] = await Promise.all([
-          supabase
+        // Only fetch knowledge docs if team config exists (skip for speed)
+        if (teamGradingConfig) {
+          const docsResult = await supabase
             .from('team_knowledge_documents')
             .select('*')
             .eq('team_id', userProfile.team_id)
             .eq('use_in_grading', true)
             .order('created_at', { ascending: false })
-            .limit(5), // Reduced to 5 for faster queries
-          supabase
-            .from('knowledge_base')
-            .select('file_name, content')
-            .eq('user_id', (session as any).user_id)
-            .eq('is_active', true)
-            .limit(3) // Reduced to 3 for faster queries
-        ])
-        
-        teamKnowledgeDocs = docsResult.data || []
-        knowledgeBase = kbResult.data || []
+            .limit(3) // Reduced to 3 for faster grading
+          
+          teamKnowledgeDocs = docsResult.data || []
+        }
+        // Skip legacy knowledge base - not commonly used
+        knowledgeBase = []
       } else {
-        // Parallel fetch: team config, team docs, and legacy knowledge base
-        const [configResult, docsResult, kbResult] = await Promise.all([
-          supabase
-            .from('team_grading_configs')
-            .select('*')
-            .eq('team_id', userProfile.team_id)
-            .eq('enabled', true)
-            .single(),
-          supabase
-            .from('team_knowledge_documents')
-            .select('*')
-            .eq('team_id', userProfile.team_id)
-            .eq('use_in_grading', true)
-            .order('created_at', { ascending: false })
-            .limit(5), // Reduced to 5 for faster queries
-          supabase
-            .from('knowledge_base')
-            .select('file_name, content')
-            .eq('user_id', (session as any).user_id)
-            .eq('is_active', true)
-            .limit(3) // Reduced to 3 for faster queries
-        ])
+        // Fetch team config first, then conditionally fetch docs
+        const configResult = await supabase
+          .from('team_grading_configs')
+          .select('*')
+          .eq('team_id', userProfile.team_id)
+          .eq('enabled', true)
+          .single()
         
         teamGradingConfig = configResult.data
-        teamKnowledgeDocs = docsResult.data || []
-        knowledgeBase = kbResult.data || []
+        
+        // Only fetch knowledge docs if team config exists
+        if (teamGradingConfig) {
+          const docsResult = await supabase
+            .from('team_knowledge_documents')
+            .select('*')
+            .eq('team_id', userProfile.team_id)
+            .eq('use_in_grading', true)
+            .order('created_at', { ascending: false })
+            .limit(3) // Reduced to 3 for faster grading
+          
+          teamKnowledgeDocs = docsResult.data || []
+        }
+        
+        // Skip legacy knowledge base for speed
+        knowledgeBase = []
         
         // Cache the team config for future use
         if (teamGradingConfig) {
@@ -470,15 +464,9 @@ export async function POST(request: NextRequest) {
       console.log('📚 Team grading config found:', !!teamGradingConfig)
       console.log('📚 Team knowledge docs:', teamKnowledgeDocs.length)
     } else {
-      // If no team, just fetch legacy knowledge base
-      const { data: kb } = await supabase
-        .from('knowledge_base')
-        .select('file_name, content')
-        .eq('user_id', (session as any).user_id)
-        .eq('is_active', true)
-        .limit(3) // Reduced to 3 for faster queries
-      
-      knowledgeBase = kb || []
+      // Skip knowledge base for non-team users (saves 1-2 seconds)
+      console.log('⚡ Skipping knowledge base fetch - no team configured')
+      knowledgeBase = []
     }
 
     // Build comprehensive knowledge context
@@ -526,13 +514,13 @@ export async function POST(request: NextRequest) {
       if (teamKnowledgeDocs.length > 0) {
         contextParts.push('\n=== KNOWLEDGE BASE DOCUMENTS ===')
         let totalChars = 0
-        const maxTotalChars = 6000 // Limit total knowledge base to ~1500 tokens
+        const maxTotalChars = 4000 // Reduced from 6000 to save tokens and speed up
         
         for (const doc of teamKnowledgeDocs) {
           if (doc.extracted_content && totalChars < maxTotalChars) {
             contextParts.push(`\n[${doc.document_type.toUpperCase()}: ${doc.document_name}]`)
             // Limit each document and track total
-            const maxDocChars = Math.min(1500, maxTotalChars - totalChars)
+            const maxDocChars = Math.min(1000, maxTotalChars - totalChars)
             const content = doc.extracted_content.substring(0, maxDocChars)
             contextParts.push(content + (doc.extracted_content.length > maxDocChars ? '...' : ''))
             totalChars += content.length
@@ -545,15 +533,6 @@ export async function POST(request: NextRequest) {
       if (contextParts.length > 0) {
         knowledgeContext = '\n\n' + contextParts.join('\n')
       }
-    }
-    
-    // Add legacy knowledge base if no team config
-    if (!knowledgeContext && knowledgeBase && knowledgeBase.length > 0) {
-      knowledgeContext = '\n\nREFERENCE MATERIALS:\n' + 
-        (knowledgeBase as any)
-          .filter((kb: any) => kb.content)
-          .map((kb: any) => `File: ${kb.file_name}\n${kb.content.substring(0, 1000)}...`)
-          .join('\n\n')
     }
 
     // Format transcript for OpenAI with timestamps
@@ -595,6 +574,7 @@ export async function POST(request: NextRequest) {
     console.log('📝 Transcript preview:', formattedTranscript.substring(0, 300), '...')
 
     const openaiStartTime = Date.now()
+    console.log('⏱️ Database queries completed in:', ((Date.now() - startTime) / 1000).toFixed(2), 'seconds')
 
     // Call OpenAI for comprehensive analysis
     // Build system prompt with team customizations
@@ -756,7 +736,7 @@ ${knowledgeContext}`
           model: "gpt-4o-mini",
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 4000, // Increased for comprehensive grading
+          max_tokens: 3200, // Optimized for speed while maintaining comprehensiveness
           temperature: 0.2 // Lower for more consistent JSON
         })
         break // Success, exit retry loop
@@ -785,6 +765,7 @@ ${knowledgeContext}`
     
     console.log('⏱️ OpenAI API call completed in:', openaiTimeSeconds, 'seconds')
     console.log('📨 Raw OpenAI response length:', responseContent.length, 'characters')
+    console.log('🎯 Tokens used:', completion.usage?.total_tokens || 'unknown', '(prompt:', completion.usage?.prompt_tokens, 'completion:', completion.usage?.completion_tokens, ')')
     
     let gradingResult
     try {
@@ -967,6 +948,7 @@ ${knowledgeContext}`
     
     console.log('📍 Applied timestamps to', lineRatings.filter((r: any) => r.timestamp && r.timestamp !== '00:00').length, 'line ratings')
 
+    const dbUpdateStartTime = Date.now()
     const { error: updateError } = await (supabase as any)
       .from('live_sessions')
       .update({
@@ -1021,6 +1003,10 @@ ${knowledgeContext}`
       throw updateError
     }
 
+    const dbUpdateEndTime = Date.now()
+    const dbUpdateTimeSeconds = ((dbUpdateEndTime - dbUpdateStartTime) / 1000).toFixed(2)
+    console.log('⏱️ Database update completed in:', dbUpdateTimeSeconds, 'seconds')
+
     // Line ratings are stored in the analytics JSONB column, no separate table needed
     console.log(`✅ Stored ${gradingResult.line_ratings?.length || 0} line ratings in analytics column`)
 
@@ -1032,13 +1018,18 @@ ${knowledgeContext}`
     console.log('✅ Total time:', totalTimeSeconds, 'seconds')
     console.log('✅ End time:', new Date().toISOString())
     console.log('✅ ========================================')
+    console.log('📊 Performance Breakdown:')
+    console.log('  - Database queries:', ((openaiStartTime - startTime) / 1000).toFixed(2), 's')
+    console.log('  - OpenAI grading:', openaiTimeSeconds, 's')
+    console.log('  - Database update:', dbUpdateTimeSeconds, 's')
+    console.log('  - Total:', totalTimeSeconds, 's')
     console.log('📊 Summary:', {
       scores: Object.keys(gradingResult.scores || {}).length,
       line_ratings: gradingResult.line_ratings?.length || 0,
       has_objections: !!objectionAnalysis.total_objections,
       has_coaching: !!coachingPlan.immediate_fixes,
       virtual_earnings: virtualEarnings,
-      grading_time_seconds: totalTimeSeconds
+      tokens_used: completion.usage?.total_tokens
     })
 
     // Send email notifications (fire and forget - don't block response)
