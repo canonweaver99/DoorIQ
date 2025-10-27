@@ -471,13 +471,13 @@ export default function ScoresViewV2({
           <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">AI-Powered Insights</h3>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Strengths */}
           {feedback.strengths.length > 0 && (
             <div className="rounded-3xl bg-gradient-to-br from-emerald-900/20 to-green-800/20 backdrop-blur-xl border border-emerald-500/20 p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Award className="w-5 h-5 text-emerald-400" />
-                <h4 className="font-semibold text-white">Your Strengths</h4>
+                <Award className="w-6 h-6 text-emerald-400" />
+                <h4 className="font-bold text-lg text-white">Your Strengths</h4>
               </div>
               <ul className="space-y-3">
                 {feedback.strengths.map((strength, i) => (
@@ -488,8 +488,8 @@ export default function ScoresViewV2({
                     transition={{ delay: i * 0.1 }}
                     className="flex items-start gap-3"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-white/90">{strength}</span>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-base font-medium text-white">{strength}</span>
                   </motion.li>
                 ))}
               </ul>
@@ -500,8 +500,8 @@ export default function ScoresViewV2({
           {feedback.improvements.length > 0 && (
             <div className="rounded-3xl bg-gradient-to-br from-amber-900/20 to-orange-800/20 backdrop-blur-xl border border-amber-500/20 p-6">
               <div className="flex items-center gap-3 mb-4">
-                <TrendingUp className="w-5 h-5 text-amber-400" />
-                <h4 className="font-semibold text-white">Growth Opportunities</h4>
+                <TrendingUp className="w-6 h-6 text-amber-400" />
+                <h4 className="font-bold text-lg text-white">Growth Opportunities</h4>
               </div>
               <ul className="space-y-3">
                 {feedback.improvements.map((improvement, i) => (
@@ -512,8 +512,8 @@ export default function ScoresViewV2({
                     transition={{ delay: i * 0.1 }}
                     className="flex items-start gap-3"
                   >
-                    <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-white/90">{improvement}</span>
+                    <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-base font-medium text-white">{improvement}</span>
                   </motion.li>
                 ))}
               </ul>
@@ -525,8 +525,8 @@ export default function ScoresViewV2({
         {feedback.specific_tips.length > 0 && (
           <div className="mt-6 rounded-3xl bg-gradient-to-br from-blue-900/20 to-indigo-800/20 backdrop-blur-xl border border-blue-500/20 p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Sparkles className="w-5 h-5 text-blue-400" />
-              <h4 className="font-semibold text-white">Actionable Tips for Next Session</h4>
+              <Sparkles className="w-6 h-6 text-blue-400" />
+              <h4 className="font-bold text-lg text-white">Actionable Tips for Next Session</h4>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {feedback.specific_tips.map((tip, i) => (
@@ -535,10 +535,10 @@ export default function ScoresViewV2({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-white/5"
+                  className="flex items-start gap-3 p-4 rounded-xl bg-white/5"
                 >
-                  <Zap className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-white/90">{tip}</span>
+                  <Zap className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-base font-medium text-white">{tip}</span>
                 </motion.div>
               ))}
             </div>

@@ -41,6 +41,39 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
 
   const ratingsMap = new Map(lineRatings.map(r => [r.line_number, r]))
   
+  // Format timestamp to M:SS
+  const formatTimestamp = (timestamp: string | number | undefined): string => {
+    if (!timestamp) return ''
+    
+    try {
+      // If already in M:SS format
+      if (typeof timestamp === 'string' && /^\d{1,2}:\d{2}$/.test(timestamp)) {
+        return timestamp
+      }
+      
+      // If ISO timestamp, convert to M:SS from session start
+      if (typeof timestamp === 'string' && transcript[0]?.timestamp) {
+        const currentDate = new Date(timestamp)
+        const startDate = new Date(transcript[0].timestamp)
+        const secondsFromStart = Math.floor((currentDate.getTime() - startDate.getTime()) / 1000)
+        const mins = Math.floor(secondsFromStart / 60)
+        const secs = secondsFromStart % 60
+        return `${mins}:${secs.toString().padStart(2, '0')}`
+      }
+      
+      // Fallback for number timestamps
+      if (typeof timestamp === 'number') {
+        const mins = Math.floor(timestamp / 60)
+        const secs = timestamp % 60
+        return `${mins}:${secs.toString().padStart(2, '0')}`
+      }
+    } catch (e) {
+      return ''
+    }
+    
+    return ''
+  }
+  
   const toggleFeedback = (lineIndex: number) => {
     setExpandedFeedback(prev => {
       const newSet = new Set(prev)
@@ -139,7 +172,7 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
                         <span className={`text-[10px] font-mono ${
                           isRep ? 'text-purple-400/60' : 'text-slate-500'
                         }`}>
-                          {rating?.timestamp || ''}
+                          {formatTimestamp(rating?.timestamp || line.timestamp)}
                         </span>
                         <button
                           onClick={() => copyToClipboard(text, index)}

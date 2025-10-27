@@ -419,89 +419,58 @@ export default function SessionTimeline({
                         transition={{ duration: 0.2 }}
                         className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-80 z-50"
                       >
-                        <div className="relative rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 shadow-2xl overflow-hidden">
+                        <div className="relative rounded-xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 shadow-2xl overflow-hidden">
                           {/* Gradient Border */}
                           <div className={`absolute inset-0 bg-gradient-to-r ${segment.color} opacity-20`} />
                           
-                          <div className="relative p-6">
+                          <div className="relative p-5">
                             {/* Header */}
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-xl bg-gradient-to-r ${segment.color}`}>
-                                  <Icon className="w-5 h-5 text-white" />
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <div className={`p-2 rounded-lg bg-gradient-to-r ${segment.color}`}>
+                                  <Icon className="w-4 h-4 text-white" />
                                 </div>
+                                <h4 className="text-base font-bold text-white">{segment.title}</h4>
+                              </div>
+                              {audioUrl && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (audioUrl) playSegment(segment)
+                                  }}
+                                  disabled={audioLoading}
+                                  className={`p-2 rounded-lg transition-all ${
+                                    playingSegment === segment.id
+                                      ? 'bg-red-500/20 hover:bg-red-500/30' 
+                                      : 'bg-white/10 hover:bg-white/20'
+                                  }`}
+                                >
+                                  {playingSegment === segment.id ? (
+                                    <Pause className="w-4 h-4 text-white" />
+                                  ) : (
+                                    <Play className="w-4 h-4 text-white" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Key Takeaway - Simplified */}
+                            <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                              <div className="flex items-start gap-2">
+                                <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
                                 <div>
-                                  <h4 className="text-sm font-semibold text-white">{segment.title}</h4>
-                                  <p className="text-xs text-slate-400">{segment.quickTip}</p>
-                                </div>
-                              </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  if (audioUrl) {
-                                    playSegment(segment)
-                                  }
-                                }}
-                                disabled={audioLoading || !audioUrl}
-                                className={`
-                                  p-3 rounded-xl transition-all
-                                  ${!audioUrl ? 'opacity-30 cursor-not-allowed' : ''}
-                                  ${playingSegment === segment.id
-                                    ? 'bg-red-500/20 hover:bg-red-500/30' 
-                                    : 'bg-white/10 hover:bg-white/20'
-                                  }
-                                  ${audioLoading ? 'opacity-50 cursor-not-allowed' : ''}
-                                `}
-                                title={!audioUrl ? 'Audio not available for this session' : ''}
-                              >
-                                {audioLoading ? (
-                                  <div className="w-5 h-5 border-2 border-white/30 border-t-white/80 rounded-full animate-spin" />
-                                ) : playingSegment === segment.id ? (
-                                  <Pause className="w-5 h-5 text-white" />
-                                ) : (
-                                  <Play className="w-5 h-5 text-white" />
-                                )}
-                              </button>
-                            </div>
-
-                            {/* Feedback */}
-                            <div className="space-y-3">
-                              <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20">
-                                <div className="flex items-start gap-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5" />
-                                  <div>
-                                    <p className="text-xs font-medium text-green-400 mb-1">What worked well</p>
-                                    <p className="text-xs text-slate-300">{segment.feedback.good}</p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                                <div className="flex items-start gap-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5" />
-                                  <div>
-                                    <p className="text-xs font-medium text-amber-400 mb-1">Area to improve</p>
-                                    <p className="text-xs text-slate-300">{segment.feedback.improve}</p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                                <div className="flex items-start gap-2">
-                                  <Sparkles className="w-4 h-4 text-purple-400 mt-0.5" />
-                                  <div>
-                                    <p className="text-xs font-medium text-purple-400 mb-1">Pro tip</p>
-                                    <p className="text-xs text-slate-300">{segment.feedback.tip}</p>
-                                  </div>
+                                  <p className="text-sm font-semibold text-purple-400 mb-2">Key Takeaway</p>
+                                  <p className="text-sm text-white leading-relaxed">{segment.feedback.tip}</p>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Playback Controls */}
-                            <div className="mt-4 pt-4 border-t border-slate-700/50">
-                              <div className="flex items-center justify-between text-xs text-slate-400">
-                                <span>Duration: {formatTime(segment.endTime - segment.startTime)}</span>
-                                <span>{segment.timestamp} - {formatTime(segment.endTime)}</span>
+                            {/* Time Range */}
+                            <div className="mt-3 pt-3 border-t border-slate-700/50">
+                              <div className="flex items-center justify-between text-xs font-mono text-slate-400">
+                                <span>{segment.timestamp}</span>
+                                <span>•</span>
+                                <span>{formatTime(segment.endTime - segment.startTime)}</span>
                               </div>
                             </div>
                           </div>
