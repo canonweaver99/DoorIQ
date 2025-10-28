@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
 import CircularProgress from '@/components/ui/CircularProgress'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
+import PasswordResetModal from '@/components/auth/PasswordResetModal'
 
 type Session = Database['public']['Tables']['live_sessions']['Row']
 
@@ -25,6 +26,7 @@ export default function SessionsPage() {
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [circleSize, setCircleSize] = useState(64)
+  const [showResetModal, setShowResetModal] = useState(false)
 
   useEffect(() => {
     const handleResize = () => {
@@ -191,8 +193,7 @@ export default function SessionsPage() {
   }
 
   const handleResetPassword = () => {
-    // TODO: Implement password reset
-    alert('Password reset coming soon!')
+    setShowResetModal(true)
   }
 
   const handleCreateAccount = () => {
@@ -268,22 +269,28 @@ export default function SessionsPage() {
   // Show beautiful sign-in page if not authenticated
   if (isAuthenticated === false) {
     return (
-      <SignInComponent
-        title={
-          <span className="font-light text-white tracking-tight">
-            Sign in to view your <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Sessions</span>
-          </span>
-        }
-        description="Access your training sessions, scores, progress, and compete on the leaderboard"
-        heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=2160&q=80"
-        testimonials={testimonials}
-        onSignIn={handleSignIn}
-        onGoogleSignIn={handleGoogleSignIn}
-        onResetPassword={handleResetPassword}
-        onCreateAccount={handleCreateAccount}
-        loading={authLoading}
-        error={authError}
-      />
+      <>
+        <SignInComponent
+          title={
+            <span className="font-light text-white tracking-tight">
+              Sign in to view your <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Sessions</span>
+            </span>
+          }
+          description="Access your training sessions, scores, progress, and compete on the leaderboard"
+          heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=2160&q=80"
+          testimonials={testimonials}
+          onSignIn={handleSignIn}
+          onGoogleSignIn={handleGoogleSignIn}
+          onResetPassword={handleResetPassword}
+          onCreateAccount={handleCreateAccount}
+          loading={authLoading}
+          error={authError}
+        />
+        <PasswordResetModal 
+          isOpen={showResetModal} 
+          onClose={() => setShowResetModal(false)} 
+        />
+      </>
     )
   }
 

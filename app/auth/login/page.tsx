@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
+import PasswordResetModal from '@/components/auth/PasswordResetModal'
 
 const testimonials: Testimonial[] = [
   {
@@ -29,6 +30,7 @@ const testimonials: Testimonial[] = [
 function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite')
@@ -118,8 +120,7 @@ function LoginForm() {
   }
 
   const handleResetPassword = () => {
-    // TODO: Implement password reset
-    alert('Password reset coming soon!')
+    setShowResetModal(true)
   }
 
   const handleCreateAccount = () => {
@@ -135,22 +136,28 @@ function LoginForm() {
   }
 
   return (
-    <SignInComponent
-      title={
-        <span className="font-light text-white tracking-tight">
-          Welcome to <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span>
-        </span>
-      }
-      description="Access your training sessions, compete on leaderboards, and master door-to-door sales"
-      heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=2160&q=80"
-      testimonials={testimonials}
-      onSignIn={handleSignIn}
-      onGoogleSignIn={handleGoogleSignIn}
-      onResetPassword={handleResetPassword}
-      onCreateAccount={handleCreateAccount}
-      loading={loading}
-      error={error}
-    />
+    <>
+      <SignInComponent
+        title={
+          <span className="font-light text-white tracking-tight">
+            Welcome to <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span>
+          </span>
+        }
+        description="Access your training sessions, compete on leaderboards, and master door-to-door sales"
+        heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=2160&q=80"
+        testimonials={testimonials}
+        onSignIn={handleSignIn}
+        onGoogleSignIn={handleGoogleSignIn}
+        onResetPassword={handleResetPassword}
+        onCreateAccount={handleCreateAccount}
+        loading={loading}
+        error={error}
+      />
+      <PasswordResetModal 
+        isOpen={showResetModal} 
+        onClose={() => setShowResetModal(false)} 
+      />
+    </>
   )
 }
 

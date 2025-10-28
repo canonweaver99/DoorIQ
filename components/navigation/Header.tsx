@@ -38,6 +38,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
+import { logger } from '@/lib/logger'
 import { Database } from '@/lib/supabase/database.types'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 
@@ -148,15 +149,18 @@ function HeaderContent() {
         }
       }
 
-      console.log('🔍 Header - Auth User:', { id: authUser.id, email: authUser.email })
-      console.log('🔍 Header - Fetched User Data:', userData)
+      logger.debug('Header - Auth User', { id: authUser.id, email: authUser.email })
+      logger.debug('Header - Fetched User Data', userData)
 
       if (userData) {
-        console.log('✅ Header - Setting user with role:', (userData as any).role, 'earnings:', (userData as any).virtual_earnings)
+        logger.success('Header - Setting user with role', { 
+          role: (userData as any).role, 
+          earnings: (userData as any).virtual_earnings 
+        })
         setUser(userData)
         setAuthMeta(null)
       } else {
-        console.log('⚠️ Header - No user data found, using auth metadata')
+        logger.warn('Header - No user data found, using auth metadata')
         setAuthMeta({
           id: authUser.id,
           email: authUser.email,
@@ -172,7 +176,7 @@ function HeaderContent() {
 
     // Listen for avatar updates
     const handleAvatarUpdate = () => {
-      console.log('🔄 Avatar updated, refreshing user data...')
+      logger.info('Avatar updated, refreshing user data')
       fetchUser()
     }
     window.addEventListener('avatar:updated', handleAvatarUpdate)

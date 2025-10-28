@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
+import StreamingGradingDisplay from '@/components/trainer/StreamingGradingDisplay'
 
 const TIPS = [
   'Great sales reps ask 3-5 discovery questions before presenting solutions',
@@ -17,15 +18,32 @@ const TIPS = [
 export default function LoadingPage() {
   const params = useParams()
   const router = useRouter()
+  const [useStreaming, setUseStreaming] = useState(true) // Toggle for streaming mode
   const [currentTip, setCurrentTip] = useState(0)
   const [status, setStatus] = useState('Saving your session...')
   const [gradingStatus, setGradingStatus] = useState<'idle' | 'in-progress' | 'completed' | 'error'>('idle')
   const [lastError, setLastError] = useState<string | null>(null)
   const [showSkip, setShowSkip] = useState(false)
+  const sessionId = params.sessionId as string
   
   const handleSkip = () => {
     console.log('⏭️ User skipped waiting, redirecting to analytics...')
-    router.push(`/analytics/${params.sessionId}`)
+    router.push(`/analytics/${sessionId}`)
+  }
+
+  const handleStreamingComplete = () => {
+    console.log('✅ Streaming grading complete, redirecting to analytics...')
+    router.push(`/analytics/${sessionId}`)
+  }
+
+  // If streaming mode is enabled, show the streaming display
+  if (useStreaming) {
+    return (
+      <StreamingGradingDisplay 
+        sessionId={sessionId} 
+        onComplete={handleStreamingComplete}
+      />
+    )
   }
 
   useEffect(() => {
@@ -38,8 +56,6 @@ export default function LoadingPage() {
     const skipTimeout = setTimeout(() => {
       setShowSkip(true)
     }, 10000)
-
-    const sessionId = params.sessionId as string
     
     // Set grading status to in-progress immediately (backend already started it)
     setGradingStatus('in-progress')

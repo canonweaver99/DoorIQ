@@ -10,6 +10,7 @@ import WebcamRecorder from '@/components/trainer/WebcamRecorder'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
+import { logger } from '@/lib/logger'
 import { PaywallModal } from '@/components/subscription'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -87,7 +88,7 @@ function TrainerPageContent() {
         setSelectedAgent(agents?.[0] || null)
       }
     } catch (error) {
-      console.error('Error fetching agents:', error)
+      logger.error('Error fetching agents', error)
     }
   }
 
@@ -209,7 +210,7 @@ function TrainerPageContent() {
         await knockAudio.play()
         await new Promise(resolve => setTimeout(resolve, 800))
       } catch (e) {
-        console.log('Could not play knock sound:', e)
+        logger.warn('Could not play knock sound', { error: e })
       }
 
       // Play door open sound
@@ -219,7 +220,7 @@ function TrainerPageContent() {
         await doorOpenAudio.play()
         await new Promise(resolve => setTimeout(resolve, 500))
       } catch (e) {
-        console.log('Could not play door open sound:', e)
+        logger.warn('Could not play door open sound', { error: e })
       }
 
       const result = await tokenPromise
@@ -248,7 +249,7 @@ function TrainerPageContent() {
             await fetch('/api/session/increment', { method: 'POST' })
             await sessionLimit.refresh()
           } catch (error) {
-            console.error('Error incrementing session count:', error)
+            logger.error('Error incrementing session count', error)
           }
       }
 
@@ -263,7 +264,7 @@ function TrainerPageContent() {
         },
       }))
     } catch (error: any) {
-      console.error('Error starting session:', error)
+      logger.error('Error starting session', error)
       alert(`Failed to start session: ${error?.message || 'Unknown error'}`)
       setLoading(false)
       setConversationToken(null)
@@ -284,7 +285,7 @@ function TrainerPageContent() {
       const json = await resp.json()
       return json.id
     } catch (error) {
-      console.error('Error creating session:', error)
+      logger.error('Error creating session', error)
       return null
     }
   }
@@ -313,7 +314,7 @@ function TrainerPageContent() {
           })
         router.push(`/trainer/loading/${sessionId}`)
         } catch (error) {
-        console.error('Error ending session:', error)
+        logger.error('Error ending session', error)
         setLoading(false)
       }
       } else {
