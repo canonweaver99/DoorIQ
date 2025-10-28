@@ -390,6 +390,11 @@ function TrainerPageContent() {
                   <div className="relative w-full h-full">
                     {(() => {
                       const src = resolveAgentImage(selectedAgent, sessionActive)
+                      console.log('🖼️ Trainer Image:', { 
+                        sessionActive, 
+                        agentName: selectedAgent?.name,
+                        imageSrc: src 
+                      })
                       return src ? (
                       <Image
                         src={src}
@@ -399,6 +404,7 @@ function TrainerPageContent() {
                         className="object-cover"
                         style={{ objectFit: 'cover', objectPosition: 'center center' }}
                         priority
+                        onError={(e) => console.error('❌ Image failed to load:', src)}
                       />
                       ) : null
                     })()}
