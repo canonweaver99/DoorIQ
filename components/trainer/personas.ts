@@ -42,7 +42,8 @@ interface PersonaBubbleDetail {
   description: string
   difficulty: BubbleDifficulty
   color: BubbleColorVariant
-  image?: string
+  image?: string // Selection bubble image
+  liveSessionImage?: string // Image shown during active conversation
 }
 
 interface PersonaCardDetail {
