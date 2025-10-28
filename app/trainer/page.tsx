@@ -111,8 +111,10 @@ function TrainerPageContent() {
 
       if (agentParam) {
         const match = agents?.find((agent: Agent) => agent.eleven_agent_id === agentParam)
+        console.log('🔍 Selected agent by param:', match)
         setSelectedAgent(match || agents?.[0] || null)
       } else {
+        console.log('🔍 Selected first agent:', agents?.[0])
         setSelectedAgent(agents?.[0] || null)
       }
     } catch (error) {
@@ -410,6 +412,11 @@ function TrainerPageContent() {
                 ) : (
                   <div className="relative w-full h-full">
                     {(() => {
+                      console.log('🎬 Live Session Render:', { 
+                        sessionActive, 
+                        selectedAgent: selectedAgent?.name,
+                        loading 
+                      })
                       const src = resolveAgentImage(selectedAgent, sessionActive)
                       console.log('🖼️ Trainer Image:', { 
                         sessionActive, 
