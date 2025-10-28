@@ -396,19 +396,30 @@ export default function SessionsPage() {
                         <Trash2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                       </button>
                       
-                      <div className="flex-1">
-                        <h3 className="text-base lg:text-lg font-bold text-white mb-1 lg:mb-1.5">
-                          {session.agent_name || 'Training Session'}
-                        </h3>
-                        <div className="flex items-center space-x-3 lg:space-x-4 text-xs lg:text-sm text-slate-400">
-                          <span className="flex items-center">
-                            <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1" />
-                            {format(new Date(session.created_at), 'MMM d, yyyy')}
-                          </span>
-                          <span className="flex items-center">
-                            <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1" />
-                            {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}
-                          </span>
+                      <div className="flex-1 flex items-start gap-3">
+                        {/* Agent Avatar */}
+                        <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {session.agent_name && (
+                            <span className="text-sm lg:text-base font-bold text-purple-300">
+                              {session.agent_name.charAt(0)}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h3 className="text-base lg:text-lg font-bold text-white mb-1 lg:mb-1.5">
+                            {session.agent_name || 'Training Session'}
+                          </h3>
+                          <div className="flex items-center space-x-3 lg:space-x-4 text-xs lg:text-sm text-slate-400">
+                            <span className="flex items-center">
+                              <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1" />
+                              {format(new Date(session.created_at), 'MMM d, yyyy')}
+                            </span>
+                            <span className="flex items-center">
+                              <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1" />
+                              {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -445,19 +456,19 @@ export default function SessionsPage() {
                     </div>
                   </div>
                   
-                  {/* Key Insights - Smaller */}
+                  {/* Key Insights - Larger and more readable */}
                   {insights.length > 0 && (
-                    <div className="pt-1.5 lg:pt-2 mt-1.5 lg:mt-2 border-t border-slate-700/50">
+                    <div className="pt-2.5 lg:pt-3 mt-2.5 lg:mt-3 border-t border-slate-700/50">
                       <div className="space-y-0.5 lg:space-y-1">
                         {insights.map((insight, idx) => (
                           <div
                             key={idx}
-                            className={`flex items-start space-x-1.5 lg:space-x-2 text-xs ${
-                              insight.type === 'success' ? 'text-green-400/80' : 'text-yellow-400/80'
+                            className={`flex items-start space-x-2 lg:space-x-2.5 text-sm lg:text-base font-semibold ${
+                              insight.type === 'success' ? 'text-green-400' : 'text-yellow-400'
                             }`}
                           >
-                            <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                            <span>{insight.text}</span>
+                            <AlertCircle className="w-4 h-4 lg:w-5 lg:h-5 mt-0.5 flex-shrink-0" />
+                            <span className="leading-snug">{insight.text}</span>
                           </div>
                         ))}
                       </div>
