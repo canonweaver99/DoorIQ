@@ -26,6 +26,12 @@ interface Agent {
 const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) => {
   if (!agent) return null
 
+  console.log('🔍 resolveAgentImage called:', { 
+    agentName: agent.name, 
+    isLiveSession,
+    hasMetadata: ALLOWED_AGENT_SET.has(agent.name as AllowedAgentName)
+  })
+
   const directName = agent.name as AllowedAgentName
   if (ALLOWED_AGENT_SET.has(directName)) {
     const metadata = PERSONA_METADATA[directName]
@@ -33,6 +39,14 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     const image = isLiveSession 
       ? (metadata?.bubble?.liveSessionImage || metadata?.bubble?.image)
       : metadata?.bubble?.image
+    
+    console.log('✅ Found in PERSONA_METADATA:', {
+      name: directName,
+      bubbleImage: metadata?.bubble?.image,
+      liveSessionImage: metadata?.bubble?.liveSessionImage,
+      returning: image
+    })
+    
     if (image) return image
   }
 
@@ -43,10 +57,17 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
       const image = isLiveSession
         ? (metadata?.bubble?.liveSessionImage || metadata?.bubble?.image)
         : metadata?.bubble?.image
+      
+      console.log('✅ Found via persona:', { 
+        persona: personaName,
+        returning: image 
+      })
+      
       if (image) return image
     }
   }
 
+  console.log('⚠️ Falling back to generic image for:', agent.name)
   const normalized = agent.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
   return normalized ? `/agents/${normalized}.png` : '/agents/default.png'
 }
