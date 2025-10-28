@@ -735,9 +735,9 @@ ${knowledgeContext}`
           model: "gpt-4o",
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 4000, // Increased for line-by-line ratings + comprehensive feedback
+          max_tokens: 1500, // Optimized for speed without line ratings
           temperature: 0.2, // Lower for more consistent JSON
-          stream: false // Will implement streaming in next phase
+          stream: false // Streaming handled in /api/grade/stream endpoint
         })
         break // Success, exit retry loop
       } catch (apiError: any) {
@@ -957,45 +957,9 @@ ${knowledgeContext}`
       return finalScore
     })()
 
-    // Extract and normalize line ratings from the grading result
-    const sourceRatings: any[] = Array.isArray(gradingResult.line_ratings)
-      ? gradingResult.line_ratings
-      : []
-
-    const normalizedLineRatings: any[] = sourceRatings.map((r: any) => {
-      const text: string = (r.text || '').toString().trim()
-      let lineNumber: number | undefined = typeof r.line_number === 'number' ? r.line_number : undefined
-
-      // If line_number missing, attempt to infer by matching text
-      if (lineNumber === undefined && text && Array.isArray(transcriptToGrade)) {
-        const idx = (transcriptToGrade as any[]).findIndex((line: any) => {
-          const lt = (line.text || line.message || '').toString().trim()
-          return lt && text && lt.toLowerCase().includes(text.substring(0, Math.min(40, text.length)).toLowerCase())
-        })
-        if (idx >= 0) lineNumber = idx
-      }
-
-      const speakerRaw = (r.speaker || '').toString().toLowerCase()
-      const speaker = speakerRaw.includes('rep') || speakerRaw.includes('user') ? 'rep' : 'customer'
-
-      const timestamp = (lineNumber !== undefined && (session as any).full_transcript?.[lineNumber]?.timestamp) || undefined
-
-      const effectivenessRaw = (r.effectiveness || '').toString().toLowerCase()
-      const effectiveness = ['excellent', 'good', 'average', 'poor'].includes(effectivenessRaw)
-        ? effectivenessRaw
-        : (r.missed_opportunity ? 'poor' : 'average')
-
-      return {
-        line_number: lineNumber ?? 0,
-        speaker,
-        timestamp,
-        text,
-        effectiveness,
-        alternative_lines: Array.isArray(r.alternative_lines) ? r.alternative_lines : []
-      }
-    })
-
-    logger.info('Line-by-line grading enabled', { ratingsCount: normalizedLineRatings.length })
+    // Line-by-line ratings disabled for performance
+    const normalizedLineRatings: any[] = []
+    logger.info('Line-by-line grading disabled for speed')
 
     const dbUpdateStartTime = Date.now()
     const { error: updateError } = await (supabase as any)
@@ -1055,29 +1019,7 @@ ${knowledgeContext}`
     const dbUpdateEndTime = Date.now()
     logger.perf('Database update completed', dbUpdateEndTime - dbUpdateStartTime)
 
-    // Store line ratings if available
-    if (normalizedLineRatings.length > 0) {
-      const { error: ratingsError } = await (supabase as any)
-        .from('line_ratings')
-        .upsert(
-          normalizedLineRatings.map((rating: any) => ({
-            session_id: sessionId,
-            line_number: rating.line_number,
-            speaker: rating.speaker,
-            text: rating.text || '',
-            effectiveness: rating.effectiveness,
-            alternative_lines: rating.alternative_lines || [],
-            created_at: now
-          })),
-          { onConflict: 'session_id,line_number' }
-        )
-      
-      if (ratingsError) {
-        logger.warn('Failed to store line ratings', { error: ratingsError.message })
-      } else {
-        logger.success('Line ratings stored', { count: normalizedLineRatings.length })
-      }
-    }
+    // Line ratings disabled - skip storage
 
     const endTime = Date.now()
     const totalDuration = endTime - startTime
@@ -1158,7 +1100,7 @@ ${knowledgeContext}`
       success: true,
       scores: gradingResult.scores,
       feedback: gradingResult.feedback || {},
-      lines_graded: 0, // Line-by-line grading temporarily disabled
+      lines_graded: 0, // Line-by-line grading disabled for performance
       conversation_dynamics: conversationDynamics,
       failure_analysis: failureAnalysis,
       objection_analysis: objectionAnalysis,

@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
 {
   "session_summary": { "total_lines": int, "rep_lines": int, "customer_lines": int, "objections_detected": int, "questions_asked": int },
   "scores": { "overall": int, "rapport": int, "discovery": int, "objection_handling": int, "closing": int, "safety": int, "introduction": int, "listening": int, "speaking_pace": int, "question_ratio": int, "active_listening": int, "assumptive_language": int },
-  "line_ratings": [{"line_number": int, "speaker": "rep/customer", "text": "exact quote", "effectiveness": "excellent/good/poor/missed_opportunity", "alternative_lines": ["better option 1", "better option 2"]}],
   "filler_word_count": int,
   "feedback": { 
     "strengths": ["SPECIFIC examples with exact details"], 
@@ -140,12 +139,12 @@ Provide specific, actionable feedback based on this exact conversation.`
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', message: 'Starting AI analysis...' })}\n\n`))
           
           const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: messages as any,
-            response_format: { type: "json_object" },
-            max_tokens: 4000,
-            temperature: 0.2,
-            stream: true
+          model: "gpt-4o",
+          messages: messages as any,
+          response_format: { type: "json_object" },
+          max_tokens: 1500,
+          temperature: 0.2,
+          stream: true
           })
 
           for await (const chunk of completion) {
@@ -210,8 +209,6 @@ Provide specific, actionable feedback based on this exact conversation.`
           const timelineKeyMoments = gradingResult.timeline_key_moments || []
           const earningsData = gradingResult.earnings_data || {}
           const dealDetails = gradingResult.deal_details || {}
-          const lineRatings = gradingResult.line_ratings || []
-
           // Update database
           await supabase
             .from('live_sessions')
@@ -241,24 +238,6 @@ Provide specific, actionable feedback based on this exact conversation.`
               scores: gradingResult.scores || {}
             } as any)
             .eq('id', sessionId)
-
-          // Store line ratings
-          if (lineRatings.length > 0) {
-            await supabase
-              .from('line_ratings')
-              .upsert(
-                lineRatings.map((rating: any) => ({
-                  session_id: sessionId,
-                  line_number: rating.line_number,
-                  speaker: rating.speaker,
-                  text: rating.text || '',
-                  effectiveness: rating.effectiveness,
-                  alternative_lines: rating.alternative_lines || [],
-                  created_at: now
-                })),
-                { onConflict: 'session_id,line_number' }
-              )
-          }
 
           // Send completion
           const totalTime = Date.now() - startTime

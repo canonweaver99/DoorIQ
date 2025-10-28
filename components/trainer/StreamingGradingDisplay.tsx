@@ -33,7 +33,6 @@ const SECTION_LABELS: { [key: string]: string } = {
   feedback: 'Detailed Feedback',
   objection_analysis: 'Objection Handling',
   coaching_plan: 'Personalized Coaching',
-  line_ratings: 'Line-by-Line Review',
 }
 
 export default function StreamingGradingDisplay({ sessionId, onComplete }: StreamingGradingDisplayProps) {
