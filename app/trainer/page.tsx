@@ -26,22 +26,20 @@ interface Agent {
 const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) => {
   if (!agent) return null
 
-  // HARDCODED LIVE SESSION IMAGES - Simple and direct
-  if (isLiveSession) {
-    const liveSessionMap: Record<string, string> = {
-      'Austin': '/Austin Boss.png',
-      'Already Got It Alan': '/Already got it Alan landscape.png',
-      'DIY Dave': '/DIY DAVE.png',
-      'Too Expensive Tim': '/Too Expensive Tim.png'
-    }
-    
-    if (liveSessionMap[agent.name]) {
-      console.log(`✅ Using live session image for ${agent.name}:`, liveSessionMap[agent.name])
-      return liveSessionMap[agent.name]
-    }
+  // ALWAYS USE THESE IMAGES - both pre-session and during session
+  const agentImageMap: Record<string, string> = {
+    'Austin': '/Austin Boss.png',
+    'Already Got It Alan': '/Already got it Alan landscape.png',
+    'DIY Dave': '/DIY DAVE.png',
+    'Too Expensive Tim': '/Too Expensive Tim.png'
+  }
+  
+  if (agentImageMap[agent.name]) {
+    console.log(`✅ Using agent image for ${agent.name}:`, agentImageMap[agent.name])
+    return agentImageMap[agent.name]
   }
 
-  // For selection bubbles, use the metadata
+  // For other agents, use the metadata
   const directName = agent.name as AllowedAgentName
   if (ALLOWED_AGENT_SET.has(directName)) {
     const metadata = PERSONA_METADATA[directName]
