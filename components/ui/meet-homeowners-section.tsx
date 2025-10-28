@@ -14,7 +14,7 @@ export function MeetHomeownersSection() {
   const { ref, controls } = useScrollAnimation(0.2)
   
   const agents = [
-    { name: "Austin", image: "/Austin no backround large.png", trait: "The Skeptic", color: "primary" as keyof typeof COLOR_VARIANTS },
+    { name: "Austin", image: "/Austin pfp.png", trait: "The Skeptic", color: "primary" as keyof typeof COLOR_VARIANTS },
     { name: "Nancy", image: "/agents/nancy.png", trait: "Problem-Free Nancy", color: "tertiary" as keyof typeof COLOR_VARIANTS },
     { name: "Tim", image: "/agents/tim.png", trait: "Price Conscious", color: "quinary" as keyof typeof COLOR_VARIANTS },
     { name: "Beth", image: "/agents/beth.png", trait: "Always Busy", color: "secondary" as keyof typeof COLOR_VARIANTS },
