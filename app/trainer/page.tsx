@@ -23,19 +23,26 @@ interface Agent {
   is_active: boolean
 }
 
-const resolveAgentImage = (agent: Agent | null) => {
+const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) => {
   if (!agent) return null
 
   const directName = agent.name as AllowedAgentName
   if (ALLOWED_AGENT_SET.has(directName)) {
-    const image = PERSONA_METADATA[directName]?.bubble?.image
+    const metadata = PERSONA_METADATA[directName]
+    // Use live session image during conversation, bubble image for selection
+    const image = isLiveSession 
+      ? (metadata?.bubble?.liveSessionImage || metadata?.bubble?.image)
+      : metadata?.bubble?.image
     if (image) return image
   }
 
   if (agent.persona) {
     const personaName = agent.persona as AllowedAgentName
     if (ALLOWED_AGENT_SET.has(personaName)) {
-      const image = PERSONA_METADATA[personaName]?.bubble?.image
+      const metadata = PERSONA_METADATA[personaName]
+      const image = isLiveSession
+        ? (metadata?.bubble?.liveSessionImage || metadata?.bubble?.image)
+        : metadata?.bubble?.image
       if (image) return image
     }
   }
@@ -382,11 +389,11 @@ function TrainerPageContent() {
                 ) : (
                   <div className="relative w-full h-full">
                     {(() => {
-                      const src = resolveAgentImage(selectedAgent)
+                      const src = resolveAgentImage(selectedAgent, sessionActive)
                       return src ? (
                       <Image
                         src={src}
-                        alt={selectedAgent?.name || 'Agent'}
+                        alt={selectedAgent?.name || 'Rout'}
                         fill
                         sizes="(min-width: 1024px) 50vw, 100vw"
                         className="object-cover"
