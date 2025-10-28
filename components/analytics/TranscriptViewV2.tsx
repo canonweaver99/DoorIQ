@@ -40,6 +40,11 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
   const [copiedLine, setCopiedLine] = useState<number | null>(null)
 
   const ratingsMap = new Map(lineRatings.map(r => [r.line_number, r]))
+  const textMap = new Map<string, any>(
+    lineRatings
+      .filter((r) => typeof r.text === 'string' && r.text.length > 0)
+      .map((r) => [r.text.slice(0, 200), r])
+  )
   
   // Format timestamp to M:SS
   const formatTimestamp = (timestamp: string | number | undefined): string => {
@@ -146,7 +151,7 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
       <div className="rounded-3xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
         <div className="space-y-2 max-w-4xl mx-auto">
           {filteredTranscript.map((line, index) => {
-            const rating = ratingsMap.get(index)
+            const rating = ratingsMap.get(index) || textMap.get(text.slice(0, 200))
             const isRep = getSpeaker(line.speaker) === 'rep'
             const text = getLineText(line)
             const showFeedback = expandedFeedback.has(index)

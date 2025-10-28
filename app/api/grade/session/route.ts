@@ -957,11 +957,45 @@ ${knowledgeContext}`
       return finalScore
     })()
 
-    // Extract line ratings from the grading result
-    const lineRatings: any[] = Array.isArray(gradingResult.line_ratings) 
-      ? gradingResult.line_ratings 
+    // Extract and normalize line ratings from the grading result
+    const sourceRatings: any[] = Array.isArray(gradingResult.line_ratings)
+      ? gradingResult.line_ratings
       : []
-    logger.info('Line-by-line grading enabled', { ratingsCount: lineRatings.length })
+
+    const normalizedLineRatings: any[] = sourceRatings.map((r: any) => {
+      const text: string = (r.text || '').toString().trim()
+      let lineNumber: number | undefined = typeof r.line_number === 'number' ? r.line_number : undefined
+
+      // If line_number missing, attempt to infer by matching text
+      if (lineNumber === undefined && text && Array.isArray(transcriptToGrade)) {
+        const idx = (transcriptToGrade as any[]).findIndex((line: any) => {
+          const lt = (line.text || line.message || '').toString().trim()
+          return lt && text && lt.toLowerCase().includes(text.substring(0, Math.min(40, text.length)).toLowerCase())
+        })
+        if (idx >= 0) lineNumber = idx
+      }
+
+      const speakerRaw = (r.speaker || '').toString().toLowerCase()
+      const speaker = speakerRaw.includes('rep') || speakerRaw.includes('user') ? 'rep' : 'customer'
+
+      const timestamp = (lineNumber !== undefined && (session as any).full_transcript?.[lineNumber]?.timestamp) || undefined
+
+      const effectivenessRaw = (r.effectiveness || '').toString().toLowerCase()
+      const effectiveness = ['excellent', 'good', 'average', 'poor'].includes(effectivenessRaw)
+        ? effectivenessRaw
+        : (r.missed_opportunity ? 'poor' : 'average')
+
+      return {
+        line_number: lineNumber ?? 0,
+        speaker,
+        timestamp,
+        text,
+        effectiveness,
+        alternative_lines: Array.isArray(r.alternative_lines) ? r.alternative_lines : []
+      }
+    })
+
+    logger.info('Line-by-line grading enabled', { ratingsCount: normalizedLineRatings.length })
 
     const dbUpdateStartTime = Date.now()
     const { error: updateError } = await (supabase as any)
@@ -996,7 +1030,7 @@ ${knowledgeContext}`
         return_appointment: returnAppointment,
         
         analytics: {
-          line_ratings: lineRatings,
+          line_ratings: normalizedLineRatings,
           feedback: gradingResult.feedback || { strengths: [], improvements: [], specific_tips: [] },
           enhanced_metrics: enhancedMetrics,
           objection_analysis: objectionAnalysis,
@@ -1022,11 +1056,11 @@ ${knowledgeContext}`
     logger.perf('Database update completed', dbUpdateEndTime - dbUpdateStartTime)
 
     // Store line ratings if available
-    if (lineRatings.length > 0) {
+    if (normalizedLineRatings.length > 0) {
       const { error: ratingsError } = await (supabase as any)
         .from('line_ratings')
         .upsert(
-          lineRatings.map((rating: any) => ({
+          normalizedLineRatings.map((rating: any) => ({
             session_id: sessionId,
             line_number: rating.line_number,
             speaker: rating.speaker,
@@ -1041,7 +1075,7 @@ ${knowledgeContext}`
       if (ratingsError) {
         logger.warn('Failed to store line ratings', { error: ratingsError.message })
       } else {
-        logger.success('Line ratings stored', { count: lineRatings.length })
+        logger.success('Line ratings stored', { count: normalizedLineRatings.length })
       }
     }
 
