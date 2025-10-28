@@ -393,7 +393,7 @@ function TrainerPageContent() {
                       return src ? (
                       <Image
                         src={src}
-                        alt={selectedAgent?.name || 'Rout'}
+                        alt={selectedAgent?.name || 'Agent'}
                         fill
                         sizes="(min-width: 1024px) 50vw, 100vw"
                         className="object-cover"
