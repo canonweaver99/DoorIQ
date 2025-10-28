@@ -786,7 +786,7 @@ ${knowledgeContext}`
       has_scores: !!gradingResult.scores,
       sale_closed: gradingResult.sale_closed,
       virtual_earnings: gradingResult.virtual_earnings,
-      openai_time: openaiTimeSeconds + 's'
+      openai_time: (openaiDuration / 1000).toFixed(2) + 's'
     })
 
     // Start a transaction to update both tables
