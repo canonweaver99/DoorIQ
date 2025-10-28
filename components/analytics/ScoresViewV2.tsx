@@ -214,7 +214,26 @@ export default function ScoresViewV2({
                 </div>
               </div>
 
-              {/* Filler Word Penalty with Dropdown */}
+              {/* Filler Word Display - Penalty or Congrats */}
+              {scores.filler_words !== undefined && scores.filler_words === 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-emerald-300">Congrats, you didn't stutter!</div>
+                      <div className="text-xs text-emerald-400/70">Zero filler words detected - crystal clear communication</div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              
               {scores.filler_words && scores.filler_words > 0 && (
                 <div className="mb-6">
                   <button
