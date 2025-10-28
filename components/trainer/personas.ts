@@ -433,7 +433,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Needs time to think. Overcome indecision and create urgency.',
       difficulty: 'Hard',
       color: 'undenary',
-      image: '/agents/tina.png',
+      image: '/Think About It Tina no backround.png',
       liveSessionImage: '/Think About It Tina.png',
     },
     card: {
