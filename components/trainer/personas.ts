@@ -239,7 +239,8 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Everything costs too much. Perfect for value framing.',
       difficulty: 'Hard',
       color: 'senary',
-      image: '/agents/tim.png',
+      image: '/agents/tim.png', // Selection bubble
+      liveSessionImage: '/Too Expensive Tim.png', // During live conversation
     },
     card: {
       age: 44,
