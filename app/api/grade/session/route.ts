@@ -600,12 +600,6 @@ export async function POST(request: NextRequest) {
   "session_summary": { "total_lines": int, "rep_lines": int, "customer_lines": int, "objections_detected": int, "questions_asked": int },
   "scores": { "overall": int, "rapport": int, "discovery": int, "objection_handling": int, "closing": int, "safety": int, "introduction": int, "listening": int, "speaking_pace": int, "question_ratio": int, "active_listening": int, "assumptive_language": int },
   "filler_word_count": int,
-  "line_ratings": [{
-    "line_number": int,
-    "speaker": "rep/customer",
-    "effectiveness": "excellent/good/average/poor",
-    "alternative_lines": []
-  }],
   "feedback": { 
     "strengths": ["SPECIFIC examples with exact details from conversation"], 
     "improvements": ["SPECIFIC issues with concrete examples"], 
@@ -672,12 +666,6 @@ ${(teamGradingConfig.custom_grading_rubric.automatic_fails as any[]).join('\n- '
 ` : ''}
 ${teamGradingConfig?.passing_score ? `PASSING SCORE: ${teamGradingConfig.passing_score}%` : ''}
 
-LINE RATINGS:
-- Rate EVERY sales rep line: excellent/good/average/poor
-- ONLY include alternative_lines array for lines rated "poor"
-- Leave alternative_lines as [] for good/average/excellent lines
-- Alternative lines should be SPECIFIC to the context (reference what customer just said)
-
 TIMELINE (3 moments at 33%, 66%, 90%):
 - Copy EXACT timestamps from transcript format: (1:23)
 - Choose actual impactful lines from those positions
@@ -736,7 +724,7 @@ ${knowledgeContext}`
           model: "gpt-4o-mini",
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 3200, // Optimized for speed while maintaining comprehensiveness
+          max_tokens: 1800, // Reduced significantly - no line ratings = much faster
           temperature: 0.2 // Lower for more consistent JSON
         })
         break // Success, exit retry loop
@@ -778,7 +766,7 @@ ${knowledgeContext}`
     }
     
     console.log('✅ OpenAI grading parsed successfully:', {
-      lines_rated: gradingResult.line_ratings?.length || 0,
+      line_ratings_disabled: true,
       has_scores: !!gradingResult.scores,
       sale_closed: gradingResult.sale_closed,
       virtual_earnings: gradingResult.virtual_earnings,
@@ -935,18 +923,9 @@ ${knowledgeContext}`
       return finalScore
     })()
 
-    // Merge timestamps from original transcript into line ratings
-    const lineRatings = gradingResult.line_ratings || []
-    const transcriptWithTimestamps = (session as any).full_transcript || []
-    
-    lineRatings.forEach((rating: any) => {
-      const originalLine = transcriptWithTimestamps[rating.line_number]
-      if (originalLine && originalLine.timestamp) {
-        rating.timestamp = originalLine.timestamp
-      }
-    })
-    
-    console.log('📍 Applied timestamps to', lineRatings.filter((r: any) => r.timestamp && r.timestamp !== '00:00').length, 'line ratings')
+    // Line ratings temporarily disabled for speed testing
+    const lineRatings: any[] = []
+    console.log('⚡ Line-by-line grading disabled for speed optimization')
 
     const dbUpdateStartTime = Date.now()
     const { error: updateError } = await (supabase as any)
@@ -1007,8 +986,8 @@ ${knowledgeContext}`
     const dbUpdateTimeSeconds = ((dbUpdateEndTime - dbUpdateStartTime) / 1000).toFixed(2)
     console.log('⏱️ Database update completed in:', dbUpdateTimeSeconds, 'seconds')
 
-    // Line ratings are stored in the analytics JSONB column, no separate table needed
-    console.log(`✅ Stored ${gradingResult.line_ratings?.length || 0} line ratings in analytics column`)
+    // Line ratings temporarily disabled for speed testing
+    console.log('⚡ Line-by-line grading skipped - testing speed impact')
 
     const endTime = Date.now()
     const totalTimeSeconds = ((endTime - startTime) / 1000).toFixed(2)
@@ -1025,11 +1004,12 @@ ${knowledgeContext}`
     console.log('  - Total:', totalTimeSeconds, 's')
     console.log('📊 Summary:', {
       scores: Object.keys(gradingResult.scores || {}).length,
-      line_ratings: gradingResult.line_ratings?.length || 0,
+      line_ratings_disabled: true,
       has_objections: !!objectionAnalysis.total_objections,
       has_coaching: !!coachingPlan.immediate_fixes,
       virtual_earnings: virtualEarnings,
-      tokens_used: completion.usage?.total_tokens
+      tokens_used: completion.usage?.total_tokens,
+      tokens_saved_vs_4000: (4000 - (completion.usage?.completion_tokens || 0))
     })
 
     // Send email notifications (fire and forget - don't block response)
@@ -1086,7 +1066,7 @@ ${knowledgeContext}`
       success: true,
       scores: gradingResult.scores,
       feedback: gradingResult.feedback || {},
-      lines_graded: gradingResult.line_ratings?.length || 0,
+      lines_graded: 0, // Line-by-line grading temporarily disabled
       conversation_dynamics: conversationDynamics,
       failure_analysis: failureAnalysis,
       objection_analysis: objectionAnalysis,

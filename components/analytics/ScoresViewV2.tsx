@@ -330,7 +330,7 @@ export default function ScoresViewV2({
                       />
                       <Icon className="w-5 h-5 mb-2" style={{ color: metric.color }} />
                       <div className="text-2xl font-bold text-white mb-1">{metric.score}%</div>
-                      <div className="text-xs text-slate-400">{metric.name}</div>
+                      <div className="text-sm text-slate-200 font-medium">{metric.name}</div>
                     </motion.div>
                   )
                 })}
@@ -409,17 +409,17 @@ export default function ScoresViewV2({
                   )}
                 </>
               ) : (
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Potential Deal Value</span>
-                    <span className="text-white/50 font-medium line-through">$--</span>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-base">
+                    <span className="text-slate-300 font-medium">Potential Deal Value</span>
+                    <span className="text-white/70 font-semibold line-through">$--</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Missed Commission</span>
-                    <span className="text-red-400 font-medium">$0.00</span>
+                  <div className="flex justify-between text-base">
+                    <span className="text-slate-300 font-medium">Missed Commission</span>
+                    <span className="text-red-300 font-semibold">$0.00</span>
                   </div>
-                  <div className="pt-3 border-t border-red-500/20">
-                    <p className="text-sm text-red-300">No sale was closed this session. Review the feedback below to improve your approach.</p>
+                  <div className="pt-4 border-t border-red-500/30">
+                    <p className="text-base text-red-200 font-medium leading-relaxed">No sale was closed this session. Review the feedback below to improve your approach.</p>
                   </div>
                 </div>
               )}
