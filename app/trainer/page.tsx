@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
 import { PaywallModal } from '@/components/subscription'
-import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
+import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 
 interface Agent {
@@ -20,6 +20,27 @@ interface Agent {
   persona: string | null
   eleven_agent_id: string
   is_active: boolean
+}
+
+const resolveAgentImage = (agent: Agent | null) => {
+  if (!agent) return null
+
+  const directName = agent.name as AllowedAgentName
+  if (ALLOWED_AGENT_SET.has(directName)) {
+    const image = PERSONA_METADATA[directName]?.bubble?.image
+    if (image) return image
+  }
+
+  if (agent.persona) {
+    const personaName = agent.persona as AllowedAgentName
+    if (ALLOWED_AGENT_SET.has(personaName)) {
+      const image = PERSONA_METADATA[personaName]?.bubble?.image
+      if (image) return image
+    }
+  }
+
+  const normalized = agent.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return normalized ? `/agents/${normalized}.png` : '/agents/default.png'
 }
 
 function TrainerPageContent() {
@@ -359,17 +380,20 @@ function TrainerPageContent() {
                   </div>
                 ) : (
                   <div className="relative w-full h-full">
-                    {selectedAgent?.name && (
+                    {(() => {
+                      const src = resolveAgentImage(selectedAgent)
+                      return src ? (
                       <Image
-                        src={selectedAgent.name === 'Austin' ? '/Austin Boss.png' : `/agents/${selectedAgent.name.toLowerCase()}.png`}
-                        alt={selectedAgent.name}
+                        src={src}
+                        alt={selectedAgent?.name || 'Agent'}
                         fill
                         sizes="(min-width: 1024px) 50vw, 100vw"
                         className="object-cover"
                         style={{ objectFit: 'cover', objectPosition: 'center center' }}
                         priority
                       />
-                    )}
+                      ) : null
+                    })()}
                     
                     {/* Knock Button Overlay - centered when not active */}
                     {!sessionActive && !loading && selectedAgent && (

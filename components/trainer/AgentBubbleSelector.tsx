@@ -399,7 +399,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: index * 0.05 }}
                 className={cn(
-                  "flex flex-col items-center relative rounded-xl p-3 select-none focus:outline-none",
+                  "flex flex-col items-center relative rounded-xl p-5 select-none focus:outline-none",
                   cardBg,
                   agent.isLocked ? "opacity-40 grayscale cursor-not-allowed" : "cursor-pointer"
                 )}
@@ -422,9 +422,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   whileTap={!agent.isLocked ? { scale: 0.95 } : {}}
                   disabled={agent.isLocked}
                   tabIndex={-1}
-                  className={cn("relative mb-3 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
+                  className={cn("relative mb-4 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
                 >
-                  <div className="relative h-32 w-32 mx-auto">
+                  <div className="relative h-44 w-44 mx-auto">
                     {/* Concentric circles */}
                     {[0, 1, 2].map((i) => (
                       <motion.div
@@ -489,7 +489,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             alt={agent.name}
                             fill
                             className="object-cover"
-                            sizes="128px"
+                            sizes="352px"
+                            quality={95}
+                            priority={index < 6}
                           />
                         </div>
                       </motion.div>
@@ -518,18 +520,18 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </div>
                 )}
 
-                {/* Agent Info - Simplified */}
+                {/* Agent Info - Redesigned */}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 + 0.2 }}
-                  className="text-center space-y-2"
+                  className="text-center space-y-2.5 px-2"
                 >
                   {/* Name and difficulty */}
                   <div className="flex items-center justify-center gap-2">
-                    <h3 className="text-lg font-bold text-white">{agent.name}</h3>
+                    <h3 className="text-xl font-bold text-white tracking-tight">{agent.name}</h3>
                     <div className={cn(
-                      "w-2 h-2 rounded-full",
+                      "w-2.5 h-2.5 rounded-full flex-shrink-0",
                       agent.difficulty === 'Easy' ? 'bg-green-400' :
                       agent.difficulty === 'Moderate' ? 'bg-yellow-400' :
                       agent.difficulty === 'Hard' ? 'bg-orange-400' :
@@ -539,18 +541,18 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </div>
                   
                   {/* Combined summary */}
-                  <p className="text-xs text-white/70 max-w-[220px] mx-auto leading-snug px-2">
+                  <p className="text-sm text-white/80 max-w-[240px] mx-auto leading-relaxed font-medium">
                     {agent.description}
                   </p>
                   
                   {/* Stats if available */}
                   {(agent.sessionCount && agent.sessionCount > 0) ? (
-                    <div className="text-[10px] text-slate-500">
-                      {agent.sessionCount}x played
-                      {agent.bestScore && <span className="text-green-400 ml-1">• Best: {agent.bestScore}%</span>}
+                    <div className="text-xs font-semibold text-slate-400 pt-1">
+                      {agent.sessionCount}x attempted
+                      {agent.bestScore && <span className="text-emerald-400 ml-1.5">• Best: {agent.bestScore}%</span>}
                     </div>
                   ) : (
-                    <div className="text-[10px] text-indigo-300/80">
+                    <div className="text-xs font-semibold text-amber-400/90 pt-1">
                       ✨ Not yet attempted
                     </div>
                   )}

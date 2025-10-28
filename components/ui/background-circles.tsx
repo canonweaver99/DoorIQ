@@ -248,11 +248,12 @@ function AvatarWithRings({ agent, variantStyles, size, opacity, isCenter, onClic
             fill
             className="object-cover relative z-10"
             sizes={size === 'large' 
-              ? "(max-width: 640px) 220px, (max-width: 768px) 260px, 300px"
+              ? "(max-width: 640px) 440px, (max-width: 768px) 520px, 600px"
               : size === 'small'
-              ? "(max-width: 640px) 130px, (max-width: 768px) 155px, 180px"
-              : "(max-width: 640px) 80px, (max-width: 768px) 95px, 110px"
+              ? "(max-width: 640px) 260px, (max-width: 768px) 310px, 360px"
+              : "(max-width: 640px) 160px, (max-width: 768px) 190px, 220px"
             }
+            quality={95}
             priority={isCenter}
           />
         </div>
