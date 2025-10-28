@@ -112,6 +112,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficulty: 'Easy',
       color: 'secondary',
       image: '/agents/nancy.png',
+      liveSessionImage: '/No Problem Nancy.png',
     },
     card: {
       age: 42,
@@ -176,6 +177,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficulty: 'Very Hard',
       color: 'quaternary',
       image: '/agents/nick.png',
+      liveSessionImage: '/Not Interested Nick.png',
     },
     card: {
       age: 35,
@@ -272,6 +274,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficulty: 'Moderate',
       color: 'septenary',
       image: '/agents/susan.png',
+      liveSessionImage: '/Spouse Check Susan.png',
     },
     card: {
       age: 39,
@@ -303,6 +306,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficulty: 'Moderate',
       color: 'octonary',
       image: '/agents/beth.png',
+      liveSessionImage: '/Busy Beth.png',
     },
     card: {
       age: 33,
@@ -334,6 +338,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficulty: 'Hard',
       color: 'nonary',
       image: '/agents/randy.png',
+      liveSessionImage: '/Renter Randy.png',
     },
     card: {
       age: 28,
@@ -365,6 +370,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficulty: 'Hard',
       color: 'denary',
       image: '/agents/sam.png',
+      liveSessionImage: '/Skeptical Sam.png',
     },
     card: {
       age: 55,
@@ -396,6 +402,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficulty: 'Moderate',
       color: 'duodenary',
       image: '/agents/jerry.png',
+      liveSessionImage: '/Just Treated Jerry.png',
     },
     card: {
       age: 46,
@@ -427,6 +434,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       difficulty: 'Hard',
       color: 'undenary',
       image: '/agents/tina.png',
+      liveSessionImage: '/Think About It Tina.png',
     },
     card: {
       age: 37,

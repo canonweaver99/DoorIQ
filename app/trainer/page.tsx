@@ -29,9 +29,17 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
   // ALWAYS USE THESE IMAGES - both pre-session and during session
   const agentImageMap: Record<string, string> = {
     'Austin': '/Austin Boss.png',
+    'No Problem Nancy': '/No Problem Nancy.png',
     'Already Got It Alan': '/Already got it Alan landscape.png',
+    'Not Interested Nick': '/Not Interested Nick.png',
     'DIY Dave': '/DIY DAVE.png',
-    'Too Expensive Tim': '/Too Expensive Tim.png'
+    'Too Expensive Tim': '/Too Expensive Tim.png',
+    'Spouse Check Susan': '/Spouse Check Susan.png',
+    'Busy Beth': '/Busy Beth.png',
+    'Renter Randy': '/Renter Randy.png',
+    'Skeptical Sam': '/Skeptical Sam.png',
+    'Just Treated Jerry': '/Just Treated Jerry.png',
+    'Think About It Tina': '/Think About It Tina.png'
   }
   
   if (agentImageMap[agent.name]) {
