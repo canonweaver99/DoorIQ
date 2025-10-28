@@ -144,7 +144,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Already has pest control service. Practice competitive positioning.',
       difficulty: 'Hard',
       color: 'tertiary',
-      image: '/agents/alan.png', // Selection bubble
+      image: '/Already got it Alan no backround.png', // Selection bubble
       liveSessionImage: '/Already got it Alan landscape.png', // During live conversation
     },
     card: {
@@ -241,7 +241,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Everything costs too much. Perfect for value framing.',
       difficulty: 'Hard',
       color: 'senary',
-      image: '/agents/tim.png', // Selection bubble
+      image: '/Too Expensive Tim no backround.png', // Selection bubble
       liveSessionImage: '/Too Expensive Tim.png', // During live conversation
     },
     card: {
