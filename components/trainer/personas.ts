@@ -111,7 +111,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Friendly homeowner who agrees quickly. Perfect for building confidence.',
       difficulty: 'Easy',
       color: 'secondary',
-      image: '/No Problem Nancy No Backround.png',
+      image: '/No Problem Nancy no backround 2.png',
       liveSessionImage: '/No Problem Nancy.png',
     },
     card: {
@@ -144,7 +144,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Already has pest control service. Practice competitive positioning.',
       difficulty: 'Hard',
       color: 'tertiary',
-      image: '/Already got it Alan no backround.png', // Selection bubble
+      image: '/Already got it Alan no backround 2.png', // Selection bubble
       liveSessionImage: '/Already got it Alan landscape.png', // During live conversation
     },
     card: {
@@ -176,7 +176,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Wants to end conversation immediately. Master pattern interrupts.',
       difficulty: 'Very Hard',
       color: 'quaternary',
-      image: '/Not Interested Nick No backround.png',
+      image: '/Not Intersted Nick no backround 2.png',
       liveSessionImage: '/Not Interested Nick.png',
     },
     card: {
@@ -209,7 +209,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Prefers DIY solutions. Demonstrate professional value.',
       difficulty: 'Hard',
       color: 'quinary',
-      image: '/DIY DAVE no backround.png', // Selection bubble
+      image: '/DIY DAVE no backround 2.png', // Selection bubble
       liveSessionImage: '/DIY DAVE.png', // During live conversation
     },
     card: {
@@ -241,7 +241,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Everything costs too much. Perfect for value framing.',
       difficulty: 'Hard',
       color: 'senary',
-      image: '/Too Expensive Tim no backround.png', // Selection bubble
+      image: '/Too Expensive Tim no backround 2.png', // Selection bubble
       liveSessionImage: '/Too Expensive Tim.png', // During live conversation
     },
     card: {
@@ -273,7 +273,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Needs spouse approval. Handle the spouse objection.',
       difficulty: 'Moderate',
       color: 'septenary',
-      image: '/Spouse Check Susan no backround.png',
+      image: '/Spouse check Susan no backround 2.png',
       liveSessionImage: '/Spouse Check Susan.png',
     },
     card: {
@@ -305,7 +305,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Always in a hurry. Deliver value quickly and respectfully.',
       difficulty: 'Moderate',
       color: 'octonary',
-      image: '/Busy Beth no backround.png',
+      image: '/Busy Beth no backround 2.png',
       liveSessionImage: '/Busy Beth.png',
     },
     card: {
@@ -337,7 +337,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Renting the property. Navigate authority and landlord dynamics.',
       difficulty: 'Hard',
       color: 'nonary',
-      image: '/Renter Randy no backround.png',
+      image: '/Renter randy no backround 2.png',
       liveSessionImage: '/Renter Randy.png',
     },
     card: {
@@ -369,7 +369,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Doubts everything. Build credibility through proof.',
       difficulty: 'Hard',
       color: 'denary',
-      image: '/Skeptical Sam no backround.png',
+      image: '/Skeptical Sam no backround 2.png',
       liveSessionImage: '/Skeptical Sam.png',
     },
     card: {
@@ -401,7 +401,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Recently had service done. Practice timing and future booking.',
       difficulty: 'Moderate',
       color: 'duodenary',
-      image: '/Just Treated Jerry No backround.png',
+      image: '/Just treated Jerry no backround 2.png',
       liveSessionImage: '/Just Treated Jerry.png',
     },
     card: {
