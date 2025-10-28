@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
   try {
     // Get the API key from environment variable
     const apiKey = process.env.ELEVEN_LABS_API_KEY;
     
-    // Debug log
-    console.log('🔑 API Key exists:', !!apiKey);
-    console.log('🔑 API Key first 10 chars:', apiKey?.substring(0, 10) + '...');
+    logger.debug('ElevenLabs API Key check', { 
+      exists: !!apiKey,
+      preview: apiKey?.substring(0, 10) + '...'
+    });
     
     if (!apiKey) {
-      console.error('❌ ELEVEN_LABS_API_KEY is not set in environment variables');
+      logger.error('ELEVEN_LABS_API_KEY is not set in environment variables');
       return NextResponse.json(
         { error: 'ElevenLabs API key not configured', details: 'Missing API key in environment' },
         { status: 500 }
@@ -21,18 +23,18 @@ export async function POST(request: Request) {
     const agentId = body?.agentId || body?.agent_id;
 
     if (!agentId) {
-      console.error('❌ No agent ID provided in request body');
+      logger.error('No agent ID provided in request body');
       return NextResponse.json(
         { error: 'Agent ID is required', details: 'Request must include agentId field' },
         { status: 400 }
       );
     }
 
-    console.log('🤖 Agent ID:', agentId);
+    logger.info('Requesting signed URL for agent', { agentId });
 
     // Call ElevenLabs API to get signed URL
     const elevenLabsUrl = `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${agentId}`;
-    console.log('📡 Requesting signed URL from ElevenLabs:', elevenLabsUrl);
+    logger.api('Requesting signed URL from ElevenLabs', { url: elevenLabsUrl });
     
     const response = await fetch(elevenLabsUrl, {
       method: 'GET',
@@ -42,12 +44,14 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log('📨 ElevenLabs Response Status:', response.status);
-    console.log('📨 ElevenLabs Response Headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
+    logger.api('ElevenLabs Response', { 
+      status: response.status,
+      headers: Object.fromEntries(response.headers.entries())
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ ElevenLabs API error:', {
+      logger.error('ElevenLabs API error', undefined, {
         status: response.status,
         statusText: response.statusText,
         body: errorText,
@@ -102,13 +106,13 @@ export async function POST(request: Request) {
     }
 
     const text = await response.text();
-    console.log('📨 ElevenLabs Response Body:', text);
+    logger.debug('ElevenLabs Response Body', { body: text });
     
     let data;
     try {
       data = JSON.parse(text);
     } catch (parseError) {
-      console.error('❌ Failed to parse ElevenLabs response:', parseError);
+      logger.error('Failed to parse ElevenLabs response', parseError);
       return NextResponse.json(
         { error: 'Invalid response from ElevenLabs', details: 'Response was not valid JSON' },
         { status: 502 }
@@ -116,15 +120,14 @@ export async function POST(request: Request) {
     }
 
     if (!data.signed_url) {
-      console.error('❌ No signed_url in response:', data);
+      logger.error('No signed_url in response', undefined, { data });
       return NextResponse.json(
         { error: 'Missing signed URL in response', details: 'ElevenLabs did not return a signed_url' },
         { status: 502 }
       );
     }
 
-    console.log('✅ Successfully obtained signed URL');
-    console.log('⏰ Expires at:', data.expires_at);
+    logger.success('Successfully obtained signed URL', { expiresAt: data.expires_at });
     
     return NextResponse.json({
       signed_url: data.signed_url,
@@ -133,9 +136,8 @@ export async function POST(request: Request) {
     });
     
   } catch (error: any) {
-    console.error('❌ Error in signed URL endpoint:', {
+    logger.error('Error in signed URL endpoint', error, {
       message: error?.message,
-      stack: error?.stack,
       name: error?.name,
     });
     return NextResponse.json(

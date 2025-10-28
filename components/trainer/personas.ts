@@ -42,7 +42,8 @@ interface PersonaBubbleDetail {
   description: string
   difficulty: BubbleDifficulty
   color: BubbleColorVariant
-  image?: string
+  image?: string // Selection bubble image
+  liveSessionImage?: string // Image shown during active conversation
 }
 
 interface PersonaCardDetail {
@@ -77,7 +78,8 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Direct communicator who asks tough questions and spots pressure tactics instantly.',
       difficulty: 'Moderate',
       color: 'primary',
-      image: '/Austin no backround large.png',
+      image: '/Austin No Backround.png', // Selection bubble (capital N, B)
+      liveSessionImage: '/Austin Boss.png', // During live conversation
     },
     card: {
       age: 38,
@@ -141,7 +143,8 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Already has pest control service. Practice competitive positioning.',
       difficulty: 'Hard',
       color: 'tertiary',
-      image: '/agents/alan.png',
+      image: '/agents/alan.png', // Selection bubble
+      liveSessionImage: '/Already got it Alan landscape.png', // During live conversation
     },
     card: {
       age: 51,
@@ -204,7 +207,8 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Prefers DIY solutions. Demonstrate professional value.',
       difficulty: 'Hard',
       color: 'quinary',
-      image: '/agents/dave.png',
+      image: '/agents/dave.png', // Selection bubble
+      liveSessionImage: '/DIY DAVE.png', // During live conversation
     },
     card: {
       age: 48,
@@ -235,7 +239,8 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Everything costs too much. Perfect for value framing.',
       difficulty: 'Hard',
       color: 'senary',
-      image: '/agents/tim.png',
+      image: '/agents/tim.png', // Selection bubble
+      liveSessionImage: '/Too Expensive Tim.png', // During live conversation
     },
     card: {
       age: 44,

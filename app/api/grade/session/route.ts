@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
+import { logger } from '@/lib/logger'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -15,7 +16,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 function getCachedTeamConfig(teamId: string) {
   const cached = teamConfigCache.get(teamId)
   if (cached && cached.expires > Date.now()) {
-    console.log('💾 Using cached team config for team:', teamId)
+    logger.db('Using cached team config for team', { teamId })
     return cached.data
   }
   teamConfigCache.delete(teamId)
@@ -23,7 +24,7 @@ function getCachedTeamConfig(teamId: string) {
 }
 
 function setCachedTeamConfig(teamId: string, data: any) {
-  console.log('💾 Caching team config for team:', teamId)
+  logger.db('Caching team config for team', { teamId })
   teamConfigCache.set(teamId, {
     data,
     expires: Date.now() + CACHE_TTL_MS
@@ -317,7 +318,7 @@ const gradingResponseSchema: JsonSchema = {
 
 // Check if API key is configured
 if (!process.env.OPENAI_API_KEY) {
-  console.error('❌ OPENAI_API_KEY not configured')
+  logger.error('OPENAI_API_KEY not configured')
 }
 
 export async function POST(request: NextRequest) {
@@ -334,10 +335,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
     }
 
-    console.log('🎯 ========================================')
-    console.log('🎯 GRADING START for session:', sessionId)
-    console.log('🎯 Start time:', new Date().toISOString())
-    console.log('🎯 ========================================')
+    const timer = logger.startTimer()
+    logger.group(`Grading session: ${sessionId}`, () => {
+      logger.info('GRADING START', { sessionId, startTime: new Date().toISOString() })
+    })
     
     const supabase = await createServiceSupabaseClient()
     
@@ -349,13 +350,13 @@ export async function POST(request: NextRequest) {
       .single()
     
     if (sessionError || !session) {
-      console.error('❌ Session not found:', sessionError)
+      logger.error('Session not found', sessionError)
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
     
     if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
-      console.error('❌ No transcript found for session:', sessionId)
-      console.error('📊 Session data:', {
+      logger.error('No transcript found for session', undefined, {
+        sessionId,
         id: (session as any).id,
         created_at: (session as any).created_at,
         ended_at: (session as any).ended_at,
@@ -372,25 +373,27 @@ export async function POST(request: NextRequest) {
     }
     
     const transcriptLength = (session as any).full_transcript.length
-    console.log('📊 Transcript found:', transcriptLength, 'lines')
-    console.log('📊 First transcript line:', (session as any).full_transcript[0])
+    logger.info('Transcript found', { 
+      lines: transcriptLength,
+      firstLine: (session as any).full_transcript[0]
+    })
     
     // Warn if transcript is very long (may take longer to process)
     if (transcriptLength > 500) {
-      console.warn('⚠️  Large transcript detected:', transcriptLength, 'lines - grading may take longer')
+      logger.warn('Large transcript detected - grading may take longer', { lines: transcriptLength })
     }
     
     // For extremely long transcripts (>1000 lines), sample key portions
     let transcriptToGrade = (session as any).full_transcript
     if (transcriptLength > 1000) {
-      console.warn('⚠️  Very large transcript (>1000 lines) - sampling key sections')
+      logger.warn('Very large transcript - sampling key sections', { lines: transcriptLength })
       // Take first 300, middle 400, last 300 lines
       transcriptToGrade = [
         ...(session as any).full_transcript.slice(0, 300),
         ...(session as any).full_transcript.slice(Math.floor(transcriptLength / 2) - 200, Math.floor(transcriptLength / 2) + 200),
         ...(session as any).full_transcript.slice(-300)
       ]
-      console.log('📊 Sampled transcript to', transcriptToGrade.length, 'lines')
+      logger.info('Sampled transcript', { sampledLines: transcriptToGrade.length })
     }
 
     // Get user's team information and actual name in a single query
@@ -461,11 +464,13 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      console.log('📚 Team grading config found:', !!teamGradingConfig)
-      console.log('📚 Team knowledge docs:', teamKnowledgeDocs.length)
+      logger.db('Team grading config found', { 
+        hasConfig: !!teamGradingConfig,
+        docCount: teamKnowledgeDocs.length 
+      })
     } else {
       // Skip knowledge base for non-team users (saves 1-2 seconds)
-      console.log('⚡ Skipping knowledge base fetch - no team configured')
+      logger.info('Skipping knowledge base fetch - no team configured')
       knowledgeBase = []
     }
 
@@ -527,7 +532,7 @@ export async function POST(request: NextRequest) {
           }
         }
         
-        console.log(`📚 Knowledge context: ${totalChars} chars from ${teamKnowledgeDocs.length} docs`)
+        logger.db('Knowledge context loaded', { chars: totalChars, docs: teamKnowledgeDocs.length })
       }
 
       if (contextParts.length > 0) {
@@ -568,13 +573,14 @@ export async function POST(request: NextRequest) {
       })
       .join('\n')
 
-    console.log('🤖 Calling OpenAI for grading...')
-    console.log('📝 Formatted transcript length:', formattedTranscript.length, 'characters')
-    console.log('📝 Transcript lines:', (session as any).full_transcript.length)
-    console.log('📝 Transcript preview:', formattedTranscript.substring(0, 300), '...')
+    logger.api('Calling OpenAI for grading', {
+      transcriptChars: formattedTranscript.length,
+      transcriptLines: (session as any).full_transcript.length,
+      preview: formattedTranscript.substring(0, 300) + '...'
+    })
 
     const openaiStartTime = Date.now()
-    console.log('⏱️ Database queries completed in:', ((Date.now() - startTime) / 1000).toFixed(2), 'seconds')
+    logger.perf('Database queries completed', Date.now() - startTime)
 
     // Call OpenAI for comprehensive analysis
     // Build system prompt with team customizations
@@ -680,9 +686,14 @@ EARNINGS & COMMITMENT:
 - If only appointment scheduled: virtual_earnings = 0, but return_appointment = true
 
 FILLER WORDS:
-- Count ONLY these filler words: um, uh, uhh, like, erm, err, hmm
+- Count ONLY these as filler words:
+  * "um", "uh", "uhh" at any position
+  * "erm", "err", "hmm" at any position
+  * "like" ONLY at the START of a sentence or before a pause (e.g., "Like, I was thinking...")
+  * "like" in the MIDDLE of a sentence is normal speech (e.g., "service like this" or "need of a service like this")
 - Return total AND breakdown by type with line numbers where each occurs
 - Do NOT count: actually, basically, you know, sort of, kind of (normal speech)
+- Do NOT count "like" when it's a comparison or example (e.g., "like this", "looks like", "seems like")
 
 CRITICAL - FEEDBACK MUST BE HYPER-SPECIFIC:
 - ALWAYS reference actual names mentioned (customer's name, family members, pets, etc.)
@@ -721,24 +732,25 @@ ${knowledgeContext}`
     while (retryCount < maxRetries) {
       try {
         completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: "gpt-4o",
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 1800, // Reduced significantly - no line ratings = much faster
-          temperature: 0.2 // Lower for more consistent JSON
+          max_tokens: 1500, // Optimized for speed without line ratings
+          temperature: 0.2, // Lower for more consistent JSON
+          stream: false // Streaming handled in /api/grade/stream endpoint
         })
         break // Success, exit retry loop
       } catch (apiError: any) {
         retryCount++
-        console.error(`❌ OpenAI API error (attempt ${retryCount}/${maxRetries}):`, apiError.message)
+        logger.error(`OpenAI API error (attempt ${retryCount}/${maxRetries})`, apiError)
         
         if (retryCount >= maxRetries) {
           throw new Error(`OpenAI API failed after ${maxRetries} attempts: ${apiError.message}`)
         }
-        
+
         // Wait before retry (exponential backoff)
         const waitTime = Math.min(1000 * Math.pow(2, retryCount), 5000)
-        console.log(`⏳ Retrying in ${waitTime}ms...`)
+        logger.info(`Retrying in ${waitTime}ms`, { attempt: retryCount, maxRetries })
         await new Promise(resolve => setTimeout(resolve, waitTime))
       }
     }
@@ -749,23 +761,27 @@ ${knowledgeContext}`
 
     const responseContent = completion.choices[0].message.content || '{}'
     const openaiEndTime = Date.now()
-    const openaiTimeSeconds = ((openaiEndTime - openaiStartTime) / 1000).toFixed(2)
+    const openaiDuration = openaiEndTime - openaiStartTime
     
-    console.log('⏱️ OpenAI API call completed in:', openaiTimeSeconds, 'seconds')
-    console.log('📨 Raw OpenAI response length:', responseContent.length, 'characters')
-    console.log('🎯 Tokens used:', completion.usage?.total_tokens || 'unknown', '(prompt:', completion.usage?.prompt_tokens, 'completion:', completion.usage?.completion_tokens, ')')
+    logger.perf('OpenAI API call completed', openaiDuration, {
+      responseLength: responseContent.length,
+      tokensUsed: completion.usage?.total_tokens || 'unknown',
+      promptTokens: completion.usage?.prompt_tokens,
+      completionTokens: completion.usage?.completion_tokens
+    })
     
     let gradingResult
     try {
       gradingResult = JSON.parse(responseContent)
     } catch (parseError) {
-      console.error('❌ JSON parse error:', parseError)
-      console.error('❌ Response content (first 2000 chars):', responseContent.substring(0, 2000))
-      console.error('❌ Response content (last 500 chars):', responseContent.substring(Math.max(0, responseContent.length - 500)))
+      logger.error('JSON parse error', parseError, {
+        responseStart: responseContent.substring(0, 2000),
+        responseEnd: responseContent.substring(Math.max(0, responseContent.length - 500))
+      })
       throw new Error('Failed to parse OpenAI response as JSON')
     }
     
-    console.log('✅ OpenAI grading parsed successfully:', {
+    logger.success('OpenAI grading parsed successfully', {
       line_ratings_disabled: true,
       has_scores: !!gradingResult.scores,
       sale_closed: gradingResult.sale_closed,
@@ -794,7 +810,7 @@ ${knowledgeContext}`
     
     const returnAppointment = typeof gradingResult.return_appointment === 'boolean' ? gradingResult.return_appointment : false
 
-    console.log('🔍 Extracted scores:', { 
+    logger.debug('Extracted scores', { 
       rapportScore, discoveryScore, objectionScore, closeScore,
       speakingPaceScore, questionRatioScore, 
       activeListeningScore, assumptiveLanguageScore,
@@ -860,7 +876,7 @@ ${knowledgeContext}`
       
       virtualEarnings = totalEarned
       
-      console.log('💰 Recalculated earnings:', {
+      logger.info('Recalculated earnings', {
         monthly_value: monthlyValue,
         contract_length: contractLength,
         base_price: basePrice,
@@ -880,7 +896,7 @@ ${knowledgeContext}`
       let baseScore = 0
       
       if (typeof gradingResult.scores?.overall === 'number') {
-        console.log('✅ Using OpenAI overall score:', gradingResult.scores.overall)
+        logger.info('Using OpenAI overall score', { score: gradingResult.scores.overall })
         baseScore = gradingResult.scores.overall
       } else {
         // Include core sales performance scores only (exclude filler_words and question_ratio)
@@ -893,12 +909,17 @@ ${knowledgeContext}`
           return 0
         }
         baseScore = Math.round(numericScores.reduce((sum, value) => sum + value, 0) / numericScores.length)
-        console.log('🧮 Calculated overall score from', numericScores.length, 'core metrics:', baseScore)
+        logger.info('Calculated overall score from core metrics', { 
+          metricsCount: numericScores.length, 
+          score: baseScore 
+        })
       }
       
       // No duration penalty - quality matters more than length
       const durationSeconds = (session as any).duration_seconds || 0
-      console.log(`⏱️ Session duration: ${durationSeconds}s (${Math.floor(durationSeconds / 60)}:${String(durationSeconds % 60).padStart(2, '0')})`)
+      const minutes = Math.floor(durationSeconds / 60)
+      const seconds = String(durationSeconds % 60).padStart(2, '0')
+      logger.info(`Session duration: ${minutes}:${seconds}`, { durationSeconds })
       
       // Penalize missing critical categories
       const criticalCategories = [rapportScore, discoveryScore, objectionScore, closeScore]
@@ -906,7 +927,10 @@ ${knowledgeContext}`
       
       if (missingCategories > 0) {
         const categoryPenalty = missingCategories * 10 // -10% per missing critical category
-        console.log(`📊 Missing ${missingCategories} critical categories: -${categoryPenalty}%`)
+        logger.info('Missing critical categories penalty', { 
+          missingCategories, 
+          penalty: categoryPenalty 
+        })
         baseScore = Math.max(0, baseScore - categoryPenalty)
       }
       
@@ -915,17 +939,27 @@ ${knowledgeContext}`
       const finalScore = Math.max(0, baseScore - fillerPenalty)
       
       if (fillerWordCount > 0) {
-        console.log(`🎙️ Filler word penalty: ${fillerWordCount} words = -${fillerPenalty}% (${baseScore} → ${finalScore})`)
+        logger.info('Filler word penalty', { 
+          fillerWordCount, 
+          penalty: fillerPenalty,
+          beforeScore: baseScore,
+          afterScore: finalScore 
+        })
       }
       
-      console.log(`🎯 Final overall score: ${finalScore} (duration: ${durationSeconds}s, missing: ${missingCategories}, fillers: ${fillerWordCount})`)
+      logger.info('Final overall score calculated', { 
+        finalScore, 
+        durationSeconds, 
+        missingCategories, 
+        fillerWordCount 
+      })
       
       return finalScore
     })()
 
-    // Line ratings temporarily disabled for speed testing
-    const lineRatings: any[] = []
-    console.log('⚡ Line-by-line grading disabled for speed optimization')
+    // Line-by-line ratings disabled for performance
+    const normalizedLineRatings: any[] = []
+    logger.info('Line-by-line grading disabled for speed')
 
     const dbUpdateStartTime = Date.now()
     const { error: updateError } = await (supabase as any)
@@ -960,7 +994,7 @@ ${knowledgeContext}`
         return_appointment: returnAppointment,
         
         analytics: {
-          line_ratings: lineRatings,
+          line_ratings: normalizedLineRatings,
           feedback: gradingResult.feedback || { strengths: [], improvements: [], specific_tips: [] },
           enhanced_metrics: enhancedMetrics,
           objection_analysis: objectionAnalysis,
@@ -978,38 +1012,38 @@ ${knowledgeContext}`
       .eq('id', sessionId)
 
     if (updateError) {
-      console.error('❌ Failed to update session:', updateError)
+      logger.error('Failed to update session', updateError)
       throw updateError
     }
 
     const dbUpdateEndTime = Date.now()
-    const dbUpdateTimeSeconds = ((dbUpdateEndTime - dbUpdateStartTime) / 1000).toFixed(2)
-    console.log('⏱️ Database update completed in:', dbUpdateTimeSeconds, 'seconds')
+    logger.perf('Database update completed', dbUpdateEndTime - dbUpdateStartTime)
 
-    // Line ratings temporarily disabled for speed testing
-    console.log('⚡ Line-by-line grading skipped - testing speed impact')
+    // Line ratings disabled - skip storage
 
     const endTime = Date.now()
-    const totalTimeSeconds = ((endTime - startTime) / 1000).toFixed(2)
+    const totalDuration = endTime - startTime
     
-    console.log('✅ ========================================')
-    console.log('✅ GRADING COMPLETE!')
-    console.log('✅ Total time:', totalTimeSeconds, 'seconds')
-    console.log('✅ End time:', new Date().toISOString())
-    console.log('✅ ========================================')
-    console.log('📊 Performance Breakdown:')
-    console.log('  - Database queries:', ((openaiStartTime - startTime) / 1000).toFixed(2), 's')
-    console.log('  - OpenAI grading:', openaiTimeSeconds, 's')
-    console.log('  - Database update:', dbUpdateTimeSeconds, 's')
-    console.log('  - Total:', totalTimeSeconds, 's')
-    console.log('📊 Summary:', {
-      scores: Object.keys(gradingResult.scores || {}).length,
-      line_ratings_disabled: true,
+    logger.group('Grading Complete', () => {
+      logger.success('GRADING COMPLETE!', {
+        totalTime: `${(totalDuration / 1000).toFixed(2)}s`,
+        endTime: new Date().toISOString()
+      })
+      logger.info('Performance Breakdown', {
+        databaseQueries: `${((openaiStartTime - startTime) / 1000).toFixed(2)}s`,
+        openaiGrading: `${((openaiEndTime - openaiStartTime) / 1000).toFixed(2)}s`,
+        databaseUpdate: `${((dbUpdateEndTime - dbUpdateStartTime) / 1000).toFixed(2)}s`,
+        total: `${(totalDuration / 1000).toFixed(2)}s`
+      })
+      logger.info('Summary', {
+        scores: Object.keys(gradingResult.scores || {}).length,
+        line_ratings_disabled: true,
       has_objections: !!objectionAnalysis.total_objections,
       has_coaching: !!coachingPlan.immediate_fixes,
       virtual_earnings: virtualEarnings,
       tokens_used: completion.usage?.total_tokens,
       tokens_saved_vs_4000: (4000 - (completion.usage?.completion_tokens || 0))
+    })
     })
 
     // Send email notifications (fire and forget - don't block response)
@@ -1059,14 +1093,14 @@ ${knowledgeContext}`
         }
       })
     ]).catch(error => {
-      console.error('⚠️  Failed to send notifications (non-blocking):', error)
+      logger.warn('Failed to send notifications (non-blocking)', { error: error.message })
     })
 
     return NextResponse.json({
       success: true,
       scores: gradingResult.scores,
       feedback: gradingResult.feedback || {},
-      lines_graded: 0, // Line-by-line grading temporarily disabled
+      lines_graded: 0, // Line-by-line grading disabled for performance
       conversation_dynamics: conversationDynamics,
       failure_analysis: failureAnalysis,
       objection_analysis: objectionAnalysis,
@@ -1080,20 +1114,16 @@ ${knowledgeContext}`
 
   } catch (error: any) {
     const errorTime = Date.now()
-    const errorDuration = ((errorTime - startTime) / 1000).toFixed(2)
+    const errorDuration = (errorTime - startTime) / 1000
     
-    console.error('❌ ========================================')
-    console.error('❌ GRADING FAILED')
-    console.error('❌ Error after:', errorDuration, 'seconds')
-    console.error('❌ ========================================')
-    console.error('❌ Error type:', error.name)
-    console.error('❌ Error message:', error.message)
-    console.error('❌ Error stack:', error.stack)
-    
-    // Log additional context for debugging
-    if (error.code) console.error('❌ Error code:', error.code)
-    if (error.status) console.error('❌ Error status:', error.status)
-    if (error.response) console.error('❌ Error response:', error.response)
+    logger.group('Grading Failed', () => {
+      logger.error('GRADING FAILED', error, {
+        errorAfter: `${errorDuration.toFixed(2)}s`,
+        errorType: error.name,
+        errorCode: error.code,
+        errorStatus: error.status
+      })
+    })
     
     // Provide helpful error messages based on error type
     let userMessage = error.message || 'Failed to grade session'

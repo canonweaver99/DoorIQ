@@ -412,7 +412,7 @@ export default function SessionTimeline({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-80 z-50"
+                        className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-80 z-50"
                       >
                         <div className="relative rounded-xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 shadow-2xl overflow-hidden">
                           {/* Gradient Border */}
