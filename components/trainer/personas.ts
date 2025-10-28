@@ -78,7 +78,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Direct communicator who asks tough questions and spots pressure tactics instantly.',
       difficulty: 'Moderate',
       color: 'primary',
-      image: '/Austin no backround.png', // Selection bubble
+      image: '/Austin No Backround.png', // Selection bubble (capital N, B)
       liveSessionImage: '/Austin Boss.png', // During live conversation
     },
     card: {
