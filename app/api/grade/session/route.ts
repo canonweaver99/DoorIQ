@@ -735,8 +735,8 @@ ${knowledgeContext}`
           model: "gpt-4o",
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 1500, // Optimized for speed without line ratings
-          temperature: 0.2, // Lower for more consistent JSON
+          max_tokens: 1200, // Further reduced for faster grading
+          temperature: 0.1, // Even lower for faster, more deterministic responses
           stream: false // Streaming handled in /api/grade/stream endpoint
         })
         break // Success, exit retry loop
