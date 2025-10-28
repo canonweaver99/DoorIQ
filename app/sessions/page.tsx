@@ -25,12 +25,13 @@ export default function SessionsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [circleSize, setCircleSize] = useState(64)
+  const [circleSize, setCircleSize] = useState(96) // Larger circle for better visibility
   const [showResetModal, setShowResetModal] = useState(false)
 
   useEffect(() => {
     const handleResize = () => {
-      setCircleSize(window.innerWidth >= 1024 ? 64 : 56)
+      // Larger circles for better visibility
+      setCircleSize(window.innerWidth >= 1024 ? 96 : 80)
     }
     
     // Set initial size
@@ -138,7 +139,8 @@ export default function SessionsPage() {
       insights.push({ type: 'success', text: 'Excellent overall performance!' })
     }
     
-    return insights
+    // Return only the first insight
+    return insights.slice(0, 1)
   }
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
