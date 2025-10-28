@@ -1063,6 +1063,7 @@ ${knowledgeContext}`
       tokens_used: completion.usage?.total_tokens,
       tokens_saved_vs_4000: (4000 - (completion.usage?.completion_tokens || 0))
     })
+    })
 
     // Send email notifications (fire and forget - don't block response)
     const userId = (session as any).user_id
