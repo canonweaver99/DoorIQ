@@ -136,18 +136,21 @@ export default function ScoresViewV2({
   // If we have pre-generated timeline moments from the LLM, use those (expecting 3 moments now)
   if (timelineKeyMoments && timelineKeyMoments.length >= 1) {
     console.log('✅ Using timeline_key_moments from grading:', timelineKeyMoments.length, 'moments')
-    keyMoments = timelineKeyMoments.map(moment => {
+    console.log('📋 Session ID:', sessionId) // Log to verify uniqueness
+    keyMoments = timelineKeyMoments.map((moment, idx) => {
       // Convert effectiveness to score for timeline display
       const rating = lineRatings?.find((r: any) => r.line_number === moment.line_number)
       const effectivenessScore = rating?.effectiveness === 'excellent' ? 90 :
                                   rating?.effectiveness === 'good' ? 75 :
                                   rating?.effectiveness === 'average' ? 60 : 40
       
-      console.log('📍 Timeline moment:', {
+      console.log(`📍 Timeline moment ${idx + 1}/${timelineKeyMoments.length}:`, {
+        sessionId: sessionId.substring(0, 8), // Show partial ID to verify uniqueness
         line: moment.line_number,
         timestamp: moment.timestamp,
         type: moment.moment_type,
-        quote: moment.quote.substring(0, 50) + '...'
+        quote: moment.quote?.substring(0, 50) + '...',
+        description: moment.description?.substring(0, 50) + '...'
       })
       
       return {
@@ -155,12 +158,12 @@ export default function ScoresViewV2({
         line: moment.line_number,
         timestamp: moment.timestamp,
         title: moment.moment_type,
-        description: moment.quote,
+        description: moment.description || moment.quote, // Use description if available
         score: effectivenessScore,
         impact: 'high'
       }
     })
-    console.log('✅ Mapped', keyMoments.length, 'timeline moments for display')
+    console.log('✅ Mapped', keyMoments.length, 'timeline moments for session', sessionId.substring(0, 8))
   } else {
     // Fallback not needed - we always get timeline_key_moments from grading
     // If missing, just show empty timeline

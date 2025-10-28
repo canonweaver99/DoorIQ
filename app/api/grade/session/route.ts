@@ -686,9 +686,14 @@ EARNINGS & COMMITMENT:
 - If only appointment scheduled: virtual_earnings = 0, but return_appointment = true
 
 FILLER WORDS:
-- Count ONLY these filler words: um, uh, uhh, like, erm, err, hmm
+- Count ONLY these as filler words:
+  * "um", "uh", "uhh" at any position
+  * "erm", "err", "hmm" at any position
+  * "like" ONLY at the START of a sentence or before a pause (e.g., "Like, I was thinking...")
+  * "like" in the MIDDLE of a sentence is normal speech (e.g., "service like this" or "need of a service like this")
 - Return total AND breakdown by type with line numbers where each occurs
 - Do NOT count: actually, basically, you know, sort of, kind of (normal speech)
+- Do NOT count "like" when it's a comparison or example (e.g., "like this", "looks like", "seems like")
 
 CRITICAL - FEEDBACK MUST BE HYPER-SPECIFIC:
 - ALWAYS reference actual names mentioned (customer's name, family members, pets, etc.)

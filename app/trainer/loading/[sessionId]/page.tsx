@@ -18,7 +18,7 @@ const TIPS = [
 export default function LoadingPage() {
   const params = useParams()
   const router = useRouter()
-  const [useStreaming, setUseStreaming] = useState(true) // Toggle for streaming mode
+  const [useStreaming, setUseStreaming] = useState(false) // Disable streaming for now, fallback to polling
   const [currentTip, setCurrentTip] = useState(0)
   const [status, setStatus] = useState('Saving your session...')
   const [gradingStatus, setGradingStatus] = useState<'idle' | 'in-progress' | 'completed' | 'error'>('idle')
