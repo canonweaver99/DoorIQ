@@ -207,7 +207,8 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Prefers DIY solutions. Demonstrate professional value.',
       difficulty: 'Hard',
       color: 'quinary',
-      image: '/agents/dave.png',
+      image: '/agents/dave.png', // Selection bubble
+      liveSessionImage: '/DIY DAVE.png', // During live conversation
     },
     card: {
       age: 48,
