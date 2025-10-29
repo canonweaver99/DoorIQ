@@ -195,11 +195,12 @@ export default function SessionTimeline({
 
   // Update progress and check segment boundaries
   useEffect(() => {
-    if (!audioRef.current) return
+    const audioElement = audioRef.current
+    if (!audioElement) return
 
     const updateProgress = () => {
-      const current = audioRef.current?.currentTime || 0
-      const total = audioRef.current?.duration || duration
+      const current = audioElement.currentTime || 0
+      const total = audioElement.duration || duration
       setCurrentTime(current)
       setProgress((current / total) * 100)
 
@@ -207,27 +208,26 @@ export default function SessionTimeline({
       if (playingSegment !== null) {
         const segment = segments[playingSegment]
         if (current >= segment.endTime) {
-          audioRef.current?.pause()
+          audioElement.pause()
           setIsPlaying(false)
           setPlayingSegment(null)
         }
       }
     }
 
-    audioRef.current.addEventListener('timeupdate', updateProgress)
-    audioRef.current.addEventListener('ended', () => {
+    const handleEnded = () => {
       setIsPlaying(false)
       setPlayingSegment(null)
-    })
+    }
+
+    audioElement.addEventListener('timeupdate', updateProgress)
+    audioElement.addEventListener('ended', handleEnded)
 
     return () => {
-      audioRef.current?.removeEventListener('timeupdate', updateProgress)
-      audioRef.current?.removeEventListener('ended', () => {
-        setIsPlaying(false)
-        setPlayingSegment(null)
-      })
+      audioElement.removeEventListener('timeupdate', updateProgress)
+      audioElement.removeEventListener('ended', handleEnded)
     }
-  }, [playingSegment, duration])
+  }, [playingSegment, duration, segments])
 
   const getSegmentStyle = (segment: TimelineSegment) => {
     const isActive = activeSegment === segment.id

@@ -99,6 +99,8 @@ interface SessionData {
   what_worked: string[] | null
   what_failed: string[] | null
   audio_url: string | null
+  video_url: string | null
+  has_video: boolean | null
   duration_seconds: number | null
 }
 
@@ -168,6 +170,8 @@ export default function AnalyticsPage() {
       console.log('First transcript item:', data.full_transcript?.[0])
       console.log('Has grading:', !!data.analytics?.line_ratings)
       console.log('🎵 Audio URL:', data.audio_url)
+      console.log('🎥 Video URL:', data.video_url)
+      console.log('📹 Has video:', data.has_video)
       console.log('⏱️ Duration:', data.duration_seconds)
       console.log('📦 Upload type:', data.upload_type)
       setSession(data)

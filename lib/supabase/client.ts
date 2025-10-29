@@ -33,10 +33,21 @@ export function createClient() {
     }
   )
   
-  // Disable Realtime to prevent WebSocket connection spam
+  // Disable Realtime completely to prevent WebSocket connection spam
   // We don't use realtime subscriptions in this app
-  if ((client as any).realtime) {
-    (client as any).realtime.disconnect()
+  try {
+    // Remove all channels and disconnect realtime
+    const realtime = (client as any).realtime
+    if (realtime) {
+      realtime.channels.forEach((channel: any) => {
+        realtime.removeChannel(channel)
+      })
+      realtime.disconnect()
+      // Prevent auto-reconnection
+      realtime.accessToken = null
+    }
+  } catch (e) {
+    // Ignore errors during realtime cleanup
   }
   
   return client

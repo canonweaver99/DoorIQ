@@ -206,11 +206,14 @@ export default function SessionTimelineWithVideo({
 
   // Update current time
   useEffect(() => {
-    const media = videoRef.current || audioRef.current
-    if (!media) return
+    const mediaElement = videoRef.current || audioRef.current
+    if (!mediaElement) {
+      console.log('Video ref is null, will retry in useEffect')
+      return
+    }
 
     const updateTime = () => {
-      setCurrentTime(media.currentTime)
+      setCurrentTime(mediaElement.currentTime)
     }
 
     const handlePlay = () => setIsPlaying(true)
@@ -218,18 +221,18 @@ export default function SessionTimelineWithVideo({
     const handleLoadStart = () => setVideoLoading(true)
     const handleLoadedData = () => setVideoLoading(false)
 
-    media.addEventListener('timeupdate', updateTime)
-    media.addEventListener('play', handlePlay)
-    media.addEventListener('pause', handlePause)
-    media.addEventListener('loadstart', handleLoadStart)
-    media.addEventListener('loadeddata', handleLoadedData)
+    mediaElement.addEventListener('timeupdate', updateTime)
+    mediaElement.addEventListener('play', handlePlay)
+    mediaElement.addEventListener('pause', handlePause)
+    mediaElement.addEventListener('loadstart', handleLoadStart)
+    mediaElement.addEventListener('loadeddata', handleLoadedData)
 
     return () => {
-      media.removeEventListener('timeupdate', updateTime)
-      media.removeEventListener('play', handlePlay)
-      media.removeEventListener('pause', handlePause)
-      media.removeEventListener('loadstart', handleLoadStart)
-      media.removeEventListener('loadeddata', handleLoadedData)
+      mediaElement.removeEventListener('timeupdate', updateTime)
+      mediaElement.removeEventListener('play', handlePlay)
+      mediaElement.removeEventListener('pause', handlePause)
+      mediaElement.removeEventListener('loadstart', handleLoadStart)
+      mediaElement.removeEventListener('loadeddata', handleLoadedData)
     }
   }, [videoUrl, audioUrl])
 

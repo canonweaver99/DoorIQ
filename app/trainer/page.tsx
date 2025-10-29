@@ -160,13 +160,7 @@ function TrainerPageContent() {
     }
   }, [pushFinal])
 
-  useEffect(() => {
-    const handleEndSessionRequest = () => {
-      if (sessionActive) endSession()
-    }
-    window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
-    return () => window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
-  }, [sessionActive])
+  // Moved to after endSession definition
 
   // Auto-scroll transcript to bottom when new messages arrive
   useEffect(() => {
@@ -354,6 +348,43 @@ function TrainerPageContent() {
         setLoading(false)
       }
   }, [sessionId, duration, transcript, router])
+
+  // Handle agent end call event
+  useEffect(() => {
+    const handleEndSessionRequest = () => {
+      if (sessionActive) endSession()
+    }
+    
+    const handleAgentEndCall = async (e: any) => {
+      if (!sessionActive) return
+      
+      console.log('🚪 Agent ended call, playing door close sound...')
+      
+      // Play door closing sound
+      try {
+        const doorCloseAudio = new Audio('/sounds/door_close.mp3')
+        doorCloseAudio.volume = 0.6
+        await doorCloseAudio.play()
+        
+        // Wait for sound to finish (approx 1.5 seconds)
+        await new Promise(resolve => setTimeout(resolve, 1500))
+      } catch (error) {
+        console.warn('Could not play door close sound', error)
+      }
+      
+      // End the session and navigate to loading page
+      console.log('🔚 Ending session after agent end call...')
+      endSession()
+    }
+    
+    window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
+    window.addEventListener('agent:end_call', handleAgentEndCall)
+    
+    return () => {
+      window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
+      window.removeEventListener('agent:end_call', handleAgentEndCall)
+    }
+  }, [sessionActive, endSession])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
