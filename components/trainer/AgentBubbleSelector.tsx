@@ -167,7 +167,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
         const hydrated = sorted.map((agent: AgentRow, index: number) => {
           const agentSessions = sessions.filter((s: any) => s.agent_name === agent.name)
-          const completedSessions = agentSessions.filter(s => s.grade !== null)
+          const completedSessions = agentSessions.filter(s => s.grade !== null && s.grade > 0)
           const bestScore = completedSessions.length > 0 
             ? Math.max(...completedSessions.map(s => s.grade || 0))
             : null
@@ -468,7 +468,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     {/* Profile Image in Center - synchronized with circles */}
                     {agent.image && (
                       <motion.div 
-                        className="absolute inset-[6px] flex items-center justify-center pointer-events-none"
+                        className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
                         animate={isHovered ? {
                           scale: 1,
                         } : {
