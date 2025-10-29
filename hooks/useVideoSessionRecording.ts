@@ -86,16 +86,20 @@ export function useVideoSessionRecording(sessionId: string | null, options: UseV
   }, [sessionId, options])
 
   const stopRecording = useCallback(() => {
-    console.log('🛑 stopRecording called - isRecording:', isRecording)
-    if (mediaRecorderRef.current && isRecording) {
-      console.log('🛑 Stopping MediaRecorder...')
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
-      console.log('✅ MediaRecorder stopped, onstop handler will trigger upload')
+    console.log('🛑 video stopRecording called - mediaRecorder exists:', !!mediaRecorderRef.current)
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      console.log('🛑 Stopping video MediaRecorder (state:', mediaRecorderRef.current.state, ')...')
+      try {
+        mediaRecorderRef.current.stop()
+        setIsRecording(false)
+        console.log('✅ Video MediaRecorder stopped, onstop handler will trigger upload')
+      } catch (error) {
+        console.error('❌ Error stopping video mediaRecorder:', error)
+      }
     } else {
-      console.warn('⚠️ Cannot stop recording - mediaRecorder or isRecording is false')
+      console.log('ℹ️ Video MediaRecorder not active, skipping stop')
     }
-  }, [isRecording])
+  }, [])
 
   const uploadVideoToSupabase = async (blob: Blob, sessionId: string) => {
     try {

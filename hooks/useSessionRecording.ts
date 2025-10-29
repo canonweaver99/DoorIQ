@@ -52,17 +52,21 @@ export function useSessionRecording(sessionId: string | null) {
   }, [sessionId])
 
   const stopRecording = useCallback(() => {
-    console.log('🛑 stopRecording called - isRecording:', isRecording)
-    if (mediaRecorderRef.current && isRecording) {
-      console.log('🛑 Stopping MediaRecorder...')
-      mediaRecorderRef.current.stop()
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
-      setIsRecording(false)
-      console.log('✅ MediaRecorder stopped, onstop handler will trigger upload')
+    console.log('🛑 stopRecording called - mediaRecorder exists:', !!mediaRecorderRef.current)
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      console.log('🛑 Stopping MediaRecorder (state:', mediaRecorderRef.current.state, ')...')
+      try {
+        mediaRecorderRef.current.stop()
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
+        setIsRecording(false)
+        console.log('✅ MediaRecorder stopped, onstop handler will trigger upload')
+      } catch (error) {
+        console.error('❌ Error stopping mediaRecorder:', error)
+      }
     } else {
-      console.warn('⚠️ Cannot stop recording - mediaRecorder or isRecording is false')
+      console.log('ℹ️ MediaRecorder not active, skipping stop')
     }
-  }, [isRecording])
+  }, [])
 
   const uploadAudioToSupabase = async (blob: Blob, sessionId: string) => {
     try {

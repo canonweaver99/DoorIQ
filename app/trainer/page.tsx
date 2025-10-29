@@ -81,8 +81,8 @@ function TrainerPageContent() {
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [showPaywall, setShowPaywall] = useState(false)
   
-  // Video recording state
-  const { isRecording: isVideoRecording, getVideoStream } = useVideoSessionRecording(sessionId)
+  // Video recording state (video only, no audio - ElevenLabs needs exclusive mic access)
+  const { isRecording: isVideoRecording, getVideoStream } = useVideoSessionRecording(sessionId, { audio: false, video: true })
 
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
