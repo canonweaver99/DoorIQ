@@ -4,36 +4,14 @@ import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
 // Increase timeout for grading (Vercel allows up to 300s on Pro)
-export const maxDuration = 120 // 2 minutes
+export const maxDuration = 90 // 90 seconds - faster timeout
 export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 90000, // 90 second timeout
-  maxRetries: 2 // SDK-level retries
+  timeout: 60000, // 60 second timeout - faster
+  maxRetries: 1 // Reduced retries for speed
 })
-
-// In-memory cache for team grading configs (5 minute TTL)
-const teamConfigCache = new Map<string, { data: any; expires: number }>()
-const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
-
-function getCachedTeamConfig(teamId: string) {
-  const cached = teamConfigCache.get(teamId)
-  if (cached && cached.expires > Date.now()) {
-    logger.db('Using cached team config for team', { teamId })
-    return cached.data
-  }
-  teamConfigCache.delete(teamId)
-  return null
-}
-
-function setCachedTeamConfig(teamId: string, data: any) {
-  logger.db('Caching team config for team', { teamId })
-  teamConfigCache.set(teamId, {
-    data,
-    expires: Date.now() + CACHE_TTL_MS
-  })
-}
 
 type JsonSchema = Record<string, any>
 
@@ -411,138 +389,24 @@ export async function POST(request: NextRequest) {
     const salesRepName = userProfile?.full_name || 'Sales Rep'
     const customerName = (session as any).agent_name || 'Homeowner'
 
-    let teamGradingConfig = null
-    let teamKnowledgeDocs: any[] = []
-    let knowledgeBase: any[] = []
-
-    // Fetch team-specific grading configuration and knowledge base in parallel
+    // Simplified team config - no caching complexity
+    let teamGradingConfig: any = null
     if (userProfile?.team_id) {
-      // Try to get team config from cache first
-      const cachedConfig = getCachedTeamConfig(userProfile.team_id)
+      const { data } = await supabase
+        .from('team_grading_configs')
+        .select('company_name, product_description')
+        .eq('team_id', userProfile.team_id)
+        .eq('enabled', true)
+        .single()
       
-      if (cachedConfig) {
-        teamGradingConfig = cachedConfig
-        // Only fetch knowledge docs if team config exists (skip for speed)
-        if (teamGradingConfig) {
-          const docsResult = await supabase
-            .from('team_knowledge_documents')
-            .select('*')
-            .eq('team_id', userProfile.team_id)
-            .eq('use_in_grading', true)
-            .order('created_at', { ascending: false })
-            .limit(3) // Reduced to 3 for faster grading
-          
-          teamKnowledgeDocs = docsResult.data || []
-        }
-        // Skip legacy knowledge base - not commonly used
-        knowledgeBase = []
-      } else {
-        // Fetch team config first, then conditionally fetch docs
-        const configResult = await supabase
-          .from('team_grading_configs')
-          .select('*')
-          .eq('team_id', userProfile.team_id)
-          .eq('enabled', true)
-          .single()
-        
-        teamGradingConfig = configResult.data
-        
-        // Only fetch knowledge docs if team config exists
-        if (teamGradingConfig) {
-          const docsResult = await supabase
-            .from('team_knowledge_documents')
-            .select('*')
-            .eq('team_id', userProfile.team_id)
-            .eq('use_in_grading', true)
-            .order('created_at', { ascending: false })
-            .limit(3) // Reduced to 3 for faster grading
-          
-          teamKnowledgeDocs = docsResult.data || []
-        }
-        
-        // Skip legacy knowledge base for speed
-        knowledgeBase = []
-        
-        // Cache the team config for future use
-        if (teamGradingConfig) {
-          setCachedTeamConfig(userProfile.team_id, teamGradingConfig)
-        }
-      }
-
-      logger.db('Team grading config found', { 
-        hasConfig: !!teamGradingConfig,
-        docCount: teamKnowledgeDocs.length 
-      })
-    } else {
-      // Skip knowledge base for non-team users (saves 1-2 seconds)
-      logger.info('Skipping knowledge base fetch - no team configured')
-      knowledgeBase = []
+      teamGradingConfig = data
+      logger.db('Team config loaded', { hasConfig: !!teamGradingConfig })
     }
 
-    // Build comprehensive knowledge context
-    let knowledgeContext = ''
-    
-    // Add team-specific context if available
-    if (teamGradingConfig) {
-      const contextParts: string[] = []
-      
-      if (teamGradingConfig.company_name || teamGradingConfig.company_mission) {
-        contextParts.push('=== COMPANY INFORMATION ===')
-        if (teamGradingConfig.company_name) {
-          contextParts.push(`Company: ${teamGradingConfig.company_name}`)
-        }
-        if (teamGradingConfig.company_mission) {
-          contextParts.push(`Mission: ${teamGradingConfig.company_mission}`)
-        }
-        if (teamGradingConfig.product_description) {
-          contextParts.push(`Products/Services: ${teamGradingConfig.product_description}`)
-        }
-        if (teamGradingConfig.service_guarantees) {
-          contextParts.push(`Guarantees: ${teamGradingConfig.service_guarantees}`)
-        }
-        if (teamGradingConfig.company_values?.length > 0) {
-          contextParts.push(`Values: ${teamGradingConfig.company_values.join(', ')}`)
-        }
-      }
-
-      if (teamGradingConfig.pricing_info && Array.isArray(teamGradingConfig.pricing_info) && (teamGradingConfig.pricing_info as any).length > 0) {
-        contextParts.push('\n=== PRICING INFORMATION ===')
-        ;(teamGradingConfig.pricing_info as any).forEach((item: any) => {
-          contextParts.push(`${item.name || 'Service'}: $${item.price || 0} ${item.frequency || ''}`)
-          if (item.description) contextParts.push(`  ${item.description}`)
-        })
-      }
-
-      if (teamGradingConfig.objection_handlers && Array.isArray(teamGradingConfig.objection_handlers) && (teamGradingConfig.objection_handlers as any).length > 0) {
-        contextParts.push('\n=== OBJECTION HANDLERS ===')
-        ;(teamGradingConfig.objection_handlers as any).forEach((handler: any) => {
-          contextParts.push(`Objection: "${handler.objection}"`)
-          contextParts.push(`Response: "${handler.response}"`)
-        })
-      }
-
-      if (teamKnowledgeDocs.length > 0) {
-        contextParts.push('\n=== KNOWLEDGE BASE DOCUMENTS ===')
-        let totalChars = 0
-        const maxTotalChars = 4000 // Reduced from 6000 to save tokens and speed up
-        
-        for (const doc of teamKnowledgeDocs) {
-          if (doc.extracted_content && totalChars < maxTotalChars) {
-            contextParts.push(`\n[${doc.document_type.toUpperCase()}: ${doc.document_name}]`)
-            // Limit each document and track total
-            const maxDocChars = Math.min(1000, maxTotalChars - totalChars)
-            const content = doc.extracted_content.substring(0, maxDocChars)
-            contextParts.push(content + (doc.extracted_content.length > maxDocChars ? '...' : ''))
-            totalChars += content.length
-          }
-        }
-        
-        logger.db('Knowledge context loaded', { chars: totalChars, docs: teamKnowledgeDocs.length })
-      }
-
-      if (contextParts.length > 0) {
-        knowledgeContext = '\n\n' + contextParts.join('\n')
-      }
+    // Simplified context - removed heavy knowledge base loading
+    let companyContext = ''
+    if (teamGradingConfig?.company_name || teamGradingConfig?.product_description) {
+      companyContext = `\nCompany: ${teamGradingConfig.company_name || 'Door-to-door sales'}. Product: ${teamGradingConfig.product_description || 'pest control services'}.`
     }
 
     // Format transcript for OpenAI with timestamps
@@ -587,20 +451,8 @@ export async function POST(request: NextRequest) {
     const openaiStartTime = Date.now()
     logger.perf('Database queries completed', Date.now() - startTime)
 
-    // Call OpenAI for comprehensive analysis
-    // Build system prompt with team customizations
-    let systemPrompt = `You are an expert sales coach for door-to-door sales. Analyze the transcript and return ONLY valid JSON matching this structure:`
-    
-    // Add team-specific context to prompt
-    if (teamGradingConfig) {
-      systemPrompt = `You are an expert sales coach${teamGradingConfig.company_name ? ` for ${teamGradingConfig.company_name}` : ''}. `
-      
-      if (teamGradingConfig.product_description) {
-        systemPrompt += `The sales rep is selling: ${teamGradingConfig.product_description}. `
-      }
-      
-      systemPrompt += `Analyze the transcript using the company's specific knowledge and standards, and return ONLY valid JSON matching this structure:`
-    }
+    // Simplified prompt - much more concise
+    const systemPrompt = `You are an expert door-to-door sales coach.${companyContext} Analyze this conversation and return ONLY valid JSON with these exact fields:`
 
     const messages: Array<{ role: string; content: string }> = [
         {
@@ -645,75 +497,41 @@ export async function POST(request: NextRequest) {
   }
 }
 
-SCORING GUIDELINES:
-- Overall (0-100): ${teamGradingConfig?.custom_grading_rubric?.weights ? 'Weighted average based on custom rubric' : 'Average of all category scores'}
-- Rapport (0-100): Connection, trust, warmth, local references
-- Discovery (0-100): Question quality, needs assessment
-- Objection Handling (0-100): Addressing concerns effectively
-- Closing (0-100): Assumptive language, trial closes, commitment
-  * 90-100: Sale closed with payment commitment
-  * 75-89: Appointment/inspection scheduled (strong close attempt)
-  * 60-74: Trial close attempted, commitment sought
-  * 40-59: Asked for the sale but weak
-  * 0-39: Did not attempt to close
-- Safety (0-100): Mentioned pet/child safety, guarantees
-- Introduction (0-100): Opening strength, first impression
-- Listening (0-100): Acknowledgment, paraphrasing
-- Speaking Pace (0-100): Appropriate speed, not rushed
-- Question Ratio (0-100): Balance of questions vs statements (30-40% is ideal)
-- Active Listening (0-100): Reflects understanding
-- Assumptive Language (0-100): "When" not "if" language
-${teamGradingConfig?.custom_grading_rubric?.weights ? `
-CUSTOM SCORING WEIGHTS (Team-Specific):
-${Object.entries(teamGradingConfig.custom_grading_rubric.weights).map(([key, value]) => `- ${key}: ${value}%`).join('\n')}
-` : ''}
-${teamGradingConfig?.custom_grading_rubric?.custom_criteria?.length > 0 ? `
-ADDITIONAL TEAM CRITERIA:
-${(teamGradingConfig.custom_grading_rubric.custom_criteria as any[]).map((c: any) => `- ${c.name}: ${c.description}`).join('\n')}
-` : ''}
-${teamGradingConfig?.custom_grading_rubric?.automatic_fails?.length > 0 ? `
-AUTOMATIC FAILS (Cap score at 50%):
-${(teamGradingConfig.custom_grading_rubric.automatic_fails as any[]).join('\n- ')}
-` : ''}
-${teamGradingConfig?.passing_score ? `PASSING SCORE: ${teamGradingConfig.passing_score}%` : ''}
+SCORING (0-100 each):
+- Overall: Average of all scores
+- Rapport: Connection, warmth, trust
+- Discovery: Questions, needs assessment
+- Objection Handling: Addressing concerns
+- Closing: Commitment attempts (90-100=sale, 75-89=appointment, 60-74=trial close, 40-59=weak ask, 0-39=no close)
+- Safety: Pet/child safety mentions
+- Introduction: Opening strength
+- Listening: Acknowledgment, paraphrasing
+- Speaking Pace: Appropriate speed
+- Question Ratio: Questions vs statements (30-40% ideal)
+- Active Listening: Reflects understanding
+- Assumptive Language: "When" not "if"
 
-TIMELINE (3 moments at 33%, 66%, 90%):
-- Copy EXACT timestamps from transcript format: (1:23)
-- Choose actual impactful lines from those positions
+TIMELINE: Pick 3 key moments at 33%, 66%, 90% of conversation. Use EXACT timestamps from transcript.
 
-EARNINGS & COMMITMENT:
-- sale_closed: true ONLY if customer committed to PAID service with payment
-- return_appointment: true if inspection, callback, or follow-up scheduled
-- IMPORTANT: Scheduled inspections are NOT sales (sale_closed = false, return_appointment = true)
-- Extract: base_price, monthly_value, contract_length from conversation
-- Calculate: total_contract_value, commission_earned (30%), total_earned
-- commission_rate always 0.30
-- If only appointment scheduled: virtual_earnings = 0, but return_appointment = true
+EARNINGS:
+- sale_closed: true ONLY if customer committed to PAID service
+- return_appointment: true if appointment/inspection scheduled
+- Inspections are NOT sales (sale_closed=false, return_appointment=true)
+- Commission rate always 0.30 (30%)
+- virtual_earnings = total_contract_value × 0.30
 
 FILLER WORDS:
-- Count ONLY these as filler words:
-  * "um", "uh", "uhh" at any position
-  * "erm", "err", "hmm" at any position
-  * "like" ONLY at the START of a sentence or before a pause (e.g., "Like, I was thinking...")
-  * "like" in the MIDDLE of a sentence is normal speech (e.g., "service like this" or "need of a service like this")
-- Return total AND breakdown by type with line numbers where each occurs
-- Do NOT count: actually, basically, you know, sort of, kind of (normal speech)
-- Do NOT count "like" when it's a comparison or example (e.g., "like this", "looks like", "seems like")
+- Count only: "um", "uh", "uhh", "erm", "err", "hmm"
+- Count "like" ONLY at sentence start (e.g., "Like, I was thinking")
+- NOT "like" in middle (e.g., "service like this" is normal)
 
-CRITICAL - FEEDBACK MUST BE HYPER-SPECIFIC:
-- ALWAYS reference actual names mentioned (customer's name, family members, pets, etc.)
-- ALWAYS quote or reference specific topics discussed (sports teams, hobbies, local events, etc.)
-- For strengths: Say WHAT they did well WITH the exact detail. Example: "Great rapport building when discussing UT football and his son Miguel's interest in the team"
-- For improvements: Cite SPECIFIC missed opportunities. Example: "When customer mentioned Miguel's baseball game, could have asked what position he plays to build deeper connection"
-- For tips: Give ACTIONABLE advice tied to actual conversation moments. Example: "Next time customer mentions family activity, ask 2-3 follow-up questions before pivoting to business"
-- NEVER use generic feedback like "build rapport" or "ask better questions" or "improve communication"
-- ALWAYS include at least one proper noun (name, place, team, etc.) in each feedback item when possible
-- Reference EXACT objections raised and how they were or weren't handled
-- Quote actual phrases/words used in the conversation within feedback
-- Make the rep feel like you actually watched THEIR specific conversation, not a template
-- Each strength/improvement should be unique to THIS conversation, not applicable to every sales call
+FEEDBACK - BE SPECIFIC:
+- Reference actual names, topics, details from THIS conversation
+- Quote exact phrases
+- Avoid generic advice
+- Make it personal to THIS call
 
-MUST return valid, complete JSON matching the exact structure above. No commentary.`
+Return ONLY valid JSON. No commentary.`
         },
         {
           role: "user",
@@ -721,74 +539,21 @@ MUST return valid, complete JSON matching the exact structure above. No commenta
       }
     ]
 
-    if (knowledgeContext) {
-      messages.push({
-        role: "system",
-        content: `Reference materials:
-${knowledgeContext}`
-      })
-    }
-
-    // Retry logic for OpenAI API calls with timeout
+    // Simplified retry - single attempt with timeout
     let completion
-    let retryCount = 0
-    const maxRetries = 3
-    const API_TIMEOUT_MS = 60000 // 60 second timeout for OpenAI API
-    
-    while (retryCount < maxRetries) {
-      try {
-        // Create AbortController for timeout
-        const abortController = new AbortController()
-        const timeoutId = setTimeout(() => abortController.abort(), API_TIMEOUT_MS)
-        
-        try {
-          completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: messages as any,
-            response_format: { type: "json_object" },
-            max_tokens: 1200, // Further reduced for faster grading
-            temperature: 0.1, // Even lower for faster, more deterministic responses
-            stream: false // Streaming handled in /api/grade/stream endpoint
-          }, {
-            signal: abortController.signal as any
-          })
-        } finally {
-          clearTimeout(timeoutId)
-        }
-        
-        break // Success, exit retry loop
-      } catch (apiError: any) {
-        retryCount++
-        
-        // Better error messages for different error types
-        let errorType = 'unknown'
-        if (apiError.name === 'AbortError') {
-          errorType = 'timeout'
-          logger.error(`OpenAI API timeout (attempt ${retryCount}/${maxRetries})`, { timeoutMs: API_TIMEOUT_MS })
-        } else if (apiError.status >= 500) {
-          errorType = 'server_error'
-          logger.error(`OpenAI server error (attempt ${retryCount}/${maxRetries})`, { status: apiError.status })
-        } else if (apiError.status === 429) {
-          errorType = 'rate_limit'
-          logger.error(`OpenAI rate limit (attempt ${retryCount}/${maxRetries})`)
-        } else {
-          logger.error(`OpenAI API error (attempt ${retryCount}/${maxRetries})`, apiError)
-        }
-        
-        if (retryCount >= maxRetries) {
-          throw new Error(`OpenAI API failed after ${maxRetries} attempts (${errorType}): ${apiError.message}`)
-        }
-
-        // Wait before retry (exponential backoff, longer for rate limits)
-        const baseWaitTime = errorType === 'rate_limit' ? 5000 : 1000
-        const waitTime = Math.min(baseWaitTime * Math.pow(2, retryCount), 10000)
-        logger.info(`Retrying in ${waitTime}ms`, { attempt: retryCount, maxRetries, errorType })
-        await new Promise(resolve => setTimeout(resolve, waitTime))
-      }
-    }
-    
-    if (!completion) {
-      throw new Error('Failed to get completion from OpenAI after retries')
+    try {
+      completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: messages as any,
+        response_format: { type: "json_object" },
+        max_tokens: 1000, // Reduced for speed
+        temperature: 0.05, // Very deterministic
+        stream: false
+      })
+    } catch (apiError: any) {
+      const errorType = apiError.status === 429 ? 'rate_limit' : apiError.status >= 500 ? 'server_error' : 'api_error'
+      logger.error('OpenAI API error', apiError, { errorType, status: apiError.status })
+      throw new Error(`OpenAI grading failed (${errorType}): ${apiError.message}`)
     }
 
     const responseContent = completion.choices[0].message.content || '{}'
@@ -854,74 +619,17 @@ ${knowledgeContext}`
       saleClosed = false
     }
 
-    // Extract all optional data (graceful degradation)
-    let earningsData = gradingResult.earnings_data || {}
-    let dealDetails = gradingResult.deal_details || {}
+    // Simplified earnings calculation
+    const earningsData = gradingResult.earnings_data || {}
+    const dealDetails = gradingResult.deal_details || {}
     const objectionAnalysis = gradingResult.objection_analysis || {}
     const coachingPlan = gradingResult.coaching_plan || {}
     const enhancedMetrics = gradingResult.enhanced_metrics || {}
     const conversationDynamics = gradingResult.conversation_dynamics || {}
     const failureAnalysis = gradingResult.failure_analysis || {}
     
-    // Recalculate earnings to ensure correct math (OpenAI sometimes gets this wrong)
-    let virtualEarnings = 0
-    if (saleClosed) {
-      const monthlyValue = dealDetails.monthly_value || 0
-      const contractLength = dealDetails.contract_length || 0
-      const basePrice = dealDetails.base_price || 0
-      
-      // Calculate total contract value
-      let totalContractValue = 0
-      if (monthlyValue > 0 && contractLength > 0) {
-        // Monthly contract: $X/month × Y months
-        totalContractValue = monthlyValue * contractLength
-      } else if (basePrice > 0) {
-        // One-time service
-        totalContractValue = basePrice
-      }
-      
-      // Calculate commission (30% of total contract value)
-      const commissionEarned = totalContractValue * 0.30
-      
-      // Add bonuses
-      const bonuses = earningsData.bonus_modifiers || {}
-      const totalBonuses = Object.values(bonuses).reduce((sum: number, val: any) => sum + (typeof val === 'number' ? val : 0), 0)
-      
-      // Total earned = commission + bonuses
-      const totalEarned = commissionEarned + totalBonuses
-      
-      // Update earnings data with corrected values
-      earningsData = {
-        ...earningsData,
-        closed_amount: totalContractValue,
-        commission_rate: 0.30,
-        commission_earned: commissionEarned,
-        bonus_modifiers: bonuses,
-        total_earned: totalEarned
-      }
-      
-      // Update deal details
-      dealDetails = {
-        ...dealDetails,
-        total_contract_value: totalContractValue
-      }
-      
-      virtualEarnings = totalEarned
-      
-      logger.info('Recalculated earnings', {
-        monthly_value: monthlyValue,
-        contract_length: contractLength,
-        base_price: basePrice,
-        total_contract_value: totalContractValue,
-        commission_earned: commissionEarned,
-        bonuses: totalBonuses,
-        total_earned: totalEarned
-      })
-    }
-
-    if (!saleClosed) {
-      virtualEarnings = 0
-    }
+    // Simple earnings - trust OpenAI or default to 0
+    const virtualEarnings = saleClosed ? (gradingResult.virtual_earnings || 0) : 0
 
 
     const calculatedOverall = (() => {
