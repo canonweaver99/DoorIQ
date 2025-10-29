@@ -154,7 +154,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
       let sessions: any[] = []
       if (user) {
         const { data: sessionData } = await supabase
-          .from('sessions')
+          .from('live_sessions')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { descending: true })

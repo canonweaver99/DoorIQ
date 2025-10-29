@@ -6,46 +6,58 @@ type AgentImageStyle = {
 }
 
 const DEFAULT_STYLE: Required<AgentImageStyle> = {
-  objectPosition: '50% 50%',
-  scale: 1.3,
+  objectPosition: '50% 45%',
+  scale: 1.6,
 }
 
 const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
   'Austin': {
-    objectPosition: '50% 38%',
-    scale: 1.4,
+    objectPosition: '50% 42%',
+    scale: 1.65,
   },
   'Too Expensive Tim': {
-    objectPosition: '50% 38%',
-    scale: 1.4,
+    objectPosition: '50% 42%',
+    scale: 1.65,
   },
   'Already Got It Alan': {
-    objectPosition: '50% 40%',
-    scale: 1.35,
+    objectPosition: '50% 43%',
+    scale: 1.6,
   },
   'No Problem Nancy': {
-    objectPosition: '50% 50%',
-    scale: 1.3,
+    objectPosition: '50% 45%',
+    scale: 1.55,
   },
   'Not Interested Nick': {
-    objectPosition: '50% 48%',
-    scale: 1.5,
+    objectPosition: '50% 50%',
+    scale: 1.8,
   },
   'Spouse Check Susan': {
-    objectPosition: '50% 50%',
-    scale: 1.35,
+    objectPosition: '50% 48%',
+    scale: 1.6,
   },
   'Busy Beth': {
-    objectPosition: '50% 48%',
-    scale: 1.15,
+    objectPosition: '50% 50%',
+    scale: 1.4,
   },
   'Renter Randy': {
-    objectPosition: '50% 50%',
-    scale: 1.3,
+    objectPosition: '50% 45%',
+    scale: 1.6,
   },
   'Just Treated Jerry': {
-    objectPosition: '50% 48%',
-    scale: 1.25,
+    objectPosition: '50% 45%',
+    scale: 1.55,
+  },
+  'DIY Dave': {
+    objectPosition: '50% 45%',
+    scale: 1.65,
+  },
+  'Skeptical Sam': {
+    objectPosition: '50% 45%',
+    scale: 1.6,
+  },
+  'Think About It Tina': {
+    objectPosition: '50% 45%',
+    scale: 1.6,
   },
 }
 

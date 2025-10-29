@@ -40,7 +40,7 @@ export default function LastFeedbackModal({ isOpen, onClose, userId }: LastFeedb
     const supabase = createClient()
     
     const { data, error } = await supabase
-      .from('sessions')
+      .from('live_sessions')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })

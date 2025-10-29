@@ -46,6 +46,7 @@ interface ScoresViewV2Props {
     moment_type: string
     quote?: string
     is_positive: boolean
+    key_takeaway?: string
     description?: string
     feedback?: string
     visual_cue?: string
@@ -168,7 +169,7 @@ export default function ScoresViewV2({
         timestamp: moment.timestamp,
         type: moment.moment_type,
         quote: moment.quote?.substring(0, 50) + '...',
-        description: moment.description?.substring(0, 50) + '...'
+        key_takeaway: moment.key_takeaway?.substring(0, 50) + '...'
       })
       
       return {
@@ -176,7 +177,7 @@ export default function ScoresViewV2({
         line: moment.line_number,
         timestamp: moment.timestamp,
         title: moment.moment_type,
-        description: moment.description || moment.quote, // Use description if available
+        description: moment.key_takeaway || moment.quote, // Use key_takeaway from grading
         score: effectivenessScore,
         impact: 'high'
       }

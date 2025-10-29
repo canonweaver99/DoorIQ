@@ -249,9 +249,10 @@ const gradingResponseSchema: JsonSchema = {
           timestamp: { type: 'string' },
           moment_type: { type: 'string' },
           quote: { type: 'string' },
-          is_positive: { type: 'boolean' }
+          is_positive: { type: 'boolean' },
+          key_takeaway: { type: 'string' }
         },
-        required: ['position', 'line_number', 'timestamp', 'moment_type', 'quote', 'is_positive']
+        required: ['position', 'line_number', 'timestamp', 'moment_type', 'quote', 'is_positive', 'key_takeaway']
       }
     },
     sale_closed: { type: 'boolean' },
@@ -386,8 +387,8 @@ export async function POST(request: NextRequest) {
 
     // Extract user profile from joined query (already fetched above)
     const userProfile = (session as any).user
-    const salesRepName = userProfile?.full_name || 'Sales Rep'
-    const customerName = (session as any).agent_name || 'Homeowner'
+    const salesRepName = 'You' // Use "you" for personalized feedback
+    const customerName = (session as any).agent_name || 'the homeowner'
 
     // Simplified team config - no caching complexity
     let teamGradingConfig: any = null
@@ -478,9 +479,9 @@ export async function POST(request: NextRequest) {
     "role_play_scenarios": ["SPECIFIC scenario based on actual conversation topics"] 
   },
   "timeline_key_moments": [
-    { "position": 33, "line_number": int, "timestamp": "0:00", "moment_type": "Opening", "quote": "actual customer or rep quote", "is_positive": bool },
-    { "position": 66, "line_number": int, "timestamp": "0:00", "moment_type": "Key Moment", "quote": "actual customer or rep quote", "is_positive": bool },
-    { "position": 90, "line_number": int, "timestamp": "0:00", "moment_type": "Close Attempt", "quote": "actual customer or rep quote", "is_positive": bool }
+    { "position": 33, "line_number": int, "timestamp": "0:00", "moment_type": "Opening", "quote": "actual customer or rep quote", "is_positive": bool, "key_takeaway": "Specific actionable tip based on what happened here" },
+    { "position": 66, "line_number": int, "timestamp": "0:00", "moment_type": "Key Moment", "quote": "actual customer or rep quote", "is_positive": bool, "key_takeaway": "Specific actionable tip based on what happened here" },
+    { "position": 90, "line_number": int, "timestamp": "0:00", "moment_type": "Close Attempt", "quote": "actual customer or rep quote", "is_positive": bool, "key_takeaway": "Specific actionable tip based on what happened here" }
   ],
   "sale_closed": bool,
   "return_appointment": bool,
@@ -511,7 +512,7 @@ SCORING (0-100 each):
 - Active Listening: Reflects understanding
 - Assumptive Language: "When" not "if"
 
-TIMELINE: Pick 3 key moments at 33%, 66%, 90% of conversation. Use EXACT timestamps from transcript.
+TIMELINE: Pick 3 key moments at 33%, 66%, 90% of conversation. Use EXACT timestamps from transcript. Include a specific "key_takeaway" for each moment based on what actually happened (e.g., "You built great rapport when mentioning their dog Max" or "Ask follow-up about pest sightings instead of jumping to pitch").
 
 EARNINGS:
 - sale_closed: true ONLY if customer committed to PAID service

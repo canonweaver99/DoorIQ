@@ -36,7 +36,7 @@ export default function QuickActionsFAB() {
   const checkHasSession = async (userId: string) => {
     const supabase = createClient()
     const { data, error } = await supabase
-      .from('sessions')
+      .from('live_sessions')
       .select('id')
       .eq('user_id', userId)
       .limit(1)

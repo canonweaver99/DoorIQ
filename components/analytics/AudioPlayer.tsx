@@ -84,13 +84,19 @@ export default function AudioPlayer({
 
   // Seek backward 10 seconds
   const seekBackward = useCallback(() => {
-    audioControls.seek(audioState.currentTime - 10)
+    const newTime = Math.max(0, audioState.currentTime - 10)
+    if (isFinite(newTime)) {
+      audioControls.seek(newTime)
+    }
   }, [audioState.currentTime, audioControls])
 
   // Seek forward 10 seconds
   const seekForward = useCallback(() => {
-    audioControls.seek(audioState.currentTime + 10)
-  }, [audioState.currentTime, audioControls])
+    const newTime = Math.min(audioState.duration || 0, audioState.currentTime + 10)
+    if (isFinite(newTime)) {
+      audioControls.seek(newTime)
+    }
+  }, [audioState.currentTime, audioState.duration, audioControls])
 
   // Toggle mute
   const toggleMute = useCallback(() => {
@@ -167,10 +173,14 @@ export default function AudioPlayer({
           <div 
             className="relative h-2 bg-slate-700/50 rounded-full cursor-pointer group"
             onClick={(e) => {
+              if (!audioState.duration || audioState.duration <= 0) return
               const rect = e.currentTarget.getBoundingClientRect()
               const x = e.clientX - rect.left
               const percentage = x / rect.width
-              audioControls.seek(percentage * audioState.duration)
+              const seekTime = percentage * audioState.duration
+              if (isFinite(seekTime)) {
+                audioControls.seek(seekTime)
+              }
             }}
           >
             <motion.div 
