@@ -472,13 +472,12 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         animate={isHovered ? {
                           scale: 1,
                         } : {
-                          scale: [1, 1.05, 1],
+                          scale: 1,
                         }}
                         transition={isHovered ? {
                           duration: 0.3,
                         } : {
-                          duration: 4,
-                          repeat: Number.POSITIVE_INFINITY,
+                          duration: 0.3,
                           ease: "easeInOut",
                           delay: 0,
                         }}
