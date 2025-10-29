@@ -161,145 +161,56 @@ export default function AudioPlayer({
     : 0
 
   return (
-    <div className="rounded-xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
-      <div className="space-y-4">
+    <div className="rounded-xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-4">
+      <div className="space-y-3">
+        {/* Time Display */}
+        <div className="flex items-center justify-between text-sm text-slate-400">
+          <span className="font-mono">{formatTime(audioState.currentTime)}</span>
+          <span className="font-mono">{formatTime(audioState.duration || providedDuration || 0)}</span>
+        </div>
+        
         {/* Progress Bar */}
-        <div>
-          <div className="flex items-center justify-between text-sm text-slate-400 mb-2">
-            <span className="font-mono">{formatTime(audioState.currentTime)}</span>
-            <span className="font-mono">{formatTime(audioState.duration || providedDuration || 0)}</span>
-          </div>
+        <div 
+          className="relative h-2 bg-slate-700/50 rounded-full cursor-pointer group"
+          onClick={(e) => {
+            if (!audioState.duration || audioState.duration <= 0) return
+            const rect = e.currentTarget.getBoundingClientRect()
+            const x = e.clientX - rect.left
+            const percentage = x / rect.width
+            const seekTime = percentage * audioState.duration
+            if (isFinite(seekTime)) {
+              audioControls.seek(seekTime)
+            }
+          }}
+        >
+          <motion.div 
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+            style={{ width: `${progress}%` }}
+          />
           
-          <div 
-            className="relative h-2 bg-slate-700/50 rounded-full cursor-pointer group"
-            onClick={(e) => {
-              if (!audioState.duration || audioState.duration <= 0) return
-              const rect = e.currentTarget.getBoundingClientRect()
-              const x = e.clientX - rect.left
-              const percentage = x / rect.width
-              const seekTime = percentage * audioState.duration
-              if (isFinite(seekTime)) {
-                audioControls.seek(seekTime)
-              }
-            }}
-          >
-            <motion.div 
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
-              style={{ width: `${progress}%` }}
-            />
-            
-            {/* Hover indicator */}
-            <div className="absolute inset-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <div 
-                className="h-4 w-4 bg-white rounded-full shadow-lg"
-                style={{ marginLeft: `${progress}%`, transform: 'translateX(-50%)' }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center justify-between">
-          {/* Playback Controls */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={seekBackward}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-              title="Rewind 10s"
-            >
-              <SkipBack className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={togglePlayPause}
-              className="p-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white transition-colors"
-              title={audioState.isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-            >
-              {audioState.isPlaying ? (
-                <Pause className="w-6 h-6" />
-              ) : (
-                <Play className="w-6 h-6 ml-0.5" />
-              )}
-            </button>
-
-            <button
-              onClick={seekForward}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-              title="Forward 10s"
-            >
-              <SkipForward className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Speed Control */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">Speed:</span>
-            <div className="flex gap-1">
-              {speeds.map(speed => (
-                <button
-                  key={speed}
-                  onClick={() => audioControls.setSpeed(speed)}
-                  className={`
-                    px-2 py-1 rounded text-xs font-medium transition-colors
-                    ${audioState.playbackRate === speed 
-                      ? 'bg-purple-600 text-white' 
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }
-                  `}
-                >
-                  {speed}x
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Volume Control */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleMute}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-            >
-              {audioState.volume === 0 ? (
-                <VolumeX className="w-5 h-5" />
-              ) : (
-                <Volume2 className="w-5 h-5" />
-              )}
-            </button>
-
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={audioState.volume}
-              onChange={(e) => audioControls.setVolume(Number(e.target.value))}
-              className="w-24 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer
-                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500
-                [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full
-                [&::-moz-range-thumb]:bg-purple-500 [&::-moz-range-thumb]:border-0"
+          {/* Scrubber */}
+          <div className="absolute inset-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <div 
+              className="h-4 w-4 bg-white rounded-full shadow-lg"
+              style={{ marginLeft: `${progress}%`, transform: 'translateX(-50%)' }}
             />
           </div>
         </div>
 
-        {/* Current Segment Indicator */}
-        {currentSegment >= 0 && transcript[currentSegment] && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg"
+        {/* Simple Controls - Play/Pause only */}
+        <div className="flex items-center justify-center">
+          <button
+            onClick={togglePlayPause}
+            className="p-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+            title={audioState.isPlaying ? 'Pause (Space)' : 'Play (Space)'}
           >
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-              <span className="text-xs text-purple-400 font-medium">
-                Current Segment • {transcript[currentSegment].timestamp}
-              </span>
-            </div>
-            <p className="text-sm text-slate-300">
-              <strong className="text-white">{transcript[currentSegment].speaker}:</strong>{' '}
-              {transcript[currentSegment].text}
-            </p>
-          </motion.div>
-        )}
+            {audioState.isPlaying ? (
+              <Pause className="w-6 h-6" />
+            ) : (
+              <Play className="w-6 h-6 ml-0.5" />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   )

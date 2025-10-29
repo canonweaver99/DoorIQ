@@ -522,9 +522,9 @@ EARNINGS:
 - virtual_earnings = total_contract_value × 0.30
 
 FILLER WORDS:
-- Count only: "um", "uh", "uhh", "erm", "err", "hmm"
-- Count "like" ONLY at sentence start (e.g., "Like, I was thinking")
-- NOT "like" in middle (e.g., "service like this" is normal)
+- Count ONLY: "um", "uh", "uhh", "erm", "err", "hmm"
+- NEVER count "like" as a filler word (it's almost always used correctly in conversation)
+- Examples of normal speech (NOT fillers): "sounds like magic", "service like this", "looks like", "feels like"
 
 FEEDBACK - BE SPECIFIC:
 - Reference actual names, topics, details from THIS conversation
