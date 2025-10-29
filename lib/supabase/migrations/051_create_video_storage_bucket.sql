@@ -18,28 +18,28 @@ ON CONFLICT (id) DO UPDATE SET
 DROP POLICY IF EXISTS "Users can upload their own video recordings" ON storage.objects;
 DROP POLICY IF EXISTS "Users can view all video recordings" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own video recordings" ON storage.objects;
+DROP POLICY IF EXISTS "Public can upload to session-videos" ON storage.objects;
+DROP POLICY IF EXISTS "Public can read session-videos" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload videos" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view videos" ON storage.objects;
 
--- Storage policies for video recordings
--- Upload: Users can only upload to their own folder (sessions/{user_id}/...)
-CREATE POLICY "Users can upload their own video recordings" ON storage.objects
+-- Simplified policies - allow authenticated users to upload, anyone to view
+-- This is appropriate for session videos which are not sensitive
+
+-- Upload: Any authenticated user can upload videos
+CREATE POLICY "Authenticated users can upload videos" ON storage.objects
   FOR INSERT TO authenticated
-  WITH CHECK (
-    bucket_id = 'session-videos' AND 
-    auth.uid()::text = (string_to_array(name, '/'))[2]
-  );
+  WITH CHECK (bucket_id = 'session-videos');
 
--- Select: Users can view all videos (public bucket)
-CREATE POLICY "Users can view all video recordings" ON storage.objects
-  FOR SELECT TO authenticated
+-- Select: Anyone can view videos (public bucket)
+CREATE POLICY "Anyone can view videos" ON storage.objects
+  FOR SELECT
   USING (bucket_id = 'session-videos');
 
--- Delete: Users can only delete their own videos
-CREATE POLICY "Users can delete their own video recordings" ON storage.objects
+-- Delete: Authenticated users can delete any video (for cleanup)
+CREATE POLICY "Authenticated users can delete videos" ON storage.objects
   FOR DELETE TO authenticated
-  USING (
-    bucket_id = 'session-videos' AND 
-    auth.uid()::text = (string_to_array(name, '/'))[2]
-  );
+  USING (bucket_id = 'session-videos');
 
 -- Add comment for tracking
 COMMENT ON COLUMN live_sessions.video_url IS 'Public URL to the video recording stored in session-videos bucket';

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import SessionTimeline from './SessionTimeline'
 import SessionTimelineWithVideo from './SessionTimelineWithVideo'
 import CoachingChat from './CoachingChat'
+import { AnalyticsErrorBoundary } from './AnalyticsErrorBoundary'
 
 interface ScoresViewV2Props {
   sessionId: string
@@ -478,27 +479,28 @@ export default function ScoresViewV2({
 
       {/* Enhanced Timeline - "What specific moments mattered?" */}
       {keyMoments.length > 0 && (
-        <section className="rounded-3xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Clock className="w-5 h-5 text-purple-400" />
-            <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">Session Timeline</h3>
-          </div>
-          
-          {videoUrl ? (
+        <AnalyticsErrorBoundary>
+          <section className="rounded-3xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Clock className="w-5 h-5 text-purple-400" />
+              <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">Session Timeline</h3>
+            </div>
+            
+            {videoUrl ? (
             <SessionTimelineWithVideo
               duration={durationSeconds}
               videoUrl={videoUrl}
               audioUrl={audioUrl}
-              keyMoments={keyMoments.map((moment, idx) => ({
+              keyMoments={keyMoments.filter(m => m && m.moment_type).map((moment, idx) => ({
                 id: `moment-${idx}`,
-                timestamp: parseTimestamp(moment.timestamp),
-                title: moment.moment_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-                type: moment.moment_type.includes('rapport') ? 'rapport' :
-                      moment.moment_type.includes('discovery') ? 'discovery' :
-                      moment.moment_type.includes('objection') ? 'objection' :
-                      moment.moment_type.includes('closing') ? 'closing' : 'critical' as const,
-                description: moment.quote,
-                quote: moment.quote
+                timestamp: parseTimestamp(moment.timestamp || '0'),
+                title: (moment.moment_type || 'key-moment').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+                type: (moment.moment_type || '').includes('rapport') ? 'rapport' :
+                      (moment.moment_type || '').includes('discovery') ? 'discovery' :
+                      (moment.moment_type || '').includes('objection') ? 'objection' :
+                      (moment.moment_type || '').includes('closing') ? 'closing' : 'critical' as const,
+                description: moment.quote || moment.description,
+                quote: moment.quote || moment.description
               }))}
               customerName={agentName}
               salesRepName="Canon Weaver"
@@ -524,7 +526,8 @@ export default function ScoresViewV2({
               audioUrl={audioUrl}
             />
           )}
-        </section>
+          </section>
+        </AnalyticsErrorBoundary>
       )}
 
       {/* AI Coaching Chat - Below Timeline */}
