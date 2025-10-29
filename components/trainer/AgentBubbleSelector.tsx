@@ -465,10 +465,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </motion.div>
                     ))}
 
-                    {/* Profile Image in Center - synchronized with circles - OVERLAY mode */}
+                    {/* Profile Image in Center - synchronized with circles */}
                     {agent.image && (
                       <motion.div 
-                        className="absolute inset-[-4px] flex items-center justify-center pointer-events-none"
+                        className="absolute inset-[6px] flex items-center justify-center pointer-events-none"
                         animate={isHovered ? {
                           scale: 1,
                         } : {
