@@ -342,10 +342,16 @@ export async function POST(request: NextRequest) {
     
     const supabase = await createServiceSupabaseClient()
     
-    // Fetch session data
+    // Fetch session data WITH user profile in a single query (optimization)
     const { data: session, error: sessionError } = await supabase
       .from('live_sessions')
-      .select('*')
+      .select(`
+        *,
+        user:users!live_sessions_user_id_fkey (
+          team_id,
+          full_name
+        )
+      `)
       .eq('id', sessionId)
       .single()
     
@@ -396,13 +402,8 @@ export async function POST(request: NextRequest) {
       logger.info('Sampled transcript', { sampledLines: transcriptToGrade.length })
     }
 
-    // Get user's team information and actual name in a single query
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('team_id, full_name')
-      .eq('id', (session as any).user_id)
-      .single()
-    
+    // Extract user profile from joined query (already fetched above)
+    const userProfile = (session as any).user
     const salesRepName = userProfile?.full_name || 'Sales Rep'
     const customerName = (session as any).agent_name || 'Homeowner'
 
@@ -724,33 +725,60 @@ ${knowledgeContext}`
       })
     }
 
-    // Retry logic for OpenAI API calls
+    // Retry logic for OpenAI API calls with timeout
     let completion
     let retryCount = 0
     const maxRetries = 3
+    const API_TIMEOUT_MS = 60000 // 60 second timeout for OpenAI API
     
     while (retryCount < maxRetries) {
       try {
-        completion = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: messages as any,
-          response_format: { type: "json_object" },
-          max_tokens: 1200, // Further reduced for faster grading
-          temperature: 0.1, // Even lower for faster, more deterministic responses
-          stream: false // Streaming handled in /api/grade/stream endpoint
-        })
+        // Create AbortController for timeout
+        const abortController = new AbortController()
+        const timeoutId = setTimeout(() => abortController.abort(), API_TIMEOUT_MS)
+        
+        try {
+          completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: messages as any,
+            response_format: { type: "json_object" },
+            max_tokens: 1200, // Further reduced for faster grading
+            temperature: 0.1, // Even lower for faster, more deterministic responses
+            stream: false // Streaming handled in /api/grade/stream endpoint
+          }, {
+            signal: abortController.signal as any
+          })
+        } finally {
+          clearTimeout(timeoutId)
+        }
+        
         break // Success, exit retry loop
       } catch (apiError: any) {
         retryCount++
-        logger.error(`OpenAI API error (attempt ${retryCount}/${maxRetries})`, apiError)
+        
+        // Better error messages for different error types
+        let errorType = 'unknown'
+        if (apiError.name === 'AbortError') {
+          errorType = 'timeout'
+          logger.error(`OpenAI API timeout (attempt ${retryCount}/${maxRetries})`, { timeoutMs: API_TIMEOUT_MS })
+        } else if (apiError.status >= 500) {
+          errorType = 'server_error'
+          logger.error(`OpenAI server error (attempt ${retryCount}/${maxRetries})`, { status: apiError.status })
+        } else if (apiError.status === 429) {
+          errorType = 'rate_limit'
+          logger.error(`OpenAI rate limit (attempt ${retryCount}/${maxRetries})`)
+        } else {
+          logger.error(`OpenAI API error (attempt ${retryCount}/${maxRetries})`, apiError)
+        }
         
         if (retryCount >= maxRetries) {
-          throw new Error(`OpenAI API failed after ${maxRetries} attempts: ${apiError.message}`)
+          throw new Error(`OpenAI API failed after ${maxRetries} attempts (${errorType}): ${apiError.message}`)
         }
 
-        // Wait before retry (exponential backoff)
-        const waitTime = Math.min(1000 * Math.pow(2, retryCount), 5000)
-        logger.info(`Retrying in ${waitTime}ms`, { attempt: retryCount, maxRetries })
+        // Wait before retry (exponential backoff, longer for rate limits)
+        const baseWaitTime = errorType === 'rate_limit' ? 5000 : 1000
+        const waitTime = Math.min(baseWaitTime * Math.pow(2, retryCount), 10000)
+        logger.info(`Retrying in ${waitTime}ms`, { attempt: retryCount, maxRetries, errorType })
         await new Promise(resolve => setTimeout(resolve, waitTime))
       }
     }
@@ -1068,21 +1096,15 @@ ${knowledgeContext}`
         })
       }),
 
-      // Manager notification
+      // Manager notification (using already-fetched salesRepName for efficiency)
       import('@/lib/notifications/service').then(async ({ getRepManager, sendNotification }) => {
         const managerId = await getRepManager(userId)
         if (managerId) {
-          const { data: repData } = await supabase
-            .from('users')
-            .select('full_name')
-            .eq('id', userId)
-            .single()
-
           return sendNotification({
             type: 'managerSessionAlert',
             userId: managerId,
             data: {
-              repName: repData?.full_name || 'Team Member',
+              repName: salesRepName, // Already fetched from joined query
               score: calculatedOverall,
               grade,
               sessionId,

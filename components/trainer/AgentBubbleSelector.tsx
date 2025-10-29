@@ -489,6 +489,17 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             alt={agent.name}
                             fill
                             className="object-cover"
+                            style={{
+                              // Zoom in on faces for specific agents
+                              objectPosition: agent.name === 'Too Expensive Tim' ? 'center 30%' :
+                                            agent.name === 'Already Got It Alan' ? 'center 25%' :
+                                            agent.name === 'No Problem Nancy' ? 'center 30%' :
+                                            agent.name === 'Not Interested Nick' ? 'center 25%' :
+                                            'center center',
+                              transform: ['Too Expensive Tim', 'Already Got It Alan', 'No Problem Nancy', 'Not Interested Nick'].includes(agent.name)
+                                ? 'scale(1.4)'
+                                : 'scale(1.0)'
+                            }}
                             sizes="352px"
                             quality={95}
                             priority={index < 6}

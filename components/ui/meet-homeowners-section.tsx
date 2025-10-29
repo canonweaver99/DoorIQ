@@ -137,6 +137,15 @@ export function MeetHomeownersSection() {
                           alt={agent.name}
                           fill
                           className="object-cover relative z-10"
+                          style={{
+                            // Zoom in on faces for specific agents
+                            objectPosition: agent.name === 'Tim' ? 'center 30%' :
+                                          agent.name === 'Nancy' ? 'center 30%' :
+                                          'center center',
+                            transform: ['Tim', 'Nancy'].includes(agent.name)
+                              ? 'scale(1.4)'
+                              : 'scale(1.0)'
+                          }}
                           sizes="160px"
                         />
                       </div>

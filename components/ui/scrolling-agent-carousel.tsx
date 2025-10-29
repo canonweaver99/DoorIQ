@@ -329,6 +329,17 @@ export function ScrollingAgentCarousel({
                         alt={agent.name}
                         fill
                         className="object-cover relative z-10"
+                        style={{
+                          // Zoom in on faces for specific agents
+                          objectPosition: agent.name === 'Tim' ? 'center 30%' :
+                                        agent.name === 'Alan' ? 'center 25%' :
+                                        agent.name === 'Nancy' ? 'center 30%' :
+                                        agent.name === 'Nick' ? 'center 25%' :
+                                        'center center',
+                          transform: ['Tim', 'Alan', 'Nancy', 'Nick'].includes(agent.name)
+                            ? 'scale(1.4)'
+                            : 'scale(1.0)'
+                        }}
                         sizes="(max-width: 640px) 150px, (max-width: 768px) 200px, 240px"
                         priority={scale > 0.8}
                       />

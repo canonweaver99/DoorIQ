@@ -173,7 +173,11 @@ export default function AnalyticsPage() {
       setSession(data)
       
       // If transcript exists but no grading, trigger grading and poll for completion
-      if (data.full_transcript && data.full_transcript.length > 0 && !data.analytics?.line_ratings) {
+      // Check if grading is needed: no overall_score or analytics object
+      const needsGrading = data.full_transcript && data.full_transcript.length > 0 && 
+                          (!data.overall_score && !data.analytics?.scores?.overall)
+      
+      if (needsGrading) {
         console.log('🎯 No grading found, triggering grading and setting up polling...')
         triggerGrading()
         
@@ -186,7 +190,9 @@ export default function AnalyticsPage() {
           const pollResponse = await fetch(`/api/session?id=${sessionId}`)
           if (pollResponse.ok) {
             const pollData = await pollResponse.json()
-            if (pollData.analytics?.line_ratings && pollData.analytics.line_ratings.length > 0) {
+            // Check if grading is complete by looking for overall_score or analytics.scores
+            const isGraded = pollData.overall_score || pollData.analytics?.scores?.overall
+            if (isGraded) {
               console.log('✅ Grading completed! Refreshing page...')
               clearInterval(pollInterval)
               setSession(pollData)
@@ -198,6 +204,7 @@ export default function AnalyticsPage() {
           if (pollCount >= 40) {
             console.log('⏰ Polling timeout - grading may still be in progress')
             clearInterval(pollInterval)
+            setGrading(false)
           }
         }, 3000)
       }
