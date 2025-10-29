@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import ElevenLabsConversation from '@/components/trainer/ElevenLabsConversation'
 import WebcamRecorder from '@/components/trainer/WebcamRecorder'
-import { useDualCameraRecording } from '@/hooks/useDualCameraRecording'
+// import { useDualCameraRecording } from '@/hooks/useDualCameraRecording' // Archived - re-enable when ready
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
