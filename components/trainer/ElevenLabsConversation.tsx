@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Conversation } from '@elevenlabs/client'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
-import { useVideoSessionRecording } from '@/hooks/useVideoSessionRecording'
 
 type ElevenLabsConversationProps = {
   agentId: string
@@ -18,13 +17,11 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [currentToken, setCurrentToken] = useState(conversationToken)
   
-  // Audio and Video recording
+  // Audio recording only (video is handled by dual camera compositor in trainer page)
   const { isRecording: isAudioRecording, startRecording: startAudioRecording, stopRecording: stopAudioRecording } = useSessionRecording(sessionId)
-  const { isRecording: isVideoRecording, startRecording: startVideoRecording, stopRecording: stopVideoRecording } = useVideoSessionRecording(sessionId)
   
   // Track recording state with refs for reliable cleanup
   const audioRecordingActiveRef = useRef(false)
-  const videoRecordingActiveRef = useRef(false)
 
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
     window.dispatchEvent(new CustomEvent('connection:status', { detail: s === 'connected' ? 'connected' : s === 'connecting' ? 'connecting' : s === 'error' ? 'error' : 'idle' }))
@@ -87,16 +84,6 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             } else {
               console.log('⚠️ Already audio recording, skipping start')
             }
-            
-            if (!videoRecordingActiveRef.current) {
-              console.log('🎬 Starting video recording for session:', sessionId)
-              startVideoRecording().then(() => {
-                videoRecordingActiveRef.current = true
-              }).catch((error) => {
-                console.error('❌ Failed to start video recording:', error)
-                // Continue with audio only
-              })
-            }
           } else {
             console.warn('⚠️ No sessionId provided to ElevenLabsConversation - audio will not be recorded')
           }
@@ -115,12 +102,6 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             audioRecordingActiveRef.current = false
           } else {
             console.log('ℹ️ onDisconnect called but audio recording was not active')
-          }
-          
-          if (videoRecordingActiveRef.current) {
-            console.log('🛑 Calling stopVideoRecording from onDisconnect')
-            stopVideoRecording()
-            videoRecordingActiveRef.current = false
           }
         },
         
@@ -421,16 +402,11 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
 
   const stop = useCallback(async () => {
     try {
-      // Stop recordings first
+      // Stop audio recording
       if (audioRecordingActiveRef.current) {
         console.log('🛑 Stopping audio recording from stop()')
         stopAudioRecording()
         audioRecordingActiveRef.current = false
-      }
-      if (videoRecordingActiveRef.current) {
-        console.log('🛑 Stopping video recording from stop()')
-        stopVideoRecording()
-        videoRecordingActiveRef.current = false
       }
       
       if (conversationRef.current) {
@@ -550,14 +526,10 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Stop recordings on unmount
+      // Stop audio recording on unmount
       if (audioRecordingActiveRef.current) {
         stopAudioRecording()
         audioRecordingActiveRef.current = false
-      }
-      if (videoRecordingActiveRef.current) {
-        stopVideoRecording()
-        videoRecordingActiveRef.current = false
       }
       
       if (conversationRef.current) {
