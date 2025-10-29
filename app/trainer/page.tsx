@@ -79,10 +79,10 @@ function TrainerPageContent() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [showPaywall, setShowPaywall] = useState(false)
-  const [userCameraStream, setUserCameraStream] = useState<MediaStream | null>(null)
   
-  // Dual camera recording (Loom-style: agent + user side-by-side)
-  const { isRecording: isVideoRecording, startRecording: startDualCameraRecording, stopRecording: stopDualCameraRecording } = useDualCameraRecording(sessionId)
+  // Video recording temporarily disabled - archived for future implementation
+  // const { isRecording: isVideoRecording, startRecording: startDualCameraRecording, stopRecording: stopDualCameraRecording } = useDualCameraRecording(sessionId)
+  const isVideoRecording = false
 
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
@@ -321,11 +321,11 @@ function TrainerPageContent() {
     setSessionActive(false)
     setConversationToken(null)
 
-    // Stop dual camera recording
-    if (isVideoRecording) {
-      console.log('🛑 Stopping dual camera recording from endSession')
-      stopDualCameraRecording()
-    }
+    // Video recording disabled - archived for future
+    // if (isVideoRecording) {
+    //   console.log('🛑 Stopping dual camera recording from endSession')
+    //   stopDualCameraRecording()
+    // }
 
     if (durationInterval.current) clearInterval(durationInterval.current)
       if (signedUrlAbortRef.current) {
@@ -353,7 +353,7 @@ function TrainerPageContent() {
         router.push('/trainer')
         setLoading(false)
       }
-  }, [sessionId, duration, transcript, router, isVideoRecording, stopDualCameraRecording])
+  }, [sessionId, duration, transcript, router])
 
   // Handle agent end call event
   useEffect(() => {
@@ -493,23 +493,6 @@ function TrainerPageContent() {
               <WebcamRecorder 
                 sessionActive={sessionActive} 
                 duration={duration}
-                onStreamReady={(stream) => {
-                  console.log('📹 User camera stream ready, starting dual recording...')
-                  setUserCameraStream(stream)
-                  // Start dual camera recording when both user stream and session are ready
-                  if (sessionActive && selectedAgent) {
-                    const agentImageSrc = resolveAgentImage(selectedAgent, true)
-                    if (agentImageSrc) {
-                      startDualCameraRecording(stream, agentImageSrc).catch((error) => {
-                        console.error('❌ Failed to start dual camera recording:', error)
-                      })
-                    }
-                  }
-                }}
-                onStreamEnd={() => {
-                  console.log('📹 User camera stream ended')
-                  setUserCameraStream(null)
-                }}
               />
             </div>
           </div>
