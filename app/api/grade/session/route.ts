@@ -539,21 +539,34 @@ Return ONLY valid JSON. No commentary.`
       }
     ]
 
-    // Simplified retry - single attempt with timeout
+    // Retry with backoff for reliability
     let completion
-    try {
-      completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: messages as any,
-        response_format: { type: "json_object" },
-        max_tokens: 1000, // Reduced for speed
-        temperature: 0.05, // Very deterministic
-        stream: false
-      })
-    } catch (apiError: any) {
-      const errorType = apiError.status === 429 ? 'rate_limit' : apiError.status >= 500 ? 'server_error' : 'api_error'
-      logger.error('OpenAI API error', apiError, { errorType, status: apiError.status })
-      throw new Error(`OpenAI grading failed (${errorType}): ${apiError.message}`)
+    let lastError
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: messages as any,
+          response_format: { type: "json_object" },
+          max_tokens: 1500, // Increased from 1000 to avoid truncation
+          temperature: 0.1,
+          stream: false
+        })
+        break // Success
+      } catch (apiError: any) {
+        lastError = apiError
+        const errorType = apiError.status === 429 ? 'rate_limit' : apiError.status >= 500 ? 'server_error' : 'api_error'
+        logger.error(`OpenAI API error (attempt ${attempt}/2)`, apiError, { errorType, status: apiError.status })
+        
+        if (attempt < 2) {
+          // Wait 2 seconds before retry
+          await new Promise(resolve => setTimeout(resolve, 2000))
+        }
+      }
+    }
+    
+    if (!completion) {
+      throw new Error(`OpenAI grading failed after 2 attempts: ${lastError?.message || 'Unknown error'}`)
     }
 
     const responseContent = completion.choices[0].message.content || '{}'

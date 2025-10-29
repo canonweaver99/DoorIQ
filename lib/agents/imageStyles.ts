@@ -6,42 +6,46 @@ type AgentImageStyle = {
 }
 
 const DEFAULT_STYLE: Required<AgentImageStyle> = {
-  objectPosition: '50% 52%',
-  scale: 1.35,
+  objectPosition: '50% 50%',
+  scale: 1.3,
 }
 
 const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
+  'Austin': {
+    objectPosition: '50% 38%',
+    scale: 1.4,
+  },
   'Too Expensive Tim': {
-    objectPosition: '50% 34%',
-    scale: 1.47,
+    objectPosition: '50% 38%',
+    scale: 1.4,
   },
   'Already Got It Alan': {
-    objectPosition: '50% 36%',
-    scale: 1.43,
+    objectPosition: '50% 40%',
+    scale: 1.35,
   },
   'No Problem Nancy': {
     objectPosition: '50% 50%',
-    scale: 1.4,
+    scale: 1.3,
   },
   'Not Interested Nick': {
-    objectPosition: '50% 52%',
-    scale: 1.7,
+    objectPosition: '50% 48%',
+    scale: 1.5,
   },
   'Spouse Check Susan': {
     objectPosition: '50% 50%',
-    scale: 1.41,
-  },
-  'Busy Beth': {
-    objectPosition: '50% 55%',
-    scale: 1.18,
-  },
-  'Renter Randy': {
-    objectPosition: '50% 54%',
     scale: 1.35,
   },
+  'Busy Beth': {
+    objectPosition: '50% 48%',
+    scale: 1.15,
+  },
+  'Renter Randy': {
+    objectPosition: '50% 50%',
+    scale: 1.3,
+  },
   'Just Treated Jerry': {
-    objectPosition: '50% 52%',
-    scale: 1.32,
+    objectPosition: '50% 48%',
+    scale: 1.25,
   },
 }
 
