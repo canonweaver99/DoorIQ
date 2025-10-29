@@ -90,7 +90,7 @@ export function LiveSessionPreview() {
   }
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden" style={{ minHeight: 'calc(100vh - 140px)', maxHeight: 'calc(100vh - 140px)', transform: 'scale(1.02)' }}>
+    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden 2xl:max-h-[720px]" style={{ minHeight: 'calc(100vh - 140px)', maxHeight: 'calc(100vh - 140px)', transform: 'scale(1.02)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
         <div className="flex items-center gap-2">

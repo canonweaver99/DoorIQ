@@ -558,15 +558,15 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
 
         <ul
           role="list"
-          className="mt-4 space-y-2.5 text-sm leading-6 text-left"
+          className="mt-4 space-y-3 text-sm leading-6 text-left"
         >
           {plan.features.map((feature) => (
-            <li key={feature} className="flex gap-x-2.5">
+            <li key={feature} className="flex gap-x-3">
               <Check
-                className="h-5 w-5 flex-none text-primary mt-0.5"
+                className="h-6 w-6 flex-none text-primary mt-0.5"
                 aria-hidden="true"
               />
-              <span className="font-medium text-white/95 text-base">{feature}</span>
+              <span className="font-medium text-white/95 text-lg leading-relaxed">{feature}</span>
             </li>
           ))}
         </ul>
