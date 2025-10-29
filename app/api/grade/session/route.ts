@@ -3,6 +3,10 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
+// Increase timeout for grading (Vercel allows up to 300s on Pro)
+export const maxDuration = 120 // 2 minutes
+export const dynamic = 'force-dynamic'
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   timeout: 90000, // 90 second timeout
@@ -1143,7 +1147,9 @@ ${knowledgeContext}`
         errorAfter: `${errorDuration.toFixed(2)}s`,
         errorType: error.name,
         errorCode: error.code,
-        errorStatus: error.status
+        errorStatus: error.status,
+        errorMessage: error.message,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n')
       })
     })
     
@@ -1151,15 +1157,25 @@ ${knowledgeContext}`
     let userMessage = error.message || 'Failed to grade session'
     let statusCode = 500
     
-    if (error.message?.includes('OpenAI')) {
+    // Check for specific OpenAI errors
+    if (error.status === 429) {
+      userMessage = 'OpenAI rate limit exceeded - please wait a moment and try again'
+      statusCode = 429
+    } else if (error.status === 503 || error.message?.includes('overloaded')) {
+      userMessage = 'OpenAI service temporarily unavailable - please try again'
+      statusCode = 503
+    } else if (error.message?.includes('OpenAI') || error.code?.includes('openai')) {
       userMessage = 'OpenAI API error - please try again'
       statusCode = 503
-    } else if (error.message?.includes('parse')) {
+    } else if (error.message?.includes('parse') || error.message?.includes('JSON')) {
       userMessage = 'Failed to parse grading response - please try again'
       statusCode = 502
-    } else if (error.message?.includes('timeout')) {
+    } else if (error.message?.includes('timeout') || error.code === 'ETIMEDOUT') {
       userMessage = 'Request timed out - session may be too long'
       statusCode = 504
+    } else if (error.message?.includes('ECONNREFUSED')) {
+      userMessage = 'Cannot connect to OpenAI - check internet connection'
+      statusCode = 503
     }
     
     return NextResponse.json(
@@ -1168,6 +1184,8 @@ ${knowledgeContext}`
         details: {
           type: error.name,
           message: error.message,
+          code: error.code,
+          status: error.status,
           duration: errorDuration + 's'
         }
       },
