@@ -550,7 +550,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   {(agent.sessionCount && agent.sessionCount > 0) ? (
                     <div className="text-xs font-semibold text-slate-400 pt-1">
                       {agent.sessionCount}x attempted
-                      {agent.bestScore && <span className="text-emerald-400 ml-1.5">• Best: {agent.bestScore}%</span>}
+                      {agent.bestScore && agent.bestScore > 0 && <span className="text-emerald-400 ml-1.5">• Best: {agent.bestScore}%</span>}
                     </div>
                   ) : (
                     <div className="text-xs font-semibold text-amber-400/90 pt-1">
