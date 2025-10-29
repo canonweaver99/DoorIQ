@@ -537,7 +537,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         conversationRef.current.endSession().catch(() => {})
       }
     }
-  }, [stopAudioRecording, stopVideoRecording])
+  }, [stopAudioRecording])
 
   // This component is headless
   return null
