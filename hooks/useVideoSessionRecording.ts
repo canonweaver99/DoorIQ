@@ -19,6 +19,7 @@ export function useVideoSessionRecording(sessionId: string | null, options: UseV
     try {
       setRecordingError(null)
       console.log('🎬 Starting video recording for session:', sessionId)
+      console.log('📹 Video recording options:', options)
 
       // Request both video and audio permissions
       const constraints: MediaStreamConstraints = {
@@ -30,9 +31,13 @@ export function useVideoSessionRecording(sessionId: string | null, options: UseV
         } : false
       }
 
+      console.log('📹 Requesting media with constraints:', constraints)
       const stream = await navigator.mediaDevices.getUserMedia(constraints)
       streamRef.current = stream
-      console.log('✅ Got media stream for recording')
+      console.log('✅ Got media stream for recording:', {
+        videoTracks: stream.getVideoTracks().length,
+        audioTracks: stream.getAudioTracks().length
+      })
       
       // Determine the best mime type
       const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') 
