@@ -465,10 +465,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </motion.div>
                     ))}
 
-                    {/* Profile Image in Center - synchronized with circles */}
+                    {/* Profile Image in Center - synchronized with circles - OVERLAY mode */}
                     {agent.image && (
                       <motion.div 
-                        className="absolute inset-[6px] flex items-center justify-center pointer-events-none"
+                        className="absolute inset-[-4px] flex items-center justify-center pointer-events-none"
                         animate={isHovered ? {
                           scale: 1,
                         } : {
@@ -547,10 +547,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </p>
                   
                   {/* Stats if available */}
-                  {(agent.sessionCount && agent.sessionCount > 0) ? (
+                  {agent.sessionCount && agent.sessionCount > 0 ? (
                     <div className="text-xs font-semibold text-slate-400 pt-1">
                       {agent.sessionCount}x attempted
-                      {agent.bestScore && agent.bestScore > 0 && <span className="text-emerald-400 ml-1.5">• Best: {agent.bestScore}%</span>}
+                      {agent.bestScore && agent.bestScore > 0 ? <span className="text-emerald-400 ml-1.5">• Best: {agent.bestScore}%</span> : null}
                     </div>
                   ) : (
                     <div className="text-xs font-semibold text-amber-400/90 pt-1">
