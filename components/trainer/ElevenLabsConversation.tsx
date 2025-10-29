@@ -85,12 +85,10 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             
             if (!isVideoRecording) {
               console.log('🎬 Starting video recording for session:', sessionId)
-              try {
-                await startVideoRecording()
-              } catch (error) {
+              startVideoRecording().catch((error) => {
                 console.error('❌ Failed to start video recording:', error)
                 // Continue with audio only
-              }
+              })
             }
           } else {
             console.warn('⚠️ No sessionId provided to ElevenLabsConversation - audio will not be recorded')
