@@ -5,6 +5,7 @@ import { Users, Target, Shield, HandshakeIcon, DollarSign, Download, Share2, Boo
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import SessionTimeline from './SessionTimeline'
+import SessionTimelineWithVideo from './SessionTimelineWithVideo'
 import CoachingChat from './CoachingChat'
 
 interface ScoresViewV2Props {
@@ -36,18 +37,38 @@ interface ScoresViewV2Props {
   failureAnalysis?: any
   saleClosed?: boolean
   lineRatings?: any[]
-  fullTranscript?: Array<{ speaker: string, text: string, timestamp?: string }>
+  fullTranscript?: Array<{ speaker: string, text?: string, message?: string, timestamp?: string }>
   timelineKeyMoments?: Array<{
     position: number
     line_number: number
     timestamp: string
     moment_type: string
-    quote: string
+    quote?: string
     is_positive: boolean
+    description?: string
+    feedback?: string
+    visual_cue?: string
+    impact?: 'positive' | 'negative' | 'neutral'
+    tags?: string[]
   }>
   agentName?: string
   durationSeconds?: number
   audioUrl?: string
+  videoUrl?: string
+}
+
+// Helper function to parse timestamp strings to seconds
+function parseTimestamp(timestamp: string): number {
+  if (!timestamp) return 0
+  
+  // Handle "MM:SS" format
+  if (timestamp.includes(':')) {
+    const [minutes, seconds] = timestamp.split(':').map(Number)
+    return minutes * 60 + seconds
+  }
+  
+  // Handle plain number (assume seconds)
+  return Number(timestamp) || 0
 }
 
 export default function ScoresViewV2({
@@ -66,7 +87,8 @@ export default function ScoresViewV2({
   timelineKeyMoments,
   agentName = 'AI Agent',
   durationSeconds = 600,
-  audioUrl
+  audioUrl,
+  videoUrl
 }: ScoresViewV2Props) {
   const [animatedEarnings, setAnimatedEarnings] = useState(0)
   const [showFillerWordsDropdown, setShowFillerWordsDropdown] = useState(false)
@@ -120,11 +142,6 @@ export default function ScoresViewV2({
   }
 
   // Extract key moments - prefer LLM-generated timeline moments, fallback to extraction
-  function parseTimestamp(ts: string): number {
-    const [mins, secs] = ts.split(':').map(Number)
-    return (mins || 0) * 60 + (secs || 0)
-  }
-
   let keyMoments: any[] = []
   
   console.log('🔍 Timeline check:', {
@@ -177,6 +194,31 @@ export default function ScoresViewV2({
     { name: 'Objection Handling', score: scores.objection_handling, icon: Shield, color: '#f59e0b' },
     { name: 'Closing', score: scores.closing, icon: HandshakeIcon, color: '#8b5cf6' }
   ]
+
+  const bonusModifiers = earningsData?.bonus_modifiers as Record<string, unknown> | undefined
+  const bonusModifierValues = Array.isArray(bonusModifiers)
+    ? bonusModifiers.filter((value): value is number => typeof value === 'number')
+    : bonusModifiers
+      ? Object.values(bonusModifiers).filter((value): value is number => typeof value === 'number')
+      : []
+  const totalBonus = bonusModifierValues.reduce((sum, value) => sum + value, 0)
+
+  const normalizedTranscript = fullTranscript.map((entry) => ({
+    speaker: entry.speaker,
+    text: entry.text ?? entry.message ?? '',
+    message: entry.message,
+    timestamp: entry.timestamp,
+  }))
+
+  const fillerWordEntries = normalizedTranscript
+    .map((entry, index) => ({ ...entry, index }))
+    .filter(({ speaker, text }) => {
+      if (!speaker) return false
+      const isRepLine = speaker === 'rep' || speaker === 'user'
+      if (!isRepLine) return false
+      const fillerPattern = /\b(um|uhh?|uh|like|erm|err|hmm)\b/gi
+      return fillerPattern.test(text)
+    })
 
   return (
     <div className="space-y-8">
@@ -234,7 +276,7 @@ export default function ScoresViewV2({
                 </motion.div>
               )}
               
-              {scores.filler_words && scores.filler_words > 0 && (
+              {scores.filler_words !== undefined && scores.filler_words > 0 && (
                 <div className="mb-6">
                   <button
                     onClick={() => setShowFillerWordsDropdown(!showFillerWordsDropdown)}
@@ -268,35 +310,21 @@ export default function ScoresViewV2({
                         <div className="mt-2 p-4 bg-slate-900/50 border border-amber-500/20 rounded-xl max-h-64 overflow-y-auto">
                           <h4 className="text-sm font-semibold text-amber-300 mb-3">Filler Word Locations:</h4>
                           <div className="space-y-2">
-                            {fullTranscript?.filter((line, idx) => {
-                              const text = line.text || line.message || ''
-                              // Only match standalone filler words (not parts of other words)
-                              const fillerPattern = /\b(um|uhh?|uh|like|erm|err|hmm)\b/gi
-                              const isRepLine = line.speaker === 'rep' || line.speaker === 'user'
-                              return isRepLine && fillerPattern.test(text)
-                            }).map((line, idx) => {
-                              const text = line.text || line.message || ''
-                              const lineIndex = fullTranscript.indexOf(line)
-                              
-                              // Highlight filler words in the text
-                              const highlightedText = text.replace(
+                            {fillerWordEntries.map((entry, idx) => {
+                              const highlightedText = entry.text.replace(
                                 /\b(um|uhh?|uh|like|erm|err|hmm)\b/gi,
                                 '<mark class="bg-amber-500/30 text-amber-300 px-1 rounded">$1</mark>'
                               )
-                              
-                              // Format timestamp to simple M:SS format
-                              let displayTime = `Line ${lineIndex}`
-                              if (line.timestamp) {
+
+                              let displayTime = `Line ${entry.index + 1}`
+                              if (entry.timestamp) {
                                 try {
-                                  const timestamp = line.timestamp
-                                  // If it's already in M:SS format, use it
+                                  const timestamp = entry.timestamp
                                   if (/^\d{1,2}:\d{2}$/.test(timestamp)) {
                                     displayTime = timestamp
                                   } else {
-                                    // Parse ISO datetime and convert to seconds from start
                                     const date = new Date(timestamp)
-                                    // Assuming session start is first line timestamp
-                                    const firstLine = fullTranscript[0]
+                                    const firstLine = normalizedTranscript[0]
                                     if (firstLine?.timestamp) {
                                       const startDate = new Date(firstLine.timestamp)
                                       const secondsFromStart = Math.floor((date.getTime() - startDate.getTime()) / 1000)
@@ -306,17 +334,17 @@ export default function ScoresViewV2({
                                     }
                                   }
                                 } catch (e) {
-                                  // Keep default Line X format
+                                  // Keep default format
                                 }
                               }
-                              
+
                               return (
-                                <div key={idx} className="text-xs p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg hover:bg-amber-500/10 transition-colors">
+                                <div key={`${entry.index}-${idx}`} className="text-xs p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg hover:bg-amber-500/10 transition-colors">
                                   <div className="flex items-center gap-2 mb-2">
                                     <Clock className="w-3 h-3 text-amber-400" />
                                     <span className="text-amber-400 font-mono">{displayTime}</span>
                                   </div>
-                                  <p 
+                                  <p
                                     className="text-slate-300 leading-relaxed"
                                     dangerouslySetInnerHTML={{ __html: `"${highlightedText}"` }}
                                   />
@@ -409,12 +437,10 @@ export default function ScoresViewV2({
                       <span className="text-slate-400">Commission (30%)</span>
                       <span className="text-emerald-400 font-medium">${earningsData?.commission_earned?.toFixed(2) || '0.00'}</span>
                     </div>
-                    {earningsData?.bonus_modifiers && Object.values(earningsData.bonus_modifiers).some((v: any) => v > 0) && (
+                    {bonusModifierValues.length > 0 && bonusModifierValues.some((value) => value > 0) && (
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-400">Bonuses</span>
-                        <span className="text-yellow-400 font-medium">
-                          ${Object.values(earningsData.bonus_modifiers).reduce((a: any, b: any) => a + b, 0)}
-                        </span>
+                        <span className="text-yellow-400 font-medium">${totalBonus.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="pt-3 border-t border-emerald-500/20 flex justify-between">
@@ -458,20 +484,46 @@ export default function ScoresViewV2({
             <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">Session Timeline</h3>
           </div>
           
-          <SessionTimeline
-            duration={durationSeconds}
-            events={keyMoments}
-            lineRatings={lineRatings}
-            fullTranscript={fullTranscript}
-            customerName={agentName}
-            salesRepName="Canon Weaver"
-            dealOutcome={{
-              closed: saleClosed || false,
-              amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
-              product: dealDetails?.product_sold || 'Service'
-            }}
-            audioUrl={audioUrl}
-          />
+          {videoUrl ? (
+            <SessionTimelineWithVideo
+              duration={durationSeconds}
+              videoUrl={videoUrl}
+              audioUrl={audioUrl}
+              keyMoments={keyMoments.map((moment, idx) => ({
+                id: `moment-${idx}`,
+                timestamp: parseTimestamp(moment.timestamp),
+                title: moment.moment_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+                type: moment.moment_type.includes('rapport') ? 'rapport' :
+                      moment.moment_type.includes('discovery') ? 'discovery' :
+                      moment.moment_type.includes('objection') ? 'objection' :
+                      moment.moment_type.includes('closing') ? 'closing' : 'critical' as const,
+                description: moment.quote,
+                quote: moment.quote
+              }))}
+              customerName={agentName}
+              salesRepName="Canon Weaver"
+              dealOutcome={{
+                closed: saleClosed || false,
+                amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
+                product: dealDetails?.product_sold || 'Service'
+              }}
+            />
+          ) : (
+            <SessionTimeline
+              duration={durationSeconds}
+              events={keyMoments}
+              lineRatings={lineRatings}
+              fullTranscript={normalizedTranscript}
+              customerName={agentName}
+              salesRepName="Canon Weaver"
+              dealOutcome={{
+                closed: saleClosed || false,
+                amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
+                product: dealDetails?.product_sold || 'Service'
+              }}
+              audioUrl={audioUrl}
+            />
+          )}
         </section>
       )}
 
@@ -481,7 +533,7 @@ export default function ScoresViewV2({
         overallScore={overallScore}
         scores={scores}
         feedback={feedback}
-        fullTranscript={fullTranscript}
+        fullTranscript={normalizedTranscript}
         saleClosed={saleClosed}
         virtualEarnings={virtualEarnings}
       />

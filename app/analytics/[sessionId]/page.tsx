@@ -307,6 +307,7 @@ export default function AnalyticsPage() {
           agentName={session.agent_name || 'AI Agent'}
           durationSeconds={session.duration_seconds || 600}
           audioUrl={session.audio_url}
+          videoUrl={session.video_url}
         />
         {session.audio_url && (
           <div className="mt-6">

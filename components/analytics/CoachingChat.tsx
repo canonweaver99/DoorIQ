@@ -18,7 +18,7 @@ interface CoachingChatProps {
     strengths: string[]
     improvements: string[]
   }
-  fullTranscript?: Array<{ speaker: string, text: string }>
+  fullTranscript?: Array<{ speaker: string, text?: string, message?: string }>
   saleClosed?: boolean
   virtualEarnings?: number
 }

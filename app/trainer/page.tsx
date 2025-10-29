@@ -7,6 +7,8 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import ElevenLabsConversation from '@/components/trainer/ElevenLabsConversation'
 import WebcamRecorder from '@/components/trainer/WebcamRecorder'
+import VideoRecordingPreview from '@/components/trainer/VideoRecordingPreview'
+import { useVideoSessionRecording } from '@/hooks/useVideoSessionRecording'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
@@ -78,6 +80,9 @@ function TrainerPageContent() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [showPaywall, setShowPaywall] = useState(false)
+  
+  // Video recording state
+  const { isRecording: isVideoRecording, getVideoStream } = useVideoSessionRecording(sessionId)
 
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
@@ -508,6 +513,12 @@ function TrainerPageContent() {
           autostart 
         />
       )}
+      
+      {/* Video Recording Preview */}
+      <VideoRecordingPreview 
+        stream={getVideoStream()} 
+        isRecording={isVideoRecording} 
+      />
 
       <style jsx global>{`
         @keyframes fadeIn {

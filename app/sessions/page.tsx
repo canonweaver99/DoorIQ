@@ -12,6 +12,7 @@ import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
 import CircularProgress from '@/components/ui/CircularProgress'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import PasswordResetModal from '@/components/auth/PasswordResetModal'
+import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 
 type Session = Database['public']['Tables']['live_sessions']['Row']
 
@@ -430,22 +431,7 @@ export default function SessionsPage() {
                             alt={session.agent_name || 'Agent'}
                             fill
                             className="object-cover"
-                            style={{
-                              objectPosition: session.agent_name === 'Too Expensive Tim' ? 'center 30%' :
-                                            session.agent_name === 'Already Got It Alan' ? 'center 25%' :
-                                            session.agent_name === 'No Problem Nancy' ? 'center center' :
-                                            session.agent_name === 'Not Interested Nick' ? 'center 40%' :
-                                            session.agent_name === 'Spouse Check Susan' ? 'center center' :
-                                            session.agent_name === 'Busy Beth' ? 'center center' :
-                                            'center center',
-                              transform: session.agent_name === 'Too Expensive Tim' ? 'scale(1.2)' :
-                                        session.agent_name === 'Already Got It Alan' ? 'scale(1.2)' :
-                                        session.agent_name === 'No Problem Nancy' ? 'scale(1.1)' :
-                                        session.agent_name === 'Not Interested Nick' ? 'scale(1.2)' :
-                                        session.agent_name === 'Spouse Check Susan' ? 'scale(1.0)' :
-                                        session.agent_name === 'Busy Beth' ? 'scale(0.9)' :
-                                        'scale(1.0)'
-                            }}
+                            style={getAgentImageStyle(session.agent_name)}
                             sizes={`${circleSize}px`}
                           />
                         </div>

@@ -21,7 +21,7 @@ interface SessionTimelineProps {
   duration: number // in seconds
   events: any[]
   lineRatings?: any[]
-  fullTranscript?: Array<{ speaker: string, text: string, timestamp?: string }>
+  fullTranscript?: Array<{ speaker: string, text?: string, message?: string, timestamp?: string }>
   customerName?: string
   salesRepName?: string
   dealOutcome?: {

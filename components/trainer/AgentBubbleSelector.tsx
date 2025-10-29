@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { createClient } from '@/lib/supabase/client'
@@ -174,9 +175,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             ? Math.round(completedSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / completedSessions.length / 60)
             : null
           
-          // Progressive unlock logic - paid users get all agents, free users unlock progressively
-          const agentOrder = ALLOWED_AGENT_ORDER.indexOf(agent.name as AllowedAgentName)
-          const isLocked = !hasActiveSubscription && agentOrder > 2 && completedSessions.length === 0 && sessions.length < agentOrder
+          // All agents remain visually available; access is enforced when starting a session
+          const isLocked = false
           const isMastered = completedSessions.length >= 5 && bestScore && bestScore >= 80
           
           return {
@@ -489,23 +489,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             alt={agent.name}
                             fill
                             className="object-cover"
-                            style={{
-                              // Adjusted positioning and scaling per agent
-                              objectPosition: agent.name === 'Too Expensive Tim' ? 'center 30%' :
-                                            agent.name === 'Already Got It Alan' ? 'center 25%' :
-                                            agent.name === 'No Problem Nancy' ? 'center center' :
-                                            agent.name === 'Not Interested Nick' ? 'center 40%' :
-                                            agent.name === 'Spouse Check Susan' ? 'center center' :
-                                            agent.name === 'Busy Beth' ? 'center center' :
-                                            'center center',
-                              transform: agent.name === 'Too Expensive Tim' ? 'scale(1.2)' :
-                                        agent.name === 'Already Got It Alan' ? 'scale(1.2)' :
-                                        agent.name === 'No Problem Nancy' ? 'scale(1.1)' :
-                                        agent.name === 'Not Interested Nick' ? 'scale(1.2)' :
-                                        agent.name === 'Spouse Check Susan' ? 'scale(1.0)' :
-                                        agent.name === 'Busy Beth' ? 'scale(0.9)' :
-                                        'scale(1.0)'
-                            }}
+                            style={getAgentImageStyle(agent.name)}
                             sizes="352px"
                             quality={95}
                             priority={index < 6}
