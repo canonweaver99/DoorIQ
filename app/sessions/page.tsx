@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
@@ -13,6 +14,28 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import PasswordResetModal from '@/components/auth/PasswordResetModal'
 
 type Session = Database['public']['Tables']['live_sessions']['Row']
+
+// Agent image mapping - same as trainer page
+const getAgentImage = (agentName: string | null): string => {
+  if (!agentName) return '/agents/default.png'
+  
+  const agentImageMap: Record<string, string> = {
+    'Austin': '/Austin Boss.png',
+    'No Problem Nancy': '/No Problem Nancy.png',
+    'Already Got It Alan': '/Already got it Alan landscape.png',
+    'Not Interested Nick': '/Not Interested Nick.png',
+    'DIY Dave': '/DIY DAVE.png',
+    'Too Expensive Tim': '/Too Expensive Tim.png',
+    'Spouse Check Susan': '/Spouse Check Susan.png',
+    'Busy Beth': '/Busy Beth.png',
+    'Renter Randy': '/Renter Randy.png',
+    'Skeptical Sam': '/Skeptical Sam.png',
+    'Just Treated Jerry': '/Just Treated Jerry.png',
+    'Think About It Tina': '/Think About It Tina.png'
+  }
+  
+  return agentImageMap[agentName] || '/agents/default.png'
+}
 
 export default function SessionsPage() {
   const router = useRouter()
@@ -397,13 +420,34 @@ export default function SessionsPage() {
                       </button>
                       
                       <div className="flex-1 flex items-start gap-3">
-                        {/* Agent Avatar */}
-                        <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {session.agent_name && (
-                            <span className="text-sm lg:text-base font-bold text-purple-300">
-                              {session.agent_name.charAt(0)}
-                            </span>
-                          )}
+                        {/* Agent Avatar - Same size as percentage circle */}
+                        <div 
+                          className="rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/30 flex-shrink-0 overflow-hidden relative"
+                          style={{ width: `${circleSize}px`, height: `${circleSize}px` }}
+                        >
+                          <Image
+                            src={getAgentImage(session.agent_name)}
+                            alt={session.agent_name || 'Agent'}
+                            fill
+                            className="object-cover"
+                            style={{
+                              objectPosition: session.agent_name === 'Too Expensive Tim' ? 'center 30%' :
+                                            session.agent_name === 'Already Got It Alan' ? 'center 25%' :
+                                            session.agent_name === 'No Problem Nancy' ? 'center center' :
+                                            session.agent_name === 'Not Interested Nick' ? 'center 40%' :
+                                            session.agent_name === 'Spouse Check Susan' ? 'center center' :
+                                            session.agent_name === 'Busy Beth' ? 'center center' :
+                                            'center center',
+                              transform: session.agent_name === 'Too Expensive Tim' ? 'scale(1.2)' :
+                                        session.agent_name === 'Already Got It Alan' ? 'scale(1.2)' :
+                                        session.agent_name === 'No Problem Nancy' ? 'scale(1.1)' :
+                                        session.agent_name === 'Not Interested Nick' ? 'scale(1.2)' :
+                                        session.agent_name === 'Spouse Check Susan' ? 'scale(1.0)' :
+                                        session.agent_name === 'Busy Beth' ? 'scale(0.9)' :
+                                        'scale(1.0)'
+                            }}
+                            sizes={`${circleSize}px`}
+                          />
                         </div>
                         
                         <div className="flex-1">

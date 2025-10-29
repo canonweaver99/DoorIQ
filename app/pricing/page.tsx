@@ -208,8 +208,8 @@ function PricingPageContent() {
           <Crown className="w-4 h-4" />
           Current Plan
         </span>
-      ) : "Get Started Free",
-      href: isCurrentPlan("Free") ? "#" : "/auth/signup",
+      ) : hasActiveSubscription ? "Switch to Free" : "Get Started Free",
+      href: isCurrentPlan("Free") ? "#" : (hasActiveSubscription ? "/billing" : "/auth/signup"),
       onClick: isCurrentPlan("Free") ? () => {} : undefined,
       isCurrentPlan: isCurrentPlan("Free"),
     },

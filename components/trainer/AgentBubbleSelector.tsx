@@ -468,7 +468,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     {/* Profile Image in Center - synchronized with circles */}
                     {agent.image && (
                       <motion.div 
-                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        className="absolute inset-[6px] flex items-center justify-center pointer-events-none"
                         animate={isHovered ? {
                           scale: 1,
                         } : {
@@ -490,15 +490,21 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             fill
                             className="object-cover"
                             style={{
-                              // Zoom in on faces for specific agents
+                              // Adjusted positioning and scaling per agent
                               objectPosition: agent.name === 'Too Expensive Tim' ? 'center 30%' :
                                             agent.name === 'Already Got It Alan' ? 'center 25%' :
-                                            agent.name === 'No Problem Nancy' ? 'center 30%' :
-                                            agent.name === 'Not Interested Nick' ? 'center 25%' :
+                                            agent.name === 'No Problem Nancy' ? 'center center' :
+                                            agent.name === 'Not Interested Nick' ? 'center 40%' :
+                                            agent.name === 'Spouse Check Susan' ? 'center center' :
+                                            agent.name === 'Busy Beth' ? 'center center' :
                                             'center center',
-                              transform: ['Too Expensive Tim', 'Already Got It Alan', 'No Problem Nancy', 'Not Interested Nick'].includes(agent.name)
-                                ? 'scale(1.4)'
-                                : 'scale(1.0)'
+                              transform: agent.name === 'Too Expensive Tim' ? 'scale(1.2)' :
+                                        agent.name === 'Already Got It Alan' ? 'scale(1.2)' :
+                                        agent.name === 'No Problem Nancy' ? 'scale(1.1)' :
+                                        agent.name === 'Not Interested Nick' ? 'scale(1.2)' :
+                                        agent.name === 'Spouse Check Susan' ? 'scale(1.0)' :
+                                        agent.name === 'Busy Beth' ? 'scale(0.9)' :
+                                        'scale(1.0)'
                             }}
                             sizes="352px"
                             quality={95}
