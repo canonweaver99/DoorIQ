@@ -67,7 +67,7 @@ export default function AudioPlayer({
 
   // Format time as M:SS
   const formatTime = useCallback((seconds: number): string => {
-    if (!seconds || isNaN(seconds)) return '0:00'
+    if (!seconds || isNaN(seconds) || !isFinite(seconds)) return '0:00'
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
@@ -156,7 +156,7 @@ export default function AudioPlayer({
     )
   }
 
-  const progress = audioState.duration > 0 
+  const progress = audioState.duration > 0 && isFinite(audioState.duration)
     ? (audioState.currentTime / audioState.duration) * 100 
     : 0
 

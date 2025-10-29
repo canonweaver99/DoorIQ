@@ -6,14 +6,34 @@ export function useSessionRecording(sessionId: string | null) {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const streamsRef = useRef<MediaStream[]>([])
 
   const startRecording = useCallback(async () => {
     try {
       console.log('🎙️ useSessionRecording.startRecording called for sessionId:', sessionId)
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      console.log('✅ Got media stream for recording')
       
-      const mediaRecorder = new MediaRecorder(stream, {
+      // Get user microphone
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      console.log('✅ Got microphone stream for recording')
+      streamsRef.current.push(micStream)
+      
+      // Create AudioContext to mix streams
+      const audioContext = new AudioContext()
+      audioContextRef.current = audioContext
+      const destination = audioContext.createMediaStreamDestination()
+      
+      // Connect microphone
+      const micSource = audioContext.createMediaStreamSource(micStream)
+      micSource.connect(destination)
+      
+      // NOTE: Browser limitation - can't directly capture tab audio (ElevenLabs voice)
+      // The user's browser plays the AI voice, but we can't capture it programmatically
+      // This is a browser security restriction. For full conversation recording,
+      // users would need to use browser extensions or desktop recording software.
+      console.log('ℹ️ Recording user microphone only (browser cannot capture AI voice output)')
+      
+      const mediaRecorder = new MediaRecorder(destination.stream, {
         mimeType: 'audio/webm'
       })
 
@@ -31,6 +51,14 @@ export function useSessionRecording(sessionId: string | null) {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
         console.log('📦 Audio blob created, size:', blob.size, 'bytes')
         setAudioBlob(blob)
+        
+        // Clean up
+        if (audioContextRef.current) {
+          audioContextRef.current.close()
+          audioContextRef.current = null
+        }
+        streamsRef.current.forEach(stream => stream.getTracks().forEach(track => track.stop()))
+        streamsRef.current = []
         
         // Upload to Supabase Storage if we have a session ID
         if (sessionId) {

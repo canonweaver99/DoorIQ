@@ -69,81 +69,42 @@ export default function SessionTimeline({
   const audioRef = useRef<HTMLAudioElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
 
-  // Create timeline segments with enhanced design
-  const segments: TimelineSegment[] = [
-    { 
-      id: 0,
-      position: 15,
-      timestamp: formatTime(duration * 0.15),
-      startTime: 0,
-      endTime: duration * 0.3,
-      title: 'Opening & Rapport',
-      type: 'opening',
-      intensity: 'medium',
-      icon: MessageSquare,
-      color: 'from-blue-500 to-cyan-500',
-      quickTip: 'Build connection with personal touches',
+  // Use AI-generated timeline moments from grading (not hardcoded)
+  const segments: TimelineSegment[] = events && events.length > 0 ? events.map((event: any, index: number) => {
+    const eventTime = typeof event.timestamp === 'string' ? parseTimestamp(event.timestamp) : (event.timestamp || 0)
+    return {
+      id: index,
+      position: event.position || ((eventTime / duration) * 100),
+      timestamp: event.timestamp || formatTime(eventTime),
+      startTime: Math.max(0, eventTime - 2.5), // 5-second clip: 2.5s before
+      endTime: Math.min(duration, eventTime + 2.5), // 2.5s after
+      title: event.moment_type || event.title || 'Key Moment',
+      type: (event.moment_type || 'opening').toLowerCase().includes('rapport') ? 'opening' :
+            (event.moment_type || 'discovery').toLowerCase().includes('discovery') ? 'discovery' :
+            (event.moment_type || 'closing').toLowerCase().includes('clos') ? 'closing' : 'presentation',
+      intensity: event.is_positive ? 'high' : 'medium',
+      icon: (event.moment_type || '').toLowerCase().includes('rapport') ? MessageSquare :
+            (event.moment_type || '').toLowerCase().includes('discovery') ? Mic :
+            (event.moment_type || '').toLowerCase().includes('clos') ? Zap : Sparkles,
+      color: event.is_positive ? 'from-green-500 to-emerald-500' : 'from-blue-500 to-purple-500',
+      quickTip: event.key_takeaway || event.description || 'Key moment',
       feedback: {
-        good: 'Strong personal connection, used customer name, warm tone',
-        improve: 'Add more local references, mirror their energy level',
-        tip: 'Try mentioning something specific about their neighborhood or recent local events'
-      }
-    },
-    { 
-      id: 1,
-      position: 35,
-      timestamp: formatTime(duration * 0.35),
-      startTime: duration * 0.3,
-      endTime: duration * 0.5,
-      title: 'Discovery Phase',
-      type: 'discovery',
-      intensity: 'high',
-      icon: Mic,
-      color: 'from-purple-500 to-pink-500',
-      quickTip: 'Ask open-ended questions',
-      feedback: {
-        good: 'Asked open-ended questions, listened actively',
-        improve: 'Dig deeper into their specific concerns about pests',
-        tip: 'Use phrases like "Tell me more about..." to encourage elaboration'
-      }
-    },
-    { 
-      id: 2,
-      position: 60,
-      timestamp: formatTime(duration * 0.6),
-      startTime: duration * 0.5,
-      endTime: duration * 0.75,
-      title: 'Solution Presentation',
-      type: 'presentation',
-      intensity: 'high',
-      icon: Sparkles,
-      color: 'from-amber-500 to-orange-500',
-      quickTip: 'Focus on value, not features',
-      feedback: {
-        good: 'Clear explanation of services, addressed safety concerns',
-        improve: 'More emphasis on unique value proposition',
-        tip: 'Use social proof: "Your neighbor at 123 Main St had similar concerns..."'
-      }
-    },
-    { 
-      id: 3,
-      position: 85,
-      timestamp: formatTime(duration * 0.85),
-      startTime: duration * 0.75,
-      endTime: duration,
-      title: 'Closing & Next Steps',
-      type: 'closing',
-      intensity: dealOutcome?.closed ? 'high' : 'low',
-      icon: Zap,
-      color: dealOutcome?.closed ? 'from-green-500 to-emerald-500' : 'from-red-500 to-rose-500',
-      quickTip: 'Be direct but not pushy',
-      feedback: {
-        good: 'Clear call to action, handled objections well',
-        improve: 'Create more urgency without being aggressive',
-        tip: 'Offer a limited-time incentive: "If we can schedule this week..."'
+        good: event.key_takeaway || event.description || '',
+        improve: '',
+        tip: event.key_takeaway || event.description || ''
       }
     }
-  ]
+  }) : []
+  
+  // Helper to parse "M:SS" timestamp strings
+  function parseTimestamp(ts: string): number {
+    if (!ts || typeof ts !== 'string') return 0
+    const parts = ts.split(':')
+    if (parts.length === 2) {
+      return parseInt(parts[0]) * 60 + parseInt(parts[1])
+    }
+    return 0
+  }
 
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60)
