@@ -6,9 +6,11 @@ import { Camera, CameraOff, Mic, MicOff, Video } from 'lucide-react'
 interface WebcamRecorderProps {
   sessionActive: boolean
   duration?: number
+  onStreamReady?: (stream: MediaStream) => void
+  onStreamEnd?: () => void
 }
 
-export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRecorderProps) {
+export default function WebcamRecorder({ sessionActive, duration = 0, onStreamReady, onStreamEnd }: WebcamRecorderProps) {
   const [isWebcamActive, setIsWebcamActive] = useState(false)
   const [isMicActive, setIsMicActive] = useState(true)
   const [hasPermission, setHasPermission] = useState(false)
@@ -108,6 +110,11 @@ export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRe
       setIsRequestingPermission(false)
       setError(null)
       
+      // Notify parent that stream is ready for dual recording
+      if (onStreamReady) {
+        onStreamReady(stream)
+      }
+      
       // Then attach stream to video element
       if (videoRef.current) {
         console.log('📹 Setting srcObject on video element')
@@ -168,6 +175,11 @@ export default function WebcamRecorder({ sessionActive, duration = 0 }: WebcamRe
     }
     
     setIsWebcamActive(false)
+    
+    // Notify parent that stream ended
+    if (onStreamEnd) {
+      onStreamEnd()
+    }
   }
 
   const toggleWebcam = () => {

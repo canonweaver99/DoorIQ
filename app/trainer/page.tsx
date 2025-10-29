@@ -7,8 +7,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import ElevenLabsConversation from '@/components/trainer/ElevenLabsConversation'
 import WebcamRecorder from '@/components/trainer/WebcamRecorder'
-import VideoRecordingPreview from '@/components/trainer/VideoRecordingPreview'
-import { useVideoSessionRecording } from '@/hooks/useVideoSessionRecording'
+import { useDualCameraRecording } from '@/hooks/useDualCameraRecording'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
@@ -80,9 +79,10 @@ function TrainerPageContent() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [userCameraStream, setUserCameraStream] = useState<MediaStream | null>(null)
   
-  // Video recording state (video only, no audio - ElevenLabs needs exclusive mic access)
-  const { isRecording: isVideoRecording, getVideoStream } = useVideoSessionRecording(sessionId, { audio: false, video: true })
+  // Dual camera recording (Loom-style: agent + user side-by-side)
+  const { isRecording: isVideoRecording, startRecording: startDualCameraRecording, stopRecording: stopDualCameraRecording } = useDualCameraRecording(sessionId)
 
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
@@ -321,6 +321,12 @@ function TrainerPageContent() {
     setSessionActive(false)
     setConversationToken(null)
 
+    // Stop dual camera recording
+    if (isVideoRecording) {
+      console.log('🛑 Stopping dual camera recording from endSession')
+      stopDualCameraRecording()
+    }
+
     if (durationInterval.current) clearInterval(durationInterval.current)
       if (signedUrlAbortRef.current) {
         signedUrlAbortRef.current.abort()
@@ -347,7 +353,7 @@ function TrainerPageContent() {
         router.push('/trainer')
         setLoading(false)
       }
-  }, [sessionId, duration, transcript, router])
+  }, [sessionId, duration, transcript, router, isVideoRecording, stopDualCameraRecording])
 
   // Handle agent end call event
   useEffect(() => {
@@ -484,7 +490,27 @@ function TrainerPageContent() {
             
             {/* Right: Webcam */}
             <div className="relative bg-gradient-to-br from-green-950/20 to-transparent">
-              <WebcamRecorder sessionActive={sessionActive} duration={duration} />
+              <WebcamRecorder 
+                sessionActive={sessionActive} 
+                duration={duration}
+                onStreamReady={(stream) => {
+                  console.log('📹 User camera stream ready, starting dual recording...')
+                  setUserCameraStream(stream)
+                  // Start dual camera recording when both user stream and session are ready
+                  if (sessionActive && selectedAgent) {
+                    const agentImageSrc = resolveAgentImage(selectedAgent, true)
+                    if (agentImageSrc) {
+                      startDualCameraRecording(stream, agentImageSrc).catch((error) => {
+                        console.error('❌ Failed to start dual camera recording:', error)
+                      })
+                    }
+                  }
+                }}
+                onStreamEnd={() => {
+                  console.log('📹 User camera stream ended')
+                  setUserCameraStream(null)
+                }}
+              />
             </div>
           </div>
 
@@ -545,11 +571,7 @@ function TrainerPageContent() {
         />
       )}
       
-      {/* Video Recording Preview */}
-      <VideoRecordingPreview 
-        stream={getVideoStream()} 
-        isRecording={isVideoRecording} 
-      />
+      {/* Video recording happens automatically via WebcamRecorder callbacks */}
 
       <style jsx global>{`
         @keyframes fadeIn {
