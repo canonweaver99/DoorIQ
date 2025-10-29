@@ -77,8 +77,13 @@ export default function LoadingPage() {
             overall_score: session.overall_score
           })
           
-          // Check if grading is complete
-          if (session.analytics?.line_ratings && session.analytics.line_ratings.length > 0) {
+          // Check if grading is complete (line_ratings are disabled for performance)
+          const graded = Boolean(
+            session.overall_score ||
+            session.analytics?.scores?.overall ||
+            session.analytics?.graded_at
+          )
+          if (graded) {
             console.log('✅ Grading complete! Redirecting to analytics...')
             setGradingStatus('completed')
             setStatus('Grading complete! Loading your results...')

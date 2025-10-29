@@ -313,15 +313,7 @@ export default function AnalyticsPage() {
           audioUrl={session.audio_url}
           videoUrl={session.video_url}
         />
-        {session.audio_url && (
-          <div className="mt-6">
-            <AudioPlayer 
-              audioUrl={session.audio_url}
-              duration={session.duration_seconds}
-              transcript={session.full_transcript}
-            />
-          </div>
-        )}
+        {/* Audio playback archived - focusing on grading consistency */}
       </>
     )
   }
