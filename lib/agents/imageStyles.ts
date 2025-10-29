@@ -6,58 +6,42 @@ type AgentImageStyle = {
 }
 
 const DEFAULT_STYLE: Required<AgentImageStyle> = {
-  objectPosition: '50% 120%',
-  scale: 0.82,
+  objectPosition: '50% 52%',
+  scale: 1.15,
 }
 
 const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
-  'Austin': {
-    objectPosition: '50% 120%',
-    scale: 0.85,
-  },
   'Too Expensive Tim': {
-    objectPosition: '50% 120%',
-    scale: 0.85,
+    objectPosition: '50% 34%',
+    scale: 1.27,
   },
   'Already Got It Alan': {
-    objectPosition: '50% 120%',
-    scale: 0.83,
+    objectPosition: '50% 36%',
+    scale: 1.23,
   },
   'No Problem Nancy': {
-    objectPosition: '50% 120%',
-    scale: 0.8,
+    objectPosition: '50% 50%',
+    scale: 1.2,
   },
   'Not Interested Nick': {
-    objectPosition: '50% 120%',
-    scale: 0.88,
+    objectPosition: '50% 52%',
+    scale: 1.5,
   },
   'Spouse Check Susan': {
-    objectPosition: '50% 120%',
-    scale: 0.83,
+    objectPosition: '50% 50%',
+    scale: 1.21,
   },
   'Busy Beth': {
-    objectPosition: '50% 120%',
-    scale: 0.76,
+    objectPosition: '50% 60%',
+    scale: 1.28,
   },
   'Renter Randy': {
-    objectPosition: '50% 120%',
-    scale: 0.82,
+    objectPosition: '50% 54%',
+    scale: 1.15,
   },
   'Just Treated Jerry': {
-    objectPosition: '50% 120%',
-    scale: 0.8,
-  },
-  'DIY Dave': {
-    objectPosition: '50% 120%',
-    scale: 0.85,
-  },
-  'Skeptical Sam': {
-    objectPosition: '50% 120%',
-    scale: 0.82,
-  },
-  'Think About It Tina': {
-    objectPosition: '50% 120%',
-    scale: 0.82,
+    objectPosition: '50% 52%',
+    scale: 1.12,
   },
 }
 
@@ -79,4 +63,3 @@ export function getAgentImageStyle(agentName?: string | null): CSSProperties {
     transform: `scale(${scale})`,
   }
 }
-
