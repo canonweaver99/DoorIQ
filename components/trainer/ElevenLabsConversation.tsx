@@ -418,7 +418,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
     } catch (e) {
       console.error('❌ Error ending conversation:', e)
     }
-  }, [stopAudioRecording, stopVideoRecording])
+  }, [stopAudioRecording])
 
   useEffect(() => {
     if (autostart) {
