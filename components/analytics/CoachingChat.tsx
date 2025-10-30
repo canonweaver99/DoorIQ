@@ -320,6 +320,7 @@ export default function CoachingChat({
                 )}
               </div>
             </button>
+            </div>
           </div>
         </div>
       </div>
