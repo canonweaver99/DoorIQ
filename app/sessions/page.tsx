@@ -28,26 +28,14 @@ const getAgentColorVariant = (agentName: string | null): keyof typeof COLOR_VARI
   return 'primary'
 }
 
-// Agent image mapping - same as trainer page
+// Get cutout bubble image (no background) - for consistency with practice page
 const getAgentImage = (agentName: string | null): string => {
   if (!agentName) return '/agents/default.png'
-  
-  const agentImageMap: Record<string, string> = {
-    'Austin': '/Austin Boss.png',
-    'No Problem Nancy': '/No Problem Nancy.png',
-    'Already Got It Alan': '/Already got it Alan landscape.png',
-    'Not Interested Nick': '/Not Interested Nick.png',
-    'DIY Dave': '/DIY DAVE.png',
-    'Too Expensive Tim': '/Too Expensive Tim.png',
-    'Spouse Check Susan': '/Spouse Check Susan.png',
-    'Busy Beth': '/Busy Beth.png',
-    'Renter Randy': '/Renter Randy.png',
-    'Skeptical Sam': '/Skeptical Sam.png',
-    'Just Treated Jerry': '/Just Treated Jerry.png',
-    'Think About It Tina': '/Think About It Tina.png'
+  const agentNameTyped = agentName as AllowedAgentName
+  if (PERSONA_METADATA[agentNameTyped]?.bubble?.image) {
+    return PERSONA_METADATA[agentNameTyped].bubble.image
   }
-  
-  return agentImageMap[agentName] || '/agents/default.png'
+  return '/agents/default.png'
 }
 
 export default function SessionsPage() {

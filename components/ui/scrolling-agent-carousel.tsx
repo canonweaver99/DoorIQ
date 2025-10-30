@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { Button } from "@/components/ui/button";
+import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 
 // Layout + animation tuning
 const AGENT_BASE_SIZE_PX = 240; // smaller base size
@@ -70,20 +71,16 @@ export const COLOR_VARIANTS = {
   },
 } as const;
 
-const agents = [
-  { name: "Alan", fullName: "Already Got It Alan", src: "/agents/alan.png", color: "tertiary" },
-  { name: "Austin", fullName: "Austin", src: "/Austin Boss.png", color: "primary" },
-  { name: "Beth", fullName: "Busy Beth", src: "/agents/beth.png", color: "octonary" },
-  { name: "Dave", fullName: "DIY Dave", src: "/agents/dave.png", color: "quinary" },
-  { name: "Jerry", fullName: "Just Treated Jerry", src: "/agents/jerry.png", color: "duodenary" },
-  { name: "Nancy", fullName: "No Problem Nancy", src: "/agents/nancy.png", color: "secondary" },
-  { name: "Nick", fullName: "Not Interested Nick", src: "/agents/nick.png", color: "quaternary" },
-  { name: "Randy", fullName: "Renter Randy", src: "/agents/randy.png", color: "nonary" },
-  { name: "Sam", fullName: "Skeptical Sam", src: "/agents/sam.png", color: "denary" },
-  { name: "Susan", fullName: "Spouse Check Susan", src: "/agents/susan.png", color: "septenary" },
-  { name: "Tim", fullName: "Too Expensive Tim", src: "/agents/tim.png", color: "senary" },
-  { name: "Tina", fullName: "Think About It Tina", src: "/agents/tina.png", color: "undenary" },
-];
+// Use cutout bubble images from PERSONA_METADATA for consistency
+const agents = ALLOWED_AGENT_ORDER.slice(0, 12).map((agentName) => {
+  const metadata = PERSONA_METADATA[agentName];
+  return {
+    name: agentName.split(' ').slice(-1)[0], // Get last name for display
+    fullName: agentName,
+    src: metadata?.bubble?.image || '/agents/default.png', // Use cutout bubble image (no background)
+    color: metadata?.bubble?.color || 'primary'
+  };
+});
 
 // Duplicate agents to create seamless loop
 const loopedAgents = [...agents, ...agents, ...agents];

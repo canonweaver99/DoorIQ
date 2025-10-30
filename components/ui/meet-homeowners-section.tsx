@@ -9,18 +9,25 @@ import { Button } from '@/components/ui/button'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from '@/components/trainer/personas'
+import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 
 export function MeetHomeownersSection() {
   const { ref, controls } = useScrollAnimation(0.2)
   
-  const agents = [
-    { name: "Austin", image: "/Austin Boss.png", trait: "The Skeptic", color: "primary" as keyof typeof COLOR_VARIANTS },
-    { name: "Nancy", image: "/agents/nancy.png", trait: "Problem-Free Nancy", color: "tertiary" as keyof typeof COLOR_VARIANTS },
-    { name: "Tim", image: "/agents/tim.png", trait: "Price Conscious", color: "quinary" as keyof typeof COLOR_VARIANTS },
-    { name: "Beth", image: "/agents/beth.png", trait: "Always Busy", color: "secondary" as keyof typeof COLOR_VARIANTS },
-    { name: "Sam", image: "/agents/sam.png", trait: "Data-Driven", color: "senary" as keyof typeof COLOR_VARIANTS },
-    { name: "Susan", image: "/agents/susan.png", trait: "Decision Deferred", color: "quaternary" as keyof typeof COLOR_VARIANTS },
-  ]
+  // Use the same agents as practice page with cutout bubble images
+  const agentNames: AllowedAgentName[] = ['Austin', 'No Problem Nancy', 'Too Expensive Tim', 'Busy Beth', 'Skeptical Sam', 'Spouse Check Susan']
+  
+  const agents = agentNames.map((agentName) => {
+    const metadata = PERSONA_METADATA[agentName]
+    return {
+      name: agentName.split(' ').slice(-1)[0], // Get last name for display
+      fullName: agentName,
+      image: metadata?.bubble?.image || '/agents/default.png', // Use cutout bubble image (no background)
+      trait: metadata?.bubble?.subtitle || 'Training Partner',
+      color: (metadata?.bubble?.color || 'primary') as keyof typeof COLOR_VARIANTS
+    }
+  })
 
   return (
     <motion.section 
@@ -137,15 +144,7 @@ export function MeetHomeownersSection() {
                           alt={agent.name}
                           fill
                           className="object-cover relative z-10"
-                          style={{
-                            // Zoom in on faces for specific agents
-                            objectPosition: agent.name === 'Tim' ? 'center 30%' :
-                                          agent.name === 'Nancy' ? 'center 30%' :
-                                          'center center',
-                            transform: ['Tim', 'Nancy'].includes(agent.name)
-                              ? 'scale(1.4)'
-                              : 'scale(1.0)'
-                          }}
+                          style={getAgentImageStyle(agent.fullName)}
                           sizes="160px"
                         />
                       </div>

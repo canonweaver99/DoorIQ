@@ -24,6 +24,16 @@ import { useSubscription } from '@/hooks/useSubscription'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 
+// Helper to get cutout bubble image (no background)
+const getAgentBubbleImage = (agentName: string | null): string => {
+  if (!agentName) return '/agents/default.png'
+  const agentNameTyped = agentName as AllowedAgentName
+  if (PERSONA_METADATA[agentNameTyped]?.bubble?.image) {
+    return PERSONA_METADATA[agentNameTyped].bubble.image
+  }
+  return '/agents/default.png'
+}
+
 type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
 // Tab Navigation Component
@@ -175,7 +185,7 @@ function DashboardPageContent() {
     
     const sessionsThisWeek = sessions?.length || 0
     const avgScore = sessions && sessions.length > 0
-      ? Math.round(sessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / sessions.length)
+      ? Math.round(sessions.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessions.length)
       : 0
     
     // Calculate team rank based on virtual_earnings
@@ -219,15 +229,6 @@ function DashboardPageContent() {
       iconColor: '#3b82f6',
       iconBgColor: 'rgba(59, 130, 246, 0.2)',
       glowColor: 'rgba(59, 130, 246, 0.2)',
-      valueClass: 'text-[26px]'
-    },
-    { 
-      label: 'Avg Score', 
-      value: `${realStats.avgScore}%`, 
-      icon: TrendingUp,
-      iconColor: '#ec4899',
-      iconBgColor: 'rgba(236, 72, 153, 0.2)',
-      glowColor: 'rgba(236, 72, 153, 0.2)',
       valueClass: 'text-[26px]'
     },
     { 
@@ -287,7 +288,7 @@ function DashboardPageContent() {
             </div>
 
             {/* Right: Quick Stats Cards - Vibrant Icons */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {quickStats.map((stat, idx) => (
                 <motion.div
                   key={stat.label}
@@ -376,90 +377,100 @@ function OverviewTabContent() {
     
     if (!user) return
     
-    // Get recent sessions with agent_name
-    const { data: sessions } = await supabase
+    // Get ALL user sessions for calculating averages (not just recent 4)
+    const { data: allSessions } = await supabase
       .from('live_sessions')
-      .select('overall_score, created_at, homeowner_name, agent_name, virtual_earnings, rapport_score, discovery_score, objection_handling_score, closing_score')
+      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score')
+      .eq('user_id', user.id)
+      .not('overall_score', 'is', null)
+    
+    // Get recent sessions with agent_name (for display) - fetch all sessions, not just graded ones
+    const { data: recentSessionsData, error: recentSessionsError } = await supabase
+      .from('live_sessions')
+      .select('overall_score, created_at, homeowner_name, agent_name, agent_persona, virtual_earnings')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(4)
     
-    if (sessions && sessions.length > 0) {
+    if (recentSessionsError) {
+      console.error('Error fetching recent sessions:', recentSessionsError)
+    }
+    
+    // Format recent sessions for display
+    if (recentSessionsData && recentSessionsData.length > 0) {
       const gradients = ['from-purple-500/30', 'from-blue-500/30', 'from-pink-500/30', 'from-green-500/30']
       
-      // Get agent image mapping
-      const getAgentImage = (agentName: string | null): string => {
-        if (!agentName) return '/agents/default.png'
-        
-        const agentImageMap: Record<string, string> = {
-          'Austin': '/Austin Boss.png',
-          'No Problem Nancy': '/No Problem Nancy.png',
-          'Already Got It Alan': '/Already got it Alan landscape.png',
-          'Not Interested Nick': '/Not Interested Nick.png',
-          'DIY Dave': '/DIY DAVE.png',
-          'Too Expensive Tim': '/Too Expensive Tim.png',
-          'Spouse Check Susan': '/Spouse Check Susan.png',
-          'Busy Beth': '/Busy Beth.png',
-          'Renter Randy': '/Renter Randy.png',
-          'Skeptical Sam': '/Skeptical Sam.png',
-          'Just Treated Jerry': '/Just Treated Jerry.png',
-          'Think About It Tina': '/Think About It Tina.png',
-          'Comparison Katie': '/agents/default.png',
-          'Bad Experience Bill': '/agents/default.png',
-          'Neighbor Reference Nate': '/agents/default.png'
-        }
-        
-        return agentImageMap[agentName] || '/agents/default.png'
-      }
-      
-      const formattedSessions = sessions.map((session, idx) => {
+      const formattedSessions = recentSessionsData.map((session: any, idx: number) => {
         const timeAgo = Math.floor((Date.now() - new Date(session.created_at).getTime()) / (1000 * 60 * 60))
-        const agentName = session.agent_name || session.homeowner_name || null
+        // Try agent_name first, then agent_persona, then homeowner_name
+        const agentName = session.agent_name || session.agent_persona || session.homeowner_name || null
         return {
-          name: session.agent_name || session.homeowner_name || 'Practice Session',
+          name: session.agent_name || session.agent_persona || session.homeowner_name || 'Practice Session',
           score: session.overall_score || 0,
           earned: session.virtual_earnings || 0,
-          avatar: getAgentImage(agentName),
+          avatar: getAgentBubbleImage(agentName),
           time: timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`,
           gradient: gradients[idx % gradients.length]
         }
       })
+      console.log('✅ Formatted recent sessions:', formattedSessions)
       setRecentSessions(formattedSessions)
+    } else {
+      console.log('⚠️ No recent sessions found')
+      setRecentSessions([])
+    }
+    
+    // Fetch real notifications from messages
+    const { data: messages } = await supabase
+      .from('messages')
+      .select('*, sender:users!messages_sender_id_fkey(full_name)')
+      .eq('recipient_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(4)
+    
+    if (messages && messages.length > 0) {
+      const formattedNotifications = messages.map((msg: any) => {
+        const timeAgo = Math.floor((Date.now() - new Date(msg.created_at).getTime()) / (1000 * 60 * 60))
+        const senderName = msg.sender?.full_name || 'Manager'
+        
+        return {
+          type: 'manager',
+          title: 'Message from Manager',
+          message: msg.message || msg.message_text || '',
+          time: timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`,
+          iconColor: '#a855f7',
+          iconBgColor: 'rgba(168, 85, 247, 0.2)'
+        }
+      })
+      setNotifications(formattedNotifications)
+    } else {
+      setNotifications([])
+    }
+    
+    // Calculate average scores from all sessions that have scores
+    if (allSessions && allSessions.length > 0) {
+      // Filter sessions with valid scores for each metric
+      const sessionsWithOverall = allSessions.filter((s: any) => s.overall_score !== null && s.overall_score > 0)
+      const sessionsWithRapport = allSessions.filter((s: any) => s.rapport_score !== null && s.rapport_score > 0)
+      const sessionsWithDiscovery = allSessions.filter((s: any) => s.discovery_score !== null && s.discovery_score > 0)
+      const sessionsWithObjection = allSessions.filter((s: any) => s.objection_handling_score !== null && s.objection_handling_score > 0)
+      const sessionsWithClosing = allSessions.filter((s: any) => s.close_score !== null && s.close_score > 0)
       
-      // Fetch real notifications from messages
-      const { data: messages } = await supabase
-        .from('messages')
-        .select('*, sender:users!messages_sender_id_fkey(full_name)')
-        .eq('recipient_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(4)
-      
-      if (messages && messages.length > 0) {
-        const formattedNotifications = messages.map((msg: any) => {
-          const timeAgo = Math.floor((Date.now() - new Date(msg.created_at).getTime()) / (1000 * 60 * 60))
-          const senderName = msg.sender?.full_name || 'Manager'
-          
-          return {
-            type: 'manager',
-            title: 'Message from Manager',
-            message: msg.message || msg.message_text || '',
-            time: timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`,
-            iconColor: '#a855f7',
-            iconBgColor: 'rgba(168, 85, 247, 0.2)'
-          }
-        })
-        setNotifications(formattedNotifications)
-      } else {
-        // No notifications yet
-        setNotifications([])
-      }
-      
-      // Calculate average scores
-      const avgOverall = Math.round(sessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / sessions.length)
-      const avgRapport = Math.round(sessions.reduce((sum, s) => sum + (s.rapport_score || 0), 0) / sessions.length)
-      const avgDiscovery = Math.round(sessions.reduce((sum, s) => sum + (s.discovery_score || 0), 0) / sessions.length)
-      const avgObjection = Math.round(sessions.reduce((sum, s) => sum + (s.objection_handling_score || 0), 0) / sessions.length)
-      const avgClosing = Math.round(sessions.reduce((sum, s) => sum + (s.closing_score || 0), 0) / sessions.length)
+      const avgOverall = sessionsWithOverall.length > 0
+        ? Math.round(sessionsWithOverall.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessionsWithOverall.length)
+        : 0
+      const avgRapport = sessionsWithRapport.length > 0
+        ? Math.round(sessionsWithRapport.reduce((sum: number, s: any) => sum + (s.rapport_score || 0), 0) / sessionsWithRapport.length)
+        : 0
+      const avgDiscovery = sessionsWithDiscovery.length > 0
+        ? Math.round(sessionsWithDiscovery.reduce((sum: number, s: any) => sum + (s.discovery_score || 0), 0) / sessionsWithDiscovery.length)
+        : 0
+      const avgObjection = sessionsWithObjection.length > 0
+        ? Math.round(sessionsWithObjection.reduce((sum: number, s: any) => sum + (s.objection_handling_score || 0), 0) / sessionsWithObjection.length)
+        : 0
+      const avgClosing = sessionsWithClosing.length > 0
+        ? Math.round(sessionsWithClosing.reduce((sum: number, s: any) => sum + (s.close_score || 0), 0) / sessionsWithClosing.length)
+        : 0
       
       setPerformanceMetrics([
         {
@@ -746,7 +757,39 @@ function OverviewTabContent() {
 
           {/* Enhanced Chart */}
           <div ref={chartRef} className="relative h-64">
-            <svg className="w-full h-full" viewBox="0 0 850 260">
+            {/* Tooltip overlay - positioned absolutely outside SVG */}
+            {hoveredPoint && chartRef.current && (() => {
+              const rect = chartRef.current.getBoundingClientRect()
+              const idx = currentData.findIndex(p => p.day === hoveredPoint.day)
+              const spacing = 660
+              const offset = 80
+              const x = 60 + offset + (idx * (spacing / (currentData.length - 1)))
+              const pixelX = (x / 850) * rect.width
+              const pixelY = ((280 - (hoveredPoint.value * 2.8)) / 320) * rect.height
+              
+              return (
+                <div
+                  className="absolute pointer-events-none z-50"
+                  style={{
+                    left: pixelX,
+                    top: pixelY - 100,
+                    transform: 'translateX(-50%)',
+                  }}
+                >
+                  <div className="bg-[#1e1e30]/95 border border-white/20 rounded-lg p-3 shadow-xl backdrop-blur-sm">
+                    <p className="text-white font-semibold mb-2">
+                      {hoveredPoint.day}
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm text-white">
+                        Score: <span className="font-bold text-white">{hoveredPoint.value}%</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+            <svg className="w-full h-full" viewBox="0 0 850 320">
               <defs>
                 <linearGradient id="chartAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#ec4899" stopOpacity="0.3" />
@@ -756,13 +799,13 @@ function OverviewTabContent() {
 
               {/* Grid lines - Subtle */}
               {[25, 50, 75].map((value) => {
-                const y = 220 - (value * 2.0)
+                const y = 280 - (value * 2.8)
                 return (
                   <line
                     key={value}
                     x1="60"
                     y1={y}
-                    x2="780"
+                    x2="790"
                     y2={y}
                     stroke="#222222"
                     strokeWidth="1"
@@ -772,7 +815,7 @@ function OverviewTabContent() {
 
               {/* Y-axis labels */}
               {[0, 25, 50, 75, 100].map((value) => {
-                const y = 220 - (value * 2.0)
+                const y = 280 - (value * 2.8)
                 return (
                   <text
                     key={value}
@@ -791,13 +834,13 @@ function OverviewTabContent() {
               {/* Area under curve - Gradient fill */}
               <motion.path
                 key={`area-${chartTimeRange}`}
-                d={`M 80 220 ${currentData.map((point, idx) => {
-                  const spacing = 648
+                d={`M 80 280 ${currentData.map((point, idx) => {
+                  const spacing = 660
                   const offset = 80
                   const x = 60 + offset + (idx * (spacing / (currentData.length - 1)))
-                  const y = 220 - (point.overall * 2.0)
+                  const y = 280 - (point.overall * 2.8)
                   return `L ${x} ${y}`
-                }).join(' ')} L ${60 + 80 + ((currentData.length - 1) * (648 / (currentData.length - 1)))} 220 Z`}
+                }).join(' ')} L ${60 + 80 + ((currentData.length - 1) * (660 / (currentData.length - 1)))} 280 Z`}
                 fill="url(#chartAreaGradient)"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -808,10 +851,10 @@ function OverviewTabContent() {
               <motion.path
                 key={`line-${chartTimeRange}`}
                 d={currentData.map((point, idx) => {
-                  const spacing = 648 // 720 * 0.9 = 648 (10% reduction)
-                  const offset = 80 // Moved left from 96
+                  const spacing = 660
+                  const offset = 80
                   const x = 60 + offset + (idx * (spacing / (currentData.length - 1)))
-                  const y = 220 - (point.overall * 2.0)
+                  const y = 280 - (point.overall * 2.8)
                   return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
                 }).join(' ')}
                 fill="none"
@@ -827,10 +870,10 @@ function OverviewTabContent() {
 
               {/* Larger data points with pink fill */}
               {currentData.map((point, idx) => {
-                const spacing = 648
+                const spacing = 660
                 const offset = 80
                 const x = 60 + offset + (idx * (spacing / (currentData.length - 1)))
-                const y = 220 - (point.overall * 2.0)
+                const y = 280 - (point.overall * 2.8)
                 
                 return (
                   <g key={`point-${chartTimeRange}-${idx}`}>
@@ -859,7 +902,7 @@ function OverviewTabContent() {
                     {/* X-axis labels - Closer to chart */}
                     <text
                       x={x}
-                      y="238"
+                      y="298"
                       fill="#ffffff"
                       fontSize="15"
                       fontWeight="600"
@@ -874,56 +917,24 @@ function OverviewTabContent() {
               {/* Hover tooltip with vertical line */}
               {hoveredPoint && (() => {
                 const idx = currentData.findIndex(p => p.day === hoveredPoint.day)
-                const spacing = 648
+                const spacing = 660
                 const offset = 80
                 const x = 60 + offset + (idx * (spacing / (currentData.length - 1)))
-                const y = 220 - (hoveredPoint.value * 2.0)
+                const y = 280 - (hoveredPoint.value * 2.8)
                 
                 return (
                   <g>
-                    {/* Vertical dashed line */}
+                    {/* Vertical dashed line - thicker and smoother */}
                     <line
                       x1={x}
                       y1="20"
                       x2={x}
-                      y2="220"
+                      y2="280"
                       stroke="#ffffff"
-                      strokeWidth="2"
-                      strokeDasharray="5 5"
-                      opacity="0.6"
+                      strokeWidth="3"
+                      strokeDasharray="8 4"
+                      opacity="0.8"
                     />
-                    {/* Tooltip box */}
-                    <rect
-                      x={x - 60}
-                      y={y - 65}
-                      width="120"
-                      height="50"
-                      rx="8"
-                      fill="#1e1e30"
-                      stroke="#ffffff"
-                      strokeWidth="1.5"
-                      strokeOpacity="0.3"
-                    />
-                    <text
-                      x={x}
-                      y={y - 40}
-                      fill="white"
-                      fontSize="16"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                    >
-                      {hoveredPoint.value}%
-                    </text>
-                    <text
-                      x={x}
-                      y={y - 22}
-                      fill="#ffffff"
-                      fontSize="12"
-                      textAnchor="middle"
-                      opacity="0.7"
-                    >
-                      {hoveredPoint.day}
-                    </text>
                     {/* Enlarged hover dot */}
                     <circle
                       cx={x}
@@ -975,7 +986,40 @@ function OverviewTabContent() {
 
           {/* Earnings Chart */}
           <div ref={earningsRef} className="relative h-64">
-            <svg className="w-full h-full" viewBox="0 0 850 260">
+            {/* Tooltip overlay - positioned absolutely outside SVG */}
+            {hoveredEarnings && earningsRef.current && (() => {
+              const rect = earningsRef.current.getBoundingClientRect()
+              const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
+              const idx = currentEarnings.findIndex(p => p.day === hoveredEarnings.day)
+              const spacing = 660
+              const offset = 80
+              const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
+              const pixelX = (x / 850) * rect.width
+              const pixelY = ((280 - ((hoveredEarnings.value / maxEarnings) * 280)) / 320) * rect.height
+              
+              return (
+                <div
+                  className="absolute pointer-events-none z-50"
+                  style={{
+                    left: pixelX,
+                    top: pixelY - 100,
+                    transform: 'translateX(-50%)',
+                  }}
+                >
+                  <div className="bg-[#1e1e30]/95 border border-white/20 rounded-lg p-3 shadow-xl backdrop-blur-sm">
+                    <p className="text-white font-semibold mb-2">
+                      {hoveredEarnings.day}
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm text-white">
+                        Earnings: <span className="font-bold text-white">${hoveredEarnings.value}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+            <svg className="w-full h-full" viewBox="0 0 850 320">
               <defs>
                 <linearGradient id="earningsAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
@@ -987,13 +1031,13 @@ function OverviewTabContent() {
               {[0, 25, 50, 75, 100].map((percentage) => {
                 const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
                 const value = (percentage / 100) * maxEarnings
-                const y = 220 - (percentage * 2.0)
+                const y = 280 - (percentage * 2.8)
                 return percentage !== 0 && percentage !== 100 ? (
                   <line
                     key={percentage}
                     x1="60"
                     y1={y}
-                    x2="780"
+                    x2="790"
                     y2={y}
                     stroke="#222222"
                     strokeWidth="1"
@@ -1005,7 +1049,7 @@ function OverviewTabContent() {
               {[0, 25, 50, 75, 100].map((percentage) => {
                 const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
                 const value = Math.round((percentage / 100) * maxEarnings)
-                const y = 220 - (percentage * 2.0)
+                const y = 280 - (percentage * 2.8)
                 return (
                   <text
                     key={percentage}
@@ -1024,14 +1068,14 @@ function OverviewTabContent() {
               {/* Area under curve */}
               <motion.path
                 key={`earnings-area-${earningsTimeRange}`}
-                d={`M 80 220 ${currentEarnings.map((point, idx) => {
+                d={`M 80 280 ${currentEarnings.map((point, idx) => {
                   const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
-                  const spacing = 648
+                  const spacing = 660
                   const offset = 80
                   const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
-                  const y = 220 - ((point.earnings / maxEarnings) * 200)
+                  const y = 280 - ((point.earnings / maxEarnings) * 280)
                   return `L ${x} ${y}`
-                }).join(' ')} L ${60 + 80 + ((currentEarnings.length - 1) * (648 / (currentEarnings.length - 1)))} 220 Z`}
+                }).join(' ')} L ${60 + 80 + ((currentEarnings.length - 1) * (660 / (currentEarnings.length - 1)))} 280 Z`}
                 fill="url(#earningsAreaGradient)"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -1043,10 +1087,10 @@ function OverviewTabContent() {
                 key={`earnings-line-${earningsTimeRange}`}
                 d={currentEarnings.map((point, idx) => {
                   const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
-                  const spacing = 648
+                  const spacing = 660
                   const offset = 80
                   const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
-                  const y = 220 - ((point.earnings / maxEarnings) * 200)
+                  const y = 280 - ((point.earnings / maxEarnings) * 280)
                   return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
                 }).join(' ')}
                 fill="none"
@@ -1063,10 +1107,10 @@ function OverviewTabContent() {
               {/* Data points */}
               {currentEarnings.map((point, idx) => {
                 const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
-                const spacing = 648
+                const spacing = 660
                 const offset = 80
                 const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
-                const y = 220 - ((point.earnings / maxEarnings) * 200)
+                const y = 280 - ((point.earnings / maxEarnings) * 280)
                 
                 return (
                   <g key={`earnings-point-${earningsTimeRange}-${idx}`}>
@@ -1095,7 +1139,7 @@ function OverviewTabContent() {
                     {/* X-axis labels */}
                     <text
                       x={x}
-                      y="238"
+                      y="298"
                       fill="#ffffff"
                       fontSize="15"
                       fontWeight="600"
@@ -1111,56 +1155,24 @@ function OverviewTabContent() {
               {hoveredEarnings && (() => {
                 const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
                 const idx = currentEarnings.findIndex(p => p.day === hoveredEarnings.day)
-                const spacing = 648
+                const spacing = 660
                 const offset = 80
                 const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
-                const y = 220 - ((hoveredEarnings.value / maxEarnings) * 200)
+                const y = 280 - ((hoveredEarnings.value / maxEarnings) * 280)
                 
                 return (
                   <g>
-                    {/* Vertical dashed line */}
+                    {/* Vertical dashed line - thicker and smoother */}
                     <line
                       x1={x}
                       y1="20"
                       x2={x}
-                      y2="220"
+                      y2="280"
                       stroke="#ffffff"
-                      strokeWidth="2"
-                      strokeDasharray="5 5"
-                      opacity="0.6"
+                      strokeWidth="3"
+                      strokeDasharray="8 4"
+                      opacity="0.8"
                     />
-                    {/* Tooltip box */}
-                    <rect
-                      x={x - 60}
-                      y={y - 65}
-                      width="120"
-                      height="50"
-                      rx="8"
-                      fill="#1e1e30"
-                      stroke="#ffffff"
-                      strokeWidth="1.5"
-                      strokeOpacity="0.3"
-                    />
-                    <text
-                      x={x}
-                      y={y - 40}
-                      fill="white"
-                      fontSize="16"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                    >
-                      ${hoveredEarnings.value}
-                    </text>
-                    <text
-                      x={x}
-                      y={y - 22}
-                      fill="#ffffff"
-                      fontSize="12"
-                      textAnchor="middle"
-                      opacity="0.7"
-                    >
-                      {hoveredEarnings.day}
-                    </text>
                     {/* Enlarged hover dot */}
                     <circle
                       cx={x}

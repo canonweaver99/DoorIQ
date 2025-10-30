@@ -32,7 +32,7 @@ interface RevenueDataPoint {
 }
 
 export default function TeamOverview() {
-  const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month'>('month')
+  const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month'>('week')
   const [stats, setStats] = useState<TeamStats>({
     totalReps: 0,
     activeNow: 0,
