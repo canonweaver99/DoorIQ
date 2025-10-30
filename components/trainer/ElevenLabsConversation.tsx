@@ -22,6 +22,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   
   // Track recording state with refs for reliable cleanup
   const audioRecordingActiveRef = useRef(false)
+  const wasConnectedRef = useRef(false) // Track if we were ever connected to detect actual disconnects
 
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
     window.dispatchEvent(new CustomEvent('connection:status', { detail: s === 'connected' ? 'connected' : s === 'connecting' ? 'connecting' : s === 'error' ? 'error' : 'idle' }))
@@ -71,6 +72,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         onConnect: () => {
           console.log('✅ WebRTC Connected!')
           setStatus('connected')
+          wasConnectedRef.current = true // Mark that we were connected
           dispatchStatus('connected')
           setErrorMessage('')
           
@@ -91,6 +93,20 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         
         onDisconnect: (reason?: any) => {
           console.log('🔌 Disconnected:', reason)
+          
+          // Dispatch agent:end_call event when disconnecting during active session
+          // This is a reliable signal that ElevenLabs has ended the conversation
+          if (wasConnectedRef.current) {
+            console.log('🔌 Disconnect detected during active session, dispatching agent:end_call event')
+            window.dispatchEvent(new CustomEvent('agent:end_call', { 
+              detail: { 
+                reason: reason || 'Connection ended',
+                source: 'disconnect'
+              } 
+            }))
+            wasConnectedRef.current = false // Reset for next connection
+          }
+          
           setStatus('disconnected')
           dispatchStatus('disconnected')
           

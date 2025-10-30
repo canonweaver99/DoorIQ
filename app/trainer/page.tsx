@@ -425,6 +425,25 @@ function TrainerPageContent() {
       handleAgentActivity()
     }
     
+    // Listen for connection status changes (disconnect signals from ElevenLabs)
+    const handleConnectionStatus = (e: any) => {
+      const status = e.detail
+      console.log('📊 Connection status changed:', status)
+      
+      // If we get disconnected during an active session, end the session
+      // This catches cases where ElevenLabs disconnects without sending end_call
+      if (status === 'disconnected' && sessionActive && sessionId) {
+        console.log('🔌 Connection disconnected during active session, ending session...')
+        // Small delay to allow for end_call event to come through first (if it exists)
+        setTimeout(() => {
+          if (sessionActive && sessionId) {
+            console.log('🔚 Auto-ending session due to connection disconnect')
+            handleAgentEndCall({ detail: { reason: 'Connection lost', source: 'disconnect' } })
+          }
+        }, 2000) // 2 second delay to allow end_call event to process first
+      }
+    }
+    
     // Also listen for agent end_call events more aggressively
     const checkForEndCall = () => {
       // Check if transcript ends with agent saying goodbye/ending phrases
@@ -434,7 +453,14 @@ function TrainerPageContent() {
         )
         if (lastAgentMessage) {
           const text = (lastAgentMessage.text || '').toLowerCase()
-          const endingPhrases = ['bye', 'goodbye', 'see you', 'alright then', 'talk to you', 'i\'ll see you', 'take care']
+          // Expanded ending phrases to catch more variations including "Ain't interested, thanks for stopping by"
+          const endingPhrases = [
+            'bye', 'goodbye', 'see you', 'alright then', 'talk to you', 
+            "i'll see you", 'take care', "ain't interested", 'not interested',
+            'thanks for stopping', 'stopping by', 'gotta go', 'have to go',
+            'gotta get back', 'back to work', 'closing the door', 'close the door',
+            'thanks for stopping by'
+          ]
           if (endingPhrases.some(phrase => text.includes(phrase))) {
             // Wait 3 seconds after agent's last message before auto-ending
             setTimeout(() => {
@@ -463,6 +489,7 @@ function TrainerPageContent() {
     window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
     window.addEventListener('agent:end_call', handleAgentEndCall)
     window.addEventListener('agent:message', handleAgentMessage)
+    window.addEventListener('connection:status', handleConnectionStatus)
     
     return () => {
       if (silenceTimer) clearTimeout(silenceTimer)
@@ -470,6 +497,7 @@ function TrainerPageContent() {
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
       window.removeEventListener('agent:end_call', handleAgentEndCall)
       window.removeEventListener('agent:message', handleAgentMessage)
+      window.removeEventListener('connection:status', handleConnectionStatus)
     }
   }, [sessionActive, sessionId, endSession, transcript])
 
