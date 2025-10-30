@@ -13,6 +13,7 @@ import { FaqSection } from '@/components/ui/faq-section'
 import { TestimonialsColumn, testimonialsData } from '@/components/ui/testimonials-columns-1'
 import { Target, Zap, TrendingUp, Users, CheckCircle2, BarChart3 } from 'lucide-react'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
+import { vibrate } from '@/lib/utils'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {
@@ -288,7 +289,11 @@ function ProblemSolutionSection() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Link href="/auth/signup" className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-6 py-3 text-base font-semibold backdrop-blur-sm">
+            <Link 
+              href="/auth/signup" 
+              onClick={() => vibrate()}
+              className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-6 py-3 text-base font-semibold backdrop-blur-sm"
+            >
               Get Started Free
             </Link>
           </motion.div>

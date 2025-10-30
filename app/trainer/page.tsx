@@ -317,6 +317,14 @@ function TrainerPageContent() {
   }
 
   const endSession = useCallback(async () => {
+    console.log('🔚 endSession called', { sessionId, duration, transcriptLength: transcript.length })
+    
+    // Prevent multiple calls
+    if (!sessionActive && !sessionId) {
+      console.log('⚠️ endSession called but session not active, ignoring')
+      return
+    }
+    
     setLoading(true)
     setSessionActive(false)
     setConversationToken(null)
@@ -327,34 +335,60 @@ function TrainerPageContent() {
     //   stopDualCameraRecording()
     // }
 
-    if (durationInterval.current) clearInterval(durationInterval.current)
-      if (signedUrlAbortRef.current) {
-        signedUrlAbortRef.current.abort()
-        signedUrlAbortRef.current = null
-      }
+    if (durationInterval.current) {
+      clearInterval(durationInterval.current)
+      durationInterval.current = null
+    }
+    
+    if (signedUrlAbortRef.current) {
+      signedUrlAbortRef.current.abort()
+      signedUrlAbortRef.current = null
+    }
 
-      if (sessionId) {
-        try {
-          await fetch('/api/session', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: sessionId,
-              transcript: transcript,
-              duration_seconds: duration
-            }),
-          })
-          // Use window.location for more reliable redirect
-          window.location.href = `/trainer/loading/${sessionId}`
-        } catch (error) {
-          logger.error('Error ending session', error)
-          setLoading(false)
-        }
-      } else {
-        router.push('/trainer')
-        setLoading(false)
+    if (sessionId) {
+      try {
+        console.log('💾 Saving session data before redirect...')
+        const savePromise = fetch('/api/session', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: sessionId,
+            transcript: transcript,
+            duration_seconds: duration
+          }),
+        })
+        
+        // Redirect immediately, don't wait for save to complete
+        console.log('🚀 Redirecting to loading page:', `/trainer/loading/${sessionId}`)
+        const redirectUrl = `/trainer/loading/${sessionId}`
+        
+        // Try to save in background, but redirect regardless
+        savePromise.catch((error) => {
+          console.error('❌ Error saving session (continuing with redirect):', error)
+        })
+        
+        // Use window.location.href for reliable redirect (blocking)
+        window.location.href = redirectUrl
+        
+        // Fallback redirect if window.location fails
+        setTimeout(() => {
+          if (window.location.pathname !== redirectUrl) {
+            console.log('⚠️ Primary redirect failed, trying router.push')
+            router.push(redirectUrl)
+          }
+        }, 100)
+      } catch (error) {
+        logger.error('Error ending session', error)
+        console.error('❌ Error in endSession, attempting redirect anyway:', error)
+        // Still try to redirect even if there's an error
+        window.location.href = `/trainer/loading/${sessionId}`
       }
-  }, [sessionId, duration, transcript, router])
+    } else {
+      console.log('⚠️ No sessionId, redirecting to trainer page')
+      router.push('/trainer')
+      setLoading(false)
+    }
+  }, [sessionId, duration, transcript, router, sessionActive])
 
   // Handle agent end call event with improved reliability
   useEffect(() => {
@@ -369,8 +403,15 @@ function TrainerPageContent() {
     }
     
     const handleAgentEndCall = async (e: any) => {
+      console.log('📞 handleAgentEndCall triggered', { sessionActive, sessionId, eventDetail: e?.detail })
+      
       if (!sessionActive) {
-        console.log('⚠️ Received end_call event but session not active')
+        console.log('⚠️ Received end_call event but session not active, ignoring')
+        return
+      }
+      
+      if (!sessionId) {
+        console.log('⚠️ Received end_call event but no sessionId, ignoring')
         return
       }
       
@@ -382,22 +423,30 @@ function TrainerPageContent() {
         silenceTimer = null
       }
       
-      // Prevent multiple calls
+      // Prevent multiple calls immediately
       setSessionActive(false)
       
-      // Play door closing sound
+      // Play door closing sound (non-blocking - don't wait for it)
       try {
         const doorCloseAudio = new Audio('/sounds/door_close.mp3')
         doorCloseAudio.volume = 0.6
-        await doorCloseAudio.play()
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        doorCloseAudio.play().catch((err) => {
+          console.warn('Could not play door close sound', err)
+        })
+        // Don't wait for sound - redirect immediately
       } catch (error) {
         console.warn('Could not play door close sound', error)
       }
       
-      // End the session
+      // End the session immediately (don't await sound)
       console.log('🔚 Ending session after agent end call...')
-      await endSession()
+      endSession().catch((error) => {
+        console.error('❌ Error in endSession from handleAgentEndCall:', error)
+        // Force redirect as fallback
+        if (sessionId) {
+          window.location.href = `/trainer/loading/${sessionId}`
+        }
+      })
     }
     
     // Track agent activity - improved with shorter timeout
@@ -486,10 +535,24 @@ function TrainerPageContent() {
       handleAgentActivity() // Initialize timer
     }
     
+    // Log when event listeners are attached
+    console.log('🎧 Setting up event listeners for auto-end', { sessionActive, sessionId })
+    
     window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
     window.addEventListener('agent:end_call', handleAgentEndCall)
     window.addEventListener('agent:message', handleAgentMessage)
     window.addEventListener('connection:status', handleConnectionStatus)
+    
+    // Debug: Log all custom events to see what's happening
+    const originalDispatchEvent = window.dispatchEvent
+    const debugListener = (e: Event) => {
+      if (e.type.startsWith('agent:') || e.type === 'connection:status' || e.type === 'trainer:') {
+        console.log('🎯 Custom event dispatched:', e.type, e instanceof CustomEvent ? e.detail : '')
+      }
+    }
+    window.addEventListener('agent:end_call', debugListener as EventListener, { once: false })
+    window.addEventListener('agent:message', debugListener as EventListener, { once: false })
+    window.addEventListener('connection:status', debugListener as EventListener, { once: false })
     
     return () => {
       if (silenceTimer) clearTimeout(silenceTimer)
@@ -498,6 +561,9 @@ function TrainerPageContent() {
       window.removeEventListener('agent:end_call', handleAgentEndCall)
       window.removeEventListener('agent:message', handleAgentMessage)
       window.removeEventListener('connection:status', handleConnectionStatus)
+      window.removeEventListener('agent:end_call', debugListener as EventListener)
+      window.removeEventListener('agent:message', debugListener as EventListener)
+      window.removeEventListener('connection:status', debugListener as EventListener)
     }
   }, [sessionActive, sessionId, endSession, transcript])
 

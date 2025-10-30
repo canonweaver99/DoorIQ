@@ -212,18 +212,18 @@ export default function SessionTimeline({
               onMouseLeave={() => setHoveredSegment(null)}
               onClick={() => setActiveSegment(activeSegment === segment.id ? null : segment.id)}
             >
-              {/* Connection Line - Only show when feedback is visible */}
-              {(isHovered || isActive) && (
-                <div className="absolute left-1/2 -translate-x-1/2 -top-8 w-0.5 h-24 bg-gradient-to-b from-transparent via-purple-400/40 to-transparent" />
-              )}
-              
-              {/* Sparkle Icon - Always visible */}
+              {/* Sparkle Icon - Always visible, perfectly centered on timeline bar */}
+              {/* Timeline bar is h-3 (12px), center at 6px. Icon is 24px, so center it at 6px */}
               <motion.div
-                className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${
+                className={`absolute left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer z-50 ${
                   isHovered || isActive
-                    ? 'bg-white border-white scale-125'
+                    ? 'bg-white border-white'
                     : 'bg-[#1a1a1a] border-purple-400/60'
                 }`}
+                style={{
+                  top: '6px', // Center of h-3 bar (12px / 2 = 6px)
+                  transform: 'translateX(-50%) translateY(-50%)' // Center the icon on this point
+                }}
                 animate={{
                   scale: isHovered || isActive ? 1.3 : 1,
                 }}
@@ -232,10 +232,25 @@ export default function SessionTimeline({
                 <Sparkles className={`w-3.5 h-3.5 ${isHovered || isActive ? 'text-purple-600' : 'text-purple-400'}`} />
               </motion.div>
               
-              {/* Key Moment Card - Only shown on hover or click */}
+              {/* Connection Line - Only show when feedback is visible */}
+              {(isHovered || isActive) && (
+                <div 
+                  className="absolute left-1/2 -translate-x-1/2 w-0.5 bg-gradient-to-b from-transparent via-purple-400/40 to-transparent z-10" 
+                  style={{
+                    top: '6px', // Start from center of timeline bar
+                    height: '8rem', // Extend upward
+                  }}
+                />
+              )}
+              
+              {/* Key Moment Card - Only shown on hover or click, positioned above to not cover icon */}
               {(isHovered || isActive) && (
                 <motion.div
-                  className="absolute -top-8 left-1/2 -translate-x-1/2 w-72 z-50 cursor-pointer"
+                  className="absolute left-1/2 -translate-x-1/2 w-72 z-40 cursor-pointer"
+                  style={{
+                    top: 'calc(-8rem - 1rem)', // Position above connection line (8rem) with extra spacing (1rem)
+                    transform: 'translateX(-50%)' // Center horizontally
+                  }}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}

@@ -30,3 +30,16 @@ import { twMerge } from 'tailwind-merge'
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * Triggers a single short vibration on supported devices
+ */
+export function vibrate(): void {
+  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(10) // Single short vibration (10ms)
+    } catch (error) {
+      // Silently fail if vibration is not supported
+    }
+  }
+}
