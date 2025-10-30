@@ -59,8 +59,15 @@ function SignUpForm() {
         throw new Error(adminJson.error || 'Failed to create account')
       }
 
+      // Handle invite token if present
+      const redirectParams = new URLSearchParams()
+      redirectParams.set('email', email)
+      if (inviteToken) {
+        redirectParams.set('invite', inviteToken)
+      }
+      
       // Show success message and redirect to confirmation page
-      router.push(`/auth/confirmed?email=${encodeURIComponent(email)}`)
+      router.push(`/auth/confirmed?${redirectParams.toString()}`)
       return
     } catch (err: any) {
       console.error('Signup error:', err)
@@ -79,10 +86,11 @@ function SignUpForm() {
 
       // Preserve redirect params in OAuth callback
       let callbackUrl = `${origin}/auth/callback`
-      if (nextUrl || checkoutIntent) {
-        const params = new URLSearchParams()
-        if (nextUrl) params.set('next', nextUrl)
-        if (checkoutIntent) params.set('checkout', checkoutIntent)
+      const params = new URLSearchParams()
+      if (nextUrl) params.set('next', nextUrl)
+      if (checkoutIntent) params.set('checkout', checkoutIntent)
+      if (inviteToken) params.set('invite', inviteToken)
+      if (params.toString()) {
         callbackUrl += `?${params.toString()}`
       }
 

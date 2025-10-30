@@ -66,6 +66,25 @@ export async function GET(request: Request) {
         console.log('✅ User profile already exists')
       }
 
+      // Handle invite token if present in URL
+      const inviteToken = requestUrl.searchParams.get('invite')
+      if (inviteToken) {
+        try {
+          const inviteResponse = await fetch(`${requestUrl.origin}/api/invites/accept`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: inviteToken })
+          })
+          if (inviteResponse.ok) {
+            console.log('✅ Invite accepted during OAuth callback')
+          } else {
+            console.warn('⚠️ Failed to accept invite during OAuth callback')
+          }
+        } catch (e) {
+          console.warn('⚠️ Error accepting invite during OAuth callback:', e)
+        }
+      }
+
       // Redirect directly to the destination (no intermediate page)
       console.log('🔄 Redirecting after auth to:', redirectPath)
     }

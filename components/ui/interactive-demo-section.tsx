@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Play, Pause, Volume2, CheckCircle2, XCircle, TrendingUp } from 'lucide-react'
@@ -42,9 +42,17 @@ const demoSteps: DemoStep[] = [
 export function InteractiveDemoSection() {
   const [activeStep, setActiveStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const { ref, controls } = useScrollAnimation(0.2)
 
   const handlePlayDemo = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause()
+      } else {
+        videoRef.current.play()
+      }
+    }
     setIsPlaying(!isPlaying)
   }
   
@@ -83,9 +91,22 @@ export function InteractiveDemoSection() {
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Placeholder for video */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
+              {/* Video Player */}
+              <video
+                ref={videoRef}
+                src="/austin-video.mp4"
+                controls={isPlaying}
+                autoPlay={false}
+                loop
+                className="w-full h-full object-cover"
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                playsInline
+              />
+              
+              {/* Play Button Overlay */}
+              {!isPlaying && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -94,44 +115,22 @@ export function InteractiveDemoSection() {
                     <Button
                       onClick={handlePlayDemo}
                       size="lg"
-                      className="w-20 h-20 rounded-full bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/50 mb-4"
+                      className="w-20 h-20 rounded-full bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/50"
                     >
-                      {isPlaying ? (
-                        <Pause className="w-8 h-8" />
-                      ) : (
-                        <Play className="w-8 h-8 ml-1" />
-                      )}
+                      <Play className="w-8 h-8 ml-1 text-white" />
                     </Button>
                   </motion.div>
-                  <p className="text-slate-400 text-sm">
-                    {isPlaying ? 'Demo Playing...' : 'Watch 90-Second Demo'}
-                  </p>
                 </div>
-              </div>
-
-              {/* Simulated UI overlay */}
-              <div className="absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                    <Volume2 className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-xs text-slate-400 mb-1">AI Homeowner Speaking...</div>
-                    <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 w-3/4 animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
               
               {/* Step indicator */}
               <motion.div 
-                className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1"
+                className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5 z-10"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.8 }}
               >
-                <span className="text-sm text-white">Step {demoSteps[activeStep].id}: {demoSteps[activeStep].title}</span>
+                <span className="text-sm text-white font-medium">Step {demoSteps[activeStep].id}: {demoSteps[activeStep].title}</span>
               </motion.div>
             </motion.div>
 
