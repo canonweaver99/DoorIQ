@@ -187,14 +187,14 @@ export default function SessionTimeline({
 
       {/* Timeline - Redesigned */}
       <div className="relative" ref={timelineRef}>
-        {/* Progress Bar Background - More vibrant */}
+        {/* Progress Bar Background - Static gradient with smooth fade-in */}
         <div className="relative h-3 rounded-full bg-[#1a1a1a] border-2 border-purple-500/30 overflow-hidden shadow-lg">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/40 via-blue-500/40 to-emerald-500/40 animate-pulse" />
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/60 via-blue-600/60 to-emerald-600/60" style={{ 
-            width: '100%',
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 3s ease-in-out infinite'
-          }} />
+          <motion.div 
+            className="absolute inset-0 bg-gradient-to-r from-purple-500/40 via-blue-500/40 to-emerald-500/40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, ease: "easeIn" }}
+          />
         </div>
         
         {/* Key Moments */}
@@ -212,72 +212,64 @@ export default function SessionTimeline({
               onMouseLeave={() => setHoveredSegment(null)}
               onClick={() => setActiveSegment(activeSegment === segment.id ? null : segment.id)}
             >
-              {/* Connection Line - Extended upward */}
-              <div className="absolute left-1/2 -translate-x-1/2 -top-8 w-0.5 h-20 bg-gradient-to-b from-transparent via-purple-400/30 to-transparent" />
+              {/* Connection Line - Only show when feedback is visible */}
+              {(isHovered || isActive) && (
+                <div className="absolute left-1/2 -translate-x-1/2 -top-8 w-0.5 h-24 bg-gradient-to-b from-transparent via-purple-400/40 to-transparent" />
+              )}
               
-              {/* Marker Dot */}
+              {/* Sparkle Icon - Always visible */}
               <motion.div
-                className={`absolute left-1/2 -translate-x-1/2 top-0 w-4 h-4 rounded-full border-2 ${
+                className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${
                   isHovered || isActive
                     ? 'bg-white border-white scale-125'
-                    : 'bg-[#1a1a1a] border-white/40'
+                    : 'bg-[#1a1a1a] border-purple-400/60'
                 }`}
-                style={{
-                  boxShadow: isHovered || isActive ? '0 0 12px rgba(255,255,255,0.6)' : 'none'
-                }}
                 animate={{
-                  scale: isHovered || isActive ? 1.25 : 1,
+                  scale: isHovered || isActive ? 1.3 : 1,
                 }}
                 transition={{ duration: 0.2 }}
-              />
-              
-              {/* Key Moment Card - Higher z-index and positioned higher to avoid overlap */}
-              <motion.div
-                className="absolute -top-8 left-1/2 -translate-x-1/2 w-64 z-50 cursor-pointer"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                  scale: isHovered || isActive ? 1.05 : 1
-                }}
-                transition={{ delay: index * 0.1 }}
               >
-                <div 
-                  className={`rounded-xl border-2 p-4 transition-all ${
-                    isHovered || isActive
-                      ? 'border-white/50 shadow-2xl shadow-purple-500/30'
-                      : 'border-white/20'
-                  }`}
-                  style={{
-                    background: isHovered || isActive
-                      ? `linear-gradient(135deg, ${getColorFromGradient(segment.color, 0.2)})`
-                      : `linear-gradient(135deg, ${getColorFromGradient(segment.color, 0.1)})`,
-                  }}
-                >
-                  {/* Header */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${segment.color}`}>
-                      <Icon className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-white truncate">{segment.title}</div>
-                      <div className="text-xs text-white/50 font-mono">{segment.timestamp}</div>
-                    </div>
-                  </div>
-                  
-                  {/* Key Takeaway */}
-                  {(isHovered || isActive) && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-3 pt-3 border-t border-white/10"
-                    >
-                      <p className="text-xs text-white/70 leading-relaxed">{segment.quickTip}</p>
-                    </motion.div>
-                  )}
-                </div>
+                <Sparkles className={`w-3.5 h-3.5 ${isHovered || isActive ? 'text-purple-600' : 'text-purple-400'}`} />
               </motion.div>
+              
+              {/* Key Moment Card - Only shown on hover or click */}
+              {(isHovered || isActive) && (
+                <motion.div
+                  className="absolute -top-8 left-1/2 -translate-x-1/2 w-72 z-50 cursor-pointer"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div 
+                    className="rounded-xl border-2 border-white/30 p-5 bg-[#0a0a0a] backdrop-blur-sm"
+                    style={{
+                      background: `linear-gradient(135deg, ${getColorFromGradient(segment.color, 0.15)}), rgba(10, 10, 10, 0.95)`,
+                      boxShadow: 'none'
+                    }}
+                  >
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`p-2.5 rounded-lg bg-gradient-to-br ${segment.color}`}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-base font-bold text-white truncate">{segment.title}</div>
+                        <div className="text-sm text-white/70 font-mono mt-1">{segment.timestamp}</div>
+                      </div>
+                    </div>
+                    
+                    {/* Key Takeaway */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="pt-4 border-t border-white/10"
+                    >
+                      <p className="text-sm text-white leading-relaxed font-medium">{segment.quickTip}</p>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
             </div>
           )
         })}
