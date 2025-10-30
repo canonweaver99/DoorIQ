@@ -7,7 +7,9 @@ import {
   MessageSquare, 
   Sparkles, 
   Mic,
-  Zap
+  Zap,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react'
 
 interface SessionTimelineProps {
@@ -53,20 +55,21 @@ export default function SessionTimeline({
   dealOutcome,
   audioUrl
 }: SessionTimelineProps) {
-  const [playingSegment, setPlayingSegment] = useState<number | null>(null)
   const [hoveredSegment, setHoveredSegment] = useState<number | null>(null)
   const [activeSegment, setActiveSegment] = useState<number | null>(null)
-  // Audio playback archived – keep visual-only timeline
   const timelineRef = useRef<HTMLDivElement>(null)
 
-  // Use AI-generated timeline moments - evenly spaced at 25%, 50%, 75%
+  // Use AI-generated timeline moments
   const segments: TimelineSegment[] = events && events.length > 0 ? events.slice(0, 3).map((event: any, index: number) => {
     const eventTime = typeof event.timestamp === 'string' ? parseTimestamp(event.timestamp) : (event.timestamp || 0)
-    // Fixed positions: 25%, 50%, 75% for clean, evenly-spaced layout
+    // Calculate actual position based on timestamp
+    const actualPosition = duration > 0 ? (eventTime / duration) * 100 : [25, 50, 75][index]
     const fixedPositions = [25, 50, 75]
+    const position = actualPosition > 0 && actualPosition <= 100 ? actualPosition : fixedPositions[index] || 50
+    
     return {
       id: index,
-      position: fixedPositions[index] || 50,
+      position: Math.max(5, Math.min(95, position)), // Clamp between 5% and 95%
       timestamp: event.timestamp || formatTime(eventTime),
       startTime: Math.max(0, eventTime - 2.5),
       endTime: Math.min(duration, eventTime + 2.5),
@@ -88,7 +91,6 @@ export default function SessionTimeline({
     }
   }) : []
   
-  // Helper to parse "M:SS" timestamp strings
   function parseTimestamp(ts: string): number {
     if (!ts || typeof ts !== 'string') return 0
     const parts = ts.split(':')
@@ -104,175 +106,171 @@ export default function SessionTimeline({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Audio logic removed – timeline is purely visual for now
-
-  const getSegmentStyle = (segment: TimelineSegment) => {
-    const isActive = activeSegment === segment.id
-    const isHovered = hoveredSegment === segment.id
-
-    return {
-      base: isActive || isHovered ? 'scale-110' : 'scale-100',
-      glow: '',
-      intensity: {
-        low: 'opacity-60',
-        medium: 'opacity-80',
-        high: 'opacity-100'
-      }[segment.intensity]
-    }
-  }
+  // Calculate minutes and seconds for display
+  const minutes = Math.floor(duration / 60)
+  const seconds = duration % 60
+  const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`
 
   return (
-    <div className="relative py-8">
-      {/* Conversation Summary Card */}
-      <div className="mb-8 rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
-        <div className="flex items-center justify-between">
-          {/* Left side: Duration and participants */}
-          <div className="flex-1">
-            <div className="flex items-center gap-4 mb-3">
-              <Clock className="w-5 h-5 text-slate-400" />
-              <span className="text-2xl font-semibold text-white">{formatTime(duration)}</span>
-              <span className="text-sm text-slate-400">conversation</span>
-            </div>
-            <div className="flex items-center gap-6 text-sm">
-              <div>
-                <span className="text-slate-500">Customer: </span>
-                <span className="text-white font-medium">{customerName}</span>
+    <div className="relative">
+      {/* Header Card - Redesigned */}
+      <div className="mb-8 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] p-6" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* Left: Session Info */}
+          <div className="flex items-start gap-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
+                <Clock className="w-5 h-5 text-white/70" />
               </div>
-              <div className="w-px h-4 bg-slate-700"></div>
               <div>
-                <span className="text-slate-500">Sales Rep: </span>
-                <span className="text-white font-medium">{salesRepName}</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-white tabular-nums">{formattedDuration}</span>
+                  <span className="text-sm text-white/50">duration</span>
+                </div>
+                <div className="flex items-center gap-4 mt-2 text-sm text-white/60">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+                    <span>{customerName}</span>
+                  </div>
+                  <div className="w-px h-4 bg-white/10"></div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                    <span>{salesRepName}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           
-          {/* Right side: Deal outcome badge */}
-          {dealOutcome && (
-            <div className={`
-              px-6 py-3 rounded-xl font-semibold text-lg
-              ${dealOutcome.closed 
-                ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-400 border-2 border-green-500/50 shadow-lg shadow-green-500/20' 
-                : 'bg-gradient-to-br from-slate-700/20 to-slate-600/20 text-slate-400 border-2 border-slate-600/50'
-              }
-            `}>
-              {dealOutcome.closed 
-                ? `✓ Closed: $${dealOutcome.amount.toLocaleString()}`
-                : 'Not Closed'
-              }
-            </div>
-          )}
+          {/* Right: Outcome Badge */}
+          <div className={`flex items-center gap-3 px-5 py-3 rounded-xl border-2 ${
+            dealOutcome?.closed 
+              ? 'bg-gradient-to-br from-emerald-500/20 to-green-500/20 border-emerald-500/50 text-emerald-300' 
+              : 'bg-gradient-to-br from-slate-700/20 to-slate-600/20 border-slate-600/50 text-slate-400'
+          }`}>
+            {dealOutcome?.closed ? (
+              <>
+                <CheckCircle2 className="w-5 h-5" />
+                <div>
+                  <div className="text-sm font-semibold">Closed</div>
+                  <div className="text-xs opacity-80">${dealOutcome.amount.toLocaleString()}</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <XCircle className="w-5 h-5" />
+                <div className="text-sm font-semibold">Not Closed</div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Playback Controls removed – audio is archived */}
-
-      {/* Enhanced Timeline */}
+      {/* Timeline - Redesigned */}
       <div className="relative" ref={timelineRef}>
-        {/* Background Track (static) */}
-        <div className="relative h-24 rounded-2xl overflow-hidden bg-slate-900/50 border border-slate-800/50">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-red-500/10" />
+        {/* Progress Bar Background */}
+        <div className="relative h-2 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-emerald-500/20" />
         </div>
         
-        {/* Segment Pills */}
-        <div className="absolute inset-0">
-          {segments.map((segment) => {
-            const style = getSegmentStyle(segment)
-            const Icon = segment.icon
-            
-            return (
+        {/* Key Moments */}
+        {segments.map((segment, index) => {
+          const Icon = segment.icon
+          const isHovered = hoveredSegment === segment.id
+          const isActive = activeSegment === segment.id
+          
+          return (
+            <div
+              key={segment.id}
+              className="absolute top-0"
+              style={{ left: `${segment.position}%` }}
+              onMouseEnter={() => setHoveredSegment(segment.id)}
+              onMouseLeave={() => setHoveredSegment(null)}
+              onClick={() => setActiveSegment(activeSegment === segment.id ? null : segment.id)}
+            >
+              {/* Connection Line */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-2 w-0.5 h-16 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+              
+              {/* Marker Dot */}
               <motion.div
-                key={segment.id}
-                className="absolute top-1/2 -translate-y-1/2"
-                style={{ left: `${segment.position}%` }}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: segment.id * 0.1 }}
+                className={`absolute left-1/2 -translate-x-1/2 top-0 w-4 h-4 rounded-full border-2 ${
+                  isHovered || isActive
+                    ? 'bg-white border-white scale-125'
+                    : 'bg-[#1a1a1a] border-white/40'
+                }`}
+                style={{
+                  boxShadow: isHovered || isActive ? '0 0 12px rgba(255,255,255,0.6)' : 'none'
+                }}
+                animate={{
+                  scale: isHovered || isActive ? 1.25 : 1,
+                }}
+                transition={{ duration: 0.2 }}
+              />
+              
+              {/* Key Moment Card */}
+              <motion.div
+                className="absolute top-6 left-1/2 -translate-x-1/2 w-64 z-10 cursor-pointer"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ 
+                  opacity: 1, 
+                  y: 0,
+                  scale: isHovered || isActive ? 1.05 : 1
+                }}
+                transition={{ delay: index * 0.1 }}
               >
-                <div
-                  className="relative -translate-x-1/2 cursor-pointer"
-                  onMouseEnter={() => setHoveredSegment(segment.id)}
-                  onMouseLeave={() => setHoveredSegment(null)}
-                >
-                  {/* Clean Pill Marker */}
-                  <motion.div
-                    className={`
-                      relative px-5 py-2.5 rounded-xl
-                      bg-slate-800/90 border-2 border-slate-600/50
-                      shadow-xl backdrop-blur-sm
-                      transition-all duration-300
-                      ${style.base}
-                      hover:border-purple-500/50 hover:bg-slate-700/90
-                    `}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setActiveSegment(segment.id)}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className={`p-1.5 rounded-lg bg-gradient-to-br ${segment.color}`}>
-                        <Icon className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <span className="text-sm font-semibold text-white whitespace-nowrap">
-                        {segment.title}
-                      </span>
+                <div className={`rounded-xl border-2 p-4 transition-all ${
+                  isHovered || isActive
+                    ? 'bg-[#0a0a0a] border-white/30 shadow-xl'
+                    : 'bg-[#1a1a1a] border-[#2a2a2a]'
+                }`}>
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`p-2 rounded-lg bg-gradient-to-br ${segment.color}`}>
+                      <Icon className="w-4 h-4 text-white" />
                     </div>
-                  </motion.div>
-
-                  {/* Hover Playback Card */}
-                  <AnimatePresence>
-                    {hoveredSegment === segment.id && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-80 z-50"
-                      >
-                        <div className="relative rounded-xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 shadow-2xl overflow-hidden">
-                          {/* Gradient Border */}
-                          <div className={`absolute inset-0 bg-gradient-to-r ${segment.color} opacity-20`} />
-                          
-                          <div className="relative p-5">
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <div className={`p-2 rounded-lg bg-gradient-to-r ${segment.color}`}>
-                                  <Icon className="w-4 h-4 text-white" />
-                                </div>
-                                <h4 className="text-base font-bold text-white">{segment.title}</h4>
-                              </div>
-                              {/* Audio controls removed */}
-                            </div>
-
-                            {/* Key Takeaway - Simplified */}
-                            <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                              <div className="flex items-start gap-2">
-                                <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-                                <div>
-                                  <p className="text-sm font-semibold text-purple-400 mb-2">Key Takeaway</p>
-                                  <p className="text-sm text-white leading-relaxed">{segment.feedback.tip}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-white truncate">{segment.title}</div>
+                      <div className="text-xs text-white/50 font-mono">{segment.timestamp}</div>
+                    </div>
+                  </div>
+                  
+                  {/* Key Takeaway */}
+                  {(isHovered || isActive) && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-3 pt-3 border-t border-white/10"
+                    >
+                      <p className="text-xs text-white/70 leading-relaxed">{segment.quickTip}</p>
+                    </motion.div>
+                  )}
                 </div>
               </motion.div>
-            )
-          })}
-        </div>
-
-        {/* Time markers */}
-        <div className="absolute -bottom-6 left-0 right-0 flex justify-between text-xs font-mono text-slate-500">
-          <span>0:00</span>
-          <span>{formatTime(duration / 2)}</span>
-          <span>{formatTime(duration)}</span>
+            </div>
+          )
+        })}
+        
+        {/* Time Labels */}
+        <div className="mt-8 flex justify-between items-center">
+          <div className="flex flex-col items-start">
+            <div className="text-xs font-mono text-white/40">START</div>
+            <div className="text-sm font-mono text-white/60 font-semibold mt-1">0:00</div>
+          </div>
+          
+          {segments.map((segment, idx) => (
+            <div key={idx} className="flex flex-col items-center" style={{ position: 'absolute', left: `${segment.position}%`, transform: 'translateX(-50%)', marginTop: '2rem' }}>
+              <div className="text-xs font-mono text-white/40">{segment.title.toUpperCase()}</div>
+              <div className="text-sm font-mono text-white/60 font-semibold mt-1">{segment.timestamp}</div>
+            </div>
+          ))}
+          
+          <div className="flex flex-col items-end">
+            <div className="text-xs font-mono text-white/40">END</div>
+            <div className="text-sm font-mono text-white/60 font-semibold mt-1">{formatTime(duration)}</div>
+          </div>
         </div>
       </div>
-
-      {/* Audio element removed */}
     </div>
   )
 }

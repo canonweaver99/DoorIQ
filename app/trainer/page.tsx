@@ -355,42 +355,89 @@ function TrainerPageContent() {
       }
   }, [sessionId, duration, transcript, router])
 
-  // Handle agent end call event
+  // Handle agent end call event with improved reliability
   useEffect(() => {
+    let silenceTimer: NodeJS.Timeout | null = null
+    let lastActivityTime = Date.now()
+    
     const handleEndSessionRequest = () => {
-      if (sessionActive) endSession()
+      if (sessionActive && sessionId) {
+        console.log('🔚 Manual end session requested')
+        endSession()
+      }
     }
     
     const handleAgentEndCall = async (e: any) => {
-      if (!sessionActive) return
+      if (!sessionActive) {
+        console.log('⚠️ Received end_call event but session not active')
+        return
+      }
       
       console.log('🚪 Agent ended call, playing door close sound...')
+      
+      // Clear any silence timers
+      if (silenceTimer) {
+        clearTimeout(silenceTimer)
+        silenceTimer = null
+      }
+      
+      // Prevent multiple calls
+      setSessionActive(false)
       
       // Play door closing sound
       try {
         const doorCloseAudio = new Audio('/sounds/door_close.mp3')
         doorCloseAudio.volume = 0.6
         await doorCloseAudio.play()
-        
-        // Wait for sound to finish (approx 1.5 seconds)
         await new Promise(resolve => setTimeout(resolve, 1500))
       } catch (error) {
         console.warn('Could not play door close sound', error)
       }
       
-      // End the session and navigate to loading page
+      // End the session
       console.log('🔚 Ending session after agent end call...')
-      endSession()
+      await endSession()
+    }
+    
+    // Track agent activity
+    const handleAgentActivity = () => {
+      lastActivityTime = Date.now()
+      // Reset the silence timer when agent is active
+      if (silenceTimer) {
+        clearTimeout(silenceTimer)
+      }
+      if (sessionActive && sessionId) {
+        silenceTimer = setTimeout(() => {
+          const timeSinceLastActivity = Date.now() - lastActivityTime
+          if (sessionActive && sessionId && timeSinceLastActivity >= 15000) {
+            console.log('⏱️ No agent activity for 15 seconds, auto-ending session...')
+            handleAgentEndCall({ detail: { reason: 'Agent stopped responding' } })
+          }
+        }, 15000)
+      }
+    }
+    
+    // Listen for agent messages to track activity
+    const handleAgentMessage = (e: any) => {
+      handleAgentActivity()
+    }
+    
+    // Set up initial silence timeout
+    if (sessionActive && sessionId) {
+      handleAgentActivity() // Initialize timer
     }
     
     window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
     window.addEventListener('agent:end_call', handleAgentEndCall)
+    window.addEventListener('agent:message', handleAgentMessage)
     
     return () => {
+      if (silenceTimer) clearTimeout(silenceTimer)
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
       window.removeEventListener('agent:end_call', handleAgentEndCall)
+      window.removeEventListener('agent:message', handleAgentMessage)
     }
-  }, [sessionActive, endSession])
+  }, [sessionActive, sessionId, endSession])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)

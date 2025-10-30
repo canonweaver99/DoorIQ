@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Sparkles, Loader2, User, Bot } from 'lucide-react'
+import { MessageCircle, Sparkles, Loader2, User, Bot, Mic, MicOff, Volume2 } from 'lucide-react'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -67,6 +67,68 @@ export default function CoachingChat({
 }: CoachingChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<'chat' | 'voice'>('chat')
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null)
+
+  // Stop speech when component unmounts or mode changes
+  useEffect(() => {
+    return () => {
+      if (speechSynthesisRef.current && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    // If switching to voice mode and there's a last assistant message, speak it
+    if (mode === 'voice' && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage.role === 'assistant' && lastMessage.content) {
+        speakText(lastMessage.content)
+      }
+    } else if (mode === 'chat') {
+      // Stop speech when switching to chat
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+        setIsSpeaking(false)
+      }
+    }
+  }, [mode, messages])
+
+  const speakText = (text: string) => {
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported')
+      return
+    }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel()
+    setIsSpeaking(false)
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 1.0
+    utterance.pitch = 1.0
+    utterance.volume = 1.0
+    utterance.lang = 'en-US'
+
+    utterance.onstart = () => {
+      setIsSpeaking(true)
+    }
+
+    utterance.onend = () => {
+      setIsSpeaking(false)
+      speechSynthesisRef.current = null
+    }
+
+    utterance.onerror = () => {
+      setIsSpeaking(false)
+      speechSynthesisRef.current = null
+    }
+
+    speechSynthesisRef.current = utterance
+    window.speechSynthesis.speak(utterance)
+  }
 
   const handleQuestionClick = async (question: string) => {
     // Add user message
@@ -91,7 +153,7 @@ export default function CoachingChat({
             saleClosed,
             virtualEarnings,
             transcriptLength: fullTranscript.length,
-            transcript: fullTranscript // Send actual transcript for quotes
+            transcript: fullTranscript
           }
         })
       })
@@ -109,9 +171,15 @@ export default function CoachingChat({
         timestamp: new Date()
       }
       setMessages(prev => [...prev, assistantMessage])
+
+      // If in voice mode, speak the response
+      if (mode === 'voice') {
+        setTimeout(() => {
+          speakText(answer)
+        }, 100)
+      }
     } catch (error) {
       console.error('Error getting coaching:', error)
-      // Add error message
       const errorMessage: Message = {
         role: 'assistant',
         content: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
@@ -123,6 +191,13 @@ export default function CoachingChat({
     }
   }
 
+  const stopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -130,15 +205,58 @@ export default function CoachingChat({
       transition={{ duration: 0.5, delay: 0.4 }}
       className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden"
     >
-      {/* Header */}
+      {/* Header with Mode Toggle */}
       <div className="px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-500/20 rounded-xl">
-            <Sparkles className="w-5 h-5 text-purple-400" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-500/20 rounded-xl">
+              <Sparkles className="w-5 h-5 text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">AI Coaching Assistant</h3>
+              <p className="text-xs text-slate-400">
+                {mode === 'chat' ? 'Ask questions about your performance' : 'Voice feedback mode'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">AI Coaching Assistant</h3>
-            <p className="text-xs text-slate-400">Ask questions about your performance</p>
+
+          {/* Mode Toggle */}
+          <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-1 border border-slate-700/50">
+            <button
+              onClick={() => setMode('chat')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                mode === 'chat'
+                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                <span>Chat</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setMode('voice')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                mode === 'voice'
+                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {isSpeaking ? (
+                  <>
+                    <MicOff className="w-4 h-4" onClick={stopSpeaking} />
+                    <span>Stop</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-4 h-4" />
+                    <span>Voice</span>
+                  </>
+                )}
+              </div>
+            </button>
           </div>
         </div>
       </div>
@@ -148,11 +266,19 @@ export default function CoachingChat({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-2xl flex items-center justify-center mb-4">
-              <MessageCircle className="w-8 h-8 text-purple-400" />
+              {mode === 'chat' ? (
+                <MessageCircle className="w-8 h-8 text-purple-400" />
+              ) : (
+                <Volume2 className="w-8 h-8 text-purple-400" />
+              )}
             </div>
-            <p className="text-slate-300 font-medium mb-2">Get Personalized Coaching</p>
+            <p className="text-slate-300 font-medium mb-2">
+              {mode === 'chat' ? 'Get Personalized Coaching' : 'Voice Coaching Mode'}
+            </p>
             <p className="text-slate-500 text-sm max-w-md">
-              Select a question below to get AI-powered insights based on your session performance
+              {mode === 'chat'
+                ? 'Select a question below to get AI-powered insights based on your session performance'
+                : 'Select a question to hear feedback spoken aloud'}
             </p>
           </div>
         ) : (
@@ -167,7 +293,11 @@ export default function CoachingChat({
               >
                 {message.role === 'assistant' && (
                   <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-5 h-5 text-white" />
+                    {mode === 'voice' ? (
+                      <Volume2 className="w-5 h-5 text-white" />
+                    ) : (
+                      <Bot className="w-5 h-5 text-white" />
+                    )}
                   </div>
                 )}
                 <div
@@ -196,14 +326,41 @@ export default function CoachingChat({
             className="flex gap-3 justify-start"
           >
             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
-              <Bot className="w-5 h-5 text-white" />
+              {mode === 'voice' ? (
+                <Volume2 className="w-5 h-5 text-white" />
+              ) : (
+                <Bot className="w-5 h-5 text-white" />
+              )}
             </div>
             <div className="bg-slate-800/60 border border-slate-700/50 px-4 py-3 rounded-2xl">
               <div className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
-                <span className="text-sm text-slate-400">Thinking...</span>
+                <span className="text-sm text-slate-400">
+                  {mode === 'voice' ? 'Preparing voice feedback...' : 'Thinking...'}
+                </span>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {isSpeaking && mode === 'voice' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center gap-2 mt-4 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg"
+          >
+            <div className="flex gap-1">
+              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
+            </div>
+            <span className="text-sm text-purple-300 font-medium">Speaking...</span>
+            <button
+              onClick={stopSpeaking}
+              className="ml-2 p-1.5 hover:bg-purple-500/20 rounded-lg transition-colors"
+            >
+              <MicOff className="w-4 h-4 text-purple-300" />
+            </button>
           </motion.div>
         )}
       </div>
@@ -216,7 +373,7 @@ export default function CoachingChat({
             <button
               key={q.id}
               onClick={() => handleQuestionClick(q.label)}
-              disabled={loading}
+              disabled={loading || isSpeaking}
               className="flex items-center gap-3 px-4 py-3 bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700/50 hover:border-purple-500/50 rounded-xl text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <span className="text-xl">{q.icon}</span>
@@ -230,4 +387,3 @@ export default function CoachingChat({
     </motion.div>
   )
 }
-

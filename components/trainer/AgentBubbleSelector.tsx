@@ -500,13 +500,6 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </div>
                 </motion.button>
 
-                {/* Best Score Badge - Top Left */}
-                {agent.bestScore !== null && agent.bestScore !== undefined && agent.bestScore > 0 && (
-                  <div className="absolute top-1 left-1 bg-gradient-to-r from-purple-600/90 to-indigo-600/90 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-purple-500/40 shadow-lg z-10">
-                    <span className="text-[11px] font-bold text-white tabular-nums">Best: {agent.bestScore}%</span>
-                  </div>
-                )}
-
                 {/* Suggested Badge */}
                 {suggestedAgent === agent.name && !agent.isLocked && (
                   <div className="absolute top-1 right-1 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-500/40">
@@ -553,14 +546,16 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     {agent.description}
                   </p>
                   
-                  {/* Stats if available */}
+                  {/* Stats if available - Larger and more readable */}
                   {agent.sessionCount && agent.sessionCount > 0 ? (
-                    <div className="text-xs font-semibold text-slate-400 pt-1">
-                      {agent.sessionCount}x attempted
-                      {agent.bestScore && agent.bestScore > 0 ? <span className="text-emerald-400 ml-1.5">• Best: {agent.bestScore}%</span> : null}
+                    <div className="text-base font-bold pt-2">
+                      <span className="text-white/90">{agent.sessionCount}x attempted</span>
+                      {agent.bestScore && agent.bestScore > 0 ? (
+                        <span className="text-emerald-400 ml-2 tabular-nums">• Best: {agent.bestScore}%</span>
+                      ) : null}
                     </div>
                   ) : (
-                    <div className="text-xs font-semibold text-amber-400/90 pt-1">
+                    <div className="text-base font-semibold text-amber-400/90 pt-2">
                       ✨ Not yet attempted
                     </div>
                   )}
