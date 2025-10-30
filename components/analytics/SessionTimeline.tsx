@@ -1,19 +1,12 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Clock, 
-  Play, 
-  Pause, 
   MessageSquare, 
-  Volume2, 
   Sparkles, 
-  ChevronRight,
   Mic,
-  Activity,
-  SkipForward,
-  Rewind,
   Zap
 } from 'lucide-react'
 
@@ -52,7 +45,8 @@ interface TimelineSegment {
 }
 
 export default function SessionTimeline({ 
-  duration, 
+  duration,
+  events = [],
   fullTranscript = [],
   customerName = 'Customer',
   salesRepName = 'Sales Rep',
@@ -62,11 +56,7 @@ export default function SessionTimeline({
   const [playingSegment, setPlayingSegment] = useState<number | null>(null)
   const [hoveredSegment, setHoveredSegment] = useState<number | null>(null)
   const [activeSegment, setActiveSegment] = useState<number | null>(null)
-  const [audioLoading, setAudioLoading] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const audioRef = useRef<HTMLAudioElement>(null)
+  // Audio playback archived – keep visual-only timeline
   const timelineRef = useRef<HTMLDivElement>(null)
 
   // Use AI-generated timeline moments from grading (not hardcoded)
@@ -112,92 +102,15 @@ export default function SessionTimeline({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const playSegment = async (segment: TimelineSegment) => {
-    if (!audioUrl || !audioRef.current) {
-      console.warn('No audio URL available')
-      return
-    }
-
-    try {
-      setAudioLoading(true)
-      
-      if (audioRef.current.src !== audioUrl) {
-        audioRef.current.src = audioUrl
-      }
-
-      await audioRef.current.load()
-      
-      audioRef.current.currentTime = segment.startTime
-      
-      await audioRef.current.play()
-      setIsPlaying(true)
-      setPlayingSegment(segment.id)
-      setActiveSegment(segment.id)
-      
-    } catch (error) {
-      console.error('Failed to play audio:', error)
-    } finally {
-      setAudioLoading(false)
-    }
-  }
-
-  const pauseAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      setIsPlaying(false)
-    }
-  }
-
-  const seekToTime = (time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time
-    }
-  }
-
-  // Update progress and check segment boundaries
-  useEffect(() => {
-    const audioElement = audioRef.current
-    if (!audioElement) return
-
-    const updateProgress = () => {
-      const current = audioElement.currentTime || 0
-      const total = audioElement.duration || duration
-      setCurrentTime(current)
-      setProgress((current / total) * 100)
-
-      // Check if we've passed the end of the current segment
-      if (playingSegment !== null) {
-        const segment = segments[playingSegment]
-        if (current >= segment.endTime) {
-          audioElement.pause()
-          setIsPlaying(false)
-          setPlayingSegment(null)
-        }
-      }
-    }
-
-    const handleEnded = () => {
-      setIsPlaying(false)
-      setPlayingSegment(null)
-    }
-
-    audioElement.addEventListener('timeupdate', updateProgress)
-    audioElement.addEventListener('ended', handleEnded)
-
-    return () => {
-      audioElement.removeEventListener('timeupdate', updateProgress)
-      audioElement.removeEventListener('ended', handleEnded)
-    }
-  }, [playingSegment, duration, segments])
+  // Audio logic removed – timeline is purely visual for now
 
   const getSegmentStyle = (segment: TimelineSegment) => {
     const isActive = activeSegment === segment.id
     const isHovered = hoveredSegment === segment.id
-    const isPlaying = playingSegment === segment.id
 
     return {
       base: isActive || isHovered ? 'scale-110' : 'scale-100',
-      glow: isPlaying ? 'ring-4 ring-white/30' : '',
+      glow: '',
       intensity: {
         low: 'opacity-60',
         medium: 'opacity-80',
@@ -249,75 +162,13 @@ export default function SessionTimeline({
         </div>
       </div>
 
-      {/* Playback Controls */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          
-          {/* Overall Controls */}
-          {audioUrl && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => seekToTime(Math.max(0, currentTime - 10))}
-                className="p-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
-              >
-                <Rewind className="w-4 h-4 text-slate-400" />
-              </button>
-              <button
-                onClick={() => isPlaying ? pauseAudio() : audioRef.current?.play()}
-                className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
-              >
-                {isPlaying ? (
-                  <Pause className="w-4 h-4 text-slate-400" />
-                ) : (
-                  <Play className="w-4 h-4 text-slate-400" />
-                )}
-              </button>
-              <button
-                onClick={() => seekToTime(Math.min(duration, currentTime + 10))}
-                className="p-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
-              >
-                <SkipForward className="w-4 h-4 text-slate-400" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Current time indicator */}
-        {isPlaying && (
-          <div className="text-xs font-mono text-slate-500 text-center">
-            Playing: {formatTime(currentTime)}
-          </div>
-        )}
-      </div>
+      {/* Playback Controls removed – audio is archived */}
 
       {/* Enhanced Timeline */}
       <div className="relative" ref={timelineRef}>
-        {/* Background Track */}
+        {/* Background Track (static) */}
         <div className="relative h-24 rounded-2xl overflow-hidden bg-slate-900/50 border border-slate-800/50">
-          {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-red-500/10" />
-          
-          {/* Progress Bar */}
-          <div 
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-red-500/20 backdrop-blur-sm transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          >
-            <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/50 animate-pulse" />
-          </div>
-
-          {/* Waveform Visualization (Decorative) */}
-          <div className="absolute inset-0 flex items-center justify-around opacity-20">
-            {Array.from({ length: 50 }, (_, i) => (
-              <div
-                key={i}
-                className="w-1 bg-slate-400 rounded-full transition-all duration-300"
-                style={{
-                  height: `${20 + Math.random() * 60}%`,
-                  opacity: progress > (i / 50) * 100 ? 0.8 : 0.3
-                }}
-              />
-            ))}
-          </div>
         </div>
         
         {/* Segment Pills */}
@@ -352,16 +203,13 @@ export default function SessionTimeline({
                     `}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => playSegment(segment)}
+                    onClick={() => setActiveSegment(segment.id)}
                   >
                     <div className="flex items-center gap-2">
                       <Icon className="w-4 h-4 text-white" />
                       <span className="text-xs font-medium text-white whitespace-nowrap">
                         {segment.title}
                       </span>
-                      {playingSegment === segment.id && (
-                        <Activity className="w-3 h-3 text-white animate-pulse" />
-                      )}
                     </div>
                   </motion.div>
 
@@ -388,26 +236,7 @@ export default function SessionTimeline({
                                 </div>
                                 <h4 className="text-base font-bold text-white">{segment.title}</h4>
                               </div>
-                              {audioUrl && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (audioUrl) playSegment(segment)
-                                  }}
-                                  disabled={audioLoading}
-                                  className={`p-2 rounded-lg transition-all ${
-                                    playingSegment === segment.id
-                                      ? 'bg-red-500/20 hover:bg-red-500/30' 
-                                      : 'bg-white/10 hover:bg-white/20'
-                                  }`}
-                                >
-                                  {playingSegment === segment.id ? (
-                                    <Pause className="w-4 h-4 text-white" />
-                                  ) : (
-                                    <Play className="w-4 h-4 text-white" />
-                                  )}
-                                </button>
-                              )}
+                              {/* Audio controls removed */}
                             </div>
 
                             {/* Key Takeaway - Simplified */}
@@ -439,15 +268,7 @@ export default function SessionTimeline({
         </div>
       </div>
 
-      {/* Hidden Audio Element */}
-      {audioUrl && (
-        <audio 
-          ref={audioRef} 
-          preload="metadata"
-          onLoadStart={() => setAudioLoading(true)}
-          onLoadedData={() => setAudioLoading(false)}
-        />
-      )}
+      {/* Audio element removed */}
     </div>
   )
 }
