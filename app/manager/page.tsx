@@ -54,79 +54,132 @@ function ManagerPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e]">
-      {/* Header with Role Badge */}
-      <div className="border-b border-white/10 bg-[#1e1e30]/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-[1800px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl shadow-lg shadow-purple-500/30">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Manager Panel</h1>
-                  <p className="text-xs text-slate-400">Team Performance & Management</p>
-                </div>
-              </div>
-              
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-lg">
-                <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
-                <span className="text-xs font-medium text-purple-300">Manager Mode</span>
-              </div>
+    <div className="min-h-screen bg-[#0a0a0a] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1800px] mx-auto">
+        {/* Header Section matching dashboard */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Left: Title & Description */}
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">
+                Manager Panel
+              </h1>
+              <p className="text-white/70">
+                Oversee your team performance, manage reps, and track analytics
+              </p>
             </div>
 
-            {/* Quick Actions */}
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setActiveTab('messages')}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30"
+            {/* Right: Quick Stats (matching dashboard style) */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4"
+                style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
               >
-                <MessageSquare className="w-4 h-4" />
-                <span className="hidden sm:inline">Send Message</span>
-              </button>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-white/60">Active Reps</p>
+                    <p className="text-[26px] font-bold text-white leading-tight">24</p>
+                  </div>
+                  <div 
+                    className="flex items-center justify-center w-9 h-9 rounded-full shrink-0 ml-2"
+                    style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)' }}
+                  >
+                    <Users className="w-[18px] h-[18px]" style={{ color: '#a855f7' }} />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4"
+                style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-white/60">Messages</p>
+                    <p className="text-[26px] font-bold text-white leading-tight">3</p>
+                  </div>
+                  <div 
+                    className="flex items-center justify-center w-9 h-9 rounded-full shrink-0 ml-2"
+                    style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)' }}
+                  >
+                    <MessageSquare className="w-[18px] h-[18px]" style={{ color: '#ec4899' }} />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4"
+                style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-white/60">Avg Score</p>
+                    <p className="text-[26px] font-bold text-white leading-tight">78%</p>
+                  </div>
+                  <div 
+                    className="flex items-center justify-center w-9 h-9 rounded-full shrink-0 ml-2"
+                    style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}
+                  >
+                    <BarChart3 className="w-[18px] h-[18px]" style={{ color: '#10b981' }} />
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Tab Navigation */}
-      <div className="border-b border-white/10 bg-[#1e1e30]/30 backdrop-blur-xl sticky top-[73px] z-40">
-        <div className="max-w-[1800px] mx-auto px-6">
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-            {tabs.map((tab) => {
+        {/* Tab Navigation matching dashboard style */}
+        <div className="mb-8 border-b border-[#2a2a2a]">
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+            {tabs.map((tab, index) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.id
-              
+
               return (
-                <button
+                <motion.button
                   key={tab.id}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
+                  className={`relative flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                     isActive
-                      ? 'text-white'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'text-white bg-[#1a1a1a]'
+                      : 'text-[#888888] hover:text-[#bbbbbb]'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  {tab.name}
+                  <span>{tab.name}</span>
                   
                   {isActive && (
                     <motion.div
-                      layoutId="activeTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      layoutId="activeTabBorder"
+                      className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#a855f7]"
+                      style={{ boxShadow: '0 2px 8px rgba(168, 85, 247, 0.3)' }}
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                     />
                   )}
-                </button>
+                </motion.button>
               )
             })}
           </div>
         </div>
-      </div>
 
-      {/* Tab Content */}
-      <div className="max-w-[1800px] mx-auto px-6 py-8">
+        {/* Tab Content with smooth transitions */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
