@@ -59,15 +59,17 @@ export default function SessionTimeline({
   // Audio playback archived – keep visual-only timeline
   const timelineRef = useRef<HTMLDivElement>(null)
 
-  // Use AI-generated timeline moments from grading (not hardcoded)
-  const segments: TimelineSegment[] = events && events.length > 0 ? events.map((event: any, index: number) => {
+  // Use AI-generated timeline moments - evenly spaced at 25%, 50%, 75%
+  const segments: TimelineSegment[] = events && events.length > 0 ? events.slice(0, 3).map((event: any, index: number) => {
     const eventTime = typeof event.timestamp === 'string' ? parseTimestamp(event.timestamp) : (event.timestamp || 0)
+    // Fixed positions: 25%, 50%, 75% for clean, evenly-spaced layout
+    const fixedPositions = [25, 50, 75]
     return {
       id: index,
-      position: event.position || ((eventTime / duration) * 100),
+      position: fixedPositions[index] || 50,
       timestamp: event.timestamp || formatTime(eventTime),
-      startTime: Math.max(0, eventTime - 2.5), // 5-second clip: 2.5s before
-      endTime: Math.min(duration, eventTime + 2.5), // 2.5s after
+      startTime: Math.max(0, eventTime - 2.5),
+      endTime: Math.min(duration, eventTime + 2.5),
       title: event.moment_type || event.title || 'Key Moment',
       type: (event.moment_type || 'opening').toLowerCase().includes('rapport') ? 'opening' :
             (event.moment_type || 'discovery').toLowerCase().includes('discovery') ? 'discovery' :
@@ -76,7 +78,7 @@ export default function SessionTimeline({
       icon: (event.moment_type || '').toLowerCase().includes('rapport') ? MessageSquare :
             (event.moment_type || '').toLowerCase().includes('discovery') ? Mic :
             (event.moment_type || '').toLowerCase().includes('clos') ? Zap : Sparkles,
-      color: event.is_positive ? 'from-green-500 to-emerald-500' : 'from-blue-500 to-purple-500',
+      color: event.is_positive ? 'from-emerald-500 to-green-500' : 'from-blue-500 to-indigo-500',
       quickTip: event.key_takeaway || event.description || 'Key moment',
       feedback: {
         good: event.key_takeaway || event.description || '',
@@ -191,23 +193,25 @@ export default function SessionTimeline({
                   onMouseEnter={() => setHoveredSegment(segment.id)}
                   onMouseLeave={() => setHoveredSegment(null)}
                 >
-                  {/* Pill Marker */}
+                  {/* Clean Pill Marker */}
                   <motion.div
                     className={`
-                      relative px-4 py-2 rounded-full
-                      bg-gradient-to-r ${segment.color}
-                      ${style.intensity} ${style.glow}
-                      shadow-lg backdrop-blur-sm
+                      relative px-5 py-2.5 rounded-xl
+                      bg-slate-800/90 border-2 border-slate-600/50
+                      shadow-xl backdrop-blur-sm
                       transition-all duration-300
                       ${style.base}
+                      hover:border-purple-500/50 hover:bg-slate-700/90
                     `}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setActiveSegment(segment.id)}
                   >
-                    <div className="flex items-center gap-2">
-                      <Icon className="w-4 h-4 text-white" />
-                      <span className="text-xs font-medium text-white whitespace-nowrap">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-1.5 rounded-lg bg-gradient-to-br ${segment.color}`}>
+                        <Icon className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-white whitespace-nowrap">
                         {segment.title}
                       </span>
                     </div>

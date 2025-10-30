@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build context prompt
-    const contextPrompt = `You are an expert sales coach providing personalized feedback to a sales rep based on their practice session.
+    const contextPrompt = `You are a sales manager giving quick, casual coaching to your rep after their door knock.
 
 SESSION PERFORMANCE:
 - Overall Score: ${overallScore}%
@@ -49,12 +49,13 @@ AREAS FOR IMPROVEMENT:
 ${feedback.improvements?.map((i: string) => `- ${i}`).join('\n') || 'N/A'}
 ${transcriptContext}
 
-RESPONSE GUIDELINES:
-- Keep response to 2-3 SHORT paragraphs (150-200 words max)
-- ALWAYS quote specific lines from the transcript as evidence (use "quotes")
-- Be direct and actionable, not verbose
-- Reference actual conversation moments
-- No generic advice - make it feel personal to THIS call
+RESPONSE STYLE:
+- Talk like a real manager, not a robot. Be casual and conversational.
+- Keep it SHORT - 2-3 sentences MAX (50-80 words total)
+- Get straight to the point. No fluff.
+- Use phrases like "Look," "Here's the thing," "Real talk," "Next time try..."
+- Be encouraging but direct
+- Reference specific moments from the call if relevant
 
 QUESTION: ${question}`
 
@@ -63,15 +64,15 @@ QUESTION: ${question}`
       messages: [
         {
           role: 'system',
-          content: 'You are an expert door-to-door sales coach. Give CONCISE, specific feedback (2-3 short paragraphs max). Always include direct quotes from the transcript as evidence. Be encouraging but honest. Focus on practical techniques they can apply immediately. Make it feel like you actually listened to THEIR call.'
+          content: 'You are a sales manager giving quick, casual coaching. Keep responses VERY SHORT (2-3 sentences, 50-80 words max). Talk like a real person, not a textbook. Be direct, encouraging, and actionable. Use casual language like "Look," "Here\'s the thing," "Real talk." Make it feel like quick advice from a manager who cares, not a formal evaluation.'
         },
         {
           role: 'user',
           content: contextPrompt
         }
       ],
-      temperature: 0.7,
-      max_tokens: 300 // Reduced for more concise responses
+      temperature: 0.8,
+      max_tokens: 150 // Even shorter for casual, quick responses
     })
 
     const answer = completion.choices[0].message.content || "I'm sorry, I couldn't generate a response. Please try again."

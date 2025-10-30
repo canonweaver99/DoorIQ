@@ -293,7 +293,9 @@ const gradingResponseSchema: JsonSchema = {
         total_contract_value: { type: 'number' },
         payment_method: { type: 'string' },
         add_ons: { type: 'array', items: { type: 'string' } },
-        start_date: { type: 'string' }
+        start_date: { type: 'string' },
+        next_step: { type: 'string' },
+        next_step_type: { type: 'string' }
       }
     }
   }
@@ -520,6 +522,12 @@ EARNINGS:
 - Inspections are NOT sales (sale_closed=false, return_appointment=true)
 - Commission rate always 0.30 (30%)
 - virtual_earnings = total_contract_value × 0.30
+
+NEXT STEPS (in deal_details):
+- If no sale closed but customer agreed to next step, capture it in "next_step" field
+- Examples: "Return appointment scheduled for Friday", "Will call back after talking to spouse", "Free inspection booked for next week"
+- Set "next_step_type" to one of: "return_appointment", "callback", "inspection", "think_it_over", "spouse_discussion"
+- If sale closed OR no next step agreed, leave both fields empty
 
 FILLER WORDS:
 - Count ONLY: "um", "uh", "uhh", "erm", "err", "hmm"

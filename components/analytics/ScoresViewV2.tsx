@@ -218,7 +218,8 @@ export default function ScoresViewV2({
       if (!speaker) return false
       const isRepLine = speaker === 'rep' || speaker === 'user'
       if (!isRepLine) return false
-      const fillerPattern = /\b(um|uhh?|uh|like|erm|err|hmm)\b/gi
+      // Only count: um, uh, uhh, erm, err, hmm (NOT "like")
+      const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm)\b/gi
       return fillerPattern.test(text)
     })
 
@@ -313,8 +314,9 @@ export default function ScoresViewV2({
                           <h4 className="text-sm font-semibold text-amber-300 mb-3">Filler Word Locations:</h4>
                           <div className="space-y-2">
                             {fillerWordEntries.map((entry, idx) => {
+                              // Only highlight: um, uh, uhh, erm, err, hmm (NOT "like")
                               const highlightedText = entry.text.replace(
-                                /\b(um|uhh?|uh|like|erm|err|hmm)\b/gi,
+                                /\b(um|uhh?|uh|erm|err|hmm)\b/gi,
                                 '<mark class="bg-amber-500/30 text-amber-300 px-1 rounded">$1</mark>'
                               )
 
@@ -397,14 +399,18 @@ export default function ScoresViewV2({
             className={`relative rounded-3xl backdrop-blur-xl p-8 overflow-hidden ${
               saleClosed && virtualEarnings > 0
                 ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
-                : 'bg-gradient-to-br from-red-900/40 to-rose-800/40 border border-red-500/30'
+                : dealDetails?.next_step
+                  ? 'bg-gradient-to-br from-amber-900/40 to-yellow-800/40 border border-amber-500/30'
+                  : 'bg-gradient-to-br from-red-900/40 to-rose-800/40 border border-red-500/30'
             }`}
           >
             {/* Sparkle background */}
             <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
               saleClosed && virtualEarnings > 0
                 ? 'bg-gradient-to-br from-emerald-400/20 to-green-400/20'
-                : 'bg-gradient-to-br from-red-400/20 to-rose-400/20'
+                : dealDetails?.next_step
+                  ? 'bg-gradient-to-br from-amber-400/20 to-yellow-400/20'
+                  : 'bg-gradient-to-br from-red-400/20 to-rose-400/20'
             }`}></div>
             
             <div className="relative z-10">
@@ -413,6 +419,11 @@ export default function ScoresViewV2({
                   <>
                     <DollarSign className="w-6 h-6 text-emerald-400" />
                     <span className="text-sm uppercase tracking-[0.25em] text-emerald-400">You Earned</span>
+                  </>
+                ) : dealDetails?.next_step ? (
+                  <>
+                    <Clock className="w-6 h-6 text-amber-400" />
+                    <span className="text-sm uppercase tracking-[0.25em] text-amber-400">Soft Close</span>
                   </>
                 ) : (
                   <>
@@ -458,6 +469,19 @@ export default function ScoresViewV2({
                     </div>
                   )}
                 </>
+              ) : dealDetails?.next_step ? (
+                <div className="space-y-4">
+                  <div className="text-3xl font-bold text-amber-300 mb-2">Next Step Set ✓</div>
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <div className="text-sm text-amber-400/80 mb-2 uppercase tracking-wide font-semibold">
+                      {dealDetails.next_step_type?.replace(/_/g, ' ') || 'Follow-up'}
+                    </div>
+                    <p className="text-base text-white font-medium leading-relaxed">{dealDetails.next_step}</p>
+                  </div>
+                  <div className="pt-4 border-t border-amber-500/30">
+                    <p className="text-sm text-amber-200/80">No immediate sale, but you kept the door open. Follow through on this commitment to close the deal.</p>
+                  </div>
+                </div>
               ) : (
                 <div className="space-y-4">
                   <div className="flex justify-between text-base">
