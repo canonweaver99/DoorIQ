@@ -67,18 +67,8 @@ export async function checkSessionLimit(userId: string): Promise<{
       .eq('id', userId)
       .single()
 
-    const status = user?.subscription_status
-    const isTrialing = status === 'trialing' && user?.trial_ends_at && new Date(user.trial_ends_at) > new Date()
-    const hasActiveSubscription = status === 'active' || isTrialing
-
-    if (hasActiveSubscription) {
-      return {
-        canStartSession: true,
-        sessionsRemaining: -1,
-        sessionsUsed: 0,
-        sessionsLimit: -1,
-      }
-    }
+    // All users now use credit-based system, including paid users (50 credits/month)
+    // Removed unlimited access - paid users get 50 credits/month
 
     // Check session limits using RPC
     const { data: canStart, error: limitError } = await supabase.rpc(

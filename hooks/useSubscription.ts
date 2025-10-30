@@ -130,36 +130,27 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
       const isTrialing = status === 'trialing' && subscription?.trial_ends_at && new Date(subscription.trial_ends_at) > new Date()
       const hasActiveSubscription = status === 'active' || isTrialing
 
-      if (hasActiveSubscription) {
-        setData({
-          canStartSession: true,
-          sessionsRemaining: -1,
-          sessionsUsed: 0,
-          sessionsLimit: -1,
-          isUnlimited: true,
-          loading: false
-        })
-        return
-      }
-
-      // Get session limit data
+      // Get session limit data (now includes credits for paid users)
       const { data: limitData } = await supabase
         .from('user_session_limits')
-        .select('sessions_this_month, sessions_limit')
+        .select('sessions_this_month, sessions_limit, monthly_credits, purchased_credits')
         .eq('user_id', user.id)
         .single()
 
+      // Calculate total available credits
+      const monthlyCredits = limitData?.monthly_credits || (hasActiveSubscription ? 50 : null)
+      const purchasedCredits = limitData?.purchased_credits || 0
+      const totalLimit = limitData?.sessions_limit || (hasActiveSubscription ? 50 : 10)
       const sessionsUsed = limitData?.sessions_this_month || 0
-      const sessionsLimit = limitData?.sessions_limit || 5
-      const sessionsRemaining = Math.max(0, sessionsLimit - sessionsUsed)
-      const canStartSession = sessionsUsed < sessionsLimit
+      const sessionsRemaining = Math.max(0, totalLimit - sessionsUsed)
+      const canStartSession = sessionsUsed < totalLimit
 
       setData({
         canStartSession,
         sessionsRemaining,
         sessionsUsed,
-        sessionsLimit,
-        isUnlimited: false,
+        sessionsLimit: totalLimit,
+        isUnlimited: false, // No longer unlimited for paid users
         loading: false
       })
     } catch (error) {

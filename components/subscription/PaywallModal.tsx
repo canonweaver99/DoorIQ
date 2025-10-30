@@ -37,7 +37,7 @@ export function PaywallModal({ isOpen, onClose, reason = 'feature_locked', featu
   const getDescription = () => {
     switch (reason) {
       case 'session_limit':
-        return "You've reached your 10 practice sessions this month. Upgrade to get unlimited sessions and more!"
+        return "You've run out of practice call credits. Upgrade to get 50 credits per month, or purchase extra credits to continue!"
       case 'trial_ended':
         return 'Your 7-day free trial has ended. Upgrade now to continue accessing all premium features!'
       case 'feature_locked':
@@ -50,7 +50,7 @@ export function PaywallModal({ isOpen, onClose, reason = 'feature_locked', featu
 
   const features = [
     { icon: Sparkles, text: 'Access to ALL 12 AI training agents', premium: true },
-    { icon: Zap, text: 'Unlimited practice sessions', premium: true },
+    { icon: Zap, text: '50 practice call credits per month', premium: true },
     { icon: Crown, text: 'Advanced analytics & scoring', premium: true },
     { icon: Check, text: 'Real-time feedback & coaching', premium: true },
     { icon: Check, text: 'Custom sales scenarios', premium: true },

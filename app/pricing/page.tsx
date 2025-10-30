@@ -53,26 +53,49 @@ function PricingPageContent() {
     
     // Sync subscription status after successful checkout
     if (success === 'true' && sessionId) {
-      console.log('🔄 Syncing subscription for session:', sessionId)
+      const credits = searchParams.get('credits')
       
-      fetch('/api/stripe/sync-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            console.log('✅ Subscription synced successfully')
-            // Refresh subscription status
-            subscription.refetch?.()
-          } else {
-            console.error('❌ Failed to sync subscription:', data.error)
-          }
+      if (credits) {
+        // Handle credit purchase
+        console.log('🔄 Processing credit purchase:', credits)
+        fetch('/api/credits/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, credits: parseInt(credits) })
         })
-        .catch(error => {
-          console.error('❌ Error syncing subscription:', error)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              console.log('✅ Credits applied successfully')
+              subscription.refetch?.()
+            } else {
+              console.error('❌ Failed to apply credits:', data.error)
+            }
+          })
+          .catch(error => {
+            console.error('❌ Error applying credits:', error)
+          })
+      } else {
+        // Handle subscription
+        console.log('🔄 Syncing subscription for session:', sessionId)
+        fetch('/api/stripe/sync-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
         })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              console.log('✅ Subscription synced successfully')
+              subscription.refetch?.()
+            } else {
+              console.error('❌ Failed to sync subscription:', data.error)
+            }
+          })
+          .catch(error => {
+            console.error('❌ Error syncing subscription:', error)
+          })
+      }
     }
     
     if (success === 'true') {
@@ -215,12 +238,13 @@ function PricingPageContent() {
     },
     {
       name: "Individual",
-      price: "50",
-      yearlyPrice: "40",
+      price: "20",
+      yearlyPrice: "20",
       period: "month",
       features: [
         "Access to ALL AI training agents",
-        "Unlimited practice calls",
+        "50 practice calls per month",
+        "Purchase extra credits anytime",
         "Advanced analytics & scoring",
         "Full dashboard access (Performance, Learning, etc.)",
         "Sales call upload & analysis",
@@ -293,9 +317,15 @@ function PricingPageContent() {
                 </div>
                 
                 <div className="flex-1 pt-0.5">
-                  <h3 className="font-bold text-2xl mb-2 text-white">Welcome to Premium!</h3>
+                  <h3 className="font-bold text-2xl mb-2 text-white">
+                    {searchParams.get('credits') ? 'Credits Purchased!' : 'Welcome to Premium!'}
+                  </h3>
                   <p className="text-emerald-100 text-sm leading-relaxed mb-4">
-                    Your <span className="font-semibold text-white">subscription</span> is now active! You now have unlimited access to all 12 AI training agents and premium features.
+                    {searchParams.get('credits') ? (
+                      <>You've successfully purchased <span className="font-semibold text-white">{searchParams.get('credits')} credits</span>! Your credits have been added to your account.</>
+                    ) : (
+                      <>Your <span className="font-semibold text-white">subscription</span> is now active! You now have 50 practice call credits per month with access to all 12 AI training agents and premium features.</>
+                    )}
                   </p>
                   
                   <div className="flex flex-wrap gap-2.5">

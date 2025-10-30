@@ -121,6 +121,11 @@ export async function POST(request: NextRequest) {
             console.error('❌ Error updating user subscription:', updateError)
           } else {
             console.log('✅ User subscription updated successfully')
+            // Grant 50 monthly credits for paid subscription
+            if (subscription.status === 'active' || subscription.status === 'trialing') {
+              await supabase.rpc('grant_subscription_credits', { p_user_id: userId })
+              console.log('✅ Granted 50 monthly credits to user')
+            }
           }
 
           // Log event
@@ -161,6 +166,12 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', userId)
 
+        // Grant 50 monthly credits for subscription
+        if (subscription.status === 'active' || subscription.status === 'trialing') {
+          await supabase.rpc('grant_subscription_credits', { p_user_id: userId })
+          console.log('✅ Granted 50 monthly credits to user')
+        }
+
         // Log event
         await logSubscriptionEvent(supabase, userId, 'trial_started', {
           subscription_id: subscription.id,
@@ -199,6 +210,12 @@ export async function POST(request: NextRequest) {
             subscription_cancel_at_period_end: subscription.cancel_at_period_end
           })
           .eq('id', userId)
+
+        // Grant credits if subscription is now active/trialing
+        if (subscription.status === 'active' || subscription.status === 'trialing') {
+          await supabase.rpc('grant_subscription_credits', { p_user_id: userId })
+          console.log('✅ Granted/updated 50 monthly credits to user')
+        }
 
         // Check if trial just ended
         if (previousAttributes?.status === 'trialing' && subscription.status === 'active') {
