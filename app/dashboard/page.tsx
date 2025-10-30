@@ -21,6 +21,8 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { useSubscription } from '@/hooks/useSubscription'
+import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 
 type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
@@ -730,9 +732,9 @@ function OverviewTabContent() {
                 <button
                   key={range}
                   onClick={() => setChartTimeRange(range)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
                     chartTimeRange === range
-                      ? 'bg-[#a855f7] text-white'
+                      ? 'bg-[#a855f7] text-white shadow-lg shadow-purple-500/30'
                       : 'text-[#8a8a8a] hover:text-white'
                   }`}
                 >
@@ -820,7 +822,7 @@ function OverviewTabContent() {
                 filter="drop-shadow(0 0 8px rgba(236, 72, 153, 0.4))"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 1.5, ease: "easeInOut" }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
               />
 
               {/* Larger data points with pink fill */}
@@ -869,7 +871,7 @@ function OverviewTabContent() {
                 )
               })}
 
-              {/* Hover tooltip */}
+              {/* Hover tooltip with vertical line */}
               {hoveredPoint && (() => {
                 const idx = currentData.findIndex(p => p.day === hoveredPoint.day)
                 const spacing = 648
@@ -879,21 +881,34 @@ function OverviewTabContent() {
                 
                 return (
                   <g>
+                    {/* Vertical dashed line */}
+                    <line
+                      x1={x}
+                      y1="20"
+                      x2={x}
+                      y2="220"
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                      strokeDasharray="5 5"
+                      opacity="0.6"
+                    />
+                    {/* Tooltip box */}
                     <rect
-                      x={x - 35}
-                      y={y - 50}
-                      width="70"
-                      height="35"
-                      rx="6"
-                      fill="#0a0a0a"
-                      stroke="#2a2a2a"
-                      strokeWidth="1"
+                      x={x - 60}
+                      y={y - 65}
+                      width="120"
+                      height="50"
+                      rx="8"
+                      fill="#1e1e30"
+                      stroke="#ffffff"
+                      strokeWidth="1.5"
+                      strokeOpacity="0.3"
                     />
                     <text
                       x={x}
-                      y={y - 30}
+                      y={y - 40}
                       fill="white"
-                      fontSize="14"
+                      fontSize="16"
                       fontWeight="bold"
                       textAnchor="middle"
                     >
@@ -901,13 +916,24 @@ function OverviewTabContent() {
                     </text>
                     <text
                       x={x}
-                      y={y - 17}
-                      fill="#8a8a8a"
-                      fontSize="10"
+                      y={y - 22}
+                      fill="#ffffff"
+                      fontSize="12"
                       textAnchor="middle"
+                      opacity="0.7"
                     >
                       {hoveredPoint.day}
                     </text>
+                    {/* Enlarged hover dot */}
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="12"
+                      fill="#ec4899"
+                      stroke="#ffffff"
+                      strokeWidth="3"
+                      opacity="0.9"
+                    />
                   </g>
                 )
               })()}
@@ -935,9 +961,9 @@ function OverviewTabContent() {
                 <button
                   key={range}
                   onClick={() => setEarningsTimeRange(range)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
                     earningsTimeRange === range
-                      ? 'bg-[#10b981] text-white'
+                      ? 'bg-[#10b981] text-white shadow-lg shadow-green-500/30'
                       : 'text-[#8a8a8a] hover:text-white'
                   }`}
                 >
@@ -1031,7 +1057,7 @@ function OverviewTabContent() {
                 filter="drop-shadow(0 0 8px rgba(16, 185, 129, 0.4))"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 1.5, ease: "easeInOut" }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
               />
 
               {/* Data points */}
@@ -1081,7 +1107,7 @@ function OverviewTabContent() {
                 )
               })}
 
-              {/* Hover tooltip */}
+              {/* Hover tooltip with vertical line */}
               {hoveredEarnings && (() => {
                 const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
                 const idx = currentEarnings.findIndex(p => p.day === hoveredEarnings.day)
@@ -1092,21 +1118,34 @@ function OverviewTabContent() {
                 
                 return (
                   <g>
+                    {/* Vertical dashed line */}
+                    <line
+                      x1={x}
+                      y1="20"
+                      x2={x}
+                      y2="220"
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                      strokeDasharray="5 5"
+                      opacity="0.6"
+                    />
+                    {/* Tooltip box */}
                     <rect
-                      x={x - 35}
-                      y={y - 50}
-                      width="70"
-                      height="35"
-                      rx="6"
-                      fill="#0a0a0a"
-                      stroke="#2a2a2a"
-                      strokeWidth="1"
+                      x={x - 60}
+                      y={y - 65}
+                      width="120"
+                      height="50"
+                      rx="8"
+                      fill="#1e1e30"
+                      stroke="#ffffff"
+                      strokeWidth="1.5"
+                      strokeOpacity="0.3"
                     />
                     <text
                       x={x}
-                      y={y - 30}
+                      y={y - 40}
                       fill="white"
-                      fontSize="14"
+                      fontSize="16"
                       fontWeight="bold"
                       textAnchor="middle"
                     >
@@ -1114,13 +1153,24 @@ function OverviewTabContent() {
                     </text>
                     <text
                       x={x}
-                      y={y - 17}
-                      fill="#8a8a8a"
-                      fontSize="10"
+                      y={y - 22}
+                      fill="#ffffff"
+                      fontSize="12"
                       textAnchor="middle"
+                      opacity="0.7"
                     >
                       {hoveredEarnings.day}
                     </text>
+                    {/* Enlarged hover dot */}
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="12"
+                      fill="#10b981"
+                      stroke="#ffffff"
+                      strokeWidth="3"
+                      opacity="0.9"
+                    />
                   </g>
                 )
               })()}
@@ -1165,13 +1215,41 @@ function OverviewTabContent() {
                   className="flex items-center justify-between gap-2.5"
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="relative">
-                      <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${session.gradient} to-transparent blur-sm`} />
-                      <img 
-                        src={session.avatar}
-                        alt={session.name}
-                        className="relative w-8 h-8 rounded-full ring-2 ring-white/10 object-cover flex-shrink-0"
-                      />
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      {(() => {
+                        // Get agent color variant from session name
+                        const agentName = session.name as AllowedAgentName
+                        const getAgentColorVariant = (name: string): keyof typeof COLOR_VARIANTS => {
+                          if (PERSONA_METADATA[name as AllowedAgentName]?.bubble?.color) {
+                            return PERSONA_METADATA[name as AllowedAgentName].bubble.color as keyof typeof COLOR_VARIANTS
+                          }
+                          return 'primary'
+                        }
+                        const colorVariant = getAgentColorVariant(agentName || '')
+                        const variantStyles = COLOR_VARIANTS[colorVariant]
+                        return (
+                          <>
+                            {/* Animated gradient rings */}
+                            {[0, 1, 2].map((i) => (
+                              <div
+                                key={i}
+                                className={`absolute inset-0 rounded-full border ${variantStyles.border[i]} ${variantStyles.gradient} bg-gradient-to-br to-transparent`}
+                                style={{
+                                  animation: `spin 8s linear infinite`,
+                                  opacity: 0.5 - (i * 0.1),
+                                  transform: `scale(${1 - i * 0.05})`
+                                }}
+                              />
+                            ))}
+                            {/* Profile Image */}
+                            <img 
+                              src={session.avatar}
+                              alt={session.name}
+                              className="relative w-full h-full rounded-full object-cover z-10"
+                            />
+                          </>
+                        )
+                      })()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-white truncate">{session.name}</div>

@@ -294,9 +294,9 @@ export function DashboardHeroPreview() {
                       <button
                         key={range}
                         onClick={() => setChartTimeRange(range)}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
                           chartTimeRange === range
-                            ? 'bg-purple-500 text-white'
+                            ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
                             : 'text-gray-400 hover:text-white'
                         }`}
                       >
@@ -377,6 +377,7 @@ export function DashboardHeroPreview() {
                          fill="url(#areaGradient)"
                        />
                       <motion.path
+                        key={chartTimeRange}
                         d="M 0 148.8 C 29 119, 44 104, 58.33 88.8 C 87 82, 102 78, 116.67 74.4 C 146 60, 161 56, 175 50.4 C 204 58, 219 63, 233.33 64.8 C 262 72, 277 75, 291.67 74.4 C 320 52, 335 48, 350 45.6"
                         fill="none"
                         stroke="url(#lineGradient)"
@@ -384,8 +385,22 @@ export function DashboardHeroPreview() {
                         strokeLinecap="round"
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={isChartInView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
-                        transition={{ duration: 1.5, ease: "easeInOut" }}
+                        transition={{ duration: 0.6, ease: "easeInOut" }}
                       />
+                      {/* Hover vertical line */}
+                      {hoveredPoint && (
+                        <line
+                          x1={hoveredPoint.x}
+                          y1="0"
+                          x2={hoveredPoint.x}
+                          y2="240"
+                          stroke="#ffffff"
+                          strokeWidth="2"
+                          strokeDasharray="5 5"
+                          opacity="0.6"
+                        />
+                      )}
+                      
                       {/* Animated data points */}
                       {[
                         { cx: 0, cy: 148.8, value: 38 },        // Mon - 38%
@@ -396,27 +411,28 @@ export function DashboardHeroPreview() {
                         { cx: 291.67, cy: 74.4, value: 69 },   // Sat - 69%
                         { cx: 350, cy: 45.6, value: 81 },      // Sun - 81%
                       ].map((point, index) => (
-                        <motion.circle
-                          key={index}
-                          cx={point.cx}
-                          cy={point.cy}
-                          r="5"
-                          fill="#EC4899"
-                          stroke="white"
-                          strokeWidth="2"
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={isChartInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
-                          transition={{
-                            delay: isChartInView ? 1.5 + (index * 0.1) : 0,
-                            duration: 0.5,
-                            type: "spring",
-                            stiffness: 260,
-                            damping: 20
-                          }}
-                          style={{ cursor: 'pointer' }}
-                          onMouseEnter={() => setHoveredPoint({ x: point.cx, y: point.cy, value: point.value })}
-                          onMouseLeave={() => setHoveredPoint(null)}
-                        />
+                        <g key={index}>
+                          <motion.circle
+                            cx={point.cx}
+                            cy={point.cy}
+                            r={hoveredPoint && hoveredPoint.x === point.cx ? "8" : "5"}
+                            fill="#EC4899"
+                            stroke="white"
+                            strokeWidth={hoveredPoint && hoveredPoint.x === point.cx ? "3" : "2"}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={isChartInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+                            transition={{
+                              delay: isChartInView ? 1.5 + (index * 0.1) : 0,
+                              duration: 0.5,
+                              type: "spring",
+                              stiffness: 260,
+                              damping: 20
+                            }}
+                            style={{ cursor: 'pointer' }}
+                            onMouseEnter={() => setHoveredPoint({ x: point.cx, y: point.cy, value: point.value })}
+                            onMouseLeave={() => setHoveredPoint(null)}
+                          />
+                        </g>
                       ))}
                      </svg>
                      

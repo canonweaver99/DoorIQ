@@ -63,82 +63,14 @@ function ManagerPageContent() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* Left: Title & Description */}
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">
-                Manager Panel
-              </h1>
-              <p className="text-white/70">
-                Oversee your team performance, manage reps, and track analytics
-              </p>
-            </div>
-
-            {/* Right: Quick Stats (matching dashboard style) */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4"
-                style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/60">Active Reps</p>
-                    <p className="text-[26px] font-bold text-white leading-tight">24</p>
-                  </div>
-                  <div 
-                    className="flex items-center justify-center w-9 h-9 rounded-full shrink-0 ml-2"
-                    style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)' }}
-                  >
-                    <Users className="w-[18px] h-[18px]" style={{ color: '#a855f7' }} />
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4"
-                style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/60">Messages</p>
-                    <p className="text-[26px] font-bold text-white leading-tight">3</p>
-                  </div>
-                  <div 
-                    className="flex items-center justify-center w-9 h-9 rounded-full shrink-0 ml-2"
-                    style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)' }}
-                  >
-                    <MessageSquare className="w-[18px] h-[18px]" style={{ color: '#ec4899' }} />
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4"
-                style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/60">Avg Score</p>
-                    <p className="text-[26px] font-bold text-white leading-tight">78%</p>
-                  </div>
-                  <div 
-                    className="flex items-center justify-center w-9 h-9 rounded-full shrink-0 ml-2"
-                    style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}
-                  >
-                    <BarChart3 className="w-[18px] h-[18px]" style={{ color: '#10b981' }} />
-                  </div>
-                </div>
-              </motion.div>
-            </div>
+          {/* Title & Description */}
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Manager Panel
+            </h1>
+            <p className="text-white/70">
+              Oversee your team performance, manage reps, and track analytics
+            </p>
           </div>
         </motion.div>
 

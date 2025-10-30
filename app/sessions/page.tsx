@@ -13,8 +13,20 @@ import CircularProgress from '@/components/ui/CircularProgress'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import PasswordResetModal from '@/components/auth/PasswordResetModal'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
+import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 
 type Session = Database['public']['Tables']['live_sessions']['Row']
+
+// Helper to get agent color variant
+const getAgentColorVariant = (agentName: string | null): keyof typeof COLOR_VARIANTS => {
+  if (!agentName) return 'primary'
+  const agentNameTyped = agentName as AllowedAgentName
+  if (PERSONA_METADATA[agentNameTyped]?.bubble?.color) {
+    return PERSONA_METADATA[agentNameTyped].bubble.color as keyof typeof COLOR_VARIANTS
+  }
+  return 'primary'
+}
 
 // Agent image mapping - same as trainer page
 const getAgentImage = (agentName: string | null): string => {
@@ -421,19 +433,45 @@ export default function SessionsPage() {
                       </button>
                       
                       <div className="flex-1 flex items-start gap-3">
-                        {/* Agent Avatar - Same size as percentage circle */}
+                        {/* Agent Avatar with Gradient Rings */}
                         <div 
-                          className="rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/30 flex-shrink-0 overflow-hidden relative"
+                          className="relative flex-shrink-0"
                           style={{ width: `${circleSize}px`, height: `${circleSize}px` }}
                         >
-                          <Image
-                            src={getAgentImage(session.agent_name)}
-                            alt={session.agent_name || 'Agent'}
-                            fill
-                            className="object-cover"
-                            style={getAgentImageStyle(session.agent_name)}
-                            sizes={`${circleSize}px`}
-                          />
+                          {(() => {
+                            const colorVariant = getAgentColorVariant(session.agent_name)
+                            const variantStyles = COLOR_VARIANTS[colorVariant]
+                            return (
+                              <>
+                                {/* Animated gradient rings */}
+                                {[0, 1, 2].map((i) => (
+                                  <div
+                                    key={i}
+                                    className={`absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent ${variantStyles.border[i]} ${variantStyles.gradient}`}
+                                    style={{
+                                      animation: `spin 8s linear infinite`,
+                                      opacity: 0.6 - (i * 0.15)
+                                    }}
+                                  >
+                                    <div
+                                      className={`absolute inset-0 rounded-full mix-blend-screen bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace('from-', '')}/20%,transparent_70%)]`}
+                                    />
+                                  </div>
+                                ))}
+                                {/* Profile Image */}
+                                <div className="absolute inset-[2px] rounded-full overflow-hidden">
+                                  <Image
+                                    src={getAgentImage(session.agent_name)}
+                                    alt={session.agent_name || 'Agent'}
+                                    fill
+                                    className="object-cover"
+                                    style={getAgentImageStyle(session.agent_name)}
+                                    sizes={`${circleSize}px`}
+                                  />
+                                </div>
+                              </>
+                            )
+                          })()}
                         </div>
                         
                         <div className="flex-1">
