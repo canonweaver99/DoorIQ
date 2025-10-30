@@ -110,11 +110,13 @@ function DashboardPageContent() {
   const [userName, setUserName] = useState('Alex')
   const [realStats, setRealStats] = useState({
     sessionsThisWeek: 0,
+    totalSessions: 0,
     avgScore: 0,
     teamRank: 1,
     totalEarnings: 0
   })
   const [recentSessions, setRecentSessions] = useState<any[]>([])
+  const [hasTeam, setHasTeam] = useState(false)
   
   const isPaidUser = subscription.hasActiveSubscription
 
@@ -172,20 +174,30 @@ function DashboardPageContent() {
       .eq('id', user.id)
       .single()
     
-    // Get sessions from this week
+    // Check if user has a team
+    setHasTeam(!!userProfile?.team_id)
+    
+    // Get sessions from this week (for weekly stats)
     const oneWeekAgo = new Date()
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
     
-    const { data: sessions } = await supabase
+    const { data: sessionsThisWeekData } = await supabase
       .from('live_sessions')
-      .select('overall_score, created_at, homeowner_name, virtual_earnings')
+      .select('overall_score, created_at')
       .eq('user_id', user.id)
       .gte('created_at', oneWeekAgo.toISOString())
       .order('created_at', { ascending: false })
     
-    const sessionsThisWeek = sessions?.length || 0
-    const avgScore = sessions && sessions.length > 0
-      ? Math.round(sessions.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessions.length)
+    // Get total sessions count (all time)
+    const { data: allSessionsData } = await supabase
+      .from('live_sessions')
+      .select('id')
+      .eq('user_id', user.id)
+    
+    const sessionsThisWeek = sessionsThisWeekData?.length || 0
+    const totalSessions = allSessionsData?.length || 0
+    const avgScore = sessionsThisWeekData && sessionsThisWeekData.length > 0
+      ? Math.round(sessionsThisWeekData.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessionsThisWeekData.length)
       : 0
     
     // Calculate team rank based on virtual_earnings
@@ -207,6 +219,7 @@ function DashboardPageContent() {
     
     setRealStats({
       sessionsThisWeek,
+      totalSessions,
       avgScore,
       teamRank,
       totalEarnings: userData?.virtual_earnings || 0
@@ -217,14 +230,16 @@ function DashboardPageContent() {
     { id: 'overview', label: 'Dashboard', icon: Home, locked: false },
     { id: 'learning', label: 'Learning', icon: BookOpen, locked: !isPaidUser },
     { id: 'upload', label: 'Upload', icon: Upload, locked: !isPaidUser },
-    { id: 'team', label: 'Team', icon: UsersIcon, locked: !isPaidUser },
-    { id: 'messages', label: 'Messages', icon: MessageSquare, locked: !isPaidUser },
+    ...(hasTeam ? [
+      { id: 'team', label: 'Team', icon: UsersIcon, locked: !isPaidUser },
+      { id: 'messages', label: 'Messages', icon: MessageSquare, locked: !isPaidUser },
+    ] : []),
   ]
 
   const quickStats = [
     { 
       label: 'Sessions', 
-      value: realStats.sessionsThisWeek, 
+      value: realStats.totalSessions, 
       icon: Target,
       iconColor: '#3b82f6',
       iconBgColor: 'rgba(59, 130, 246, 0.2)',
@@ -877,26 +892,19 @@ function OverviewTabContent() {
                 
                 return (
                   <g key={`point-${chartTimeRange}-${idx}`}>
-                    <motion.circle
+                    <circle
                       cx={x}
                       cy={y}
-                      r="10"
+                      r={hoveredPoint && hoveredPoint.day === point.day ? "12" : "10"}
                       fill="#ec4899"
                       stroke="white"
-                      strokeWidth="2"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{
-                        delay: 1.5 + (idx * 0.1),
-                        duration: 0.5,
-                        type: "spring",
-                        stiffness: 260,
-                        damping: 20
-                      }}
+                      strokeWidth={hoveredPoint && hoveredPoint.day === point.day ? "3" : "2"}
                       onMouseEnter={() => setHoveredPoint({ day: point.day, value: point.overall })}
                       onMouseLeave={() => setHoveredPoint(null)}
-                      className="cursor-pointer"
-                      whileHover={{ scale: 1.3 }}
+                      className="cursor-pointer transition-all"
+                      style={{
+                        transition: 'r 0.2s ease, stroke-width 0.2s ease'
+                      }}
                     />
                     
                     {/* X-axis labels - Closer to chart */}
@@ -1114,26 +1122,19 @@ function OverviewTabContent() {
                 
                 return (
                   <g key={`earnings-point-${earningsTimeRange}-${idx}`}>
-                    <motion.circle
+                    <circle
                       cx={x}
                       cy={y}
-                      r="10"
+                      r={hoveredEarnings && hoveredEarnings.day === point.day ? "12" : "10"}
                       fill="#10b981"
                       stroke="white"
-                      strokeWidth="2"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{
-                        delay: 1.5 + (idx * 0.1),
-                        duration: 0.5,
-                        type: "spring",
-                        stiffness: 260,
-                        damping: 20
-                      }}
+                      strokeWidth={hoveredEarnings && hoveredEarnings.day === point.day ? "3" : "2"}
                       onMouseEnter={() => setHoveredEarnings({ day: point.day, value: point.earnings })}
                       onMouseLeave={() => setHoveredEarnings(null)}
-                      className="cursor-pointer"
-                      whileHover={{ scale: 1.3 }}
+                      className="cursor-pointer transition-all"
+                      style={{
+                        transition: 'r 0.2s ease, stroke-width 0.2s ease'
+                      }}
                     />
                     
                     {/* X-axis labels */}
@@ -1208,15 +1209,16 @@ function OverviewTabContent() {
             </button>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {recentSessions.length === 0 ? (
               <div className="text-center py-8 text-white/60">
                 <p className="text-sm">No recent sessions</p>
                 <p className="text-xs mt-1">Complete a practice session to see it here</p>
               </div>
-            ) : recentSessions.map((session, idx) => {
+            ) : recentSessions.slice(0, 3).map((session, idx) => {
               const circumference = 2 * Math.PI * 16
               const strokeDashoffset = circumference - (session.score / 100) * circumference
+              const gradients = ['from-purple-500/30', 'from-blue-500/30', 'from-pink-500/30']
 
               return (
                 <motion.div
@@ -1224,12 +1226,12 @@ function OverviewTabContent() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.4 + idx * 0.1 }}
-                  className="flex items-center justify-between gap-2.5"
+                  className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#222222] hover:bg-[#2a2a2a] transition-colors border border-white/5"
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="relative w-8 h-8 flex-shrink-0">
+                    <div className="relative">
+                      <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${gradients[idx]} to-transparent blur-md`}></div>
                       {(() => {
-                        // Get agent color variant from session name
                         const agentName = session.name as AllowedAgentName
                         const getAgentColorVariant = (name: string): keyof typeof COLOR_VARIANTS => {
                           if (PERSONA_METADATA[name as AllowedAgentName]?.bubble?.color) {
@@ -1257,14 +1259,14 @@ function OverviewTabContent() {
                             <img 
                               src={session.avatar}
                               alt={session.name}
-                              className="relative w-full h-full rounded-full object-cover z-10"
+                              className="relative w-8 h-8 rounded-full ring-2 ring-white/20 flex-shrink-0 z-10"
                             />
                           </>
                         )
                       })()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-white truncate">{session.name}</div>
+                      <div className="text-xs font-semibold text-white truncate">{session.name}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -1297,7 +1299,8 @@ function OverviewTabContent() {
                         <span className="text-[9px] font-bold text-white">{session.score}%</span>
                       </div>
                     </div>
-                    <div className="text-sm font-bold text-green-400 tabular-nums">+${session.earned}</div>
+                    <div className="text-xs font-bold text-green-400 tabular-nums">+${session.earned}</div>
+                    <div className="text-[10px] text-slate-400">{session.time}</div>
                   </div>
                 </motion.div>
               )
@@ -1482,23 +1485,6 @@ function LearningTabContent() {
     },
   ]
 
-  const coachingTips = [
-    {
-      title: 'Use Their Name',
-      tip: 'Use prospect\'s name 2-3 times in the first minute to build instant rapport.',
-      color: '#a855f7'
-    },
-    {
-      title: 'Mirror Their Energy',
-      tip: 'Match your prospect\'s speaking pace and energy level for subconscious connection.',
-      color: '#3b82f6'
-    },
-    {
-      title: 'Assumptive Language',
-      tip: 'Replace "if" with "when" in your closes for stronger commitment language.',
-      color: '#10b981'
-    },
-  ]
 
   return (
     <div className="space-y-4">
@@ -1556,33 +1542,6 @@ function LearningTabContent() {
         </div>
       </div>
 
-      {/* Coaching Tips */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
-        <h3 className="text-base font-bold text-white mb-3">Coaching Tips</h3>
-
-        <div className="space-y-2.5">
-          {coachingTips.map((tip, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 + idx * 0.1 }}
-              className="pb-2.5 border-b border-[#2a2a2a] last:border-0 last:pb-0"
-            >
-              <div className="flex items-start gap-2">
-                <div 
-                  className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                  style={{ backgroundColor: tip.color }}
-                />
-                <div className="flex-1">
-                  <h4 className="text-xs font-bold text-white mb-1">{tip.title}</h4>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">{tip.tip}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }
@@ -1707,52 +1666,106 @@ function UploadTabContent() {
 }
 
 function TeamTabContent() {
-  const leaderboard = [
-    { 
-      rank: 1, 
-      name: 'Sarah Chen', 
-      score: 892, 
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-      change: '+12',
-      badge: '🥇'
-    },
-    { 
-      rank: 2, 
-      name: 'Marcus Johnson', 
-      score: 875, 
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-      change: '+8',
-      badge: '🥈'
-    },
-    { 
-      rank: 3, 
-      name: 'Alex Rivera (You)', 
-      score: 840, 
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-      isYou: true,
-      change: '+15',
-      badge: '🥉'
-    },
-    { 
-      rank: 4, 
-      name: 'David Martinez', 
-      score: 825, 
-      avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
-      change: '+5',
-    },
-    { 
-      rank: 5, 
-      name: 'Emma Wilson', 
-      score: 810, 
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
-      change: '+3',
-    },
-  ]
-
-  const teamStats = [
+  const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [teamStats, setTeamStats] = useState({
+    teamSize: 0,
+    avgTeamScore: 0,
+    topPerformer: '',
+    teamGrowth: 0
+  })
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+  
+  useEffect(() => {
+    fetchTeamData()
+  }, [])
+  
+  const fetchTeamData = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
+    
+    // Get user's team_id
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('team_id')
+      .eq('id', user.id)
+      .single()
+    
+    if (!userProfile?.team_id) {
+      setLoading(false)
+      return
+    }
+    
+    // Get all team members
+    const { data: teamMembers } = await supabase
+      .from('users')
+      .select('id, full_name, virtual_earnings, email')
+      .eq('team_id', userProfile.team_id)
+      .order('virtual_earnings', { ascending: false })
+    
+    if (!teamMembers || teamMembers.length === 0) {
+      setLoading(false)
+      return
+    }
+    
+    // Calculate team stats
+    const teamSize = teamMembers.length
+    
+    // Get average team score from sessions
+    const { data: allTeamSessions } = await supabase
+      .from('live_sessions')
+      .select('overall_score, user_id')
+      .in('user_id', teamMembers.map((m: any) => m.id))
+      .not('overall_score', 'is', null)
+    
+    const avgTeamScore = allTeamSessions && allTeamSessions.length > 0
+      ? Math.round(allTeamSessions.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / allTeamSessions.length)
+      : 0
+    
+    // Top performer
+    const topPerformer = teamMembers.length > 0 
+      ? teamMembers[0].full_name?.split(' ').map((n: string) => n[0]).join('') || teamMembers[0].full_name || 'N/A'
+      : 'N/A'
+    
+    // Calculate team growth (placeholder - could calculate from previous period)
+    const teamGrowth = 0 // TODO: Calculate from previous period if needed
+    
+    setTeamStats({
+      teamSize,
+      avgTeamScore,
+      topPerformer,
+      teamGrowth
+    })
+    
+    // Build leaderboard
+    const leaderboardData = teamMembers.map((member: any, index: number) => {
+      const isYou = member.id === user.id
+      const firstName = member.full_name?.split(' ')[0] || 'User'
+      const lastName = member.full_name?.split(' ').slice(1).join(' ') || ''
+      const displayName = isYou ? `${firstName} ${lastName} (You)` : member.full_name || 'Team Member'
+      
+      return {
+        rank: index + 1,
+        name: displayName,
+        score: member.virtual_earnings || 0,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name || member.email || 'User')}&background=random`,
+        change: '+0', // TODO: Calculate change from previous period
+        badge: index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : undefined,
+        isYou
+      }
+    })
+    
+    setLeaderboard(leaderboardData)
+    setLoading(false)
+  }
+  
+  const teamStatsArray = [
     { 
       label: 'Team Size', 
-      value: '24', 
+      value: `${teamStats.teamSize}`, 
       icon: UsersIcon,
       borderColor: '#2a4a6a',
       bg: '#1a2a3a',
@@ -1761,7 +1774,7 @@ function TeamTabContent() {
     },
     { 
       label: 'Avg Team Score', 
-      value: '78%', 
+      value: `${teamStats.avgTeamScore}%`, 
       icon: TrendingUp,
       borderColor: '#4a2a6a',
       bg: '#2a1a3a',
@@ -1770,7 +1783,7 @@ function TeamTabContent() {
     },
     { 
       label: 'Top Performer', 
-      value: 'Sarah C.', 
+      value: teamStats.topPerformer, 
       icon: Award,
       borderColor: '#6a4a2a',
       bg: '#3a2a1a',
@@ -1779,7 +1792,7 @@ function TeamTabContent() {
     },
     { 
       label: 'Team Growth', 
-      value: '+12%', 
+      value: teamStats.teamGrowth > 0 ? `+${teamStats.teamGrowth}%` : '0%', 
       icon: Zap,
       borderColor: '#2a6a4a',
       bg: '#1a3a2a',
@@ -1790,9 +1803,15 @@ function TeamTabContent() {
 
   return (
     <div className="space-y-4">
-      {/* Team Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {teamStats.map((stat, idx) => {
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+        </div>
+      ) : (
+        <>
+          {/* Team Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {teamStatsArray.map((stat, idx) => {
           const Icon = stat.icon
           return (
             <motion.div
@@ -1832,7 +1851,11 @@ function TeamTabContent() {
         </div>
 
         <div className="space-y-2.5">
-          {leaderboard.map((member, idx) => (
+          {leaderboard.length === 0 ? (
+            <div className="text-center py-8 text-white/60">
+              <p className="text-sm">No team members found</p>
+            </div>
+          ) : leaderboard.map((member, idx) => (
             <motion.div
               key={member.rank}
               initial={{ opacity: 0, x: -20 }}
@@ -1875,6 +1898,8 @@ function TeamTabContent() {
           ))}
         </div>
       </motion.div>
+        </>
+      )}
     </div>
   )
 }
