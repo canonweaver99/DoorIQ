@@ -235,7 +235,7 @@ function HeaderContent() {
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
           { name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 },
           { name: 'Playbooks', href: '/dashboard?tab=learning', icon: NotebookPen },
-          { name: 'Manager Panel', href: '/manager', icon: UsersIcon, managerOnly: true },
+          { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
         ],
       },
