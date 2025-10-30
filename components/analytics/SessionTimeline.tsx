@@ -113,6 +113,40 @@ export default function SessionTimeline({
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
+  
+  // Calculate card positions to prevent overlap when multiple cards are open
+  const getCardPosition = (index: number, segmentPosition: number) => {
+    const isActive = activeSegment === index
+    const isHovered = hoveredSegment === index
+    if (!isActive && !isHovered) return null
+    
+    // Find all other currently visible cards (active or hovered)
+    const visibleCards = segments
+      .map((seg, idx) => ({ ...seg, idx, isVisible: idx === activeSegment || idx === hoveredSegment }))
+      .filter(seg => seg.isVisible && seg.idx !== index)
+    
+    // Check if any visible cards are nearby (within 25% of timeline to account for card width)
+    const nearbyCards = visibleCards.filter(seg => 
+      Math.abs(seg.position - segmentPosition) < 25
+    )
+    
+    // Count how many cards are to the left (we'll stack left cards lower)
+    const cardsToLeft = nearbyCards.filter(seg => seg.position < segmentPosition).length
+    
+    // Calculate vertical offset - stack cards with generous spacing
+    // Card height is ~10rem, so use 11rem spacing to prevent any overlap
+    const baseOffset = 'calc(-10rem - 2rem)' // Base position (10rem connection line + 2rem spacing)
+    const stackOffset = cardsToLeft * 13 // 13rem spacing per stacked card
+    
+    const verticalOffset = nearbyCards.length > 0
+      ? `calc(-10rem - 2rem - ${stackOffset}rem)` // Stack with 13rem between cards
+      : baseOffset // Normal position
+    
+    return {
+      top: verticalOffset,
+      zIndex: 40 + (isActive ? 10 : 0) + index // Active cards on top, increment by index
+    }
+  }
 
   // Helper to convert gradient string to rgba colors
   function getColorFromGradient(gradient: string, opacity: number): string {
@@ -212,24 +246,25 @@ export default function SessionTimeline({
               onMouseLeave={() => setHoveredSegment(null)}
               onClick={() => setActiveSegment(activeSegment === segment.id ? null : segment.id)}
             >
-              {/* Sparkle Icon - Always visible, perfectly centered on timeline bar */}
-              {/* Timeline bar is h-3 (12px), center at 6px. Icon is 24px, so center it at 6px */}
+              {/* Sparkle Icon - Always visible, bigger (w-12 h-12) and overlaying timeline bar */}
+              {/* Timeline bar is h-3 (12px). Icon is 48px (w-12 h-12), so center it to overlay */}
               <motion.div
-                className={`absolute left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer z-50 ${
+                className={`absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer z-[60] ${
                   isHovered || isActive
-                    ? 'bg-white border-white'
+                    ? 'bg-white border-white shadow-lg shadow-purple-500/50'
                     : 'bg-[#1a1a1a] border-purple-400/60'
                 }`}
                 style={{
-                  top: '6px', // Center of h-3 bar (12px / 2 = 6px)
-                  transform: 'translateX(-50%) translateY(-50%)' // Center the icon on this point
+                  top: '0px', // Start at top of timeline container
+                  transform: 'translateX(-50%) translateY(-50%)', // Center horizontally, center vertically
+                  marginTop: '6px' // Position so center of icon aligns with center of timeline bar (6px = half of 12px)
                 }}
                 animate={{
-                  scale: isHovered || isActive ? 1.3 : 1,
+                  scale: isHovered || isActive ? 1.15 : 1,
                 }}
                 transition={{ duration: 0.2 }}
               >
-                <Sparkles className={`w-3.5 h-3.5 ${isHovered || isActive ? 'text-purple-600' : 'text-purple-400'}`} />
+                <Sparkles className={`w-7 h-7 ${isHovered || isActive ? 'text-purple-600' : 'text-purple-400'}`} />
               </motion.div>
               
               {/* Connection Line - Only show when feedback is visible */}
@@ -238,24 +273,30 @@ export default function SessionTimeline({
                   className="absolute left-1/2 -translate-x-1/2 w-0.5 bg-gradient-to-b from-transparent via-purple-400/40 to-transparent z-10" 
                   style={{
                     top: '6px', // Start from center of timeline bar
-                    height: '8rem', // Extend upward
+                    height: '9rem', // Extend upward
+                    marginTop: '-18px' // Start from bottom edge of icon (icon is 48px, so -24px to bottom edge, -18px to be slightly above)
                   }}
                 />
               )}
               
-              {/* Key Moment Card - Only shown on hover or click, positioned above to not cover icon */}
-              {(isHovered || isActive) && (
-                <motion.div
-                  className="absolute left-1/2 -translate-x-1/2 w-72 z-40 cursor-pointer"
-                  style={{
-                    top: 'calc(-8rem - 1rem)', // Position above connection line (8rem) with extra spacing (1rem)
-                    transform: 'translateX(-50%)' // Center horizontally
-                  }}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
+              {/* Key Moment Card - Only shown on hover or click, positioned above to prevent overlap */}
+              {(isHovered || isActive) && (() => {
+                const cardPos = getCardPosition(index, segment.position)
+                if (!cardPos) return null
+                
+                return (
+                  <motion.div
+                    className="absolute left-1/2 -translate-x-1/2 w-72 cursor-pointer"
+                    style={{
+                      top: cardPos.top,
+                      zIndex: cardPos.zIndex,
+                      transform: 'translateX(-50%)' // Center horizontally
+                    }}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
                   <div 
                     className="rounded-xl border-2 border-white/30 p-5 bg-[#0a0a0a] backdrop-blur-sm"
                     style={{
@@ -283,8 +324,9 @@ export default function SessionTimeline({
                       <p className="text-sm text-white leading-relaxed font-medium">{segment.quickTip}</p>
                     </motion.div>
                   </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )
+              })()}
             </div>
           )
         })}

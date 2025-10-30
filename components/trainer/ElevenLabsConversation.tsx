@@ -138,73 +138,124 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           console.log('📨 Message keys:', Object.keys(msg || {}))
           window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
           
-          // Check for end_call tool invocation in multiple possible formats
-          let endCallDetected = false
-          
-          // Format 1: Direct tool_call or function_call type
-          if (msg?.type === 'tool_call' || msg?.type === 'function_call') {
-            const toolName = msg?.tool_name || msg?.name || msg?.function_name
-            console.log('🔍 Checking tool call, name:', toolName)
-            if (toolName === 'end_call') {
-              console.log('🛑 END_CALL TOOL DETECTED (Format 1)!')
-              endCallDetected = true
-              const endCallData = {
-                reason: msg?.arguments?.reason || msg?.parameters?.reason || 'Agent ended call',
-                notes: msg?.arguments?.notes || msg?.parameters?.notes || ''
+          // AGGRESSIVE end_call detection - check every possible format
+          const detectEndCall = (message: any, source: string): boolean => {
+            // Format 1: Direct tool_call or function_call type
+            if (message?.type === 'tool_call' || message?.type === 'function_call') {
+              const toolName = message?.tool_name || message?.name || message?.function_name || message?.function?.name
+              console.log(`🔍 [${source}] Checking tool call, name:`, toolName)
+              if (toolName === 'end_call') {
+                console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 1)!`)
+                return true
               }
-              console.log('🎯 Dispatching agent:end_call event with data:', endCallData)
-              window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
             }
-          }
-          
-          // Format 2: Inside conversation_updated messages
-          if (msg?.type === 'conversation_updated' && !endCallDetected) {
-            const messages = msg?.conversation?.messages || []
-            console.log('🔍 Checking conversation_updated, message count:', messages.length)
             
-            // Check last few messages for tool calls
-            const recentMessages = messages.slice(-3)
-            recentMessages.forEach((m: any, idx: number) => {
-              console.log(`🔍 Message ${messages.length - 3 + idx}: role=${m?.role}, has tool_calls=${!!m?.tool_calls}`)
+            // Format 2: Check for tool_calls array
+            if (message?.tool_calls && Array.isArray(message.tool_calls)) {
+              for (const tc of message.tool_calls) {
+                const toolName = tc?.function?.name || tc?.name || tc?.tool_name || tc?.type
+                console.log(`🔍 [${source}] Checking tool_calls array, name:`, toolName)
+                if (toolName === 'end_call') {
+                  console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 2 - tool_calls array)!`)
+                  return true
+                }
+              }
+            }
+            
+            // Format 3: Check nested function calls
+            if (message?.function?.name === 'end_call' || message?.function_name === 'end_call') {
+              console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 3 - nested function)!`)
+              return true
+            }
+            
+            // Format 4: Check in conversation_updated messages
+            if (message?.type === 'conversation_updated') {
+              const messages = message?.conversation?.messages || []
+              console.log(`🔍 [${source}] Checking conversation_updated, message count:`, messages.length)
               
-              if (m?.role === 'tool_call' || m?.role === 'function' || m?.tool_calls?.length > 0) {
-                const toolCalls = m?.tool_calls || [m]
-                toolCalls.forEach((tc: any) => {
-                  const toolName = tc?.function?.name || tc?.name || tc?.tool_name || tc?.type
-                  console.log('🔍 Tool call found:', toolName)
-                  
-                  if (toolName === 'end_call') {
-                    console.log('🛑 END_CALL TOOL DETECTED (Format 2 - conversation_updated)!')
-                    endCallDetected = true
-                    const args = typeof tc?.function?.arguments === 'string' 
-                      ? JSON.parse(tc.function.arguments) 
-                      : (tc?.function?.arguments || tc?.arguments || {})
-                    const endCallData = {
-                      reason: args?.reason || 'Agent ended call',
-                      notes: args?.notes || ''
+              // Check ALL messages, not just recent ones
+              for (const m of messages) {
+                // Check tool_calls in message
+                if (m?.tool_calls && Array.isArray(m.tool_calls)) {
+                  for (const tc of m.tool_calls) {
+                    const toolName = tc?.function?.name || tc?.name || tc?.tool_name || tc?.type
+                    console.log(`🔍 [${source}] Tool call in message:`, toolName)
+                    if (toolName === 'end_call') {
+                      console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 4 - conversation_updated tool_calls)!`)
+                      return true
                     }
-                    console.log('🎯 Dispatching agent:end_call event with data:', endCallData)
-                    window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
                   }
-                })
+                }
+                
+                // Check if message itself is a tool_call
+                if (m?.role === 'tool_call' || m?.role === 'function') {
+                  const toolName = m?.function?.name || m?.name || m?.tool_name
+                  console.log(`🔍 [${source}] Message is tool_call, name:`, toolName)
+                  if (toolName === 'end_call') {
+                    console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 4 - message role tool_call)!`)
+                    return true
+                  }
+                }
+                
+                // Deep check in nested structures
+                if (m?.function?.name === 'end_call') {
+                  console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 4 - deep nested)!`)
+                  return true
+                }
               }
-            })
+            }
+            
+            // Format 5: Check anywhere in the message recursively
+            const checkRecursively = (obj: any, depth = 0): boolean => {
+              if (depth > 5) return false // Prevent infinite recursion
+              if (!obj || typeof obj !== 'object') return false
+              
+              // Check common keys
+              if (obj.name === 'end_call' || obj.tool_name === 'end_call' || obj.function_name === 'end_call') {
+                return true
+              }
+              if (obj.function?.name === 'end_call') {
+                return true
+              }
+              
+              // Recursively check all properties
+              for (const key in obj) {
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                  if (checkRecursively(obj[key], depth + 1)) return true
+                }
+              }
+              
+              return false
+            }
+            
+            if (checkRecursively(message)) {
+              console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 5 - recursive search)!`)
+              return true
+            }
+            
+            return false
           }
           
-          // Format 3: Check message content for end_call signals (fallback)
-          if (!endCallDetected && msg?.type === 'conversation_updated') {
-            const messages = msg?.conversation?.messages || []
-            const lastMsg = messages[messages.length - 1]
-            const content = lastMsg?.content?.toLowerCase() || ''
-            
-            // Look for phrases that indicate the conversation is ending
-            const endPhrases = ['have a great day', 'goodbye', 'take care', 'talk to you later', 'see you then']
-            if (endPhrases.some(phrase => content.includes(phrase))) {
-              console.log('🛑 END PHRASE DETECTED in agent message:', content.substring(0, 50))
-              // Don't dispatch end_call event for phrase detection, just log it
-              // The actual end_call tool should be used by the agent
+          // Check if end_call is detected
+          if (detectEndCall(msg, 'onMessage')) {
+            console.log('🎯 END_CALL DETECTED! Dispatching agent:end_call event immediately...')
+            const endCallData = {
+              reason: msg?.arguments?.reason || msg?.parameters?.reason || msg?.detail?.reason || 'Agent ended call',
+              notes: msg?.arguments?.notes || msg?.parameters?.notes || msg?.detail?.notes || '',
+              source: 'tool_detection'
             }
+            console.log('🎯 Dispatching agent:end_call with data:', endCallData)
+            
+            // Dispatch multiple times to ensure it's caught
+            window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+            
+            // Also dispatch after a small delay as backup
+            setTimeout(() => {
+              console.log('🔄 Re-dispatching agent:end_call event (backup)')
+              window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+            }, 100)
           }
+          
           
           // Extract transcript text from various message formats
           const extractTranscripts = (message: any) => {

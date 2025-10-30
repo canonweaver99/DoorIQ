@@ -87,6 +87,7 @@ function TrainerPageContent() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const signedUrlAbortRef = useRef<AbortController | null>(null)
+  const endCallProcessingRef = useRef(false) // Track if end call is being processed
   
   const subscription = useSubscription()
   const sessionLimit = useSessionLimit()
@@ -319,11 +320,14 @@ function TrainerPageContent() {
   const endSession = useCallback(async () => {
     console.log('🔚 endSession called', { sessionId, duration, transcriptLength: transcript.length })
     
-    // Prevent multiple calls
-    if (!sessionActive && !sessionId) {
-      console.log('⚠️ endSession called but session not active, ignoring')
+    // Prevent multiple calls - but allow if we have sessionId even if sessionActive is false
+    if (!sessionId) {
+      console.log('⚠️ endSession called but no sessionId, ignoring')
       return
     }
+    
+    // Reset processing flag when starting endSession
+    endCallProcessingRef.current = false
     
     setLoading(true)
     setSessionActive(false)
@@ -403,19 +407,29 @@ function TrainerPageContent() {
     }
     
     const handleAgentEndCall = async (e: any) => {
-      console.log('📞 handleAgentEndCall triggered', { sessionActive, sessionId, eventDetail: e?.detail })
+      console.log('📞 handleAgentEndCall triggered', { 
+        sessionActive, 
+        sessionId, 
+        eventDetail: e?.detail,
+        alreadyProcessing: endCallProcessingRef.current
+      })
       
-      if (!sessionActive) {
-        console.log('⚠️ Received end_call event but session not active, ignoring')
+      // Prevent duplicate processing
+      if (endCallProcessingRef.current) {
+        console.log('⚠️ Already processing end_call, ignoring duplicate')
         return
       }
       
+      // Only require sessionId - don't check sessionActive as it might be false already
       if (!sessionId) {
         console.log('⚠️ Received end_call event but no sessionId, ignoring')
         return
       }
       
-      console.log('🚪 Agent ended call, playing door close sound...')
+      // Set processing flag immediately to prevent duplicates
+      endCallProcessingRef.current = true
+      
+      console.log('🚪 Agent ended call - PROCESSING IMMEDIATELY (bypassing sessionActive check)...')
       
       // Clear any silence timers
       if (silenceTimer) {
@@ -423,7 +437,7 @@ function TrainerPageContent() {
         silenceTimer = null
       }
       
-      // Prevent multiple calls immediately
+      // Set session inactive immediately to prevent other handlers
       setSessionActive(false)
       
       // Play door closing sound (non-blocking - don't wait for it)
@@ -433,20 +447,32 @@ function TrainerPageContent() {
         doorCloseAudio.play().catch((err) => {
           console.warn('Could not play door close sound', err)
         })
-        // Don't wait for sound - redirect immediately
       } catch (error) {
         console.warn('Could not play door close sound', error)
       }
       
-      // End the session immediately (don't await sound)
-      console.log('🔚 Ending session after agent end call...')
+      // End the session immediately - don't await to avoid blocking
+      console.log('🔚 Calling endSession immediately (non-blocking)...')
       endSession().catch((error) => {
         console.error('❌ Error in endSession from handleAgentEndCall:', error)
-        // Force redirect as fallback
-        if (sessionId) {
+      })
+      
+      // Force redirect after delays as multiple fallbacks - this MUST happen
+      setTimeout(() => {
+        const currentPath = window.location.pathname
+        if (sessionId && currentPath.includes('/trainer') && !currentPath.includes('/loading')) {
+          console.log('🔄 Force redirecting as fallback (500ms)...')
           window.location.href = `/trainer/loading/${sessionId}`
         }
-      })
+      }, 500)
+      
+      setTimeout(() => {
+        const currentPath = window.location.pathname
+        if (sessionId && currentPath.includes('/trainer') && !currentPath.includes('/loading')) {
+          console.log('🔄 Force redirecting as final fallback (1000ms)...')
+          window.location.href = `/trainer/loading/${sessionId}`
+        }
+      }, 1000)
     }
     
     // Track agent activity - improved with shorter timeout
