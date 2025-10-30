@@ -267,17 +267,29 @@ export default function SessionTimeline({
                 <Sparkles className={`w-7 h-7 ${isHovered || isActive ? 'text-purple-600' : 'text-purple-400'}`} />
               </motion.div>
               
-              {/* Connection Line - Only show when feedback is visible */}
-              {(isHovered || isActive) && (
-                <div 
-                  className="absolute left-1/2 -translate-x-1/2 w-0.5 bg-gradient-to-b from-transparent via-purple-400/40 to-transparent z-10" 
-                  style={{
-                    top: '6px', // Start from center of timeline bar
-                    height: '9rem', // Extend upward
-                    marginTop: '-18px' // Start from bottom edge of icon (icon is 48px, so -24px to bottom edge, -18px to be slightly above)
-                  }}
-                />
-              )}
+              {/* Connection Line - Only show when feedback is visible, extends upward to card */}
+              {(isHovered || isActive) && (() => {
+                const cardPos = getCardPosition(index, segment.position)
+                if (!cardPos) return null
+                
+                // Icon center is at 6px (timeline center), icon is 48px tall, so top edge is at -18px
+                // Card bottom edge is roughly at cardPos.top (negative value)
+                // Line should start from top of icon (-18px) and extend to card bottom
+                return (
+                  <motion.div 
+                    className="absolute left-1/2 -translate-x-1/2 w-0.5 bg-gradient-to-t from-purple-400/60 via-purple-400/40 to-transparent z-[20]" 
+                    style={{
+                      top: '-18px', // Start from top edge of icon (6px center - 24px radius)
+                      height: 'calc(12rem + 18px)', // Extend upward to connect with card (12rem = card height estimate + 18px to reach top)
+                      transformOrigin: 'top center',
+                    }}
+                    initial={{ opacity: 0, scaleY: 0 }}
+                    animate={{ opacity: 1, scaleY: 1 }}
+                    exit={{ opacity: 0, scaleY: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  />
+                )
+              })()}
               
               {/* Key Moment Card - Only shown on hover or click, positioned above to prevent overlap */}
               {(isHovered || isActive) && (() => {
@@ -332,20 +344,30 @@ export default function SessionTimeline({
         })}
         
         {/* Time Labels */}
-        <div className="mt-8 flex justify-between items-center">
-          <div className="flex flex-col items-start">
+        <div className="relative mt-8" style={{ minHeight: '4rem' }}>
+          {/* START label - positioned at 0% */}
+          <div className="absolute left-0 flex flex-col items-start" style={{ transform: 'translateX(0)' }}>
             <div className="text-xs font-mono text-white/40">START</div>
             <div className="text-sm font-mono text-white/60 font-semibold mt-1">0:00</div>
           </div>
           
+          {/* Segment labels - positioned at their marker positions */}
           {segments.map((segment, idx) => (
-            <div key={idx} className="flex flex-col items-center" style={{ position: 'absolute', left: `${segment.position}%`, transform: 'translateX(-50%)', marginTop: '2rem' }}>
-              <div className="text-xs font-mono text-white/40">{segment.title.toUpperCase()}</div>
+            <div 
+              key={idx} 
+              className="absolute flex flex-col items-center" 
+              style={{ 
+                left: `${segment.position}%`, 
+                transform: 'translateX(-50%)',
+              }}
+            >
+              <div className="text-xs font-mono text-white/40 whitespace-nowrap">{segment.title.toUpperCase()}</div>
               <div className="text-sm font-mono text-white/60 font-semibold mt-1">{segment.timestamp}</div>
             </div>
           ))}
           
-          <div className="flex flex-col items-end">
+          {/* END label - positioned at 100% */}
+          <div className="absolute right-0 flex flex-col items-end" style={{ transform: 'translateX(0)' }}>
             <div className="text-xs font-mono text-white/40">END</div>
             <div className="text-sm font-mono text-white/60 font-semibold mt-1">{formatTime(duration)}</div>
           </div>

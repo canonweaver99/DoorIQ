@@ -114,8 +114,8 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Friendly homeowner who agrees quickly. Perfect for building confidence.',
       difficulty: 'Easy',
       color: 'secondary',
-      image: '/No Problem Nancy no backround 2.png',
-      liveSessionImage: '/No Problem Nancy.png',
+      image: '/Nancy Black No backround.png',
+      liveSessionImage: '/No Problem Nancy Black.png',
     },
     card: {
       age: 42,

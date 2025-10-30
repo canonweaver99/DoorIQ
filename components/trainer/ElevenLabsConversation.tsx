@@ -25,7 +25,8 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   const wasConnectedRef = useRef(false) // Track if we were ever connected to detect actual disconnects
 
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
-    window.dispatchEvent(new CustomEvent('connection:status', { detail: s === 'connected' ? 'connected' : s === 'connecting' ? 'connecting' : s === 'error' ? 'error' : 'idle' }))
+    // Dispatch the status exactly as passed (don't map disconnected to 'idle')
+    window.dispatchEvent(new CustomEvent('connection:status', { detail: s }))
   }
 
   const start = useCallback(async () => {

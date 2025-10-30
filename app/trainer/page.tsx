@@ -30,7 +30,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
   // ALWAYS USE THESE IMAGES - both pre-session and during session
   const agentImageMap: Record<string, string> = {
     'Austin': '/Austin Boss.png',
-    'No Problem Nancy': '/No Problem Nancy.png',
+    'No Problem Nancy': '/No Problem Nancy Black.png',
     'Already Got It Alan': '/Already got it Alan landscape.png',
     'Not Interested Nick': '/Not Interested Nick.png',
     'DIY Dave': '/DIY DAVE.png',
@@ -496,7 +496,40 @@ function TrainerPageContent() {
     }
     
     // Listen for agent messages to track activity
+    // Listen to BOTH agent:message AND agent:response events (both are dispatched)
     const handleAgentMessage = (e: any) => {
+      console.log('📨 Agent message/response received, resetting activity timer')
+      handleAgentActivity()
+    }
+    
+    // Also listen for agent:response events (the main one that's dispatched)
+    const handleAgentResponse = (e: any) => {
+      console.log('📨 Agent response received, resetting activity timer')
+      handleAgentActivity()
+      
+      // Also check the response text for goodbye phrases immediately
+      if (e?.detail && typeof e.detail === 'string') {
+        const text = e.detail.toLowerCase()
+        const endingPhrases = [
+          'bye', 'goodbye', 'see you', 'alright then', 'talk to you', 
+          "i'll see you", 'take care', "ain't interested", 'not interested',
+          'thanks for stopping', 'stopping by', 'gotta go', 'have to go',
+          'gotta get back', 'back to work', 'closing the door', 'close the door',
+          'thanks for stopping by', "we're done", "that's all"
+        ]
+        if (endingPhrases.some(phrase => text.includes(phrase))) {
+          console.log('🔚 Agent response contains goodbye phrase, ending in 2 seconds...')
+          setTimeout(() => {
+            if (sessionActive && sessionId) {
+              handleAgentEndCall({ detail: { reason: 'Agent said goodbye in response' } })
+            }
+          }, 2000)
+        }
+      }
+    }
+    
+    // Listen for user activity too (they might be speaking)
+    const handleUserActivity = (e: any) => {
       handleAgentActivity()
     }
     
@@ -520,30 +553,32 @@ function TrainerPageContent() {
     }
     
     // Also listen for agent end_call events more aggressively
+    // Check transcript for goodbye phrases (backup method)
     const checkForEndCall = () => {
-      // Check if transcript ends with agent saying goodbye/ending phrases
+      // Check if transcript ends with agent (homeowner) saying goodbye/ending phrases
       if (transcript.length > 0) {
+        // Find the last message from the agent (homeowner = AI agent)
         const lastAgentMessage = [...transcript].reverse().find((msg: TranscriptEntry) => 
-          msg.speaker === 'homeowner'
+          msg.speaker === 'homeowner' // 'homeowner' = AI agent, 'user' = sales rep
         )
         if (lastAgentMessage) {
           const text = (lastAgentMessage.text || '').toLowerCase()
-          // Expanded ending phrases to catch more variations including "Ain't interested, thanks for stopping by"
+          // Expanded ending phrases to catch more variations
           const endingPhrases = [
             'bye', 'goodbye', 'see you', 'alright then', 'talk to you', 
             "i'll see you", 'take care', "ain't interested", 'not interested',
             'thanks for stopping', 'stopping by', 'gotta go', 'have to go',
             'gotta get back', 'back to work', 'closing the door', 'close the door',
-            'thanks for stopping by'
+            'thanks for stopping by', "we're done", "that's all", 'have a good day'
           ]
           if (endingPhrases.some(phrase => text.includes(phrase))) {
-            // Wait 3 seconds after agent's last message before auto-ending
+            // Wait 2 seconds after agent's last message before auto-ending
             setTimeout(() => {
               if (sessionActive && sessionId) {
-                console.log('🔚 Agent said goodbye, auto-ending session...')
-                handleAgentEndCall({ detail: { reason: 'Agent ended conversation' } })
+                console.log('🔚 Agent said goodbye in transcript, auto-ending session...')
+                handleAgentEndCall({ detail: { reason: 'Agent ended conversation (transcript check)' } })
               }
-            }, 3000)
+            }, 2000)
           }
         }
       }
@@ -564,13 +599,24 @@ function TrainerPageContent() {
     // Log when event listeners are attached
     console.log('🎧 Setting up event listeners for auto-end', { sessionActive, sessionId })
     
+    // Listen for manual end session requests
     window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
+    
+    // Listen for agent end_call events (dispatched from ElevenLabsConversation)
     window.addEventListener('agent:end_call', handleAgentEndCall)
+    
+    // Listen for agent messages/responses to track activity
+    // Note: agent:message is dispatched, but agent:response is the main one with actual text
     window.addEventListener('agent:message', handleAgentMessage)
+    window.addEventListener('agent:response', handleAgentResponse) // Main event for agent transcript
+    
+    // Listen for user activity too (they might be speaking)
+    window.addEventListener('agent:user', handleUserActivity)
+    
+    // Listen for connection status changes
     window.addEventListener('connection:status', handleConnectionStatus)
     
     // Debug: Log all custom events to see what's happening
-    const originalDispatchEvent = window.dispatchEvent
     const debugListener = (e: Event) => {
       if (e.type.startsWith('agent:') || e.type === 'connection:status' || e.type === 'trainer:') {
         console.log('🎯 Custom event dispatched:', e.type, e instanceof CustomEvent ? e.detail : '')
@@ -578,6 +624,8 @@ function TrainerPageContent() {
     }
     window.addEventListener('agent:end_call', debugListener as EventListener, { once: false })
     window.addEventListener('agent:message', debugListener as EventListener, { once: false })
+    window.addEventListener('agent:response', debugListener as EventListener, { once: false })
+    window.addEventListener('agent:user', debugListener as EventListener, { once: false })
     window.addEventListener('connection:status', debugListener as EventListener, { once: false })
     
     return () => {
@@ -586,9 +634,13 @@ function TrainerPageContent() {
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
       window.removeEventListener('agent:end_call', handleAgentEndCall)
       window.removeEventListener('agent:message', handleAgentMessage)
+      window.removeEventListener('agent:response', handleAgentResponse)
+      window.removeEventListener('agent:user', handleUserActivity)
       window.removeEventListener('connection:status', handleConnectionStatus)
       window.removeEventListener('agent:end_call', debugListener as EventListener)
       window.removeEventListener('agent:message', debugListener as EventListener)
+      window.removeEventListener('agent:response', debugListener as EventListener)
+      window.removeEventListener('agent:user', debugListener as EventListener)
       window.removeEventListener('connection:status', debugListener as EventListener)
     }
   }, [sessionActive, sessionId, endSession, transcript])
