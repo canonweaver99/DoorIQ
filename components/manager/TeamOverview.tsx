@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Users, TrendingUp, Target, Mail, Calendar, Trophy, Download, Activity, DollarSign, UserPlus } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import Link from 'next/link'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -280,47 +280,41 @@ export default function TeamOverview() {
 
           {revenueData.length > 0 ? (
             <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={revenueData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="#06B6D4" stopOpacity={0.6} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <LineChart data={revenueData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                 <XAxis 
                   dataKey="period" 
-                  stroke="#6B7280"
-                  tick={{ fill: '#6B7280', fontSize: 11 }}
-                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  stroke="#ffffff"
+                  tick={{ fill: '#ffffff', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.2)' }}
                   angle={timePeriod === 'week' ? -15 : 0}
                   textAnchor={timePeriod === 'week' ? 'end' : 'middle'}
                   height={timePeriod === 'week' ? 50 : 30}
                 />
                 <YAxis 
-                  stroke="#6B7280"
-                  tick={{ fill: '#6B7280', fontSize: 11 }}
-                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  stroke="#ffffff"
+                  tick={{ fill: '#ffffff', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.2)' }}
                   tickFormatter={(value) => value >= 1000 ? `$${(value / 1000).toFixed(0)}k` : `$${value}`}
                 />
                 <Tooltip 
-                  cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
+                  cursor={{ stroke: '#ffffff', strokeWidth: 2, strokeDasharray: '5 5' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload
                       return (
-                        <div className="bg-[#1e1e30]/95 border border-white/10 rounded-lg p-3 shadow-xl backdrop-blur-sm">
+                        <div className="bg-[#1e1e30]/95 border border-white/20 rounded-lg p-3 shadow-xl backdrop-blur-sm">
                           <p className="text-white font-semibold mb-2">
                             {data.fullPeriod || data.period}
                           </p>
                           <div className="space-y-1">
-                            <p className="text-sm text-purple-300">
+                            <p className="text-sm text-white">
                               Revenue: <span className="font-bold text-white">${data.revenue.toLocaleString()}</span>
                             </p>
-                            <p className="text-sm text-cyan-300">
+                            <p className="text-sm text-white">
                               Reps Who Sold: <span className="font-bold text-white">{data.repsWhoSold}</span>
                             </p>
-                            <p className="text-sm text-green-300">
+                            <p className="text-sm text-white">
                               Total Sales: <span className="font-bold text-white">{data.totalSales}</span>
                             </p>
                           </div>
@@ -330,19 +324,15 @@ export default function TeamOverview() {
                     return null
                   }}
                 />
-                <Bar 
+                <Line 
+                  type="monotone" 
                   dataKey="revenue" 
-                  fill="url(#revenueGradient)"
-                  radius={[8, 8, 0, 0]}
-                  maxBarSize={60}
-                  label={{
-                    position: 'top',
-                    fill: '#9CA3AF',
-                    fontSize: 10,
-                    formatter: (value: number) => value >= 1000 ? `$${(value / 1000).toFixed(1)}k` : `$${value}`
-                  }}
+                  stroke="#ffffff"
+                  strokeWidth={3}
+                  dot={{ fill: '#ffffff', r: 6, stroke: '#ffffff', strokeWidth: 2 }}
+                  activeDot={{ fill: '#ffffff', r: 8, stroke: '#ffffff', strokeWidth: 2 }}
                 />
-              </BarChart>
+              </LineChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex items-center justify-center h-[350px] text-slate-400">

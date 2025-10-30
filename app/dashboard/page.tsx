@@ -153,6 +153,13 @@ function DashboardPageContent() {
       setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
     }
     
+    // Get user's team_id
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('team_id')
+      .eq('id', user.id)
+      .single()
+    
     // Get sessions from this week
     const oneWeekAgo = new Date()
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
@@ -169,28 +176,27 @@ function DashboardPageContent() {
       ? Math.round(sessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / sessions.length)
       : 0
     
-    // Format recent sessions with real data
-    const formattedSessions = (sessions || []).slice(0, 4).map((session, idx) => {
-      const gradients = ['from-purple-500/30', 'from-blue-500/30', 'from-pink-500/30', 'from-green-500/30']
-      const avatars = ['/agents/sam.png', '/agents/tim.png', '/agents/tina.png', '/agents/karen.png']
-      const timeAgo = Math.floor((Date.now() - new Date(session.created_at).getTime()) / (1000 * 60 * 60))
+    // Calculate team rank based on virtual_earnings
+    let teamRank = 1
+    if (userProfile?.team_id) {
+      const { data: teamMembers } = await supabase
+        .from('users')
+        .select('id, virtual_earnings')
+        .eq('team_id', userProfile.team_id)
+        .not('virtual_earnings', 'is', null)
       
-      return {
-        name: session.homeowner_name || 'Practice Session',
-        score: session.overall_score || 0,
-        earned: session.virtual_earnings || 0,
-        avatar: avatars[idx % avatars.length],
-        time: timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`,
-        gradient: gradients[idx % gradients.length]
+      if (teamMembers && teamMembers.length > 1) {
+        // Sort by virtual_earnings descending
+        const sorted = [...teamMembers].sort((a, b) => (b.virtual_earnings || 0) - (a.virtual_earnings || 0))
+        const userIndex = sorted.findIndex(m => m.id === user.id)
+        teamRank = userIndex >= 0 ? userIndex + 1 : teamMembers.length
       }
-    })
-    
-    setRecentSessions(formattedSessions)
+    }
     
     setRealStats({
       sessionsThisWeek,
       avgScore,
-      teamRank: 1,
+      teamRank,
       totalEarnings: userData?.virtual_earnings || 0
     })
   }
@@ -351,6 +357,7 @@ function OverviewTabContent() {
   const [hoveredEarnings, setHoveredEarnings] = useState<{ day: string; value: number; } | null>(null)
   const [recentSessions, setRecentSessions] = useState<any[]>([])
   const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([])
+  const [notifications, setNotifications] = useState<any[]>([])
   const chartRef = useRef<HTMLDivElement>(null)
   const earningsRef = useRef<HTMLDivElement>(null)
   const isChartInView = useInView(chartRef, { once: true, amount: 0.3 })
@@ -367,30 +374,83 @@ function OverviewTabContent() {
     
     if (!user) return
     
-    // Get recent sessions
+    // Get recent sessions with agent_name
     const { data: sessions } = await supabase
       .from('live_sessions')
-      .select('overall_score, created_at, homeowner_name, virtual_earnings, rapport_score, discovery_score, objection_handling_score, closing_score')
+      .select('overall_score, created_at, homeowner_name, agent_name, virtual_earnings, rapport_score, discovery_score, objection_handling_score, closing_score')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(4)
     
     if (sessions && sessions.length > 0) {
       const gradients = ['from-purple-500/30', 'from-blue-500/30', 'from-pink-500/30', 'from-green-500/30']
-      const avatars = ['/agents/sam.png', '/agents/tim.png', '/agents/tina.png', '/agents/karen.png']
+      
+      // Get agent image mapping
+      const getAgentImage = (agentName: string | null): string => {
+        if (!agentName) return '/agents/default.png'
+        
+        const agentImageMap: Record<string, string> = {
+          'Austin': '/Austin Boss.png',
+          'No Problem Nancy': '/No Problem Nancy.png',
+          'Already Got It Alan': '/Already got it Alan landscape.png',
+          'Not Interested Nick': '/Not Interested Nick.png',
+          'DIY Dave': '/DIY DAVE.png',
+          'Too Expensive Tim': '/Too Expensive Tim.png',
+          'Spouse Check Susan': '/Spouse Check Susan.png',
+          'Busy Beth': '/Busy Beth.png',
+          'Renter Randy': '/Renter Randy.png',
+          'Skeptical Sam': '/Skeptical Sam.png',
+          'Just Treated Jerry': '/Just Treated Jerry.png',
+          'Think About It Tina': '/Think About It Tina.png',
+          'Comparison Katie': '/agents/default.png',
+          'Bad Experience Bill': '/agents/default.png',
+          'Neighbor Reference Nate': '/agents/default.png'
+        }
+        
+        return agentImageMap[agentName] || '/agents/default.png'
+      }
       
       const formattedSessions = sessions.map((session, idx) => {
         const timeAgo = Math.floor((Date.now() - new Date(session.created_at).getTime()) / (1000 * 60 * 60))
+        const agentName = session.agent_name || session.homeowner_name || null
         return {
-          name: session.homeowner_name || 'Practice Session',
+          name: session.agent_name || session.homeowner_name || 'Practice Session',
           score: session.overall_score || 0,
           earned: session.virtual_earnings || 0,
-          avatar: avatars[idx % avatars.length],
+          avatar: getAgentImage(agentName),
           time: timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`,
           gradient: gradients[idx % gradients.length]
         }
       })
       setRecentSessions(formattedSessions)
+      
+      // Fetch real notifications from messages
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('*, sender:users!messages_sender_id_fkey(full_name)')
+        .eq('recipient_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(4)
+      
+      if (messages && messages.length > 0) {
+        const formattedNotifications = messages.map((msg: any) => {
+          const timeAgo = Math.floor((Date.now() - new Date(msg.created_at).getTime()) / (1000 * 60 * 60))
+          const senderName = msg.sender?.full_name || 'Manager'
+          
+          return {
+            type: 'manager',
+            title: 'Message from Manager',
+            message: msg.message || msg.message_text || '',
+            time: timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`,
+            iconColor: '#a855f7',
+            iconBgColor: 'rgba(168, 85, 247, 0.2)'
+          }
+        })
+        setNotifications(formattedNotifications)
+      } else {
+        // No notifications yet
+        setNotifications([])
+      }
       
       // Calculate average scores
       const avgOverall = Math.round(sessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / sessions.length)
@@ -607,40 +667,8 @@ function OverviewTabContent() {
     },
   ]
 
-  const notificationsData = [
-    {
-      type: 'manager',
-      title: 'Message from Manager',
-      message: 'Great work this week! Objection handling improved.',
-      time: '2h ago',
-      iconColor: '#a855f7',
-      iconBgColor: 'rgba(168, 85, 247, 0.2)'
-    },
-    {
-      type: 'leaderboard',
-      title: 'New Leader!',
-      message: 'Sarah Chen took #1 with 892 points.',
-      time: '5h ago',
-      iconColor: '#10b981',
-      iconBgColor: 'rgba(16, 185, 129, 0.2)'
-    },
-    {
-      type: 'achievement',
-      title: 'Achievement Unlocked',
-      message: 'Earned "Closer Pro" badge.',
-      time: '1d ago',
-      iconColor: '#f59e0b',
-      iconBgColor: 'rgba(245, 158, 11, 0.2)'
-    },
-    {
-      type: 'session',
-      title: 'Daily Goal Reached',
-      message: 'Completed 5 practice sessions today!',
-      time: '2d ago',
-      iconColor: '#3b82f6',
-      iconBgColor: 'rgba(59, 130, 246, 0.2)'
-    },
-  ]
+  // Use real notifications if available, otherwise show empty state
+  const notificationsData = notifications.length > 0 ? notifications : []
 
   return (
     <div className="space-y-6">
@@ -1243,7 +1271,12 @@ function OverviewTabContent() {
           <h3 className="text-base font-bold text-white mb-3">Notifications</h3>
 
           <div className="space-y-2.5">
-            {notificationsData.map((notif, idx) => {
+            {notificationsData.length === 0 ? (
+              <div className="text-center py-8 text-white/60">
+                <p className="text-sm">No notifications</p>
+                <p className="text-xs mt-1">You're all caught up!</p>
+              </div>
+            ) : notificationsData.map((notif, idx) => {
               const getIcon = () => {
                 switch(notif.type) {
                   case 'manager':

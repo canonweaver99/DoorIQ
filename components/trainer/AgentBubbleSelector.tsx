@@ -167,9 +167,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
         const hydrated = sorted.map((agent: AgentRow, index: number) => {
           const agentSessions = sessions.filter((s: any) => s.agent_name === agent.name)
-          const completedSessions = agentSessions.filter(s => s.grade !== null && s.grade > 0)
+          const completedSessions = agentSessions.filter(s => s.overall_score !== null && s.overall_score > 0)
           const bestScore = completedSessions.length > 0 
-            ? Math.max(...completedSessions.map(s => s.grade || 0))
+            ? Math.max(...completedSessions.map(s => s.overall_score || 0))
             : null
           const avgDuration = completedSessions.length > 0
             ? Math.round(completedSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / completedSessions.length / 60)
@@ -499,6 +499,13 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     )}
                   </div>
                 </motion.button>
+
+                {/* Best Score Badge - Top Left */}
+                {agent.bestScore !== null && agent.bestScore !== undefined && agent.bestScore > 0 && (
+                  <div className="absolute top-1 left-1 bg-gradient-to-r from-purple-600/90 to-indigo-600/90 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-purple-500/40 shadow-lg z-10">
+                    <span className="text-[11px] font-bold text-white tabular-nums">Best: {agent.bestScore}%</span>
+                  </div>
+                )}
 
                 {/* Suggested Badge */}
                 {suggestedAgent === agent.name && !agent.isLocked && (
