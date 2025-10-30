@@ -69,7 +69,43 @@ export default function CoachingChat({
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'chat' | 'voice'>('chat')
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [selectedVoice, setSelectedVoice] = useState<string>('')
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null)
+
+  // Load available voices
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices()
+        setAvailableVoices(voices)
+        
+        // Set default to a good-quality English voice
+        if (!selectedVoice && voices.length > 0) {
+          const preferredVoices = voices.filter(v => 
+            v.lang.startsWith('en') && 
+            (v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Alex') || v.name.includes('Samantha'))
+          )
+          if (preferredVoices.length > 0) {
+            setSelectedVoice(preferredVoices[0].voiceURI)
+          } else {
+            const englishVoices = voices.filter(v => v.lang.startsWith('en'))
+            if (englishVoices.length > 0) {
+              setSelectedVoice(englishVoices[0].voiceURI)
+            }
+          }
+        }
+      }
+      
+      // Load voices immediately
+      loadVoices()
+      
+      // Some browsers load voices asynchronously
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices
+      }
+    }
+  }, [selectedVoice])
 
   // Stop speech when component unmounts or mode changes
   useEffect(() => {
@@ -107,10 +143,18 @@ export default function CoachingChat({
     setIsSpeaking(false)
 
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 1.0
+    utterance.rate = 0.95 // Slightly slower for clarity
     utterance.pitch = 1.0
     utterance.volume = 1.0
     utterance.lang = 'en-US'
+    
+    // Use selected voice if available
+    if (selectedVoice && availableVoices.length > 0) {
+      const voice = availableVoices.find(v => v.voiceURI === selectedVoice)
+      if (voice) {
+        utterance.voice = voice
+      }
+    }
 
     utterance.onstart = () => {
       setIsSpeaking(true)
@@ -220,34 +264,53 @@ export default function CoachingChat({
             </div>
           </div>
 
-          {/* Mode Toggle */}
-          <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-1 border border-slate-700/50">
-            <button
-              onClick={() => setMode('chat')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                mode === 'chat'
-                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4" />
-                <span>Chat</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setMode('voice')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                mode === 'voice'
-                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                {isSpeaking ? (
-                  <>
-                    <MicOff className="w-4 h-4" onClick={stopSpeaking} />
-                    <span>Stop</span>
+          {/* Mode Toggle and Voice Selector */}
+          <div className="flex items-center gap-3">
+            {/* Voice Selector (only show in voice mode) */}
+            {mode === 'voice' && availableVoices.length > 0 && (
+              <select
+                value={selectedVoice}
+                onChange={(e) => setSelectedVoice(e.target.value)}
+                className="px-3 py-2 text-xs font-medium rounded-md bg-slate-800/50 border border-slate-600/50 text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/50 max-w-[180px]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {availableVoices
+                  .filter(v => v.lang.startsWith('en'))
+                  .slice(0, 8) // Limit to 8 best options
+                  .map((voice) => (
+                    <option key={voice.voiceURI} value={voice.voiceURI}>
+                      {voice.name} {voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Alex') || voice.name.includes('Samantha') ? '⭐' : ''}
+                    </option>
+                  ))}
+              </select>
+            )}
+            <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-1 border border-slate-700/50">
+              <button
+                onClick={() => setMode('chat')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  mode === 'chat'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Chat</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setMode('voice')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  mode === 'voice'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {isSpeaking ? (
+                    <>
+                      <MicOff className="w-4 h-4" onClick={stopSpeaking} />
+                      <span>Stop</span>
                   </>
                 ) : (
                   <>

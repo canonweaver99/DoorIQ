@@ -81,7 +81,15 @@ export default function SessionTimeline({
       icon: (event.moment_type || '').toLowerCase().includes('rapport') ? MessageSquare :
             (event.moment_type || '').toLowerCase().includes('discovery') ? Mic :
             (event.moment_type || '').toLowerCase().includes('clos') ? Zap : Sparkles,
-      color: event.is_positive ? 'from-emerald-500 to-green-500' : 'from-blue-500 to-indigo-500',
+      color: event.is_positive 
+        ? 'from-emerald-400 via-green-400 to-emerald-600' 
+        : (event.moment_type || '').toLowerCase().includes('rapport')
+          ? 'from-purple-400 via-pink-400 to-purple-600'
+          : (event.moment_type || '').toLowerCase().includes('discovery')
+          ? 'from-blue-400 via-cyan-400 to-blue-600'
+          : (event.moment_type || '').toLowerCase().includes('clos')
+          ? 'from-orange-400 via-red-400 to-orange-600'
+          : 'from-indigo-400 via-purple-400 to-indigo-600',
       quickTip: event.key_takeaway || event.description || 'Key moment',
       feedback: {
         good: event.key_takeaway || event.description || '',
@@ -106,13 +114,24 @@ export default function SessionTimeline({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Helper to convert gradient string to rgba colors
+  function getColorFromGradient(gradient: string, opacity: number): string {
+    // Map gradient classes to actual colors
+    if (gradient.includes('emerald')) return `rgba(16, 185, 129, ${opacity}), rgba(34, 197, 94, ${opacity})`
+    if (gradient.includes('purple') && gradient.includes('pink')) return `rgba(192, 132, 252, ${opacity}), rgba(236, 72, 153, ${opacity}), rgba(147, 51, 234, ${opacity})`
+    if (gradient.includes('blue') && gradient.includes('cyan')) return `rgba(96, 165, 250, ${opacity}), rgba(34, 211, 238, ${opacity}), rgba(37, 99, 235, ${opacity})`
+    if (gradient.includes('orange') && gradient.includes('red')) return `rgba(251, 146, 60, ${opacity}), rgba(239, 68, 68, ${opacity}), rgba(249, 115, 22, ${opacity})`
+    if (gradient.includes('indigo') && gradient.includes('purple')) return `rgba(129, 140, 248, ${opacity}), rgba(168, 85, 247, ${opacity}), rgba(99, 102, 241, ${opacity})`
+    return `rgba(168, 85, 247, ${opacity}), rgba(99, 102, 241, ${opacity})` // Default purple
+  }
+
   // Calculate minutes and seconds for display
   const minutes = Math.floor(duration / 60)
   const seconds = duration % 60
   const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`
 
   return (
-    <div className="relative">
+    <div className="relative mb-16">
       {/* Header Card - Redesigned */}
       <div className="mb-8 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] p-6" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -168,9 +187,14 @@ export default function SessionTimeline({
 
       {/* Timeline - Redesigned */}
       <div className="relative" ref={timelineRef}>
-        {/* Progress Bar Background */}
-        <div className="relative h-2 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-emerald-500/20" />
+        {/* Progress Bar Background - More vibrant */}
+        <div className="relative h-3 rounded-full bg-[#1a1a1a] border-2 border-purple-500/30 overflow-hidden shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/40 via-blue-500/40 to-emerald-500/40 animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/60 via-blue-600/60 to-emerald-600/60" style={{ 
+            width: '100%',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 3s ease-in-out infinite'
+          }} />
         </div>
         
         {/* Key Moments */}
@@ -188,8 +212,8 @@ export default function SessionTimeline({
               onMouseLeave={() => setHoveredSegment(null)}
               onClick={() => setActiveSegment(activeSegment === segment.id ? null : segment.id)}
             >
-              {/* Connection Line */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-2 w-0.5 h-16 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+              {/* Connection Line - Extended upward */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-8 w-0.5 h-20 bg-gradient-to-b from-transparent via-purple-400/30 to-transparent" />
               
               {/* Marker Dot */}
               <motion.div
@@ -207,9 +231,9 @@ export default function SessionTimeline({
                 transition={{ duration: 0.2 }}
               />
               
-              {/* Key Moment Card */}
+              {/* Key Moment Card - Higher z-index and positioned higher to avoid overlap */}
               <motion.div
-                className="absolute top-6 left-1/2 -translate-x-1/2 w-64 z-10 cursor-pointer"
+                className="absolute -top-8 left-1/2 -translate-x-1/2 w-64 z-50 cursor-pointer"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ 
                   opacity: 1, 
@@ -218,11 +242,18 @@ export default function SessionTimeline({
                 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div className={`rounded-xl border-2 p-4 transition-all ${
-                  isHovered || isActive
-                    ? 'bg-[#0a0a0a] border-white/30 shadow-xl'
-                    : 'bg-[#1a1a1a] border-[#2a2a2a]'
-                }`}>
+                <div 
+                  className={`rounded-xl border-2 p-4 transition-all ${
+                    isHovered || isActive
+                      ? 'border-white/50 shadow-2xl shadow-purple-500/30'
+                      : 'border-white/20'
+                  }`}
+                  style={{
+                    background: isHovered || isActive
+                      ? `linear-gradient(135deg, ${getColorFromGradient(segment.color, 0.2)})`
+                      : `linear-gradient(135deg, ${getColorFromGradient(segment.color, 0.1)})`,
+                  }}
+                >
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`p-2 rounded-lg bg-gradient-to-br ${segment.color}`}>

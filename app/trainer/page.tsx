@@ -335,7 +335,7 @@ function TrainerPageContent() {
 
       if (sessionId) {
         try {
-        await fetch('/api/session', {
+          await fetch('/api/session', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -344,11 +344,12 @@ function TrainerPageContent() {
               duration_seconds: duration
             }),
           })
-        router.push(`/trainer/loading/${sessionId}`)
+          // Use window.location for more reliable redirect
+          window.location.href = `/trainer/loading/${sessionId}`
         } catch (error) {
-        logger.error('Error ending session', error)
-        setLoading(false)
-      }
+          logger.error('Error ending session', error)
+          setLoading(false)
+        }
       } else {
         router.push('/trainer')
         setLoading(false)
@@ -399,21 +400,23 @@ function TrainerPageContent() {
       await endSession()
     }
     
-    // Track agent activity
+    // Track agent activity - improved with shorter timeout
     const handleAgentActivity = () => {
       lastActivityTime = Date.now()
       // Reset the silence timer when agent is active
       if (silenceTimer) {
         clearTimeout(silenceTimer)
+        silenceTimer = null
       }
       if (sessionActive && sessionId) {
         silenceTimer = setTimeout(() => {
           const timeSinceLastActivity = Date.now() - lastActivityTime
-          if (sessionActive && sessionId && timeSinceLastActivity >= 15000) {
-            console.log('⏱️ No agent activity for 15 seconds, auto-ending session...')
+          // Reduced to 10 seconds for faster auto-end
+          if (sessionActive && sessionId && timeSinceLastActivity >= 10000) {
+            console.log('⏱️ No agent activity for 10 seconds, auto-ending session...')
             handleAgentEndCall({ detail: { reason: 'Agent stopped responding' } })
           }
-        }, 15000)
+        }, 10000)
       }
     }
     
@@ -421,6 +424,36 @@ function TrainerPageContent() {
     const handleAgentMessage = (e: any) => {
       handleAgentActivity()
     }
+    
+    // Also listen for agent end_call events more aggressively
+    const checkForEndCall = () => {
+      // Check if transcript ends with agent saying goodbye/ending phrases
+      if (transcript.length > 0) {
+        const lastAgentMessage = [...transcript].reverse().find((msg: TranscriptEntry) => 
+          msg.speaker === 'homeowner'
+        )
+        if (lastAgentMessage) {
+          const text = (lastAgentMessage.text || '').toLowerCase()
+          const endingPhrases = ['bye', 'goodbye', 'see you', 'alright then', 'talk to you', 'i\'ll see you', 'take care']
+          if (endingPhrases.some(phrase => text.includes(phrase))) {
+            // Wait 3 seconds after agent's last message before auto-ending
+            setTimeout(() => {
+              if (sessionActive && sessionId) {
+                console.log('🔚 Agent said goodbye, auto-ending session...')
+                handleAgentEndCall({ detail: { reason: 'Agent ended conversation' } })
+              }
+            }, 3000)
+          }
+        }
+      }
+    }
+    
+    // Check for end call periodically
+    const endCallCheckInterval = setInterval(() => {
+      if (sessionActive && sessionId) {
+        checkForEndCall()
+      }
+    }, 2000) // Check every 2 seconds
     
     // Set up initial silence timeout
     if (sessionActive && sessionId) {
@@ -433,11 +466,12 @@ function TrainerPageContent() {
     
     return () => {
       if (silenceTimer) clearTimeout(silenceTimer)
+      clearInterval(endCallCheckInterval)
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
       window.removeEventListener('agent:end_call', handleAgentEndCall)
       window.removeEventListener('agent:message', handleAgentMessage)
     }
-  }, [sessionActive, sessionId, endSession])
+  }, [sessionActive, sessionId, endSession, transcript])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
