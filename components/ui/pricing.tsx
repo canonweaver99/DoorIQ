@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useSpring } from "framer-motion";
+import { motion, useSpring, AnimatePresence } from "framer-motion";
 import React, {
   useState,
   useRef,
@@ -197,6 +197,7 @@ interface PricingPlan {
   name: string;
   price: string;
   yearlyPrice: string;
+  yearlyTotal?: string; // Total yearly cost when billed annually
   period: string;
   features: string[];
   description: string;
@@ -479,23 +480,39 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
         <p className="mt-1.5 text-sm font-medium text-slate-400">
           {plan.description}
         </p>
-        <div className="mt-3 flex items-baseline justify-center gap-x-1">
+        <div className="mt-3 flex flex-col items-center gap-1">
           {typeof calculateTotalPrice() === 'number' ? (
             <>
-              <span className="text-5xl font-extrabold tracking-tight text-white">
-                <NumberFlow
-                  value={calculateTotalPrice() as number}
-                  format={{
-                    style: "currency",
-                    currency: "USD",
-                    minimumFractionDigits: 0,
-                  }}
-                  className="font-variant-numeric: tabular-nums"
-                />
-              </span>
-              <span className="text-sm font-semibold leading-6 tracking-wide text-slate-400">
-                / {plan.period}
-              </span>
+              <div className="flex items-baseline justify-center gap-x-1">
+                <span className="text-5xl font-extrabold tracking-tight text-white">
+                  <NumberFlow
+                    value={calculateTotalPrice() as number}
+                    format={{
+                      style: "currency",
+                      currency: "USD",
+                      minimumFractionDigits: 0,
+                    }}
+                    className="font-variant-numeric: tabular-nums"
+                  />
+                </span>
+                <span className="text-sm font-semibold leading-6 tracking-wide text-slate-400">
+                  / {plan.period}
+                </span>
+              </div>
+              <AnimatePresence mode="wait">
+                {!isMonthly && plan.yearlyTotal && (
+                  <motion.p 
+                    key="yearly-total"
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-sm font-medium text-slate-500 mt-1"
+                  >
+                    ${plan.yearlyTotal} / year
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </>
           ) : (
             <span className="text-3xl font-extrabold tracking-tight text-white">
@@ -505,9 +522,18 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
         </div>
         
         {typeof calculateTotalPrice() === 'number' && (
-          <p className="text-sm font-medium text-slate-400 mt-2">
-            {isMonthly ? "Billed Monthly" : "Billed Annually"}
-          </p>
+          <AnimatePresence mode="wait">
+            <motion.p 
+              key={isMonthly ? 'monthly' : 'annual'}
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.3 }}
+              className="text-sm font-medium text-slate-400 mt-2"
+            >
+              {isMonthly ? "Billed Monthly" : "Billed Annually"}
+            </motion.p>
+          </AnimatePresence>
         )}
 
         {/* Rep Selector for Manager Plan */}

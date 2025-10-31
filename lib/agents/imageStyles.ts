@@ -20,7 +20,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.23,
   },
   'No Problem Nancy': {
-    objectPosition: '40% 50%', // Shifted left in image (showing right side of image) to center her in the frame
+    objectPosition: '25% 50%', // Shifted significantly to the right to center her in the frame
     scale: 1.2,
   },
   'Not Interested Nick': {
@@ -28,7 +28,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.5,
   },
   'Spouse Check Susan': {
-    objectPosition: '50% 50%',
+    objectPosition: '30% 50%', // Shifted significantly to the right to center her in the frame
     scale: 1.21,
   },
   'Busy Beth': {
