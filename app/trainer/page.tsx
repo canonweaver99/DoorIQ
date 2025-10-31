@@ -40,7 +40,11 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'Renter Randy': '/Renter Randy.png',
     'Skeptical Sam': '/Skeptical Sam.png',
     'Just Treated Jerry': '/Just Treated Jerry.png',
-    'Think About It Tina': '/Think About It Tina.png'
+    'Think About It Tina': '/Think About It Tina.png',
+    'Veteran Victor': '/Veteran Victor Landcape.png',
+    'English Second Language Elena': '/agents/elena.png',
+    'Tag Team Tanya & Tom': '/agents/tanya-tom.png',
+    'Comparing Carl': '/agents/carl.png'
   }
   
   if (agentImageMap[agent.name]) {

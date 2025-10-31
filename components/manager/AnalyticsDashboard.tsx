@@ -159,12 +159,17 @@ export default function AnalyticsDashboard() {
       { skill: 'Objection Handling', current: 68, previous: 71, trend: 'down' },
       { skill: 'Closing', current: 75, previous: 73, trend: 'up' },
       { skill: 'Follow-up', current: 70, previous: 68, trend: 'up' },
+      { skill: 'Active Listening', current: 76, previous: 72, trend: 'up' },
+      { skill: 'Value Communication', current: 74, previous: 71, trend: 'up' },
+      { skill: 'Time Management', current: 69, previous: 67, trend: 'up' },
     ],
     coachingOpportunities: [
       { repName: 'Chris Martinez', skill: 'Objection Handling', currentScore: 60, targetScore: 75, impact: 'high' },
       { repName: 'James Wilson', skill: 'Discovery', currentScore: 68, targetScore: 80, impact: 'high' },
       { repName: 'Rachel Kim', skill: 'Closing', currentScore: 68, targetScore: 78, impact: 'medium' },
       { repName: 'David Park', skill: 'Rapport Building', currentScore: 78, targetScore: 85, impact: 'medium' },
+      { repName: 'Lisa Anderson', skill: 'Value Communication', currentScore: 70, targetScore: 82, impact: 'medium' },
+      { repName: 'Emily Rodriguez', skill: 'Active Listening', currentScore: 78, targetScore: 88, impact: 'low' },
     ]
   })
 
@@ -671,8 +676,12 @@ export default function AnalyticsDashboard() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                        label={({ name, value }) => `${name}: ${value}%`}
-                        outerRadius={120}
+                    label={(props: any) => {
+                      const { percent } = props
+                      return `${(percent * 100).toFixed(0)}%`
+                    }}
+                    outerRadius={100}
+                    innerRadius={40}
                     fill="#8884d8"
                     dataKey="value"
                   >
@@ -685,10 +694,30 @@ export default function AnalyticsDashboard() {
                           backgroundColor: '#1a1a2e',
                           border: '1px solid rgba(255, 255, 255, 0.1)',
                           borderRadius: '12px',
+                          color: '#fff'
                         }}
+                        formatter={(value: number, name: string) => [`${value}%`, name]}
+                      />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        height={80}
+                        formatter={(value) => <span style={{ color: '#fff', fontSize: '12px' }}>{value}</span>}
                       />
                 </PieChart>
               </ResponsiveContainer>
+              {/* Custom legend below chart */}
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {analytics.skillDistribution.map((entry, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-sm text-white/80">{entry.name}</span>
+                    <span className="text-sm font-semibold text-white ml-auto">{entry.value}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
                 <div className="h-[400px] flex items-center justify-center text-slate-400">
@@ -710,42 +739,75 @@ export default function AnalyticsDashboard() {
                 </div>
                 <TrendingUp className="w-5 h-5 text-emerald-400" />
               </div>
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                 {analytics.skillProgression?.map((skill, idx) => {
                   const improvement = skill.current - skill.previous
+                  const improvementPercent = ((improvement / skill.previous) * 100).toFixed(1)
                   return (
-                    <div key={idx} className="p-4 bg-black/20 rounded-xl border border-white/10">
+                    <motion.div 
+                      key={idx}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="p-4 bg-black/30 border border-white/10 rounded-xl hover:border-emerald-500/30 transition-all group"
+                    >
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-white font-semibold">{skill.skill}</span>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
-                          skill.trend === 'up' ? 'bg-emerald-500/20 text-emerald-300' :
-                          skill.trend === 'down' ? 'bg-red-500/20 text-red-300' :
-                          'bg-slate-500/20 text-slate-300'
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${
+                            skill.trend === 'up' ? 'bg-emerald-500/20' :
+                            skill.trend === 'down' ? 'bg-red-500/20' :
+                            'bg-slate-500/20'
+                          }`}>
+                            {skill.trend === 'up' ? (
+                              <ArrowUpRight className={`w-4 h-4 ${skill.trend === 'up' ? 'text-emerald-300' : ''}`} />
+                            ) : skill.trend === 'down' ? (
+                              <ArrowDownRight className="w-4 h-4 text-red-300" />
+                            ) : (
+                              <Activity className="w-4 h-4 text-slate-300" />
+                            )}
+                          </div>
+                          <span className="text-white font-semibold">{skill.skill}</span>
+                        </div>
+                        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border ${
+                          skill.trend === 'up' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                          skill.trend === 'down' ? 'bg-red-500/20 text-red-300 border-red-500/30' :
+                          'bg-slate-500/20 text-slate-300 border-slate-500/30'
                         }`}>
-                          {skill.trend === 'up' && <ArrowUpRight className="w-3 h-3" />}
-                          {skill.trend === 'down' && <ArrowDownRight className="w-3 h-3" />}
-                          <span className="text-xs font-semibold">{improvement > 0 ? '+' : ''}{improvement}%</span>
+                          <span className="text-xs font-bold">{improvement > 0 ? '+' : ''}{improvement}%</span>
+                          <span className="text-xs opacity-75">({improvementPercent}%)</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div className="flex-1 relative">
+                          {/* Previous period bar (subtle) */}
+                          <div className="absolute inset-0 h-2 bg-white/5 rounded-full">
                             <div 
+                              className="h-full bg-white/10 rounded-full"
+                              style={{ width: `${skill.previous}%` }}
+                            />
+                          </div>
+                          {/* Current period bar */}
+                          <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${skill.current}%` }}
+                              transition={{ duration: 0.8, delay: idx * 0.1 }}
                               className={`h-full rounded-full ${
-                                skill.current >= 75 ? 'bg-emerald-500' :
-                                skill.current >= 65 ? 'bg-blue-500' :
-                                'bg-amber-500'
+                                skill.current >= 75 ? 'bg-gradient-to-r from-emerald-500 to-green-500' :
+                                skill.current >= 65 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
+                                'bg-gradient-to-r from-amber-500 to-orange-500'
                               }`}
-                              style={{ width: `${skill.current}%` }}
                             />
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-white">{skill.current}%</span>
-                          <span className="text-xs text-white/50 ml-1">({skill.previous}%)</span>
+                        <div className="text-right min-w-[80px]">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xl font-bold text-white">{skill.current}%</span>
+                            <span className="text-xs text-white/50 line-through">{skill.previous}%</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })}
               </div>
@@ -769,42 +831,78 @@ export default function AnalyticsDashboard() {
                   <p className="text-sm text-purple-300/80">AI-identified improvement areas</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {analytics.coachingOpportunities.map((opp, idx) => (
-                  <div key={idx} className="p-4 bg-black/20 rounded-xl border border-purple-500/20">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="text-white font-semibold">{opp.repName}</p>
-                        <p className="text-sm text-purple-300/80 mt-1">{opp.skill}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${
-                        opp.impact === 'high' ? 'bg-red-500/20 text-red-300' :
-                        opp.impact === 'medium' ? 'bg-amber-500/20 text-amber-300' :
-                        'bg-blue-500/20 text-blue-300'
-                      }`}>
-                        {opp.impact.toUpperCase()} IMPACT
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-white/60">Current</span>
-                          <span className="text-xs text-white/60">Target</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {analytics.coachingOpportunities.map((opp, idx) => {
+                  const gap = opp.targetScore - opp.currentScore
+                  const progress = (opp.currentScore / opp.targetScore) * 100
+                  return (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="p-5 bg-gradient-to-br from-black/30 to-black/20 rounded-xl border border-purple-500/20 hover:border-purple-400/40 transition-all group"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                              <TargetIcon className="w-4 h-4 text-purple-300" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-white font-bold text-sm">{opp.repName}</p>
+                              <p className="text-xs text-purple-300/70 mt-0.5">{opp.skill}</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full"
-                            style={{ width: `${(opp.currentScore / opp.targetScore) * 100}%` }}
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                          opp.impact === 'high' ? 'bg-red-500/20 text-red-300 border-red-500/30' :
+                          opp.impact === 'medium' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                          'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                        }`}>
+                          {opp.impact.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-white/60 font-medium">Progress to Target</span>
+                          <span className="text-xs text-white/50">{progress.toFixed(0)}% complete</span>
+                        </div>
+                        <div className="relative h-3 bg-white/10 rounded-full overflow-hidden">
+                          <div className="absolute inset-0 h-full bg-gradient-to-r from-white/5 to-white/10 rounded-full" />
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(progress, 100)}%` }}
+                            transition={{ duration: 0.8, delay: idx * 0.1 }}
+                            className={`h-full rounded-full ${
+                              opp.impact === 'high' ? 'bg-gradient-to-r from-red-500 to-orange-500' :
+                              opp.impact === 'medium' ? 'bg-gradient-to-r from-amber-500 to-yellow-500' :
+                              'bg-gradient-to-r from-blue-500 to-cyan-500'
+                            }`}
                           />
                         </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                          <div>
+                            <span className="text-lg font-bold text-white">{opp.currentScore}%</span>
+                            <span className="text-xs text-white/50 ml-1">current</span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-purple-300 transition-colors" />
+                          <div className="text-right">
+                            <span className="text-lg font-bold text-purple-300">{opp.targetScore}%</span>
+                            <span className="text-xs text-white/50 ml-1">target</span>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t border-white/10">
+                          <p className="text-xs text-white/60">
+                            {gap > 15 ? 'Needs significant improvement' :
+                             gap > 10 ? 'Moderate improvement needed' :
+                             'Close to target - maintain focus'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-lg font-bold text-white">{opp.currentScore}%</span>
-                        <span className="text-xs text-white/50"> → {opp.targetScore}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    </motion.div>
+                  )
+                })}
               </div>
             </motion.div>
           )}
@@ -900,44 +998,82 @@ export default function AnalyticsDashboard() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-black/30 border border-purple-500/20 rounded-xl p-5 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-5 h-5 text-purple-300" />
-                <p className="text-sm font-semibold text-purple-300">Trend Analysis</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-gradient-to-br from-purple-900/30 to-indigo-900/30 border border-purple-500/30 rounded-xl p-6 backdrop-blur-sm hover:border-purple-400/50 transition-all"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-400/30">
+                  <Sparkles className="w-5 h-5 text-purple-300" />
+                </div>
+                <p className="text-sm font-bold text-purple-200">Trend Analysis</p>
               </div>
-              <p className="text-sm text-white leading-relaxed">
-              {analytics.changes.score > 0 
+              <p className="text-sm text-white leading-relaxed mb-3">
+                {analytics.changes.score > 0 
                   ? `Team performance is improving by ${analytics.changes.score}% this period. Maintain focus on skill development to sustain momentum.`
-                : analytics.changes.score < 0
+                  : analytics.changes.score < 0
                   ? `Team scores declining by ${Math.abs(analytics.changes.score)}%. Immediate coaching intervention recommended for underperforming reps.`
                   : 'Team performance is stable. Consider advanced training modules to push beyond current plateau.'}
-            </p>
-          </div>
-            <div className="bg-black/30 border border-amber-500/20 rounded-xl p-5 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Activity className="w-5 h-5 text-amber-300" />
-                <p className="text-sm font-semibold text-amber-300">Activity Insights</p>
+              </p>
+              <div className="mt-4 pt-4 border-t border-purple-500/20">
+                <p className="text-xs text-purple-300/80 font-medium">
+                  📈 Performance momentum: {analytics.changes.score > 0 ? 'Strong upward trajectory' : analytics.changes.score < 0 ? 'Needs attention' : 'Maintaining stability'}
+                </p>
               </div>
-              <p className="text-sm text-white leading-relaxed">
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="bg-gradient-to-br from-amber-900/30 to-orange-900/30 border border-amber-500/30 rounded-xl p-6 backdrop-blur-sm hover:border-amber-400/50 transition-all"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-400/30">
+                  <Activity className="w-5 h-5 text-amber-300" />
+                </div>
+                <p className="text-sm font-bold text-amber-200">Activity Insights</p>
+              </div>
+              <p className="text-sm text-white leading-relaxed mb-3">
                 {analytics.activeReps} active team members completed {analytics.totalSessions} training sessions. 
                 {analytics.totalSessions / analytics.activeReps > 30 
                   ? ' Excellent engagement levels across the team.' 
                   : ' Consider increasing session frequency for optimal skill retention.'}
-            </p>
-          </div>
-            <div className="bg-black/30 border border-emerald-500/20 rounded-xl p-5 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Zap className="w-5 h-5 text-emerald-300" />
-                <p className="text-sm font-semibold text-emerald-300">Strategic Recommendations</p>
+              </p>
+              <div className="mt-4 pt-4 border-t border-amber-500/20">
+                <p className="text-xs text-amber-300/80 font-medium">
+                  🎯 Avg {Math.round(analytics.totalSessions / analytics.activeReps)} sessions per rep this period
+                </p>
               </div>
-              <p className="text-sm text-white leading-relaxed">
-              {analytics.teamAverage < 70 
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="bg-gradient-to-br from-emerald-900/30 to-green-900/30 border border-emerald-500/30 rounded-xl p-6 backdrop-blur-sm hover:border-emerald-400/50 transition-all"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-emerald-500/20 border border-emerald-400/30">
+                  <Zap className="w-5 h-5 text-emerald-300" />
+                </div>
+                <p className="text-sm font-bold text-emerald-200">Strategic Recommendations</p>
+              </div>
+              <p className="text-sm text-white leading-relaxed mb-3">
+                {analytics.teamAverage < 70 
                   ? 'Focus on foundational skills training. Consider one-on-one coaching sessions for reps scoring below 65%.'
-                : analytics.teamAverage < 80
+                  : analytics.teamAverage < 80
                   ? 'Team is performing well. Focus on objection handling and advanced closing techniques to reach next performance tier.'
                   : 'Outstanding performance! Maintain momentum with advanced scenario training and peer learning sessions.'}
-            </p>
-            </div>
+              </p>
+              <div className="mt-4 pt-4 border-t border-emerald-500/20">
+                <p className="text-xs text-emerald-300/80 font-medium">
+                  💡 Priority: {analytics.coachingOpportunities && analytics.coachingOpportunities.length > 0 
+                    ? `${analytics.coachingOpportunities.filter(o => o.impact === 'high').length} high-impact coaching opportunities identified`
+                    : 'Continue maintaining excellence'}
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </motion.div>
