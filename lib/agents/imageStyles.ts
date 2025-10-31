@@ -20,7 +20,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.23,
   },
   'No Problem Nancy': {
-    objectPosition: '50% 50%',
+    objectPosition: '80% 50%', // Shifted significantly right to center her in the frame
     scale: 1.2,
   },
   'Not Interested Nick': {

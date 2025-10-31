@@ -108,8 +108,8 @@ export function DashboardHeroPreview() {
                     className="mt-3 pt-3 overflow-hidden"
                     style={{ borderTop: '1px solid #4a2a6a' }}
                   >
-                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">Focus on consistency across all areas. Your rapport and discovery skills show promise.</p>
+                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
+                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Focus on consistency across all areas. Your rapport and discovery skills show promise.</p>
                   </motion.div>
                 )}
               </div>
@@ -149,8 +149,8 @@ export function DashboardHeroPreview() {
                     className="mt-3 pt-3 overflow-hidden"
                     style={{ borderTop: '1px solid #2a6a4a' }}
                   >
-                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">Incorporate personalized questions within the first 30 seconds. Reference specific details about their property.</p>
+                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
+                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Incorporate personalized questions within the first 30 seconds. Reference specific details about their property.</p>
                   </motion.div>
                 )}
               </div>
@@ -190,8 +190,8 @@ export function DashboardHeroPreview() {
                     className="mt-3 pt-3 overflow-hidden"
                     style={{ borderTop: '1px solid #2a4a6a' }}
                   >
-                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">Dig deeper into pain points with follow-up questions about specific frustrations.</p>
+                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
+                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Dig deeper into pain points with follow-up questions about specific frustrations.</p>
                   </motion.div>
                 )}
               </div>
@@ -231,8 +231,8 @@ export function DashboardHeroPreview() {
                     className="mt-3 pt-3 overflow-hidden"
                     style={{ borderTop: '1px solid #6a4a2a' }}
                   >
-                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">Reframe price concerns as investment discussions. Pivot to ROI and break down savings.</p>
+                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
+                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Reframe price concerns as investment discussions. Pivot to ROI and break down savings.</p>
                   </motion.div>
                 )}
               </div>
@@ -272,8 +272,8 @@ export function DashboardHeroPreview() {
                     className="mt-3 pt-3 overflow-hidden"
                     style={{ borderTop: '1px solid #6a2a4a' }}
                   >
-                    <p className="text-[11px] font-semibold text-purple-400 mb-1">AI Feedback</p>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">Use assumptive language in your close. Replace questions with statements like 'When we install this'.</p>
+                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
+                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Use assumptive language in your close. Replace questions with statements like 'When we install this'.</p>
                   </motion.div>
                 )}
               </div>
