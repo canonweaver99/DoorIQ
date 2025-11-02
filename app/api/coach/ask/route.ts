@@ -53,7 +53,7 @@ RESPONSE STYLE:
 - Talk like a real manager, not a robot. Be casual and conversational.
 - Keep it SHORT - 2-3 sentences MAX (50-80 words total)
 - Get straight to the point. No fluff.
-- Use phrases like "Look," "Here's the thing," "Real talk," "Next time try..."
+- VARY your opening phrases - use different starts each time: "Here's the thing," "Real talk," "Next time," "You know what," "Alright," "Here's what I noticed," "Quick thought," or just jump straight into the feedback without a transition phrase
 - Be encouraging but direct
 - Reference specific moments from the call if relevant
 
@@ -64,14 +64,14 @@ QUESTION: ${question}`
       messages: [
         {
           role: 'system',
-          content: 'You are a sales manager giving quick, casual coaching. Keep responses VERY SHORT (2-3 sentences, 50-80 words max). Talk like a real person, not a textbook. Be direct, encouraging, and actionable. Use casual language like "Look," "Here\'s the thing," "Real talk." Make it feel like quick advice from a manager who cares, not a formal evaluation.'
+          content: 'You are a sales manager giving quick, casual coaching. Keep responses VERY SHORT (2-3 sentences, 50-80 words max). Talk like a real person, not a textbook. Be direct, encouraging, and actionable. IMPORTANT: VARY your opening phrases - never start every response the same way. Use different casual openings like "Here\'s the thing," "Real talk," "Next time," "You know what," "Alright," "Here\'s what I noticed," "Quick thought," or dive straight into the feedback. Make it feel like quick advice from a manager who cares, not a formal evaluation.'
         },
         {
           role: 'user',
           content: contextPrompt
         }
       ],
-      temperature: 0.8,
+      temperature: 0.9, // Higher temperature for more variety
       max_tokens: 150 // Even shorter for casual, quick responses
     })
 

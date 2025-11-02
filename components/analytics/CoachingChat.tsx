@@ -71,7 +71,10 @@ export default function CoachingChat({
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState<string>('')
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
+  const [useElevenLabs, setUseElevenLabs] = useState(true) // Default to Eleven Labs for better quality
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Load available voices
   useEffect(() => {
@@ -121,26 +124,84 @@ export default function CoachingChat({
     if (mode === 'voice' && messages.length > 0) {
       const lastMessage = messages[messages.length - 1]
       if (lastMessage.role === 'assistant' && lastMessage.content) {
-        speakText(lastMessage.content)
+        speakText(lastMessage.content).catch(console.error)
       }
     } else if (mode === 'chat') {
       // Stop speech when switching to chat
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel()
-        setIsSpeaking(false)
-      }
+      stopSpeaking()
     }
   }, [mode, messages])
 
-  const speakText = (text: string) => {
+  const speakText = async (text: string) => {
+    // Stop any ongoing audio first
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+    setIsSpeaking(false)
+
+    // Try Eleven Labs TTS if enabled
+    if (useElevenLabs) {
+      try {
+        setIsGeneratingAudio(true)
+        const response = await fetch('/api/eleven/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        })
+
+        if (response.ok) {
+          const audioBlob = await response.blob()
+          const audioUrl = URL.createObjectURL(audioBlob)
+          const audio = new Audio(audioUrl)
+          audioRef.current = audio
+
+          audio.onplay = () => {
+            setIsSpeaking(true)
+            setIsGeneratingAudio(false)
+          }
+
+          audio.onended = () => {
+            setIsSpeaking(false)
+            URL.revokeObjectURL(audioUrl)
+            audioRef.current = null
+          }
+
+          audio.onerror = () => {
+            setIsSpeaking(false)
+            setIsGeneratingAudio(false)
+            URL.revokeObjectURL(audioUrl)
+            audioRef.current = null
+            console.warn('Eleven Labs audio playback failed, falling back to browser TTS')
+            // Fallback to browser TTS
+            speakTextBrowser(text)
+          }
+
+          await audio.play()
+          return
+        } else {
+          console.warn('Eleven Labs TTS failed, falling back to browser TTS')
+          setIsGeneratingAudio(false)
+        }
+      } catch (error) {
+        console.error('Error using Eleven Labs TTS:', error)
+        setIsGeneratingAudio(false)
+        // Fallback to browser TTS
+      }
+    }
+
+    // Fallback to browser TTS
+    speakTextBrowser(text)
+  }
+
+  const speakTextBrowser = (text: string) => {
     if (!('speechSynthesis' in window)) {
       console.warn('Speech synthesis not supported')
       return
     }
-
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel()
-    setIsSpeaking(false)
 
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 0.95 // Slightly slower for clarity
@@ -218,8 +279,8 @@ export default function CoachingChat({
 
       // If in voice mode, speak the response
       if (mode === 'voice') {
-        setTimeout(() => {
-          speakText(answer)
+        setTimeout(async () => {
+          await speakText(answer)
         }, 100)
       }
     } catch (error) {
@@ -236,10 +297,17 @@ export default function CoachingChat({
   }
 
   const stopSpeaking = () => {
+    // Stop Eleven Labs audio if playing
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    // Stop browser TTS
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel()
-      setIsSpeaking(false)
     }
+    setIsSpeaking(false)
+    setIsGeneratingAudio(false)
   }
 
   return (
@@ -266,8 +334,20 @@ export default function CoachingChat({
 
           {/* Mode Toggle and Voice Selector */}
           <div className="flex items-center gap-3">
-            {/* Voice Selector (only show in voice mode) */}
-            {mode === 'voice' && availableVoices.length > 0 && (
+            {/* Eleven Labs Toggle (only show in voice mode) */}
+            {mode === 'voice' && (
+              <label className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-md bg-slate-800/50 border border-slate-600/50 cursor-pointer hover:bg-slate-800/70 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={useElevenLabs}
+                  onChange={(e) => setUseElevenLabs(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-800"
+                />
+                <span className="text-slate-300">Eleven Labs</span>
+              </label>
+            )}
+            {/* Voice Selector (only show in voice mode and when NOT using Eleven Labs) */}
+            {mode === 'voice' && !useElevenLabs && availableVoices.length > 0 && (
               <select
                 value={selectedVoice}
                 onChange={(e) => setSelectedVoice(e.target.value)}
@@ -407,7 +487,7 @@ export default function CoachingChat({
           </motion.div>
         )}
 
-        {isSpeaking && mode === 'voice' && (
+        {(isSpeaking || isGeneratingAudio) && mode === 'voice' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -418,7 +498,9 @@ export default function CoachingChat({
               <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
               <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
             </div>
-            <span className="text-sm text-purple-300 font-medium">Speaking...</span>
+            <span className="text-sm text-purple-300 font-medium">
+              {isGeneratingAudio ? 'Generating audio...' : 'Speaking...'}
+            </span>
             <button
               onClick={stopSpeaking}
               className="ml-2 p-1.5 hover:bg-purple-500/20 rounded-lg transition-colors"

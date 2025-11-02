@@ -398,6 +398,9 @@ function TrainerPageContent() {
     }
   }, [sessionId, duration, transcript, router, sessionActive])
 
+  // Track agent mode for speaking detection
+  const agentModeRef = useRef<'speaking' | 'listening' | 'idle' | null>(null)
+  
   // Handle agent end call event with improved reliability
   useEffect(() => {
     let silenceTimer: NodeJS.Timeout | null = null
@@ -410,12 +413,22 @@ function TrainerPageContent() {
       }
     }
     
+    // Listen for agent mode changes to track speaking status
+    const handleAgentMode = (e: any) => {
+      const mode = e?.detail || e
+      agentModeRef.current = mode === 'speaking' ? 'speaking' : (mode === 'listening' ? 'listening' : 'idle')
+      console.log('🎙️ Agent mode changed:', agentModeRef.current)
+    }
+    
+    window.addEventListener('agent:mode', handleAgentMode)
+    
     const handleAgentEndCall = async (e: any) => {
       console.log('📞 handleAgentEndCall triggered', { 
         sessionActive, 
         sessionId, 
         eventDetail: e?.detail,
-        alreadyProcessing: endCallProcessingRef.current
+        alreadyProcessing: endCallProcessingRef.current,
+        currentAgentMode: agentModeRef.current
       })
       
       // Prevent duplicate processing
@@ -433,7 +446,7 @@ function TrainerPageContent() {
       // Set processing flag immediately to prevent duplicates
       endCallProcessingRef.current = true
       
-      console.log('🚪 Agent ended call - waiting 2.5 seconds to allow agent to finish speaking...')
+      console.log('🚪 Agent ended call - waiting for agent to finish speaking...')
       
       // Clear any silence timers
       if (silenceTimer) {
@@ -452,18 +465,46 @@ function TrainerPageContent() {
         console.warn('Could not play door close sound', error)
       }
       
-      // Wait 2.5 seconds before ending session to allow agent to finish speaking
-      // This ensures the agent's final sentence isn't interrupted
-      setTimeout(() => {
-        // Set session inactive before ending
-        setSessionActive(false)
+      // Wait for agent to finish speaking before ending session
+      const waitForAgentToFinish = async () => {
+        const maxWaitTime = 8000 // Maximum 8 seconds wait
+        const checkInterval = 200 // Check every 200ms
+        const startTime = Date.now()
         
-        // End the session after delay to allow agent to finish
-        console.log('🔚 Calling endSession after 2.5s delay (allowing agent to finish)...')
-        endSession().catch((error) => {
-          console.error('❌ Error in endSession from handleAgentEndCall:', error)
+        return new Promise<void>((resolve) => {
+          const checkIfDoneSpeaking = () => {
+            const elapsed = Date.now() - startTime
+            const isStillSpeaking = agentModeRef.current === 'speaking'
+            
+            if (!isStillSpeaking || elapsed >= maxWaitTime) {
+              const reason = elapsed >= maxWaitTime ? 'timeout' : 'agent_finished_speaking'
+              console.log(`🔚 Agent finished speaking (${reason}), elapsed: ${elapsed}ms`)
+              resolve()
+            } else {
+              console.log(`⏳ Agent still speaking (${elapsed}ms elapsed)...`)
+              setTimeout(checkIfDoneSpeaking, checkInterval)
+            }
+          }
+          
+          // Start checking after a brief initial delay
+          setTimeout(checkIfDoneSpeaking, 500)
         })
-      }, 2500) // 2.5 seconds delay
+      }
+      
+      // Wait for agent to finish, with a minimum delay of 3 seconds and max of 8 seconds
+      await waitForAgentToFinish()
+      
+      // Additional buffer delay to ensure audio completes
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Set session inactive before ending
+      setSessionActive(false)
+      
+      // End the session after agent finishes speaking
+      console.log('🔚 Calling endSession after agent finished speaking...')
+      endSession().catch((error) => {
+        console.error('❌ Error in endSession from handleAgentEndCall:', error)
+      })
     }
     
     // Track agent activity - improved with shorter timeout
@@ -628,6 +669,7 @@ function TrainerPageContent() {
       window.removeEventListener('agent:response', handleAgentResponse)
       window.removeEventListener('agent:user', handleUserActivity)
       window.removeEventListener('connection:status', handleConnectionStatus)
+      window.removeEventListener('agent:mode', handleAgentMode)
       window.removeEventListener('agent:end_call', debugListener as EventListener)
       window.removeEventListener('agent:message', debugListener as EventListener)
       window.removeEventListener('agent:response', debugListener as EventListener)
