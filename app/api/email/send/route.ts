@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { addSignatureIfNeeded } from '@/lib/email/send'
 
 // Lazy initialize Resend to avoid build-time errors
 function getResendClient() {
@@ -31,13 +32,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
     }
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'notifications@dooriq.com'
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'notifications@dooriq.ai'
+    const emailHtml = getEmailTemplate(type, subject, body)
+    const htmlWithSignature = addSignatureIfNeeded(emailHtml, fromEmail)
 
     const { data, error } = await resend.emails.send({
       from: fromEmail,
       to: Array.isArray(to) ? to : [to],
       subject,
-      html: getEmailTemplate(type, subject, body)
+      html: htmlWithSignature
     })
 
     if (error) {

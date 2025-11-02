@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { addSignatureIfNeeded } from '@/lib/email/send'
 
 // Lazy initialize Resend to avoid build-time errors
 function getResendClient() {
@@ -31,14 +32,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, skipped: true, reason: 'Email service not configured' })
     }
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'invites@dooriq.com'
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'invites@dooriq.ai'
     const roleText = role === 'manager' ? 'Manager' : 'Sales Rep'
 
-    const { data, error } = await resend.emails.send({
-      from: fromEmail,
-      to: email,
-      subject: `You've been invited to join DoorIQ as a ${roleText}`,
-      html: `
+    const emailHtml = `
         <!DOCTYPE html>
         <html>
           <head>
@@ -97,6 +94,14 @@ export async function POST(request: NextRequest) {
           </body>
         </html>
       `
+    
+    const htmlWithSignature = addSignatureIfNeeded(emailHtml, fromEmail)
+
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
+      to: email,
+      subject: `You've been invited to join DoorIQ as a ${roleText}`,
+      html: htmlWithSignature
     })
 
     if (error) {

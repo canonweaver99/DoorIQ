@@ -321,8 +321,13 @@ function TrainerPageContent() {
     }
   }
 
-  const endSession = useCallback(async () => {
-    console.log('🔚 endSession called', { sessionId, duration, transcriptLength: transcript.length })
+  const endSession = useCallback(async (endReason?: string) => {
+    console.log('🔚 endSession called', { 
+      sessionId, 
+      duration, 
+      transcriptLength: transcript.length,
+      endReason: endReason || 'manual'
+    })
     
     // Prevent multiple calls - but allow if we have sessionId even if sessionActive is false
     if (!sessionId) {
@@ -362,7 +367,8 @@ function TrainerPageContent() {
           body: JSON.stringify({
             id: sessionId,
             transcript: transcript,
-            duration_seconds: duration
+            duration_seconds: duration,
+            end_reason: endReason || 'manual'
           }),
         })
         
@@ -405,6 +411,7 @@ function TrainerPageContent() {
   useEffect(() => {
     let silenceTimer: NodeJS.Timeout | null = null
     let lastActivityTime = Date.now()
+    let goodbyeCheckAttempts = 0 // Track goodbye confirmation attempts
     
     const handleEndSessionRequest = () => {
       if (sessionActive && sessionId) {
@@ -502,15 +509,17 @@ function TrainerPageContent() {
       
       // End the session after agent finishes speaking
       console.log('🔚 Calling endSession after agent finished speaking...')
-      endSession().catch((error) => {
+      const reason = e?.detail?.reason || 'Unknown'
+      console.log('📊 END CALL TRIGGER DETAIL:', reason)
+      endSession(reason).catch((error) => {
         console.error('❌ Error in endSession from handleAgentEndCall:', error)
       })
     }
     
-    // Track agent activity - improved with shorter timeout
+    // Track agent and user activity - increased timeout to prevent premature endings
     const handleAgentActivity = () => {
       lastActivityTime = Date.now()
-      // Reset the silence timer when agent is active
+      // Reset the silence timer when agent or user is active
       if (silenceTimer) {
         clearTimeout(silenceTimer)
         silenceTimer = null
@@ -518,12 +527,14 @@ function TrainerPageContent() {
       if (sessionActive && sessionId) {
         silenceTimer = setTimeout(() => {
           const timeSinceLastActivity = Date.now() - lastActivityTime
-          // Reduced to 10 seconds for faster auto-end
-          if (sessionActive && sessionId && timeSinceLastActivity >= 10000) {
-            console.log('⏱️ No agent activity for 10 seconds, auto-ending session...')
-            handleAgentEndCall({ detail: { reason: 'Agent stopped responding' } })
+          // Increased to 30 seconds - allows for natural conversation pauses
+          // Only trigger if we've had actual silence (not just processing time)
+          if (sessionActive && sessionId && timeSinceLastActivity >= 30000) {
+            console.log('⏱️ No activity for 30 seconds, auto-ending session...')
+            console.log('📊 END CALL TRIGGER: Silence timeout (30 seconds)')
+            handleAgentEndCall({ detail: { reason: 'Extended silence detected' } })
           }
-        }, 10000)
+        }, 30000) // 30 seconds timeout
       }
     }
     
@@ -539,23 +550,29 @@ function TrainerPageContent() {
       console.log('📨 Agent response received, resetting activity timer')
       handleAgentActivity()
       
-      // Also check the response text for goodbye phrases immediately
+      // Check the response text for goodbye phrases - but require confirmation
+      // Only trigger on clear ending phrases, not ambiguous ones
       if (e?.detail && typeof e.detail === 'string') {
         const text = e.detail.toLowerCase()
-        const endingPhrases = [
-          'bye', 'goodbye', 'see you', 'alright then', 'talk to you', 
-          "i'll see you", 'take care', "ain't interested", 'not interested',
-          'thanks for stopping', 'stopping by', 'gotta go', 'have to go',
-          'gotta get back', 'back to work', 'closing the door', 'close the door',
-          'thanks for stopping by', "we're done", "that's all"
+        // Only very clear ending phrases - removed ambiguous ones
+        const clearEndingPhrases = [
+          'goodbye', 'bye bye', 'see you later', 'talk to you later',
+          'closing the door', 'close the door now', 'thanks for stopping by',
+          "we're done here", "that's all for today", 'have a good day', 'have a nice day'
         ]
-        if (endingPhrases.some(phrase => text.includes(phrase))) {
-          console.log('🔚 Agent response contains goodbye phrase, ending in 2 seconds...')
+        // Check if the message ENDS with a clear goodbye phrase (not just contains it)
+        const endsWithGoodbye = clearEndingPhrases.some(phrase => {
+          return text.endsWith(phrase) || text.trim().endsWith(phrase + '.') || text.trim().endsWith(phrase + '!')
+        })
+        
+        if (endsWithGoodbye) {
+          console.log('🔚 Agent response ends with clear goodbye phrase, ending in 3 seconds...')
+          console.log('📊 END CALL TRIGGER: Goodbye phrase detected in agent response')
           setTimeout(() => {
             if (sessionActive && sessionId) {
-              handleAgentEndCall({ detail: { reason: 'Agent said goodbye in response' } })
+              handleAgentEndCall({ detail: { reason: 'Agent clearly ended conversation' } })
             }
-          }, 2000)
+          }, 3000) // Increased delay to ensure it's really ending
         }
       }
     }
@@ -576,52 +593,74 @@ function TrainerPageContent() {
         console.log('🔌 Connection disconnected during active session, ending session...')
         // Small delay to allow for end_call event to come through first (if it exists)
         setTimeout(() => {
-          if (sessionActive && sessionId) {
-            console.log('🔚 Auto-ending session due to connection disconnect')
-            handleAgentEndCall({ detail: { reason: 'Connection lost', source: 'disconnect' } })
-          }
+            if (sessionActive && sessionId) {
+              console.log('🔚 Auto-ending session due to connection disconnect')
+              console.log('📊 END CALL TRIGGER: Connection lost/disconnected')
+              handleAgentEndCall({ detail: { reason: 'Connection lost', source: 'disconnect' } })
+            }
         }, 2000) // 2 second delay to allow end_call event to process first
       }
     }
     
-    // Also listen for agent end_call events more aggressively
-    // Check transcript for goodbye phrases (backup method)
+    // Check transcript for goodbye phrases (backup method) - less aggressive
+    // Only check if we haven't seen activity in a while
     const checkForEndCall = () => {
+      // Only check if it's been at least 20 seconds since last activity
+      const timeSinceActivity = Date.now() - lastActivityTime
+      if (timeSinceActivity < 20000) {
+        return // Too soon, don't check
+      }
+      
       // Check if transcript ends with agent (homeowner) saying goodbye/ending phrases
       if (transcript.length > 0) {
-        // Find the last message from the agent (homeowner = AI agent)
-        const lastAgentMessage = [...transcript].reverse().find((msg: TranscriptEntry) => 
-          msg.speaker === 'homeowner' // 'homeowner' = AI agent, 'user' = sales rep
-        )
-        if (lastAgentMessage) {
-          const text = (lastAgentMessage.text || '').toLowerCase()
-          // Expanded ending phrases to catch more variations
-          const endingPhrases = [
-            'bye', 'goodbye', 'see you', 'alright then', 'talk to you', 
-            "i'll see you", 'take care', "ain't interested", 'not interested',
-            'thanks for stopping', 'stopping by', 'gotta go', 'have to go',
-            'gotta get back', 'back to work', 'closing the door', 'close the door',
-            'thanks for stopping by', "we're done", "that's all", 'have a good day'
+        // Find the last few messages from the agent
+        const lastAgentMessages = [...transcript]
+          .reverse()
+          .filter((msg: TranscriptEntry) => msg.speaker === 'homeowner')
+          .slice(0, 3) // Check last 3 agent messages
+        
+        if (lastAgentMessages.length > 0) {
+          const lastText = (lastAgentMessages[0].text || '').toLowerCase().trim()
+          // Only very clear ending phrases
+          const clearEndingPhrases = [
+            'goodbye', 'bye bye', 'see you later', 'talk to you later',
+            'closing the door', 'close the door now', 'thanks for stopping by',
+            "we're done here", "that's all for today", 'have a good day', 'have a nice day'
           ]
-          if (endingPhrases.some(phrase => text.includes(phrase))) {
-            // Wait 2 seconds after agent's last message before auto-ending
-            setTimeout(() => {
-              if (sessionActive && sessionId) {
-                console.log('🔚 Agent said goodbye in transcript, auto-ending session...')
-                handleAgentEndCall({ detail: { reason: 'Agent ended conversation (transcript check)' } })
-              }
-            }, 2000)
+          
+          // Check if the LAST message ends with a clear goodbye
+          const endsWithGoodbye = clearEndingPhrases.some(phrase => {
+            return lastText.endsWith(phrase) || 
+                   lastText.endsWith(phrase + '.') || 
+                   lastText.endsWith(phrase + '!')
+          })
+          
+          if (endsWithGoodbye) {
+            goodbyeCheckAttempts++
+            // Require multiple confirmations (check 3 times = 6 seconds)
+            if (goodbyeCheckAttempts >= 3) {
+              console.log('🔚 Agent clearly ended conversation (transcript check), auto-ending session...')
+              console.log('📊 END CALL TRIGGER: Goodbye phrase confirmed in transcript (3 checks)')
+              setTimeout(() => {
+                if (sessionActive && sessionId) {
+                  handleAgentEndCall({ detail: { reason: 'Agent ended conversation (transcript confirmation)' } })
+                }
+              }, 3000)
+              goodbyeCheckAttempts = 0 // Reset
+            }
+          } else {
+            goodbyeCheckAttempts = 0 // Reset if no goodbye detected
           }
         }
       }
     }
     
-    // Check for end call periodically
+    // Check for end call periodically - less frequent
     const endCallCheckInterval = setInterval(() => {
       if (sessionActive && sessionId) {
         checkForEndCall()
       }
-    }, 2000) // Check every 2 seconds
+    }, 3000) // Check every 3 seconds (less aggressive)
     
     // Set up initial silence timeout
     if (sessionActive && sessionId) {

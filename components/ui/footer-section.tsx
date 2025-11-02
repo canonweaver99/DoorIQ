@@ -40,7 +40,7 @@ const footerLinks: FooterSectionType[] = [
   {
     label: 'Resources',
     links: [
-      { title: 'Contact Us', href: 'mailto:support@dooriq.ai?subject=Support%20Request&body=Hi%20DoorIQ%20Team,%0D%0A%0D%0AI%20need%20help%20with:%0D%0A%0D%0A' },
+      { title: 'Contact Us', href: 'mailto:contact@dooriq.ai?subject=Support%20Request&body=Hi%20DoorIQ%20Team,%0D%0A%0D%0AI%20need%20help%20with:%0D%0A%0D%0A' },
       { title: 'Help', href: '/help' },
     ],
   },

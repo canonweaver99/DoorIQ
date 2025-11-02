@@ -17,18 +17,6 @@ const emailAddresses = [
     message: 'This is a test email from the DoorIQ notifications system. You\'ll receive session complete alerts from this address.'
   },
   {
-    from: 'support@dooriq.ai',
-    name: 'DoorIQ Support',
-    subject: 'Test from Support',
-    message: 'This is a test email from DoorIQ support. Customer support and help requests will come from this address.'
-  },
-  {
-    from: 'team@dooriq.ai',
-    name: 'DoorIQ Team',
-    subject: 'Test from Team',
-    message: 'This is a test email from the DoorIQ team address. Team invitations and collaboration emails will come from here.'
-  },
-  {
     from: 'verify@dooriq.ai',
     name: 'DoorIQ Verification',
     subject: 'Test from Verification',
@@ -38,14 +26,8 @@ const emailAddresses = [
     from: 'contact@dooriq.ai',
     name: 'DoorIQ Contact',
     subject: 'Test from Contact',
-    message: 'This is a test email from the DoorIQ contact address. General inquiries and contact form responses will come from here.'
+    message: 'This is a test email from the DoorIQ contact address. Customer support, help requests, team invitations, and general inquiries will come from here.'
   },
-  {
-    from: 'hello@dooriq.ai',
-    name: 'DoorIQ',
-    subject: 'Test from Hello',
-    message: 'This is a test email from hello@dooriq.ai. General communications and announcements will come from this address.'
-  }
 ]
 
 async function sendTestEmails() {

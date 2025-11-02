@@ -15,7 +15,7 @@ export default function HelpPage() {
 
       <section className="mt-10">
         <h2 className="text-xl font-semibold">Contact Support</h2>
-        <p className="mt-2 text-slate-300">Email us at hello@dooriq.com for assistance.</p>
+        <p className="mt-2 text-slate-300">Email us at contact@dooriq.ai for assistance.</p>
       </section>
     </div>
   )

@@ -384,15 +384,20 @@ export default function SessionTimelineWithVideo({
         )}
       </div>
 
-      {/* Key Moments Timeline */}
+      {/* Key Moments Timeline - Enhanced Visual Design */}
       {!isFullscreen && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock className="w-5 h-5 text-purple-400" />
-            <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">Key Moments</h3>
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div 
+              className="p-2.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30"
+              style={{ boxShadow: '0 4px 12px rgba(139, 92, 246, 0.15)' }}
+            >
+              <Clock className="w-5 h-5 text-purple-400" />
+            </div>
+            <h3 className="text-sm uppercase tracking-[0.25em] font-semibold text-slate-400">Key Moments</h3>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {moments.map((moment, index) => {
               const Icon = getMomentIcon(moment.type)
               const color = getMomentColor(moment.type)
@@ -408,42 +413,54 @@ export default function SessionTimelineWithVideo({
                   onMouseEnter={() => setHoveredMoment(moment.id)}
                   onMouseLeave={() => setHoveredMoment(null)}
                   className={`
-                    relative rounded-xl border transition-all duration-300 cursor-pointer
+                    relative rounded-2xl border-2 transition-all duration-300 cursor-pointer
                     ${isActive 
-                      ? 'bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-500/50' 
-                      : 'bg-slate-900/50 border-slate-700/50 hover:border-slate-600/50'
+                      ? 'bg-gradient-to-br from-purple-900/40 via-pink-900/30 to-purple-900/40 border-purple-500/60 shadow-xl shadow-purple-500/20' 
+                      : 'bg-gradient-to-br from-slate-900/60 to-slate-800/50 border-slate-700/60 hover:border-slate-600/70 hover:shadow-lg'
                     }
                   `}
+                  style={{
+                    boxShadow: isActive 
+                      ? '0 8px 24px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(139, 92, 246, 0.1)'
+                      : '0 4px 16px rgba(0, 0, 0, 0.3)'
+                  }}
                   onClick={() => seekToMoment(moment)}
                 >
-                  <div className="p-4">
-                    <div className="flex items-start gap-4">
+                  <div className="p-5">
+                    <div className="flex items-start gap-5">
                       {/* Icon and Timeline */}
                       <div className="flex-shrink-0">
-                        <div className={`p-2.5 rounded-xl bg-gradient-to-br ${color}`}>
-                          <Icon className="w-5 h-5 text-white" />
+                        <div 
+                          className={`p-3 rounded-xl bg-gradient-to-br ${color} shadow-lg transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}
+                          style={{ 
+                            boxShadow: isActive 
+                              ? `0 6px 20px ${color.includes('purple') ? 'rgba(139, 92, 246, 0.4)' : color.includes('green') ? 'rgba(34, 197, 94, 0.4)' : 'rgba(96, 165, 250, 0.4)'}`
+                              : '0 4px 12px rgba(0, 0, 0, 0.4)'
+                          }}
+                        >
+                          <Icon className="w-6 h-6 text-white" />
                         </div>
                         {index < moments.length - 1 && (
-                          <div className="w-0.5 h-16 bg-slate-700/50 mx-auto mt-2" />
+                          <div className="w-0.5 h-20 bg-gradient-to-b from-slate-700/60 via-slate-600/40 to-slate-700/60 mx-auto mt-3" />
                         )}
                       </div>
 
                       {/* Content */}
                       <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-base font-semibold text-white">{moment.title}</h4>
-                          <span className="text-sm font-mono text-slate-400">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-lg font-bold text-white">{moment.title}</h4>
+                          <span className="text-sm font-mono font-semibold text-white/80 bg-slate-800/50 px-2.5 py-1 rounded-md">
                             {formatTime(moment.timestamp)}
                           </span>
                         </div>
 
                         {moment.description && (
-                          <p className="text-sm text-slate-400 mb-2">{moment.description}</p>
+                          <p className="text-sm text-slate-300 mb-3 leading-relaxed">{moment.description}</p>
                         )}
 
                         {moment.quote && (
-                          <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                            <p className="text-sm text-slate-300 italic">"{moment.quote}"</p>
+                          <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/60">
+                            <p className="text-sm text-slate-200 italic leading-relaxed">"{moment.quote}"</p>
                           </div>
                         )}
 
@@ -451,10 +468,10 @@ export default function SessionTimelineWithVideo({
                         <AnimatePresence>
                           {hoveredMoment === moment.id && (
                             <motion.div
-                              initial={{ opacity: 0, scale: 0.9 }}
+                              initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              className="mt-3"
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              className="mt-4"
                             >
                               <button
                                 onClick={(e) => {
@@ -462,11 +479,14 @@ export default function SessionTimelineWithVideo({
                                   seekToMoment(moment)
                                 }}
                                 className={`
-                                  px-4 py-2 rounded-lg text-sm font-medium
+                                  px-5 py-2.5 rounded-xl text-sm font-semibold
                                   bg-gradient-to-r ${color} text-white
-                                  hover:shadow-lg transition-all duration-300
-                                  flex items-center gap-2
+                                  hover:shadow-xl transition-all duration-300
+                                  flex items-center gap-2.5
                                 `}
+                                style={{
+                                  boxShadow: `0 4px 16px ${color.includes('purple') ? 'rgba(139, 92, 246, 0.4)' : color.includes('green') ? 'rgba(34, 197, 94, 0.4)' : 'rgba(96, 165, 250, 0.4)'}`
+                                }}
                               >
                                 <Play className="w-4 h-4" />
                                 Play from here
@@ -480,7 +500,10 @@ export default function SessionTimelineWithVideo({
 
                   {/* Progress Indicator */}
                   {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-pink-500 rounded-l-xl" />
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-purple-500 via-pink-500 to-purple-500 rounded-l-2xl"
+                      style={{ boxShadow: '0 0 12px rgba(139, 92, 246, 0.6)' }}
+                    />
                   )}
                 </motion.div>
               )

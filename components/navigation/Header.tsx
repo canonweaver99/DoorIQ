@@ -99,7 +99,7 @@ function HeaderContent() {
   const userRole: UserRole | null = normalizeRole(user?.role) ?? normalizeRole(authMeta?.role)
   const isSignedIn = Boolean(user || authMeta)
   const profileName = (user?.full_name || authMeta?.full_name || authMeta?.email || 'Sales Pro') as string
-  const profileEmail = user?.email || authMeta?.email || 'team@dooriq.app'
+  const profileEmail = user?.email || authMeta?.email || 'contact@dooriq.ai'
   const profileInitial = profileName.charAt(0).toUpperCase()
   const profileEarnings = parseEarnings(user?.virtual_earnings ?? authMeta?.virtual_earnings)
   const profileAvatar = (user as any)?.avatar_url || authMeta?.avatar_url || null

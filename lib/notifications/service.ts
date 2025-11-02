@@ -6,6 +6,7 @@
 import { Resend } from 'resend'
 import emailTemplates from '../email/templates'
 import { createServiceSupabaseClient } from '../supabase/server'
+import { addSignatureIfNeeded } from '../email/send'
 
 // Lazy initialize Resend
 function getResendClient() {
@@ -83,13 +84,14 @@ export async function sendNotification(options: NotificationOptions): Promise<bo
     const { subject, html } = template(emailData)
 
     // Send email via Resend
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'notifications@dooriq.com'
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'notifications@dooriq.ai'
+    const htmlWithSignature = addSignatureIfNeeded(html, fromEmail)
     
     const { data: result, error: sendError } = await resend.emails.send({
       from: fromEmail,
       to: user.email,
       subject,
-      html
+      html: htmlWithSignature
     })
 
     if (sendError) {

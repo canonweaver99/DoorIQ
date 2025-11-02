@@ -118,7 +118,7 @@ const EMAIL_TEMPLATES = {
         </a>
         
         <p style="color: #666; font-size: 14px; margin-top: 30px;">
-          Need help? Contact our support team at support@dooriq.com
+          Need help? Contact our support team at contact@dooriq.ai
         </p>
       </div>
     `
@@ -144,7 +144,7 @@ const EMAIL_TEMPLATES = {
         </a>
         
         <p style="color: #666; font-size: 14px; margin-top: 30px;">
-          We're sorry to see you go. If you have feedback, we'd love to hear it at feedback@dooriq.com
+          We're sorry to see you go. If you have feedback, we'd love to hear it at contact@dooriq.ai
         </p>
       </div>
     `
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
     // Send email using Resend
     if (process.env.RESEND_API_KEY) {
       await resend.emails.send({
-        from: 'DoorIQ <notifications@dooriq.com>',
+        from: 'DoorIQ <notifications@dooriq.ai>',
         to: user.email,
         subject,
         html

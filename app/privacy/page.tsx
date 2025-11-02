@@ -13,7 +13,7 @@ export default function PrivacyPage() {
           We do not sell your data. Access is restricted to authorized team members and administrators.
         </p>
         <p>
-          For questions or data requests, contact us at hello@dooriq.com.
+          For questions or data requests, contact us at contact@dooriq.ai.
         </p>
       </section>
     </div>

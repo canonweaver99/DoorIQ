@@ -43,11 +43,14 @@ export async function POST(req: Request) {
 // UPDATE session (save transcript and scores)
 export async function PATCH(req: Request) {
   try {
-    const { id, transcript, duration_seconds } = await req.json()
+    const { id, transcript, duration_seconds, end_reason } = await req.json()
     
     console.log('🔧 PATCH: Updating session:', id)
     console.log('📝 PATCH: Transcript lines:', transcript?.length || 0)
     console.log('⏱️ PATCH: Duration:', duration_seconds)
+    if (end_reason) {
+      console.log('📊 PATCH: End reason:', end_reason)
+    }
     
     const supabase = await createServiceSupabaseClient()
     

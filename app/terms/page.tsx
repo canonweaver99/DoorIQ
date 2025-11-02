@@ -13,7 +13,7 @@ export default function TermsPage() {
           Training data and analytics are provided for educational purposes; no performance outcomes are guaranteed.
         </p>
         <p>
-          If you have any questions, contact hello@dooriq.com.
+          If you have any questions, contact contact@dooriq.ai.
         </p>
       </section>
     </div>
