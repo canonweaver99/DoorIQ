@@ -239,8 +239,8 @@ function PricingPageContent() {
     {
       name: "Individual",
       price: "20",
-      yearlyPrice: "16", // $16/month when billed annually
-      yearlyTotal: "192", // Total yearly cost
+      yearlyPrice: "14", // $14/month when billed annually (30% off)
+      yearlyTotal: "168", // Total yearly cost
       period: "month",
       features: [
         "Access to ALL AI training agents",

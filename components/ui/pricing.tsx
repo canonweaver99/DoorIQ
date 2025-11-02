@@ -356,7 +356,7 @@ function PricingToggle() {
             )}
           >
             {" "}
-            (Save 20%)
+            (Save 30%)
           </span>
         </button>
       </div>
