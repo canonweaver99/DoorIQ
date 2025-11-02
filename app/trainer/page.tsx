@@ -433,16 +433,13 @@ function TrainerPageContent() {
       // Set processing flag immediately to prevent duplicates
       endCallProcessingRef.current = true
       
-      console.log('🚪 Agent ended call - PROCESSING IMMEDIATELY (bypassing sessionActive check)...')
+      console.log('🚪 Agent ended call - waiting 2.5 seconds to allow agent to finish speaking...')
       
       // Clear any silence timers
       if (silenceTimer) {
         clearTimeout(silenceTimer)
         silenceTimer = null
       }
-      
-      // Set session inactive immediately to prevent other handlers
-      setSessionActive(false)
       
       // Play door closing sound (non-blocking - don't wait for it)
       try {
@@ -455,28 +452,18 @@ function TrainerPageContent() {
         console.warn('Could not play door close sound', error)
       }
       
-      // End the session immediately - don't await to avoid blocking
-      console.log('🔚 Calling endSession immediately (non-blocking)...')
-      endSession().catch((error) => {
-        console.error('❌ Error in endSession from handleAgentEndCall:', error)
-      })
-      
-      // Force redirect after delays as multiple fallbacks - this MUST happen
+      // Wait 2.5 seconds before ending session to allow agent to finish speaking
+      // This ensures the agent's final sentence isn't interrupted
       setTimeout(() => {
-        const currentPath = window.location.pathname
-        if (sessionId && currentPath.includes('/trainer') && !currentPath.includes('/loading')) {
-          console.log('🔄 Force redirecting as fallback (500ms)...')
-          window.location.href = `/trainer/loading/${sessionId}`
-        }
-      }, 500)
-      
-      setTimeout(() => {
-        const currentPath = window.location.pathname
-        if (sessionId && currentPath.includes('/trainer') && !currentPath.includes('/loading')) {
-          console.log('🔄 Force redirecting as final fallback (1000ms)...')
-          window.location.href = `/trainer/loading/${sessionId}`
-        }
-      }, 1000)
+        // Set session inactive before ending
+        setSessionActive(false)
+        
+        // End the session after delay to allow agent to finish
+        console.log('🔚 Calling endSession after 2.5s delay (allowing agent to finish)...')
+        endSession().catch((error) => {
+          console.error('❌ Error in endSession from handleAgentEndCall:', error)
+        })
+      }, 2500) // 2.5 seconds delay
     }
     
     // Track agent activity - improved with shorter timeout
