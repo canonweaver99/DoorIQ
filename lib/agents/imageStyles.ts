@@ -12,7 +12,7 @@ const DEFAULT_STYLE: Required<AgentImageStyle> = {
 
 const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
   'Too Expensive Tim': {
-    objectPosition: '50% 34%',
+    objectPosition: '50% 49%', // Lowered vertically by 15%
     scale: 1.27,
   },
   'Already Got It Alan': {

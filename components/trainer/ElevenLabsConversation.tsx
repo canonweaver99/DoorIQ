@@ -23,6 +23,19 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   // Track recording state with refs for reliable cleanup
   const audioRecordingActiveRef = useRef(false)
   const wasConnectedRef = useRef(false) // Track if we were ever connected to detect actual disconnects
+  
+  // Connection health monitoring
+  const lastMessageTimeRef = useRef<number>(Date.now())
+  const lastPingTimeRef = useRef<number>(Date.now())
+  const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectAttemptsRef = useRef(0)
+  const maxReconnectAttempts = 3
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isReconnectingRef = useRef(false)
+  
+  // Connection health thresholds (in milliseconds)
+  const MESSAGE_TIMEOUT = 30000 // 30 seconds without any message = potential connection issue
+  const PING_TIMEOUT = 60000 // 60 seconds without ping = connection likely dead
 
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
     // Dispatch the status exactly as passed (don't map disconnected to 'idle')
@@ -77,6 +90,15 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           dispatchStatus('connected')
           setErrorMessage('')
           
+          // Reset reconnection state on successful connection
+          reconnectAttemptsRef.current = 0
+          isReconnectingRef.current = false
+          lastMessageTimeRef.current = Date.now()
+          lastPingTimeRef.current = Date.now()
+          
+          // Start connection health monitoring
+          setTimeout(() => startHealthMonitoring(), 1000)
+          
           // Start audio recording when conversation connects
           console.log('🎙️ Checking audio recording - sessionId:', sessionId, 'isRecording:', isAudioRecording)
           if (sessionId) {
@@ -95,14 +117,33 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         onDisconnect: (reason?: any) => {
           console.log('🔌 Disconnected:', reason)
           
+          // Stop health monitoring
+          stopHealthMonitoringFn()
+          
+          // Check if this was an unexpected disconnect (not a graceful end)
+          const isUnexpected = wasConnectedRef.current && 
+                              !reason?.includes('end_call') && 
+                              !reason?.includes('completed')
+          
+          if (isUnexpected && !isReconnectingRef.current) {
+            console.warn('⚠️ Unexpected disconnect detected, attempting reconnection...')
+            // Only attempt reconnect if we haven't exceeded max attempts
+            if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+              attemptReconnect()
+              return // Don't dispatch end_call yet, wait to see if reconnect works
+            } else {
+              console.error('❌ Max reconnection attempts reached, ending conversation')
+            }
+          }
+          
           // Dispatch agent:end_call event when disconnecting during active session
           // This is a reliable signal that ElevenLabs has ended the conversation
-          if (wasConnectedRef.current) {
+          if (wasConnectedRef.current && !isReconnectingRef.current) {
             console.log('🔌 Disconnect detected during active session, dispatching agent:end_call event')
             window.dispatchEvent(new CustomEvent('agent:end_call', { 
               detail: { 
                 reason: reason || 'Connection ended',
-                source: 'disconnect'
+                source: isUnexpected ? 'unexpected_disconnect' : 'disconnect'
               } 
             }))
             wasConnectedRef.current = false // Reset for next connection
@@ -138,6 +179,15 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           console.log('📨 Message type:', msg?.type)
           console.log('📨 Message keys:', Object.keys(msg || {}))
           window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
+          
+          // Update last message time for connection health monitoring
+          lastMessageTimeRef.current = Date.now()
+          
+          // Update ping time if this is a ping message
+          if (msg?.type === 'ping') {
+            lastPingTimeRef.current = Date.now()
+            console.log('🏓 Ping received, connection healthy')
+          }
           
           // AGGRESSIVE end_call detection - check every possible format
           const detectEndCall = (message: any, source: string): boolean => {
@@ -429,6 +479,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           setErrorMessage(errMsg)
           setStatus('error')
           dispatchStatus('error')
+          
+          // Attempt automatic reconnection if we were previously connected
+          if (wasConnectedRef.current && !isReconnectingRef.current) {
+            console.warn('⚠️ Connection error during active session, attempting reconnection...')
+            attemptReconnect()
+          }
         },
       })
 
@@ -468,8 +524,98 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
     }
   }, [agentId, currentToken])
 
+  const stopHealthMonitoringFn = useCallback(() => {
+    if (healthCheckIntervalRef.current) {
+      console.log('🏥 Stopping connection health monitoring')
+      clearInterval(healthCheckIntervalRef.current)
+      healthCheckIntervalRef.current = null
+    }
+  }, [])
+
+  // Automatic reconnection function (defined before startHealthMonitoring to avoid dependency issues)
+  const attemptReconnect = useCallback(async () => {
+    if (isReconnectingRef.current) {
+      console.log('🔄 Already reconnecting, skipping duplicate attempt')
+      return
+    }
+
+    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      console.error('❌ Max reconnection attempts reached')
+      setErrorMessage('Connection failed. Please try starting a new conversation.')
+      setStatus('error')
+      dispatchStatus('error')
+      return
+    }
+
+    isReconnectingRef.current = true
+    reconnectAttemptsRef.current += 1
+    
+    console.log(`🔄 Attempting reconnection (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`)
+    
+    try {
+      // Stop current conversation if it exists
+      if (conversationRef.current) {
+        try {
+          await conversationRef.current.endSession()
+        } catch (e) {
+          console.warn('⚠️ Error ending session during reconnect:', e)
+        }
+        conversationRef.current = null
+      }
+      
+      // Wait before reconnecting (exponential backoff)
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 5000)
+      console.log(`⏳ Waiting ${delay}ms before reconnecting...`)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      
+      // Try to get a new token first
+      console.log('🔄 Requesting new conversation token for reconnection...')
+      const response = await fetch('/api/eleven/conversation-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data?.conversation_token) {
+          console.log('✅ New token obtained, updating and restarting...')
+          setCurrentToken(data.conversation_token)
+          // The start function will be called automatically via useEffect
+          // But we'll also try calling it directly after a short delay
+          reconnectTimeoutRef.current = setTimeout(async () => {
+            await start()
+            isReconnectingRef.current = false
+          }, 500)
+        } else {
+          throw new Error('No token in response')
+        }
+      } else {
+        throw new Error(`Failed to get new token: ${response.status}`)
+      }
+    } catch (error: any) {
+      console.error('❌ Reconnection attempt failed:', error)
+      isReconnectingRef.current = false
+      
+      // Try again after a delay if we haven't exceeded max attempts
+      if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+        console.log(`⏳ Will retry reconnection in 3 seconds...`)
+        reconnectTimeoutRef.current = setTimeout(() => {
+          attemptReconnect()
+        }, 3000)
+      } else {
+        setErrorMessage('Connection failed after multiple attempts. Please try starting a new conversation.')
+        setStatus('error')
+        dispatchStatus('error')
+      }
+    }
+  }, [agentId, start])
+
   const stop = useCallback(async () => {
     try {
+      // Stop health monitoring
+      stopHealthMonitoringFn()
+      
       // Stop audio recording
       if (audioRecordingActiveRef.current) {
         console.log('🛑 Stopping audio recording from stop()')
@@ -486,7 +632,32 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
     } catch (e) {
       console.error('❌ Error ending conversation:', e)
     }
-  }, [stopAudioRecording])
+  }, [stopAudioRecording, stopHealthMonitoringFn])
+
+  // Connection health monitoring functions
+  const startHealthMonitoring = useCallback(() => {
+    stopHealthMonitoringFn() // Clear any existing interval
+    
+    console.log('🏥 Starting connection health monitoring')
+    healthCheckIntervalRef.current = setInterval(() => {
+      const now = Date.now()
+      const timeSinceLastMessage = now - lastMessageTimeRef.current
+      const timeSinceLastPing = now - lastPingTimeRef.current
+      const currentStatus = status
+      
+      // Check if connection seems dead
+      if (timeSinceLastPing > PING_TIMEOUT && currentStatus === 'connected') {
+        console.warn('⚠️ Connection appears dead (no ping for', Math.round(timeSinceLastPing / 1000), 'seconds)')
+        if (!isReconnectingRef.current && reconnectAttemptsRef.current < maxReconnectAttempts) {
+          attemptReconnect()
+        }
+      } else if (timeSinceLastMessage > MESSAGE_TIMEOUT && currentStatus === 'connected') {
+        console.warn('⚠️ No messages received for', Math.round(timeSinceLastMessage / 1000), 'seconds')
+        // Don't immediately reconnect on message timeout, but log it
+        // Sometimes the agent might just be listening for user input
+      }
+    }, 10000) // Check every 10 seconds
+  }, [status, attemptReconnect, stopHealthMonitoringFn])
 
   useEffect(() => {
     if (autostart) {
@@ -594,6 +765,14 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Clear any pending timeouts
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+      
+      // Stop health monitoring
+      stopHealthMonitoringFn()
+      
       // Stop audio recording on unmount
       if (audioRecordingActiveRef.current) {
         stopAudioRecording()
@@ -605,7 +784,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         conversationRef.current.endSession().catch(() => {})
       }
     }
-  }, [stopAudioRecording])
+  }, [stopAudioRecording, stopHealthMonitoringFn])
 
   // This component is headless
   return null
