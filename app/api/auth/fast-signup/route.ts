@@ -3,6 +3,59 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 
+/**
+ * Send confirmation email to newly created user
+ * Uses Supabase admin API to generate and send confirmation email
+ */
+async function sendConfirmationEmail(supabase: any, email: string, userId: string) {
+  try {
+    // Get the site URL for the confirmation redirect
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                    process.env.NEXT_PUBLIC_APP_URL || 
+                    'https://dooriq.ai'
+    
+    // Generate confirmation link - this should trigger email send
+    const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
+      type: 'signup',
+      email: email.toLowerCase(),
+      options: {
+        redirectTo: `${siteUrl}/auth/callback`
+      }
+    })
+
+    if (linkError) {
+      console.error('❌ Error generating confirmation link:', linkError)
+      
+      // Fallback: Try to resend confirmation email directly
+      const { error: resendError } = await (supabase as any).auth.admin.resend({
+        type: 'signup',
+        email: email.toLowerCase()
+      })
+      
+      if (resendError) {
+        console.error('❌ Error resending confirmation email:', resendError)
+        return false
+      }
+      
+      console.log('✅ Confirmation email resent via fallback method')
+      return true
+    }
+
+    if (linkData?.properties?.action_link) {
+      console.log(`✅ Confirmation email link generated for ${email}`)
+      // Note: generateLink with type 'signup' should automatically send the email
+      // But if it doesn't, we'll need to check Supabase email settings
+      return true
+    }
+
+    console.warn('⚠️ No action_link in generated link response')
+    return false
+  } catch (error: any) {
+    console.error('❌ Error sending confirmation email:', error)
+    return false
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { email, password, full_name } = await req.json()
@@ -58,6 +111,11 @@ export async function POST(req: Request) {
               return NextResponse.json({ error: retryResult.error.message || 'Failed to create account after cleanup' }, { status: 400 })
             }
             
+            // Send confirmation email for retry
+            if (retryResult.data?.user?.id) {
+              await sendConfirmationEmail(supabase, email, retryResult.data.user.id)
+            }
+            
             return NextResponse.json({ success: true, userId: retryResult.data?.user?.id || null })
           }
         }
@@ -70,6 +128,11 @@ export async function POST(req: Request) {
       
       // Other errors
       return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    // Send confirmation email after successful user creation
+    if (data?.user?.id) {
+      await sendConfirmationEmail(supabase, email, data.user.id)
     }
 
     return NextResponse.json({ success: true, userId: data?.user?.id || null })

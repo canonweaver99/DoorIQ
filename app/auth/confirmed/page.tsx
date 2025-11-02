@@ -2,8 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
-import { Mail, CheckCircle, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+import { Mail, CheckCircle } from 'lucide-react'
 
 function ConfirmedContent() {
   const searchParams = useSearchParams()
@@ -37,18 +36,10 @@ function ConfirmedContent() {
               Click the link in the email to verify your account and start training!
             </p>
             
-            <div className="pt-4 space-y-3">
+            <div className="pt-4">
               <p className="text-xs text-slate-500">
                 Didn't receive the email? Check your spam folder or wait a few minutes.
               </p>
-              
-              <Link
-                href="/auth/login"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg"
-              >
-                Go to Login
-                <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </div>
         </div>
