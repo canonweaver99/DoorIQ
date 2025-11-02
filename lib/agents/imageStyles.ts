@@ -25,7 +25,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
   },
   'Not Interested Nick': {
     objectPosition: '50% 70%', // Lowered vertically
-    scale: 1.5,
+    scale: 1.75, // Made larger
   },
   'Spouse Check Susan': {
     objectPosition: '10% 50%', // Horizontal position adjusted

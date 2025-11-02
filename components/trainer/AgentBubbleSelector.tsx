@@ -313,6 +313,38 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           </p>
         </motion.div>
 
+        {/* Difficulty Key/Legend */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-6 flex flex-wrap items-center justify-center gap-4 px-4 py-3 bg-[#1a1a1a]/50 border border-[#2a2a2a] rounded-lg backdrop-blur-sm max-w-3xl mx-auto"
+        >
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Difficulty:</span>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-400 flex-shrink-0" />
+              <span className="text-xs text-slate-300">Easy</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 flex-shrink-0" />
+              <span className="text-xs text-slate-300">Moderate</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-orange-400 flex-shrink-0" />
+              <span className="text-xs text-slate-300">Hard</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-400 flex-shrink-0" />
+              <span className="text-xs text-slate-300">Very Hard</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-400 flex-shrink-0" />
+              <span className="text-xs text-slate-300">Expert</span>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Filter Bar */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
