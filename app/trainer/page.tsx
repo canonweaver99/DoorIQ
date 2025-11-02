@@ -427,7 +427,15 @@ function TrainerPageContent() {
       console.log('🎙️ Agent mode changed:', agentModeRef.current)
     }
     
+    // Listen for ping/audio activity even without text responses
+    const handleAgentPing = (e: any) => {
+      console.log('🏓 Agent ping/audio activity detected, resetting activity timer')
+      handleAgentActivity()
+    }
+    
     window.addEventListener('agent:mode', handleAgentMode)
+    window.addEventListener('agent:ping', handleAgentPing)
+    window.addEventListener('agent:audio', handleAgentPing)
     
     const handleAgentEndCall = async (e: any) => {
       console.log('📞 handleAgentEndCall triggered', { 
@@ -709,6 +717,8 @@ function TrainerPageContent() {
       window.removeEventListener('agent:user', handleUserActivity)
       window.removeEventListener('connection:status', handleConnectionStatus)
       window.removeEventListener('agent:mode', handleAgentMode)
+      window.removeEventListener('agent:ping', handleAgentPing)
+      window.removeEventListener('agent:audio', handleAgentPing)
       window.removeEventListener('agent:end_call', debugListener as EventListener)
       window.removeEventListener('agent:message', debugListener as EventListener)
       window.removeEventListener('agent:response', debugListener as EventListener)
@@ -747,7 +757,7 @@ function TrainerPageContent() {
               Duration: {formatDuration(duration)}
             </span>
             <button
-              onClick={endSession}
+              onClick={() => endSession()}
               disabled={loading || !sessionActive}
               className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-all"
             >

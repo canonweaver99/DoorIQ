@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     description: "Master door-to-door sales with realistic AI voice interactions.",
     images: [
       {
-        url: '/dooriq-og-image.svg',
+        url: '/dooriqlogo.png',
         width: 1200,
         height: 630,
         alt: 'DoorIQ Logo',
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "DoorIQ - Practice Your Sales Pitch",
     description: "Master door-to-door sales with realistic AI voice interactions.",
-    images: ['/dooriq-og-image.svg'],
+    images: ['/dooriqlogo.png'],
   },
 };
 

@@ -187,6 +187,14 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           if (msg?.type === 'ping') {
             lastPingTimeRef.current = Date.now()
             console.log('🏓 Ping received, connection healthy')
+            // Dispatch ping event to reset activity timer even without text
+            window.dispatchEvent(new CustomEvent('agent:ping', { detail: msg }))
+          }
+          
+          // Also dispatch audio activity events to keep conversation alive
+          if (msg?.type === 'audio' || msg?.type === 'audio_chunk') {
+            console.log('🔊 Audio activity detected, connection still active')
+            window.dispatchEvent(new CustomEvent('agent:audio', { detail: msg }))
           }
           
           // AGGRESSIVE end_call detection - check every possible format
@@ -465,10 +473,17 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
               console.log('✋ User interrupted agent')
             } else if (msg?.type === 'ping') {
               console.log('🏓 Ping')
-            } else if (msg?.type === 'audio') {
-              console.log('🔊 Audio chunk')
+            } else if (msg?.type === 'audio' || msg?.type === 'audio_chunk') {
+              console.log('🔊 Audio chunk received - connection still active')
             } else if (msg?.type !== 'transcript.delta' && msg?.type !== 'interim_transcript' && msg?.type) {
               console.log('ℹ️  Unhandled message type:', msg.type, '- Consider adding support if this contains transcript data')
+            }
+            
+            // Warn if we're receiving messages but no text is being extracted (potential issue)
+            if (msg?.type && msg?.type !== 'ping' && msg?.type !== 'audio' && msg?.type !== 'audio_chunk' && 
+                msg?.type !== 'transcript.delta' && msg?.type !== 'interim_transcript' && 
+                msg?.type !== 'conversation_initiation_metadata' && msg?.type !== 'interruption') {
+              console.warn('⚠️ Received message type', msg.type, 'but no transcript text was extracted. Agent may have stopped responding.')
             }
           }
         },
