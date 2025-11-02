@@ -23,6 +23,7 @@ import { Database } from '@/lib/supabase/database.types'
 import { useSubscription } from '@/hooks/useSubscription'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
+import Link from 'next/link'
 
 // Helper to get cutout bubble image (no background)
 const getAgentBubbleImage = (agentName: string | null): string => {
@@ -402,7 +403,7 @@ function OverviewTabContent() {
     // Get recent sessions with agent_name (for display) - fetch all sessions, not just graded ones
     const { data: recentSessionsData, error: recentSessionsError } = await supabase
       .from('live_sessions')
-      .select('overall_score, created_at, homeowner_name, agent_name, agent_persona, virtual_earnings')
+      .select('id, overall_score, created_at, homeowner_name, agent_name, agent_persona, virtual_earnings')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(4)
@@ -420,6 +421,7 @@ function OverviewTabContent() {
         // Try agent_name first, then agent_persona, then homeowner_name
         const agentName = session.agent_name || session.agent_persona || session.homeowner_name || null
         return {
+          id: session.id,
           name: session.agent_name || session.agent_persona || session.homeowner_name || 'Practice Session',
           score: session.overall_score || 0,
           earned: session.virtual_earnings || 0,
@@ -892,6 +894,19 @@ function OverviewTabContent() {
                 
                 return (
                   <g key={`point-${chartTimeRange}-${idx}`}>
+                    {/* Invisible larger hover area */}
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="25"
+                      fill="transparent"
+                      stroke="none"
+                      onMouseEnter={() => setHoveredPoint({ day: point.day, value: point.overall })}
+                      onMouseLeave={() => setHoveredPoint(null)}
+                      className="cursor-pointer"
+                      style={{ pointerEvents: 'all' }}
+                    />
+                    {/* Visible circle */}
                     <circle
                       cx={x}
                       cy={y}
@@ -899,9 +914,7 @@ function OverviewTabContent() {
                       fill="#ec4899"
                       stroke="white"
                       strokeWidth={hoveredPoint && hoveredPoint.day === point.day ? "3" : "2"}
-                      onMouseEnter={() => setHoveredPoint({ day: point.day, value: point.overall })}
-                      onMouseLeave={() => setHoveredPoint(null)}
-                      className="cursor-pointer transition-all"
+                      className="cursor-pointer transition-all pointer-events-none"
                       style={{
                         transition: 'r 0.2s ease, stroke-width 0.2s ease'
                       }}
@@ -1122,6 +1135,19 @@ function OverviewTabContent() {
                 
                 return (
                   <g key={`earnings-point-${earningsTimeRange}-${idx}`}>
+                    {/* Invisible larger hover area */}
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="25"
+                      fill="transparent"
+                      stroke="none"
+                      onMouseEnter={() => setHoveredEarnings({ day: point.day, value: point.earnings })}
+                      onMouseLeave={() => setHoveredEarnings(null)}
+                      className="cursor-pointer"
+                      style={{ pointerEvents: 'all' }}
+                    />
+                    {/* Visible circle */}
                     <circle
                       cx={x}
                       cy={y}
@@ -1129,9 +1155,7 @@ function OverviewTabContent() {
                       fill="#10b981"
                       stroke="white"
                       strokeWidth={hoveredEarnings && hoveredEarnings.day === point.day ? "3" : "2"}
-                      onMouseEnter={() => setHoveredEarnings({ day: point.day, value: point.earnings })}
-                      onMouseLeave={() => setHoveredEarnings(null)}
-                      className="cursor-pointer transition-all"
+                      className="cursor-pointer transition-all pointer-events-none"
                       style={{
                         transition: 'r 0.2s ease, stroke-width 0.2s ease'
                       }}
@@ -1204,9 +1228,9 @@ function OverviewTabContent() {
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-white">Recent Sessions</h3>
-            <button className="text-sm text-[#a855f7] hover:text-[#9333ea] transition-colors">
+            <Link href="/sessions" className="text-sm text-[#a855f7] hover:text-[#9333ea] transition-colors">
               View All →
-            </button>
+            </Link>
           </div>
 
           <div className="space-y-2">
@@ -1221,13 +1245,16 @@ function OverviewTabContent() {
               const gradients = ['from-purple-500/30', 'from-blue-500/30', 'from-pink-500/30']
 
               return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.4 + idx * 0.1 }}
-                  className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#222222] hover:bg-[#2a2a2a] transition-colors border border-white/5"
+                <Link
+                  key={session.id || idx}
+                  href={session.id ? `/analytics/${session.id}` : '/sessions'}
                 >
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 + idx * 0.1 }}
+                    className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#222222] hover:bg-[#2a2a2a] transition-colors border border-white/5 cursor-pointer"
+                  >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <div className="relative">
                       <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${gradients[idx]} to-transparent blur-md`}></div>
@@ -1302,7 +1329,8 @@ function OverviewTabContent() {
                     <div className="text-xs font-bold text-green-400 tabular-nums">+${session.earned}</div>
                     <div className="text-[10px] text-slate-400">{session.time}</div>
                   </div>
-                </motion.div>
+                  </motion.div>
+                </Link>
               )
             })}
           </div>

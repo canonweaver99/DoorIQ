@@ -16,32 +16,44 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.27,
   },
   'Already Got It Alan': {
-    objectPosition: '50% 36%',
+    objectPosition: '60% 46%', // Horizontal position adjusted
     scale: 1.23,
   },
   'No Problem Nancy': {
-    objectPosition: '25% 50%', // Shifted significantly to the right to center her in the frame
+    objectPosition: '11% 60%', // Horizontal and vertical position adjusted
     scale: 1.2,
   },
   'Not Interested Nick': {
-    objectPosition: '50% 52%',
+    objectPosition: '50% 70%', // Lowered vertically
     scale: 1.5,
   },
   'Spouse Check Susan': {
-    objectPosition: '30% 50%', // Shifted significantly to the right to center her in the frame
-    scale: 1.21,
+    objectPosition: '10% 50%', // Horizontal position adjusted
+    scale: 1.15, // Made smaller
   },
   'Busy Beth': {
-    objectPosition: '50% 60%',
-    scale: 1.28,
+    objectPosition: '35% 65%', // Raised vertically by 15%
+    scale: 1.04, // Reduced by 20% total from 1.28 (10% + 10%)
   },
   'Renter Randy': {
     objectPosition: '50% 54%',
     scale: 1.15,
   },
   'Just Treated Jerry': {
-    objectPosition: '50% 52%',
+    objectPosition: '40% 52%', // Horizontal position adjusted
     scale: 1.12,
+  },
+  'Veteran Victor': {
+    objectPosition: '73% 55%', // Lowered vertically by 5%
+    scale: 1.15,
+  },
+  'Skeptical Sam': {
+    objectPosition: '50% 52%', // Horizontal position adjusted
+    scale: 1.15,
+  },
+  'DIY Dave': {
+    objectPosition: '40% 52%', // Moved to the left
+    scale: 1.4, // Made bigger
   },
 }
 
@@ -59,7 +71,7 @@ export function getAgentImageStyle(agentName?: string | null): CSSProperties {
   const scale = overrides.scale ?? DEFAULT_STYLE.scale
 
   return {
-    objectPosition,
+    objectPosition: objectPosition as string,
     transform: `scale(${scale})`,
   }
 }

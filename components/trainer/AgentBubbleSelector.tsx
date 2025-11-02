@@ -484,16 +484,61 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         }}
                       >
                         <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
-                          <Image
-                            src={agent.image}
-                            alt={agent.name}
-                            fill
-                            className="object-cover"
-                            style={getAgentImageStyle(agent.name)}
-                            sizes="352px"
-                            quality={95}
-                            priority={index < 6}
-                          />
+                          {(() => {
+                            const imageStyle = getAgentImageStyle(agent.name)
+                            const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                            
+                            // Convert vertical percentage to translateY
+                            // For object-position, 50% = center, 100% = bottom edge, 200% = way below
+                            // For translateY, we need to calculate based on container size
+                            // Since we can't know exact container size, we'll use a percentage transform
+                            // 50% (center) = 0, 100% (bottom) = 50% of container down, 200% = 100% down
+                            let translateY = '0'
+                            const verticalNum = parseFloat(vertical)
+                            if (verticalNum !== 50) {
+                              // Calculate translateY: if vertical is 200%, move down by ~50% of container
+                              // Formula: (verticalNum - 50) / 150 gives us the percentage to translate
+                              // For 200%: (200 - 50) / 150 = 100% translate down
+                              const translatePercent = ((verticalNum - 50) / 150) * 100
+                              translateY = `${translatePercent}%`
+                            }
+                            
+                            // Combine transforms - scale from imageStyle and translateY
+                            const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                            const combinedTransform = translateY !== '0' 
+                              ? `scale(${scaleValue}) translateY(${translateY})`
+                              : imageStyle.transform || `scale(${scaleValue})`
+                            
+                            const finalStyle = {
+                              objectFit: 'cover' as const,
+                              objectPosition: `${horizontal} 50%`, // Keep horizontal, center vertical
+                              transform: combinedTransform,
+                            }
+                            
+                            if (agent.name === 'Not Interested Nick') {
+                              console.log('🖼️ Nick style:', { 
+                                agentName: agent.name,
+                                horizontal, 
+                                vertical,
+                                verticalNum,
+                                translateY,
+                                combinedTransform,
+                                finalObjectPosition: finalStyle.objectPosition,
+                                finalTransform: finalStyle.transform
+                              })
+                            }
+                            return (
+                              <Image
+                                src={agent.image}
+                                alt={agent.name}
+                                fill
+                                style={finalStyle}
+                                sizes="352px"
+                                quality={95}
+                                priority={index < 6}
+                              />
+                            )
+                          })()}
                         </div>
                       </motion.div>
                     )}
