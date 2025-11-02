@@ -381,8 +381,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           </button>
         </motion.div>
 
-        {/* Agent Bubbles Grid - 4 rows x 3 columns */}
-        <div className="grid grid-cols-3 gap-5 mb-8 max-w-5xl mx-auto">
+        {/* Agent Bubbles Grid - 4 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 max-w-7xl mx-auto">
           {sortedAgents.map((agent, index) => {
             const variantKey = agent.color as keyof typeof COLOR_VARIANTS
             const variantStyles = COLOR_VARIANTS[variantKey]

@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import clsx from "clsx";
 import { Button } from "@/components/ui/button";
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
+import { getAgentImageStyle } from "@/lib/agents/imageStyles";
 
 // Layout + animation tuning
 const AGENT_BASE_SIZE_PX = 240; // smaller base size
@@ -321,25 +322,43 @@ export function ScrollingAgentCarousel({
                           } as React.CSSProperties}
                         />
                       </div>
-                      <Image
-                        src={agent.src}
-                        alt={agent.name}
-                        fill
-                        className="object-cover relative z-10"
-                        style={{
-                          // Zoom in on faces for specific agents
-                          objectPosition: agent.name === 'Tim' ? 'center 30%' :
-                                        agent.name === 'Alan' ? 'center 25%' :
-                                        agent.name === 'Nancy' ? 'center 30%' :
-                                        agent.name === 'Nick' ? 'center 25%' :
-                                        'center center',
-                          transform: ['Tim', 'Alan', 'Nancy', 'Nick'].includes(agent.name)
-                            ? 'scale(1.4)'
-                            : 'scale(1.0)'
-                        }}
-                        sizes="(max-width: 640px) 150px, (max-width: 768px) 200px, 240px"
-                        priority={scale > 0.8}
-                      />
+                      {(() => {
+                        const imageStyle = getAgentImageStyle(agent.fullName)
+                        const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                        
+                        // Convert vertical percentage to translateY (same logic as practice page)
+                        let translateY = '0'
+                        const verticalNum = parseFloat(vertical)
+                        if (verticalNum !== 50) {
+                          const translatePercent = ((verticalNum - 50) / 150) * 100
+                          translateY = `${translatePercent}%`
+                        }
+                        
+                        // Combine transforms - scale from imageStyle and translateY
+                        const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                        const combinedTransform = translateY !== '0' 
+                          ? `scale(${scaleValue}) translateY(${translateY})`
+                          : imageStyle.transform || `scale(${scaleValue})`
+                        
+                        const finalStyle = {
+                          objectFit: 'cover' as const,
+                          objectPosition: `${horizontal} 50%`, // Keep horizontal, center vertical
+                          transform: combinedTransform,
+                        }
+                        
+                        return (
+                          <Image
+                            src={agent.src}
+                            alt={agent.name}
+                            fill
+                            className="object-cover relative z-10"
+                            style={finalStyle}
+                            sizes="(max-width: 640px) 150px, (max-width: 768px) 200px, 240px"
+                            quality={95}
+                            priority={scale > 0.8}
+                          />
+                        )
+                      })()}
                     </div>
                   </div>
                 </div>

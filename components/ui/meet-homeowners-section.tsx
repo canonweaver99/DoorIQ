@@ -70,7 +70,11 @@ export function MeetHomeownersSection() {
             {[...agents, ...agents, ...agents].map((agent, index) => {
               const variantStyles = COLOR_VARIANTS[agent.color]
               return (
-                <div key={index} className="relative flex-shrink-0">
+                <Link
+                  key={index}
+                  href="/trainer/select-homeowner"
+                  className="relative flex-shrink-0 cursor-pointer group"
+                >
                   <div className="relative h-40 w-40">
                     {/* Concentric circles */}
                     {[0, 1, 2].map((i) => (
@@ -104,53 +108,49 @@ export function MeetHomeownersSection() {
                       </motion.div>
                     ))}
 
-                    {/* Profile Image in Center */}
-                    <motion.div 
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                      animate={{
-                        scale: [1, 1.05, 1],
-                      }}
-                      transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    >
+                    {/* Profile Image in Center - Simplified to match practice page */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
-                        <div className="absolute inset-0 rounded-full overflow-hidden">
-                          <div
-                            className={cn(
-                              "absolute inset-[-12%] rounded-full bg-gradient-to-br mix-blend-screen",
-                              variantStyles.gradient,
-                              "to-transparent opacity-60"
-                            )}
-                            style={{
-                              animation: "spin 14s linear infinite"
-                            }}
-                          />
-                          <div
-                            className={cn(
-                              "absolute inset-[-8%] rounded-full bg-gradient-to-tr mix-blend-screen",
-                              variantStyles.gradient,
-                              "to-transparent opacity-35"
-                            )}
-                            style={{
-                              animation: "spin 16s linear infinite reverse"
-                            }}
-                          />
-                        </div>
-                        <Image
-                          src={agent.image}
-                          alt={agent.name}
-                          fill
-                          className="object-cover relative z-10"
-                          style={getAgentImageStyle(agent.fullName)}
-                          sizes="160px"
-                        />
+                        {(() => {
+                          const imageStyle = getAgentImageStyle(agent.fullName)
+                          const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                          
+                          // Convert vertical percentage to translateY (same logic as practice page)
+                          let translateY = '0'
+                          const verticalNum = parseFloat(vertical)
+                          if (verticalNum !== 50) {
+                            const translatePercent = ((verticalNum - 50) / 150) * 100
+                            translateY = `${translatePercent}%`
+                          }
+                          
+                          // Combine transforms - scale from imageStyle and translateY
+                          const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                          const combinedTransform = translateY !== '0' 
+                            ? `scale(${scaleValue}) translateY(${translateY})`
+                            : imageStyle.transform || `scale(${scaleValue})`
+                          
+                          const finalStyle = {
+                            objectFit: 'cover' as const,
+                            objectPosition: `${horizontal} 50%`, // Keep horizontal, center vertical
+                            transform: combinedTransform,
+                          }
+                          
+                          return (
+                            <Image
+                              src={agent.image}
+                              alt={agent.name}
+                              fill
+                              style={finalStyle}
+                              sizes="160px"
+                              quality={95}
+                              priority={index < 6}
+                            />
+                          )
+                        })()}
                       </div>
-                    </motion.div>
+                    </div>
                   </div>
-                </div>
+                </Link>
               )
             })}
           </motion.div>
