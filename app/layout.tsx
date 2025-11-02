@@ -31,7 +31,14 @@ export const metadata: Metadata = {
   description: "Master door-to-door sales with realistic AI voice interactions.",
   metadataBase: new URL(siteUrl),
   icons: {
-    icon: '/dooriq-key.png',
+    icon: [
+      { url: '/dooriq-key.png', sizes: 'any' },
+      { url: '/dooriq-key.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/dooriq-key.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/dooriq-key.png',
   },
   viewport: {
     width: 'device-width',
