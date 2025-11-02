@@ -5,51 +5,119 @@ export const runtime = 'nodejs'
 
 /**
  * Send confirmation email to newly created user
- * Uses Supabase admin API to generate and send confirmation email
+ * Uses Supabase admin API to resend confirmation email
  */
 async function sendConfirmationEmail(supabase: any, email: string, userId: string) {
   try {
-    // Get the site URL for the confirmation redirect
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-                    process.env.NEXT_PUBLIC_APP_URL || 
-                    'https://dooriq.ai'
+    console.log(`📧 Attempting to send confirmation email to ${email}...`)
     
-    // Generate confirmation link - this should trigger email send
-    const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
+    // Use resend method to actually send the email
+    // This is the proper way to send confirmation emails via Supabase Admin API
+    const { data: resendData, error: resendError } = await (supabase as any).auth.admin.resend({
       type: 'signup',
-      email: email.toLowerCase(),
-      options: {
-        redirectTo: `${siteUrl}/auth/callback`
-      }
+      email: email.toLowerCase()
     })
 
-    if (linkError) {
-      console.error('❌ Error generating confirmation link:', linkError)
+    if (resendError) {
+      console.error('❌ Error sending confirmation email via resend:', resendError)
       
-      // Fallback: Try to resend confirmation email directly
-      const { error: resendError } = await (supabase as any).auth.admin.resend({
+      // Fallback: Generate link and send email manually if Resend is configured
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                      process.env.NEXT_PUBLIC_APP_URL || 
+                      'https://dooriq.ai'
+      
+      const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
         type: 'signup',
-        email: email.toLowerCase()
+        email: email.toLowerCase(),
+        options: {
+          redirectTo: `${siteUrl}/auth/callback`
+        }
       })
-      
-      if (resendError) {
-        console.error('❌ Error resending confirmation email:', resendError)
+
+      if (linkError) {
+        console.error('❌ Error generating confirmation link:', linkError)
         return false
       }
-      
-      console.log('✅ Confirmation email resent via fallback method')
-      return true
+
+      // If we have Resend configured, send the email manually
+      if (process.env.RESEND_API_KEY && linkData?.properties?.action_link) {
+        try {
+          const { Resend } = await import('resend')
+          const resend = new Resend(process.env.RESEND_API_KEY)
+          
+          const confirmationLink = linkData.properties.action_link
+          
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                  .header { background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; padding: 40px; text-align: center; border-radius: 8px 8px 0 0; }
+                  .content { background: #ffffff; padding: 40px; border: 1px solid #e5e7eb; border-top: none; }
+                  .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+                  .button { display: inline-block; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; margin: 24px 0; font-weight: 600; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h1 style="margin: 0; font-size: 32px;">🚪 DoorIQ</h1>
+                    <p style="margin: 8px 0 0 0; opacity: 0.9;">AI-Powered Sales Training</p>
+                  </div>
+                  <div class="content">
+                    <h2 style="color: #a855f7; margin-top: 0;">Confirm Your Email</h2>
+                    <p style="font-size: 16px; color: #4b5563;">
+                      Thanks for signing up for DoorIQ! Please confirm your email address by clicking the button below.
+                    </p>
+                    <div style="text-align: center; margin: 32px 0;">
+                      <a href="${confirmationLink}" class="button">Confirm Email Address</a>
+                    </div>
+                    <p style="font-size: 14px; color: #6b7280; margin-top: 32px;">
+                      If the button doesn't work, copy and paste this link into your browser:
+                    </p>
+                    <p style="font-size: 12px; color: #9ca3af; word-break: break-all;">
+                      ${confirmationLink}
+                    </p>
+                  </div>
+                  <div class="footer">
+                    <p>© ${new Date().getFullYear()} DoorIQ. All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `
+          
+          const fromEmail = process.env.RESEND_FROM_EMAIL || 'DoorIQ <noreply@dooriq.ai>'
+          
+          const { data: emailData, error: emailError } = await resend.emails.send({
+            from: fromEmail,
+            to: email.toLowerCase(),
+            subject: 'Confirm your DoorIQ account',
+            html: emailHtml
+          })
+
+          if (emailError) {
+            console.error('❌ Error sending email via Resend:', emailError)
+            return false
+          }
+
+          console.log(`✅ Confirmation email sent via Resend to ${email} (ID: ${emailData?.id})`)
+          return true
+        } catch (error: any) {
+          console.error('❌ Error in Resend fallback:', error)
+          return false
+        }
+      }
+
+      return false
     }
 
-    if (linkData?.properties?.action_link) {
-      console.log(`✅ Confirmation email link generated for ${email}`)
-      // Note: generateLink with type 'signup' should automatically send the email
-      // But if it doesn't, we'll need to check Supabase email settings
-      return true
-    }
-
-    console.warn('⚠️ No action_link in generated link response')
-    return false
+    console.log(`✅ Confirmation email sent via Supabase resend to ${email}`)
+    return true
   } catch (error: any) {
     console.error('❌ Error sending confirmation email:', error)
     return false
