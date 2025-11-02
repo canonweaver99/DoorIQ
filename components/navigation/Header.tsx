@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Home,
@@ -393,7 +394,14 @@ function HeaderContent() {
           {/* Centered bar */}
           <div className="hidden md:flex items-center space-x-6 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10">
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10">
-              <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">DoorIQ</span>
+              <Image 
+                src="/dooriqlogo.png" 
+                alt="DoorIQ Logo" 
+                width={85} 
+                height={27} 
+                className="h-[27px] w-auto object-contain"
+                priority
+              />
             </Link>
 
             {navigation.map((item) => {
@@ -453,7 +461,14 @@ function HeaderContent() {
           {/* Mobile header */}
           <div className="flex md:hidden items-center justify-between w-full">
             <Link href="/" className="flex items-center">
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">DoorIQ</span>
+              <Image 
+                src="/dooriqlogo.png" 
+                alt="DoorIQ Logo" 
+                width={68} 
+                height={22} 
+                className="h-[22px] w-auto object-contain"
+                priority
+              />
             </Link>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}

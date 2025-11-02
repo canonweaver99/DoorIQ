@@ -4,6 +4,8 @@ import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Facebook as FacebookIcon, Instagram as InstagramIcon, Linkedin as LinkedinIcon, Youtube as YoutubeIcon } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface FooterLink {
   title: string;
@@ -60,7 +62,16 @@ export function Footer() {
 
       <div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-8">
         <AnimatedContainer className="space-y-4">
-          <span className="inline-block text-2xl md:text-3xl font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">DoorIQ</span>
+          <Link href="/" className="inline-block">
+            <Image 
+              src="/dooriqlogo.png" 
+              alt="DoorIQ Logo" 
+              width={120} 
+              height={38} 
+              className="h-10 w-auto object-contain"
+              priority
+            />
+          </Link>
           <p className="text-muted-foreground mt-8 text-sm md:mt-0">
             © {new Date().getFullYear()} DoorIQ. All rights reserved.
           </p>
