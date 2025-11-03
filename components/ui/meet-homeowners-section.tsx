@@ -37,7 +37,7 @@ export function MeetHomeownersSection() {
       animate={controls}
       variants={staggerContainer}
     >
-      <div className="max-w-7xl mx-auto px-0 sm:px-4 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-8">
         {/* Introduction */}
         <motion.div className="text-center mb-8" variants={fadeInUp}>
           <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
