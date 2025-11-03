@@ -71,25 +71,25 @@ export function MeetHomeownersSection() {
             <motion.div 
               className="flex items-center justify-start"
               animate={{ 
-                x: [0, `-${(agents.length * 256)}px`]
+                x: [0, `-${(agents.length * 208)}px`]
               }}
               transition={{
                 x: {
                   repeat: Infinity,
                   repeatType: "loop",
-                  duration: isMobile ? 10 : 50,
+                  duration: isMobile ? 12.5 : 62.5,
                   ease: "linear"
                 }
               }}
             >
-              {/* Quadruple the agents for seamless infinite loop - each agent is ~256px wide (160px + 96px gap) */}
+              {/* Quadruple the agents for seamless infinite loop - each agent is ~208px wide (160px + 48px gap) */}
               {[...agents, ...agents, ...agents, ...agents].map((agent, index) => {
                 const variantStyles = COLOR_VARIANTS[agent.color]
                 return (
                   <Link
                     key={`${agent.fullName}-${index}`}
                     href="/trainer/select-homeowner"
-                    className="relative flex-shrink-0 cursor-pointer group mx-12"
+                    className="relative flex-shrink-0 cursor-pointer group mx-6"
                   >
                     <div className="relative h-40 w-40">
                     {/* Concentric circles */}
