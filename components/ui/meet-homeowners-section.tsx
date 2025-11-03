@@ -67,28 +67,31 @@ export function MeetHomeownersSection() {
           className="relative overflow-hidden mb-12 py-8"
           variants={fadeInScale}
         >
-          <motion.div 
-            className="flex gap-16 items-center justify-center"
-            animate={{ x: [0, `-${100 / 3}%`] }}
-            transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: "loop",
-                duration: isMobile ? 5 : 50,
-                ease: "linear"
-              }
-            }}
-          >
-            {/* Triple the agents for seamless loop */}
-            {[...agents, ...agents, ...agents].map((agent, index) => {
-              const variantStyles = COLOR_VARIANTS[agent.color]
-              return (
-                <Link
-                  key={index}
-                  href="/trainer/select-homeowner"
-                  className="relative flex-shrink-0 cursor-pointer group"
-                >
-                  <div className="relative h-40 w-40">
+          <div className="relative w-full">
+            <motion.div 
+              className="flex items-center justify-start"
+              animate={{ 
+                x: [0, `-${(agents.length * 256)}px`]
+              }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: isMobile ? 10 : 50,
+                  ease: "linear"
+                }
+              }}
+            >
+              {/* Quadruple the agents for seamless infinite loop - each agent is ~256px wide (160px + 96px gap) */}
+              {[...agents, ...agents, ...agents, ...agents].map((agent, index) => {
+                const variantStyles = COLOR_VARIANTS[agent.color]
+                return (
+                  <Link
+                    key={`${agent.fullName}-${index}`}
+                    href="/trainer/select-homeowner"
+                    className="relative flex-shrink-0 cursor-pointer group mx-12"
+                  >
+                    <div className="relative h-40 w-40">
                     {/* Concentric circles */}
                     {[0, 1, 2].map((i) => (
                       <motion.div
