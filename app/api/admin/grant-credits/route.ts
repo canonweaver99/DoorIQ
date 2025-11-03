@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 /**
  * POST /api/admin/grant-credits
@@ -14,7 +14,7 @@ import { createClient } from '@/lib/supabase/server'
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerSupabaseClient()
     
     // Check if user is authenticated
     const { data: { user } } = await supabase.auth.getUser()
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         .insert({
           user_id: userId,
           sessions_this_month: 0,
-          sessions_limit: 10 + credits,
+          sessions_limit: 5 + credits,
           last_reset_date: new Date().toISOString().split('T')[0]
         })
       
@@ -102,8 +102,8 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({
         success: true,
-        message: `Granted ${credits} credits. New limit: ${10 + credits}`,
-        newLimit: 10 + credits
+        message: `Granted ${credits} credits. New limit: ${5 + credits}`,
+        newLimit: 5 + credits
       })
     }
   } catch (error) {

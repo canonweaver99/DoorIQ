@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 async function verifyRecaptcha(token: string): Promise<boolean> {
   const secretKey = process.env.RECAPTCHA_SECRET_KEY
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = await createServerSupabaseClient()
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
