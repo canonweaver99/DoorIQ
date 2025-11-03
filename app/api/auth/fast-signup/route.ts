@@ -11,43 +11,39 @@ async function sendConfirmationEmail(supabase: any, email: string, userId: strin
   try {
     console.log(`📧 Attempting to send confirmation email to ${email}...`)
     
-    // Use resend method to actually send the email
-    // This is the proper way to send confirmation emails via Supabase Admin API
-    const { data: resendData, error: resendError } = await (supabase as any).auth.admin.resend({
+    // Generate confirmation link
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                    process.env.NEXT_PUBLIC_APP_URL || 
+                    'https://dooriq.ai'
+    
+    const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
       type: 'signup',
-      email: email.toLowerCase()
+      email: email.toLowerCase(),
+      options: {
+        redirectTo: `${siteUrl}/auth/callback`
+      }
     })
 
-    if (resendError) {
-      console.error('❌ Error sending confirmation email via resend:', resendError)
-      
-      // Fallback: Generate link and send email manually if Resend is configured
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-                      process.env.NEXT_PUBLIC_APP_URL || 
-                      'https://dooriq.ai'
-      
-      const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
-        type: 'signup',
-        email: email.toLowerCase(),
-        options: {
-          redirectTo: `${siteUrl}/auth/callback`
-        }
-      })
+    if (linkError) {
+      console.error('❌ Error generating confirmation link:', linkError)
+      return false
+    }
 
-      if (linkError) {
-        console.error('❌ Error generating confirmation link:', linkError)
-        return false
-      }
+    if (!linkData?.properties?.action_link) {
+      console.error('❌ No action_link in generated link response')
+      return false
+    }
 
-      // If we have Resend configured, send the email manually
-      if (process.env.RESEND_API_KEY && linkData?.properties?.action_link) {
-        try {
-          const { Resend } = await import('resend')
-          const resend = new Resend(process.env.RESEND_API_KEY)
-          
-          const confirmationLink = linkData.properties.action_link
-          
-          const emailHtml = `
+    const confirmationLink = linkData.properties.action_link
+    console.log(`✅ Generated confirmation link: ${confirmationLink}`)
+
+    // Send email via Resend if configured
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const { Resend } = await import('resend')
+        const resend = new Resend(process.env.RESEND_API_KEY)
+        
+        const emailHtml = `
             <!DOCTYPE html>
             <html>
               <head>
@@ -108,16 +104,14 @@ async function sendConfirmationEmail(supabase: any, email: string, userId: strin
           console.log(`✅ Confirmation email sent via Resend to ${email} (ID: ${emailData?.id})`)
           return true
         } catch (error: any) {
-          console.error('❌ Error in Resend fallback:', error)
+          console.error('❌ Error sending email via Resend:', error)
           return false
         }
+      } else {
+        console.warn('⚠️ RESEND_API_KEY not configured - cannot send confirmation email')
+        console.warn('⚠️ Confirmation link generated but email not sent:', confirmationLink)
+        return false
       }
-
-      return false
-    }
-
-    console.log(`✅ Confirmation email sent via Supabase resend to ${email}`)
-    return true
   } catch (error: any) {
     console.error('❌ Error sending confirmation email:', error)
     return false

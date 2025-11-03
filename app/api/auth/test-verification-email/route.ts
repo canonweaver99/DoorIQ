@@ -27,45 +27,42 @@ export async function POST(req: Request) {
 
     console.log(`✅ Found user: ${existingUser.id}, email confirmed: ${existingUser.email_confirmed_at}`)
 
-    // Try to resend the confirmation email
-    const { data: resendData, error: resendError } = await (supabase as any).auth.admin.resend({
+    // Generate confirmation link
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                    process.env.NEXT_PUBLIC_APP_URL || 
+                    'https://dooriq.ai'
+    
+    const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
       type: 'signup',
-      email: email.toLowerCase()
+      email: email.toLowerCase(),
+      options: {
+        redirectTo: `${siteUrl}/auth/callback`
+      }
     })
 
-    if (resendError) {
-      console.error('❌ Error sending via resend:', resendError)
-      
-      // Fallback: Generate link and send via Resend if configured
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-                      process.env.NEXT_PUBLIC_APP_URL || 
-                      'https://dooriq.ai'
-      
-      const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
-        type: 'signup',
-        email: email.toLowerCase(),
-        options: {
-          redirectTo: `${siteUrl}/auth/callback`
-        }
-      })
+    if (linkError) {
+      console.error('❌ Error generating confirmation link:', linkError)
+      return NextResponse.json({ 
+        error: 'Failed to generate confirmation link: ' + linkError.message
+      }, { status: 500 })
+    }
 
-      if (linkError) {
-        console.error('❌ Error generating link:', linkError)
-        return NextResponse.json({ 
-          error: 'Failed to send email. Error: ' + (resendError.message || linkError.message),
-          details: { resendError, linkError }
-        }, { status: 500 })
-      }
+    if (!linkData?.properties?.action_link) {
+      return NextResponse.json({ 
+        error: 'Failed to generate confirmation link - no action_link returned'
+      }, { status: 500 })
+    }
 
-      // If we have Resend configured, send the email manually
-      if (process.env.RESEND_API_KEY && linkData?.properties?.action_link) {
-        try {
-          const { Resend } = await import('resend')
-          const resend = new Resend(process.env.RESEND_API_KEY)
-          
-          const confirmationLink = linkData.properties.action_link
-          
-          const emailHtml = `
+    const confirmationLink = linkData.properties.action_link
+    console.log(`✅ Generated confirmation link: ${confirmationLink}`)
+
+    // If we have Resend configured, send the email manually
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const { Resend } = await import('resend')
+        const resend = new Resend(process.env.RESEND_API_KEY)
+        
+        const emailHtml = `
             <!DOCTYPE html>
             <html>
               <head>
@@ -135,23 +132,16 @@ export async function POST(req: Request) {
         } catch (error: any) {
           console.error('❌ Error in Resend fallback:', error)
           return NextResponse.json({ 
-            error: 'Resend fallback failed: ' + error.message 
+            error: 'Resend failed: ' + error.message 
           }, { status: 500 })
         }
+      } else {
+        return NextResponse.json({ 
+          error: 'Resend API key is not configured. Please set RESEND_API_KEY in your environment variables.',
+          confirmationLink: confirmationLink,
+          message: 'Generated link but cannot send email without Resend configuration'
+        }, { status: 500 })
       }
-
-      return NextResponse.json({ 
-        error: 'Failed to send email. Supabase resend failed and Resend API key is not configured.',
-        resendError: resendError.message
-      }, { status: 500 })
-    }
-
-    console.log(`✅ Test verification email sent via Supabase resend to ${email}`)
-    return NextResponse.json({ 
-      success: true, 
-      method: 'supabase_resend',
-      message: 'Verification email sent via Supabase'
-    })
   } catch (e: any) {
     console.error('❌ Test email error:', e)
     return NextResponse.json({ 
