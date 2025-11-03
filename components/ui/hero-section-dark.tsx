@@ -248,18 +248,18 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
 
         {/* Dashboard Section - Below the Fold */}
         <section className="relative w-full max-w-full mx-auto z-1 py-16">
-          <div className="max-w-[1400px] mx-auto px-20">
+          <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-20">
             <motion.div 
-              className="text-center mb-12"
+              className="text-center mb-8 sm:mb-12"
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+              <h2 className="text-3xl sm:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
                 Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Analytics</span>
               </h2>
-              <p className="text-lg text-slate-300 max-w-3xl mx-auto">
+              <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-3xl mx-auto">
                 Track every rep's performance in real-time with detailed analytics and insights
               </p>
             </motion.div>
@@ -271,9 +271,9 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="mb-12"
+              className="mb-8 sm:mb-12"
             >
-              <div className="flex flex-wrap justify-center gap-3 max-w-5xl mx-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap lg:justify-center gap-2 sm:gap-3 max-w-5xl mx-auto">
                 {[
                   "AI-Powered Roleplay",
                   "Real-Time Feedback",
@@ -297,7 +297,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="px-5 py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default"
+                    className="px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap overflow-hidden text-ellipsis"
                   >
                     {feature}
                   </motion.div>
