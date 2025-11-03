@@ -111,46 +111,6 @@ export async function GET(request: Request) {
     }
   }
 
-    if (data.user) {
-      console.log('✅ Email verified and user authenticated:', data.user.email)
-
-      // Check if user profile exists in the users table
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single()
-
-      // If user doesn't exist in users table, create profile
-      if (!existingUser) {
-        console.log('📝 Creating user profile in database...')
-        const userMetadata = data.user.user_metadata
-        
-        const { error: insertError } = await supabase.from('users').insert({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User',
-          rep_id: `REP-${Date.now().toString().slice(-6)}`,
-          role: 'rep',
-          virtual_earnings: 0
-        })
-
-        if (insertError) {
-          console.error('❌ Error creating user profile:', insertError.message)
-        } else {
-          console.log('✅ User profile created successfully')
-        }
-      } else {
-        console.log('✅ User profile already exists')
-      }
-
-      // Redirect new users to dashboard (they'll be fully logged in)
-      const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
-      console.log('🔄 Redirecting verified user to:', redirectPath)
-      return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
-    }
-  }
-
   // Handle OAuth callback with code (Google, etc.)
   if (code) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
