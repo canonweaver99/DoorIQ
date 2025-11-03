@@ -37,26 +37,110 @@ export async function GET(request: Request) {
 
   const supabase = await createServerSupabaseClient()
 
+  // Extract token from hash fragment if present (Supabase sometimes puts tokens in hash)
+  const hashToken = hashParams?.get('access_token') || hashParams?.get('token')
+  const hashTokenHash = hashParams?.get('token_hash')
+  const hashCode = hashParams?.get('code')
+  const hashType = hashParams?.get('type') || type
+  
+  // Use hash params if available, otherwise use query params
+  const verificationToken = hashToken || token
+  const verificationTokenHash = hashTokenHash || token_hash
+  const verificationCode = hashCode || code
+  const verificationType = hashType || type
+
+  // Handle email verification with code parameter (magic link style)
+  // This uses exchangeCodeForSession which is the recommended approach
+  // Distinguish from OAuth by checking for type parameter (email verification has type, OAuth doesn't)
+  if (verificationCode && (verificationType === 'email' || verificationType === 'signup')) {
+    console.log('📧 Email verification detected with code (magic link)', { type: verificationType })
+    
+    try {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(verificationCode)
+      
+      if (error) {
+        console.error('❌ Error exchanging code for session:', error.message)
+        return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent(error.message || 'Email verification failed')}`, requestUrl.origin))
+      }
+      
+      if (data.user) {
+        console.log('✅ Email verified via code exchange:', data.user.email)
+        
+        // Check if user profile exists, create if not
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .single()
+        
+        if (!existingUser) {
+          console.log('📝 Creating user profile in database...')
+          const userMetadata = data.user.user_metadata
+          const serviceSupabase = await createServiceSupabaseClient()
+          
+          const { error: insertError } = await serviceSupabase.from('users').insert({
+            id: data.user.id,
+            email: data.user.email,
+            full_name: userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User',
+            rep_id: `REP-${Date.now().toString().slice(-6)}`,
+            role: 'rep',
+            virtual_earnings: 0
+          })
+          
+          if (!insertError) {
+            // Grant 5 free credits
+            await serviceSupabase.from('user_session_limits').insert({
+              user_id: data.user.id,
+              sessions_this_month: 0,
+              sessions_limit: 5,
+              last_reset_date: new Date().toISOString().split('T')[0]
+            })
+            console.log('✅ User profile created with 5 credits')
+          }
+        }
+        
+        // Verify session was set
+        const { data: { session: finalSession } } = await supabase.auth.getSession()
+        if (!finalSession) {
+          console.error('❌ No session after code exchange')
+          return NextResponse.redirect(new URL('/auth/login?error=Unable to sign you in. Please try signing in manually.', requestUrl.origin))
+        }
+        
+        const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
+        console.log('🔄 Redirecting verified user to:', redirectPath)
+        return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
+      }
+    } catch (error: any) {
+      console.error('❌ Unexpected error in code exchange:', error)
+      return NextResponse.redirect(new URL('/auth/login?error=Email verification failed. Please try again.', requestUrl.origin))
+    }
+  }
+
   // Handle email verification (Supabase email verification links)
   // Supabase email verification can use either 'token' or 'token_hash' parameter
-  if ((token || token_hash) && type === 'signup') {
-    console.log('📧 Email verification detected with token')
+  // Tokens can come from query params or hash fragments
+  if ((verificationToken || verificationTokenHash) && (verificationType === 'signup' || verificationType === 'email')) {
+    console.log('📧 Email verification detected with token', { 
+      hasToken: !!verificationToken, 
+      hasTokenHash: !!verificationTokenHash,
+      source: hashToken ? 'hash' : 'query'
+    })
     
     let verificationData, verificationError
     
     // Try to verify with token_hash first, then token
-    if (token_hash) {
+    if (verificationTokenHash) {
       console.log('🔑 Verifying with token_hash')
       const result = await supabase.auth.verifyOtp({
-        token_hash: token_hash,
+        token_hash: verificationTokenHash,
         type: 'email'
       })
       verificationData = result.data
       verificationError = result.error
-    } else if (token) {
+    } else if (verificationToken) {
       console.log('🔑 Verifying with token')
       const result = await supabase.auth.verifyOtp({
-        token: token,
+        token: verificationToken,
         type: 'email'
       })
       verificationData = result.data
