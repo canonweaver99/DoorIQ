@@ -93,6 +93,7 @@ function HeaderContent() {
   const sidebarButtonRef = useRef<HTMLButtonElement | null>(null)
   const [portalReady, setPortalReady] = useState(false)
   const [showNeedHand, setShowNeedHand] = useState(true)
+  const [userCredits, setUserCredits] = useState<number>(0)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -160,6 +161,21 @@ function HeaderContent() {
         })
         setUser(userData)
         setAuthMeta(null)
+        
+        // Fetch user credits
+        const { data: limitData } = await supabase
+          .from('user_session_limits')
+          .select('sessions_limit, sessions_this_month')
+          .eq('user_id', authUser.id)
+          .single()
+        
+        if (limitData) {
+          const creditsRemaining = Math.max(0, (limitData.sessions_limit || 0) - (limitData.sessions_this_month || 0))
+          setUserCredits(creditsRemaining)
+        } else {
+          // Default to 10 credits if no limit record exists yet
+          setUserCredits(10)
+        }
       } else {
         logger.warn('Header - No user data found, using auth metadata')
         setAuthMeta({
@@ -169,6 +185,8 @@ function HeaderContent() {
           role: metaRole,
           virtual_earnings: null,
         })
+        // Default credits for auth-only users
+        setUserCredits(10)
       }
     }
 
@@ -425,7 +443,7 @@ function HeaderContent() {
                 <>
                   <div className="pl-2 border-l border-white/10">
                     <p className="text-xs text-slate-300 leading-4">{user?.full_name ?? profileName}</p>
-                    <p className="text-[11px] text-purple-400 font-semibold">${profileEarnings.toFixed(2)} earned</p>
+                    <p className="text-[11px] text-purple-400 font-semibold">{userCredits} credits</p>
                   </div>
                   {profileAvatar && (
                     <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-purple-500/30">
@@ -547,7 +565,7 @@ function HeaderContent() {
                 {user && (
                   <div className="px-4 py-3 border-t border-white/10 mt-4">
                     <p className="text-sm font-medium text-white">{profileName}</p>
-                    <p className="text-xs text-purple-400 font-semibold mt-1">${profileEarnings?.toFixed(2) ?? '0.00'} earned</p>
+                    <p className="text-xs text-purple-400 font-semibold mt-1">{userCredits} credits</p>
                   </div>
                 )}
               </div>
