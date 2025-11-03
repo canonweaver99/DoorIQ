@@ -71,7 +71,7 @@ export function MeetHomeownersSection() {
               x: {
                 repeat: Infinity,
                 repeatType: "loop",
-                duration: isMobile ? 20 : 50,
+                duration: isMobile ? 12 : 50,
                 ease: "linear"
               }
             }}
