@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
-
-export const runtime = 'nodejs'
-
-/**
- * Send confirmation email to newly created user
- * Uses Supabase admin API to resend confirmation email
- */
-export async function sendEmailWithLink(email: string, confirmationLink: string) {
+// Import the email sending function
+async function sendEmailWithLink(email: string, confirmationLink: string) {
   if (!process.env.RESEND_API_KEY) {
     console.warn('⚠️ RESEND_API_KEY not configured - cannot send confirmation email')
-    console.warn('⚠️ Confirmation link generated but email not sent:', confirmationLink)
     return false
   }
 
@@ -98,19 +91,51 @@ export async function sendEmailWithLink(email: string, confirmationLink: string)
   }
 }
 
-async function sendConfirmationEmail(supabase: any, email: string, userId: string, redirectUrl?: string) {
+export const runtime = 'nodejs'
+
+/**
+ * Resend verification email to user
+ * Generates a fresh confirmation link and sends it via Resend
+ */
+export async function POST(req: Request) {
   try {
-    console.log(`📧 Attempting to send confirmation email to ${email}...`)
-    
+    const { email, redirectUrl } = await req.json()
+
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+    }
+
+    const supabase = await createServiceSupabaseClient()
+
+    // Check if user exists
+    const { data: usersData } = await (supabase as any).auth.admin.listUsers()
+    const existingUser = usersData?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+
+    if (!existingUser) {
+      return NextResponse.json({ 
+        error: 'No account found with this email address. Please sign up first.' 
+      }, { status: 404 })
+    }
+
+    // Check if email is already confirmed
+    if (existingUser.email_confirmed_at) {
+      return NextResponse.json({ 
+        success: true,
+        message: 'Your email is already confirmed. You can sign in now.',
+        alreadyConfirmed: true
+      })
+    }
+
+    console.log(`📧 Resending verification email to ${email}...`)
+
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
                     process.env.NEXT_PUBLIC_APP_URL || 
                     'https://dooriq.ai'
     
     // Use provided redirect URL or default to callback
     const finalRedirectTo = redirectUrl || `${siteUrl}/auth/callback`
-    
-    // Generate confirmation link using generateLink
-    // Note: These links expire quickly by default, but we'll generate a fresh one each time
+
+    // Generate a fresh confirmation link
     const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
       type: 'signup',
       email: email.toLowerCase(),
@@ -121,122 +146,48 @@ async function sendConfirmationEmail(supabase: any, email: string, userId: strin
 
     if (linkError) {
       console.error('❌ Error generating confirmation link:', linkError)
-      return false
+      return NextResponse.json({ 
+        error: 'Failed to generate confirmation link. Please try again later.' 
+      }, { status: 500 })
     }
 
     if (!linkData?.properties?.action_link) {
       console.error('❌ No action_link in generated link response')
-      return false
+      return NextResponse.json({ 
+        error: 'Failed to generate confirmation link. Please try again later.' 
+      }, { status: 500 })
     }
 
     const confirmationLink = linkData.properties.action_link
-    console.log(`✅ Generated confirmation link: ${confirmationLink}`)
+    console.log(`✅ Generated fresh confirmation link for ${email}`)
 
     // Send email via Resend if configured
-    if (process.env.RESEND_API_KEY) {
-      return await sendEmailWithLink(email, confirmationLink)
-    } else {
+    if (!process.env.RESEND_API_KEY) {
       console.warn('⚠️ RESEND_API_KEY not configured - cannot send confirmation email')
-      console.warn('⚠️ Confirmation link generated but email not sent:', confirmationLink)
-      return false
-    }
-  } catch (error: any) {
-    console.error('❌ Error sending confirmation email:', error)
-    return false
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    const { email, password, full_name, redirectUrl } = await req.json()
-
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Missing email or password' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'Email service not configured. Please contact support.' 
+      }, { status: 500 })
     }
 
-    const supabase = await createServiceSupabaseClient()
+    const emailSent = await sendEmailWithLink(email, confirmationLink)
 
-    // Try to create user first
-    // Set email_confirm to false so Supabase sends confirmation email automatically
-    let { data, error } = await (supabase as any).auth.admin.createUser({
-      email,
-      password,
-      email_confirm: false,
-      user_metadata: { full_name },
-      email_redirect_to: redirectUrl || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'}/auth/callback`
+    if (!emailSent) {
+      return NextResponse.json({ 
+        error: 'Failed to send verification email. Please try again later.' 
+      }, { status: 500 })
+    }
+
+    console.log(`✅ Verification email resent to ${email}`)
+    return NextResponse.json({ 
+      success: true,
+      message: 'Verification email sent! Please check your inbox.'
     })
 
-    // If user already exists, delete the orphaned Auth user and retry
-    if (error) {
-      const alreadyExists = (error.message || '').toLowerCase().includes('already registered') || 
-                           (error.message || '').toLowerCase().includes('already exists') ||
-                           error.status === 422
-      
-      if (alreadyExists) {
-        console.log(`🔄 User with email ${email} exists in Auth but was deleted from database. Cleaning up to allow re-registration...`)
-        
-        // Find the user by email and delete from Auth
-        const { data: usersData } = await (supabase as any).auth.admin.listUsers()
-        if (usersData?.users) {
-          const existingUser = usersData.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
-          
-          if (existingUser) {
-            // Delete the existing user from Auth
-            const { error: deleteError } = await (supabase as any).auth.admin.deleteUser(existingUser.id)
-            
-            if (deleteError) {
-              console.error('❌ Error deleting existing user from Auth:', deleteError)
-              return NextResponse.json({ error: 'Failed to clean up existing account. Please contact support.' }, { status: 400 })
-            }
-            
-            console.log('✅ Deleted orphaned user from Auth, retrying signup...')
-            
-            // Retry creating the user
-            const retryResult = await (supabase as any).auth.admin.createUser({
-              email,
-              password,
-              email_confirm: false,
-              user_metadata: { full_name },
-              email_redirect_to: redirectUrl || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'}/auth/callback`
-            })
-            
-            if (retryResult.error) {
-              return NextResponse.json({ error: retryResult.error.message || 'Failed to create account after cleanup' }, { status: 400 })
-            }
-            
-            // Send confirmation email for retry
-            if (retryResult.data?.user?.id) {
-              await sendConfirmationEmail(supabase, email, retryResult.data.user.id, redirectUrl)
-            }
-            
-            return NextResponse.json({ success: true, userId: retryResult.data?.user?.id || null })
-          }
-        }
-        
-        // If we couldn't find or delete the user, return helpful error
-        return NextResponse.json({ 
-          error: 'Email already registered. If you deleted your account, please wait a few minutes and try again, or contact support.' 
-        }, { status: 400 })
-      }
-      
-      // Other errors
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-
-    // Send custom branded confirmation email
-    // IMPORTANT: Links generated by generateLink expire quickly (default ~1 hour)
-    // To increase expiration time, configure "Email OTP Expiration" in Supabase dashboard:
-    // Authentication → Email Templates → Email OTP Expiration
-    // Recommended: Set to 24-48 hours to prevent expiration issues
-    if (data?.user?.id) {
-      await sendConfirmationEmail(supabase, email, data.user.id, redirectUrl)
-    }
-
-    return NextResponse.json({ success: true, userId: data?.user?.id || null })
-  } catch (e: any) {
-    console.error('❌ Signup error:', e)
-    return NextResponse.json({ error: e.message || 'Signup failed' }, { status: 500 })
+  } catch (error: any) {
+    console.error('❌ Error resending verification email:', error)
+    return NextResponse.json({ 
+      error: error.message || 'Failed to resend verification email' 
+    }, { status: 500 })
   }
 }
-
 
