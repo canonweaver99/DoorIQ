@@ -828,7 +828,12 @@ function TrainerPageContent() {
                         className="object-cover"
                         style={{ objectFit: 'cover', objectPosition: 'center center' }}
                         priority
-                        onError={(e) => console.error('❌ Image failed to load:', src)}
+                        unoptimized={src.includes(' ') || src.includes('&')} // Disable optimization for files with spaces or special chars
+                        onError={(e) => {
+                          console.error('❌ Image failed to load:', src)
+                          // Prevent error propagation to avoid console spam
+                          e.stopPropagation()
+                        }}
                       />
                       ) : null
                     })()}

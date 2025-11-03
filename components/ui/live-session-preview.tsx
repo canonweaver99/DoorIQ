@@ -90,7 +90,7 @@ export function LiveSessionPreview() {
   }
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden 2xl:max-h-[720px]" style={{ minHeight: 'calc(100vh - 140px)', maxHeight: 'calc(100vh - 140px)', transform: 'scale(1.02)' }}>
+    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden max-h-[calc(100vh-140px)] xl:max-h-[500px] 2xl:max-h-[450px]" style={{ minHeight: 'calc(100vh - 140px)', transform: 'scale(1.02)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
         <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export function LiveSessionPreview() {
       {/* Main Content - 3-Way Split Layout */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Section: 50/50 Split - Austin Left, Sales Rep Right */}
-        <div className="grid grid-cols-2 gap-0 xl:min-h-[320px] 2xl:min-h-[400px]" style={{ minHeight: '240px' }}>
+        <div className="grid grid-cols-2 gap-0 xl:min-h-[220px] 2xl:min-h-[240px]" style={{ minHeight: '240px' }}>
           {/* Left: Agent (Austin) */}
           <div className="flex flex-col items-center justify-end p-0 border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent relative">
             {/* Austin Image - Fill entire rectangle */}
@@ -179,7 +179,7 @@ export function LiveSessionPreview() {
         <div className="border-b border-purple-500/20 mt-0" />
 
         {/* Bottom Section: Transcript (Full Width) - Reduced height on large monitors */}
-        <div className="flex flex-col relative h-[280px] xl:h-[200px] 2xl:h-[180px] mt-6">
+        <div className="flex flex-col relative h-[280px] xl:h-[140px] 2xl:h-[120px] mt-6 xl:mt-3 2xl:mt-2">
           
           {/* Bottom fade gradient overlay */}
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />

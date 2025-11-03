@@ -568,6 +568,11 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                                 sizes="352px"
                                 quality={95}
                                 priority={index < 6}
+                                unoptimized={agent.image.includes(' ') || agent.image.includes('&')}
+                                onError={(e) => {
+                                  console.error('❌ Agent bubble image failed to load:', agent.image)
+                                  e.stopPropagation()
+                                }}
                               />
                             )
                           })()}

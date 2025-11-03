@@ -430,34 +430,46 @@ function OverviewTabContent() {
       .select('id, overall_score, created_at, homeowner_name, agent_name, agent_persona, virtual_earnings')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(4)
+      .limit(10)
     
     if (recentSessionsError) {
-      console.error('Error fetching recent sessions:', recentSessionsError)
+      console.error('❌ Error fetching recent sessions:', recentSessionsError)
+      setRecentSessions([])
+      return
     }
+    
+    console.log('📊 Raw recent sessions data:', recentSessionsData)
     
     // Format recent sessions for display
     if (recentSessionsData && recentSessionsData.length > 0) {
       const gradients = ['from-purple-500/30', 'from-blue-500/30', 'from-pink-500/30', 'from-green-500/30']
       
-      const formattedSessions = recentSessionsData.map((session: any, idx: number) => {
-        const timeAgo = Math.floor((Date.now() - new Date(session.created_at).getTime()) / (1000 * 60 * 60))
+      const formattedSessions = recentSessionsData
+        .filter((session: any) => session && session.id) // Filter out any invalid sessions
+        .map((session: any, idx: number) => {
+          const createdAt = session.created_at ? new Date(session.created_at) : new Date()
+          const timeAgo = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60))
+          
         // Try agent_name first, then agent_persona, then homeowner_name
         const agentName = session.agent_name || session.agent_persona || session.homeowner_name || null
+          const displayName = session.agent_name || session.agent_persona || session.homeowner_name || 'Practice Session'
+          
         return {
           id: session.id,
-          name: session.agent_name || session.agent_persona || session.homeowner_name || 'Practice Session',
-          score: session.overall_score || 0,
-          earned: session.virtual_earnings || 0,
+            name: displayName,
+            score: session.overall_score ?? 0,
+            earned: session.virtual_earnings ?? 0,
           avatar: getAgentBubbleImage(agentName),
           time: timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`,
           gradient: gradients[idx % gradients.length]
         }
       })
+        .filter((session: any) => session && session.id) // Final filter to ensure valid sessions
+      
       console.log('✅ Formatted recent sessions:', formattedSessions)
       setRecentSessions(formattedSessions)
     } else {
-      console.log('⚠️ No recent sessions found')
+      console.log('⚠️ No recent sessions found in database')
       setRecentSessions([])
     }
     
@@ -1420,9 +1432,16 @@ function OverviewTabContent() {
                             ))}
                             {/* Profile Image */}
                             <img 
-                              src={session.avatar}
+                              src={session.avatar || '/agents/default.png'}
                               alt={session.name}
-                              className="relative w-8 h-8 rounded-full ring-2 ring-white/20 flex-shrink-0 z-10"
+                              className="relative w-8 h-8 rounded-full ring-2 ring-white/20 flex-shrink-0 z-10 object-cover"
+                              onError={(e) => {
+                                // Fallback to default if image fails to load
+                                const target = e.target as HTMLImageElement
+                                if (target.src !== '/agents/default.png') {
+                                  target.src = '/agents/default.png'
+                                }
+                              }}
                             />
                           </>
                         )

@@ -356,6 +356,11 @@ export function ScrollingAgentCarousel({
                             sizes="(max-width: 640px) 150px, (max-width: 768px) 200px, 240px"
                             quality={95}
                             priority={scale > 0.8}
+                            unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
+                            onError={(e) => {
+                              console.error('❌ Carousel agent image failed to load:', agent.src)
+                              e.stopPropagation()
+                            }}
                           />
                         )
                       })()}
