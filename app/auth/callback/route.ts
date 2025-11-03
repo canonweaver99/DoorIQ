@@ -40,13 +40,13 @@ export async function GET(request: Request) {
   // Handle email verification (Supabase email verification links)
   // Supabase email verification can use either 'token' or 'token_hash' parameter
   if ((token || token_hash) && type === 'signup') {
-    console.log('📧 Email verification detected')
+    console.log('📧 Email verification detected with token')
     
-    // Try to verify with token_hash first, then token
-    const verificationToken = token_hash || token
     let verificationData, verificationError
     
+    // Try to verify with token_hash first, then token
     if (token_hash) {
+      console.log('🔑 Verifying with token_hash')
       const result = await supabase.auth.verifyOtp({
         token_hash: token_hash,
         type: 'email'
@@ -54,6 +54,7 @@ export async function GET(request: Request) {
       verificationData = result.data
       verificationError = result.error
     } else if (token) {
+      console.log('🔑 Verifying with token')
       const result = await supabase.auth.verifyOtp({
         token: token,
         type: 'email'
@@ -65,7 +66,7 @@ export async function GET(request: Request) {
     if (verificationError) {
       console.error('❌ Error verifying email token:', verificationError.message)
       // If token expired, give helpful error
-      if (verificationError.message?.includes('expired') || verificationError.message?.includes('invalid')) {
+      if (verificationError.message?.includes('expired') || verificationError.message?.includes('invalid') || verificationError.message?.includes('already')) {
         return NextResponse.redirect(new URL('/auth/login?error=Verification link expired or invalid. Please request a new verification email.', requestUrl.origin))
       }
       return NextResponse.redirect(new URL('/auth/login?error=Unable to verify email. Please try signing in.', requestUrl.origin))
@@ -73,6 +74,7 @@ export async function GET(request: Request) {
 
     if (verificationData?.user) {
       console.log('✅ Email verified and user authenticated:', verificationData.user.email)
+      console.log('📦 Session data:', { session: !!verificationData.session, user: verificationData.user.id })
 
       // Check if user profile exists in the users table
       const { data: existingUser } = await supabase
@@ -104,10 +106,22 @@ export async function GET(request: Request) {
         console.log('✅ User profile already exists')
       }
 
-      // Redirect new users to dashboard (they'll be fully logged in)
+      // Create redirect response with session cookies
+      // The session should already be set via cookies by verifyOtp, but we ensure it's persisted
       const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
       console.log('🔄 Redirecting verified user to:', redirectPath)
-      return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
+      
+      const redirectUrl = new URL(redirectPath, requestUrl.origin)
+      const response = NextResponse.redirect(redirectUrl)
+      
+      // Verify session is set - get fresh supabase client to check
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('🔐 Session after verification:', { hasSession: !!session, userId: session?.user?.id })
+      
+      return response
+    } else {
+      console.error('❌ No user in verification data')
+      return NextResponse.redirect(new URL('/auth/login?error=Email verification failed. Please try again.', requestUrl.origin))
     }
   }
 
