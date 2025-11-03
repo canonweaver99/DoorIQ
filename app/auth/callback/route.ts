@@ -123,18 +123,34 @@ export async function GET(request: Request) {
       }
 
       // Create redirect response with session cookies
-      // The session should already be set via cookies by verifyOtp, but we ensure it's persisted
+      // IMPORTANT: verifyOtp should have set cookies via setAll callback
+      // We create a fresh client to ensure cookies are properly read
       const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
       console.log('🔄 Redirecting verified user to:', redirectPath)
       
+      // Create fresh supabase client to verify session was set in cookies
+      // This ensures cookies set by verifyOtp are properly included in response
+      const freshSupabase = await createServerSupabaseClient()
+      const { data: { session }, error: sessionError } = await freshSupabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('❌ Error getting session:', sessionError.message)
+      }
+      
+      if (!session) {
+        console.error('❌ No session found after verification')
+        if (verificationData.session) {
+          console.warn('⚠️ verifyOtp returned session but not found in cookies')
+          console.warn('⚠️ This suggests cookies may not be set properly - check server logs')
+        }
+      } else {
+        console.log('✅ Session confirmed in cookies:', { hasSession: !!session, userId: session?.user?.id })
+      }
+      
+      // Create redirect response
+      // Cookies set via cookies().set() in setAll callback should automatically be included
       const redirectUrl = new URL(redirectPath, requestUrl.origin)
-      const response = NextResponse.redirect(redirectUrl)
-      
-      // Verify session is set - get fresh supabase client to check
-      const { data: { session } } = await supabase.auth.getSession()
-      console.log('🔐 Session after verification:', { hasSession: !!session, userId: session?.user?.id })
-      
-      return response
+      return NextResponse.redirect(redirectUrl)
     } else {
       console.error('❌ No user in verification data')
       return NextResponse.redirect(new URL('/auth/login?error=Email verification failed. Please try again.', requestUrl.origin))
