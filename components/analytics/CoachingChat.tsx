@@ -75,6 +75,7 @@ export default function CoachingChat({
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioUrlRef = useRef<string | null>(null)
 
   // Load available voices
   useEffect(() => {
@@ -133,15 +134,8 @@ export default function CoachingChat({
   }, [mode, messages])
 
   const speakText = async (text: string) => {
-    // Stop any ongoing audio first
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-    }
-    setIsSpeaking(false)
+    // Stop any ongoing audio first to prevent overlapping
+    stopSpeaking()
 
     // Try Eleven Labs TTS if enabled
     if (useElevenLabs) {
@@ -157,30 +151,62 @@ export default function CoachingChat({
           const audioBlob = await response.blob()
           const audioUrl = URL.createObjectURL(audioBlob)
           const audio = new Audio(audioUrl)
+          
+          // Store the audio URL for cleanup
+          audioUrlRef.current = audioUrl
           audioRef.current = audio
-
+          
           audio.onplay = () => {
-            setIsSpeaking(true)
-            setIsGeneratingAudio(false)
+            // Only set speaking if this is still the current audio
+            if (audioRef.current === audio) {
+              setIsSpeaking(true)
+              setIsGeneratingAudio(false)
+            }
           }
 
           audio.onended = () => {
-            setIsSpeaking(false)
-            URL.revokeObjectURL(audioUrl)
-            audioRef.current = null
+            // Only clean up if this is still the current audio
+            if (audioRef.current === audio) {
+              setIsSpeaking(false)
+              URL.revokeObjectURL(audioUrl)
+              audioRef.current = null
+              audioUrlRef.current = null
+            }
           }
 
           audio.onerror = () => {
-            setIsSpeaking(false)
-            setIsGeneratingAudio(false)
-            URL.revokeObjectURL(audioUrl)
-            audioRef.current = null
-            console.warn('Eleven Labs audio playback failed, falling back to browser TTS')
-            // Fallback to browser TTS
-            speakTextBrowser(text)
+            // Only handle error if this is still the current audio
+            if (audioRef.current === audio) {
+              setIsSpeaking(false)
+              setIsGeneratingAudio(false)
+              URL.revokeObjectURL(audioUrl)
+              audioRef.current = null
+              audioUrlRef.current = null
+              console.warn('Eleven Labs audio playback failed, falling back to browser TTS')
+              // Fallback to browser TTS
+              speakTextBrowser(text)
+            }
           }
-
-          await audio.play()
+          
+          try {
+            await audio.play()
+            // Double-check if audio was stopped while waiting for play()
+            if (audioRef.current !== audio) {
+              audio.pause()
+              URL.revokeObjectURL(audioUrl)
+              return
+            }
+          } catch (error) {
+            // Clean up on play error
+            if (audioRef.current === audio) {
+              URL.revokeObjectURL(audioUrl)
+              audioRef.current = null
+              audioUrlRef.current = null
+              setIsGeneratingAudio(false)
+              console.warn('Audio play failed, falling back to browser TTS')
+              speakTextBrowser(text)
+            }
+          }
           return
         } else {
           console.warn('Eleven Labs TTS failed, falling back to browser TTS')
@@ -299,12 +325,22 @@ export default function CoachingChat({
   const stopSpeaking = () => {
     // Stop Eleven Labs audio if playing
     if (audioRef.current) {
-      audioRef.current.pause()
+      const currentAudio = audioRef.current
+      currentAudio.pause()
+      currentAudio.currentTime = 0
+      // Clean up object URL if it exists
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current)
+        audioUrlRef.current = null
+      }
       audioRef.current = null
     }
     // Stop browser TTS
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel()
+      if (speechSynthesisRef.current) {
+        speechSynthesisRef.current = null
+      }
     }
     setIsSpeaking(false)
     setIsGeneratingAudio(false)
@@ -332,38 +368,8 @@ export default function CoachingChat({
             </div>
           </div>
 
-          {/* Mode Toggle and Voice Selector */}
+          {/* Mode Toggle */}
           <div className="flex items-center gap-3">
-            {/* Eleven Labs Toggle (only show in voice mode) */}
-            {mode === 'voice' && (
-              <label className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-md bg-slate-800/50 border border-slate-600/50 cursor-pointer hover:bg-slate-800/70 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={useElevenLabs}
-                  onChange={(e) => setUseElevenLabs(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-800"
-                />
-                <span className="text-slate-300">Eleven Labs</span>
-              </label>
-            )}
-            {/* Voice Selector (only show in voice mode and when NOT using Eleven Labs) */}
-            {mode === 'voice' && !useElevenLabs && availableVoices.length > 0 && (
-              <select
-                value={selectedVoice}
-                onChange={(e) => setSelectedVoice(e.target.value)}
-                className="px-3 py-2 text-xs font-medium rounded-md bg-slate-800/50 border border-slate-600/50 text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/50 max-w-[180px]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {availableVoices
-                  .filter(v => v.lang.startsWith('en'))
-                  .slice(0, 8) // Limit to 8 best options
-                  .map((voice) => (
-                    <option key={voice.voiceURI} value={voice.voiceURI}>
-                      {voice.name} {voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Alex') || voice.name.includes('Samantha') ? '⭐' : ''}
-                    </option>
-                  ))}
-              </select>
-            )}
             <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-1 border border-slate-700/50">
               <button
                 onClick={() => setMode('chat')}
@@ -379,7 +385,13 @@ export default function CoachingChat({
                 </div>
               </button>
               <button
-                onClick={() => setMode('voice')}
+                onClick={() => {
+                  if (isSpeaking) {
+                    stopSpeaking()
+                  } else {
+                    setMode('voice')
+                  }
+                }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   mode === 'voice'
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
@@ -389,17 +401,17 @@ export default function CoachingChat({
                 <div className="flex items-center gap-2">
                   {isSpeaking ? (
                     <>
-                      <MicOff className="w-4 h-4" onClick={stopSpeaking} />
+                      <MicOff className="w-4 h-4" />
                       <span>Stop</span>
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-4 h-4" />
-                    <span>Voice</span>
-                  </>
-                )}
-              </div>
-            </button>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-4 h-4" />
+                      <span>Voice</span>
+                    </>
+                  )}
+                </div>
+              </button>
             </div>
           </div>
         </div>

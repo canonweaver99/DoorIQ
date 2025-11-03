@@ -4,10 +4,7 @@ import { useState, useEffect } from 'react'
 import { Users, Target, Shield, HandshakeIcon, DollarSign, Download, Share2, BookOpen, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Zap, Clock, Award, AlertCircle, CheckCircle2, Sparkles, XCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import SessionTimeline from './SessionTimeline'
-import SessionTimelineWithVideo from './SessionTimelineWithVideo'
 import CoachingChat from './CoachingChat'
-import { AnalyticsErrorBoundary } from './AnalyticsErrorBoundary'
 
 interface ScoresViewV2Props {
   sessionId: string
@@ -57,20 +54,6 @@ interface ScoresViewV2Props {
   durationSeconds?: number
   audioUrl?: string
   videoUrl?: string
-}
-
-// Helper function to parse timestamp strings to seconds
-function parseTimestamp(timestamp: string): number {
-  if (!timestamp) return 0
-  
-  // Handle "MM:SS" format
-  if (timestamp.includes(':')) {
-    const [minutes, seconds] = timestamp.split(':').map(Number)
-    return minutes * 60 + seconds
-  }
-  
-  // Handle plain number (assume seconds)
-  return Number(timestamp) || 0
 }
 
 export default function ScoresViewV2({
@@ -143,52 +126,6 @@ export default function ScoresViewV2({
     return 'Keep Practicing'
   }
 
-  // Extract key moments - prefer LLM-generated timeline moments, fallback to extraction
-  let keyMoments: any[] = []
-  
-  console.log('🔍 Timeline check:', {
-    hasTimelineKeyMoments: !!timelineKeyMoments,
-    timelineLength: timelineKeyMoments?.length || 0,
-    timelineData: timelineKeyMoments
-  })
-  
-  // If we have pre-generated timeline moments from the LLM, use those (expecting 3 moments now)
-  if (timelineKeyMoments && timelineKeyMoments.length >= 1) {
-    console.log('✅ Using timeline_key_moments from grading:', timelineKeyMoments.length, 'moments')
-    console.log('📋 Session ID:', sessionId) // Log to verify uniqueness
-    keyMoments = timelineKeyMoments.map((moment, idx) => {
-      // Convert effectiveness to score for timeline display
-      const rating = lineRatings?.find((r: any) => r.line_number === moment.line_number)
-      const effectivenessScore = rating?.effectiveness === 'excellent' ? 90 :
-                                  rating?.effectiveness === 'good' ? 75 :
-                                  rating?.effectiveness === 'average' ? 60 : 40
-      
-      console.log(`📍 Timeline moment ${idx + 1}/${timelineKeyMoments.length}:`, {
-        sessionId: sessionId.substring(0, 8), // Show partial ID to verify uniqueness
-        line: moment.line_number,
-        timestamp: moment.timestamp,
-        type: moment.moment_type,
-        quote: moment.quote?.substring(0, 50) + '...',
-        key_takeaway: moment.key_takeaway?.substring(0, 50) + '...'
-      })
-      
-      return {
-        type: moment.is_positive ? 'win' : 'critical',
-        line: moment.line_number,
-        timestamp: moment.timestamp,
-        title: moment.moment_type,
-        description: moment.key_takeaway || moment.quote, // Use key_takeaway from grading
-        score: effectivenessScore,
-        impact: 'high'
-      }
-    })
-    console.log('✅ Mapped', keyMoments.length, 'timeline moments for session', sessionId.substring(0, 8))
-  } else {
-    // Fallback not needed - we always get timeline_key_moments from grading
-    // If missing, just show empty timeline
-    console.log('⚠️ No timeline moments found in analytics - timeline will not display')
-    console.log('⚠️ Received timelineKeyMoments:', timelineKeyMoments)
-  }
 
   const coreMetrics = [
     { name: 'Rapport', score: scores.rapport, icon: Users, color: '#10b981' },
@@ -502,60 +439,7 @@ export default function ScoresViewV2({
         </div>
       </section>
 
-      {/* Enhanced Timeline - "What specific moments mattered?" */}
-      {keyMoments.length > 0 && (
-        <AnalyticsErrorBoundary>
-          <section className="rounded-3xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <Clock className="w-5 h-5 text-purple-400" />
-              <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">Session Timeline</h3>
-            </div>
-            
-            {videoUrl ? (
-            <SessionTimelineWithVideo
-              duration={durationSeconds}
-              videoUrl={videoUrl}
-              audioUrl={audioUrl}
-              keyMoments={keyMoments.filter(m => m && m.moment_type).map((moment, idx) => ({
-                id: `moment-${idx}`,
-                timestamp: parseTimestamp(moment.timestamp || '0'),
-                title: (moment.moment_type || 'key-moment').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-                type: (moment.moment_type || '').includes('rapport') ? 'rapport' :
-                      (moment.moment_type || '').includes('discovery') ? 'discovery' :
-                      (moment.moment_type || '').includes('objection') ? 'objection' :
-                      (moment.moment_type || '').includes('closing') ? 'closing' : 'critical' as const,
-                description: moment.quote || moment.description,
-                quote: moment.quote || moment.description
-              }))}
-              customerName={agentName}
-              salesRepName="Canon Weaver"
-              dealOutcome={{
-                closed: saleClosed || false,
-                amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
-                product: dealDetails?.product_sold || 'Service'
-              }}
-            />
-          ) : (
-            <SessionTimeline
-              duration={durationSeconds}
-              events={keyMoments}
-              lineRatings={lineRatings}
-              fullTranscript={normalizedTranscript}
-              customerName={agentName}
-              salesRepName="Canon Weaver"
-              dealOutcome={{
-                closed: saleClosed || false,
-                amount: dealDetails?.base_price || dealDetails?.total_contract_value || 0,
-                product: dealDetails?.product_sold || 'Service'
-              }}
-              audioUrl={audioUrl}
-            />
-          )}
-          </section>
-        </AnalyticsErrorBoundary>
-      )}
-
-      {/* AI Coaching Chat - Below Timeline */}
+      {/* AI Coaching Chat */}
       <CoachingChat
         sessionId={sessionId}
         overallScore={overallScore}
