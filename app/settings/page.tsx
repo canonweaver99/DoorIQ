@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
-import { Bell, Globe, Moon, Volume2, Save } from 'lucide-react'
+import { Bell, Moon, Volume2, Save } from 'lucide-react'
+import { Toggle } from '@/components/ui/toggle'
 import { useRouter } from 'next/navigation'
 
 type UserData = Database['public']['Tables']['users']['Row']
@@ -91,50 +92,44 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-4">
-            <label className="flex items-center justify-between cursor-pointer">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-300">Email Notifications</p>
                 <p className="text-sm text-slate-400 mt-1">
                   Receive updates about your training progress
                 </p>
               </div>
-              <input
-                type="checkbox"
+              <Toggle
                 checked={settings.emailNotifications}
-                onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
-                className="w-5 h-5 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
+                onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
               />
-            </label>
+            </div>
 
-            <label className="flex items-center justify-between cursor-pointer">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-300">Session Reminders</p>
                 <p className="text-sm text-slate-400 mt-1">
                   Get reminded to practice daily
                 </p>
               </div>
-              <input
-                type="checkbox"
+              <Toggle
                 checked={settings.sessionReminders}
-                onChange={(e) => setSettings({ ...settings, sessionReminders: e.target.checked })}
-                className="w-5 h-5 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
+                onCheckedChange={(checked) => setSettings({ ...settings, sessionReminders: checked })}
               />
-            </label>
+            </div>
 
-            <label className="flex items-center justify-between cursor-pointer">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-300">Weekly Reports</p>
                 <p className="text-sm text-slate-400 mt-1">
                   Receive weekly performance summaries
                 </p>
               </div>
-              <input
-                type="checkbox"
+              <Toggle
                 checked={settings.weeklyReports}
-                onChange={(e) => setSettings({ ...settings, weeklyReports: e.target.checked })}
-                className="w-5 h-5 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
+                onCheckedChange={(checked) => setSettings({ ...settings, weeklyReports: checked })}
               />
-            </label>
+            </div>
           </div>
         </div>
 
@@ -146,43 +141,17 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-4">
-            <label className="flex items-center justify-between cursor-pointer">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-300">Sound Effects</p>
                 <p className="text-sm text-slate-400 mt-1">
                   Play sounds during training sessions
                 </p>
               </div>
-              <input
-                type="checkbox"
+              <Toggle
                 checked={settings.soundEffects}
-                onChange={(e) => setSettings({ ...settings, soundEffects: e.target.checked })}
-                className="w-5 h-5 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500"
+                onCheckedChange={(checked) => setSettings({ ...settings, soundEffects: checked })}
               />
-            </label>
-          </div>
-        </div>
-
-        {/* Language Section */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-6 mb-6">
-          <div className="flex items-center mb-6">
-            <Globe className="w-5 h-5 text-cyan-400 mr-2" />
-            <h2 className="text-xl font-semibold text-white">Language & Region</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Language
-              </label>
-              <select
-                value={settings.language}
-                onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              >
-                <option value="en">English</option>
-                <option value="es">Español</option>
-              </select>
             </div>
           </div>
         </div>

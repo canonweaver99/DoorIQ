@@ -39,6 +39,13 @@ export const metadata: Metadata = {
       { url: '/dooriq-key.png', sizes: '180x180', type: 'image/png' },
     ],
     shortcut: '/dooriq-key.png',
+    other: [
+      {
+        rel: 'icon',
+        type: 'image/png',
+        url: '/dooriq-key.png',
+      },
+    ],
   },
   viewport: {
     width: 'device-width',

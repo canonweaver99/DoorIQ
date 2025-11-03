@@ -42,6 +42,7 @@ import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/logger'
 import { Database } from '@/lib/supabase/database.types'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
+import { useSubscription } from '@/hooks/useSubscription'
 
 type User = Database['public']['Tables']['users']['Row']
 type UserRole = User['role']
@@ -108,6 +109,8 @@ function HeaderContent() {
   const profileAvatar = (user as any)?.avatar_url || authMeta?.avatar_url || null
   const userId = user?.id || authMeta?.id || null
   const { unreadCount } = useUnreadMessages(userId)
+  const subscription = useSubscription()
+  const hasActiveSubscription = subscription.hasActiveSubscription
 
   useEffect(() => {
     setPortalReady(true)
@@ -179,7 +182,7 @@ function HeaderContent() {
           setUserCredits(5)
         }
 
-        // Check if user is new (created within last 48 hours) and show credits tooltip
+        // Check if user is new (created within last 48 hours) or first time sign in and show credits tooltip
         if (userData.created_at) {
           const createdAt = new Date(userData.created_at)
           const now = new Date()
@@ -188,11 +191,19 @@ function HeaderContent() {
           const tooltipDismissed = typeof window !== 'undefined' 
             ? localStorage.getItem('credits-tooltip-dismissed') === 'true'
             : false
+          const hasSeenTooltip = typeof window !== 'undefined'
+            ? localStorage.getItem(`credits-tooltip-seen-${user.id}`) === 'true'
+            : false
           
-          if (isNewUser && !tooltipDismissed) {
+          // Show for new users or first time sign in (if they haven't seen it before)
+          if ((isNewUser || !hasSeenTooltip) && !tooltipDismissed) {
             // Small delay to ensure DOM is ready
             setTimeout(() => {
               setShowCreditsTooltip(true)
+              // Mark as seen for this user
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(`credits-tooltip-seen-${user.id}`, 'true')
+              }
             }, 1000)
           }
         }
@@ -297,7 +308,7 @@ function HeaderContent() {
         items: [
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
           { name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 },
-          { name: 'Playbooks', href: '/dashboard?tab=learning', icon: NotebookPen },
+          { name: 'Playbooks', href: hasActiveSubscription ? '/dashboard?tab=learning' : '/pricing', icon: NotebookPen },
           { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
         ],
@@ -306,7 +317,7 @@ function HeaderContent() {
         title: 'Training',
         items: [
           { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
-          { name: 'Upload Sales Call', href: '/trainer/upload', icon: Upload },
+          { name: 'Upload Sales Call', href: hasActiveSubscription ? '/trainer/upload' : '/pricing', icon: Upload },
           { name: 'Session History', href: '/sessions', icon: ClipboardList },
           ...(user?.team_id ? [{ name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 }] : []),
         ],
@@ -314,12 +325,12 @@ function HeaderContent() {
       {
         title: 'Support & Account',
         items: [
-          { 
+          ...(user?.team_id ? [{
             name: 'Messages', 
             href: isManagerLike ? '/manager?tab=messages' : '/messages', 
             icon: MessageCircle,
             badge: unreadCount > 0 ? String(unreadCount) : undefined
-          },
+          }] : []),
           { name: 'Documentation', href: '/documentation', icon: BookOpen },
           { name: 'Help Center', href: '/support', icon: HelpCircle },
           { name: 'Notifications', href: '/notifications', icon: Bell },
@@ -333,7 +344,7 @@ function HeaderContent() {
     // AI Insights removed per user request
 
     return sections
-  }, [isManagerLike, unreadCount])
+  }, [isManagerLike, unreadCount, hasActiveSubscription, user?.team_id])
 
   const quickActions = [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },

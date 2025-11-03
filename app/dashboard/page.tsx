@@ -233,6 +233,14 @@ function DashboardPageContent() {
     })
   }
 
+  const handleTabClick = (tabId: string) => {
+    if ((tabId === 'learning' || tabId === 'upload') && !isPaidUser) {
+      window.location.href = '/pricing'
+      return
+    }
+    setActiveTab(tabId)
+  }
+
   const tabs = [
     { id: 'overview', label: 'Dashboard', icon: Home, locked: false },
     { id: 'learning', label: 'Learning', icon: BookOpen, locked: !isPaidUser },
@@ -253,7 +261,8 @@ function DashboardPageContent() {
       glowColor: 'rgba(59, 130, 246, 0.2)',
       valueClass: 'text-[26px]'
     },
-    { 
+    // Only show Rank card for team plan users
+    ...(hasTeam ? [{
       label: 'Rank', 
       value: `#${realStats.teamRank}`, 
       icon: Award,
@@ -261,7 +270,7 @@ function DashboardPageContent() {
       iconBgColor: 'rgba(245, 158, 11, 0.2)',
       glowColor: 'rgba(245, 158, 11, 0.2)',
       valueClass: 'text-2xl'
-    },
+    }] : []),
     { 
       label: 'Earnings', 
       value: `$${realStats.totalEarnings.toFixed(0)}`, 
@@ -341,7 +350,7 @@ function DashboardPageContent() {
         </motion.div>
 
         {/* Tab Navigation */}
-        <TabNavigation tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+        <TabNavigation tabs={tabs} activeTab={activeTab} onChange={handleTabClick} />
 
         {/* Tab Content with Smooth Transitions */}
         <AnimatePresence mode="wait">
@@ -383,6 +392,7 @@ function OverviewTabContent() {
   const [recentSessions, setRecentSessions] = useState<any[]>([])
   const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([])
   const [notifications, setNotifications] = useState<any[]>([])
+  const [insightsData, setInsightsData] = useState<any[]>([])
   const [performanceData, setPerformanceData] = useState<{
     day: Array<{ day: string; overall: number }>
     week: Array<{ day: string; overall: number }>
@@ -409,7 +419,60 @@ function OverviewTabContent() {
   // Fetch real data on mount
   useEffect(() => {
     fetchOverviewData()
+    fetchAIInsights()
   }, [])
+
+  const fetchAIInsights = async () => {
+    try {
+      const response = await fetch('/api/insights/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        // Map icon strings to icon components
+        const iconMap: Record<string, any> = {
+          'trending-up': TrendingUp,
+          'target': Target,
+          'clock': Clock,
+          'award': Award,
+          'zap': Zap,
+          'alert-circle': MessageSquare
+        }
+        
+        const mappedInsights = data.insights.map((insight: any) => ({
+          ...insight,
+          icon: iconMap[insight.icon] || TrendingUp
+        }))
+        
+        setInsightsData(mappedInsights)
+      } else {
+        // Fallback to default insights
+        setInsightsData([
+          {
+            title: 'Analyzing your data',
+            message: 'Complete more sessions to see personalized insights',
+            icon: TrendingUp,
+            iconColor: '#10b981',
+            iconBgColor: 'rgba(16, 185, 129, 0.2)'
+          }
+        ])
+      }
+    } catch (error) {
+      console.error('Error fetching insights:', error)
+      // Fallback to default insights
+      setInsightsData([
+        {
+          title: 'Analyzing your data',
+          message: 'Complete more sessions to see personalized insights',
+          icon: TrendingUp,
+          iconColor: '#10b981',
+          iconBgColor: 'rgba(16, 185, 129, 0.2)'
+        }
+      ])
+    }
+  }
   
   const fetchOverviewData = async () => {
     const supabase = createClient()
@@ -809,40 +872,6 @@ function OverviewTabContent() {
 
   const currentData = performanceData[chartTimeRange]
   const currentEarnings = earningsData[earningsTimeRange]
-
-  // Insights and notifications data
-  const insightsData = [
-    {
-      title: 'Rapport building',
-      message: 'improvement this week',
-      percentage: '+23%',
-      icon: TrendingUp,
-      iconColor: '#10b981',
-      iconBgColor: 'rgba(16, 185, 129, 0.2)'
-    },
-    {
-      title: 'Discovery questions',
-      message: 'Ask follow-up questions to uncover deeper pain points',
-      icon: Target,
-      iconColor: '#3b82f6',
-      iconBgColor: 'rgba(59, 130, 246, 0.2)'
-    },
-    {
-      title: 'Peak performance',
-      message: 'Sessions between 2-4 PM show highest scores',
-      icon: Clock,
-      iconColor: '#f59e0b',
-      iconBgColor: 'rgba(245, 158, 11, 0.2)'
-    },
-    {
-      title: 'Closing techniques',
-      message: 'Assumptive language increases close rate',
-      percentage: '+18%',
-      icon: Award,
-      iconColor: '#a855f7',
-      iconBgColor: 'rgba(168, 85, 247, 0.2)'
-    },
-  ]
 
   // Use real notifications if available, otherwise show empty state
   const notificationsData = notifications.length > 0 ? notifications : []
