@@ -43,8 +43,8 @@ export const metadata: Metadata = {
   viewport: {
     width: 'device-width',
     initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+    maximumScale: 5,
+    userScalable: true,
   },
   openGraph: {
     title: "DoorIQ - Practice Your Sales Pitch",
@@ -82,8 +82,8 @@ export default function RootLayout({
             <Suspense fallback={<div style={{ height: 64 }} />}>
               <Header />
             </Suspense>
-            {/* Spacer to avoid content under fixed nav (approx 64px for new header) */}
-            <div style={{ height: 64 }} />
+            {/* Spacer to avoid content under fixed nav (responsive height) */}
+            <div className="h-16 sm:h-16 md:h-16" />
             <div className="min-h-[calc(100svh-64px)] flex flex-col">
               <div className="flex-1">
                 {children}
