@@ -109,10 +109,7 @@ export async function GET(request: Request) {
       console.log('🔄 Redirecting verified user to:', redirectPath)
       return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
     }
-      }
-      
-      return NextResponse.redirect(new URL('/auth/login?error=Unable to verify email. Please try signing in.', requestUrl.origin))
-    }
+  }
 
     if (data.user) {
       console.log('✅ Email verified and user authenticated:', data.user.email)
