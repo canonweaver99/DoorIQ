@@ -45,13 +45,13 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial; delay: string }) => (
   <a 
     href="/testimonials"
-    className={`animate-testimonial ${delay} flex items-start gap-2 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 p-2.5 w-56 hover:bg-white/15 transition-all duration-300 hover:border-purple-500/40 hover:shadow-[0_8px_32px_rgba(168,85,247,0.3)] cursor-pointer block`}
+    className={`animate-testimonial ${delay} flex items-start gap-2 xl:gap-3 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 p-2.5 xl:p-4 2xl:p-5 w-56 xl:w-72 2xl:w-80 hover:bg-white/15 transition-all duration-300 hover:border-purple-500/40 hover:shadow-[0_8px_32px_rgba(168,85,247,0.3)] cursor-pointer`}
   >
-    <img src={testimonial.avatarSrc} className="h-9 w-9 object-cover rounded-lg ring-2 ring-white/20" alt="avatar" />
-    <div className="text-xs leading-tight">
-      <p className="flex items-center gap-1 font-bold text-white">{testimonial.name}</p>
-      <p className="text-slate-300 text-xs font-medium">{testimonial.handle}</p>
-      <p className="mt-0.5 text-white font-medium leading-snug">&ldquo;{testimonial.text}&rdquo;</p>
+    <img src={testimonial.avatarSrc} className="h-9 w-9 xl:h-12 xl:w-12 2xl:h-14 2xl:w-14 object-cover rounded-lg ring-2 ring-white/20 flex-shrink-0" alt="avatar" />
+    <div className="text-xs xl:text-sm 2xl:text-base leading-tight xl:leading-relaxed">
+      <p className="flex items-center gap-1 font-bold text-white xl:text-base 2xl:text-lg">{testimonial.name}</p>
+      <p className="text-slate-300 text-xs xl:text-sm 2xl:text-base font-medium">{testimonial.handle}</p>
+      <p className="mt-0.5 xl:mt-1 text-white font-medium leading-snug xl:leading-relaxed 2xl:leading-relaxed">&ldquo;{testimonial.text}&rdquo;</p>
     </div>
   </a>
 );
@@ -195,12 +195,17 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
             <div className="absolute inset-0 bg-gradient-to-t from-[#07030f] via-transparent to-transparent"></div>
           </div>
           {testimonials.length > 0 && (
-            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 px-2 w-full justify-center z-10">
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 xl:gap-3 2xl:gap-4 px-2 xl:px-4 w-full justify-center z-10 max-w-[95vw] xl:max-w-full">
               <TestimonialCard testimonial={testimonials[0]} delay="animate-delay-1000" />
               {testimonials[1] && <TestimonialCard testimonial={testimonials[1]} delay="animate-delay-1200" />}
               {testimonials[2] && (
                 <div className="hidden xl:flex">
                   <TestimonialCard testimonial={testimonials[2]} delay="animate-delay-1400" />
+                </div>
+              )}
+              {testimonials[3] && (
+                <div className="hidden 2xl:flex">
+                  <TestimonialCard testimonial={testimonials[3]} delay="animate-delay-1600" />
                 </div>
               )}
             </div>

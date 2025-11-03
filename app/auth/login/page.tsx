@@ -25,6 +25,12 @@ const testimonials: Testimonial[] = [
     handle: '@davidclosing',
     text: 'The leaderboard keeps me motivated. I went from struggling to top performer in my team!',
   },
+  {
+    avatarSrc: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
+    name: 'James Wilson',
+    handle: '@jamessells',
+    text: 'The AI homeowners feel so real. My objection handling skills have improved dramatically!',
+  },
 ]
 
 function LoginForm() {

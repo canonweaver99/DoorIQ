@@ -93,7 +93,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20 xl:px-24 2xl:px-32">
             {/* Split Screen: Copy Left, Live Session Right */}
-            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] xl:[grid-template-columns:45%_55%] gap-12 xl:gap-16 items-center pt-8 xl:pt-12">
+            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] xl:[grid-template-columns:52%_48%] 2xl:[grid-template-columns:58%_42%] gap-12 xl:gap-16 items-center pt-8 xl:pt-12">
               {/* Left Side - Copy */}
               <motion.div 
                 className="space-y-5 text-center flex flex-col items-center justify-center" 
@@ -228,15 +228,17 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 </motion.div>
               </motion.div>
 
-              {/* Right Side - Live Session (Expanded) */}
+              {/* Right Side - Live Session (Reduced size on large monitors) */}
               <motion.div 
-                className="w-full h-full mt-3" 
+                className="w-full h-full mt-3 xl:max-w-[450px] 2xl:max-w-[400px] xl:mx-auto" 
                 style={{ paddingLeft: '40px' }}
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               >
-                <LiveSessionPreview />
+                <div className="xl:scale-[0.85] 2xl:scale-[0.7] xl:origin-center">
+                  <LiveSessionPreview />
+                </div>
               </motion.div>
             </div>
           </div>
@@ -274,7 +276,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mb-8 sm:mb-12"
             >
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap lg:justify-center gap-2 sm:gap-3 max-w-5xl mx-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap lg:justify-center gap-3 sm:gap-3 lg:gap-4 max-w-6xl mx-auto px-4">
                 {/* Mobile-only features (most important) - shown on mobile, hidden on larger screens */}
                 {[
                   { feature: "AI-Powered Roleplay", isMobileOnly: true },
@@ -321,7 +323,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap overflow-hidden text-ellipsis hidden sm:block"
+                    className="px-4 sm:px-5 lg:px-6 xl:px-7 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap flex-shrink-0 hidden sm:block"
                   >
                     {feature}
                   </motion.div>

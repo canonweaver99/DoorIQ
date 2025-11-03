@@ -219,10 +219,9 @@ function PricingPageContent() {
       period: "month",
       features: [
         "Access to ALL AI training agents",
-        "10 practice call credits/month",
+        "5 practice calls",
         "Full analytics for your sessions",
         "Basic objection handling scenarios",
-        "Email support",
         "Dashboard overview only",
       ],
       description: "Perfect for getting started",
