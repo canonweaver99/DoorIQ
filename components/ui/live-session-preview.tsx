@@ -105,7 +105,7 @@ export function LiveSessionPreview() {
       {/* Main Content - 3-Way Split Layout */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Section: 50/50 Split - Austin Left, Sales Rep Right */}
-        <div className="grid grid-cols-2 gap-0" style={{ minHeight: '240px' }}>
+        <div className="grid grid-cols-2 gap-0 xl:min-h-[320px] 2xl:min-h-[400px]" style={{ minHeight: '240px' }}>
           {/* Left: Agent (Austin) */}
           <div className="flex flex-col items-center justify-end p-0 border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent relative">
             {/* Austin Image - Fill entire rectangle */}
@@ -178,8 +178,8 @@ export function LiveSessionPreview() {
         {/* Divider line - sits right below the text labels */}
         <div className="border-b border-purple-500/20 mt-0" />
 
-        {/* Bottom Section: Transcript (Full Width) - Fixed Height (label removed) */}
-        <div className="flex flex-col relative" style={{ height: '280px', minHeight: '280px', maxHeight: '280px', marginTop: '24px' }}>
+        {/* Bottom Section: Transcript (Full Width) - Reduced height on large monitors */}
+        <div className="flex flex-col relative h-[280px] xl:h-[200px] 2xl:h-[180px] mt-6">
           
           {/* Bottom fade gradient overlay */}
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
@@ -188,8 +188,7 @@ export function LiveSessionPreview() {
             ref={transcriptRef}
             className="flex-1 overflow-y-auto px-4 pb-12 space-y-1.5 custom-scrollbar"
             style={{
-              scrollBehavior: 'smooth',
-              height: '280px'
+              scrollBehavior: 'smooth'
             }}
           >
             {fullTranscript.slice(0, visibleMessages).map((entry, index) => {

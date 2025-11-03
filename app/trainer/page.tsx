@@ -45,7 +45,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'Think About It Tina': '/Think About It Tina.png',
     'Veteran Victor': '/Veteran Victor Landcape.png',
     'English Second Language Elena': '/agents/elena.png',
-    'Tag Team Tanya & Tom': '/agents/tanya-tom.png',
+    'Tag Team Tanya & Tom': '/tanya and tom.png',
     'Comparing Carl': '/agents/carl.png'
   }
   

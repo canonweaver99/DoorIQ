@@ -533,8 +533,8 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Multiple decision-makers. Practice building consensus.',
       difficulty: 'Hard',
       color: 'tertiary',
-      image: '/agents/tanya-tom.png', // Add image path when available
-      liveSessionImage: '/agents/tanya-tom.png',
+      image: '/Tanya and Tom no backround.png', // Bubble image (no background)
+      liveSessionImage: '/tanya and tom.png', // Live session image
     },
     card: {
       age: 42,
