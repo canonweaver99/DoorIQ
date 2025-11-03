@@ -8,6 +8,12 @@ export async function GET(request: Request) {
   const token_hash = requestUrl.searchParams.get('token_hash')
   const type = requestUrl.searchParams.get('type')
   const checkoutIntent = requestUrl.searchParams.get('checkout')
+  
+  // Check for error parameters in hash or query (Supabase redirects with error params)
+  const hashParams = requestUrl.hash ? new URLSearchParams(requestUrl.hash.substring(1)) : null
+  const errorParam = hashParams?.get('error') || requestUrl.searchParams.get('error')
+  const errorCode = hashParams?.get('error_code') || requestUrl.searchParams.get('error_code')
+  const errorDescription = hashParams?.get('error_description') || requestUrl.searchParams.get('error_description')
 
   console.log('🔗 Auth callback triggered:', {
     code: !!code,
@@ -15,8 +21,19 @@ export async function GET(request: Request) {
     token_hash: !!token_hash,
     type,
     checkoutIntent: !!checkoutIntent,
+    error: errorParam,
+    errorCode,
     origin: requestUrl.origin
   })
+
+  // Handle errors from Supabase redirect
+  if (errorParam) {
+    console.error('❌ Auth error from Supabase:', { error: errorParam, errorCode, errorDescription })
+    if (errorCode === 'otp_expired') {
+      return NextResponse.redirect(new URL('/auth/login?error=Verification link expired. Please request a new verification email.', requestUrl.origin))
+    }
+    return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent(errorDescription || 'Authentication failed. Please try again.')}`, requestUrl.origin))
+  }
 
   const supabase = await createServerSupabaseClient()
 
@@ -27,63 +44,71 @@ export async function GET(request: Request) {
     
     // Try to verify with token_hash first, then token
     const verificationToken = token_hash || token
-    const { data, error } = await supabase.auth.verifyOtp({
-      token_hash: verificationToken,
-      type: 'email'
-    })
+    let verificationData, verificationError
+    
+    if (token_hash) {
+      const result = await supabase.auth.verifyOtp({
+        token_hash: token_hash,
+        type: 'email'
+      })
+      verificationData = result.data
+      verificationError = result.error
+    } else if (token) {
+      const result = await supabase.auth.verifyOtp({
+        token: token,
+        type: 'email'
+      })
+      verificationData = result.data
+      verificationError = result.error
+    }
 
-    if (error) {
-      console.error('❌ Error verifying email token:', error.message)
-      // Fallback: try with token parameter if token_hash failed
-      if (token && !token_hash) {
-        const { data: retryData, error: retryError } = await supabase.auth.verifyOtp({
-          token,
-          type: 'email'
+    if (verificationError) {
+      console.error('❌ Error verifying email token:', verificationError.message)
+      // If token expired, give helpful error
+      if (verificationError.message?.includes('expired') || verificationError.message?.includes('invalid')) {
+        return NextResponse.redirect(new URL('/auth/login?error=Verification link expired or invalid. Please request a new verification email.', requestUrl.origin))
+      }
+      return NextResponse.redirect(new URL('/auth/login?error=Unable to verify email. Please try signing in.', requestUrl.origin))
+    }
+
+    if (verificationData?.user) {
+      console.log('✅ Email verified and user authenticated:', verificationData.user.email)
+
+      // Check if user profile exists in the users table
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', verificationData.user.id)
+        .single()
+
+      // If user doesn't exist in users table, create profile
+      if (!existingUser) {
+        console.log('📝 Creating user profile in database...')
+        const userMetadata = verificationData.user.user_metadata
+        
+        const { error: insertError } = await supabase.from('users').insert({
+          id: verificationData.user.id,
+          email: verificationData.user.email,
+          full_name: userMetadata.full_name || userMetadata.name || verificationData.user.email?.split('@')[0] || 'User',
+          rep_id: `REP-${Date.now().toString().slice(-6)}`,
+          role: 'rep',
+          virtual_earnings: 0
         })
-        
-        if (retryError) {
-          console.error('❌ Error verifying email token (retry):', retryError.message)
-          return NextResponse.redirect(new URL('/auth/login?error=Unable to verify email. Please try signing in.', requestUrl.origin))
+
+        if (insertError) {
+          console.error('❌ Error creating user profile:', insertError.message)
+        } else {
+          console.log('✅ User profile created successfully')
         }
-        
-        if (retryData?.user) {
-          console.log('✅ Email verified and user authenticated:', retryData.user.email)
+      } else {
+        console.log('✅ User profile already exists')
+      }
 
-          // Check if user profile exists in the users table
-          const { data: existingUser } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', retryData.user.id)
-            .single()
-
-          // If user doesn't exist in users table, create profile
-          if (!existingUser) {
-            console.log('📝 Creating user profile in database...')
-            const userMetadata = retryData.user.user_metadata
-            
-            const { error: insertError } = await supabase.from('users').insert({
-              id: retryData.user.id,
-              email: retryData.user.email,
-              full_name: userMetadata.full_name || userMetadata.name || retryData.user.email?.split('@')[0] || 'User',
-              rep_id: `REP-${Date.now().toString().slice(-6)}`,
-              role: 'rep',
-              virtual_earnings: 0
-            })
-
-            if (insertError) {
-              console.error('❌ Error creating user profile:', insertError.message)
-            } else {
-              console.log('✅ User profile created successfully')
-            }
-          } else {
-            console.log('✅ User profile already exists')
-          }
-
-          // Redirect new users to dashboard (they'll be fully logged in)
-          const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
-          console.log('🔄 Redirecting verified user to:', redirectPath)
-          return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
-        }
+      // Redirect new users to dashboard (they'll be fully logged in)
+      const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
+      console.log('🔄 Redirecting verified user to:', redirectPath)
+      return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
+    }
       }
       
       return NextResponse.redirect(new URL('/auth/login?error=Unable to verify email. Please try signing in.', requestUrl.origin))
