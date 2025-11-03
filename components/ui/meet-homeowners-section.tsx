@@ -14,15 +14,18 @@ import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 
 export function MeetHomeownersSection() {
   const { ref, controls } = useScrollAnimation(0.2)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(true) // Default to true for faster initial render
   
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640)
     }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    // Check immediately and on mount
+    if (typeof window !== 'undefined') {
+      checkMobile()
+      window.addEventListener('resize', checkMobile)
+      return () => window.removeEventListener('resize', checkMobile)
+    }
   }, [])
   
   // Use the same agents as practice page with cutout bubble images
@@ -71,7 +74,7 @@ export function MeetHomeownersSection() {
               x: {
                 repeat: Infinity,
                 repeatType: "loop",
-                duration: isMobile ? 6 : 50,
+                duration: isMobile ? 5 : 50,
                 ease: "linear"
               }
             }}
