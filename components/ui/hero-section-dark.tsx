@@ -93,7 +93,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20 xl:px-24 2xl:px-32">
             {/* Split Screen: Copy Left, Live Session Right */}
-            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] xl:[grid-template-columns:52%_48%] 2xl:[grid-template-columns:58%_42%] gap-12 xl:gap-16 items-center pt-8 xl:pt-12">
+            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] xl:[grid-template-columns:50%_50%] 2xl:[grid-template-columns:50%_50%] gap-12 xl:gap-16 items-center pt-8 xl:pt-12">
               {/* Left Side - Copy */}
               <motion.div 
                 className="space-y-5 text-center flex flex-col items-center justify-center" 
@@ -228,17 +228,15 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 </motion.div>
               </motion.div>
 
-              {/* Right Side - Live Session (Reduced size on large monitors) */}
+              {/* Right Side - Live Session (Equal width on large monitors) */}
               <motion.div 
-                className="w-full h-full mt-3 xl:max-w-[450px] 2xl:max-w-[400px] xl:mx-auto" 
+                className="w-full h-full mt-3" 
                 style={{ paddingLeft: '40px' }}
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               >
-                <div className="xl:scale-[0.85] 2xl:scale-[0.7] xl:origin-center">
-                  <LiveSessionPreview />
-                </div>
+                <LiveSessionPreview />
               </motion.div>
             </div>
           </div>
