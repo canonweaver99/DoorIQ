@@ -48,6 +48,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    // Grant 5 free credits to new free users
+    const { error: creditsError } = await admin
+      .from('user_session_limits')
+      .insert({
+        user_id: id,
+        sessions_this_month: 0,
+        sessions_limit: 5,
+        last_reset_date: new Date().toISOString().split('T')[0]
+      })
+
+    if (creditsError) {
+      console.error('⚠️ Failed to create credits record:', creditsError)
+      // Don't fail the request if credits creation fails - user was created successfully
+    } else {
+      console.log('✅ Granted 5 free credits to new user')
+    }
+
     console.log('✅ User profile created successfully')
     return NextResponse.json({ ok: true })
   } catch (error: any) {

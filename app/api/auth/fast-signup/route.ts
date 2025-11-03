@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
  * Send confirmation email to newly created user
  * Uses Supabase admin API to resend confirmation email
  */
-async function sendConfirmationEmail(supabase: any, email: string, userId: string) {
+async function sendConfirmationEmail(supabase: any, email: string, userId: string, redirectUrl?: string) {
   try {
     console.log(`📧 Attempting to send confirmation email to ${email}...`)
     
@@ -16,11 +16,14 @@ async function sendConfirmationEmail(supabase: any, email: string, userId: strin
                     process.env.NEXT_PUBLIC_APP_URL || 
                     'https://dooriq.ai'
     
+    // Use provided redirect URL or default to callback
+    const finalRedirectTo = redirectUrl || `${siteUrl}/auth/callback`
+    
     const { data: linkData, error: linkError } = await (supabase as any).auth.admin.generateLink({
       type: 'signup',
       email: email.toLowerCase(),
       options: {
-        redirectTo: `${siteUrl}/auth/callback`
+        redirectTo: finalRedirectTo
       }
     })
 
@@ -134,7 +137,7 @@ async function sendConfirmationEmail(supabase: any, email: string, userId: strin
 
 export async function POST(req: Request) {
   try {
-    const { email, password, full_name } = await req.json()
+    const { email, password, full_name, redirectUrl } = await req.json()
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Missing email or password' }, { status: 400 })
@@ -189,7 +192,7 @@ export async function POST(req: Request) {
             
             // Send confirmation email for retry
             if (retryResult.data?.user?.id) {
-              await sendConfirmationEmail(supabase, email, retryResult.data.user.id)
+              await sendConfirmationEmail(supabase, email, retryResult.data.user.id, redirectUrl)
             }
             
             return NextResponse.json({ success: true, userId: retryResult.data?.user?.id || null })
@@ -208,7 +211,7 @@ export async function POST(req: Request) {
 
     // Send confirmation email after successful user creation
     if (data?.user?.id) {
-      await sendConfirmationEmail(supabase, email, data.user.id)
+      await sendConfirmationEmail(supabase, email, data.user.id, redirectUrl)
     }
 
     return NextResponse.json({ success: true, userId: data?.user?.id || null })

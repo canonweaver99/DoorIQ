@@ -48,11 +48,16 @@ function SignUpForm() {
     try {
       const supabase = createClient()
       
+      // Capture current page URL for redirect after email confirmation
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard'
+      const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
+      const redirectUrl = `${origin}/auth/callback?next=${encodeURIComponent(currentPath)}`
+      
       // Step 1: Create user via server (requires email confirmation)
       const adminResp = await fetch('/api/auth/fast-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name: fullName })
+        body: JSON.stringify({ email, password, full_name: fullName, redirectUrl })
       })
       const adminJson = await adminResp.json()
       if (!adminResp.ok) {

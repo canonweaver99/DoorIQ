@@ -15,6 +15,8 @@ import { logger } from '@/lib/logger'
 import { PaywallModal } from '@/components/subscription'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { LastCreditWarningModal } from '@/components/ui/LastCreditWarningModal'
+import { OutOfCreditsModal } from '@/components/ui/OutOfCreditsModal'
 
 interface Agent {
   id: string
@@ -83,6 +85,8 @@ function TrainerPageContent() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
+  const [showOutOfCredits, setShowOutOfCredits] = useState(false)
   
   // Video recording temporarily disabled - archived for future implementation
   // const { isRecording: isVideoRecording, startRecording: startDualCameraRecording, stopRecording: stopDualCameraRecording } = useDualCameraRecording(sessionId)
@@ -206,7 +210,7 @@ function TrainerPageContent() {
     }
   }
 
-  const startSession = async () => {
+  const startSession = async (skipCreditCheck = false) => {
     if (!selectedAgent?.eleven_agent_id) {
       alert('Please select an agent first')
       return
@@ -224,9 +228,16 @@ function TrainerPageContent() {
           return
         }
 
-      if (!subscription.hasActiveSubscription && !sessionLimit.loading) {
+      if (!subscription.hasActiveSubscription && !sessionLimit.loading && !skipCreditCheck) {
         if (!sessionLimit.canStartSession) {
-          setShowPaywall(true)
+          setShowOutOfCredits(true)
+          setLoading(false)
+          return
+        }
+        
+        // Check if this is their last credit
+        if (sessionLimit.sessionsRemaining === 1) {
+          setShowLastCreditWarning(true)
           setLoading(false)
           return
         }
@@ -740,6 +751,21 @@ function TrainerPageContent() {
         onClose={() => setShowPaywall(false)}
         reason="session_limit"
       />
+      <LastCreditWarningModal 
+        isOpen={showLastCreditWarning} 
+        onClose={() => setShowLastCreditWarning(false)}
+        onContinue={() => {
+          setShowLastCreditWarning(false)
+          // Restart session after modal closes, skipping credit check
+          setTimeout(() => {
+            startSession(true)
+          }, 100)
+        }}
+      />
+      <OutOfCreditsModal 
+        isOpen={showOutOfCredits} 
+        onClose={() => setShowOutOfCredits(false)}
+      />
 
       {/* Hero-Style Session Container */}
       <div className="relative w-full max-w-7xl h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)] flex flex-col bg-black/40 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-purple-500/20 overflow-hidden">
@@ -811,7 +837,7 @@ function TrainerPageContent() {
                     {!sessionActive && !loading && selectedAgent && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                         <button
-                          onClick={startSession}
+                          onClick={() => startSession()}
                           className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-semibold text-sm sm:text-base lg:text-lg rounded-lg sm:rounded-xl transition-all hover:scale-105 shadow-lg hover:shadow-emerald-500/50 touch-target"
                         >
                           <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>

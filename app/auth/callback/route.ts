@@ -101,6 +101,22 @@ export async function GET(request: Request) {
           console.error('❌ Error creating user profile:', insertError.message)
         } else {
           console.log('✅ User profile created successfully')
+          
+          // Grant 5 free credits to new free users
+          const { error: creditsError } = await supabase
+            .from('user_session_limits')
+            .insert({
+              user_id: verificationData.user.id,
+              sessions_this_month: 0,
+              sessions_limit: 5,
+              last_reset_date: new Date().toISOString().split('T')[0]
+            })
+
+          if (creditsError) {
+            console.error('⚠️ Failed to create credits record:', creditsError)
+          } else {
+            console.log('✅ Granted 5 free credits to new user')
+          }
         }
       } else {
         console.log('✅ User profile already exists')
@@ -162,6 +178,22 @@ export async function GET(request: Request) {
           console.error('❌ Error creating user profile:', insertError.message)
         } else {
           console.log('✅ User profile created successfully')
+          
+          // Grant 5 free credits to new free users
+          const { error: creditsError } = await supabase
+            .from('user_session_limits')
+            .insert({
+              user_id: data.user.id,
+              sessions_this_month: 0,
+              sessions_limit: 5,
+              last_reset_date: new Date().toISOString().split('T')[0]
+            })
+
+          if (creditsError) {
+            console.error('⚠️ Failed to create credits record:', creditsError)
+          } else {
+            console.log('✅ Granted 5 free credits to new user')
+          }
         }
       } else {
         console.log('✅ User profile already exists')

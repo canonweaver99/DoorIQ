@@ -23,9 +23,18 @@ export function SignUpClient() {
 
     try {
       const supabase = createClient()
+      
+      // Capture current page URL for redirect after email confirmation
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard'
+      const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
+      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(currentPath)}`
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: redirectTo,
+        },
       })
 
       if (authError) throw authError

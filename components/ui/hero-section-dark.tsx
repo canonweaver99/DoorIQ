@@ -91,9 +91,9 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         {/* Hero Section - Full Viewport Height */}
         <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-start pt-0">
           <RetroGrid {...gridOptions} />
-          <div className="max-w-[1400px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20">
+          <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20 xl:px-24 2xl:px-32">
             {/* Split Screen: Copy Left, Live Session Right */}
-            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] gap-12 items-center pt-8">
+            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] xl:[grid-template-columns:45%_55%] gap-12 xl:gap-16 items-center pt-8 xl:pt-12">
               {/* Left Side - Copy */}
               <motion.div 
                 className="space-y-5 text-center flex flex-col items-center justify-center" 
@@ -116,7 +116,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   </h1>
                 </motion.a>
                 <motion.h2 
-                  className="text-5xl sm:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+                  className="text-5xl sm:text-5xl lg:text-[56px] xl:text-[64px] 2xl:text-[72px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
@@ -188,7 +188,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   )}
                 </motion.div>
                 <motion.p 
-                  className="text-white text-lg"
+                  className="text-white text-lg xl:text-xl 2xl:text-2xl"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.6 }}
@@ -249,7 +249,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
 
         {/* Dashboard Section - Below the Fold */}
         <section className="relative w-full max-w-full mx-auto z-1 py-16">
-          <div className="max-w-[1400px] mx-auto px-1.5 sm:px-4 lg:px-20">
+          <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto px-1.5 sm:px-4 lg:px-20 xl:px-24 2xl:px-32">
             <motion.div 
               className="text-center mb-8 sm:mb-12"
               initial={{ opacity: 0, y: 50 }}

@@ -108,7 +108,7 @@ function DashboardPageContent() {
   const subscription = useSubscription()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeTab, setActiveTab] = useState('overview')
-  const [userName, setUserName] = useState('Alex')
+  const [userName, setUserName] = useState('')
   const [realStats, setRealStats] = useState({
     sessionsThisWeek: 0,
     totalSessions: 0,
@@ -164,8 +164,14 @@ function DashboardPageContent() {
     
     if (userData?.full_name) {
       // Capitalize first name properly
-      const firstName = userData.full_name.split(' ')[0] || 'Alex'
+      const firstName = userData.full_name.split(' ')[0] || userData.email?.split('@')[0] || 'User'
       setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+    } else if (userData?.email) {
+      // Use email username as fallback
+      const emailName = userData.email.split('@')[0] || 'User'
+      setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
+    } else {
+      setUserName('User')
     }
     
     // Get user's team_id
@@ -377,6 +383,24 @@ function OverviewTabContent() {
   const [recentSessions, setRecentSessions] = useState<any[]>([])
   const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([])
   const [notifications, setNotifications] = useState<any[]>([])
+  const [performanceData, setPerformanceData] = useState<{
+    day: Array<{ day: string; overall: number }>
+    week: Array<{ day: string; overall: number }>
+    month: Array<{ day: string; overall: number }>
+  }>({
+    day: [],
+    week: [],
+    month: []
+  })
+  const [earningsData, setEarningsData] = useState<{
+    day: Array<{ day: string; earnings: number }>
+    week: Array<{ day: string; earnings: number }>
+    month: Array<{ day: string; earnings: number }>
+  }>({
+    day: [],
+    week: [],
+    month: []
+  })
   const chartRef = useRef<HTMLDivElement>(null)
   const earningsRef = useRef<HTMLDivElement>(null)
   const isChartInView = useInView(chartRef, { once: true, amount: 0.3 })
@@ -393,10 +417,10 @@ function OverviewTabContent() {
     
     if (!user) return
     
-    // Get ALL user sessions for calculating averages (not just recent 4)
+    // Get ALL user sessions for calculating averages and trends (with dates and earnings)
     const { data: allSessions } = await supabase
       .from('live_sessions')
-      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score')
+      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, virtual_earnings')
       .eq('user_id', user.id)
       .not('overall_score', 'is', null)
     
@@ -606,58 +630,169 @@ function OverviewTabContent() {
         }
       ])
     }
-  }
 
-  const performanceData = {
-    day: [
-      { day: '6am', overall: 0 },
-      { day: '9am', overall: 0 },
-      { day: '12pm', overall: 75 },
-      { day: '3pm', overall: 82 },
-      { day: '6pm', overall: 80 },
-      { day: '9pm', overall: 0 },
-    ],
-    week: [
-      { day: 'Mon', overall: 75 },
-      { day: 'Tue', overall: 78 },
-      { day: 'Wed', overall: 76 },
-      { day: 'Thu', overall: 82 },
-      { day: 'Fri', overall: 80 },
-      { day: 'Sat', overall: 85 },
-      { day: 'Sun', overall: 83 },
-    ],
-    month: [
-      { day: 'Week 1', overall: 72 },
-      { day: 'Week 2', overall: 78 },
-      { day: 'Week 3', overall: 81 },
-      { day: 'Week 4', overall: 85 },
-    ],
-  }
-
-  const earningsData = {
-    day: [
-      { day: '6am', earnings: 0 },
-      { day: '9am', earnings: 0 },
-      { day: '12pm', earnings: 89 },
-      { day: '3pm', earnings: 142 },
-      { day: '6pm', earnings: 93 },
-      { day: '9pm', earnings: 0 },
-    ],
-    week: [
-      { day: 'Mon', earnings: 89 },
-      { day: 'Tue', earnings: 142 },
-      { day: 'Wed', earnings: 93 },
-      { day: 'Thu', earnings: 178 },
-      { day: 'Fri', earnings: 125 },
-      { day: 'Sat', earnings: 156 },
-      { day: 'Sun', earnings: 138 },
-    ],
-    month: [
-      { day: 'Week 1', earnings: 324 },
-      { day: 'Week 2', earnings: 489 },
-      { day: 'Week 3', earnings: 567 },
-      { day: 'Week 4', earnings: 721 },
-    ],
+    // Calculate real performance and earnings trends
+    if (allSessions && allSessions.length > 0) {
+      const now = new Date()
+      const sessionsWithDates = allSessions.filter((s: any) => s.created_at && s.overall_score !== null)
+      
+      // Day trends (today's hours)
+      const dayHours = ['6am', '9am', '12pm', '3pm', '6pm', '9pm']
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const dayData = dayHours.map(hour => {
+        let hourNum = 6
+        if (hour === '9am') hourNum = 9
+        else if (hour === '12pm') hourNum = 12
+        else if (hour === '3pm') hourNum = 15
+        else if (hour === '6pm') hourNum = 18
+        else if (hour === '9pm') hourNum = 21
+        
+        const hourStart = new Date(today)
+        hourStart.setHours(hourNum, 0, 0, 0)
+        const hourEnd = new Date(today)
+        hourEnd.setHours(hourNum + 3, 0, 0, 0)
+        
+        const sessionsInHour = sessionsWithDates.filter((s: any) => {
+          const sessionDate = new Date(s.created_at)
+          return sessionDate >= hourStart && sessionDate < hourEnd
+        })
+        
+        const avg = sessionsInHour.length > 0
+          ? Math.round(sessionsInHour.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessionsInHour.length)
+          : 0
+        
+        return { day: hour, overall: avg }
+      })
+      
+      // Week trends (last 7 days)
+      const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      const weekData = weekDays.map((dayName, idx) => {
+        const dayDate = new Date(now)
+        dayDate.setDate(dayDate.getDate() - (6 - idx))
+        dayDate.setHours(0, 0, 0, 0)
+        const nextDay = new Date(dayDate)
+        nextDay.setDate(nextDay.getDate() + 1)
+        
+        const sessionsInDay = sessionsWithDates.filter((s: any) => {
+          const sessionDate = new Date(s.created_at)
+          return sessionDate >= dayDate && sessionDate < nextDay
+        })
+        
+        const avg = sessionsInDay.length > 0
+          ? Math.round(sessionsInDay.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessionsInDay.length)
+          : 0
+        
+        return { day: dayName, overall: avg }
+      })
+      
+      // Month trends (last 4 weeks)
+      const monthWeeks = []
+      for (let i = 3; i >= 0; i--) {
+        const weekStart = new Date(now)
+        weekStart.setDate(weekStart.getDate() - (i * 7 + 7))
+        weekStart.setHours(0, 0, 0, 0)
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekEnd.getDate() + 7)
+        
+        const sessionsInWeek = sessionsWithDates.filter((s: any) => {
+          const sessionDate = new Date(s.created_at)
+          return sessionDate >= weekStart && sessionDate < weekEnd
+        })
+        
+        const avg = sessionsInWeek.length > 0
+          ? Math.round(sessionsInWeek.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessionsInWeek.length)
+          : 0
+        
+        monthWeeks.push({ day: `Week ${4 - i}`, overall: avg })
+      }
+      
+      // Earnings trends
+      const earningsDayData = dayHours.map(hour => {
+        let hourNum = 6
+        if (hour === '9am') hourNum = 9
+        else if (hour === '12pm') hourNum = 12
+        else if (hour === '3pm') hourNum = 15
+        else if (hour === '6pm') hourNum = 18
+        else if (hour === '9pm') hourNum = 21
+        
+        const hourStart = new Date(today)
+        hourStart.setHours(hourNum, 0, 0, 0)
+        const hourEnd = new Date(today)
+        hourEnd.setHours(hourNum + 3, 0, 0, 0)
+        
+        const sessionsInHour = allSessions.filter((s: any) => {
+          if (!s.created_at || !s.virtual_earnings) return false
+          const sessionDate = new Date(s.created_at)
+          return sessionDate >= hourStart && sessionDate < hourEnd
+        })
+        
+        const total = sessionsInHour.reduce((sum: number, s: any) => sum + (s.virtual_earnings || 0), 0)
+        return { day: hour, earnings: total }
+      })
+      
+      const earningsWeekData = weekDays.map((dayName, idx) => {
+        const dayDate = new Date(now)
+        dayDate.setDate(dayDate.getDate() - (6 - idx))
+        dayDate.setHours(0, 0, 0, 0)
+        const nextDay = new Date(dayDate)
+        nextDay.setDate(nextDay.getDate() + 1)
+        
+        const sessionsInDay = allSessions.filter((s: any) => {
+          if (!s.created_at || !s.virtual_earnings) return false
+          const sessionDate = new Date(s.created_at)
+          return sessionDate >= dayDate && sessionDate < nextDay
+        })
+        
+        const total = sessionsInDay.reduce((sum: number, s: any) => sum + (s.virtual_earnings || 0), 0)
+        return { day: dayName, earnings: total }
+      })
+      
+      const earningsMonthData = []
+      for (let i = 3; i >= 0; i--) {
+        const weekStart = new Date(now)
+        weekStart.setDate(weekStart.getDate() - (i * 7 + 7))
+        weekStart.setHours(0, 0, 0, 0)
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekEnd.getDate() + 7)
+        
+        const sessionsInWeek = allSessions.filter((s: any) => {
+          if (!s.created_at || !s.virtual_earnings) return false
+          const sessionDate = new Date(s.created_at)
+          return sessionDate >= weekStart && sessionDate < weekEnd
+        })
+        
+        const total = sessionsInWeek.reduce((sum: number, s: any) => sum + (s.virtual_earnings || 0), 0)
+        earningsMonthData.push({ day: `Week ${4 - i}`, earnings: total })
+      }
+      
+      setPerformanceData({
+        day: dayData,
+        week: weekData,
+        month: monthWeeks
+      })
+      
+      setEarningsData({
+        day: earningsDayData,
+        week: earningsWeekData,
+        month: earningsMonthData
+      })
+    } else {
+      // Default empty data when no sessions exist
+      const defaultDayHours = ['6am', '9am', '12pm', '3pm', '6pm', '9pm']
+      const defaultWeekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      
+      setPerformanceData({
+        day: defaultDayHours.map((h: string) => ({ day: h, overall: 0 })),
+        week: defaultWeekDays.map((d: string) => ({ day: d, overall: 0 })),
+        month: [{ day: 'Week 1', overall: 0 }, { day: 'Week 2', overall: 0 }, { day: 'Week 3', overall: 0 }, { day: 'Week 4', overall: 0 }]
+      })
+      
+      setEarningsData({
+        day: defaultDayHours.map((h: string) => ({ day: h, earnings: 0 })),
+        week: defaultWeekDays.map((d: string) => ({ day: d, earnings: 0 })),
+        month: [{ day: 'Week 1', earnings: 0 }, { day: 'Week 2', earnings: 0 }, { day: 'Week 3', earnings: 0 }, { day: 'Week 4', earnings: 0 }]
+      })
+    }
   }
 
   const currentData = performanceData[chartTimeRange]
@@ -806,7 +941,7 @@ function OverviewTabContent() {
                 </div>
               )
             })()}
-            <svg className="w-full h-full" viewBox="0 0 850 320">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 900 320" style={{ paddingLeft: '20px' }}>
               <defs>
                 <linearGradient id="chartAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#ec4899" stopOpacity="0.3" />
@@ -836,7 +971,7 @@ function OverviewTabContent() {
                 return (
                   <text
                     key={value}
-                    x="40"
+                    x="50"
                     y={y + 6}
                     fill="#ffffff"
                     fontSize="15"
@@ -1040,7 +1175,7 @@ function OverviewTabContent() {
                 </div>
               )
             })()}
-            <svg className="w-full h-full" viewBox="0 0 850 320">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 900 320" style={{ paddingLeft: '20px' }}>
               <defs>
                 <linearGradient id="earningsAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
@@ -1050,7 +1185,7 @@ function OverviewTabContent() {
 
               {/* Grid lines */}
               {[0, 25, 50, 75, 100].map((percentage) => {
-                const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
+                const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings), 1)
                 const value = (percentage / 100) * maxEarnings
                 const y = 280 - (percentage * 2.8)
                 return percentage !== 0 && percentage !== 100 ? (
@@ -1068,13 +1203,13 @@ function OverviewTabContent() {
 
               {/* Y-axis labels */}
               {[0, 25, 50, 75, 100].map((percentage) => {
-                const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
+                const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings), 1)
                 const value = Math.round((percentage / 100) * maxEarnings)
                 const y = 280 - (percentage * 2.8)
                 return (
                   <text
                     key={percentage}
-                    x="40"
+                    x="50"
                     y={y + 6}
                     fill="#ffffff"
                     fontSize="15"
