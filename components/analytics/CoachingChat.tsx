@@ -303,12 +303,7 @@ export default function CoachingChat({
       }
       setMessages(prev => [...prev, assistantMessage])
 
-      // If in voice mode, speak the response
-      if (mode === 'voice') {
-        setTimeout(async () => {
-          await speakText(answer)
-        }, 100)
-      }
+      // Voice mode is handled automatically by useEffect when messages change
     } catch (error) {
       console.error('Error getting coaching:', error)
       const errorMessage: Message = {
