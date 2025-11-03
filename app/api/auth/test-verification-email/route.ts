@@ -73,7 +73,7 @@ export async function POST(req: Request) {
                   .container { max-width: 600px; margin: 0 auto; padding: 20px; }
                   .header { background: linear-gradient(135deg, #0A0420 0%, #120836 100%); border: 1px solid rgba(168, 85, 247, 0.2); padding: 50px 40px; text-align: center; border-radius: 12px 12px 0 0; }
                   .logo-container { margin-bottom: 20px; }
-                  .logo { max-width: 200px; height: auto; margin: 0 auto; }
+                  .logo { max-width: 180px; height: auto; margin: 0 auto; }
                   .header-text { color: white; font-size: 28px; font-weight: 700; margin: 16px 0 8px 0; letter-spacing: -0.5px; }
                   .header-subtext { color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0; }
                   .content { background: #0A0420; border: 1px solid rgba(168, 85, 247, 0.1); border-top: none; padding: 50px 40px; border-radius: 0 0 12px 12px; }
