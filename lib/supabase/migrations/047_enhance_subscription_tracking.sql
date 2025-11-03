@@ -53,7 +53,7 @@ ON CONFLICT (feature_key) DO NOTHING;
 CREATE TABLE IF NOT EXISTS user_session_limits (
   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   sessions_this_month INTEGER DEFAULT 0,
-  sessions_limit INTEGER DEFAULT 10, -- 10 for free, unlimited (-1) for paid
+  sessions_limit INTEGER DEFAULT 5, -- 5 for free users, 50 for paid users
   last_reset_date DATE DEFAULT CURRENT_DATE,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -132,7 +132,7 @@ BEGIN
 
   -- Get or create limit record
   INSERT INTO user_session_limits (user_id, sessions_this_month, sessions_limit)
-  VALUES (p_user_id, 0, 10)
+  VALUES (p_user_id, 0, 5)
   ON CONFLICT (user_id) DO NOTHING;
 
   SELECT * INTO v_limit_record
@@ -158,7 +158,7 @@ CREATE OR REPLACE FUNCTION increment_user_session_count(p_user_id UUID)
 RETURNS VOID AS $$
 BEGIN
   INSERT INTO user_session_limits (user_id, sessions_this_month, sessions_limit)
-  VALUES (p_user_id, 1, 10)
+  VALUES (p_user_id, 1, 5)
   ON CONFLICT (user_id) 
   DO UPDATE SET 
     sessions_this_month = user_session_limits.sessions_this_month + 1,
@@ -171,18 +171,21 @@ ALTER TABLE subscription_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feature_flags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_session_limits ENABLE ROW LEVEL SECURITY;
 
--- Users can view their own subscription events
+-- Users can view their own subscription events (idempotent - drop if exists)
+DROP POLICY IF EXISTS "Users can view own subscription events" ON subscription_events;
 CREATE POLICY "Users can view own subscription events"
   ON subscription_events FOR SELECT
   USING (auth.uid() = user_id);
 
--- Everyone can view feature flags (they're public)
+-- Everyone can view feature flags (they're public) (idempotent - drop if exists)
+DROP POLICY IF EXISTS "Anyone can view feature flags" ON feature_flags;
 CREATE POLICY "Anyone can view feature flags"
   ON feature_flags FOR SELECT
   TO public
   USING (true);
 
--- Users can view their own session limits
+-- Users can view their own session limits (idempotent - drop if exists)
+DROP POLICY IF EXISTS "Users can view own session limits" ON user_session_limits;
 CREATE POLICY "Users can view own session limits"
   ON user_session_limits FOR SELECT
   USING (auth.uid() = user_id);

@@ -44,9 +44,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'Just Treated Jerry': '/Just Treated Jerry.png',
     'Think About It Tina': '/Think About It Tina.png',
     'Veteran Victor': '/Veteran Victor Landcape.png',
-    'English Second Language Elena': '/agents/elena.png',
-    'Tag Team Tanya & Tom': '/tanya and tom.png',
-    'Comparing Carl': '/agents/carl.png'
+    'Tag Team Tanya & Tom': '/tanya and tom.png'
   }
   
   if (agentImageMap[agent.name]) {
@@ -286,13 +284,14 @@ function TrainerPageContent() {
       setSessionActive(true)
       setLoading(false)
       
-        if (!subscription.hasActiveSubscription) {
-          try {
-            await fetch('/api/session/increment', { method: 'POST' })
-            await sessionLimit.refresh()
-          } catch (error) {
-            logger.error('Error incrementing session count', error)
-          }
+      // Deduct credit for ALL users (free users have 10 credits, paid users have 50 credits/month)
+      try {
+        await fetch('/api/session/increment', { method: 'POST' })
+        await sessionLimit.refresh()
+        // Dispatch event to notify header to refresh credits
+        window.dispatchEvent(new CustomEvent('credits:updated'))
+      } catch (error) {
+        logger.error('Error incrementing session count', error)
       }
 
       durationInterval.current = setInterval(() => {

@@ -140,7 +140,7 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
       // Calculate total available credits
       const monthlyCredits = limitData?.monthly_credits || (hasActiveSubscription ? 50 : null)
       const purchasedCredits = limitData?.purchased_credits || 0
-      const totalLimit = limitData?.sessions_limit || (hasActiveSubscription ? 50 : 10)
+      const totalLimit = limitData?.sessions_limit || (hasActiveSubscription ? 50 : 5)
       const sessionsUsed = limitData?.sessions_this_month || 0
       const sessionsRemaining = Math.max(0, totalLimit - sessionsUsed)
       const canStartSession = sessionsUsed < totalLimit

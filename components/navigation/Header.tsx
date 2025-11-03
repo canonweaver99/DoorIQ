@@ -200,6 +200,29 @@ function HeaderContent() {
     }
     window.addEventListener('avatar:updated', handleAvatarUpdate)
 
+    // Listen for credit updates
+    const handleCreditsUpdate = () => {
+      logger.info('Credits updated, refreshing user credits')
+      // Refresh only credits, not full user data
+      const refreshCredits = async () => {
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        if (authUser) {
+          const { data: limitData } = await supabase
+            .from('user_session_limits')
+            .select('sessions_limit, sessions_this_month')
+            .eq('user_id', authUser.id)
+            .single()
+          
+          if (limitData) {
+            const creditsRemaining = Math.max(0, (limitData.sessions_limit || 0) - (limitData.sessions_this_month || 0))
+            setUserCredits(creditsRemaining)
+          }
+        }
+      }
+      refreshCredits()
+    }
+    window.addEventListener('credits:updated', handleCreditsUpdate)
+
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -213,6 +236,7 @@ function HeaderContent() {
     return () => {
       subscription.unsubscribe()
       window.removeEventListener('avatar:updated', handleAvatarUpdate)
+      window.removeEventListener('credits:updated', handleCreditsUpdate)
     }
   }, [])
 

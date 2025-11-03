@@ -36,7 +36,7 @@ BEGIN
   VALUES (p_user_id, 0, 
     CASE 
       WHEN v_subscription_status IN ('active', 'trialing') THEN 50 
-      ELSE 10 
+      ELSE 5 
     END,
     CASE 
       WHEN v_subscription_status IN ('active', 'trialing') THEN 50 
@@ -56,7 +56,7 @@ BEGIN
       -- Reset monthly credits and reset purchased credits to 0
       UPDATE user_session_limits
       SET sessions_this_month = 0,
-          sessions_limit = COALESCE(monthly_credits, 10) + purchased_credits,
+          sessions_limit = COALESCE(monthly_credits, 5) + purchased_credits,
           purchased_credits = 0, -- Reset purchased credits at start of new month
           last_reset_date = CURRENT_DATE
       WHERE user_id = p_user_id;
@@ -103,7 +103,7 @@ BEGIN
   -- Determine monthly credits based on subscription
   v_monthly_credits := CASE 
     WHEN v_subscription_status IN ('active', 'trialing') THEN 50 
-    ELSE 10 
+    ELSE 5 
   END;
 
   -- Insert or update session count

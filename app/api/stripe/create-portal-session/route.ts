@@ -48,12 +48,27 @@ export async function POST(request: NextRequest) {
       'http://localhost:3000'
 
     // Create portal session
-    const session = await stripe.billingPortal.sessions.create({
-      customer: profile.stripe_customer_id,
-      return_url: `${origin}/billing`
-    })
+    try {
+      const session = await stripe.billingPortal.sessions.create({
+        customer: profile.stripe_customer_id,
+        return_url: `${origin}/billing`
+      })
 
-    return NextResponse.json({ url: session.url })
+      return NextResponse.json({ url: session.url })
+    } catch (portalError: any) {
+      // Check for specific Stripe configuration errors
+      if (portalError?.code === 'resource_missing' || portalError?.message?.includes('configuration')) {
+        console.error('Stripe Billing Portal configuration error:', portalError)
+        return NextResponse.json(
+          { 
+            error: 'Billing portal is not configured. Please configure it in Stripe Dashboard: https://dashboard.stripe.com/test/settings/billing/portal',
+            details: portalError.message
+          },
+          { status: 400 }
+        )
+      }
+      throw portalError
+    }
   } catch (error: any) {
     console.error('Portal session error:', error)
     return NextResponse.json(

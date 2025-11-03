@@ -11,25 +11,8 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user has active subscription (skip increment for premium users)
-    const { data: userData } = await supabase
-      .from('users')
-      .select('subscription_status, trial_ends_at')
-      .eq('id', user.id)
-      .single()
-
-    const status = userData?.subscription_status
-    const isTrialing = status === 'trialing' && userData?.trial_ends_at && new Date(userData.trial_ends_at) > new Date()
-    const hasActiveSubscription = status === 'active' || isTrialing
-
-    if (hasActiveSubscription) {
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Premium user - no limit' 
-      })
-    }
-
-    // Increment session count for free tier users
+    // Increment session count for ALL users (free users have 10 credits, paid users have 50 credits/month)
+    // The increment_user_session_count function handles both cases based on subscription status
     const { error: incrementError } = await supabase.rpc(
       'increment_user_session_count',
       { p_user_id: user.id }
