@@ -407,7 +407,7 @@ function HeaderContent() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="max-w-7xl mx-auto px-0 sm:px-4 lg:px-8">
         <div className="flex items-center justify-center h-16">
           {/* Centered bar */}
           <div className="hidden md:flex items-center space-x-6 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10">
@@ -477,7 +477,7 @@ function HeaderContent() {
           </div>
 
           {/* Mobile header */}
-          <div className="flex md:hidden items-center justify-between w-full">
+          <div className="flex md:hidden items-center justify-between w-full px-4">
             <Link href="/" className="flex items-center">
               <Image 
                 src="/dooriqlogo.png" 
@@ -490,7 +490,7 @@ function HeaderContent() {
             </Link>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-slate-300 hover:text-white p-2"
+              className="text-slate-300 hover:text-white p-2 touch-target"
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -499,7 +499,7 @@ function HeaderContent() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 space-y-2">
+          <div className="md:hidden py-4 space-y-2 px-4">
             {navigation.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)

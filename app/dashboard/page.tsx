@@ -276,7 +276,7 @@ function DashboardPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#0a0a0a] py-2 sm:py-4 lg:py-8 px-2 sm:px-4 lg:px-8">
       <div className="max-w-[1800px] mx-auto">
         {/* Minimalist Header Section */}
         <motion.div
@@ -703,14 +703,14 @@ function OverviewTabContent() {
   return (
     <div className="space-y-6">
       {/* Performance Metrics Cards - Vibrant */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
         {performanceMetrics.map((metric, idx) => (
           <motion.div
             key={metric.id}
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.4, delay: idx * 0.1 }}
-            className="rounded-lg p-4 sm:p-5"
+            className="rounded-lg p-2 sm:p-4 lg:p-5"
             style={{ 
               backgroundColor: metric.bg,
               border: `2px solid ${metric.borderColor}`,
@@ -718,20 +718,20 @@ function OverviewTabContent() {
             }}
           >
             <div>
-              <h3 className={`text-[10px] sm:text-xs font-semibold ${metric.textColor} uppercase tracking-wide mb-2`}>
+              <h3 className={`text-[9px] sm:text-xs font-semibold ${metric.textColor} uppercase tracking-wide mb-1 sm:mb-2`}>
                 {metric.title}
               </h3>
               
-              <div className="text-2xl sm:text-3xl font-bold text-white mb-2 tabular-nums">
+              <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">
                 {metric.value}%
               </div>
               
-              <div className="text-[10px] sm:text-xs text-green-400 font-semibold mb-2 sm:mb-3">
-                {metric.change} from last week
+              <div className="text-[9px] sm:text-[10px] sm:text-xs text-green-400 font-semibold mb-1 sm:mb-2 lg:mb-3">
+                {metric.change}
               </div>
 
-              <div className="pt-2 sm:pt-3" style={{ borderTop: `1px solid ${metric.borderColor}` }}>
-                <p className="text-sm sm:text-[15px] text-slate-300 leading-relaxed">{metric.feedback}</p>
+              <div className="pt-1 sm:pt-2 lg:pt-3 hidden sm:block" style={{ borderTop: `1px solid ${metric.borderColor}` }}>
+                <p className="text-xs sm:text-sm lg:text-[15px] text-slate-300 leading-relaxed">{metric.feedback}</p>
               </div>
             </div>
           </motion.div>

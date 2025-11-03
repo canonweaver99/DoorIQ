@@ -57,7 +57,7 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
         }}
         {...props}
       >
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-0 sm:px-4 lg:px-8">
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 50 },

@@ -90,7 +90,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         {/* Hero Section - Full Viewport Height */}
         <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-start pt-0">
           <RetroGrid {...gridOptions} />
-          <div className="max-w-[1400px] z-10 mx-auto w-full" style={{ paddingLeft: '80px', paddingRight: '80px' }}>
+          <div className="max-w-[1400px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20">
             {/* Split Screen: Copy Left, Live Session Right */}
             <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] gap-12 items-center pt-8">
               {/* Left Side - Copy */}
