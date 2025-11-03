@@ -16,7 +16,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.27,
   },
   'Already Got It Alan': {
-    objectPosition: '60% 46%', // Horizontal position adjusted
+    objectPosition: '60% 56%', // Lowered vertically by 10% (was 46%, now 56%)
     scale: 1.23,
   },
   'No Problem Nancy': {
