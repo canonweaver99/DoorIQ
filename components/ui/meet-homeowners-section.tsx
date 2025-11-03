@@ -14,6 +14,16 @@ import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 
 export function MeetHomeownersSection() {
   const { ref, controls } = useScrollAnimation(0.2)
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
   
   // Use the same agents as practice page with cutout bubble images
   const agentNames: AllowedAgentName[] = ['Austin', 'No Problem Nancy', 'Too Expensive Tim', 'Busy Beth', 'Skeptical Sam', 'Spouse Check Susan']
@@ -61,7 +71,7 @@ export function MeetHomeownersSection() {
               x: {
                 repeat: Infinity,
                 repeatType: "loop",
-                duration: 50,
+                duration: isMobile ? 20 : 50,
                 ease: "linear"
               }
             }}
