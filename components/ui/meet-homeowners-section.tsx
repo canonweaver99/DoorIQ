@@ -169,7 +169,8 @@ export function MeetHomeownersSection() {
                 </Link>
               )
             })}
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
         
         {/* Three Key Benefits - Now Second */}
