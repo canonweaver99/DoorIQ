@@ -6,6 +6,7 @@ import { LiveSessionPreview } from "@/components/ui/live-session-preview"
 import { motion } from "framer-motion"
 import { useScrollAnimation, fadeInUp, fadeInLeft, fadeInRight, fadeInScale } from "@/hooks/useScrollAnimation"
 
+
 interface HeroSectionProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string
   titleHref?: string
@@ -248,7 +249,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
 
         {/* Dashboard Section - Below the Fold */}
         <section className="relative w-full max-w-full mx-auto z-1 py-16">
-          <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-20">
+          <div className="max-w-[1400px] mx-auto px-1.5 sm:px-4 lg:px-20">
             <motion.div 
               className="text-center mb-8 sm:mb-12"
               initial={{ opacity: 0, y: 50 }}
@@ -274,6 +275,29 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
               className="mb-8 sm:mb-12"
             >
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap lg:justify-center gap-2 sm:gap-3 max-w-5xl mx-auto">
+                {/* Mobile-only features (most important) - shown on mobile, hidden on larger screens */}
+                {[
+                  { feature: "AI-Powered Roleplay", isMobileOnly: true },
+                  { feature: "Real-Time Feedback", isMobileOnly: true },
+                  { feature: "Performance Analytics", isMobileOnly: true },
+                  { feature: "Objection Handling", isMobileOnly: true },
+                  { feature: "Team Leaderboards", isMobileOnly: true },
+                  { feature: "Progress Tracking", isMobileOnly: true },
+                  { feature: "Unlimited Practice", isMobileOnly: true },
+                  { feature: "Manager Insights", isMobileOnly: true },
+                ].map((item, index) => (
+                  <motion.div
+                    key={`mobile-${index}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap overflow-hidden text-ellipsis sm:hidden"
+                  >
+                    {item.feature}
+                  </motion.div>
+                ))}
+                {/* Desktop features - hidden on mobile, shown on larger screens */}
                 {[
                   "AI-Powered Roleplay",
                   "Real-Time Feedback",
@@ -297,7 +321,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap overflow-hidden text-ellipsis"
+                    className="px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap overflow-hidden text-ellipsis hidden sm:block"
                   >
                     {feature}
                   </motion.div>
