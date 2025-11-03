@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -88,7 +88,10 @@ export async function GET(request: Request) {
         console.log('📝 Creating user profile in database...')
         const userMetadata = verificationData.user.user_metadata
         
-        const { error: insertError } = await supabase.from('users').insert({
+        // Use service role client to bypass RLS for user creation
+        const serviceSupabase = await createServiceSupabaseClient()
+        
+        const { error: insertError } = await serviceSupabase.from('users').insert({
           id: verificationData.user.id,
           email: verificationData.user.email,
           full_name: userMetadata.full_name || userMetadata.name || verificationData.user.email?.split('@')[0] || 'User',
@@ -98,12 +101,14 @@ export async function GET(request: Request) {
         })
 
         if (insertError) {
-          console.error('❌ Error creating user profile:', insertError.message)
+          console.error('❌ Error creating user profile:', insertError.message, insertError)
+          // Don't fail the flow - user is authenticated even if profile creation fails
+          // They can be created later or via admin
         } else {
           console.log('✅ User profile created successfully')
           
           // Grant 5 free credits to new free users
-          const { error: creditsError } = await supabase
+          const { error: creditsError } = await serviceSupabase
             .from('user_session_limits')
             .insert({
               user_id: verificationData.user.id,
@@ -122,14 +127,12 @@ export async function GET(request: Request) {
         console.log('✅ User profile already exists')
       }
 
-      // Create redirect response with session cookies
-      // IMPORTANT: verifyOtp should have set cookies via setAll callback
-      // We create a fresh client to ensure cookies are properly read
+      // Ensure session is properly set before redirecting
+      // verifyOtp should have set cookies via setAll callback, but we need to verify
       const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
       console.log('🔄 Redirecting verified user to:', redirectPath)
       
       // Create fresh supabase client to verify session was set in cookies
-      // This ensures cookies set by verifyOtp are properly included in response
       const freshSupabase = await createServerSupabaseClient()
       const { data: { session }, error: sessionError } = await freshSupabase.auth.getSession()
       
@@ -137,15 +140,28 @@ export async function GET(request: Request) {
         console.error('❌ Error getting session:', sessionError.message)
       }
       
-      if (!session) {
-        console.error('❌ No session found after verification')
-        if (verificationData.session) {
-          console.warn('⚠️ verifyOtp returned session but not found in cookies')
-          console.warn('⚠️ This suggests cookies may not be set properly - check server logs')
+      // If no session found in cookies, but we have a session from verification, set it explicitly
+      if (!session && verificationData.session) {
+        console.log('⚠️ Session not in cookies, setting it explicitly from verification data')
+        // The session should already be set via verifyOtp, but if not, we'll refresh
+        // to ensure the session is properly established
+        const { data: refreshData, error: refreshError } = await freshSupabase.auth.refreshSession(verificationData.session)
+        if (refreshError) {
+          console.error('❌ Error refreshing session:', refreshError.message)
+        } else if (refreshData.session) {
+          console.log('✅ Session refreshed and set')
         }
-      } else {
-        console.log('✅ Session confirmed in cookies:', { hasSession: !!session, userId: session?.user?.id })
       }
+      
+      // Verify session one more time before redirecting
+      const { data: { session: finalSession } } = await freshSupabase.auth.getSession()
+      
+      if (!finalSession) {
+        console.error('❌ No session found after verification - redirecting to login')
+        return NextResponse.redirect(new URL('/auth/login?error=Unable to sign you in. Please try signing in manually.', requestUrl.origin))
+      }
+      
+      console.log('✅ Session confirmed in cookies:', { hasSession: !!finalSession, userId: finalSession?.user?.id })
       
       // Create redirect response
       // Cookies set via cookies().set() in setAll callback should automatically be included
@@ -181,7 +197,10 @@ export async function GET(request: Request) {
         console.log('📝 Creating user profile in database...')
         const userMetadata = data.user.user_metadata
         
-        const { error: insertError } = await supabase.from('users').insert({
+        // Use service role client to bypass RLS for user creation
+        const serviceSupabase = await createServiceSupabaseClient()
+        
+        const { error: insertError } = await serviceSupabase.from('users').insert({
           id: data.user.id,
           email: data.user.email,
           full_name: userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User',
@@ -191,12 +210,14 @@ export async function GET(request: Request) {
         })
 
         if (insertError) {
-          console.error('❌ Error creating user profile:', insertError.message)
+          console.error('❌ Error creating user profile:', insertError.message, insertError)
+          // Don't fail the flow - user is authenticated even if profile creation fails
+          // They can be created later or via admin
         } else {
           console.log('✅ User profile created successfully')
           
           // Grant 5 free credits to new free users
-          const { error: creditsError } = await supabase
+          const { error: creditsError } = await serviceSupabase
             .from('user_session_limits')
             .insert({
               user_id: data.user.id,
