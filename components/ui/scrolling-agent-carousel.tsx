@@ -346,9 +346,14 @@ export function ScrollingAgentCarousel({
                           transform: combinedTransform,
                         }
                         
+                        // URL encode image path if it contains spaces to ensure proper loading
+                        const imageSrc = agent.src.includes(' ') || agent.src.includes('&')
+                          ? agent.src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                          : agent.src
+                        
                         return (
                           <Image
-                            src={agent.src}
+                            src={imageSrc}
                             alt={agent.name}
                             fill
                             className="object-cover relative z-10"
@@ -358,7 +363,7 @@ export function ScrollingAgentCarousel({
                             priority={scale > 0.8}
                             unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
                             onError={(e) => {
-                              console.error('❌ Carousel agent image failed to load:', agent.src)
+                              console.error('❌ Carousel agent image failed to load:', agent.src, 'Encoded:', imageSrc)
                               e.stopPropagation()
                             }}
                           />

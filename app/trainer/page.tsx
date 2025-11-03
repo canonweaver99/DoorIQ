@@ -819,18 +819,23 @@ function TrainerPageContent() {
                         imageSrc: src,
                         timestamp: new Date().toISOString()
                       })
-                      return src ? (
+                      // URL encode image path if it contains spaces to ensure proper loading
+                      const imageSrc = src && (src.includes(' ') || src.includes('&'))
+                        ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                        : src
+                      
+                      return imageSrc ? (
                       <Image
-                        src={src}
+                        src={imageSrc}
                         alt={selectedAgent?.name || 'Agent'}
                         fill
                         sizes="(min-width: 1024px) 50vw, 100vw"
                         className="object-cover"
                         style={{ objectFit: 'cover', objectPosition: 'center center' }}
                         priority
-                        unoptimized={src.includes(' ') || src.includes('&')} // Disable optimization for files with spaces or special chars
+                        unoptimized={src?.includes(' ') || src?.includes('&')} // Disable optimization for files with spaces or special chars
                         onError={(e) => {
-                          console.error('❌ Image failed to load:', src)
+                          console.error('❌ Image failed to load:', src, 'Encoded:', imageSrc)
                           // Prevent error propagation to avoid console spam
                           e.stopPropagation()
                         }}

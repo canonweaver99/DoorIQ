@@ -559,9 +559,14 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                                 finalTransform: finalStyle.transform
                               })
                             }
+                            // URL encode image path if it contains spaces to ensure proper loading
+                            const imageSrc = agent.image.includes(' ') || agent.image.includes('&')
+                              ? agent.image.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                              : agent.image
+                            
                             return (
                               <Image
-                                src={agent.image}
+                                src={imageSrc}
                                 alt={agent.name}
                                 fill
                                 style={finalStyle}
@@ -570,7 +575,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                                 priority={index < 6}
                                 unoptimized={agent.image.includes(' ') || agent.image.includes('&')}
                                 onError={(e) => {
-                                  console.error('❌ Agent bubble image failed to load:', agent.image)
+                                  console.error('❌ Agent bubble image failed to load:', agent.image, 'Encoded:', imageSrc)
                                   e.stopPropagation()
                                 }}
                               />
