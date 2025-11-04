@@ -221,23 +221,38 @@ function BillingPageContent() {
     setProfileMessage(null)
 
     try {
+      // Build update object - only include company if it's provided
+      const updateData: any = {
+        full_name: profileData.full_name,
+      }
+      
+      // Add company if provided (even if empty string, allow clearing it)
+      if (profileData.company !== undefined) {
+        updateData.company = profileData.company || null
+      }
+
       const { error } = await supabase
         .from('users')
-        .update({
-          full_name: profileData.full_name,
-          ...((profileData.company) && { company: profileData.company })
-        } as any)
+        .update(updateData)
         .eq('id', userData.id)
 
       if (error) {
-        setProfileMessage({ type: 'error', text: 'Failed to update profile' })
+        console.error('Profile update error:', error)
+        setProfileMessage({ 
+          type: 'error', 
+          text: error.message || 'Failed to update profile. Please make sure the company field exists in the database.' 
+        })
       } else {
         setProfileMessage({ type: 'success', text: 'Profile updated successfully' })
         // Refresh user data
         await fetchUserData()
       }
-    } catch (error) {
-      setProfileMessage({ type: 'error', text: 'Failed to update profile' })
+    } catch (error: any) {
+      console.error('Profile update exception:', error)
+      setProfileMessage({ 
+        type: 'error', 
+        text: error.message || 'Failed to update profile' 
+      })
     } finally {
       setSavingProfile(false)
       // Clear message after 3 seconds
