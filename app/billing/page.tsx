@@ -16,7 +16,9 @@ import {
   Moon,
   Save,
   X,
-  User
+  User,
+  ExternalLink,
+  AlertTriangle
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -24,6 +26,7 @@ import Link from 'next/link'
 import { Database } from '@/lib/supabase/database.types'
 import { Toggle } from '@/components/ui/toggle'
 import AvatarUpload from '@/components/ui/AvatarUpload'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,6 +90,9 @@ function BillingPageContent() {
   const monthlyBtnRef = useRef<HTMLButtonElement>(null)
   const annualBtnRef = useRef<HTMLButtonElement>(null)
   const [toggleStyle, setToggleStyle] = useState({})
+  const [purchases, setPurchases] = useState<any[]>([])
+  const [loadingPurchases, setLoadingPurchases] = useState(false)
+  const [showYearlyConfirm, setShowYearlyConfirm] = useState(false)
   const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -94,12 +100,14 @@ function BillingPageContent() {
   useEffect(() => {
     loadSubscriptionDetails()
     fetchUserData()
+    loadPurchaseHistory()
     
     // Check if user just upgraded
     if (searchParams.get('upgraded') === 'true') {
       // Refresh after a moment to show updated subscription
       setTimeout(() => {
         loadSubscriptionDetails()
+        loadPurchaseHistory()
         router.replace('/billing')
       }, 1000)
     }
@@ -171,6 +179,21 @@ function BillingPageContent() {
           console.error('Error parsing saved settings:', e)
         }
       }
+    }
+  }
+
+  const loadPurchaseHistory = async () => {
+    setLoadingPurchases(true)
+    try {
+      const response = await fetch('/api/stripe/purchase-history')
+      if (response.ok) {
+        const data = await response.json()
+        setPurchases(data.purchases || [])
+      }
+    } catch (error) {
+      console.error('Error loading purchase history:', error)
+    } finally {
+      setLoadingPurchases(false)
     }
   }
 
@@ -312,6 +335,11 @@ function BillingPageContent() {
   }
 
   const handleUpgradeYearly = async () => {
+    setShowYearlyConfirm(true)
+  }
+
+  const confirmYearlyUpgrade = async () => {
+    setShowYearlyConfirm(false)
     setUpgrading(true)
     try {
       const response = await fetch('/api/stripe/upgrade-yearly', {
@@ -328,6 +356,7 @@ function BillingPageContent() {
       if (data.success) {
         // Reload subscription details
         await loadSubscriptionDetails()
+        await loadPurchaseHistory()
         router.push('/billing?upgraded=true')
       }
     } catch (error) {
@@ -349,13 +378,19 @@ function BillingPageContent() {
     return brand.charAt(0).toUpperCase() + brand.slice(1)
   }
 
-  const getPlanName = (plan: string) => {
+  const getPlanName = (subscription: SubscriptionDetails | null) => {
+    if (!subscription) return 'Unknown'
+    
+    const interval = subscription.price.interval
+    if (subscription.plan === 'individual') {
+      return interval === 'year' ? 'Individual yearly plan' : 'Individual monthly plan'
+    }
+    
     const planMap: Record<string, string> = {
-      'individual': 'Starter',
       'team': 'Team',
       'free': 'Free'
     }
-    return planMap[plan] || plan.charAt(0).toUpperCase() + plan.slice(1)
+    return planMap[subscription.plan] || subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)
   }
 
   const getStatusColor = (status: string) => {
@@ -771,7 +806,7 @@ function BillingPageContent() {
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <h3 className="text-lg font-semibold text-foreground mb-2">
-                            {getPlanName(subscription.plan)}
+                            {getPlanName(subscription)}
                           </h3>
                           <button
                             className={`px-3 py-1 text-xs font-semibold rounded border ${
@@ -1128,21 +1163,87 @@ function BillingPageContent() {
               {activeTab === 'purchase-history' && (
                 <>
                   <h1 className="text-2xl font-bold text-foreground mb-6">Purchase History</h1>
-                  <div className="text-center py-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-background border border-border rounded-full mb-4">
-                      <FileText className="w-8 h-8 text-foreground" />
+                  {loadingPurchases ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">No Purchase History</h3>
-                    <p className="text-muted-foreground mb-6">
-                      Your purchase history will appear here once you make a subscription or purchase credits.
-                    </p>
-                    <Link
-                      href="/pricing"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors"
-                    >
-                      View Plans
-                    </Link>
-                  </div>
+                  ) : purchases.length > 0 ? (
+                    <div className="space-y-4">
+                      {purchases.map((purchase) => (
+                        <div key={purchase.id} className="p-4 border border-border bg-background/50 rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-sm font-semibold text-foreground">{purchase.description}</h3>
+                                <span className={`px-2 py-0.5 text-xs font-medium rounded ${
+                                  purchase.status === 'paid' 
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                    : purchase.status === 'open'
+                                    ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                }`}>
+                                  {purchase.status.toUpperCase()}
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mb-1">
+                                {new Date(purchase.date).toLocaleDateString('en-US', {
+                                  month: 'long',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                              <p className="text-sm font-medium text-foreground">
+                                {formatPrice(purchase.amount, purchase.currency)}
+                                {purchase.interval && ` / ${purchase.interval}`}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {purchase.invoiceUrl && (
+                                <a
+                                  href={purchase.invoiceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                                  title="View Invoice"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                              )}
+                              {purchase.receiptUrl && (
+                                <a
+                                  href={purchase.receiptUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                                  title="View Receipt"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-background border border-border rounded-full mb-4">
+                        <FileText className="w-8 h-8 text-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">No Purchase History</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Your purchase history will appear here once you make a subscription or purchase credits.
+                      </p>
+                      <Link
+                        href="/pricing"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors"
+                      >
+                        View Plans
+                      </Link>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -1203,6 +1304,58 @@ function BillingPageContent() {
           </div>
         </div>
       </div>
+
+      {/* Yearly Upgrade Confirmation Dialog */}
+      <Dialog open={showYearlyConfirm} onOpenChange={setShowYearlyConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              Confirm Yearly Plan Upgrade
+            </DialogTitle>
+            <DialogDescription className="pt-4">
+              <div className="space-y-3">
+                <p>
+                  You are about to upgrade to the <strong>Individual yearly plan</strong>.
+                </p>
+                <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-2">
+                  <p className="text-sm font-medium">This will:</p>
+                  <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
+                    <li>Charge your card <strong className="text-foreground">{subscription?.yearlySavings ? formatPrice(subscription.yearlySavings.yearlyPrice) : '$168.00'}</strong> immediately</li>
+                    <li>Switch your billing to annual payments</li>
+                    <li>Save you <strong className="text-foreground">{subscription?.yearlySavings?.percent || 30}%</strong> compared to monthly billing</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Your subscription will renew automatically on {subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'your renewal date'}.
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <button
+              onClick={() => setShowYearlyConfirm(false)}
+              className="px-4 py-2 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmYearlyUpgrade}
+              disabled={upgrading}
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {upgrading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Confirm & Upgrade'
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
