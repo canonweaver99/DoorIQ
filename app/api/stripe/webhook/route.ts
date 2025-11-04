@@ -128,16 +128,28 @@ export async function POST(request: NextRequest) {
             }
           }
 
+          // Check if this is an Individual plan purchase
+          const priceId = subscription.items.data[0]?.price.id
+          const individualMonthlyPriceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_MONTHLY
+          const individualYearlyPriceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_YEARLY
+          const isIndividualPlan = priceId === individualMonthlyPriceId || priceId === individualYearlyPriceId
+
           // Log event
           await logSubscriptionEvent(supabase, userId, 'trial_started', {
             subscription_id: subscription.id,
             trial_ends_at: subscription.trial_end
           })
 
-          // Send welcome email
-          await sendNotificationEmail(userId, 'trial_started', {
-            trialEndsAt: subscription.trial_end
-          })
+          // Send welcome email for Individual plan purchases
+          if (isIndividualPlan && (subscription.status === 'active' || subscription.status === 'trialing')) {
+            await sendNotificationEmail(userId, 'individual_plan_welcome', {})
+            console.log(`✅ Sent Individual plan welcome email to user ${userId}`)
+          } else {
+            // Send regular trial email for other plans
+            await sendNotificationEmail(userId, 'trial_started', {
+              trialEndsAt: subscription.trial_end
+            })
+          }
 
           console.log(`✅ Trial started for user ${userId}`)
         }
@@ -172,16 +184,28 @@ export async function POST(request: NextRequest) {
           console.log('✅ Granted 50 monthly credits to user')
         }
 
+        // Check if this is an Individual plan purchase
+        const priceId = subscription.items.data[0]?.price.id
+        const individualMonthlyPriceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_MONTHLY
+        const individualYearlyPriceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_YEARLY
+        const isIndividualPlan = priceId === individualMonthlyPriceId || priceId === individualYearlyPriceId
+
         // Log event
         await logSubscriptionEvent(supabase, userId, 'trial_started', {
           subscription_id: subscription.id,
           trial_ends_at: subscription.trial_end
         })
 
-        // Send welcome email
-        await sendNotificationEmail(userId, 'trial_started', {
-          trialEndsAt: subscription.trial_end
-        })
+        // Send welcome email for Individual plan purchases
+        if (isIndividualPlan && (subscription.status === 'active' || subscription.status === 'trialing')) {
+          await sendNotificationEmail(userId, 'individual_plan_welcome', {})
+          console.log(`✅ Sent Individual plan welcome email to user ${userId}`)
+        } else {
+          // Send regular trial email for other plans
+          await sendNotificationEmail(userId, 'trial_started', {
+            trialEndsAt: subscription.trial_end
+          })
+        }
 
         console.log(`Trial started for user ${userId}`)
         break
