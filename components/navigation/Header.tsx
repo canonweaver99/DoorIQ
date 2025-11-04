@@ -336,7 +336,6 @@ function HeaderContent() {
           { name: 'Notifications', href: '/notifications', icon: Bell },
           { name: 'Settings', href: '/billing?tab=settings', icon: SettingsIcon },
           { name: 'Billing', href: '/billing', icon: CreditCard },
-          { name: 'User Profile', href: '/profile', icon: UserCircle },
         ],
       },
     ]

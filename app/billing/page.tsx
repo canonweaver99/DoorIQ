@@ -15,13 +15,15 @@ import {
   Bell,
   Moon,
   Save,
-  X
+  X,
+  User
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Database } from '@/lib/supabase/database.types'
 import { Toggle } from '@/components/ui/toggle'
+import AvatarUpload from '@/components/ui/AvatarUpload'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,8 +73,14 @@ function BillingPageContent() {
     soundEffects: true,
     language: 'en',
   })
+  const [profileData, setProfileData] = useState({
+    full_name: '',
+    company: '',
+  })
   const [saving, setSaving] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
   const [settingsMessage, setSettingsMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [switchingPlan, setSwitchingPlan] = useState<string | null>(null)
   const [showPlanSwitcher, setShowPlanSwitcher] = useState(false)
   const [planBillingInterval, setPlanBillingInterval] = useState<'month' | 'year'>('month')
@@ -150,6 +158,10 @@ function BillingPageContent() {
 
     if (data) {
       setUserData(data)
+      setProfileData({
+        full_name: data.full_name || '',
+        company: (data as any)?.company || '',
+      })
       // Load preferences from localStorage
       const savedSettings = localStorage.getItem('userSettings')
       if (savedSettings) {
@@ -177,6 +189,39 @@ function BillingPageContent() {
     setTimeout(() => {
       setSettingsMessage(null)
     }, 3000)
+  }
+
+  const handleSaveProfile = async () => {
+    if (!userData) return
+
+    setSavingProfile(true)
+    setProfileMessage(null)
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          full_name: profileData.full_name,
+          ...((profileData.company) && { company: profileData.company })
+        } as any)
+        .eq('id', userData.id)
+
+      if (error) {
+        setProfileMessage({ type: 'error', text: 'Failed to update profile' })
+      } else {
+        setProfileMessage({ type: 'success', text: 'Profile updated successfully' })
+        // Refresh user data
+        await fetchUserData()
+      }
+    } catch (error) {
+      setProfileMessage({ type: 'error', text: 'Failed to update profile' })
+    } finally {
+      setSavingProfile(false)
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setProfileMessage(null)
+      }, 3000)
+    }
   }
 
   const handleSwitchPlan = async (planType: string, priceId?: string) => {
@@ -445,7 +490,122 @@ function BillingPageContent() {
               {activeTab === 'settings' && (
                 <>
                   <h1 className="text-2xl font-bold text-foreground mb-6">Account Settings</h1>
-                  <p className="text-muted-foreground mb-6">Manage your app preferences</p>
+                  <p className="text-muted-foreground mb-6">Manage your app preferences and profile</p>
+
+                  {/* Profile & Personalization Section */}
+                  <div className="bg-background/50 rounded-lg border border-border p-6 mb-6">
+                    <div className="flex items-center mb-6">
+                      <User className="w-5 h-5 text-foreground mr-2" />
+                      <h2 className="text-xl font-semibold text-foreground">Profile & Personalization</h2>
+                    </div>
+
+                    <div className="space-y-6">
+                      {/* Avatar Upload */}
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-3">
+                          Profile Photo
+                        </label>
+                        {userData && (
+                          <AvatarUpload
+                            currentAvatarUrl={(userData as any)?.avatar_url}
+                            userId={userData.id}
+                            onUploadComplete={(url) => {
+                              setUserData({ ...userData, avatar_url: url } as any)
+                              setProfileMessage({ type: 'success', text: 'Avatar updated successfully' })
+                              setTimeout(() => setProfileMessage(null), 3000)
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          value={profileData.full_name}
+                          onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                          className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Enter your full name"
+                        />
+                      </div>
+
+                      {/* Company */}
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Company
+                        </label>
+                        <input
+                          type="text"
+                          value={profileData.company}
+                          onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
+                          className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Enter your company name"
+                        />
+                      </div>
+
+                      {/* Read-only Fields */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+                        <div>
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
+                            Role
+                          </label>
+                          <p className="text-sm text-foreground">
+                            {userData?.role ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1) : 'Rep'}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
+                            Virtual Earnings
+                          </label>
+                          <p className="text-sm text-foreground font-semibold">
+                            ${userData?.virtual_earnings?.toFixed(2) || '0.00'}
+                          </p>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
+                            Member Since
+                          </label>
+                          <p className="text-sm text-foreground">
+                            {userData?.created_at ? new Date(userData.created_at).toLocaleDateString('en-US', {
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric'
+                            }) : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Save Profile Button */}
+                      <div className="flex justify-end pt-4 border-t border-border">
+                        <button
+                          onClick={handleSaveProfile}
+                          disabled={savingProfile}
+                          className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Save className="w-5 h-5 mr-2" />
+                          {savingProfile ? 'Saving...' : 'Save Profile'}
+                        </button>
+                      </div>
+
+                      {/* Profile Success/Error Message */}
+                      {profileMessage && (
+                        <div
+                          className={`p-4 rounded-lg border ${
+                            profileMessage.type === 'success'
+                              ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
+                              : 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
+                          }`}
+                        >
+                          {profileMessage.text}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   {/* Notifications Section */}
                   <div className="bg-background/50 rounded-lg border border-border p-6 mb-6">

@@ -12,7 +12,7 @@ function getStripeClient() {
     return null
   }
   return new Stripe(secret, {
-    apiVersion: '2024-06-20'
+    apiVersion: '2024-06-20' as any
   })
 }
 
@@ -31,14 +31,51 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's Stripe customer ID
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, email, full_name')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.stripe_customer_id) {
-      return NextResponse.json({ error: 'No customer found' }, { status: 404 })
+    if (profileError || !profile) {
+      console.error('Error fetching user profile:', profileError)
+      return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 })
+    }
+
+    const profileData = profile as { stripe_customer_id?: string | null; email?: string | null; full_name?: string | null }
+    let customerId = profileData.stripe_customer_id || undefined
+
+    // Verify customer exists in Stripe
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId)
+      } catch (error: any) {
+        // If customer doesn't exist, create a new one
+        console.warn(`Customer ${customerId} not found in Stripe, creating new customer:`, error.message)
+        customerId = undefined
+      }
+    }
+
+    // Create customer if doesn't exist
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: profileData.email || user.email || '',
+        name: profileData.full_name || undefined,
+        metadata: {
+          supabase_user_id: user.id
+        }
+      })
+      customerId = customer.id
+
+      // Save customer ID to database
+      const { error: updateError } = await (supabase
+        .from('users') as any)
+        .update({ stripe_customer_id: customerId })
+        .eq('id', user.id)
+      
+      if (updateError) {
+        console.error('Error updating customer ID:', updateError)
+      }
     }
 
     // Determine base URL from request origin (handles dev port changes)
@@ -50,7 +87,7 @@ export async function POST(request: NextRequest) {
     // Create portal session
     try {
       const session = await stripe.billingPortal.sessions.create({
-        customer: profile.stripe_customer_id,
+        customer: customerId,
         return_url: `${origin}/billing`
       })
 
