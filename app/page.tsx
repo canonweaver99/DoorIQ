@@ -192,10 +192,10 @@ export default function Home() {
         title="Frequently Asked Questions"
         items={faqItems}
         contactInfo={{
-          title: 'Have more Questions?',
-          description: 'Reach out and our crew will walk you through a live session.',
-          buttonText: 'Contact Support',
-          onContact: () => window.open('https://mail.google.com/mail/?view=cm&fs=1&to=contact@dooriq.ai&su=Support%20Request&body=Hi%20DoorIQ%20Team,%0D%0A%0D%0AI%20need%20help%20with:%0D%0A%0D%0A', '_blank')
+          title: 'Leave Feedback',
+          description: 'We\'d love to hear your thoughts and suggestions to improve DoorIQ.',
+          buttonText: 'Leave Feedback',
+          onContact: () => window.open('https://mail.google.com/mail/?view=cm&fs=1&to=contact@dooriq.ai&su=Feedback&body=Hi%20DoorIQ%20Team,%0D%0A%0D%0AMy%20feedback:%0D%0A%0D%0A', '_blank')
         }}
       />
     </div>
@@ -585,7 +585,7 @@ function TestimonialsSection() {
         }}
       >
         <motion.div variants={staggerItem}>
-          <TestimonialsColumn testimonials={firstColumn} duration={18} showEmptyCards={true} />
+          <TestimonialsColumn testimonials={firstColumn} duration={18} />
         </motion.div>
         {secondColumn.length > 0 && (
           <motion.div variants={staggerItem} className="hidden md:block">

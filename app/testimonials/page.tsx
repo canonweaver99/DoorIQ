@@ -3,10 +3,10 @@
 import { testimonialsData } from '@/components/ui/testimonials-columns-1'
 import { Star } from 'lucide-react'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-// Reviews with full text and star ratings
+// Reviews with full text and star ratings (static fallback)
 const extendedTestimonials = [
   {
     ...testimonialsData[0],
@@ -50,6 +50,18 @@ const extendedTestimonials = [
   },
 ]
 
+interface Testimonial {
+  id?: string
+  name: string
+  location: string
+  rating: number
+  review: string
+  fullText: string
+  stars: number
+  image?: string
+  profile_image_url?: string
+}
+
 export default function TestimonialsPage() {
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -60,21 +72,79 @@ export default function TestimonialsPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [acceptedTestimonials, setAcceptedTestimonials] = useState<Testimonial[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch accepted testimonials from database
+  useEffect(() => {
+    const fetchAcceptedTestimonials = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('*')
+          .eq('status', 'accepted')
+          .order('accepted_at', { ascending: false })
+
+        if (error) {
+          console.error('Error fetching testimonials:', error)
+          return
+        }
+
+        if (data) {
+          const formatted = data.map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            location: t.location,
+            rating: t.rating,
+            review: t.review,
+            fullText: t.review,
+            stars: t.rating,
+            image: t.profile_image_url || '',
+            profile_image_url: t.profile_image_url
+          }))
+          setAcceptedTestimonials(formatted)
+        }
+      } catch (error) {
+        console.error('Error fetching testimonials:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAcceptedTestimonials()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
 
     try {
-      // Here you would typically send to your backend/API
-      // For now, we'll just show a success message
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const supabase = createClient()
+      
+      // Get current user if logged in
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      // Save review to database
+      const { error } = await supabase
+        .from('testimonials')
+        .insert({
+          name: formData.name,
+          location: formData.location,
+          rating: formData.rating,
+          review: formData.review,
+          status: 'pending',
+          user_id: user?.id || null
+        })
+
+      if (error) {
+        console.error('Error submitting review:', error)
+        alert('Failed to submit review. Please try again.')
+        return
+      }
+
       setSubmitted(true)
       setFormData({ name: '', location: '', rating: 5, review: '' })
-      
-      // Optionally send to email or save to database
-      const supabase = createClient()
-      // You could save to a testimonials table here
       
     } catch (error) {
       console.error('Error submitting review:', error)
@@ -103,7 +173,54 @@ export default function TestimonialsPage() {
 
         {/* Testimonials - 2 per row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto mb-12">
-          {extendedTestimonials.map((testimonial, index) => (
+          {/* Show accepted reviews from database first, then static testimonials */}
+          {loading ? (
+            <div className="col-span-2 text-center text-slate-400 py-8">
+              Loading testimonials...
+            </div>
+          ) : (
+            <>
+              {acceptedTestimonials.map((testimonial) => (
+                <div
+                  key={testimonial.id}
+                  className="group p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-primary/50 transition-all duration-300"
+                >
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3 h-3 ${
+                          i < testimonial.stars
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'fill-none text-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Testimonial Text */}
+                  <p className="text-white font-medium text-sm leading-relaxed mb-4">
+                    &ldquo;{testimonial.fullText}&rdquo;
+                  </p>
+
+                  {/* Author */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                    {testimonial.profile_image_url && testimonial.profile_image_url.trim() !== "" && !testimonial.profile_image_url.includes("unsplash.com") && (
+                      <img
+                        src={testimonial.profile_image_url}
+                        alt={testimonial.name}
+                        className="w-9 h-9 rounded-full ring-2 ring-white/20"
+                      />
+                    )}
+                    <div>
+                      <p className="font-bold text-white text-sm">{testimonial.name}</p>
+                      <p className="text-xs text-slate-400 font-medium">{testimonial.location}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {extendedTestimonials.map((testimonial, index) => (
             <div
               key={index}
               className="group p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-primary/50 transition-all duration-300"
@@ -129,18 +246,22 @@ export default function TestimonialsPage() {
 
               {/* Author */}
               <div className="flex items-center gap-2 pt-3 border-t border-white/10">
-                <img
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  className="w-9 h-9 rounded-full ring-2 ring-white/20"
-                />
+                {testimonial.image && testimonial.image.trim() !== "" && !testimonial.image.includes("unsplash.com") && (
+                  <img
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    className="w-9 h-9 rounded-full ring-2 ring-white/20"
+                  />
+                )}
                 <div>
                   <p className="font-bold text-white text-sm">{testimonial.name}</p>
                   <p className="text-xs text-slate-400 font-medium">{testimonial.role}</p>
                 </div>
               </div>
             </div>
-          ))}
+              ))}
+            </>
+          )}
         </div>
 
         {/* Review Submission Form */}
@@ -257,7 +378,7 @@ export default function TestimonialsPage() {
               <div className="text-4xl mb-4">✅</div>
               <h3 className="text-2xl font-bold text-white mb-2">Thank You!</h3>
               <p className="text-slate-300">
-                Your review has been submitted. We appreciate your feedback!
+                Your review has been submitted and is pending approval. We appreciate your feedback!
               </p>
             </div>
           </div>
@@ -272,10 +393,10 @@ export default function TestimonialsPage() {
             Join hundreds of sales reps who are mastering door-to-door sales with AI-powered training
           </p>
           <a
-            href="/auth/signup"
+            href="/pricing"
             className="inline-block px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50 hover:scale-105"
           >
-            Start Free Trial
+            Start Now
           </a>
         </div>
       </div>

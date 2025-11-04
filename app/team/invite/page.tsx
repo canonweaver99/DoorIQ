@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, Copy, Mail, UserPlus, Loader2 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { CheckCircle2, Copy, Mail, UserPlus, Loader2, MessageSquare, Share2, X } from 'lucide-react'
 
-export default function InviteTeammatePage() {
+export default function InviteFriendPage() {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'rep' | 'manager'>('rep')
   const [loading, setLoading] = useState(false)
@@ -12,6 +13,7 @@ export default function InviteTeammatePage() {
   const [invitedEmail, setInvitedEmail] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,22 +54,47 @@ export default function InviteTeammatePage() {
   }
 
   const handleEmailInvite = () => {
-    if (inviteUrl && invitedEmail) {
-      const subject = encodeURIComponent('Join our DoorIQ team!')
+    if (inviteUrl) {
+      const subject = encodeURIComponent('Join DoorIQ!')
       const body = encodeURIComponent(
-        `You've been invited to join our team on DoorIQ!\n\nClick the link below to accept the invitation:\n${inviteUrl}\n\nThis link will expire in 7 days.`
+        `I'd love for you to try DoorIQ with me! It's an amazing AI-powered sales training platform.\n\nJoin me here: ${inviteUrl}\n\nThis link will expire in 7 days.`
       )
-      // Open Gmail compose window with TO field pre-filled
-      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(invitedEmail)}&su=${subject}&body=${body}`, '_blank')
+      // Open Gmail compose window
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank')
+    }
+  }
+
+  const handleShareViaIMessage = () => {
+    if (inviteUrl) {
+      const text = `I'd love for you to try DoorIQ with me! It's an amazing AI-powered sales training platform. Join me here: ${inviteUrl}`
+      window.open(`sms:?body=${encodeURIComponent(text)}`, '_blank')
+    }
+  }
+
+  const handleNativeShare = async () => {
+    if (inviteUrl && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join DoorIQ!',
+          text: `I'd love for you to try DoorIQ with me! It's an amazing AI-powered sales training platform.`,
+          url: inviteUrl,
+        })
+      } catch (err) {
+        // User cancelled or error occurred
+        console.log('Share cancelled or failed:', err)
+      }
+    } else {
+      // Fallback to share modal
+      setShowShareModal(true)
     }
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Invite Teammates</h1>
+        <h1 className="text-3xl font-bold text-white">Invite a Friend</h1>
         <p className="mt-2 text-slate-400">
-          Send an invite link to add new members to your team
+          Share DoorIQ with your friends and grow your network
         </p>
       </div>
 
@@ -156,23 +183,38 @@ export default function InviteTeammatePage() {
                     className="border-slate-700 hover:bg-slate-700"
                   >
                     {copied ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4 text-green-400" />
+                        Copied!
+                      </>
                     ) : (
-                      <Copy className="h-4 w-4" />
+                      <>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy
+                      </>
                     )}
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Button
-                  onClick={handleEmailInvite}
-                  variant="outline"
-                  className="w-full border-slate-700 hover:bg-slate-700"
-                >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send via Email
-                </Button>
+                {navigator.share ? (
+                  <Button
+                    onClick={handleNativeShare}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => setShowShareModal(true)}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                )}
               </div>
 
               <div className="pt-4 border-t border-slate-700">
@@ -214,6 +256,56 @@ export default function InviteTeammatePage() {
           </li>
         </ol>
       </div>
+
+      {/* Share Modal */}
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Share DoorIQ</DialogTitle>
+            <DialogDescription>
+              Choose how you'd like to share DoorIQ with your friend
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 mt-4">
+            <Button
+              onClick={handleEmailInvite}
+              variant="outline"
+              className="w-full justify-start border-slate-700 hover:bg-slate-700"
+            >
+              <Mail className="mr-3 h-5 w-5" />
+              <div className="text-left">
+                <div className="font-semibold">Gmail</div>
+                <div className="text-xs text-slate-400">Share via email</div>
+              </div>
+            </Button>
+
+            <Button
+              onClick={handleShareViaIMessage}
+              variant="outline"
+              className="w-full justify-start border-slate-700 hover:bg-slate-700"
+            >
+              <MessageSquare className="mr-3 h-5 w-5" />
+              <div className="text-left">
+                <div className="font-semibold">iMessage</div>
+                <div className="text-xs text-slate-400">Share via text message</div>
+              </div>
+            </Button>
+
+            <Button
+              onClick={handleCopyLink}
+              variant="outline"
+              className="w-full justify-start border-slate-700 hover:bg-slate-700"
+            >
+              <Copy className="mr-3 h-5 w-5" />
+              <div className="text-left">
+                <div className="font-semibold">Copy Link</div>
+                <div className="text-xs text-slate-400">Copy link to share anywhere</div>
+              </div>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

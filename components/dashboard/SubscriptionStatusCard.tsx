@@ -175,7 +175,7 @@ export default function SubscriptionStatusCard() {
       >
         <span className="flex items-center justify-center gap-2">
           <Sparkles className="w-4 h-4" />
-          Start Free Trial
+          Start Now
         </span>
       </Link>
     </motion.div>

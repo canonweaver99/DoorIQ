@@ -121,7 +121,7 @@ export function PaywallModal({ isOpen, onClose, reason = 'feature_locked', featu
             ) : (
               <>
                 <Crown className="mr-2 h-5 w-5" />
-                Start Free Trial
+                Start Now
               </>
             )}
           </Button>

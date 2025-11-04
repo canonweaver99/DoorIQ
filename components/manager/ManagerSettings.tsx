@@ -185,7 +185,7 @@ export default function ManagerSettings() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-medium text-white transition-all shadow-lg shadow-purple-600/30"
               >
                 <UserPlus className="w-4 h-4" />
-                Invite Team Member
+                Invite a Friend
               </Link>
             </>
           ) : (
@@ -197,7 +197,7 @@ export default function ManagerSettings() {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-medium text-white transition-all shadow-lg shadow-purple-600/30"
               >
                 <UserPlus className="w-4 h-4" />
-                Invite Your First Team Member
+                Invite a Friend
               </Link>
             </div>
           )}
