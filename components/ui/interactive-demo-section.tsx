@@ -127,7 +127,7 @@ export function InteractiveDemoSection() {
               {/* Video Player */}
               <video
                 ref={videoRef}
-                src="/Demo Video Home.mp4"
+                src="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
                 controls
                 muted
                 loop
@@ -138,7 +138,6 @@ export function InteractiveDemoSection() {
                 onPause={() => setIsPlaying(false)}
                 onError={(e) => {
                   console.error('Video loading error:', e)
-                  console.log('Make sure "Demo Video Home.mp4" is in the /public folder')
                 }}
                 onLoadedData={() => {
                   // Try to play when video data is loaded
