@@ -47,21 +47,34 @@ export function InteractiveDemoSection() {
 
   // Auto-play video when scrolled into view
   useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    // Set video to muted for autoplay (required by browsers)
+    video.muted = true
+    
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && videoRef.current) {
-            videoRef.current.play().catch((error) => {
-              console.log('Auto-play prevented:', error)
-            })
+          if (entry.isIntersecting && video) {
+            // Small delay to ensure video is ready
+            setTimeout(() => {
+              video.play().catch((error) => {
+                console.log('Auto-play prevented:', error)
+                // If autoplay fails, try again after a small delay
+                setTimeout(() => {
+                  video.play().catch(() => {})
+                }, 500)
+              })
+            }, 100)
             setIsPlaying(true)
-          } else if (!entry.isIntersecting && videoRef.current) {
-            videoRef.current.pause()
+          } else if (!entry.isIntersecting && video) {
+            video.pause()
             setIsPlaying(false)
           }
         })
       },
-      { threshold: 0.3 }
+      { threshold: 0.2, rootMargin: '0px' }
     )
 
     if (videoContainerRef.current) {
@@ -118,9 +131,25 @@ export function InteractiveDemoSection() {
                 controls
                 muted
                 loop
+                autoPlay
+                preload="auto"
                 className="w-full h-full object-cover"
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
+                onError={(e) => {
+                  console.error('Video loading error:', e)
+                  console.log('Make sure "Demo Video Home.mp4" is in the /public folder')
+                }}
+                onLoadedData={() => {
+                  // Try to play when video data is loaded
+                  if (videoRef.current && videoContainerRef.current) {
+                    const rect = videoContainerRef.current.getBoundingClientRect()
+                    const isVisible = rect.top < window.innerHeight && rect.bottom > 0
+                    if (isVisible) {
+                      videoRef.current.play().catch(() => {})
+                    }
+                  }
+                }}
                 playsInline
               />
               
