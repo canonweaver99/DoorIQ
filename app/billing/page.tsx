@@ -851,13 +851,13 @@ function BillingPageContent() {
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             {showMenu === subscription.id && (
-                              <div className="absolute right-0 mt-2 w-48 bg-background border border-border rounded-md shadow-lg z-10">
+                              <div className="absolute right-0 mt-2 w-48 bg-slate-900 dark:bg-slate-950 border border-slate-700 dark:border-slate-800 rounded-md shadow-xl z-50 backdrop-blur-sm">
                                 <button
                                   onClick={() => {
                                     handleManageSubscription()
                                     setShowMenu(null)
                                   }}
-                                  className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md transition-colors"
+                                  className="w-full text-left px-4 py-2 text-sm text-slate-100 hover:bg-slate-800 dark:hover:bg-slate-800 rounded-t-md transition-colors"
                                 >
                                   Manage in Stripe Portal
                                 </button>
@@ -866,7 +866,7 @@ function BillingPageContent() {
                                     router.push('/pricing')
                                     setShowMenu(null)
                                   }}
-                                  className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                                  className="w-full text-left px-4 py-2 text-sm text-slate-100 hover:bg-slate-800 dark:hover:bg-slate-800 transition-colors"
                                 >
                                   View Plans
                                 </button>
@@ -875,7 +875,7 @@ function BillingPageContent() {
                                     handleCancelSubscription(false)
                                     setShowMenu(null)
                                   }}
-                                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-b-md transition-colors"
+                                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-950/30 dark:hover:bg-red-950/40 rounded-b-md transition-colors"
                                 >
                                   Cancel Subscription
                                 </button>
