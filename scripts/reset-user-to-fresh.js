@@ -74,6 +74,8 @@ async function resetUserToFresh() {
       subscription_plan: null,
       stripe_price_id: null,
       subscription_current_period_end: null,
+      team_id: null,  // Remove team access (hides leaderboard)
+      virtual_earnings: 0,  // Reset earnings to 0
       // Keep stripe_customer_id in case they want to subscribe again
       // stripe_customer_id: null,  // Uncomment if you want to remove customer ID too
     })
@@ -92,8 +94,13 @@ async function resetUserToFresh() {
   console.log(`   Email: ${user.email}`)
   console.log(`   Subscription: None`)
   console.log(`   Plan: Free`)
+  console.log(`   Team ID: None (Individual user - no leaderboard access)`)
+  console.log(`   Virtual Earnings: $0.00`)
   console.log(`   Stripe Customer ID: ${user.stripe_customer_id || 'None'}`)
   console.log('\n✅ User is now in a fresh state and can test signup/subscription flow!')
+  console.log('   - Leaderboard link will be hidden (no team_id)')
+  console.log('   - All earnings reset to 0')
+  console.log('   - Ready to test as a new individual user')
 }
 
 resetUserToFresh().catch(console.error)
