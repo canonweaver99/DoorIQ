@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Play, Pause, Volume2, CheckCircle2, XCircle, TrendingUp } from 'lucide-react'
+import { Play, CheckCircle2, TrendingUp } from 'lucide-react'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 
@@ -43,18 +42,38 @@ export function InteractiveDemoSection() {
   const [activeStep, setActiveStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
   const { ref, controls } = useScrollAnimation(0.2)
 
-  const handlePlayDemo = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause()
-      } else {
-        videoRef.current.play()
+  // Auto-play video when scrolled into view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && videoRef.current) {
+            videoRef.current.play().catch((error) => {
+              console.log('Auto-play prevented:', error)
+            })
+            setIsPlaying(true)
+          } else if (!entry.isIntersecting && videoRef.current) {
+            videoRef.current.pause()
+            setIsPlaying(false)
+          }
+        })
+      },
+      { threshold: 0.3 }
+    )
+
+    if (videoContainerRef.current) {
+      observer.observe(videoContainerRef.current)
+    }
+
+    return () => {
+      if (videoContainerRef.current) {
+        observer.unobserve(videoContainerRef.current)
       }
     }
-    setIsPlaying(!isPlaying)
-  }
+  }, [])
   
   const handleStepClick = (index: number) => {
     setActiveStep(index)
@@ -87,6 +106,7 @@ export function InteractiveDemoSection() {
             variants={fadeInScale}
           >
             <motion.div 
+              ref={videoContainerRef}
               className="relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-2xl"
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}
@@ -94,34 +114,15 @@ export function InteractiveDemoSection() {
               {/* Video Player */}
               <video
                 ref={videoRef}
-                src="/austin-video.mp4"
-                controls={isPlaying}
-                autoPlay={false}
+                src="/Demo Video Home.mp4"
+                controls
+                muted
                 loop
                 className="w-full h-full object-cover"
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
                 playsInline
               />
-              
-              {/* Play Button Overlay */}
-              {!isPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                  >
-                    <Button
-                      onClick={handlePlayDemo}
-                      size="lg"
-                      className="w-20 h-20 rounded-full bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/50"
-                    >
-                      <Play className="w-8 h-8 ml-1 text-white" />
-                    </Button>
-                  </motion.div>
-                </div>
-              )}
               
               {/* Step indicator */}
               <motion.div 
