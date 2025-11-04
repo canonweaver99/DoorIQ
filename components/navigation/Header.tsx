@@ -191,8 +191,8 @@ function HeaderContent() {
           const tooltipDismissed = typeof window !== 'undefined' 
             ? localStorage.getItem('credits-tooltip-dismissed') === 'true'
             : false
-          const hasSeenTooltip = typeof window !== 'undefined'
-            ? localStorage.getItem(`credits-tooltip-seen-${user.id}`) === 'true'
+          const hasSeenTooltip = typeof window !== 'undefined' && userData
+            ? localStorage.getItem(`credits-tooltip-seen-${userData.id}`) === 'true'
             : false
           
           // Show for new users or first time sign in (if they haven't seen it before)
@@ -201,8 +201,8 @@ function HeaderContent() {
             setTimeout(() => {
               setShowCreditsTooltip(true)
               // Mark as seen for this user
-              if (typeof window !== 'undefined') {
-                localStorage.setItem(`credits-tooltip-seen-${user.id}`, 'true')
+              if (typeof window !== 'undefined' && userData) {
+                localStorage.setItem(`credits-tooltip-seen-${userData.id}`, 'true')
               }
             }, 1000)
           }
@@ -299,6 +299,9 @@ function HeaderContent() {
   const isManagerLike = userRole === 'manager' || userRole === 'admin'
 
   const sidebarSections = useMemo(() => {
+    const subscriptionPlan = (user as any)?.subscription_plan
+    const isIndividualPlan = subscriptionPlan === 'individual' || (!subscriptionPlan && !user?.team_id)
+    
     const sections: Array<{
       title: string
       items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string; managerOnly?: boolean }>
@@ -307,7 +310,7 @@ function HeaderContent() {
         title: 'Workspace',
         items: [
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-          { name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 },
+          ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 }]),
           { name: 'Playbooks', href: hasActiveSubscription ? '/dashboard?tab=learning' : '/pricing', icon: NotebookPen },
           { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
@@ -343,7 +346,7 @@ function HeaderContent() {
     // AI Insights removed per user request
 
     return sections
-  }, [isManagerLike, unreadCount, hasActiveSubscription, user?.team_id])
+  }, [isManagerLike, unreadCount, hasActiveSubscription, user?.team_id, (user as any)?.subscription_plan])
 
   const quickActions = [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
@@ -352,9 +355,12 @@ function HeaderContent() {
   ]
 
   const profileNavigation = useMemo(() => {
+    const subscriptionPlan = (user as any)?.subscription_plan
+    const isIndividualPlan = subscriptionPlan === 'individual' || (!subscriptionPlan && !user?.team_id)
+    
     const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }> = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 },
+      ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 }]),
       { name: 'Playbooks', href: '/dashboard?tab=learning', icon: NotebookPen },
       { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
@@ -371,7 +377,7 @@ function HeaderContent() {
     // AI Insights removed per user request
 
     return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }>
-  }, [isManagerLike, unreadCount])
+  }, [isManagerLike, unreadCount, (user as any)?.subscription_plan, user?.team_id])
 
   const handleSignOut = async () => {
     try {

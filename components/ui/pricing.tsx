@@ -227,7 +227,7 @@ const PricingContext = createContext<{
   isMonthly: boolean;
   setIsMonthly: (value: boolean) => void;
 }>({
-  isMonthly: true,
+  isMonthly: false,
   setIsMonthly: () => {},
 });
 
@@ -237,7 +237,7 @@ export function PricingSection({
   title = "Simple, Transparent Pricing",
   description = "Choose the plan that's right for you. All plans include our core features and support.",
 }: PricingSectionProps) {
-  const [isMonthly, setIsMonthly] = useState(true);
+  const [isMonthly, setIsMonthly] = useState(false);
   const [selectedPlanIndex, setSelectedPlanIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null!) as React.RefObject<HTMLDivElement>;
   const [mousePosition, setMousePosition] = useState<{

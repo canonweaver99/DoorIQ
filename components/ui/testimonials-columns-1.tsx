@@ -14,67 +14,60 @@ export type Testimonials = Testimonial[];
 
 export const testimonialsData: Testimonials = [
   {
-    text: "DoorIQ gave our new hires the confidence they needed in half the time. We can’t imagine onboarding without it now.",
+    text: "Game changer for new reps. Started using DoorIQ three weeks ago and already seeing results in the field. The AI homeowners are scary realistic - especially the 'busy parent' persona that keeps trying to end the conversation.",
     image:
-      "https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "Lina Marshall",
-    role: "Sales Rep",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&w=200&h=200&q=80",
+    name: "Marcus Thompson",
+    role: "Dallas, TX",
   },
   {
-    text: "Our entire org trains on DoorIQ. The AI homeowners feel surprisingly real and the feedback is actionable.",
-    image:
-      "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "James Patel",
-    role: "Manager",
-  },
-  {
-    text: "The weekly leaderboards keep the team competitive and actually excited about practice reps.",
-    image:
-      "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "Amina Khan",
-    role: "Manager",
-  },
-  {
-    text: "We saw deal velocity jump within the first month. DoorIQ turned coaching into a superpower for our managers.",
-    image:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "Cameron Lee",
-    role: "CEO",
-  },
-  {
-    text: "Scheduling live call reviews used to take hours. Now reps self-correct after every simulated conversation.",
-    image:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "Riya Sharma",
-    role: "Manager",
-  },
-  {
-    text: "DoorIQ keeps our remote team sharp between seasons. It’s the secret sauce behind our record summer.",
+    text: "Finally, practice that doesn't waste real leads. I manage a team of 12 solar sales reps. We were burning through leads letting new guys practice on real doors. DoorIQ solved this completely. New reps get 50+ practice conversations before they touch a real lead.",
     image:
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "Morgan Blake",
-    role: "Sales Rep",
+    name: "Jennifer Chen",
+    role: "Phoenix, AZ",
   },
   {
-    text: "The integration was painless and the product team helped us tailor scenarios to our buyer profiles.",
+    text: "Great concept, needs mobile app. Love the platform and the AI is genuinely impressive. Knocked off one star because I really need a mobile app - I'm always on the road between territories and want to practice during downtime.",
     image:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "Avery Chen",
-    role: "Marketing Head",
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&w=200&h=200&q=80",
+    name: "Tyler Rodriguez",
+    role: "Denver, CO",
   },
   {
-    text: "Our reps now request practice time. That never happened before DoorIQ.",
+    text: "Worth every penny. Been doing D2D for 8 years and wish this existed when I started. I use it to practice new product launches and test different approaches. The grading system is tough but fair.",
     image:
-      "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "Jordan Ruiz",
-    role: "Sales Rep",
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&w=200&h=200&q=80",
+    name: "Ashley Williams",
+    role: "Tampa, FL",
   },
   {
-    text: "Every simulated call feels authentic. The AI even handles layered objections like real homeowners do.",
+    text: "My confidence is through the roof. I'm naturally introverted and door knocking was terrifying. After 100+ sessions on DoorIQ, I actually look forward to real doors now. The session reminders keep me consistent.",
     image:
-      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=facearea&w=200&h=200&q=80",
-    name: "Sienna Park",
-    role: "Marketing Head",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&w=200&h=200&q=80",
+    name: "Brandon Mitchell",
+    role: "Sacramento, CA",
+  },
+  {
+    text: "Solid platform, occasional tech issues. The training is legit and definitely helps with objection handling. Sometimes the AI takes a second to respond which throws off the flow, but support said they're working on it.",
+    image:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&w=200&h=200&q=80",
+    name: "Rachel Foster",
+    role: "Charlotte, NC",
+  },
+  {
+    text: "Best investment in my sales career. Switched from roofing to solar sales and DoorIQ helped me adapt my pitch fast. The 'Recent Storm Victim' persona helped me understand how to approach storm damage conversations with empathy.",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&w=200&h=200&q=80",
+    name: "David Park",
+    role: "Austin, TX",
+  },
+  {
+    text: "Our retention is up 40%. I run a mid-size pest control company. New rep turnover was killing us - kids would quit after two bad days. Now they train on DoorIQ first, build confidence, then hit real doors.",
+    image:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=facearea&w=200&h=200&q=80",
+    name: "Nicole Martinez",
+    role: "Las Vegas, NV",
   },
 ];
 
@@ -88,7 +81,22 @@ export const TestimonialsColumn = ({
   className,
   testimonials,
   duration,
-}: TestimonialsColumnProps) => {
+  showEmptyCards = false,
+}: TestimonialsColumnProps & { showEmptyCards?: boolean }) => {
+  // Create empty review cards for the first column only
+  const emptyReviewCard = {
+    text: "",
+    image: "",
+    name: "",
+    role: "",
+    isEmpty: true,
+  };
+
+  // Add 2-3 empty cards to the first column
+  const itemsToShow = showEmptyCards 
+    ? [...testimonials, emptyReviewCard, emptyReviewCard, emptyReviewCard]
+    : testimonials;
+
   return (
     <div className={className}>
       <motion.div
@@ -105,32 +113,56 @@ export const TestimonialsColumn = ({
       >
         {Array.from({ length: 2 }).map((_, loopIndex) => (
           <React.Fragment key={loopIndex}>
-            {testimonials.map(({ text, image, name, role }, testimonialIndex) => (
-              <a
-                href="/testimonials"
-                className="p-10 rounded-3xl border shadow-lg shadow-primary/10 max-w-xs w-full cursor-pointer hover:border-primary/50 hover:shadow-primary/20 transition-all duration-300 block"
-                key={`${loopIndex}-${testimonialIndex}`}
-              >
-                <div>{text}</div>
-                <div className="flex items-center gap-2 mt-5">
-                  <img
-                    width={40}
-                    height={40}
-                    src={image}
-                    alt={name}
-                    className="h-10 w-10 rounded-full"
-                  />
-                  <div className="flex flex-col">
-                    <div className="font-medium tracking-tight leading-5">
-                      {name}
+            {itemsToShow.map((item, testimonialIndex) => {
+              const testimonial = item as any;
+              if (testimonial.isEmpty) {
+                return (
+                  <a
+                    href="/testimonials"
+                    className="p-10 rounded-3xl border-2 border-dashed border-primary/30 shadow-lg shadow-primary/10 max-w-xs w-full cursor-pointer hover:border-primary/50 hover:shadow-primary/20 transition-all duration-300 flex flex-col items-center justify-center min-h-[200px] bg-primary/5"
+                    key={`${loopIndex}-empty-${testimonialIndex}`}
+                  >
+                    <div className="text-center">
+                      <div className="text-4xl mb-3">💬</div>
+                      <div className="font-medium tracking-tight leading-5 text-primary/80 mb-2">
+                        Enjoying your time?
+                      </div>
+                      <div className="text-sm opacity-60">
+                        Leave a review
+                      </div>
                     </div>
-                    <div className="leading-5 opacity-60 tracking-tight">
-                      {role}
+                  </a>
+                );
+              }
+              
+              const { text, image, name, role } = testimonial;
+              return (
+                <a
+                  href="/testimonials"
+                  className="p-10 rounded-3xl border shadow-lg shadow-primary/10 max-w-xs w-full cursor-pointer hover:border-primary/50 hover:shadow-primary/20 transition-all duration-300 block"
+                  key={`${loopIndex}-${testimonialIndex}`}
+                >
+                  <div>{text}</div>
+                  <div className="flex items-center gap-2 mt-5">
+                    <img
+                      width={40}
+                      height={40}
+                      src={image}
+                      alt={name}
+                      className="h-10 w-10 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                      <div className="font-medium tracking-tight leading-5">
+                        {name}
+                      </div>
+                      <div className="leading-5 opacity-60 tracking-tight">
+                        {role}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </a>
-            ))}
+                </a>
+              );
+            })}
           </React.Fragment>
         ))}
       </motion.div>

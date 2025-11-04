@@ -585,7 +585,7 @@ function TestimonialsSection() {
         }}
       >
         <motion.div variants={staggerItem}>
-          <TestimonialsColumn testimonials={firstColumn} duration={18} />
+          <TestimonialsColumn testimonials={firstColumn} duration={18} showEmptyCards={true} />
         </motion.div>
         {secondColumn.length > 0 && (
           <motion.div variants={staggerItem} className="hidden md:block">

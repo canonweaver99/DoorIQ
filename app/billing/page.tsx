@@ -86,7 +86,7 @@ function BillingPageContent() {
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [switchingPlan, setSwitchingPlan] = useState<string | null>(null)
   const [showPlanSwitcher, setShowPlanSwitcher] = useState(false)
-  const [planBillingInterval, setPlanBillingInterval] = useState<'month' | 'year'>('month')
+  const [planBillingInterval, setPlanBillingInterval] = useState<'month' | 'year'>('year')
   const monthlyBtnRef = useRef<HTMLButtonElement>(null)
   const annualBtnRef = useRef<HTMLButtonElement>(null)
   const [toggleStyle, setToggleStyle] = useState({})
@@ -398,7 +398,7 @@ function BillingPageContent() {
     
     const interval = subscription.price.interval
     if (subscription.plan === 'individual') {
-      return interval === 'year' ? 'Individual yearly plan' : 'Individual monthly plan'
+      return interval === 'year' ? 'Yearly Individual Plan' : 'Monthly Individual Plan'
     }
     
     const planMap: Record<string, string> = {
