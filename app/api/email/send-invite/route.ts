@@ -101,7 +101,8 @@ export async function POST(request: NextRequest) {
       from: fromEmail,
       to: email,
       subject: `You've been invited to join DoorIQ as a ${roleText}`,
-      html: htmlWithSignature
+      html: htmlWithSignature,
+      reply_to: 'canonweaver@loopline.design'
     })
 
     if (error) {

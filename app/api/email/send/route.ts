@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
       from: fromEmail,
       to: Array.isArray(to) ? to : [to],
       subject,
-      html: htmlWithSignature
+      html: htmlWithSignature,
+      reply_to: 'canonweaver@loopline.design'
     })
 
     if (error) {

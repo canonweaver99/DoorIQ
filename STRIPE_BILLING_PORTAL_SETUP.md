@@ -51,8 +51,11 @@ When ready for production:
 
 1. Switch to **Live Mode** in Stripe Dashboard
 2. Go to [Stripe Dashboard - Billing Portal Settings (Live Mode)](https://dashboard.stripe.com/settings/billing/portal)
-3. Repeat the same configuration steps
-4. Save the configuration
+3. Click **"Activate test link"** (for live mode - Stripe uses "test link" terminology for the default configuration)
+4. Repeat the same configuration steps as test mode
+5. Save the configuration
+
+**Note:** The billing portal is accessed programmatically via your app's "Manage Subscription" button. Users don't need a direct link - the portal session is created automatically when they click the button.
 
 ### 4. Verify Configuration
 

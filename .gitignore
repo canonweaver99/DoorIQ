@@ -40,3 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.stripe.keys
+
+# Production sensitive files (contain API keys)
+STRIPE_LIVE_KEYS.md
+PRODUCTION_ENV_VARS.md
+STRIPE_COMPLETE_CONFIG.md

@@ -211,7 +211,8 @@ export async function POST(request: NextRequest) {
         from: 'DoorIQ <notifications@dooriq.ai>',
         to: user.email,
         subject,
-        html
+        html,
+        reply_to: 'canonweaver@loopline.design'
       })
 
       // Mark notification as sent

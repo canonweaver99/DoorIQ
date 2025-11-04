@@ -16,9 +16,10 @@ const STRIPE_PRICE_IDS = {
   individual_yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_YEARLY || 'price_1SIyLY1WkNBozaYxld3E6aWS'
 }
 
-// Stripe Payment Link (as provided by user)
-// This can be used directly or you can extract the price ID from your dashboard
-const PAYMENT_LINK = 'https://buy.stripe.com/test_eVq5kw4h46yu7VB6RJes000'
+// Stripe Payment Link (LIVE MODE - Production)
+// Live payment link: https://buy.stripe.com/28E7sDeNc1QSdD7g8T2go00
+// Product ID: prod_TMF8fyztCmkcyN
+const PAYMENT_LINK = 'https://buy.stripe.com/28E7sDeNc1QSdD7g8T2go00'
 
 function PricingPageContent() {
   const [loading, setLoading] = useState<string | null>(null)

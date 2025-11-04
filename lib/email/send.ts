@@ -2,11 +2,15 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Reply-to email for all DoorIQ emails - replies will go to this address
+export const REPLY_TO_EMAIL = 'canonweaver@loopline.design'
+
 interface SendEmailParams {
   to: string | string[]
   subject: string
   html: string
   from?: string
+  replyTo?: string
 }
 
 /**
@@ -54,7 +58,7 @@ export function addSignatureIfNeeded(html: string, fromEmail: string): string {
   return html + getEmailSignature()
 }
 
-export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
+export async function sendEmail({ to, subject, html, from, replyTo }: SendEmailParams) {
   try {
     const fromEmail = from || 'DoorIQ <noreply@dooriq.ai>'
     
@@ -65,7 +69,8 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
       from: fromEmail,
       to: Array.isArray(to) ? to : [to],
       subject,
-      html: htmlWithSignature
+      html: htmlWithSignature,
+      reply_to: replyTo || REPLY_TO_EMAIL
     })
 
     if (error) {

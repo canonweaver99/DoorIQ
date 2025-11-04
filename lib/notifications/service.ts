@@ -91,7 +91,8 @@ export async function sendNotification(options: NotificationOptions): Promise<bo
       from: fromEmail,
       to: user.email,
       subject,
-      html: htmlWithSignature
+      html: htmlWithSignature,
+      reply_to: 'canonweaver@loopline.design'
     })
 
     if (sendError) {

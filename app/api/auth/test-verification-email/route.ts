@@ -126,7 +126,8 @@ export async function POST(req: Request) {
             from: fromEmail,
             to: email.toLowerCase(),
             subject: 'Confirm your DoorIQ account',
-            html: emailHtml
+            html: emailHtml,
+            reply_to: 'canonweaver@loopline.design'
           })
 
           if (emailError) {

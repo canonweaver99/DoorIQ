@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { 
   FileText, 
@@ -76,6 +76,9 @@ function BillingPageContent() {
   const [switchingPlan, setSwitchingPlan] = useState<string | null>(null)
   const [showPlanSwitcher, setShowPlanSwitcher] = useState(false)
   const [planBillingInterval, setPlanBillingInterval] = useState<'month' | 'year'>('month')
+  const monthlyBtnRef = useRef<HTMLButtonElement>(null)
+  const annualBtnRef = useRef<HTMLButtonElement>(null)
+  const [toggleStyle, setToggleStyle] = useState({})
   const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -93,6 +96,16 @@ function BillingPageContent() {
       }, 1000)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    const btnRef = planBillingInterval === 'month' ? monthlyBtnRef : annualBtnRef
+    if (btnRef.current) {
+      setToggleStyle({
+        width: btnRef.current.offsetWidth,
+        transform: `translateX(${btnRef.current.offsetLeft}px)`,
+      })
+    }
+  }, [planBillingInterval])
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -331,8 +344,8 @@ function BillingPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-purple-600 animate-spin" />
+      <div className="min-h-screen bg-background dark:bg-neutral-950 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-foreground animate-spin" />
       </div>
     )
   }
@@ -343,40 +356,40 @@ function BillingPageContent() {
   const activeTab = searchParams.get('tab') || 'settings'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+    <div className="min-h-screen bg-background dark:bg-neutral-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Sidebar - Account Settings Navigation */}
           <aside className="w-full lg:w-64 flex-shrink-0">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-white/10 p-4">
-              <h2 className="text-lg font-semibold text-white mb-4">Account Settings</h2>
+            <div className="bg-background/70 backdrop-blur-sm rounded-xl border border-border p-4">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Account Settings</h2>
               <nav className="space-y-1">
                 <Link
                   href="/billing?tab=settings"
                   className={`flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                     activeTab === 'settings'
-                      ? 'font-medium text-white bg-gradient-to-r from-purple-600/30 to-indigo-600/30 border border-purple-500/30'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      ? 'font-medium text-foreground bg-muted border border-border'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
-                  <Settings className={`w-5 h-5 ${activeTab === 'settings' ? 'text-purple-400' : 'text-slate-400'}`} />
+                  <Settings className="w-5 h-5" />
                   <span>Account Settings</span>
                 </Link>
                 <Link
                   href="/billing?tab=subscription"
                   className={`flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                     activeTab === 'subscription'
-                      ? 'font-medium text-white bg-gradient-to-r from-purple-600/30 to-indigo-600/30 border border-purple-500/30'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      ? 'font-medium text-foreground bg-muted border border-border'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
-                  <FileText className={`w-5 h-5 ${activeTab === 'subscription' ? 'text-purple-400' : 'text-slate-400'}`} />
+                  <FileText className="w-5 h-5" />
                   <span>Manage Subscription</span>
                   {hasActiveSubscription && (
                     <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
                       activeTab === 'subscription' 
-                        ? 'bg-purple-500 text-white' 
-                        : 'bg-white/10 text-slate-400'
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
                     }`}>
                       1
                     </span>
@@ -386,17 +399,17 @@ function BillingPageContent() {
                   href="/billing?tab=purchase-history"
                   className={`flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                     activeTab === 'purchase-history'
-                      ? 'font-medium text-white bg-gradient-to-r from-purple-600/30 to-indigo-600/30 border border-purple-500/30'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      ? 'font-medium text-foreground bg-muted border border-border'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
-                  <FileText className={`w-5 h-5 ${activeTab === 'purchase-history' ? 'text-purple-400' : 'text-slate-400'}`} />
+                  <FileText className="w-5 h-5" />
                   <span>Purchase History</span>
                   {hasActiveSubscription && (
                     <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
                       activeTab === 'purchase-history' 
-                        ? 'bg-purple-500 text-white' 
-                        : 'bg-white/10 text-slate-400'
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
                     }`}>
                       1
                     </span>
@@ -406,17 +419,17 @@ function BillingPageContent() {
                   href="/billing?tab=cards"
                   className={`flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                     activeTab === 'cards'
-                      ? 'font-medium text-white bg-gradient-to-r from-purple-600/30 to-indigo-600/30 border border-purple-500/30'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      ? 'font-medium text-foreground bg-muted border border-border'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
-                  <CreditCard className={`w-5 h-5 ${activeTab === 'cards' ? 'text-purple-400' : 'text-slate-400'}`} />
+                  <CreditCard className="w-5 h-5" />
                   <span>Stored Cards</span>
                   {paymentMethod && (
                     <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
                       activeTab === 'cards' 
-                        ? 'bg-purple-500 text-white' 
-                        : 'bg-white/10 text-slate-400'
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
                     }`}>
                       1
                     </span>
@@ -428,24 +441,24 @@ function BillingPageContent() {
 
           {/* Main Content Area */}
           <div className="flex-1">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-white/10 p-6">
+            <div className="bg-background/70 backdrop-blur-sm rounded-xl border border-border p-6">
               {activeTab === 'settings' && (
                 <>
-                  <h1 className="text-2xl font-bold text-white mb-6">Account Settings</h1>
-                  <p className="text-slate-400 mb-6">Manage your app preferences</p>
+                  <h1 className="text-2xl font-bold text-foreground mb-6">Account Settings</h1>
+                  <p className="text-muted-foreground mb-6">Manage your app preferences</p>
 
                   {/* Notifications Section */}
-                  <div className="bg-white/5 rounded-lg border border-white/10 p-6 mb-6">
+                  <div className="bg-background/50 rounded-lg border border-border p-6 mb-6">
                     <div className="flex items-center mb-6">
-                      <Bell className="w-5 h-5 text-purple-400 mr-2" />
-                      <h2 className="text-xl font-semibold text-white">Notifications</h2>
+                      <Bell className="w-5 h-5 text-foreground mr-2" />
+                      <h2 className="text-xl font-semibold text-foreground">Notifications</h2>
                     </div>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-300">Email Notifications</p>
-                          <p className="text-sm text-slate-400 mt-1">
+                          <p className="text-sm font-medium text-foreground">Email Notifications</p>
+                          <p className="text-sm text-muted-foreground mt-1">
                             Receive updates about your training progress
                           </p>
                         </div>
@@ -457,8 +470,8 @@ function BillingPageContent() {
 
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-300">Session Reminders</p>
-                          <p className="text-sm text-slate-400 mt-1">
+                          <p className="text-sm font-medium text-foreground">Session Reminders</p>
+                          <p className="text-sm text-muted-foreground mt-1">
                             Get reminded to practice daily
                           </p>
                         </div>
@@ -470,8 +483,8 @@ function BillingPageContent() {
 
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-300">Weekly Reports</p>
-                          <p className="text-sm text-slate-400 mt-1">
+                          <p className="text-sm font-medium text-foreground">Weekly Reports</p>
+                          <p className="text-sm text-muted-foreground mt-1">
                             Receive weekly performance summaries
                           </p>
                         </div>
@@ -484,17 +497,17 @@ function BillingPageContent() {
                   </div>
 
                   {/* Appearance Section */}
-                  <div className="bg-white/5 rounded-lg border border-white/10 p-6 mb-6">
+                  <div className="bg-background/50 rounded-lg border border-border p-6 mb-6">
                     <div className="flex items-center mb-6">
-                      <Moon className="w-5 h-5 text-indigo-400 mr-2" />
-                      <h2 className="text-xl font-semibold text-white">Appearance</h2>
+                      <Moon className="w-5 h-5 text-foreground mr-2" />
+                      <h2 className="text-xl font-semibold text-foreground">Appearance</h2>
                     </div>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-300">Sound Effects</p>
-                          <p className="text-sm text-slate-400 mt-1">
+                          <p className="text-sm font-medium text-foreground">Sound Effects</p>
+                          <p className="text-sm text-muted-foreground mt-1">
                             Play sounds during training sessions
                           </p>
                         </div>
@@ -511,7 +524,7 @@ function BillingPageContent() {
                     <button
                       onClick={handleSaveSettings}
                       disabled={saving}
-                      className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Save className="w-5 h-5 mr-2" />
                       {saving ? 'Saving...' : 'Save Settings'}
@@ -521,10 +534,10 @@ function BillingPageContent() {
                   {/* Success/Error Message */}
                   {settingsMessage && (
                     <div
-                      className={`mt-4 p-4 rounded-lg ${
+                      className={`mt-4 p-4 rounded-lg border ${
                         settingsMessage.type === 'success'
-                          ? 'bg-green-600/20 text-green-400 border border-green-600/50'
-                          : 'bg-red-600/20 text-red-400 border border-red-600/50'
+                          ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
+                          : 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
                       }`}
                     >
                       {settingsMessage.text}
@@ -535,24 +548,24 @@ function BillingPageContent() {
 
               {activeTab === 'subscription' && (
                 <>
-                  <h1 className="text-2xl font-bold text-white mb-6">Manage Subscription</h1>
+                  <h1 className="text-2xl font-bold text-foreground mb-6">Manage Subscription</h1>
 
               {/* Yearly Upgrade Banner */}
               {showYearlyBanner && subscription.yearlySavings && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-lg p-4 mb-6 flex items-center justify-between"
+                  className="bg-muted/50 border border-border rounded-lg p-4 mb-6 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-500/30 rounded-lg">
-                      <Sparkles className="w-5 h-5 text-purple-400" />
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Sparkles className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white">
+                      <p className="text-sm font-semibold text-foreground">
                         Save {subscription.yearlySavings.percent}% with a yearly plan
                       </p>
-                      <p className="text-sm text-slate-300 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         The annual price for this subscription is only {formatPrice(subscription.yearlySavings.yearlyPrice)}/year. 
                         This saves you {formatPrice(subscription.yearlySavings.amount)}/year compared to your monthly subscription.
                       </p>
@@ -561,7 +574,7 @@ function BillingPageContent() {
                   <button
                     onClick={handleUpgradeYearly}
                     disabled={upgrading}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-medium rounded-md hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                   >
                     {upgrading ? (
                       <>
@@ -578,9 +591,9 @@ function BillingPageContent() {
               {/* Subscription Card */}
               {hasActiveSubscription && subscription ? (
                 <div className="space-y-6">
-                  <div className="flex items-start gap-4 p-4 border border-white/10 bg-white/5 rounded-lg">
+                  <div className="flex items-start gap-4 p-4 border border-border bg-background/50 rounded-lg">
                     {/* Logo/Icon */}
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0 p-2">
+                    <div className="w-16 h-16 bg-background border border-border rounded-lg flex items-center justify-center flex-shrink-0 p-2">
                       <img 
                         src="/dooriq-key.png" 
                         alt="DoorIQ" 
@@ -590,7 +603,7 @@ function BillingPageContent() {
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
                           if (target.parentElement) {
-                            target.parentElement.innerHTML = '<span class="text-white font-bold text-lg">DI</span>'
+                            target.parentElement.innerHTML = '<span class="text-foreground font-bold text-lg">DI</span>'
                           }
                         }}
                       />
@@ -600,16 +613,16 @@ function BillingPageContent() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="text-lg font-semibold text-white mb-2">
+                          <h3 className="text-lg font-semibold text-foreground mb-2">
                             {getPlanName(subscription.plan)}
                           </h3>
                           <button
-                            className={`px-3 py-1 text-xs font-semibold rounded ${
+                            className={`px-3 py-1 text-xs font-semibold rounded border ${
                               subscription.status === 'active' || subscription.status === 'trialing'
-                                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
                                 : subscription.status === 'past_due'
-                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                                : 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+                                ? 'bg-yellow-50 dark:bg-yellow-950/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800'
+                                : 'bg-muted text-muted-foreground border-border'
                             }`}
                           >
                             {getStatusText(subscription.status)}
@@ -619,25 +632,25 @@ function BillingPageContent() {
                           <button
                             onClick={() => setShowPlanSwitcher(true)}
                             disabled={actionLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-md hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             Change Plan
                           </button>
                           <div className="relative menu-container">
                             <button
                               onClick={() => setShowMenu(showMenu === subscription.id ? null : subscription.id)}
-                              className="p-1.5 text-slate-400 hover:bg-white/10 hover:text-white rounded-md transition-colors"
+                              className="p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors"
                             >
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             {showMenu === subscription.id && (
-                              <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-white/10 rounded-md shadow-lg z-10 backdrop-blur-sm">
+                              <div className="absolute right-0 mt-2 w-48 bg-background border border-border rounded-md shadow-lg z-10">
                                 <button
                                   onClick={() => {
                                     handleManageSubscription()
                                     setShowMenu(null)
                                   }}
-                                  className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white rounded-t-md transition-colors"
+                                  className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted rounded-t-md transition-colors"
                                 >
                                   Manage in Stripe Portal
                                 </button>
@@ -646,7 +659,7 @@ function BillingPageContent() {
                                     router.push('/pricing')
                                     setShowMenu(null)
                                   }}
-                                  className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                                  className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                                 >
                                   View Plans
                                 </button>
@@ -655,7 +668,7 @@ function BillingPageContent() {
                                     handleCancelSubscription(false)
                                     setShowMenu(null)
                                   }}
-                                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-b-md transition-colors"
+                                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-b-md transition-colors"
                                 >
                                   Cancel Subscription
                                 </button>
@@ -668,8 +681,8 @@ function BillingPageContent() {
                       {/* Renewal and Payment Info */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
-                          <p className="text-xs text-slate-400 mb-1">Renews on</p>
-                          <p className="text-sm font-medium text-white">
+                          <p className="text-xs text-muted-foreground mb-1">Renews on</p>
+                          <p className="text-sm font-medium text-foreground">
                             {new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', {
                               month: 'long',
                               day: 'numeric',
@@ -678,18 +691,18 @@ function BillingPageContent() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-slate-400 mb-1">Price</p>
-                          <p className="text-sm font-medium text-white">
+                          <p className="text-xs text-muted-foreground mb-1">Price</p>
+                          <p className="text-sm font-medium text-foreground">
                             {formatPrice(subscription.price.amount)} ({subscription.price.interval === 'month' ? 'per month' : 'per year'})
                             {subscription.price.interval === 'month' && (
-                              <span className="text-slate-400 text-xs ml-1">(incl. taxes)</span>
+                              <span className="text-muted-foreground text-xs ml-1">(incl. taxes)</span>
                             )}
                           </p>
                         </div>
                         {paymentMethod && (
                           <div>
-                            <p className="text-xs text-slate-400 mb-1">Payment Method</p>
-                            <p className="text-sm font-medium text-white">
+                            <p className="text-xs text-muted-foreground mb-1">Payment Method</p>
+                            <p className="text-sm font-medium text-foreground">
                               {formatCardBrand(paymentMethod.brand)} **** {paymentMethod.last4}
                             </p>
                           </div>
@@ -699,39 +712,39 @@ function BillingPageContent() {
                   </div>
 
                   {/* Pagination */}
-                  <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/10">
+                  <div className="flex items-center justify-center gap-2 pt-4 border-t border-border">
                     <button
-                      className="p-1 text-slate-400 hover:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       disabled
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <span className="px-3 py-1 text-sm font-medium text-purple-400 bg-purple-500/20 rounded-full border border-purple-500/30">
+                    <span className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full border border-border">
                       1
                     </span>
                     <button
-                      className="p-1 text-slate-400 hover:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       disabled
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
                   </div>
-                  <p className="text-center text-sm text-slate-400">
+                  <p className="text-center text-sm text-muted-foreground">
                     1 - 1 of 1 subscriptions purchased
                   </p>
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 rounded-full mb-4 border border-purple-500/30">
-                    <CreditCard className="w-8 h-8 text-purple-400" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-background border border-border rounded-full mb-4">
+                    <CreditCard className="w-8 h-8 text-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">No Active Subscription</h3>
-                  <p className="text-slate-300 mb-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No Active Subscription</h3>
+                  <p className="text-muted-foreground mb-6">
                     Start a subscription to access all premium features
                   </p>
                   <Link
                     href="/pricing"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-md hover:from-purple-500 hover:to-indigo-500 transition-colors shadow-lg shadow-purple-600/30"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors"
                   >
                     View Plans
                   </Link>
@@ -740,81 +753,88 @@ function BillingPageContent() {
 
               {/* Plan Switcher Modal */}
               {showPlanSwitcher && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowPlanSwitcher(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowPlanSwitcher(false)}>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="bg-slate-800 rounded-xl border border-white/10 p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+                    className="bg-background rounded-xl border border-border p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
                   >
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-bold text-white">Switch Plan</h2>
+                      <h2 className="text-2xl font-bold text-foreground">Switch Plan</h2>
                       <button
                         onClick={() => setShowPlanSwitcher(false)}
-                        className="text-slate-400 hover:text-white transition-colors"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
                       >
                         <X className="w-6 h-6" />
                       </button>
                     </div>
 
                     {/* Monthly/Yearly Toggle */}
-                    <div className="flex items-center justify-center gap-4 mb-6 p-1 bg-white/5 rounded-lg border border-white/10">
-                      <button
-                        onClick={() => setPlanBillingInterval('month')}
-                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          planBillingInterval === 'month'
-                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                            : 'text-slate-300 hover:text-white'
-                        }`}
-                      >
-                        Monthly
-                      </button>
-                      <button
-                        onClick={() => setPlanBillingInterval('year')}
-                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          planBillingInterval === 'year'
-                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                            : 'text-slate-300 hover:text-white'
-                        }`}
-                      >
-                        Yearly
-                        <span className="ml-2 text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                          Save 30%
-                        </span>
-                      </button>
+                    <div className="flex justify-center mb-6">
+                      <div className="relative flex w-fit items-center rounded-full bg-muted p-0.5">
+                        <motion.div
+                          className="absolute left-0 top-0 h-full rounded-full bg-primary p-0.5"
+                          style={toggleStyle}
+                          transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                        />
+                        <button
+                          ref={monthlyBtnRef}
+                          onClick={() => setPlanBillingInterval('month')}
+                          className={`relative z-10 rounded-full px-3 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
+                            planBillingInterval === 'month'
+                              ? 'text-primary-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Monthly
+                        </button>
+                        <button
+                          ref={annualBtnRef}
+                          onClick={() => setPlanBillingInterval('year')}
+                          className={`relative z-10 rounded-full px-3 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
+                            planBillingInterval === 'year'
+                              ? 'text-primary-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Annual
+                          <span className="ml-2 text-xs">(Save 30%)</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Available Plans */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                       {/* Free Plan */}
-                      <div className={`p-4 rounded-lg border ${
+                      <div className={`p-4 rounded-lg border bg-background/50 ${
                         !hasActiveSubscription 
-                          ? 'border-purple-500/50 bg-purple-500/10' 
-                          : 'border-white/10 bg-white/5'
+                          ? 'border-primary' 
+                          : 'border-border'
                       }`}>
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-lg font-semibold text-white">Free</h3>
+                          <h3 className="text-lg font-semibold text-foreground">Free</h3>
                           {!hasActiveSubscription && (
-                            <span className="px-2 py-1 text-xs font-semibold bg-purple-500 text-white rounded-full">
+                            <span className="px-2 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
                               Current
                             </span>
                           )}
                         </div>
                         <div className="mb-4">
-                          <span className="text-3xl font-bold text-white">$0</span>
-                          <span className="text-slate-400">/month</span>
+                          <span className="text-3xl font-bold text-foreground">$0</span>
+                          <span className="text-muted-foreground">/month</span>
                         </div>
-                        <ul className="space-y-2 mb-4 text-sm text-slate-300">
+                        <ul className="space-y-2 mb-4 text-sm text-foreground">
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
                             <span>5 practice sessions/month</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
                             <span>All AI training agents</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
                             <span>Basic analytics</span>
                           </li>
                         </ul>
@@ -823,10 +843,10 @@ function BillingPageContent() {
                           disabled={switchingPlan === 'free' || !hasActiveSubscription}
                           className={`w-full px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                             !hasActiveSubscription
-                              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                              ? 'bg-muted text-muted-foreground cursor-not-allowed'
                               : hasActiveSubscription && subscription?.plan === 'free'
-                              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                              : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500'
+                              ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                              : 'bg-primary text-primary-foreground hover:bg-primary/90'
                           }`}
                         >
                           {switchingPlan === 'free' ? (
@@ -843,44 +863,44 @@ function BillingPageContent() {
                       </div>
 
                       {/* Individual Plan */}
-                      <div className={`p-4 rounded-lg border ${
+                      <div className={`p-4 rounded-lg border bg-background/50 ${
                         hasActiveSubscription && subscription?.plan === 'individual'
-                          ? 'border-purple-500/50 bg-purple-500/10' 
-                          : 'border-white/10 bg-white/5'
+                          ? 'border-primary' 
+                          : 'border-border'
                       }`}>
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-lg font-semibold text-white">Individual</h3>
+                          <h3 className="text-lg font-semibold text-foreground">Individual</h3>
                           {hasActiveSubscription && subscription?.plan === 'individual' && 
                            subscription?.price?.interval === planBillingInterval && (
-                            <span className="px-2 py-1 text-xs font-semibold bg-purple-500 text-white rounded-full">
+                            <span className="px-2 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
                               Current
                             </span>
                           )}
                         </div>
                         <div className="mb-4">
-                          <span className="text-3xl font-bold text-white">
+                          <span className="text-3xl font-bold text-foreground">
                             ${planBillingInterval === 'month' ? '20' : '14'}
                           </span>
-                          <span className="text-slate-400">/month</span>
+                          <span className="text-muted-foreground">/month</span>
                           {planBillingInterval === 'year' && (
-                            <span className="text-xs text-slate-400 ml-2">($168/year)</span>
+                            <span className="text-xs text-muted-foreground ml-2">($168/year)</span>
                           )}
                         </div>
-                        <ul className="space-y-2 mb-4 text-sm text-slate-300">
+                        <ul className="space-y-2 mb-4 text-sm text-foreground">
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
                             <span>50 practice sessions/month</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
                             <span>All AI training agents</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
                             <span>Advanced analytics</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
                             <span>Call upload & analysis</span>
                           </li>
                         </ul>
@@ -901,8 +921,8 @@ function BillingPageContent() {
                           className={`w-full px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                             hasActiveSubscription && subscription?.plan === 'individual' && 
                             subscription?.price?.interval === planBillingInterval
-                              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                              : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500'
+                              ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                              : 'bg-primary text-primary-foreground hover:bg-primary/90'
                           }`}
                         >
                           {switchingPlan === 'individual' ? (
@@ -922,14 +942,14 @@ function BillingPageContent() {
 
                     {/* Cancel Subscription Option */}
                     {hasActiveSubscription && (
-                      <div className="pt-4 border-t border-white/10">
+                      <div className="pt-4 border-t border-border">
                         <button
                           onClick={() => {
                             setShowPlanSwitcher(false)
                             handleCancelSubscription(false)
                           }}
                           disabled={switchingPlan === 'cancel'}
-                          className="w-full px-4 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors border border-red-500/30"
+                          className="w-full px-4 py-2 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors border border-red-200 dark:border-red-800"
                         >
                           {switchingPlan === 'cancel' ? (
                             <span className="flex items-center justify-center gap-2">
@@ -950,18 +970,18 @@ function BillingPageContent() {
 
               {activeTab === 'purchase-history' && (
                 <>
-                  <h1 className="text-2xl font-bold text-white mb-6">Purchase History</h1>
+                  <h1 className="text-2xl font-bold text-foreground mb-6">Purchase History</h1>
                   <div className="text-center py-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 rounded-full mb-4 border border-purple-500/30">
-                      <FileText className="w-8 h-8 text-purple-400" />
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-background border border-border rounded-full mb-4">
+                      <FileText className="w-8 h-8 text-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">No Purchase History</h3>
-                    <p className="text-slate-300 mb-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No Purchase History</h3>
+                    <p className="text-muted-foreground mb-6">
                       Your purchase history will appear here once you make a subscription or purchase credits.
                     </p>
                     <Link
                       href="/pricing"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-md hover:from-purple-500 hover:to-indigo-500 transition-colors shadow-lg shadow-purple-600/30"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors"
                     >
                       View Plans
                     </Link>
@@ -971,20 +991,20 @@ function BillingPageContent() {
 
               {activeTab === 'cards' && (
                 <>
-                  <h1 className="text-2xl font-bold text-white mb-6">Stored Cards</h1>
+                  <h1 className="text-2xl font-bold text-foreground mb-6">Stored Cards</h1>
                   {paymentMethod ? (
                     <div className="space-y-4">
-                      <div className="p-4 border border-white/10 bg-white/5 rounded-lg">
+                      <div className="p-4 border border-border bg-background/50 rounded-lg">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                              <CreditCard className="w-6 h-6 text-white" />
+                            <div className="w-12 h-12 bg-background border border-border rounded-lg flex items-center justify-center">
+                              <CreditCard className="w-6 h-6 text-foreground" />
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-white">
+                              <p className="text-sm font-semibold text-foreground">
                                 {formatCardBrand(paymentMethod.brand)} •••• {paymentMethod.last4}
                               </p>
-                              <p className="text-xs text-slate-400 mt-1">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 Expires {paymentMethod.expMonth.toString().padStart(2, '0')}/{paymentMethod.expYear}
                               </p>
                             </div>
@@ -992,7 +1012,7 @@ function BillingPageContent() {
                           <button
                             onClick={handleManageSubscription}
                             disabled={actionLoading}
-                            className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-md hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             {actionLoading ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -1005,16 +1025,16 @@ function BillingPageContent() {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 rounded-full mb-4 border border-purple-500/30">
-                        <CreditCard className="w-8 h-8 text-purple-400" />
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-background border border-border rounded-full mb-4">
+                        <CreditCard className="w-8 h-8 text-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold text-white mb-2">No Payment Methods</h3>
-                      <p className="text-slate-300 mb-6">
+                      <h3 className="text-lg font-semibold text-foreground mb-2">No Payment Methods</h3>
+                      <p className="text-muted-foreground mb-6">
                         Add a payment method to start your subscription.
                       </p>
                       <Link
                         href="/pricing"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-md hover:from-purple-500 hover:to-indigo-500 transition-colors shadow-lg shadow-purple-600/30"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors"
                       >
                         View Plans
                       </Link>
@@ -1033,8 +1053,8 @@ function BillingPageContent() {
 export default function BillingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-purple-600 animate-spin" />
+      <div className="min-h-screen bg-background dark:bg-neutral-950 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-foreground animate-spin" />
       </div>
     }>
       <BillingPageContent />
