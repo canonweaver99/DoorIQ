@@ -334,7 +334,7 @@ function HeaderContent() {
           { name: 'Documentation', href: '/documentation', icon: BookOpen },
           { name: 'Help Center', href: '/support', icon: HelpCircle },
           { name: 'Notifications', href: '/notifications', icon: Bell },
-          { name: 'Settings', href: '/settings', icon: SettingsIcon },
+          { name: 'Settings', href: '/billing?tab=settings', icon: SettingsIcon },
           { name: 'Billing', href: '/billing', icon: CreditCard },
           { name: 'User Profile', href: '/profile', icon: UserCircle },
         ],
@@ -764,7 +764,7 @@ function HeaderContent() {
                             <p className="mt-[2px] text-[16.5px] font-semibold text-white">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                           </div>
                           <button
-                            onClick={() => router.push('/settings')}
+                            onClick={() => router.push('/billing?tab=settings')}
                             className="inline-flex items-center gap-[5px] rounded-full border border-white/10 bg-white/5 px-[12px] py-[5px] text-[10.5px] uppercase tracking-[0.15em] text-slate-200 hover:bg-white/10 transition"
                           >
                             Manage Account

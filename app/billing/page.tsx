@@ -11,11 +11,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Bell,
+  Moon,
+  Save,
+  X
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Database } from '@/lib/supabase/database.types'
+import { Toggle } from '@/components/ui/toggle'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +53,8 @@ interface PaymentMethod {
   expYear: number
 }
 
+type UserData = Database['public']['Tables']['users']['Row']
+
 function BillingPageContent() {
   const [subscription, setSubscription] = useState<SubscriptionDetails | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null)
@@ -54,12 +62,27 @@ function BillingPageContent() {
   const [actionLoading, setActionLoading] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
   const [showMenu, setShowMenu] = useState<string | null>(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const [settings, setSettings] = useState({
+    emailNotifications: true,
+    sessionReminders: true,
+    weeklyReports: true,
+    darkMode: true,
+    soundEffects: true,
+    language: 'en',
+  })
+  const [saving, setSaving] = useState(false)
+  const [settingsMessage, setSettingsMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [switchingPlan, setSwitchingPlan] = useState<string | null>(null)
+  const [showPlanSwitcher, setShowPlanSwitcher] = useState(false)
+  const [planBillingInterval, setPlanBillingInterval] = useState<'month' | 'year'>('month')
   const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
     loadSubscriptionDetails()
+    fetchUserData()
     
     // Check if user just upgraded
     if (searchParams.get('upgraded') === 'true') {
@@ -96,6 +119,112 @@ function BillingPageContent() {
       console.error('Error loading subscription:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchUserData = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (data) {
+      setUserData(data)
+      // Load preferences from localStorage
+      const savedSettings = localStorage.getItem('userSettings')
+      if (savedSettings) {
+        try {
+          setSettings(JSON.parse(savedSettings))
+        } catch (e) {
+          console.error('Error parsing saved settings:', e)
+        }
+      }
+    }
+  }
+
+  const handleSaveSettings = async () => {
+    setSaving(true)
+    setSettingsMessage(null)
+
+    // Save to localStorage
+    localStorage.setItem('userSettings', JSON.stringify(settings))
+    
+    // Could also save to database in a preferences column
+    setSettingsMessage({ type: 'success', text: 'Settings saved successfully' })
+    setSaving(false)
+    
+    // Clear message after 3 seconds
+    setTimeout(() => {
+      setSettingsMessage(null)
+    }, 3000)
+  }
+
+  const handleSwitchPlan = async (planType: string, priceId?: string) => {
+    setSwitchingPlan(planType)
+    try {
+      const response = await fetch('/api/stripe/switch-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planType, priceId })
+      })
+
+      const data = await response.json()
+      
+      if (data.error) {
+        alert(data.error)
+        return
+      }
+
+      // Reload subscription details
+      await loadSubscriptionDetails()
+      setShowPlanSwitcher(false)
+      router.push('/billing?tab=subscription&switched=true')
+    } catch (error) {
+      console.error('Error switching plan:', error)
+      alert('Failed to switch plan')
+    } finally {
+      setSwitchingPlan(null)
+    }
+  }
+
+  const handleCancelSubscription = async (immediately: boolean = false) => {
+    if (!confirm(immediately 
+      ? 'Are you sure you want to cancel your subscription immediately? You will lose access to premium features right away.'
+      : 'Are you sure you want to cancel your subscription? You will keep access until the end of your billing period.'
+    )) {
+      return
+    }
+
+    setSwitchingPlan('cancel')
+    try {
+      const response = await fetch('/api/stripe/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cancelImmediately: immediately })
+      })
+
+      const data = await response.json()
+      
+      if (data.error) {
+        alert(data.error)
+        return
+      }
+
+      // Reload subscription details
+      await loadSubscriptionDetails()
+      alert(data.message)
+    } catch (error) {
+      console.error('Error canceling subscription:', error)
+      alert('Failed to cancel subscription')
+    } finally {
+      setSwitchingPlan(null)
     }
   }
 
@@ -211,7 +340,7 @@ function BillingPageContent() {
   const hasActiveSubscription = subscription && (subscription.status === 'active' || subscription.status === 'trialing')
   const isMonthly = subscription?.price.interval === 'month'
   const showYearlyBanner = hasActiveSubscription && isMonthly && subscription.yearlySavings
-  const activeTab = searchParams.get('tab') || 'subscription'
+  const activeTab = searchParams.get('tab') || 'settings'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
@@ -223,14 +352,18 @@ function BillingPageContent() {
               <h2 className="text-lg font-semibold text-white mb-4">Account Settings</h2>
               <nav className="space-y-1">
                 <Link
-                  href="/settings"
-                  className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white rounded-md transition-colors"
+                  href="/billing?tab=settings"
+                  className={`flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
+                    activeTab === 'settings'
+                      ? 'font-medium text-white bg-gradient-to-r from-purple-600/30 to-indigo-600/30 border border-purple-500/30'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  }`}
                 >
-                  <Settings className="w-5 h-5 text-slate-400" />
+                  <Settings className={`w-5 h-5 ${activeTab === 'settings' ? 'text-purple-400' : 'text-slate-400'}`} />
                   <span>Account Settings</span>
                 </Link>
                 <Link
-                  href="/billing"
+                  href="/billing?tab=subscription"
                   className={`flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                     activeTab === 'subscription'
                       ? 'font-medium text-white bg-gradient-to-r from-purple-600/30 to-indigo-600/30 border border-purple-500/30'
@@ -296,6 +429,110 @@ function BillingPageContent() {
           {/* Main Content Area */}
           <div className="flex-1">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-white/10 p-6">
+              {activeTab === 'settings' && (
+                <>
+                  <h1 className="text-2xl font-bold text-white mb-6">Account Settings</h1>
+                  <p className="text-slate-400 mb-6">Manage your app preferences</p>
+
+                  {/* Notifications Section */}
+                  <div className="bg-white/5 rounded-lg border border-white/10 p-6 mb-6">
+                    <div className="flex items-center mb-6">
+                      <Bell className="w-5 h-5 text-purple-400 mr-2" />
+                      <h2 className="text-xl font-semibold text-white">Notifications</h2>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-300">Email Notifications</p>
+                          <p className="text-sm text-slate-400 mt-1">
+                            Receive updates about your training progress
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={settings.emailNotifications}
+                          onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-300">Session Reminders</p>
+                          <p className="text-sm text-slate-400 mt-1">
+                            Get reminded to practice daily
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={settings.sessionReminders}
+                          onCheckedChange={(checked) => setSettings({ ...settings, sessionReminders: checked })}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-300">Weekly Reports</p>
+                          <p className="text-sm text-slate-400 mt-1">
+                            Receive weekly performance summaries
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={settings.weeklyReports}
+                          onCheckedChange={(checked) => setSettings({ ...settings, weeklyReports: checked })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Appearance Section */}
+                  <div className="bg-white/5 rounded-lg border border-white/10 p-6 mb-6">
+                    <div className="flex items-center mb-6">
+                      <Moon className="w-5 h-5 text-indigo-400 mr-2" />
+                      <h2 className="text-xl font-semibold text-white">Appearance</h2>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-300">Sound Effects</p>
+                          <p className="text-sm text-slate-400 mt-1">
+                            Play sounds during training sessions
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={settings.soundEffects}
+                          onCheckedChange={(checked) => setSettings({ ...settings, soundEffects: checked })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <button
+                      onClick={handleSaveSettings}
+                      disabled={saving}
+                      className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Save className="w-5 h-5 mr-2" />
+                      {saving ? 'Saving...' : 'Save Settings'}
+                    </button>
+                  </div>
+
+                  {/* Success/Error Message */}
+                  {settingsMessage && (
+                    <div
+                      className={`mt-4 p-4 rounded-lg ${
+                        settingsMessage.type === 'success'
+                          ? 'bg-green-600/20 text-green-400 border border-green-600/50'
+                          : 'bg-red-600/20 text-red-400 border border-red-600/50'
+                      }`}
+                    >
+                      {settingsMessage.text}
+                    </div>
+                  )}
+                </>
+              )}
+
               {activeTab === 'subscription' && (
                 <>
                   <h1 className="text-2xl font-bold text-white mb-6">Manage Subscription</h1>
@@ -380,15 +617,11 @@ function BillingPageContent() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={handleManageSubscription}
+                            onClick={() => setShowPlanSwitcher(true)}
                             disabled={actionLoading}
                             className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-md hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            {actionLoading ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              'Change Plan'
-                            )}
+                            Change Plan
                           </button>
                           <div className="relative menu-container">
                             <button
@@ -413,9 +646,18 @@ function BillingPageContent() {
                                     router.push('/pricing')
                                     setShowMenu(null)
                                   }}
-                                  className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white rounded-b-md transition-colors"
+                                  className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
                                 >
                                   View Plans
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleCancelSubscription(false)
+                                    setShowMenu(null)
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-b-md transition-colors"
+                                >
+                                  Cancel Subscription
                                 </button>
                               </div>
                             )}
@@ -493,6 +735,214 @@ function BillingPageContent() {
                   >
                     View Plans
                   </Link>
+                </div>
+              )}
+
+              {/* Plan Switcher Modal */}
+              {showPlanSwitcher && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowPlanSwitcher(false)}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-slate-800 rounded-xl border border-white/10 p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-bold text-white">Switch Plan</h2>
+                      <button
+                        onClick={() => setShowPlanSwitcher(false)}
+                        className="text-slate-400 hover:text-white transition-colors"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+
+                    {/* Monthly/Yearly Toggle */}
+                    <div className="flex items-center justify-center gap-4 mb-6 p-1 bg-white/5 rounded-lg border border-white/10">
+                      <button
+                        onClick={() => setPlanBillingInterval('month')}
+                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          planBillingInterval === 'month'
+                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                            : 'text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        Monthly
+                      </button>
+                      <button
+                        onClick={() => setPlanBillingInterval('year')}
+                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          planBillingInterval === 'year'
+                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                            : 'text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        Yearly
+                        <span className="ml-2 text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                          Save 30%
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Available Plans */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      {/* Free Plan */}
+                      <div className={`p-4 rounded-lg border ${
+                        !hasActiveSubscription 
+                          ? 'border-purple-500/50 bg-purple-500/10' 
+                          : 'border-white/10 bg-white/5'
+                      }`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-lg font-semibold text-white">Free</h3>
+                          {!hasActiveSubscription && (
+                            <span className="px-2 py-1 text-xs font-semibold bg-purple-500 text-white rounded-full">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                        <div className="mb-4">
+                          <span className="text-3xl font-bold text-white">$0</span>
+                          <span className="text-slate-400">/month</span>
+                        </div>
+                        <ul className="space-y-2 mb-4 text-sm text-slate-300">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <span>5 practice sessions/month</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <span>All AI training agents</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <span>Basic analytics</span>
+                          </li>
+                        </ul>
+                        <button
+                          onClick={() => hasActiveSubscription ? handleSwitchPlan('free') : setShowPlanSwitcher(false)}
+                          disabled={switchingPlan === 'free' || !hasActiveSubscription}
+                          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                            !hasActiveSubscription
+                              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                              : hasActiveSubscription && subscription?.plan === 'free'
+                              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500'
+                          }`}
+                        >
+                          {switchingPlan === 'free' ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Switching...
+                            </span>
+                          ) : hasActiveSubscription ? (
+                            'Switch to Free'
+                          ) : (
+                            'Current Plan'
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Individual Plan */}
+                      <div className={`p-4 rounded-lg border ${
+                        hasActiveSubscription && subscription?.plan === 'individual'
+                          ? 'border-purple-500/50 bg-purple-500/10' 
+                          : 'border-white/10 bg-white/5'
+                      }`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-lg font-semibold text-white">Individual</h3>
+                          {hasActiveSubscription && subscription?.plan === 'individual' && 
+                           subscription?.price?.interval === planBillingInterval && (
+                            <span className="px-2 py-1 text-xs font-semibold bg-purple-500 text-white rounded-full">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                        <div className="mb-4">
+                          <span className="text-3xl font-bold text-white">
+                            ${planBillingInterval === 'month' ? '20' : '14'}
+                          </span>
+                          <span className="text-slate-400">/month</span>
+                          {planBillingInterval === 'year' && (
+                            <span className="text-xs text-slate-400 ml-2">($168/year)</span>
+                          )}
+                        </div>
+                        <ul className="space-y-2 mb-4 text-sm text-slate-300">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <span>50 practice sessions/month</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <span>All AI training agents</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <span>Advanced analytics</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            <span>Call upload & analysis</span>
+                          </li>
+                        </ul>
+                        <button
+                          onClick={() => {
+                            const priceId = planBillingInterval === 'month'
+                              ? process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_MONTHLY
+                              : process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_YEARLY
+                            if (priceId) {
+                              handleSwitchPlan('individual', priceId)
+                            }
+                          }}
+                          disabled={
+                            switchingPlan === 'individual' || 
+                            (hasActiveSubscription && subscription?.plan === 'individual' && 
+                             subscription?.price?.interval === planBillingInterval) || false
+                          }
+                          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                            hasActiveSubscription && subscription?.plan === 'individual' && 
+                            subscription?.price?.interval === planBillingInterval
+                              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500'
+                          }`}
+                        >
+                          {switchingPlan === 'individual' ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Switching...
+                            </span>
+                          ) : hasActiveSubscription && subscription?.plan === 'individual' && 
+                            subscription?.price?.interval === planBillingInterval ? (
+                            'Current Plan'
+                          ) : (
+                            hasActiveSubscription ? 'Switch to Individual' : 'Upgrade to Individual'
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Cancel Subscription Option */}
+                    {hasActiveSubscription && (
+                      <div className="pt-4 border-t border-white/10">
+                        <button
+                          onClick={() => {
+                            setShowPlanSwitcher(false)
+                            handleCancelSubscription(false)
+                          }}
+                          disabled={switchingPlan === 'cancel'}
+                          className="w-full px-4 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors border border-red-500/30"
+                        >
+                          {switchingPlan === 'cancel' ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Canceling...
+                            </span>
+                          ) : (
+                            'Cancel Subscription'
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
                 </div>
               )}
                 </>
