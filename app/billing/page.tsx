@@ -502,9 +502,6 @@ function BillingPageContent() {
                     <div className="space-y-6">
                       {/* Avatar Upload */}
                       <div>
-                        <label className="block text-sm font-medium text-foreground mb-3">
-                          Profile Photo
-                        </label>
                         {userData && (
                           <AvatarUpload
                             currentAvatarUrl={(userData as any)?.avatar_url}
