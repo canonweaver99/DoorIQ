@@ -1,5 +1,6 @@
 import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendNewUserNotification } from '@/lib/email/send'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -80,6 +81,10 @@ export async function GET(request: Request) {
             last_reset_date: new Date().toISOString().split('T')[0]
           })
           console.log('✅ User profile created with 5 credits')
+          
+          // Send notification email to admin about new user signup
+          const userName = userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User'
+          await sendNewUserNotification(data.user.email || '', userName, data.user.id)
         }
         
         // Verify session was set
@@ -178,6 +183,10 @@ export async function GET(request: Request) {
           } else {
             console.log('✅ Granted 5 free credits to new user')
           }
+          
+          // Send notification email to admin about new user signup
+          const userName = userMetadata.full_name || userMetadata.name || verificationData.user.email?.split('@')[0] || 'User'
+          await sendNewUserNotification(verificationData.user.email || '', userName, verificationData.user.id)
         }
       } else {
         console.log('✅ User profile already exists')
@@ -287,6 +296,10 @@ export async function GET(request: Request) {
           } else {
             console.log('✅ Granted 5 free credits to new user')
           }
+          
+          // Send notification email to admin about new user signup
+          const userName = userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User'
+          await sendNewUserNotification(data.user.email || '', userName, data.user.id)
         }
       } else {
         console.log('✅ User profile already exists')

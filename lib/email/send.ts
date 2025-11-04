@@ -85,3 +85,79 @@ export async function sendEmail({ to, subject, html, from, replyTo }: SendEmailP
   }
 }
 
+/**
+ * Send notification email to admin when a new user signs up
+ */
+export async function sendNewUserNotification(userEmail: string, fullName: string, userId: string) {
+  try {
+    // Don't send if Resend is not configured
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⏭️  Skipping new user notification - Resend not configured')
+      return
+    }
+
+    const adminEmail = 'canonweaver@loopline.design'
+    const subject = `New User Signup: ${fullName || userEmail}`
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+            .info-row { margin: 15px 0; padding: 10px; background: #f9fafb; border-radius: 6px; }
+            .info-label { font-weight: 600; color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .info-value { font-size: 16px; color: #111827; margin-top: 5px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1 style="margin: 0; font-size: 24px;">New User Signup</h1>
+            </div>
+            <div class="content">
+              <p>A new user has just created an account on DoorIQ:</p>
+              
+              <div class="info-row">
+                <div class="info-label">Name</div>
+                <div class="info-value">${fullName || 'Not provided'}</div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-label">Email</div>
+                <div class="info-value">${userEmail}</div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-label">User ID</div>
+                <div class="info-value">${userId}</div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-label">Signup Time</div>
+                <div class="info-value">${new Date().toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'long' })}</div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    await sendEmail({
+      to: adminEmail,
+      subject,
+      html,
+      from: 'DoorIQ <notifications@dooriq.ai>'
+    })
+
+    console.log(`✅ New user notification sent to ${adminEmail} for user: ${userEmail}`)
+  } catch (error) {
+    // Don't throw - this is a notification, shouldn't fail user creation
+    console.error('❌ Failed to send new user notification:', error)
+  }
+}
+

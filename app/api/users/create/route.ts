@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendNewUserNotification } from '@/lib/email/send'
 
 export async function POST(request: Request) {
   try {
@@ -64,6 +65,9 @@ export async function POST(request: Request) {
     } else {
       console.log('✅ Granted 5 free credits to new user')
     }
+
+    // Send notification email to admin about new user signup
+    await sendNewUserNotification(email, full_name, id)
 
     console.log('✅ User profile created successfully')
     return NextResponse.json({ ok: true })
