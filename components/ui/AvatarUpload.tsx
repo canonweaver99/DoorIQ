@@ -65,20 +65,8 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
 
       const supabase = createClient()
 
-      // Check if bucket exists
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets()
-      
-      if (bucketsError) {
-        throw new Error(`Failed to access storage: ${bucketsError.message}`)
-      }
-
-      const profilePicsBucket = buckets?.find(b => b.name === 'profile pics')
-      
-      if (!profilePicsBucket) {
-        throw new Error('Profile pics bucket not found. Please create a bucket named "profile pics" in Supabase Storage.')
-      }
-
-      // Upload file
+      // Upload file directly - let Supabase handle bucket existence check
+      // If bucket doesn't exist, we'll get a clear error message
       const { error: uploadError, data } = await supabase.storage
         .from('profile pics')
         .upload(filePath, file, {
@@ -129,7 +117,17 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
 
     } catch (err: any) {
       console.error('Error uploading avatar:', err)
-      setError(err.message || 'Failed to upload avatar. Please try again.')
+      
+      // Provide helpful error messages
+      const errorMessage = err.message || 'Unknown error'
+      
+      if (errorMessage.includes('not found') || errorMessage.includes('does not exist') || errorMessage.includes('Bucket not found')) {
+        setError('Profile pics bucket not found. Please create a bucket named "profile pics" in Supabase Storage and run the migration SQL to set up permissions.')
+      } else if (errorMessage.includes('permission') || errorMessage.includes('policy') || errorMessage.includes('403')) {
+        setError('Permission denied. Please run the migration SQL file (053_create_profile_pics_bucket.sql) to set up storage policies.')
+      } else {
+        setError(`Failed to upload: ${errorMessage}`)
+      }
     } finally {
       setUploading(false)
     }
