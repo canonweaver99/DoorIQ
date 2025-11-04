@@ -764,10 +764,10 @@ function HeaderContent() {
                             <p className="mt-[2px] text-[16.5px] font-semibold text-white">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                           </div>
                           <button
-                            onClick={() => router.push('/leaderboard')}
+                            onClick={() => router.push('/settings')}
                             className="inline-flex items-center gap-[5px] rounded-full border border-white/10 bg-white/5 px-[12px] py-[5px] text-[10.5px] uppercase tracking-[0.15em] text-slate-200 hover:bg-white/10 transition"
                           >
-                            Leaderboard
+                            Manage Account
                             <ArrowRight className="h-[12px] w-[12px]" />
                           </button>
                         </div>
