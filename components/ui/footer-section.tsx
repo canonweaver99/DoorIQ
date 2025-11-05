@@ -5,6 +5,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Instagram } from 'lucide-react';
 
 interface FooterLink {
   title: string;
@@ -41,11 +42,14 @@ const footerLinks: FooterSectionType[] = [
     links: [
       { title: 'Contact Us', href: 'mailto:contact@dooriq.ai?subject=Support%20Request&body=Hi%20DoorIQ%20Team,%0D%0A%0D%0AI%20need%20help%20with:%0D%0A%0D%0A' },
       { title: 'Help', href: '/help' },
+      { title: 'Become an Affiliate', href: '/affiliate/dashboard' },
     ],
   },
   {
     label: 'Follow Us',
-    links: [],
+    links: [
+      { title: 'Instagram', href: 'https://www.instagram.com/dooriq.ai/', icon: Instagram },
+    ],
   },
 ];
 
@@ -76,31 +80,21 @@ export function Footer() {
             <AnimatedContainer key={section.label} delay={0.1 + index * 0.1}>
               <div className="mb-10 md:mb-0">
                 <h3 className="text-xs">{section.label}</h3>
-                {section.label === 'Follow Us' ? (
-                  <div className="mt-4">
-                    <Image
-                      src="/dooriq.ai_qr.png"
-                      alt="Instagram QR Code"
-                      width={150}
-                      height={150}
-                      className="rounded-lg"
-                    />
-                  </div>
-                ) : (
-                  <ul className="text-muted-foreground mt-4 space-y-2 text-sm">
-                    {section.links.map((link) => (
-                      <li key={link.title}>
-                        <a
-                          href={link.href}
-                          className="hover:text-white inline-flex items-center transition-all duration-300"
-                        >
-                          {link.icon && <link.icon className="me-1 size-4" />}
-                          {link.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <ul className="text-muted-foreground mt-4 space-y-2 text-sm">
+                  {section.links.map((link) => (
+                    <li key={link.title}>
+                      <a
+                        href={link.href}
+                        target={link.href.startsWith('http') ? '_blank' : undefined}
+                        rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className="hover:text-white inline-flex items-center transition-all duration-300"
+                      >
+                        {link.icon && <link.icon className="me-1 size-4" />}
+                        {link.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </AnimatedContainer>
           ))}

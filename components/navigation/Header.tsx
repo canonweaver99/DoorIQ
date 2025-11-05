@@ -351,7 +351,7 @@ function HeaderContent() {
   const quickActions = [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
     { label: 'Review Sessions', href: '/sessions', icon: ClipboardList },
-    { label: 'Invite a Friend', href: '/team/invite', icon: Users },
+    { label: 'Invite a Friend', href: '/affiliate/dashboard', icon: Users },
   ]
 
   const profileNavigation = useMemo(() => {
