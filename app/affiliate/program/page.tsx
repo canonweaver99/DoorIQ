@@ -57,7 +57,7 @@ export default function AffiliateProgramPage() {
           {[
             {
               icon: DollarSign,
-              value: 'Up to 20%',
+              value: 'Up to 30%',
               label: 'Commission Rate',
               description: 'Earn competitive commissions on every referral'
             },
@@ -147,7 +147,7 @@ export default function AffiliateProgramPage() {
           <h2 className="text-3xl font-bold text-white mb-8 text-center">Why Join Our Affiliate Program?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              'High commission rates (up to 20%)',
+              'High commission rates (up to 30%)',
               'Recurring revenue on subscriptions',
               'Real-time tracking and analytics',
               'Fast and reliable payments',

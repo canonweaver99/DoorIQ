@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, AlertCircle, Calendar, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import confetti from 'canvas-confetti'
+import Cal, { getCalApi } from "@calcom/embed-react"
 
 // Form validation types
 interface FormData {
@@ -121,77 +122,16 @@ export function ContactSalesForm() {
     }
   }, [formData, currentStep, submitStatus])
 
-  // Load Cal.com embed script when reaching step 4
+  // Initialize Cal.com embed when reaching step 4
   useEffect(() => {
-    if (currentStep === 4 && !calLoaded) {
-      console.log('Step 4 reached, loading Cal.com...')
-      
-      // Cal.com initialization function
-      const initCal = () => {
-        try {
-          (function (C: any, A: string, L: string) { 
-            let p = function (a: any, ar: any) { a.q.push(ar); }; 
-            let d = C.document; 
-            C.Cal = C.Cal || function () { 
-              let cal = C.Cal; 
-              let ar = arguments; 
-              if (!cal.loaded) { 
-                cal.ns = {}; 
-                cal.q = cal.q || []; 
-                d.head.appendChild(d.createElement("script")).src = A; 
-                cal.loaded = true; 
-              } 
-              if (ar[0] === L) { 
-                const api = function () { p(api, arguments); }; 
-                const namespace = ar[1]; 
-                api.q = api.q || []; 
-                if(typeof namespace === "string"){
-                  cal.ns[namespace] = cal.ns[namespace] || api;
-                  p(cal.ns[namespace], ar);
-                  p(cal, ["initNamespace", namespace]);
-                } else p(cal, ar); 
-                return;
-              } 
-              p(cal, ar); 
-            }; 
-          })(window, "https://app.cal.com/embed/embed.js", "init");
-          
-          console.log('Cal.com script initialized')
-          
-          // Wait for Cal to be available
-          const checkAndInit = () => {
-            if ((window as any).Cal && (window as any).Cal.ns) {
-              const Cal = (window as any).Cal;
-              console.log('Calling Cal.init...')
-              Cal("init", "dooriq", {origin:"https://app.cal.com"});
-              
-              setTimeout(() => {
-                console.log('Calling Cal.ns.dooriq inline...')
-                Cal.ns.dooriq("inline", {
-                  elementOrSelector:"#my-cal-inline-dooriq",
-                  config: {"layout":"month_view"},
-                  calLink: "canon-weaver-aa0twn/dooriq",
-                });
-                Cal.ns.dooriq("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
-                console.log('Cal.com embed initialized')
-                setCalLoaded(true)
-              }, 500)
-            } else {
-              console.log('Cal not ready yet, retrying...')
-              setTimeout(checkAndInit, 200)
-            }
-          }
-          
-          checkAndInit()
-        } catch (error) {
-          console.error('Error initializing Cal.com:', error)
-        }
-      }
-      
-      // Ensure DOM is ready
-      setTimeout(initCal, 100)
+    if (currentStep === 4) {
+      (async function () {
+        const cal = await getCalApi({"namespace":"dooriq"});
+        cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
+        setCalLoaded(true)
+      })();
     }
-  }, [currentStep, calLoaded])
+  }, [currentStep])
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -741,14 +681,19 @@ export function ContactSalesForm() {
                     <div className="max-w-7xl mx-auto p-6">
                       <div 
                         style={{ width: '100%', minHeight: 'calc(100vh - 250px)' }} 
-                        id="my-cal-inline-dooriq"
                         className="rounded-xl bg-white relative"
                       >
                         {!calLoaded && (
-                          <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="absolute inset-0 flex items-center justify-center z-10">
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
                           </div>
                         )}
+                        <Cal 
+                          namespace="dooriq"
+                          calLink="canon-weaver-aa0twn/dooriq"
+                          style={{width:"100%",height:"100%",overflow:"scroll"}}
+                          config={{"layout":"month_view"}}
+                        />
                       </div>
                     </div>
                   </div>

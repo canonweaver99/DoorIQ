@@ -2,14 +2,21 @@
   "name": "dooriq",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "mobile"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:grading": "tsx scripts/test-grading-pipeline.ts"
+    "test:grading": "tsx scripts/test-grading-pipeline.ts",
+    "mobile": "cd mobile && npm start",
+    "mobile:ios": "cd mobile && npm run ios",
+    "mobile:android": "cd mobile && npm run android"
   },
   "dependencies": {
     "@calcom/atoms": "^1.10.0",
+    "@calcom/embed-react": "^1.5.3",
     "@clerk/nextjs": "^6.32.2",
     "@elevenlabs/client": "^0.7.1",
     "@elevenlabs/react": "^0.6.3",
