@@ -159,26 +159,13 @@ export function ContactSalesForm() {
 
   const validateStep = (step: number): boolean => {
     const newErrors: FormErrors = {}
-    
-    // Step 0 (Calendar) - no validation required, can skip
-    // Step 1 (How they found DoorIQ) - all optional
-    // Step 2 (What they're looking to get out of it) - all optional
-    
-    // Only validate email format if provided
-    if (step === 1 && formData.workEmail.trim() && !validateEmail(formData.workEmail)) {
-      newErrors.workEmail = 'Invalid email format'
-    }
-    
+    // No validation required - calendar step is optional
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
-      if (currentStep < 2) {
-        setCurrentStep(currentStep + 1)
-      }
-    }
+    // No longer needed - only one step now
   }
 
   const handlePrevious = () => {
@@ -250,14 +237,12 @@ export function ContactSalesForm() {
   }
 
   const steps = [
-    'Calendar',
-    'How they found DoorIQ',
-    'What are they looking to get out of it'
+    'Calendar'
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-purple-950/20 to-neutral-950 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-purple-950/20 to-neutral-950 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -268,45 +253,21 @@ export function ContactSalesForm() {
           <p className="text-slate-400">Let's discuss how DoorIQ can transform your sales team</p>
         </motion.div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {steps.map((step, index) => (
-              <div key={index} className="flex items-center">
-                <motion.div
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all",
-                    index < currentStep
-                      ? "bg-primary text-white"
-                      : index === currentStep
-                      ? "bg-primary/20 text-primary border-2 border-primary"
-                      : "bg-slate-800 text-slate-500"
-                  )}
-                  initial={false}
-                  animate={{
-                    scale: index === currentStep ? 1.1 : 1
-                  }}
-                >
-                  {index < currentStep ? <Check className="w-5 h-5" /> : index + 1}
-                </motion.div>
-                {index < steps.length - 1 && (
-                  <div className={cn(
-                    "w-12 h-1 mx-2 transition-all",
-                    index < currentStep ? "bg-primary" : "bg-slate-800"
-                  )} />
-                )}
-              </div>
-            ))}
+        {/* Progress Steps - Single Step */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center">
+            <motion.div
+              className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm bg-primary text-white"
+              initial={false}
+              animate={{
+                scale: 1.1
+              }}
+            >
+              1
+            </motion.div>
           </div>
-          <div className="flex justify-between mt-2">
-            {steps.map((step, index) => (
-              <p key={index} className={cn(
-                "text-xs transition-colors",
-                index <= currentStep ? "text-slate-300" : "text-slate-600"
-              )}>
-                {step}
-              </p>
-            ))}
+          <div className="flex justify-center mt-2">
+            <p className="text-xs text-slate-300">Calendar</p>
           </div>
         </div>
 
@@ -349,211 +310,52 @@ export function ContactSalesForm() {
                 boxShadow: '0 0 0 1px rgba(147, 51, 234, 0.1)',
               }}
             >
-              {/* Step 0: Calendar - Required (First Step) */}
-              {currentStep === 0 && (
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-                    <Calendar className="w-12 h-12 text-primary mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-white mb-2">Schedule Your Demo</h2>
-                    <p className="text-sm text-slate-400">Choose a time that works for you. This step is recommended but you can skip if needed.</p>
-                  </div>
-                  
-                  {/* Cal.com Embed */}
-                  <div 
-                    className="rounded-xl bg-white relative"
-                    style={{ 
-                      width: '100%', 
-                      minHeight: '600px',
-                      height: '600px'
-                    }}
-                  >
-                    <Cal 
-                      namespace="dooriq"
-                      calLink="canon-weaver-aa0twn/dooriq"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        minHeight: "600px",
-                        overflow: "scroll"
-                      }}
-                      config={{"layout":"month_view"}}
-                    />
-                    {!calLoaded && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-20">
-                        <div className="flex flex-col items-center gap-2">
-                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                          <p className="text-sm text-slate-600">Loading calendar...</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400 text-center">
-                    You can skip this step and continue without scheduling
-                  </p>
+              {/* Calendar - Single Step */}
+              <div className="space-y-6">
+                <div className="text-center mb-4">
+                  <Calendar className="w-12 h-12 text-primary mx-auto mb-4" />
+                  <h2 className="text-2xl font-bold text-white mb-2">Schedule Your Demo</h2>
+                  <p className="text-sm text-slate-400">Choose a time that works for you</p>
                 </div>
-              )}
-
-              {/* Step 1: How they found DoorIQ (Optional) */}
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white mb-6">How did you find DoorIQ?</h2>
-                  <p className="text-sm text-slate-400 mb-4">All fields are optional - you can skip this step entirely</p>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Full Name (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      placeholder="John Smith"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Work Email (Optional)
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.workEmail}
-                      onChange={(e) => handleInputChange('workEmail', e.target.value)}
-                      className={cn(
-                        "w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                        errors.workEmail ? "border-red-500" : "border-slate-700"
-                      )}
-                      placeholder="john@company.com"
-                    />
-                    {errors.workEmail && (
-                      <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.workEmail}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      How did you hear about DoorIQ? (Optional)
-                    </label>
-                    <select
-                      value={formData.howDidYouHear}
-                      onChange={(e) => handleInputChange('howDidYouHear', e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    >
-                      <option value="" className="bg-slate-900">Select an option</option>
-                      {referralSources.map(source => (
-                        <option key={source} value={source} className="bg-slate-900">
-                          {source}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: What are they looking to get out of it (Optional) */}
-              {currentStep === 2 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white mb-6">What are you looking to get out of DoorIQ?</h2>
-                  <p className="text-sm text-slate-400 mb-4">All fields are optional - you can skip this step entirely</p>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Primary Use Case (Optional)
-                    </label>
-                    <select
-                      value={formData.primaryUseCase}
-                      onChange={(e) => handleInputChange('primaryUseCase', e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    >
-                      <option value="" className="bg-slate-900">Select a use case</option>
-                      {useCases.map(useCase => (
-                        <option key={useCase} value={useCase} className="bg-slate-900">
-                          {useCase}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Company Name (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.companyName}
-                      onChange={(e) => handleInputChange('companyName', e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      placeholder="ABC Company Inc."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Number of Sales Reps (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={formData.numberOfReps === 0 ? '' : formData.numberOfReps}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '')
-                        handleInputChange('numberOfReps', value === '' ? 0 : parseInt(value))
-                      }}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="e.g., 5"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Additional Comments (Optional)
-                    </label>
-                    <textarea
-                      value={formData.additionalComments}
-                      onChange={(e) => handleInputChange('additionalComments', e.target.value)}
-                      maxLength={500}
-                      rows={4}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
-                      placeholder="Tell us more about your sales training needs..."
-                    />
-                    <p className="mt-1 text-xs text-slate-500 text-right">
-                      {formData.additionalComments.length}/500 characters
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Navigation Buttons */}
-              <div className="flex gap-4 mt-8">
-                {currentStep > 0 && (
-                  <button
-                    type="button"
-                    onClick={handlePrevious}
-                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold transition-all"
-                  >
-                    Previous
-                  </button>
-                )}
                 
-                {currentStep < steps.length - 1 ? (
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className="flex-1 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold transition-all"
-                  >
-                    {currentStep === 0 ? 'Skip or Continue' : 'Continue'}
-                  </button>
-                ) : (
+                {/* Cal.com Embed - Expanded */}
+                <div 
+                  className="rounded-xl bg-white relative w-full"
+                  style={{ 
+                    minHeight: 'calc(100vh - 300px)',
+                    height: 'calc(100vh - 300px)',
+                    maxHeight: '900px'
+                  }}
+                >
+                  <Cal 
+                    namespace="dooriq"
+                    calLink="canon-weaver-aa0twn/dooriq"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      minHeight: "calc(100vh - 300px)",
+                      maxHeight: "900px",
+                      overflow: "auto"
+                    }}
+                    config={{"layout":"month_view"}}
+                  />
+                  {!calLoaded && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-20">
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <p className="text-sm text-slate-600">Loading calendar...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Optional Submit Button */}
+                <div className="flex justify-center">
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="flex-1 py-3 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="px-8 py-3 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <>
@@ -561,10 +363,10 @@ export function ContactSalesForm() {
                         Submitting...
                       </>
                     ) : (
-                      'Submit & Get Started'
+                      'Submit Without Scheduling'
                     )}
                   </button>
-                )}
+                </div>
               </div>
 
               {submitStatus === 'error' && (
