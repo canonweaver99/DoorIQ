@@ -795,10 +795,16 @@ function TrainerPageContent() {
         <div className="flex-1 flex flex-col overflow-hidden">
           
           {/* Top Section: Split View - Agent Left, Webcam Right - Stack on mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20" style={{ minHeight: sessionActive ? '35%' : '40%' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20" style={{ 
+            minHeight: sessionActive ? '35%' : '40%',
+            height: 'auto'
+          }}>
             
             {/* Left: Agent */}
-            <div className="relative border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent">
+            <div className="relative border-r-0 md:border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent" style={{ 
+              minHeight: sessionActive ? '250px' : '300px',
+              height: sessionActive ? '35vh' : '40vh'
+            }}>
               {/* Full Agent Image - matching hero preview */}
               <div className="absolute inset-0">
                 {loading ? (
@@ -844,13 +850,13 @@ function TrainerPageContent() {
                     
                     {/* Knock Button Overlay - centered when not active */}
                     {!sessionActive && !loading && selectedAgent && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
                         <button
                           onClick={() => startSession()}
-                          className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-semibold text-sm sm:text-base lg:text-lg rounded-lg sm:rounded-xl transition-all hover:scale-105 shadow-lg hover:shadow-emerald-500/50 touch-target"
+                          className="px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 active:from-emerald-700 active:to-cyan-700 text-white font-semibold text-base sm:text-lg lg:text-xl rounded-xl sm:rounded-2xl transition-all active:scale-95 shadow-lg hover:shadow-emerald-500/50 touch-target z-20"
                         >
-                          <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
                           <span className="sm:hidden">Knock</span>
+                          <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
                         </button>
                       </div>
                     )}
@@ -860,7 +866,10 @@ function TrainerPageContent() {
             </div>
             
             {/* Right: Webcam */}
-            <div className="relative bg-gradient-to-br from-green-950/20 to-transparent">
+            <div className="relative bg-gradient-to-br from-green-950/20 to-transparent border-t md:border-t-0 border-purple-500/20" style={{ 
+              minHeight: sessionActive ? '200px' : '250px',
+              height: sessionActive ? '30vh' : '35vh'
+            }}>
               <WebcamRecorder 
                 sessionActive={sessionActive} 
                 duration={duration}
