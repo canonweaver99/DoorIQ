@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import Header from "@/components/navigation/Header";
 import { Footer } from "@/components/ui/footer-section";
 import { NotificationProvider } from "@/contexts/NotificationContext";
@@ -101,6 +102,7 @@ export default function RootLayout({
             </div>
           </NotificationProvider>
         </ToastProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
