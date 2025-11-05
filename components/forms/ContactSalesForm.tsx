@@ -241,35 +241,17 @@ export function ContactSalesForm() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-purple-950/20 to-neutral-950 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-purple-950/20 to-neutral-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Header - Minimalist */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-6 sm:mb-8"
         >
-          <h1 className="text-4xl font-bold text-white mb-2">Contact Sales</h1>
-          <p className="text-slate-400">Let's discuss how DoorIQ can transform your sales team</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Schedule a Demo</h1>
+          <p className="text-sm sm:text-base text-slate-400">Choose a time that works for you</p>
         </motion.div>
-
-        {/* Progress Steps - Single Step */}
-        <div className="mb-6">
-          <div className="flex items-center justify-center">
-            <motion.div
-              className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm bg-primary text-white"
-              initial={false}
-              animate={{
-                scale: 1.1
-              }}
-            >
-              1
-            </motion.div>
-          </div>
-          <div className="flex justify-center mt-2">
-            <p className="text-xs text-slate-300">Calendar</p>
-          </div>
-        </div>
 
         {/* Form Content */}
         <AnimatePresence mode="wait">
@@ -277,7 +259,7 @@ export function ContactSalesForm() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-gradient-to-br from-emerald-900/20 via-emerald-800/20 to-green-900/20 rounded-2xl p-8 border border-emerald-700/30 text-center"
+              className="bg-gradient-to-br from-emerald-900/20 via-emerald-800/20 to-green-900/20 rounded-2xl p-8 border border-emerald-700/30 text-center max-w-2xl mx-auto"
             >
               <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Check className="w-10 h-10 text-white" />
@@ -301,81 +283,69 @@ export function ContactSalesForm() {
           ) : (
             <motion.div
               key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-purple-900/20"
-              style={{
-                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(88, 28, 135, 0.1) 100%)',
-                boxShadow: '0 0 0 1px rgba(147, 51, 234, 0.1)',
-              }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full"
             >
-              {/* Calendar - Single Step */}
-              <div className="space-y-6">
-                <div className="text-center mb-4">
-                  <Calendar className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <h2 className="text-2xl font-bold text-white mb-2">Schedule Your Demo</h2>
-                  <p className="text-sm text-slate-400">Choose a time that works for you</p>
-                </div>
-                
-                {/* Cal.com Embed - Expanded */}
-                <div 
-                  className="rounded-xl bg-white relative w-full"
-                  style={{ 
-                    minHeight: 'calc(100vh - 300px)',
-                    height: 'calc(100vh - 300px)',
-                    maxHeight: '900px'
-                  }}
-                >
-                  <Cal 
-                    namespace="dooriq"
-                    calLink="canon-weaver-aa0twn/dooriq"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      minHeight: "calc(100vh - 300px)",
-                      maxHeight: "900px",
-                      overflow: "auto"
-                    }}
-                    config={{"layout":"month_view"}}
-                  />
-                  {!calLoaded && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-20">
-                      <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        <p className="text-sm text-slate-600">Loading calendar...</p>
+              {/* Cal.com Embed - Full Width, No Padding */}
+              <div 
+                className="rounded-xl bg-white relative w-full shadow-2xl overflow-hidden"
+                        style={{ 
+                  minHeight: 'calc(100vh - 200px)',
+                  height: 'calc(100vh - 200px)',
+                  maxHeight: '900px'
+                        }}
+                      >
+                        <Cal 
+                          namespace="dooriq"
+                          calLink="canon-weaver-aa0twn/dooriq"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                    minHeight: "calc(100vh - 200px)",
+                    maxHeight: "900px",
+                    overflow: "auto",
+                    padding: "0"
+                          }}
+                          config={{"layout":"month_view"}}
+                        />
+                        {!calLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/95 backdrop-blur-sm rounded-xl z-20">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                      <p className="text-base font-medium text-slate-700">Loading calendar...</p>
+                            </div>
+                          </div>
+                        )}
+                  </div>
+
+              {/* Optional Submit Button - Positioned below */}
+              <div className="flex justify-center mt-6">
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={isSubmitting}
+                  className="px-6 py-2.5 text-sm font-medium text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isSubmitting ? (
+                            <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                    'Skip scheduling'
+                          )}
+                        </button>
                       </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Optional Submit Button */}
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="px-8 py-3 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      'Submit Without Scheduling'
-                    )}
-                  </button>
-                </div>
-              </div>
 
               {submitStatus === 'error' && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-red-900/20 border border-red-700/30 rounded-xl"
+                  className="mt-4 p-4 bg-red-900/20 border border-red-700/30 rounded-xl max-w-2xl mx-auto"
                 >
-                  <p className="text-red-400 text-sm flex items-center gap-2">
+                  <p className="text-red-400 text-sm flex items-center gap-2 justify-center">
                     <AlertCircle className="w-4 h-4" />
                     Something went wrong. Please try again or contact support.
                   </p>
