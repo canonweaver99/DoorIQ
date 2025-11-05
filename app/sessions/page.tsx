@@ -409,22 +409,26 @@ export default function SessionsPage() {
                   key={session.id}
                   className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-slate-700 hover:border-slate-600 transition-colors shadow-xl"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div className="flex-1 flex items-start gap-2 lg:gap-3">
-                      {/* Delete button - moved to left */}
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="flex-1 flex items-start gap-2 lg:gap-3 min-w-0">
+                      {/* Delete button - moved to left, always visible */}
                       <button
-                        onClick={() => openDeleteModal(session.id as string)}
-                        className="inline-flex items-center justify-center w-6 h-6 lg:w-7 lg:h-7 mt-0.5 lg:mt-1 bg-red-500/10 text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          openDeleteModal(session.id as string)
+                        }}
+                        className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 bg-red-500/10 text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20 z-10"
                         title="Delete session"
                       >
-                        <Trash2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                       
-                      <div className="flex-1 flex items-start gap-3">
+                      <div className="flex-1 flex items-start gap-2 sm:gap-3 min-w-0">
                         {/* Agent Avatar with Gradient Rings */}
                         <div 
                           className="relative flex-shrink-0"
-                          style={{ width: `${circleSize}px`, height: `${circleSize}px` }}
+                          style={{ width: `${circleSize}px`, height: `${circleSize}px`, minWidth: `${circleSize}px` }}
                         >
                           {(() => {
                             const colorVariant = getAgentColorVariant(session.agent_name)
@@ -462,25 +466,25 @@ export default function SessionsPage() {
                           })()}
                         </div>
                         
-                        <div className="flex-1">
-                          <h3 className="text-base lg:text-lg font-bold text-white mb-1 lg:mb-1.5">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm sm:text-base lg:text-lg font-bold text-white mb-1 lg:mb-1.5 truncate">
                             {session.agent_name || 'Training Session'}
                           </h3>
-                          <div className="flex items-center space-x-3 lg:space-x-4 text-xs lg:text-sm text-slate-400">
-                            <span className="flex items-center">
-                              <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1" />
-                              {format(new Date(session.created_at), 'MMM d, yyyy')}
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-xs lg:text-sm text-slate-400">
+                            <span className="flex items-center flex-shrink-0">
+                              <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                              <span className="whitespace-nowrap">{format(new Date(session.created_at), 'MMM d, yyyy')}</span>
                             </span>
-                            <span className="flex items-center">
-                              <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1" />
-                              {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}
+                            <span className="flex items-center flex-shrink-0">
+                              <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                              <span className="whitespace-nowrap">{session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}</span>
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="mt-3 md:mt-0 flex items-center gap-3 lg:gap-3.5 xl:gap-4">
+                    <div className="mt-0 flex items-center gap-2 sm:gap-3 lg:gap-3.5 xl:gap-4 flex-shrink-0">
                       {/* Earnings - Always Show */}
                       <div className="text-right">
                         <p className="text-[10px] lg:text-[11px] text-slate-400 mb-0.5 lg:mb-1">Earned</p>

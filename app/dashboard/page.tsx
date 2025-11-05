@@ -879,14 +879,14 @@ function OverviewTabContent() {
   return (
     <div className="space-y-6">
       {/* Performance Metrics Cards - Vibrant */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 lg:gap-4">
         {performanceMetrics.map((metric, idx) => (
           <motion.div
             key={metric.id}
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: idx * 0.1 }}
-            className="rounded-lg p-2 sm:p-4 lg:p-5"
+            transition={{ duration: 0.4, delay: idx * 0.05 }}
+            className="rounded-lg p-1 sm:p-2 lg:p-4 will-change-transform"
             style={{ 
               backgroundColor: metric.bg,
               border: `2px solid ${metric.borderColor}`,
@@ -898,7 +898,7 @@ function OverviewTabContent() {
                 {metric.title}
               </h3>
               
-              <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">
+              <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">
                 {metric.value}%
               </div>
               
@@ -1433,7 +1433,7 @@ function OverviewTabContent() {
                     className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#222222] hover:bg-[#2a2a2a] transition-colors border border-white/5 cursor-pointer"
                   >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="relative">
+                    <div className="relative flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10">
                       <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${gradients[idx]} to-transparent blur-md`}></div>
                       {(() => {
                         const agentName = session.name as AllowedAgentName
@@ -1463,7 +1463,7 @@ function OverviewTabContent() {
                             <img 
                               src={session.avatar || '/agents/default.png'}
                               alt={session.name}
-                              className="relative w-8 h-8 rounded-full ring-2 ring-white/20 flex-shrink-0 z-10 object-cover"
+                              className="relative w-full h-full rounded-full ring-2 ring-white/20 z-10 object-cover"
                               onError={(e) => {
                                 // Fallback to default if image fails to load
                                 const target = e.target as HTMLImageElement
@@ -1477,11 +1477,12 @@ function OverviewTabContent() {
                       })()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-white truncate">{session.name}</div>
+                      <div className="text-xs sm:text-sm font-semibold text-white truncate">{session.name}</div>
+                      <div className="text-[10px] sm:text-xs text-slate-400 truncate">{session.time}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="relative w-9 h-9">
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                    <div className="relative w-7 h-7 sm:w-9 sm:h-9">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                         <circle 
                           cx="18" 
@@ -1507,11 +1508,10 @@ function OverviewTabContent() {
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[9px] font-bold text-white">{session.score}%</span>
+                        <span className="text-[8px] sm:text-[9px] font-bold text-white">{session.score}%</span>
                       </div>
                     </div>
-                    <div className="text-xs font-bold text-green-400 tabular-nums">+${session.earned}</div>
-                    <div className="text-[10px] text-slate-400">{session.time}</div>
+                    <div className="text-[10px] sm:text-xs font-bold text-green-400 tabular-nums">+${session.earned}</div>
                   </div>
                   </motion.div>
                 </Link>

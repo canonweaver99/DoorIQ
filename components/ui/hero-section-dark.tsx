@@ -291,8 +291,9 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     initial={{ opacity: 0, scale: 0.8 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    transition={{ duration: 0.3, delay: index * 0.02 }}
                     className="px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap overflow-hidden text-ellipsis sm:hidden"
+                    style={{ contain: 'layout style paint', willChange: 'transform, opacity' }}
                   >
                     {item.feature}
                   </motion.div>
@@ -320,8 +321,9 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     initial={{ opacity: 0, scale: 0.8 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    transition={{ duration: 0.3, delay: index * 0.02 }}
                     className="px-4 sm:px-5 lg:px-6 xl:px-7 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap flex-shrink-0 hidden sm:block"
+                    style={{ contain: 'layout style paint', willChange: 'transform, opacity' }}
                   >
                     {feature}
                   </motion.div>

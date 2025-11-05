@@ -122,9 +122,9 @@ export function ContactSalesForm() {
     }
   }, [formData, currentStep, submitStatus])
 
-  // Initialize Cal.com embed when reaching step 4
+  // Initialize Cal.com embed when reaching step 0 (first step)
   useEffect(() => {
-    if (currentStep === 4) {
+    if (currentStep === 0) {
       (async function () {
         try {
           const cal = await getCalApi({"namespace":"dooriq"});
@@ -139,7 +139,7 @@ export function ContactSalesForm() {
         }
       })();
     } else {
-      setCalLoaded(false) // Reset when leaving step 4
+      setCalLoaded(false) // Reset when leaving step 0
     }
   }, [currentStep])
 
@@ -160,23 +160,13 @@ export function ContactSalesForm() {
   const validateStep = (step: number): boolean => {
     const newErrors: FormErrors = {}
     
-    switch (step) {
-      case 0:
-        if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required'
-        if (!formData.workEmail.trim()) newErrors.workEmail = 'Email is required'
-        else if (!validateEmail(formData.workEmail)) newErrors.workEmail = 'Invalid email format'
-        if (!formData.jobTitle) newErrors.jobTitle = 'Job title is required'
-        break
-      
-      case 1:
-        if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required'
-        if (!formData.industry) newErrors.industry = 'Industry is required'
-        if (formData.numberOfReps < 1) newErrors.numberOfReps = 'Must have at least 1 sales rep'
-        break
-      
-      case 2:
-        if (!formData.howDidYouHear) newErrors.howDidYouHear = 'Please tell us how you heard about DoorIQ'
-        break
+    // Step 0 (Calendar) - no validation required, can skip
+    // Step 1 (How they found DoorIQ) - all optional
+    // Step 2 (What they're looking to get out of it) - all optional
+    
+    // Only validate email format if provided
+    if (step === 1 && formData.workEmail.trim() && !validateEmail(formData.workEmail)) {
+      newErrors.workEmail = 'Invalid email format'
     }
     
     setErrors(newErrors)
@@ -185,7 +175,7 @@ export function ContactSalesForm() {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      if (currentStep < 4) {
+      if (currentStep < 2) {
         setCurrentStep(currentStep + 1)
       }
     }
@@ -260,11 +250,9 @@ export function ContactSalesForm() {
   }
 
   const steps = [
-    'Basic Information',
-    'Company Details',
-    'Needs Assessment',
-    'Contact Preferences',
-    'Schedule a Demo'
+    'Calendar',
+    'How they found DoorIQ',
+    'What are they looking to get out of it'
   ]
 
   return (
@@ -361,36 +349,72 @@ export function ContactSalesForm() {
                 boxShadow: '0 0 0 1px rgba(147, 51, 234, 0.1)',
               }}
             >
-              {/* Step 0: Basic Information */}
+              {/* Step 0: Calendar - Required (First Step) */}
               {currentStep === 0 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white mb-6">Let's get to know you</h2>
+                  <div className="text-center mb-6">
+                    <Calendar className="w-12 h-12 text-primary mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-white mb-2">Schedule Your Demo</h2>
+                    <p className="text-sm text-slate-400">Choose a time that works for you. This step is recommended but you can skip if needed.</p>
+                  </div>
+                  
+                  {/* Cal.com Embed */}
+                  <div 
+                    className="rounded-xl bg-white relative"
+                    style={{ 
+                      width: '100%', 
+                      minHeight: '600px',
+                      height: '600px'
+                    }}
+                  >
+                    <Cal 
+                      namespace="dooriq"
+                      calLink="canon-weaver-aa0twn/dooriq"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        minHeight: "600px",
+                        overflow: "scroll"
+                      }}
+                      config={{"layout":"month_view"}}
+                    />
+                    {!calLoaded && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-20">
+                        <div className="flex flex-col items-center gap-2">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          <p className="text-sm text-slate-600">Loading calendar...</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 text-center">
+                    You can skip this step and continue without scheduling
+                  </p>
+                </div>
+              )}
+
+              {/* Step 1: How they found DoorIQ (Optional) */}
+              {currentStep === 1 && (
+                <div className="space-y-6">
+                  <h2 className="text-2xl font-bold text-white mb-6">How did you find DoorIQ?</h2>
+                  <p className="text-sm text-slate-400 mb-4">All fields are optional - you can skip this step entirely</p>
                   
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Full Name *
+                      Full Name (Optional)
                     </label>
                     <input
                       type="text"
                       value={formData.fullName}
                       onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      className={cn(
-                        "w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                        errors.fullName ? "border-red-500" : "border-slate-700"
-                      )}
+                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       placeholder="John Smith"
                     />
-                    {errors.fullName && (
-                      <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.fullName}
-                      </p>
-                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Work Email *
+                      Work Email (Optional)
                     </label>
                     <input
                       type="email"
@@ -412,136 +436,29 @@ export function ContactSalesForm() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Phone Number (Optional)
-                    </label>
-                    <input
-                      type="tel"
-                      value={formData.phoneNumber}
-                      onChange={(e) => {
-                        const formatted = formatPhoneNumber(e.target.value)
-                        handleInputChange('phoneNumber', formatted)
-                      }}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Job Title / Role *
+                      How did you hear about DoorIQ? (Optional)
                     </label>
                     <select
-                      value={formData.jobTitle}
-                      onChange={(e) => handleInputChange('jobTitle', e.target.value)}
-                      className={cn(
-                        "w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                        errors.jobTitle ? "border-red-500" : "border-slate-700"
-                      )}
+                      value={formData.howDidYouHear}
+                      onChange={(e) => handleInputChange('howDidYouHear', e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     >
-                      <option value="" className="bg-slate-900">Select your role</option>
-                      {jobTitles.map(title => (
-                        <option key={title} value={title} className="bg-slate-900">
-                          {title}
+                      <option value="" className="bg-slate-900">Select an option</option>
+                      {referralSources.map(source => (
+                        <option key={source} value={source} className="bg-slate-900">
+                          {source}
                         </option>
                       ))}
                     </select>
-                    {errors.jobTitle && (
-                      <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.jobTitle}
-                      </p>
-                    )}
                   </div>
                 </div>
               )}
 
-              {/* Step 1: Company Details */}
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white mb-6">Tell us about your company</h2>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Company Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.companyName}
-                      onChange={(e) => handleInputChange('companyName', e.target.value)}
-                      className={cn(
-                        "w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                        errors.companyName ? "border-red-500" : "border-slate-700"
-                      )}
-                      placeholder="ABC Company Inc."
-                    />
-                    {errors.companyName && (
-                      <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.companyName}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Industry *
-                    </label>
-                    <select
-                      value={formData.industry}
-                      onChange={(e) => handleInputChange('industry', e.target.value)}
-                      className={cn(
-                        "w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                        errors.industry ? "border-red-500" : "border-slate-700"
-                      )}
-                    >
-                      <option value="" className="bg-slate-900">Select your industry</option>
-                      {industries.map(industry => (
-                        <option key={industry} value={industry} className="bg-slate-900">
-                          {industry}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.industry && (
-                      <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.industry}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Number of Sales Reps *
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={formData.numberOfReps === 0 ? '' : formData.numberOfReps}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '')
-                        handleInputChange('numberOfReps', value === '' ? 0 : parseInt(value))
-                      }}
-                      className={cn(
-                        "w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
-                        errors.numberOfReps ? "border-red-500" : "border-slate-700"
-                      )}
-                      placeholder="e.g., 5"
-                    />
-                    {errors.numberOfReps && (
-                      <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.numberOfReps}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: Needs Assessment */}
+              {/* Step 2: What are they looking to get out of it (Optional) */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white mb-6">How can we help?</h2>
+                  <h2 className="text-2xl font-bold text-white mb-6">What are you looking to get out of DoorIQ?</h2>
+                  <p className="text-sm text-slate-400 mb-4">All fields are optional - you can skip this step entirely</p>
                   
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -563,29 +480,33 @@ export function ContactSalesForm() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      How did you hear about DoorIQ? *
+                      Company Name (Optional)
                     </label>
-                    <select
-                      value={formData.howDidYouHear}
-                      onChange={(e) => handleInputChange('howDidYouHear', e.target.value)}
-                      className={cn(
-                        "w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                        errors.howDidYouHear ? "border-red-500" : "border-slate-700"
-                      )}
-                    >
-                      <option value="" className="bg-slate-900">Select an option</option>
-                      {referralSources.map(source => (
-                        <option key={source} value={source} className="bg-slate-900">
-                          {source}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.howDidYouHear && (
-                      <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.howDidYouHear}
-                      </p>
-                    )}
+                    <input
+                      type="text"
+                      value={formData.companyName}
+                      onChange={(e) => handleInputChange('companyName', e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      placeholder="ABC Company Inc."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Number of Sales Reps (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={formData.numberOfReps === 0 ? '' : formData.numberOfReps}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '')
+                        handleInputChange('numberOfReps', value === '' ? 0 : parseInt(value))
+                      }}
+                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="e.g., 5"
+                    />
                   </div>
 
                   <div>
@@ -607,195 +528,44 @@ export function ContactSalesForm() {
                 </div>
               )}
 
-              {/* Step 3: Contact Preferences */}
-              {currentStep === 3 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white mb-6">How should we reach you?</h2>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-4">
-                      Preferred Contact Method
-                    </label>
-                    <div className="space-y-3">
-                      {[
-                        { value: 'email', label: 'Email', icon: '✉️' },
-                        { value: 'phone', label: 'Phone', icon: '📞' },
-                        { value: 'video', label: 'Video Call', icon: '📹' }
-                      ].map(method => (
-                        <label
-                          key={method.value}
-                          className={cn(
-                            "flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all",
-                            formData.preferredContactMethod === method.value
-                              ? "bg-primary/10 border-primary"
-                              : "bg-slate-800/50 border-slate-700 hover:bg-slate-700/50"
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="contactMethod"
-                            value={method.value}
-                            checked={formData.preferredContactMethod === method.value}
-                            onChange={(e) => handleInputChange('preferredContactMethod', e.target.value as any)}
-                            className="sr-only"
-                          />
-                          <span className="text-2xl">{method.icon}</span>
-                          <span className="text-white font-medium">{method.label}</span>
-                          {formData.preferredContactMethod === method.value && (
-                            <Check className="w-5 h-5 text-primary ml-auto" />
-                          )}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Best Time to Reach You
-                    </label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                      <select
-                        value={formData.bestTimeToReach}
-                        onChange={(e) => handleInputChange('bestTimeToReach', e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      >
-                        <option value="" className="bg-slate-900">Select a time</option>
-                        <option value="morning" className="bg-slate-900">Morning (8am - 12pm)</option>
-                        <option value="afternoon" className="bg-slate-900">Afternoon (12pm - 5pm)</option>
-                        <option value="evening" className="bg-slate-900">Evening (5pm - 8pm)</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Schedule Demo */}
-              {currentStep === 4 && (
-                <div className="fixed inset-0 bg-gradient-to-br from-neutral-950 via-purple-950/20 to-neutral-950 z-50 flex flex-col">
-                  {/* Header */}
-                  <div className="p-6 border-b border-slate-800">
-                    <div className="max-w-7xl mx-auto">
-                      <div className="flex items-center gap-4 mb-2">
-                        <Calendar className="w-8 h-8 text-primary" />
-                        <div>
-                          <h2 className="text-2xl font-bold text-white">Schedule Your Demo</h2>
-                          <p className="text-sm text-slate-400">30-minute personalized demo with our sales team</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Cal.com Embed - Full Height */}
-                  <div className="flex-1 overflow-auto">
-                    <div className="max-w-7xl mx-auto p-6">
-                      <div 
-                        className="rounded-xl bg-white relative"
-                        style={{ 
-                          width: '100%', 
-                          minHeight: 'calc(100vh - 250px)',
-                          height: '100%'
-                        }}
-                      >
-                        <Cal 
-                          namespace="dooriq"
-                          calLink="canon-weaver-aa0twn/dooriq"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            minHeight: "600px",
-                            overflow: "scroll"
-                          }}
-                          config={{"layout":"month_view"}}
-                        />
-                        {!calLoaded && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-20">
-                            <div className="flex flex-col items-center gap-2">
-                              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                              <p className="text-sm text-slate-600">Loading calendar...</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer with navigation and note */}
-                  <div className="p-6 border-t border-slate-800 bg-slate-900/50">
-                    <div className="max-w-7xl mx-auto">
-                      <p className="text-sm text-slate-400 text-center mb-4">
-                        You can also submit without scheduling and we'll reach out within 24 hours
-                      </p>
-                      
-                      <div className="flex gap-4 max-w-md mx-auto">
-                        <button
-                          type="button"
-                          onClick={handlePrevious}
-                          className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold transition-all"
-                        >
-                          Previous
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleSubmit}
-                          disabled={isSubmitting}
-                          className="flex-1 py-3 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              Submitting...
-                            </>
-                          ) : (
-                            'Submit & Get Started'
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Navigation Buttons - Hidden on step 4 (full screen calendar) */}
-              {currentStep !== 4 && (
-                <div className="flex gap-4 mt-8">
-                  {currentStep > 0 && (
-                    <button
-                      type="button"
-                      onClick={handlePrevious}
-                      className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold transition-all"
-                    >
-                      Previous
-                    </button>
-                  )}
-                  
-                  {currentStep < steps.length - 1 ? (
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      className="flex-1 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold transition-all"
-                    >
-                      Continue
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleSubmit}
-                      disabled={isSubmitting}
-                      className="flex-1 py-3 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        'Submit & Get Started'
-                      )}
-                    </button>
-                  )}
-                </div>
-              )}
+              {/* Navigation Buttons */}
+              <div className="flex gap-4 mt-8">
+                {currentStep > 0 && (
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Previous
+                  </button>
+                )}
+                
+                {currentStep < steps.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="flex-1 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold transition-all"
+                  >
+                    {currentStep === 0 ? 'Skip or Continue' : 'Continue'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="flex-1 py-3 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Submit & Get Started'
+                    )}
+                  </button>
+                )}
+              </div>
 
               {submitStatus === 'error' && (
                 <motion.div
