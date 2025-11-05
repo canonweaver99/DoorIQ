@@ -236,6 +236,7 @@ export default function AffiliateDashboardPage() {
             <Button
               variant="outline"
               className="border-white/20 text-white hover:bg-white/10"
+              onClick={() => router.push('/affiliate/materials')}
             >
               Download Materials
               <ExternalLink className="ml-2 w-4 h-4" />

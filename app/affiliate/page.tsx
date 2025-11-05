@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 export default function AffiliateLandingPage() {
   const router = useRouter()
   const [referralId, setReferralId] = useState<string | null>(null)
+  const [agentCount, setAgentCount] = useState<number>(12)
 
   useEffect(() => {
     // Check if Rewardful is loaded and has a referral ID
@@ -25,6 +26,19 @@ export default function AffiliateLandingPage() {
       }
       checkRewardful()
     }
+
+    // Fetch agent count from API
+    fetch('/api/agents/count')
+      .then(res => res.json())
+      .then(data => {
+        if (data.count) {
+          setAgentCount(data.count)
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching agent count:', error)
+        // Keep default of 12 if fetch fails
+      })
   }, [])
 
   return (
@@ -68,7 +82,7 @@ export default function AffiliateLandingPage() {
               onClick={() => router.push('/auth/signup')}
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-6 text-lg font-semibold"
             >
-              Start Your Free Trial
+              Start for Free
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -92,7 +106,7 @@ export default function AffiliateLandingPage() {
           {[
             {
               icon: Users,
-              title: '12 Realistic AI Homeowners',
+              title: `${agentCount} Realistic AI Homeowners`,
               description: 'Practice with different personalities and scenarios'
             },
             {
@@ -133,7 +147,7 @@ export default function AffiliateLandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               '5 free practice sessions to get started',
-              'Access to all 12 AI training agents',
+              `Access to all ${agentCount} AI training agents`,
               'Real-time scoring and feedback',
               'Detailed analytics and performance tracking',
               'Practice anytime, anywhere',
