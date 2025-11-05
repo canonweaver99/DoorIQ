@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
+import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Header from "@/components/navigation/Header";
 import { Footer } from "@/components/ui/footer-section";
@@ -85,6 +86,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100` }>
+        <Script id="rewardful-init" strategy="beforeInteractive">
+          {`(function(w,r){w._rwq=r;w[r]=w[r]||function(){(w[r].q=w[r].q||[]).push(arguments)}})(window,'rewardful');`}
+        </Script>
+        <Script 
+          src="https://r.wdfl.co/rw.js" 
+          data-rewardful="2154b7"
+          strategy="afterInteractive"
+        />
         <ToastProvider>
           <NotificationProvider>
             <Suspense fallback={<div style={{ height: 64 }} />}>

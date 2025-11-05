@@ -163,11 +163,19 @@ function PricingPageContent() {
         return
       }
 
+      // Get Rewardful referral ID if available
+      const referralId = typeof window !== 'undefined' && (window as any).Rewardful?.referral
+        ? (window as any).Rewardful.referral
+        : null
+      
       // Otherwise use the regular checkout session API
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId })
+        body: JSON.stringify({ 
+          priceId,
+          ...(referralId ? { referral: referralId } : {})
+        })
       })
 
       if (response.status === 401) {
@@ -245,11 +253,9 @@ function PricingPageContent() {
       features: [
         "Access to ALL AI training agents",
         "50 practice calls per month",
-        "Purchase extra credits anytime",
         "Advanced analytics & scoring",
         "Full dashboard access (Performance, Learning, etc.)",
         "Sales call upload & analysis",
-        "Call recording & playback",
         "Export reports (CSV/PDF)",
       ],
       description: "Ideal for individual sales reps",

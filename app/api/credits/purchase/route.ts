@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { credits } = await request.json()
+    const { credits, referral } = await request.json()
     
     if (!credits || !Number.isInteger(credits) || credits <= 0) {
       return NextResponse.json({ error: 'Invalid credits amount' }, { status: 400 })
@@ -96,7 +96,8 @@ export async function POST(request: NextRequest) {
                    process.env.NEXT_PUBLIC_SITE_URL || 
                    'http://localhost:3000'
 
-    const session = await stripe.checkout.sessions.create({
+    // Build checkout session parameters
+    const checkoutParams: any = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
+      customer_creation: 'always',
       success_url: `${origin}/pricing?success=true&credits=${credits}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/pricing?canceled=true`,
       metadata: {
@@ -120,7 +122,14 @@ export async function POST(request: NextRequest) {
         credits: credits.toString(),
         purchase_type: 'credits'
       },
-    })
+    }
+
+    // Add referral ID if present and non-empty (Stripe rejects blank values)
+    if (referral && referral.trim() !== '') {
+      checkoutParams.client_reference_id = referral
+    }
+
+    const session = await stripe.checkout.sessions.create(checkoutParams)
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error: any) {

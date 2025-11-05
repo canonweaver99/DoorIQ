@@ -25,7 +25,7 @@ function getStripeClient() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { priceId } = await request.json()
+    const { priceId, referral } = await request.json()
     
     if (!priceId) {
       return NextResponse.json({ error: 'Price ID required' }, { status: 400 })
@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       'http://localhost:3000'
 
-    // Create checkout session
-    const session = await stripe.checkout.sessions.create({
+    // Build checkout session parameters
+    const checkoutParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -113,8 +113,17 @@ export async function POST(request: NextRequest) {
           supabase_user_id: user.id
         }
         // No trial - immediate billing
-      }
-    })
+      },
+      customer_creation: 'always'
+    }
+
+    // Add referral ID if present and non-empty (Stripe rejects blank values)
+    if (referral && referral.trim() !== '') {
+      checkoutParams.client_reference_id = referral
+    }
+
+    // Create checkout session
+    const session = await stripe.checkout.sessions.create(checkoutParams)
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error: any) {
