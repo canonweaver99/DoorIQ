@@ -4,6 +4,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import Header from "@/components/navigation/Header";
 import { Footer } from "@/components/ui/footer-section";
 import { NotificationProvider } from "@/contexts/NotificationContext";
@@ -112,6 +113,7 @@ export default function RootLayout({
           </NotificationProvider>
         </ToastProvider>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
