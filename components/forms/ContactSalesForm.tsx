@@ -126,10 +126,20 @@ export function ContactSalesForm() {
   useEffect(() => {
     if (currentStep === 4) {
       (async function () {
-        const cal = await getCalApi({"namespace":"dooriq"});
-        cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
-        setCalLoaded(true)
+        try {
+          const cal = await getCalApi({"namespace":"dooriq"});
+          cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
+          // Set loaded after a brief delay to allow Cal to initialize
+          setTimeout(() => {
+            setCalLoaded(true)
+          }, 1000)
+        } catch (error) {
+          console.error('Error initializing Cal.com:', error)
+          setCalLoaded(true) // Show anyway if there's an error
+        }
       })();
+    } else {
+      setCalLoaded(false) // Reset when leaving step 4
     }
   }, [currentStep])
 
@@ -680,20 +690,32 @@ export function ContactSalesForm() {
                   <div className="flex-1 overflow-auto">
                     <div className="max-w-7xl mx-auto p-6">
                       <div 
-                        style={{ width: '100%', minHeight: 'calc(100vh - 250px)' }} 
                         className="rounded-xl bg-white relative"
+                        style={{ 
+                          width: '100%', 
+                          minHeight: 'calc(100vh - 250px)',
+                          height: '100%'
+                        }}
                       >
-                        {!calLoaded && (
-                          <div className="absolute inset-0 flex items-center justify-center z-10">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                          </div>
-                        )}
                         <Cal 
                           namespace="dooriq"
                           calLink="canon-weaver-aa0twn/dooriq"
-                          style={{width:"100%",height:"100%",overflow:"scroll"}}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            minHeight: "600px",
+                            overflow: "scroll"
+                          }}
                           config={{"layout":"month_view"}}
                         />
+                        {!calLoaded && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-20">
+                            <div className="flex flex-col items-center gap-2">
+                              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                              <p className="text-sm text-slate-600">Loading calendar...</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
