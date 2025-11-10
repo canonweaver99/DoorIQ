@@ -89,7 +89,7 @@ function TrainerPageContent() {
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
-    return agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor'
+    return agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy'
   }
   
   // Helper function to get video paths for an agent
@@ -104,6 +104,12 @@ function TrainerPageContent() {
       return {
         loop: '/veteran-victor-loop.mp4',
         closing: '/veteran-victor-closing-door.mp4'
+      }
+    }
+    if (agentName === 'No Problem Nancy') {
+      return {
+        loop: '/no-problem-nancy-loop.mp4',
+        closing: '/no-problem-nancy-closing-door.mp4'
       }
     }
     return null
