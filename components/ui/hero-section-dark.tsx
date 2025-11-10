@@ -230,7 +230,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
 
               {/* Right Side - Live Session (Equal width on large monitors) */}
               <motion.div 
-                className="w-full h-full mt-3" 
+                className="w-full flex items-center justify-center mt-3" 
                 style={{ paddingLeft: '40px' }}
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}

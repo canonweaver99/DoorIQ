@@ -66,7 +66,7 @@ export function LiveSessionPreview() {
     { speaker: 'salesrep', text: "Oh nice, baseball! How'd they do?", time: '0:11' },
     { speaker: 'austin', text: "Won 7 to 4! My boy hit a double in the third, I was goin' nuts.", time: '0:14' },
     { speaker: 'salesrep', text: "That's awesome! There's nothing like watching your kids play. I'm Jake, by the way.", time: '0:19' },
-    { speaker: 'austin', text: "Name's Austin. Good to meet ya.", time: '0:25' },
+    { speaker: 'austin', text: "Name's Average Austin. Good to meet ya.", time: '0:25' },
     { speaker: 'salesrep', text: "You too, man. So hey, I'm actually out here today talking to homeowners about their energy bills. Have you noticed yours going up lately?", time: '0:28' },
     { speaker: 'austin', text: "I mean, yeah, it's Texas in the summer. They're always high.", time: '0:36' },
     { speaker: 'salesrep', text: "Right? It's brutal. That's actually why I'm here. We've been helping folks in the neighborhood cut their bills by 20 to 30 percent with solar. Have you ever looked into it?", time: '0:40' },
@@ -103,7 +103,7 @@ export function LiveSessionPreview() {
     { speaker: 'austin', text: "Yeah, that'd be better. She's working today but she'll be home tomorrow afternoon.", time: '4:28' },
     { speaker: 'salesrep', text: "Perfect. Let me grab my calendar. How does tomorrow around 2:00 work? I can bring the same information, show her the numbers, answer both your questions.", time: '4:33' },
     { speaker: 'austin', text: "Yeah, 2:00 works. I'll make sure she's here.", time: '4:40' },
-    { speaker: 'salesrep', text: "Sounds great, Austin. I'll see you tomorrow at 2. I'll bring everything we talked about plus some info on the warranties and financing options so you both have all the details. Looking forward to it.", time: '4:45' },
+    { speaker: 'salesrep', text: "Sounds great, Average Austin. I'll see you tomorrow at 2. I'll bring everything we talked about plus some info on the warranties and financing options so you both have all the details. Looking forward to it.", time: '4:45' },
   ]
 
   const formatTime = (seconds: number) => {
@@ -113,7 +113,7 @@ export function LiveSessionPreview() {
   }
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden max-h-[calc(100vh-140px)] xl:max-h-[450px] 2xl:max-h-[400px]" style={{ minHeight: 'calc(100vh - 140px)', transform: 'scale(1.02)' }}>
+    <div className="relative w-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden h-[600px] sm:h-[650px] lg:h-[700px] xl:h-[600px] 2xl:h-[550px]" style={{ transform: 'scale(1.02)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
         <div className="flex items-center gap-2">
@@ -127,16 +127,16 @@ export function LiveSessionPreview() {
 
       {/* Main Content - 3-Way Split Layout */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Section: 50/50 Split - Austin Left, Sales Rep Right */}
+        {/* Top Section: 50/50 Split - Average Austin Left, Sales Rep Right */}
         <div className="grid grid-cols-2 gap-0 xl:min-h-[180px] 2xl:min-h-[160px]" style={{ minHeight: '240px' }}>
-          {/* Left: Agent (Austin) */}
+          {/* Left: Agent (Average Austin) */}
           <div className="flex flex-col items-center justify-end p-0 border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent relative">
-            {/* Austin Image - Fill entire rectangle */}
+            {/* Average Austin Image - Fill entire rectangle */}
             <div className="absolute inset-0">
               <div className="relative w-full h-full">
                 <Image
                   src="/AUSTIN FINAL.png"
-                  alt="Austin"
+                  alt="Average Austin"
                   fill
                   sizes="(min-width: 1024px) 480px, 100vw"
                   className="object-cover"
