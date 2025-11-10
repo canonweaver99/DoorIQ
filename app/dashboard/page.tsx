@@ -149,6 +149,20 @@ function DashboardPageContent() {
     fetchRealData()
   }, [])
   
+  // Refresh data when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRealData()
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+  
   const fetchRealData = async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -420,6 +434,21 @@ function OverviewTabContent() {
   useEffect(() => {
     fetchOverviewData()
     fetchAIInsights()
+  }, [])
+  
+  // Refresh data when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOverviewData()
+        fetchAIInsights()
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const fetchAIInsights = async () => {

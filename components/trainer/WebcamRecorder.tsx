@@ -239,7 +239,7 @@ export default function WebcamRecorder({ sessionActive, duration = 0, onStreamRe
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               style={{
                 transform: 'scale(1)',
                 transformOrigin: 'center center'

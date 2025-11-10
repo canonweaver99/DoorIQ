@@ -35,6 +35,20 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
     fetchRealData()
   }, [])
   
+  // Refresh data when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRealData()
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+  
   const fetchRealData = async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
