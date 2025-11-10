@@ -85,7 +85,29 @@ function TrainerPageContent() {
   const [showPaywall, setShowPaywall] = useState(false)
   const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
   const [showOutOfCredits, setShowOutOfCredits] = useState(false)
-  const [videoMode, setVideoMode] = useState<'loop' | 'closing'>('loop') // Track video state for Tanya & Tom
+  const [videoMode, setVideoMode] = useState<'loop' | 'closing'>('loop') // Track video state for agents with videos
+  
+  // Helper function to check if agent has video animations
+  const agentHasVideos = (agentName: string | null | undefined): boolean => {
+    return agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor'
+  }
+  
+  // Helper function to get video paths for an agent
+  const getAgentVideoPaths = (agentName: string | null | undefined): { loop: string; closing: string } | null => {
+    if (agentName === 'Tag Team Tanya & Tom') {
+      return {
+        loop: '/tanya-tom-loop.mp4',
+        closing: '/tanya-tom-closing-door.mp4'
+      }
+    }
+    if (agentName === 'Veteran Victor') {
+      return {
+        loop: '/veteran-victor-loop.mp4',
+        closing: '/veteran-victor-closing-door.mp4'
+      }
+    }
+    return null
+  }
   
   // Video recording temporarily disabled - archived for future implementation
   // const { isRecording: isVideoRecording, startRecording: startDualCameraRecording, stopRecording: stopDualCameraRecording } = useDualCameraRecording(sessionId)
@@ -537,11 +559,12 @@ function TrainerPageContent() {
       // Additional buffer delay to ensure audio completes
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Check if this is Tanya & Tom - if so, play closing door video
-      const isTanyaTom = selectedAgent?.name === 'Tag Team Tanya & Tom'
+      // Check if this agent has video animations - if so, play closing door video
+      const hasVideos = agentHasVideos(selectedAgent?.name)
       
-      if (isTanyaTom) {
-        console.log('🎬 Switching to closing door video for Tanya & Tom...')
+      if (hasVideos) {
+        const agentName = selectedAgent?.name || 'Unknown'
+        console.log(`🎬 Switching to closing door video for ${agentName}...`)
         
         // Switch to closing door video - React will re-render with new src
         setVideoMode('closing')
@@ -564,7 +587,7 @@ function TrainerPageContent() {
           })
           
           const handleVideoEnd = () => {
-            console.log('🎬 Closing door video finished')
+            console.log(`🎬 Closing door video finished for ${agentName}`)
             video.removeEventListener('ended', handleVideoEnd)
             resolve()
           }
@@ -882,14 +905,16 @@ function TrainerPageContent() {
                 ) : (
                   <div className="relative w-full h-full">
                     {(() => {
-                      const isTanyaTom = selectedAgent?.name === 'Tag Team Tanya & Tom'
-                      const shouldUseVideo = isTanyaTom && sessionActive
+                      const shouldUseVideo = agentHasVideos(selectedAgent?.name) && sessionActive
                       
-                      // Use video for Tanya & Tom during active session
+                      // Use video for agents with video animations during active session
                       if (shouldUseVideo) {
+                        const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                        if (!videoPaths) return null
+                        
                         const videoSrc = videoMode === 'loop' 
-                          ? '/tanya-tom-loop.mp4' 
-                          : '/tanya-tom-closing-door.mp4'
+                          ? videoPaths.loop
+                          : videoPaths.closing
                         
                         return (
                           <video
@@ -917,7 +942,7 @@ function TrainerPageContent() {
                         )
                       }
                       
-                      // Use image for all other cases (including Tanya & Tom pre-session)
+                      // Use image for all other cases (including agents with videos pre-session)
                       const src = resolveAgentImage(selectedAgent, sessionActive)
                       console.log('🖼️ FINAL IMAGE DECISION:', { 
                         sessionActive, 
