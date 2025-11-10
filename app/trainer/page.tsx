@@ -835,7 +835,7 @@ function TrainerPageContent() {
       <div className="relative w-full max-w-7xl h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)] flex flex-col bg-black/40 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-purple-500/20 overflow-hidden">
         
         {/* Header with Timer and Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-3 sm:px-6 py-2 sm:py-3 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-3 sm:px-6 py-0.5 sm:py-1 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 animate-pulse" />
             <span className="text-xs sm:text-sm font-semibold text-white truncate">
@@ -968,8 +968,8 @@ function TrainerPageContent() {
             
             {/* Right: Webcam */}
             <div className="relative bg-gradient-to-br from-green-950/20 to-transparent border-t md:border-t-0 border-purple-500/20" style={{ 
-              minHeight: sessionActive ? '200px' : '250px',
-              height: sessionActive ? '30vh' : '35vh'
+              minHeight: sessionActive ? '231px' : '289px',
+              height: sessionActive ? '34.65vh' : '40.425vh'
             }}>
               <WebcamRecorder 
                 sessionActive={sessionActive} 
