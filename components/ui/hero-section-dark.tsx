@@ -89,11 +89,11 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         <div className="absolute top-0 z-[0] h-screen w-screen bg-purple-950/10 dark:bg-purple-950/10 bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]" />
         
         {/* Hero Section - Full Viewport Height */}
-        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-start pt-0">
+        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center pt-0">
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20 xl:px-24 2xl:px-32">
             {/* Split Screen: Copy Left, Live Session Right */}
-            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] xl:[grid-template-columns:50%_50%] 2xl:[grid-template-columns:50%_50%] gap-12 xl:gap-16 items-center pt-8 xl:pt-12">
+            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] xl:[grid-template-columns:50%_50%] 2xl:[grid-template-columns:50%_50%] gap-12 xl:gap-16 items-center pt-8 xl:pt-12 -mt-[95px]">
               {/* Left Side - Copy */}
               <motion.div 
                 className="space-y-5 text-center flex flex-col items-center justify-center" 
@@ -230,7 +230,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
 
               {/* Right Side - Live Session (Equal width on large monitors) */}
               <motion.div 
-                className="w-full flex items-center justify-center mt-3" 
+                className="w-full flex items-center justify-center mt-3 lg:mt-0" 
                 style={{ paddingLeft: '40px' }}
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}

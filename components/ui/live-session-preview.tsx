@@ -113,7 +113,7 @@ export function LiveSessionPreview() {
   }
 
   return (
-    <div className="relative w-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden h-[600px] sm:h-[650px] lg:h-[700px] xl:h-[600px] 2xl:h-[550px]" style={{ transform: 'scale(1.02)' }}>
+    <div className="relative w-full flex flex-col bg-black/40 backdrop-blur-sm rounded-2xl border border-purple-500/20 overflow-hidden h-[720px] sm:h-[780px] lg:h-[840px] xl:h-[720px] 2xl:h-[660px]" style={{ transform: 'scale(1.02)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
         <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ export function LiveSessionPreview() {
       {/* Main Content - 3-Way Split Layout */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Section: 50/50 Split - Average Austin Left, Sales Rep Right */}
-        <div className="grid grid-cols-2 gap-0 xl:min-h-[180px] 2xl:min-h-[160px]" style={{ minHeight: '240px' }}>
+        <div className="grid grid-cols-2 gap-0 xl:min-h-[160px] 2xl:min-h-[140px]" style={{ minHeight: '200px' }}>
           {/* Left: Agent (Average Austin) */}
           <div className="flex flex-col items-center justify-end p-0 border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent relative">
             {/* Average Austin Image - Fill entire rectangle */}
@@ -202,7 +202,7 @@ export function LiveSessionPreview() {
         <div className="border-b border-purple-500/20 mt-0" />
 
         {/* Bottom Section: Transcript (Full Width) - Normal size on large monitors */}
-        <div className="flex flex-col relative h-[280px] xl:h-[200px] 2xl:h-[200px] mt-6">
+        <div className="flex flex-col relative h-[392px] xl:h-[280px] 2xl:h-[280px] mt-6 flex-1">
           
           {/* Bottom fade gradient overlay */}
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
