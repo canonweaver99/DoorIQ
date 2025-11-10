@@ -85,6 +85,7 @@ function TrainerPageContent() {
   const [showPaywall, setShowPaywall] = useState(false)
   const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
   const [showOutOfCredits, setShowOutOfCredits] = useState(false)
+  const [videoMode, setVideoMode] = useState<'loop' | 'closing'>('loop') // Track video state for Tanya & Tom
   
   // Video recording temporarily disabled - archived for future implementation
   // const { isRecording: isVideoRecording, startRecording: startDualCameraRecording, stopRecording: stopDualCameraRecording } = useDualCameraRecording(sessionId)
@@ -94,6 +95,7 @@ function TrainerPageContent() {
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const signedUrlAbortRef = useRef<AbortController | null>(null)
   const endCallProcessingRef = useRef(false) // Track if end call is being processed
+  const agentVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for Tanya & Tom video element
   
   const subscription = useSubscription()
   const sessionLimit = useSessionLimit()
@@ -108,6 +110,17 @@ function TrainerPageContent() {
       signedUrlAbortRef.current?.abort()
     }
   }, [])
+  
+  // Handle video mode changes for Tanya & Tom
+  useEffect(() => {
+    if (videoMode === 'closing' && agentVideoRef.current && sessionActive) {
+      const video = agentVideoRef.current
+      // Ensure video plays when switching to closing mode
+      video.play().catch((err) => {
+        console.warn('Failed to play closing door video:', err)
+      })
+    }
+  }, [videoMode, sessionActive])
 
   const fetchAgents = async () => {
     try {
@@ -282,6 +295,7 @@ function TrainerPageContent() {
       
       setSessionId(newId)
       setSessionActive(true)
+      setVideoMode('loop') // Reset to loop video when starting session
       setLoading(false)
       
       // Deduct credit for ALL users (free users have 10 credits, paid users have 50 credits/month)
@@ -351,6 +365,7 @@ function TrainerPageContent() {
     setLoading(true)
     setSessionActive(false)
     setConversationToken(null)
+    setVideoMode('loop') // Reset video mode for next session
 
     // Video recording disabled - archived for future
     // if (isVideoRecording) {
@@ -522,10 +537,60 @@ function TrainerPageContent() {
       // Additional buffer delay to ensure audio completes
       await new Promise(resolve => setTimeout(resolve, 1000))
       
+      // Check if this is Tanya & Tom - if so, play closing door video
+      const isTanyaTom = selectedAgent?.name === 'Tag Team Tanya & Tom'
+      
+      if (isTanyaTom) {
+        console.log('🎬 Switching to closing door video for Tanya & Tom...')
+        
+        // Switch to closing door video - React will re-render with new src
+        setVideoMode('closing')
+        
+        // Wait for React to update and video element to be ready
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
+        // Wait for closing door video to finish before ending session
+        await new Promise<void>((resolve) => {
+          const video = agentVideoRef.current
+          if (!video) {
+            console.warn('⚠️ Video ref not available, proceeding anyway')
+            resolve()
+            return
+          }
+          
+          // Ensure video is playing
+          video.play().catch((err) => {
+            console.warn('Video play failed:', err)
+          })
+          
+          const handleVideoEnd = () => {
+            console.log('🎬 Closing door video finished')
+            video.removeEventListener('ended', handleVideoEnd)
+            resolve()
+          }
+          
+          // Check if video already ended (edge case)
+          if (video.ended) {
+            console.log('🎬 Video already ended')
+            resolve()
+            return
+          }
+          
+          video.addEventListener('ended', handleVideoEnd)
+          
+          // Fallback timeout in case video doesn't fire ended event
+          setTimeout(() => {
+            console.log('⏰ Closing door video timeout, proceeding anyway')
+            video.removeEventListener('ended', handleVideoEnd)
+            resolve()
+          }, 10000) // 10 second timeout
+        })
+      }
+      
       // Set session inactive before ending
       setSessionActive(false)
       
-      // End the session after agent finishes speaking
+      // End the session after agent finishes speaking (and video if applicable)
       console.log('🔚 Calling endSession after agent finished speaking...')
       const reason = e?.detail?.reason || 'Unknown'
       console.log('📊 END CALL TRIGGER DETAIL:', reason)
@@ -817,6 +882,42 @@ function TrainerPageContent() {
                 ) : (
                   <div className="relative w-full h-full">
                     {(() => {
+                      const isTanyaTom = selectedAgent?.name === 'Tag Team Tanya & Tom'
+                      const shouldUseVideo = isTanyaTom && sessionActive
+                      
+                      // Use video for Tanya & Tom during active session
+                      if (shouldUseVideo) {
+                        const videoSrc = videoMode === 'loop' 
+                          ? '/tanya-tom-loop.mp4' 
+                          : '/tanya-tom-closing-door.mp4'
+                        
+                        return (
+                          <video
+                            ref={agentVideoRef}
+                            src={videoSrc}
+                            className="w-full h-full object-cover"
+                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                            autoPlay
+                            muted
+                            loop={videoMode === 'loop'}
+                            playsInline
+                            onLoadedData={() => {
+                              // Ensure video plays when loaded
+                              if (agentVideoRef.current) {
+                                agentVideoRef.current.play().catch((err) => {
+                                  console.warn('Video autoplay failed:', err)
+                                })
+                              }
+                            }}
+                            onError={(e) => {
+                              console.error('❌ Video failed to load:', videoSrc)
+                              e.stopPropagation()
+                            }}
+                          />
+                        )
+                      }
+                      
+                      // Use image for all other cases (including Tanya & Tom pre-session)
                       const src = resolveAgentImage(selectedAgent, sessionActive)
                       console.log('🖼️ FINAL IMAGE DECISION:', { 
                         sessionActive, 
