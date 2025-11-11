@@ -1,4 +1,4 @@
-import { ContactSalesForm } from '@/components/forms/ContactSalesForm'
+import { ContactSalesFlow } from '@/components/forms/ContactSalesFlow'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function ContactSalesPage() {
-  return <ContactSalesForm />
+  return <ContactSalesFlow />
 }

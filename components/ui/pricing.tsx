@@ -220,6 +220,7 @@ interface PricingSectionProps {
   plans: PricingPlan[];
   title?: string;
   description?: string;
+  hideToggle?: boolean;
 }
 
 // Context for state management
@@ -236,6 +237,7 @@ export function PricingSection({
   plans,
   title = "Simple, Transparent Pricing",
   description = "Choose the plan that's right for you. All plans include our core features and support.",
+  hideToggle = false,
 }: PricingSectionProps) {
   const [isMonthly, setIsMonthly] = useState(false);
   const [selectedPlanIndex, setSelectedPlanIndex] = useState<number | null>(null);
@@ -249,6 +251,10 @@ export function PricingSection({
     const { clientX, clientY } = event;
     setMousePosition({ x: clientX, y: clientY });
   };
+
+  // Determine grid columns based on number of plans
+  const gridCols = plans.length === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3';
+  const maxWidth = plans.length === 2 ? 'max-w-4xl' : 'max-w-6xl';
 
   return (
     <PricingContext.Provider value={{ isMonthly, setIsMonthly }}>
@@ -266,7 +272,7 @@ export function PricingSection({
           containerRef={containerRef}
         />
         <div className="relative z-10 container-responsive">
-          <div className="max-w-3xl mx-auto text-center space-y-1 mb-3">
+          <div className={`${maxWidth} mx-auto text-center space-y-1 mb-3`}>
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl lg:text-5xl text-neutral-900 dark:text-white">
               {title}
             </h2>
@@ -274,17 +280,17 @@ export function PricingSection({
               {description}
             </p>
           </div>
-          <PricingToggle />
-          <div className="mt-6 sm:mt-8 grid grid-cols-1 lg:grid-cols-3 items-stretch gap-4 lg:gap-3">
+          {!hideToggle && <PricingToggle />}
+          <div className={`mt-6 sm:mt-8 grid grid-cols-1 ${gridCols} items-stretch gap-4 lg:gap-6 justify-center`}>
             {plans.map((plan, index) => (
-              <div key={`card-wrapper-${index}`} className="origin-top scale-[0.855]">
+              <div key={`card-wrapper-${index}`} className={plans.length === 2 ? "origin-top" : "origin-top scale-[0.855]"}>
                 <PricingCard 
                   key={index} 
                   plan={plan} 
                   index={index}
                   isSelected={selectedPlanIndex === index || (selectedPlanIndex === null && (plan.isPopular ?? false))}
                   onSelect={() => setSelectedPlanIndex(index)}
-                  isCenterCard={index === 1}
+                  isCenterCard={plans.length === 2 ? false : index === 1}
                 />
               </div>
             ))}

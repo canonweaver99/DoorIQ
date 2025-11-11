@@ -214,9 +214,6 @@ function PricingPageContent() {
     if (planName === "Free" && !hasActiveSubscription && !subscription.loading) {
       return true
     }
-    if (planName === "Individual" && hasActiveSubscription) {
-      return true
-    }
     return false
   }
 
@@ -245,45 +242,13 @@ function PricingPageContent() {
       isCurrentPlan: isCurrentPlan("Free"),
     },
     {
-      name: "Individual",
-      price: "20",
-      yearlyPrice: "14", // $14/month when billed annually (30% off)
-      yearlyTotal: "168", // Total yearly cost
-      period: "month",
-      features: [
-        "Access to ALL AI training agents",
-        "50 practice calls per month",
-        "Advanced analytics & scoring",
-        "Full dashboard access (Performance, Learning, etc.)",
-        "Sales call upload & analysis",
-        "Export reports (CSV/PDF)",
-      ],
-      description: "Ideal for individual sales reps",
-      buttonText: isCurrentPlan("Individual") ? (
-        <span className="flex items-center gap-2">
-          <Crown className="w-4 h-4" />
-          Current Plan
-        </span>
-      ) : (loading === STRIPE_PRICE_IDS.individual_monthly || loading === STRIPE_PRICE_IDS.individual_yearly) ? (
-        <span className="flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Processing...
-        </span>
-      ) : "Purchase",
-      href: "#",
-      // Use monthly or yearly checkout based on toggle
-      onClickMonthly: isCurrentPlan("Individual") ? () => {} : () => handleCheckout(STRIPE_PRICE_IDS.individual_monthly, false),
-      onClickYearly: isCurrentPlan("Individual") ? () => {} : () => handleCheckout(STRIPE_PRICE_IDS.individual_yearly, false),
-      isPopular: false,
-      isCurrentPlan: isCurrentPlan("Individual"),
-    },
-    {
-      name: "Team",
+      name: "Enterprise",
       price: "Contact Sales",
       yearlyPrice: "Contact Sales",
       period: "",
       features: [
-        "Everything in Individual",
+        "Unlimited AI training agents",
+        "Unlimited practice sessions",
         "Team management dashboard",
         "Real-time team analytics & leaderboards",
         "Assign training to reps",
@@ -293,7 +258,7 @@ function PricingPageContent() {
         "Custom pricing based on team size",
         "Dedicated account manager",
       ],
-      description: "For sales managers and teams",
+      description: "For sales teams and organizations",
       buttonText: "Contact Sales",
       href: "/contact-sales",
       isPopular: true,
@@ -358,8 +323,9 @@ function PricingPageContent() {
 
       <PricingSection
         plans={plans}
-        title="Find the Perfect Plan"
+        title="Simple, Transparent Pricing"
         description="Choose the plan that fits your sales team's needs."
+        hideToggle={true}
       />
     </>
   )
