@@ -26,37 +26,63 @@ export default function LeaderboardPage() {
     
     // Set up real-time subscription to listen for changes in users table
     const supabase = supabaseRef.current
-    const channel = supabase
-      .channel('leaderboard-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'users',
-          filter: 'role=eq.rep'
-        },
-        (payload) => {
-          console.log('💰 User earnings updated:', payload)
-          // Refresh leaderboard when any user's data changes
+    let channel: any = null
+    let handleVisibilityChange: (() => void) | null = null
+    
+    // Get user's team_id for filtering real-time updates
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('team_id')
+        .eq('id', user.id)
+        .single()
+      
+      const userTeamId = userProfile?.team_id
+      
+      if (!userTeamId) return
+      
+      // Listen for changes to users - we'll filter by team in the callback
+      channel = supabase
+        .channel('leaderboard-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users',
+            filter: 'role=eq.rep'
+          },
+          (payload) => {
+            // Only refresh if the updated user is in the same team
+            const updatedUser = payload.new as any
+            if (updatedUser?.team_id === userTeamId) {
+              console.log('💰 Team member earnings updated:', payload)
+              fetchLeaderboard(true)
+            }
+          }
+        )
+        .subscribe()
+
+      // Refresh when page gains focus (user returns to tab)
+      handleVisibilityChange = () => {
+        if (!document.hidden) {
+          console.log('👀 Page visible again, refreshing leaderboard...')
           fetchLeaderboard(true)
         }
-      )
-      .subscribe()
-
-    // Refresh when page gains focus (user returns to tab)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('👀 Page visible again, refreshing leaderboard...')
-        fetchLeaderboard(true)
       }
-    }
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+    })
 
     return () => {
-      channel.unsubscribe()
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (channel) {
+        channel.unsubscribe()
+      }
+      if (handleVisibilityChange) {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+      }
     }
   }, [timeframe])
 
@@ -74,12 +100,37 @@ export default function LeaderboardPage() {
       setCurrentUserId(user.id)
     }
 
-    // Fetch all users with their earnings
-    const { data: users, error } = await supabase
+    // Get current user's team_id
+    let userTeamId: string | null = null
+    if (user) {
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('team_id')
+        .eq('id', user.id)
+        .single()
+      
+      userTeamId = userProfile?.team_id || null
+    }
+
+    // Build query - filter by team if user has a team
+    let usersQuery = supabase
       .from('users')
       .select('*')
       .eq('role', 'rep')
       .order('virtual_earnings', { ascending: false })
+
+    // Only show users from the same team
+    if (userTeamId) {
+      usersQuery = usersQuery.eq('team_id', userTeamId)
+    } else {
+      // If user has no team, show empty leaderboard
+      setLeaderboard([])
+      setLoading(false)
+      setRefreshing(false)
+      return
+    }
+
+    const { data: users, error } = await usersQuery
 
     if (error || !users) {
       console.error('Error fetching leaderboard:', error)
