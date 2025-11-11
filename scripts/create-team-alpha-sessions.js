@@ -17,13 +17,8 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-const AGENTS = [
-  { id: 'agent-1', name: 'Sarah Johnson', persona: 'Skeptical homeowner' },
-  { id: 'agent-2', name: 'Mike Chen', persona: 'Busy professional' },
-  { id: 'agent-3', name: 'Emily Rodriguez', persona: 'Price-conscious buyer' },
-  { id: 'agent-4', name: 'David Thompson', persona: 'Interested but cautious' },
-  { id: 'agent-5', name: 'Lisa Anderson', persona: 'Time-pressed decision maker' }
-]
+// Agents will be fetched from database
+let AGENTS = []
 
 const STRENGTHS = [
   'Strong opening introduction',
@@ -271,6 +266,35 @@ async function createSessionsForTeamAlpha() {
   console.log('🚀 Creating sessions for Team Alpha...\n')
   
   try {
+    // Fetch real agents from database
+    console.log('📡 Fetching agents from database...')
+    const { data: agentsData, error: agentsError } = await supabase
+      .from('agents')
+      .select('id, name, persona')
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+    
+    if (agentsError) {
+      throw new Error(`Failed to fetch agents: ${agentsError?.message}`)
+    }
+    
+    if (!agentsData || agentsData.length === 0) {
+      throw new Error('No active agents found in database. Please ensure agents are created first.')
+    }
+    
+    // Map agents to the format expected by the script
+    AGENTS = agentsData.map(agent => ({
+      id: agent.id,
+      name: agent.name,
+      persona: agent.persona || 'Homeowner'
+    }))
+    
+    console.log(`✅ Found ${AGENTS.length} active agents:`)
+    AGENTS.forEach(agent => {
+      console.log(`   - ${agent.name}${agent.persona ? ` (${agent.persona})` : ''}`)
+    })
+    console.log('')
+    
     // Get Team Alpha
     const { data: team, error: teamError } = await supabase
       .from('teams')

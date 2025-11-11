@@ -71,12 +71,23 @@ export default function MessagesPage() {
         setCurrentUser(userData)
         await supabase.rpc('update_user_last_seen')
 
-        // Load managers from users table (role-based)
-        const { data: mgrs } = await supabase
+        // Load managers from users table (role-based, filtered by team)
+        let managersQuery = supabase
           .from('users')
-          .select('id, full_name, role, last_seen_at')
+          .select('id, full_name, role, last_seen_at, team_id')
           .in('role', ['manager', 'admin'])
-          .order('full_name', { ascending: true })
+        
+        // Filter by team if user has a team
+        if (userData?.team_id) {
+          managersQuery = managersQuery.eq('team_id', userData.team_id)
+        } else {
+          // If no team, show empty list
+          setManagers([])
+          setLoading(false)
+          return
+        }
+        
+        const { data: mgrs } = await managersQuery.order('full_name', { ascending: true })
 
         const now = Date.now()
         const mapped: Manager[] = (mgrs || []).map((m: any) => ({

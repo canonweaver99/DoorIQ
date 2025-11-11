@@ -140,6 +140,141 @@ export async function GET() {
       ? Math.round(((totalSessions - previousPeriodSessions.length) / previousPeriodSessions.length) * 100)
       : 0
 
+    // Calculate rep performance data
+    const repPerformanceMap = new Map<string, {
+      id: string
+      name: string
+      sessions: number
+      scores: number[]
+      skills: {
+        rapport: number[]
+        discovery: number[]
+        objections: number[]
+        closing: number[]
+      }
+      lastActive: Date
+      earnings: number
+    }>()
+
+    // Get team members with their data
+    const { data: teamMembersData } = await supabase
+      .from('users')
+      .select('id, full_name, virtual_earnings')
+      .eq('team_id', userProfile.team_id)
+      .eq('role', 'rep')
+
+    teamMembersData?.forEach(member => {
+      repPerformanceMap.set(member.id, {
+        id: member.id,
+        name: member.full_name || 'Unknown',
+        sessions: 0,
+        scores: [],
+        skills: {
+          rapport: [],
+          discovery: [],
+          objections: [],
+          closing: []
+        },
+        lastActive: new Date(0),
+        earnings: member.virtual_earnings || 0
+      })
+    })
+
+    // Process sessions to build rep performance
+    recentSessions.forEach(session => {
+      const repData = repPerformanceMap.get(session.user_id)
+      if (repData) {
+        repData.sessions++
+        if (session.overall_score) {
+          repData.scores.push(session.overall_score)
+        }
+        const sessionDate = new Date(session.created_at)
+        if (sessionDate > repData.lastActive) {
+          repData.lastActive = sessionDate
+        }
+      }
+    })
+
+    // Get detailed session data for skills
+    const { data: detailedSessions } = await supabase
+      .from('live_sessions')
+      .select('user_id, rapport_score, discovery_score, objection_handling_score, close_effectiveness_score, created_at')
+      .in('user_id', Array.from(repPerformanceMap.keys()))
+      .gte('created_at', last30Days.toISOString())
+
+    detailedSessions?.forEach(session => {
+      const repData = repPerformanceMap.get(session.user_id)
+      if (repData) {
+        if (session.rapport_score) repData.skills.rapport.push(session.rapport_score)
+        if (session.discovery_score) repData.skills.discovery.push(session.discovery_score)
+        if (session.objection_handling_score) repData.skills.objections.push(session.objection_handling_score)
+        if (session.close_effectiveness_score) repData.skills.closing.push(session.close_effectiveness_score)
+      }
+    })
+
+    // Calculate rep performance metrics
+    const repPerformance = Array.from(repPerformanceMap.values())
+      .map(rep => {
+        const avgScore = rep.scores.length > 0
+          ? Math.round(rep.scores.reduce((sum, s) => sum + s, 0) / rep.scores.length)
+          : 0
+
+        // Calculate trend (compare recent vs older sessions)
+        const recentScores = rep.scores.slice(0, Math.floor(rep.scores.length / 2))
+        const olderScores = rep.scores.slice(Math.floor(rep.scores.length / 2))
+        const recentAvg = recentScores.length > 0
+          ? recentScores.reduce((sum, s) => sum + s, 0) / recentScores.length
+          : 0
+        const olderAvg = olderScores.length > 0
+          ? olderScores.reduce((sum, s) => sum + s, 0) / olderScores.length
+          : 0
+        const trend = Math.round(recentAvg - olderAvg)
+
+        // Calculate skill averages
+        const avgRapport = rep.skills.rapport.length > 0
+          ? Math.round(rep.skills.rapport.reduce((sum, s) => sum + s, 0) / rep.skills.rapport.length)
+          : 0
+        const avgDiscovery = rep.skills.discovery.length > 0
+          ? Math.round(rep.skills.discovery.reduce((sum, s) => sum + s, 0) / rep.skills.discovery.length)
+          : 0
+        const avgObjections = rep.skills.objections.length > 0
+          ? Math.round(rep.skills.objections.reduce((sum, s) => sum + s, 0) / rep.skills.objections.length)
+          : 0
+        const avgClosing = rep.skills.closing.length > 0
+          ? Math.round(rep.skills.closing.reduce((sum, s) => sum + s, 0) / rep.skills.closing.length)
+          : 0
+
+        // Format last active time
+        const now = Date.now()
+        const lastActiveMs = now - rep.lastActive.getTime()
+        const hoursAgo = Math.floor(lastActiveMs / (1000 * 60 * 60))
+        const daysAgo = Math.floor(hoursAgo / 24)
+        let lastActiveStr = 'Just now'
+        if (daysAgo > 0) {
+          lastActiveStr = `${daysAgo}d ago`
+        } else if (hoursAgo > 0) {
+          lastActiveStr = `${hoursAgo}h ago`
+        }
+
+        return {
+          id: rep.id,
+          name: rep.name,
+          sessions: rep.sessions,
+          avgScore,
+          trend,
+          skills: {
+            rapport: avgRapport,
+            discovery: avgDiscovery,
+            objections: avgObjections,
+            closing: avgClosing
+          },
+          revenue: rep.earnings,
+          lastActive: lastActiveStr
+        }
+      })
+      .filter(rep => rep.sessions > 0)
+      .sort((a, b) => b.avgScore - a.avgScore)
+
     return NextResponse.json({
       analytics: {
         totalSessions,
@@ -148,6 +283,7 @@ export async function GET() {
         trainingROI: 340, // Mock for now
         performanceData,
         skillDistribution,
+        repPerformance,
         changes: {
           sessions: sessionsChange,
           score: scoreChange,
