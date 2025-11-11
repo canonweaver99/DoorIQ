@@ -21,12 +21,16 @@ const siteUrl =
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  display: 'swap'
+  display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: 'swap',
+  preload: false, // Not critical, can load later
 });
 
 export const metadata: Metadata = {
@@ -35,20 +39,16 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   icons: {
     icon: [
-      { url: '/dooriq-key.png', sizes: 'any' },
-      { url: '/dooriq-key.png', type: 'image/png' },
+      { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon-144x144.png', sizes: '144x144', type: 'image/png' },
     ],
     apple: [
-      { url: '/dooriq-key.png', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/dooriq-key.png',
-    other: [
-      {
-        rel: 'icon',
-        type: 'image/png',
-        url: '/dooriq-key.png',
-      },
-    ],
+    shortcut: '/favicon-16x16.png',
   },
   viewport: {
     width: 'device-width',
@@ -75,9 +75,14 @@ export const metadata: Metadata = {
     description: "Master door-to-door sales with realistic AI voice interactions.",
     images: ['/DoorIQ Link image.png'],
   },
+  other: {
+    // Resource hints for performance
+    'dns-prefetch': 'https://r.wdfl.co',
+  },
 };
 
-export const dynamic = 'force-dynamic'
+// Removed force-dynamic to allow static optimization where possible
+// Use 'force-dynamic' only on pages that truly need it
 
 export default function RootLayout({
   children,
