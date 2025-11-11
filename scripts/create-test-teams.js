@@ -21,7 +21,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // Configuration
-const PASSWORD = 'TestPassword123!'
+const PASSWORD = 'StinkyButt12'
 const TEAMS = [
   { name: 'Team Alpha', managerName: 'Manager Alpha' },
   { name: 'Team Beta', managerName: 'Manager Beta' },
