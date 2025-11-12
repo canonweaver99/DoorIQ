@@ -43,33 +43,3 @@ export function vibrate(): void {
     }
   }
 }
-
-/**
- * Get initials from a name (first letter of first and last name)
- */
-export function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
-
-/**
- * Get a color gradient class based on name for consistent colored avatars
- */
-export function getAvatarColorClass(name: string): string {
-  const colors = [
-    'from-purple-600 to-indigo-600',
-    'from-cyan-500 to-blue-600',
-    'from-emerald-500 to-teal-600',
-    'from-pink-500 to-rose-600',
-    'from-amber-500 to-orange-600',
-    'from-red-500 to-pink-600',
-    'from-indigo-500 to-purple-600',
-    'from-teal-500 to-cyan-600',
-  ]
-  const colorIndex = name.length % colors.length
-  return `bg-gradient-to-br ${colors[colorIndex]}`
-}

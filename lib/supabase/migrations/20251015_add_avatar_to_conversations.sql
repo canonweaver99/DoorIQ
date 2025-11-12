@@ -58,3 +58,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION get_latest_conversations(UUID) TO authenticated;
 
+

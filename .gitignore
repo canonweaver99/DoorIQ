@@ -55,3 +55,6 @@ mobile/node_modules/
 mobile/.metro-health-check*
 mobile/*.tsbuildinfo
 mobile/.env*.local
+
+# Large video files (over GitHub's 100MB limit)
+public/Demo Video Home.mp4
