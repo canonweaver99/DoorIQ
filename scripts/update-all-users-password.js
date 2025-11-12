@@ -1,6 +1,6 @@
 /**
- * Update Test Users Password
- * Updates passwords for all test managers and reps to the new password
+ * Update All Users Password
+ * Updates passwords for ALL users in the system to the new password
  */
 
 require('dotenv').config({ path: '.env.local' })
@@ -18,42 +18,49 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 const NEW_PASSWORD = 'a123456'
 
-async function updateTestUsersPassword() {
-  console.log('🔐 Updating passwords for test users...\n')
+async function updateAllUsersPassword() {
+  console.log('🔐 Updating passwords for ALL users...\n')
+  console.log(`📝 New password: ${NEW_PASSWORD}\n`)
 
   try {
-    // Get all test users (managers and reps)
-    const testEmails = []
+    // Get all users from auth
+    let allUsers = []
+    let page = 1
+    const perPage = 1000
     
-    // Add managers
-    for (let i = 1; i <= 3; i++) {
-      testEmails.push(`manager${i}@test.dooriq.ai`)
-    }
-    
-    // Add reps
-    for (let i = 1; i <= 50; i++) {
-      testEmails.push(`rep${i}@test.dooriq.ai`)
+    while (true) {
+      const { data, error } = await supabase.auth.admin.listUsers({
+        page,
+        perPage
+      })
+      
+      if (error) {
+        throw error
+      }
+      
+      if (!data?.users || data.users.length === 0) {
+        break
+      }
+      
+      allUsers = allUsers.concat(data.users)
+      
+      if (data.users.length < perPage) {
+        break
+      }
+      
+      page++
     }
 
-    console.log(`📋 Found ${testEmails.length} test users to update\n`)
+    console.log(`📋 Found ${allUsers.length} total users to update\n`)
 
     let successCount = 0
     let errorCount = 0
 
-    for (const email of testEmails) {
+    for (const user of allUsers) {
       try {
-        // Get user by email from auth
-        const { data: users, error: listError } = await supabase.auth.admin.listUsers()
-        
-        if (listError) {
-          throw listError
-        }
-
-        const user = users?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
-        
-        if (!user) {
-          console.log(`   ⚠️  User not found: ${email}`)
-          errorCount++
+        // Skip users without email
+        if (!user.email) {
+          console.log(`   ⚠️  Skipping user ${user.id} (no email)`)
           continue
         }
 
@@ -64,7 +71,7 @@ async function updateTestUsersPassword() {
         )
 
         if (updateError) {
-          console.error(`   ❌ Failed to update ${email}:`, updateError.message)
+          console.error(`   ❌ Failed to update ${user.email}:`, updateError.message)
           errorCount++
         } else {
           successCount++
@@ -76,7 +83,7 @@ async function updateTestUsersPassword() {
         // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 50))
       } catch (error) {
-        console.error(`   ❌ Error updating ${email}:`, error.message)
+        console.error(`   ❌ Error updating ${user.email || user.id}:`, error.message)
         errorCount++
       }
     }
@@ -85,7 +92,7 @@ async function updateTestUsersPassword() {
     console.log(`   - Successfully updated: ${successCount}`)
     console.log(`   - Errors: ${errorCount}`)
     console.log(`   - New password: ${NEW_PASSWORD}`)
-    console.log(`\n📝 Note: Update TEST_TEAMS_CREDENTIALS.md with the new password`)
+    console.log(`\n📝 All users can now login with password: ${NEW_PASSWORD}`)
 
   } catch (error) {
     console.error('\n❌ Error updating passwords:', error)
@@ -93,5 +100,5 @@ async function updateTestUsersPassword() {
   }
 }
 
-updateTestUsersPassword()
+updateAllUsersPassword()
 
