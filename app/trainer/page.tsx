@@ -166,19 +166,13 @@ function TrainerPageContent() {
       const video = agentVideoRef.current
       
       if (videoMode === 'closing') {
-        // Play closing door animation (also used for opening at session start)
+        // Play closing door animation (used when ending session)
         video.play().catch((err) => {
           console.warn('Failed to play door animation:', err)
         })
         
-        // After door animation finishes, switch to loop (for session start)
-        const handleEnded = () => {
-          if (sessionActive && videoMode === 'closing') {
-            setVideoMode('loop')
-          }
-        }
-        video.addEventListener('ended', handleEnded)
-        return () => video.removeEventListener('ended', handleEnded)
+        // Note: Door closing animation will complete and then endSession is called
+        // No need to switch back to loop as session is ending
       } else if (videoMode === 'loop') {
         // Track when loop video starts and its duration
         video.addEventListener('loadedmetadata', () => {
@@ -372,9 +366,9 @@ function TrainerPageContent() {
       
       setSessionId(newId)
       setSessionActive(true)
-      // Start with door close animation (door opening), then transition to loop
+      // Start with loop video (door opening animation will be added in the future)
       if (agentHasVideos(selectedAgent?.name)) {
-        setVideoMode('closing')
+        setVideoMode('loop')
       } else {
         setVideoMode('loop')
       }
@@ -1073,14 +1067,14 @@ function TrainerPageContent() {
           
           {/* Top Section: Split View - Agent Left, Webcam Right - Stack on mobile */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20" style={{ 
-            minHeight: sessionActive ? '35%' : '40%',
+            minHeight: '50%',
             height: 'auto'
           }}>
             
             {/* Left: Agent */}
             <div className="relative border-r-0 md:border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent" style={{ 
-              minHeight: sessionActive ? '250px' : '300px',
-              height: sessionActive ? '35vh' : '40vh'
+              minHeight: '400px',
+              height: '50vh'
             }}>
               {/* Full Agent Image - matching hero preview */}
               <div className="absolute inset-0">
@@ -1196,8 +1190,8 @@ function TrainerPageContent() {
             
             {/* Right: Webcam */}
             <div className="relative bg-gradient-to-br from-green-950/20 to-transparent border-t md:border-t-0 border-purple-500/20" style={{ 
-              minHeight: sessionActive ? '231px' : '289px',
-              height: sessionActive ? '34.65vh' : '40.425vh'
+              minHeight: '400px',
+              height: '50vh'
             }}>
               <WebcamRecorder 
                 sessionActive={sessionActive} 
@@ -1207,7 +1201,7 @@ function TrainerPageContent() {
           </div>
 
           {/* Bottom Section: Live Transcript */}
-          <div className="flex flex-col relative flex-1 px-3 sm:px-6 py-2 sm:py-3" style={{ minHeight: sessionActive ? '45%' : '50%' }}>
+          <div className="flex flex-col relative flex-1 px-3 sm:px-6 py-2 sm:py-3">
             
             {/* Bottom fade gradient overlay */}
             <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
