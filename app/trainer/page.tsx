@@ -89,11 +89,17 @@ function TrainerPageContent() {
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
-    return agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan'
+    return agentName === 'Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan'
   }
   
   // Helper function to get video paths for an agent
   const getAgentVideoPaths = (agentName: string | null | undefined): { loop: string; closing: string } | null => {
+    if (agentName === 'Austin') {
+      return {
+        loop: '/austin-loop.mp4',
+        closing: '/austin-door-close.mp4'
+      }
+    }
     if (agentName === 'Tag Team Tanya & Tom') {
       return {
         loop: '/tanya-tom-loop.mp4',
@@ -151,14 +157,31 @@ function TrainerPageContent() {
     }
   }, [])
   
-  // Handle video mode changes for Tanya & Tom
+  // Handle video mode changes for agents with videos
   useEffect(() => {
-    if (videoMode === 'closing' && agentVideoRef.current && sessionActive) {
+    if (agentVideoRef.current && sessionActive) {
       const video = agentVideoRef.current
-      // Ensure video plays when switching to closing mode
-      video.play().catch((err) => {
-        console.warn('Failed to play closing door video:', err)
-      })
+      
+      if (videoMode === 'closing') {
+        // Play closing door animation (also used for opening at session start)
+        video.play().catch((err) => {
+          console.warn('Failed to play door animation:', err)
+        })
+        
+        // After door animation finishes, switch to loop (for session start)
+        const handleEnded = () => {
+          if (sessionActive && videoMode === 'closing') {
+            setVideoMode('loop')
+          }
+        }
+        video.addEventListener('ended', handleEnded)
+        return () => video.removeEventListener('ended', handleEnded)
+      } else if (videoMode === 'loop') {
+        // Ensure loop video plays
+        video.play().catch((err) => {
+          console.warn('Failed to play loop video:', err)
+        })
+      }
     }
   }, [videoMode, sessionActive])
 
@@ -335,7 +358,12 @@ function TrainerPageContent() {
       
       setSessionId(newId)
       setSessionActive(true)
-      setVideoMode('loop') // Reset to loop video when starting session
+      // Start with door close animation (door opening), then transition to loop
+      if (agentHasVideos(selectedAgent?.name)) {
+        setVideoMode('closing')
+      } else {
+        setVideoMode('loop')
+      }
       setLoading(false)
       
       // Deduct credit for ALL users (free users have 10 credits, paid users have 50 credits/month)

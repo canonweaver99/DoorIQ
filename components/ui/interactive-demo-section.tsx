@@ -41,11 +41,11 @@ const demoSteps: DemoStep[] = [
 export function InteractiveDemoSection() {
   const [activeStep, setActiveStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [hasAutoSwitched, setHasAutoSwitched] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const stepIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const hasAutoSwitchedRef = useRef(false)
   const { ref, controls } = useScrollAnimation(0.2)
 
   // Auto-play video when scrolled into view
@@ -99,9 +99,9 @@ export function InteractiveDemoSection() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasAutoSwitched) {
+          if (entry.isIntersecting && !hasAutoSwitchedRef.current) {
             // Start auto-switching when section comes into view
-            setHasAutoSwitched(true)
+            hasAutoSwitchedRef.current = true
             setActiveStep(0) // Reset to first step
             
             // Clear any existing interval
@@ -120,7 +120,7 @@ export function InteractiveDemoSection() {
               stepIntervalRef.current = null
             }
             // Reset flag so it can auto-switch again when scrolled back into view
-            setHasAutoSwitched(false)
+            hasAutoSwitchedRef.current = false
             setActiveStep(0)
           }
         })
@@ -136,7 +136,7 @@ export function InteractiveDemoSection() {
         clearInterval(stepIntervalRef.current)
       }
     }
-  }, [hasAutoSwitched])
+  }, [])
   
   const handleStepClick = (index: number) => {
     setActiveStep(index)
@@ -144,7 +144,7 @@ export function InteractiveDemoSection() {
     if (stepIntervalRef.current) {
       clearInterval(stepIntervalRef.current)
       stepIntervalRef.current = null
-      setHasAutoSwitched(true) // Prevent auto-switching from restarting
+      hasAutoSwitchedRef.current = true // Prevent auto-switching from restarting
     }
   }
 
@@ -157,7 +157,7 @@ export function InteractiveDemoSection() {
         }
         sectionRef.current = node
       }}
-      className="relative py-16 md:py-20 bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]" 
+      className="relative pt-4 md:pt-6 pb-16 md:pb-20" 
       id="dooriq-action"
       initial="hidden"
       animate={controls}

@@ -99,25 +99,41 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
                   transition: { duration: 0.6, delay: 0.4, ease: "easeOut" }
                 }
               }}
-              className="max-w-md mx-auto mt-12 p-6 rounded-lg text-center"
+              className="w-full max-w-7xl mx-auto mt-16"
             >
-              <div className="inline-flex items-center justify-center p-2 rounded-full mb-5">
-                <Mail className="h-6 w-6" />
+              <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 backdrop-blur-sm p-8 md:p-12">
+                {/* Background glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-purple-500/5 opacity-50" />
+                
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+                  {/* Left side - Content */}
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="inline-flex items-center justify-center md:justify-start gap-3 mb-4">
+                      <div className="p-2 rounded-full bg-purple-500/20">
+                        <Mail className="h-5 w-5 text-purple-400" />
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-white">
+                        {contactInfo.title}
+                      </h3>
+                    </div>
+                    <p className="text-base md:text-lg text-slate-300 max-w-2xl">
+                      {contactInfo.description}
+                    </p>
+                  </div>
+                  
+                  {/* Right side - CTA Button */}
+                  <div className="flex-shrink-0">
+                    <motion.button
+                      onClick={contactInfo.onContact}
+                      className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white transition-all px-8 py-4 text-base md:text-lg font-semibold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 whitespace-nowrap"
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {contactInfo.buttonText}
+                    </motion.button>
+                  </div>
+                </div>
               </div>
-              <p className="text-xl font-semibold text-foreground mb-2">
-                {contactInfo.title}
-              </p>
-              <p className="text-base text-muted-foreground mb-6">
-                {contactInfo.description}
-              </p>
-              <motion.button
-                onClick={contactInfo.onContact}
-                className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-8 py-3 text-base font-semibold backdrop-blur-sm duration-300"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {contactInfo.buttonText}
-              </motion.button>
             </motion.div>
           ) : null}
         </div>
