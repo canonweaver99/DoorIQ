@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { FaqSection } from '@/components/ui/faq-section'
 import { TestimonialsColumn, testimonialsData } from '@/components/ui/testimonials-columns-1'
+import { CalendarModal } from '@/components/ui/calendar-modal'
 import { Target, Zap, TrendingUp, Users, CheckCircle2, BarChart3 } from 'lucide-react'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 import { vibrate } from '@/lib/utils'
@@ -69,6 +70,7 @@ function useCountUp(end: number, duration = 2000, startWhen = false) {
 
 export default function Home() {
   const router = useRouter()
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
 
   // Handle email verification tokens from hash fragments
   useEffect(() => {
@@ -149,6 +151,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+      {/* Calendar Modal */}
+      <CalendarModal 
+        isOpen={isCalendarModalOpen} 
+        onClose={() => setIsCalendarModalOpen(false)} 
+      />
+      
       {/* 1) New Hero Section */}
       <HeroSection
         title="Over 10,000+ Pitches Practiced"
@@ -158,8 +166,8 @@ export default function Home() {
           gradient: "AI-Powered Training",
         }}
         description="Practice with AI homeowners • Get instant feedback • Close more deals"
-        ctaText="Try Your First AI Roleplay Free"
-        ctaHref="/trainer/select-homeowner"
+        ctaText="Book a Demo"
+        onCtaClick={() => setIsCalendarModalOpen(true)}
         ctaSecondaryText="Watch Demo"
         ctaSecondaryHref="#dooriq-action"
         bottomImage={undefined}

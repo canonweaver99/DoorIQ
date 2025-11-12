@@ -1,344 +1,151 @@
 'use client'
 
-import { useState, useEffect, Suspense } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { PricingSection } from "@/components/ui/pricing"
-import { Loader2, CheckCircle, X, Crown } from "lucide-react"
-import confetti from "canvas-confetti"
-import { useSubscription } from "@/hooks/useSubscription"
-import { createClient } from "@/lib/supabase/client"
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Loader2 } from "lucide-react"
+import Cal, { getCalApi } from "@calcom/embed-react"
 
-// Stripe Price IDs - Get these from your Stripe Dashboard
-// For now, you can use the Stripe Payment Link directly or extract the price ID
-const STRIPE_PRICE_IDS = {
-  // Hard-wire user's test price ID so Checkout Session API is always used locally
-  individual_monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_MONTHLY || 'price_1SIxYr1WkNBozaYxGzx9YffP',
-  individual_yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_YEARLY || 'price_1SIyLY1WkNBozaYxld3E6aWS'
-}
-
-// Stripe Payment Link (LIVE MODE - Production)
-// Live payment link: https://buy.stripe.com/28E7sDeNc1QSdD7g8T2go00
-// Product ID: prod_TMF8fyztCmkcyN
-const PAYMENT_LINK = 'https://buy.stripe.com/28E7sDeNc1QSdD7g8T2go00'
+const customerRanges = [
+  'Under 1,000 customers',
+  '1,000-10,000 customers',
+  '10,000+ customers'
+]
 
 function PricingPageContent() {
-  const [loading, setLoading] = useState<string | null>(null)
-  const [showSuccessBanner, setShowSuccessBanner] = useState(false)
-  const searchParams = useSearchParams()
-  const subscription = useSubscription()
-  const router = useRouter()
-  const supabase = createClient()
-  // Mirror pricing toggle state from pricing component
-  const [isMonthly, setIsMonthlyState] = useState(true)
+  const [selectedRange, setSelectedRange] = useState<string | null>(null)
+  const [calLoaded, setCalLoaded] = useState(false)
 
+  // Initialize Cal.com embed when customer range is selected
   useEffect(() => {
-    const success = searchParams.get('success')
-    const sessionId = searchParams.get('session_id')
-    const checkoutIntent = searchParams.get('checkout')
-    
-    // If user just authenticated and has a pending checkout, automatically proceed
-    if (checkoutIntent && !success) {
-      const priceId = decodeURIComponent(checkoutIntent)
-      console.log('🛒 Resuming checkout after auth:', priceId)
-      
-      // Small delay to ensure auth state is fully loaded
+    if (selectedRange) {
+      setCalLoaded(false)
+      ;(async function () {
+        try {
+          const cal = await getCalApi({"namespace":"dooriq"});
+          cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
       setTimeout(() => {
-        handleCheckout(priceId, false)
-      }, 500)
-      
-      // Clean up URL params
-      const newUrl = new URL(window.location.href)
-      newUrl.searchParams.delete('checkout')
-      window.history.replaceState({}, '', newUrl.toString())
-    }
-    
-    // Sync subscription status after successful checkout
-    if (success === 'true' && sessionId) {
-      const credits = searchParams.get('credits')
-      
-      if (credits) {
-        // Handle credit purchase
-        console.log('🔄 Processing credit purchase:', credits)
-        fetch('/api/credits/apply', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, credits: parseInt(credits) })
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              console.log('✅ Credits applied successfully')
-              subscription.refetch?.()
-            } else {
-              console.error('❌ Failed to apply credits:', data.error)
-            }
-          })
-          .catch(error => {
-            console.error('❌ Error applying credits:', error)
-          })
-      } else {
-        // Handle subscription
-        console.log('🔄 Syncing subscription for session:', sessionId)
-        fetch('/api/stripe/sync-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              console.log('✅ Subscription synced successfully')
-              subscription.refetch?.()
-            } else {
-              console.error('❌ Failed to sync subscription:', data.error)
-            }
-          })
-          .catch(error => {
-            console.error('❌ Error syncing subscription:', error)
-          })
-      }
-    }
-    
-    if (success === 'true') {
-      setShowSuccessBanner(true)
-      
-      // Trigger confetti celebration!
-      const duration = 3000
-      const animationEnd = Date.now() + duration
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
-
-      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min
-
-      const interval = window.setInterval(() => {
-        const timeLeft = animationEnd - Date.now()
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval)
+            setCalLoaded(true)
+          }, 1000)
+        } catch (error) {
+          console.error('Error initializing Cal.com:', error)
+          setCalLoaded(true) // Show anyway if there's an error
         }
-
-        const particleCount = 50 * (timeLeft / duration)
-        
-        // Confetti from left
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-        })
-        
-        // Confetti from right
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-        })
-      }, 250)
-
-      // Auto-hide banner after 10 seconds
-      const timeout = setTimeout(() => {
-        setShowSuccessBanner(false)
-      }, 10000)
-
-      return () => {
-        clearInterval(interval)
-        clearTimeout(timeout)
-      }
+      })();
+    } else {
+      setCalLoaded(false)
     }
-  }, [searchParams])
+  }, [selectedRange])
 
-  const handleCheckout = async (priceId: string, usePaymentLink: boolean = false) => {
-    setLoading(priceId)
-    try {
-      // Ensure user is authenticated before starting checkout
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        // Store the intended purchase in URL params for seamless redirect after auth
-        const checkoutIntent = encodeURIComponent(priceId)
-        router.push(`/auth/login?next=/pricing&checkout=${checkoutIntent}`)
-        return
-      }
-
-      // If using payment link directly (for testing)
-      if (usePaymentLink && PAYMENT_LINK) {
-        window.location.href = PAYMENT_LINK
-        return
-      }
-
-      // Get Rewardful referral ID if available
-      const referralId = typeof window !== 'undefined' && (window as any).Rewardful?.referral
-        ? (window as any).Rewardful.referral
-        : null
-      
-      // Otherwise use the regular checkout session API
-      const response = await fetch('/api/stripe/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          priceId,
-          ...(referralId ? { referral: referralId } : {})
-        })
-      })
-
-      if (response.status === 401) {
-        // Store the intended purchase for seamless redirect after auth
-        const checkoutIntent = encodeURIComponent(priceId)
-        router.push(`/auth/login?next=/pricing&checkout=${checkoutIntent}`)
-        return
-      }
-
-      if (response.status === 503) {
-        alert('Stripe not configured. Set STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in .env.local, then restart dev server.')
-        return
-      }
-
-      const { url, error } = await response.json()
-      
-      if (error) {
-        alert(`Error: ${error}`)
-        return
-      }
-
-      if (url) {
-        window.location.href = url
-      }
-    } catch (error) {
-      console.error('Checkout error:', error)
-      alert('Failed to start checkout. Please try again.')
-    } finally {
-      setLoading(null)
-    }
+  const handleSelectRange = (range: string) => {
+    setSelectedRange(range)
   }
-
-  // Check if user has active subscription (including trial)
-  const hasActiveSubscription = subscription.hasActiveSubscription
-  const isCurrentPlan = (planName: string) => {
-    if (planName === "Free" && !hasActiveSubscription && !subscription.loading) {
-      return true
-    }
-    return false
-  }
-
-  const plans = [
-    {
-      name: "Free",
-      price: "0",
-      yearlyPrice: "0",
-      period: "month",
-      features: [
-        "Access to ALL AI training agents",
-        "5 free practice session credits",
-        "Full analytics for your sessions",
-        "Basic objection handling scenarios",
-        "Dashboard overview only",
-      ],
-      description: "Perfect for getting started",
-      buttonText: isCurrentPlan("Free") ? (
-        <span className="flex items-center gap-2">
-          <Crown className="w-4 h-4" />
-          Current Plan
-        </span>
-      ) : hasActiveSubscription ? "Switch to Free" : "Get Started Free",
-      href: isCurrentPlan("Free") ? "#" : (hasActiveSubscription ? "/billing" : "/auth/signup"),
-      onClick: isCurrentPlan("Free") ? () => {} : undefined,
-      isCurrentPlan: isCurrentPlan("Free"),
-    },
-    {
-      name: "Enterprise",
-      price: "Contact Sales",
-      yearlyPrice: "Contact Sales",
-      period: "",
-      features: [
-        "Unlimited AI training agents",
-        "Unlimited practice sessions",
-        "Team management dashboard",
-        "Real-time team analytics & leaderboards",
-        "Assign training to reps",
-        "Track team performance metrics",
-        "Manager coaching insights",
-        "Bulk report exports",
-        "Custom pricing based on team size",
-        "Dedicated account manager",
-      ],
-      description: "For sales teams and organizations",
-      buttonText: "Contact Sales",
-      href: "/contact-sales",
-      isPopular: true,
-    },
-  ]
 
   return (
-    <>
-      {/* Success Banner */}
-      {showSuccessBanner && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] max-w-lg w-full mx-4">
-          <div className="relative">
-            {/* Glow effect behind card */}
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/40 to-green-600/40 rounded-3xl blur-2xl" />
-            
-            {/* Main card */}
-            <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-green-900 text-white rounded-2xl shadow-[0_20px_70px_-10px_rgba(16,185,129,0.5)] border border-emerald-700/50 p-7 backdrop-blur-xl animate-in slide-in-from-top duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center py-12 px-4">
+      <div className="max-w-4xl w-full">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8 sm:mb-12"
+        >
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
+            Get Started with DoorIQ
+          </h1>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={selectedRange ? 'calendar' : 'question'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-lg sm:text-xl text-slate-300"
+            >
+              {selectedRange ? 'Schedule Your Demo' : 'How many active customers does your business have?'}
+            </motion.p>
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Form Content */}
+        <AnimatePresence mode="wait">
+          {!selectedRange ? (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8 lg:p-10"
+            >
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Select your customer range
+              </h2>
+              <p className="text-slate-400 mb-8">
+                Choose the option that best describes your business
+              </p>
+              <div className="space-y-3">
+                {customerRanges.map((range) => (
               <button
-                onClick={() => setShowSuccessBanner(false)}
-                className="absolute top-4 right-4 text-emerald-200 hover:text-white transition-colors rounded-full p-1 hover:bg-white/10"
+                    key={range}
+                    onClick={() => handleSelectRange(range)}
+                    className="w-full text-left px-6 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
               >
-                <X className="w-5 h-5" />
+                    <span className="text-lg font-medium text-white">
+                      {range}
+                    </span>
               </button>
-              
-              <div className="flex items-start gap-5">
-                <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                  <CheckCircle className="w-8 h-8 text-white" strokeWidth={2.5} />
+                ))}
                 </div>
-                
-                <div className="flex-1 pt-0.5">
-                  <h3 className="font-bold text-2xl mb-2 text-white">
-                    {searchParams.get('credits') ? 'Credits Purchased!' : 'Welcome to Premium!'}
-                  </h3>
-                  <p className="text-emerald-100 text-sm leading-relaxed mb-4">
-                    {searchParams.get('credits') ? (
-                      <>You've successfully purchased <span className="font-semibold text-white">{searchParams.get('credits')} credits</span>! Your credits have been added to your account.</>
-                    ) : (
-                      <>Your <span className="font-semibold text-white">subscription</span> is now active! You now have 50 practice call credits per month with access to all 12 AI training agents and premium features.</>
-                    )}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2.5">
-                    <a
-                      href="/trainer/select-homeowner"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-emerald-900 rounded-xl font-semibold text-sm hover:bg-emerald-50 transition-all shadow-lg hover:shadow-xl hover:scale-105"
-                    >
-                      Start Training →
-                    </a>
-                    <a
-                      href="/billing"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white rounded-xl font-medium text-sm hover:bg-white/20 transition-all border border-white/20 backdrop-blur-sm"
-                    >
-                      Manage Subscription
-                    </a>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="calendar"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8 overflow-hidden"
+            >
+              {/* Cal.com Embed */}
+              <div 
+                className="relative w-full overflow-hidden rounded-xl"
+                style={{ 
+                  minHeight: 'calc(100vh - 300px)',
+                  height: 'calc(100vh - 300px)',
+                  maxHeight: '800px'
+                }}
+              >
+                <Cal 
+                  namespace="dooriq"
+                  calLink="canon-weaver-aa0twn/dooriq"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    minHeight: "calc(100vh - 300px)",
+                    maxHeight: "800px",
+                    overflow: "auto",
+                    padding: "0"
+                  }}
+                  config={{"layout":"month_view"}}
+                />
+                {!calLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 backdrop-blur-sm z-20">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-10 h-10 animate-spin text-purple-400" />
+                      <p className="text-base font-medium text-white">
+                        Loading calendar...
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
           </div>
         </div>
-      )}
-
-      <PricingSection
-        plans={plans}
-        title="Simple, Transparent Pricing"
-        description="Choose the plan that fits your sales team's needs."
-        hideToggle={true}
-      />
-    </>
   )
 }
 
 export default function PricingPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    }>
       <PricingPageContent />
-    </Suspense>
   )
 }
