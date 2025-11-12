@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { messageEvents } from '@/lib/events/messageEvents'
 import { VoiceRecorder } from '@/components/ui/voice-recorder'
 import { FileUpload } from '@/components/ui/file-upload'
+import { getInitials, getAvatarColorClass } from '@/lib/utils'
 
 interface Message {
   id: string
@@ -94,6 +95,7 @@ export default function MessagingCenter() {
         const mapped: Conversation[] = (convData || []).map((c: any) => ({
           id: c.contact_id,
           name: c.contact_name || 'User',
+          avatar: c.avatar_url || null,
           online: c.is_online,
           lastMessage: c.last_message,
           lastMessageTime: c.last_message_time,
@@ -235,7 +237,7 @@ export default function MessagingCenter() {
       }
       
       // Update the messages
-      const messageIds = unreadMessages.map(m => m.id)
+      const messageIds = unreadMessages.map((m: { id: string }) => m.id)
       const { data: updatedMessages, error } = await supabase
         .from('messages')
         .update({ is_read: true, read_at: new Date().toISOString() })
@@ -419,7 +421,7 @@ export default function MessagingCenter() {
       if (repsError) throw repsError
 
       // Send message to each rep
-      const messagePromises = reps.map(rep => 
+      const messagePromises = reps.map((rep: { id: string; full_name: string }) => 
         supabase.from('messages').insert({
           sender_id: currentUser.id,
           recipient_id: rep.id,
@@ -489,8 +491,8 @@ export default function MessagingCenter() {
                     {conv.avatar ? (
                       <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-xl object-cover" />
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-semibold">
-                        {conv.name.charAt(0).toUpperCase()}
+                      <div className={`w-12 h-12 rounded-xl ${getAvatarColorClass(conv.name)} flex items-center justify-center text-white font-semibold text-sm`}>
+                        {getInitials(conv.name)}
                       </div>
                     )}
                     {conv.online && (
@@ -542,8 +544,8 @@ export default function MessagingCenter() {
                     {selectedConversation.avatar ? (
                       <img src={selectedConversation.avatar} alt={selectedConversation.name} className="w-10 h-10 rounded-xl object-cover" />
                     ) : (
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-semibold">
-                        {selectedConversation.name.charAt(0).toUpperCase()}
+                      <div className={`w-10 h-10 rounded-xl ${getAvatarColorClass(selectedConversation.name)} flex items-center justify-center text-white font-semibold text-sm`}>
+                        {getInitials(selectedConversation.name)}
                       </div>
                     )}
                     {selectedConversation.online && (
