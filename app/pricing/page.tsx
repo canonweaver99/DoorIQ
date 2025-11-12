@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Loader2, ArrowLeft, ChevronRight } from "lucide-react"
+import { Loader2, ArrowLeft, ChevronRight, Calculator, DollarSign, Calendar } from "lucide-react"
 import Cal, { getCalApi } from "@calcom/embed-react"
 
 const salesRepRanges = [
@@ -29,14 +29,43 @@ function PricingPageContent() {
   const [currentStep, setCurrentStep] = useState(0)
   const [calLoaded, setCalLoaded] = useState(false)
   const [customIndustry, setCustomIndustry] = useState('')
+  const [numReps, setNumReps] = useState<number>(10)
   const [formData, setFormData] = useState<FormData>({
     salesRepRange: '',
     industry: ''
   })
 
-  // Initialize Cal.com embed when reaching step 2 (calendar step)
+  // Calculate pricing based on number of reps
+  const calculatePricing = (reps: number) => {
+    if (reps < 10) return { monthly: 0, annual: 0 }
+    
+    let monthly = 0
+    
+    // Reps 1-50: $50 each
+    const tier1Reps = Math.min(reps, 50)
+    monthly += tier1Reps * 50
+    
+    // Reps 51-100: $40 each
+    if (reps > 50) {
+      const tier2Reps = Math.min(reps - 50, 50)
+      monthly += tier2Reps * 40
+    }
+    
+    // Reps 101+: $35 each
+    if (reps > 100) {
+      const tier3Reps = reps - 100
+      monthly += tier3Reps * 35
+    }
+    
+    // Annual with 30% discount
+    const annual = monthly * 12 * 0.7
+    
+    return { monthly, annual }
+  }
+
+  // Initialize Cal.com embed when reaching step 3 (calendar step)
   useEffect(() => {
-    if (currentStep === 2) {
+    if (currentStep === 3) {
       setCalLoaded(false)
       ;(async function () {
         try {
@@ -75,6 +104,10 @@ function PricingPageContent() {
       setFormData(prev => ({ ...prev, industry: customIndustry.trim() }))
       setTimeout(() => setCurrentStep(2), 300)
     }
+  }
+
+  const handleContinueToCalendar = () => {
+    setTimeout(() => setCurrentStep(3), 300)
   }
 
   const handleBack = () => {
@@ -269,9 +302,168 @@ function PricingPageContent() {
             </motion.div>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 2 && (() => {
+            const pricing = calculatePricing(numReps)
+            return (
+              <motion.div
+                key="step-2"
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 lg:p-12 shadow-2xl shadow-purple-500/5"
+              >
+                {/* Glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-25 animate-pulse" />
+                
+                <div className="relative z-10">
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    onClick={handleBack}
+                    className="flex items-center gap-2 text-slate-300 hover:text-white mb-8 transition-colors group"
+                  >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    <span className="text-sm">Back</span>
+                  </motion.button>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-center mb-8"
+                  >
+                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white">
+                      Calculate Your Pricing
+                    </h2>
+                    <p className="text-lg sm:text-xl text-slate-300">
+                      See how much DoorIQ costs for your team
+                    </p>
+                  </motion.div>
+
+                  {/* Reps Input */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="mb-8"
+                  >
+                    <label className="block text-sm font-medium text-white mb-3">
+                      Number of Sales Reps
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="10"
+                        value={numReps}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 10
+                          setNumReps(Math.max(10, value))
+                        }}
+                        className="w-full px-6 py-4 rounded-xl bg-white/10 border border-white/20 text-white text-2xl font-semibold focus:outline-none focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/20 transition-all"
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                        Minimum: 10
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Pricing Display */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
+                  >
+                    {/* Monthly Pricing */}
+                    <div className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:border-purple-400/50 transition-all">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 rounded-lg bg-purple-500/20">
+                          <DollarSign className="w-5 h-5 text-purple-300" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-slate-300">Monthly</h3>
+                          <p className="text-xs text-slate-400">Per month</p>
+                        </div>
+                      </div>
+                      <div className="text-4xl font-bold text-white mb-2">
+                        ${pricing.monthly.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </div>
+                      <p className="text-sm text-slate-400">
+                        ${(pricing.monthly / numReps).toFixed(0)} per rep/month
+                      </p>
+                    </div>
+
+                    {/* Annual Pricing */}
+                    <div className="relative bg-gradient-to-br from-green-500/20 via-green-500/10 to-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-2xl p-6 hover:border-green-400/50 transition-all">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 rounded-lg bg-green-500/20">
+                          <Calendar className="w-5 h-5 text-green-300" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-slate-300">Annual</h3>
+                          <p className="text-xs text-green-300 font-semibold">30% discount</p>
+                        </div>
+                      </div>
+                      <div className="text-4xl font-bold text-white mb-2">
+                        ${pricing.annual.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </div>
+                      <p className="text-sm text-slate-400">
+                        ${(pricing.annual / 12 / numReps).toFixed(0)} per rep/month
+                      </p>
+                      <div className="mt-2 text-xs text-green-300 font-semibold">
+                        Save ${((pricing.monthly * 12) - pricing.annual).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Pricing Breakdown */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="mb-8 p-6 rounded-xl bg-white/5 border border-white/10"
+                  >
+                    <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                      <Calculator className="w-4 h-4" />
+                      Pricing Breakdown
+                    </h4>
+                    <div className="space-y-2 text-sm text-slate-300">
+                      <div className="flex justify-between">
+                        <span>Reps 1-50:</span>
+                        <span className="text-white font-medium">$50/rep/month</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Reps 51-100:</span>
+                        <span className="text-white font-medium">$40/rep/month</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Reps 101+:</span>
+                        <span className="text-white font-medium">$35/rep/month</span>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Continue Button */}
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    onClick={handleContinueToCalendar}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg transition-all shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
+                    <span>Continue to Schedule</span>
+                    <ChevronRight className="w-5 h-5" />
+                  </motion.button>
+                </div>
+              </motion.div>
+            )
+          })()}
+
+          {currentStep === 3 && (
             <motion.div
-              key="step-2"
+              key="step-3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -282,7 +474,7 @@ function PricingPageContent() {
                 className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm">← Back to industry selection</span>
+                <span className="text-sm">← Back to pricing calculator</span>
               </button>
               {/* Cal.com Embed */}
               <div 
