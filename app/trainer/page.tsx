@@ -85,7 +85,7 @@ function TrainerPageContent() {
   const [showPaywall, setShowPaywall] = useState(false)
   const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
   const [showOutOfCredits, setShowOutOfCredits] = useState(false)
-  const [videoMode, setVideoMode] = useState<'loop' | 'closing'>('loop') // Track video state for agents with videos
+  const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
   const [waitingForLoopStart, setWaitingForLoopStart] = useState(false) // Track if we're waiting for loop to reach beginning
   const loopVideoStartTimeRef = useRef<number>(0) // Track when loop video started playing
   const loopVideoDurationRef = useRef<number>(0) // Track loop video duration
@@ -96,7 +96,7 @@ function TrainerPageContent() {
   }
   
   // Helper function to get video paths for an agent
-  const getAgentVideoPaths = (agentName: string | null | undefined): { loop: string; closing: string } | null => {
+  const getAgentVideoPaths = (agentName: string | null | undefined): { loop: string; closing: string; opening?: string } | null => {
     if (agentName === 'Austin') {
       return {
         loop: '/austin-loop.mp4',
@@ -124,7 +124,8 @@ function TrainerPageContent() {
     if (agentName === 'Just Treated Jerry') {
       return {
         loop: '/just-treated-jerry-loop.mp4',
-        closing: '/just-treated-jerry-closing-door.mp4'
+        closing: '/just-treated-jerry-closing-door.mp4',
+        opening: '/just-treated-jerry-opening-door.mp4'
       }
     }
     if (agentName === 'Already Got It Alan') {
@@ -165,7 +166,24 @@ function TrainerPageContent() {
     if (agentVideoRef.current && sessionActive) {
       const video = agentVideoRef.current
       
-      if (videoMode === 'closing') {
+      if (videoMode === 'opening') {
+        // Play opening door animation, then transition to loop
+        video.play().catch((err) => {
+          console.warn('Failed to play opening animation:', err)
+        })
+        
+        const handleOpeningEnded = () => {
+          console.log('🎬 Opening animation finished, transitioning to loop')
+          setVideoMode('loop')
+          video.removeEventListener('ended', handleOpeningEnded)
+        }
+        
+        video.addEventListener('ended', handleOpeningEnded)
+        
+        return () => {
+          video.removeEventListener('ended', handleOpeningEnded)
+        }
+      } else if (videoMode === 'closing') {
         // Play closing door animation (used when ending session)
         video.play().catch((err) => {
           console.warn('Failed to play door animation:', err)
@@ -366,9 +384,14 @@ function TrainerPageContent() {
       
       setSessionId(newId)
       setSessionActive(true)
-      // Start with loop video (door opening animation will be added in the future)
+      // Start with opening animation if available (Jerry), otherwise start with loop
       if (agentHasVideos(selectedAgent?.name)) {
-        setVideoMode('loop')
+        const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+        if (videoPaths?.opening) {
+          setVideoMode('opening')
+        } else {
+          setVideoMode('loop')
+        }
       } else {
         setVideoMode('loop')
       }
@@ -1095,7 +1118,9 @@ function TrainerPageContent() {
                         const videoPaths = getAgentVideoPaths(selectedAgent?.name)
                         if (!videoPaths) return null
                         
-                        const videoSrc = videoMode === 'loop' 
+                        const videoSrc = videoMode === 'opening' && videoPaths.opening
+                          ? videoPaths.opening
+                          : videoMode === 'loop'
                           ? videoPaths.loop
                           : videoPaths.closing
                         
