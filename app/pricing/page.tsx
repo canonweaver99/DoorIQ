@@ -2,14 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { Loader2, ArrowLeft, ChevronRight } from "lucide-react"
 import Cal, { getCalApi } from "@calcom/embed-react"
-
-const customerRanges = [
-  'Under 1,000 customers',
-  '1,000-10,000 customers',
-  '10,000+ customers'
-]
 
 const salesRepRanges = [
   'Under 10 reps',
@@ -27,7 +21,6 @@ const industries = [
 ]
 
 interface FormData {
-  customerRange: string
   salesRepRange: string
   industry: string
 }
@@ -36,20 +29,19 @@ function PricingPageContent() {
   const [currentStep, setCurrentStep] = useState(0)
   const [calLoaded, setCalLoaded] = useState(false)
   const [formData, setFormData] = useState<FormData>({
-    customerRange: '',
     salesRepRange: '',
     industry: ''
   })
 
-  // Initialize Cal.com embed when reaching step 3 (calendar step)
+  // Initialize Cal.com embed when reaching step 2 (calendar step)
   useEffect(() => {
-    if (currentStep === 3) {
+    if (currentStep === 2) {
       setCalLoaded(false)
       ;(async function () {
         try {
           const cal = await getCalApi({"namespace":"dooriq"});
           cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
-          setTimeout(() => {
+      setTimeout(() => {
             setCalLoaded(true)
           }, 1000)
         } catch (error) {
@@ -62,19 +54,14 @@ function PricingPageContent() {
     }
   }, [currentStep])
 
-  const handleSelectCustomerRange = (range: string) => {
-    setFormData(prev => ({ ...prev, customerRange: range }))
-    setTimeout(() => setCurrentStep(1), 300)
-  }
-
   const handleSelectSalesRepRange = (range: string) => {
     setFormData(prev => ({ ...prev, salesRepRange: range }))
-    setTimeout(() => setCurrentStep(2), 300)
+    setTimeout(() => setCurrentStep(1), 300)
   }
 
   const handleSelectIndustry = (industry: string) => {
     setFormData(prev => ({ ...prev, industry }))
-    setTimeout(() => setCurrentStep(3), 300)
+    setTimeout(() => setCurrentStep(2), 300)
   }
 
   const handleBack = () => {
@@ -103,10 +90,9 @@ function PricingPageContent() {
               exit={{ opacity: 0 }}
               className="text-lg sm:text-xl text-slate-300"
             >
-              {currentStep === 0 && 'How many active customers does your business have?'}
-              {currentStep === 1 && 'How many sales reps does your business have?'}
-              {currentStep === 2 && 'What industry are you in?'}
-              {currentStep === 3 && 'Schedule Your Demo'}
+              {currentStep === 0 && 'How many sales reps does your business have?'}
+              {currentStep === 1 && 'What industry are you in?'}
+              {currentStep === 2 && 'Schedule Your Demo'}
             </motion.p>
           </AnimatePresence>
         </motion.div>
@@ -122,43 +108,6 @@ function PricingPageContent() {
               className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8 lg:p-10"
             >
               <h2 className="text-2xl font-bold text-white mb-2">
-                Select your customer range
-              </h2>
-              <p className="text-slate-400 mb-8">
-                Choose the option that best describes your business
-              </p>
-              <div className="space-y-3">
-                {customerRanges.map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => handleSelectCustomerRange(range)}
-                    className="w-full text-left px-6 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    <span className="text-lg font-medium text-white">
-                      {range}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 1 && (
-            <motion.div
-              key="step-1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8 lg:p-10"
-            >
-              <button
-                onClick={handleBack}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm">← Back</span>
-              </button>
-              <h2 className="text-2xl font-bold text-white mb-2">
                 Select your sales rep range
               </h2>
               <p className="text-slate-400 mb-8">
@@ -169,20 +118,21 @@ function PricingPageContent() {
                   <button
                     key={range}
                     onClick={() => handleSelectSalesRepRange(range)}
-                    className="w-full text-left px-6 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                    className="group w-full flex items-center justify-between px-6 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
                   >
                     <span className="text-lg font-medium text-white">
                       {range}
                     </span>
+                    <ChevronRight className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
                   </button>
                 ))}
               </div>
             </motion.div>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 1 && (
             <motion.div
-              key="step-2"
+              key="step-1"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -206,25 +156,26 @@ function PricingPageContent() {
                   <button
                     key={industry.name}
                     onClick={() => handleSelectIndustry(industry.name)}
-                    className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all hover:scale-105 active:scale-95 ${
+                    className={`group flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all hover:scale-105 active:scale-95 relative ${
                       formData.industry === industry.name
                         ? 'border-white bg-white/10'
                         : 'border-white/20 bg-white/5 hover:border-white/30'
                     }`}
                   >
                     <span className="text-4xl mb-2">{industry.icon}</span>
-                    <span className="text-base font-medium text-white">
+                    <span className="text-base font-medium text-white mb-1">
                       {industry.name}
                     </span>
+                    <ChevronRight className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 absolute bottom-3" />
                   </button>
                 ))}
-              </div>
+                </div>
             </motion.div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <motion.div
-              key="step-3"
+              key="step-2"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
