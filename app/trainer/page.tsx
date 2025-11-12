@@ -86,6 +86,9 @@ function TrainerPageContent() {
   const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
   const [showOutOfCredits, setShowOutOfCredits] = useState(false)
   const [videoMode, setVideoMode] = useState<'loop' | 'closing'>('loop') // Track video state for agents with videos
+  const [waitingForLoopStart, setWaitingForLoopStart] = useState(false) // Track if we're waiting for loop to reach beginning
+  const loopVideoStartTimeRef = useRef<number>(0) // Track when loop video started playing
+  const loopVideoDurationRef = useRef<number>(0) // Track loop video duration
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
@@ -177,6 +180,17 @@ function TrainerPageContent() {
         video.addEventListener('ended', handleEnded)
         return () => video.removeEventListener('ended', handleEnded)
       } else if (videoMode === 'loop') {
+        // Track when loop video starts and its duration
+        video.addEventListener('loadedmetadata', () => {
+          loopVideoDurationRef.current = video.duration
+          console.log('🎬 Loop video duration:', video.duration)
+        })
+        
+        video.addEventListener('play', () => {
+          loopVideoStartTimeRef.current = Date.now() - (video.currentTime * 1000)
+          console.log('🎬 Loop video started, tracking playback position')
+        })
+        
         // Ensure loop video plays
         video.play().catch((err) => {
           console.warn('Failed to play loop video:', err)
@@ -500,6 +514,121 @@ function TrainerPageContent() {
   // Track agent mode for speaking detection
   const agentModeRef = useRef<'speaking' | 'listening' | 'idle' | null>(null)
   
+  // Shared function to handle door closing sequence and end session
+  const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
+    console.log('🚪 Starting door closing sequence:', reason)
+    
+    // Check if this agent has video animations - if so, wait for loop to reach beginning, then play closing door video
+    const hasVideos = agentHasVideos(selectedAgent?.name)
+    
+    if (hasVideos) {
+      const agentName = selectedAgent?.name || 'Unknown'
+      console.log(`🎬 Agent has video animations, preparing door closing sequence for ${agentName}...`)
+      
+      // Wait for loop video to reach its beginning before switching to closing animation
+      if (videoMode === 'loop' && agentVideoRef.current) {
+        const video = agentVideoRef.current
+        const duration = loopVideoDurationRef.current || video.duration || 0
+        
+        if (duration > 0) {
+          // Calculate how long until the loop reaches the beginning
+          const currentTime = video.currentTime
+          const timeUntilLoopStart = duration - currentTime
+          
+          console.log(`🎬 Loop video position: ${currentTime.toFixed(2)}s / ${duration.toFixed(2)}s`)
+          console.log(`🎬 Waiting ${timeUntilLoopStart.toFixed(2)}s for loop to reach beginning...`)
+          
+          setWaitingForLoopStart(true)
+          
+          // Wait for the loop to complete and reach the beginning
+          await new Promise<void>((resolve) => {
+            const checkLoopPosition = () => {
+              const video = agentVideoRef.current
+              if (!video) {
+                resolve()
+                return
+              }
+              
+              // Check if we're at or near the beginning of the loop (within 0.1 seconds)
+              if (video.currentTime < 0.1) {
+                console.log('🎬 Loop has reached the beginning!')
+                resolve()
+              } else {
+                // Check again in 50ms
+                setTimeout(checkLoopPosition, 50)
+              }
+            }
+            
+            // Start checking after calculated time (with a small buffer)
+            setTimeout(checkLoopPosition, Math.max(0, (timeUntilLoopStart - 0.2) * 1000))
+            
+            // Fallback timeout (max wait 5 seconds)
+            setTimeout(() => {
+              console.log('⏰ Loop wait timeout, proceeding with door close')
+              resolve()
+            }, 5000)
+          })
+          
+          setWaitingForLoopStart(false)
+        }
+      }
+      
+      console.log(`🎬 Switching to closing door video for ${agentName}...`)
+      
+      // Switch to closing door video - React will re-render with new src
+      setVideoMode('closing')
+      
+      // Wait for React to update and video element to be ready
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      // Wait for closing door video to finish before ending session
+      await new Promise<void>((resolve) => {
+        const video = agentVideoRef.current
+        if (!video) {
+          console.warn('⚠️ Video ref not available, proceeding anyway')
+          resolve()
+          return
+        }
+        
+        // Ensure video is playing
+        video.play().catch((err) => {
+          console.warn('Video play failed:', err)
+        })
+        
+        const handleVideoEnd = () => {
+          console.log(`🎬 Closing door video finished for ${agentName}`)
+          video.removeEventListener('ended', handleVideoEnd)
+          resolve()
+        }
+        
+        // Check if video already ended (edge case)
+        if (video.ended) {
+          console.log('🎬 Video already ended')
+          resolve()
+          return
+        }
+        
+        video.addEventListener('ended', handleVideoEnd)
+        
+        // Fallback timeout in case video doesn't fire ended event
+        setTimeout(() => {
+          console.log('⏰ Closing door video timeout, proceeding anyway')
+          video.removeEventListener('ended', handleVideoEnd)
+          resolve()
+        }, 10000) // 10 second timeout
+      })
+    }
+    
+    // Set session inactive before ending
+    setSessionActive(false)
+    
+    // End the session after door closing sequence completes
+    console.log('🔚 Calling endSession after door closing sequence...')
+    endSession(reason).catch((error) => {
+      console.error('❌ Error in endSession from handleDoorClosingSequence:', error)
+    })
+  }, [selectedAgent?.name, videoMode, endSession])
+  
   // Handle agent end call event with improved reliability
   useEffect(() => {
     let silenceTimer: NodeJS.Timeout | null = null
@@ -605,67 +734,10 @@ function TrainerPageContent() {
       // Additional buffer delay to ensure audio completes
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Check if this agent has video animations - if so, play closing door video
-      const hasVideos = agentHasVideos(selectedAgent?.name)
-      
-      if (hasVideos) {
-        const agentName = selectedAgent?.name || 'Unknown'
-        console.log(`🎬 Switching to closing door video for ${agentName}...`)
-        
-        // Switch to closing door video - React will re-render with new src
-        setVideoMode('closing')
-        
-        // Wait for React to update and video element to be ready
-        await new Promise(resolve => setTimeout(resolve, 200))
-        
-        // Wait for closing door video to finish before ending session
-        await new Promise<void>((resolve) => {
-          const video = agentVideoRef.current
-          if (!video) {
-            console.warn('⚠️ Video ref not available, proceeding anyway')
-            resolve()
-            return
-          }
-          
-          // Ensure video is playing
-          video.play().catch((err) => {
-            console.warn('Video play failed:', err)
-          })
-          
-          const handleVideoEnd = () => {
-            console.log(`🎬 Closing door video finished for ${agentName}`)
-            video.removeEventListener('ended', handleVideoEnd)
-            resolve()
-          }
-          
-          // Check if video already ended (edge case)
-          if (video.ended) {
-            console.log('🎬 Video already ended')
-            resolve()
-            return
-          }
-          
-          video.addEventListener('ended', handleVideoEnd)
-          
-          // Fallback timeout in case video doesn't fire ended event
-          setTimeout(() => {
-            console.log('⏰ Closing door video timeout, proceeding anyway')
-            video.removeEventListener('ended', handleVideoEnd)
-            resolve()
-          }, 10000) // 10 second timeout
-        })
-      }
-      
-      // Set session inactive before ending
-      setSessionActive(false)
-      
-      // End the session after agent finishes speaking (and video if applicable)
-      console.log('🔚 Calling endSession after agent finished speaking...')
-      const reason = e?.detail?.reason || 'Unknown'
+      // Use shared door closing sequence function
+      const reason = e?.detail?.reason || 'Agent ended conversation'
       console.log('📊 END CALL TRIGGER DETAIL:', reason)
-      endSession(reason).catch((error) => {
-        console.error('❌ Error in endSession from handleAgentEndCall:', error)
-      })
+      await handleDoorClosingSequence(reason)
     }
     
     // Track agent and user activity - increased timeout to prevent premature endings
@@ -729,9 +801,56 @@ function TrainerPageContent() {
       }
     }
     
-    // Listen for user activity too (they might be speaking)
+    // Listen for user activity and check for goodbye phrases
     const handleUserActivity = (e: any) => {
       handleAgentActivity()
+      
+      // Check if user said goodbye - trigger door closing sequence
+      if (e?.detail && typeof e.detail === 'string' && sessionActive && sessionId) {
+        const text = e.detail.toLowerCase().trim()
+        
+        // User goodbye phrases - clear ending phrases
+        const userGoodbyePhrases = [
+          'goodbye', 'bye', 'bye bye', 'see you later', 'talk to you later',
+          'thanks', 'thank you', 'i have to go', 'i need to go', 'i gotta go',
+          'that\'s all', 'that\'s all for now', 'i\'m done', 'we\'re done',
+          'have a good day', 'have a nice day', 'take care', 'see ya'
+        ]
+        
+        // Check if the message contains or ends with a goodbye phrase
+        const containsGoodbye = userGoodbyePhrases.some(phrase => {
+          return text.includes(phrase) || 
+                 text.endsWith(phrase) || 
+                 text.trim().endsWith(phrase + '.') || 
+                 text.trim().endsWith(phrase + '!')
+        })
+        
+        if (containsGoodbye) {
+          console.log('👋 User said goodbye, starting door closing sequence...')
+          console.log('📊 END CALL TRIGGER: User goodbye phrase detected')
+          
+          // Prevent duplicate processing
+          if (endCallProcessingRef.current) {
+            console.log('⚠️ Already processing end_call, ignoring user goodbye')
+            return
+          }
+          
+          // Set processing flag immediately
+          endCallProcessingRef.current = true
+          
+          // Small delay to allow user to finish speaking, then trigger door closing
+          setTimeout(() => {
+            if (sessionActive && sessionId) {
+              handleDoorClosingSequence('User said goodbye').catch((error) => {
+                console.error('❌ Error in handleDoorClosingSequence from user goodbye:', error)
+                endCallProcessingRef.current = false // Reset on error
+              })
+            } else {
+              endCallProcessingRef.current = false // Reset if session ended
+            }
+          }, 2000) // 2 second delay to ensure user finished speaking
+        }
+      }
     }
     
     // Listen for connection status changes (disconnect signals from ElevenLabs)
@@ -763,46 +882,70 @@ function TrainerPageContent() {
         return // Too soon, don't check
       }
       
-      // Check if transcript ends with agent (homeowner) saying goodbye/ending phrases
+      // Check if transcript ends with agent (homeowner) or user saying goodbye/ending phrases
       if (transcript.length > 0) {
-        // Find the last few messages from the agent
-        const lastAgentMessages = [...transcript]
-          .reverse()
-          .filter((msg: TranscriptEntry) => msg.speaker === 'homeowner')
-          .slice(0, 3) // Check last 3 agent messages
+        // Check last message (could be from agent or user)
+        const lastMessage = transcript[transcript.length - 1]
+        const lastText = (lastMessage?.text || '').toLowerCase().trim()
+        const isUser = lastMessage?.speaker === 'user'
         
-        if (lastAgentMessages.length > 0) {
-          const lastText = (lastAgentMessages[0].text || '').toLowerCase().trim()
-          // Only very clear ending phrases
-          const clearEndingPhrases = [
-            'goodbye', 'bye bye', 'see you later', 'talk to you later',
-            'closing the door', 'close the door now', 'thanks for stopping by',
-            "we're done here", "that's all for today", 'have a good day', 'have a nice day'
-          ]
-          
-          // Check if the LAST message ends with a clear goodbye
-          const endsWithGoodbye = clearEndingPhrases.some(phrase => {
-            return lastText.endsWith(phrase) || 
-                   lastText.endsWith(phrase + '.') || 
-                   lastText.endsWith(phrase + '!')
-          })
-          
-          if (endsWithGoodbye) {
-            goodbyeCheckAttempts++
-            // Require multiple confirmations (check 3 times = 6 seconds)
-            if (goodbyeCheckAttempts >= 3) {
-              console.log('🔚 Agent clearly ended conversation (transcript check), auto-ending session...')
-              console.log('📊 END CALL TRIGGER: Goodbye phrase confirmed in transcript (3 checks)')
-              setTimeout(() => {
-                if (sessionActive && sessionId) {
-                  handleAgentEndCall({ detail: { reason: 'Agent ended conversation (transcript confirmation)' } })
-                }
-              }, 3000)
-              goodbyeCheckAttempts = 0 // Reset
+        // Agent ending phrases
+        const agentEndingPhrases = [
+          'goodbye', 'bye bye', 'see you later', 'talk to you later',
+          'closing the door', 'close the door now', 'thanks for stopping by',
+          "we're done here", "that's all for today", 'have a good day', 'have a nice day'
+        ]
+        
+        // User ending phrases
+        const userEndingPhrases = [
+          'goodbye', 'bye', 'bye bye', 'see you later', 'talk to you later',
+          'thanks', 'thank you', 'i have to go', 'i need to go', 'i gotta go',
+          'that\'s all', 'that\'s all for now', 'i\'m done', 'we\'re done',
+          'have a good day', 'have a nice day', 'take care', 'see ya'
+        ]
+        
+        const endingPhrases = isUser ? userEndingPhrases : agentEndingPhrases
+        
+        // Check if the LAST message contains or ends with a clear goodbye
+        const containsGoodbye = endingPhrases.some(phrase => {
+          return lastText.includes(phrase) || 
+                 lastText.endsWith(phrase) || 
+                 lastText.endsWith(phrase + '.') || 
+                 lastText.endsWith(phrase + '!')
+        })
+        
+        if (containsGoodbye) {
+          goodbyeCheckAttempts++
+          // Require multiple confirmations (check 3 times = 6 seconds)
+          if (goodbyeCheckAttempts >= 3) {
+            const speaker = isUser ? 'User' : 'Agent'
+            console.log(`🔚 ${speaker} clearly ended conversation (transcript check), auto-ending session...`)
+            console.log('📊 END CALL TRIGGER: Goodbye phrase confirmed in transcript (3 checks)')
+            
+            // Prevent duplicate processing
+            if (endCallProcessingRef.current) {
+              goodbyeCheckAttempts = 0
+              return
             }
-          } else {
-            goodbyeCheckAttempts = 0 // Reset if no goodbye detected
+            
+            endCallProcessingRef.current = true
+            
+            setTimeout(() => {
+              if (sessionActive && sessionId) {
+                if (isUser) {
+                  handleDoorClosingSequence(`${speaker} ended conversation (transcript confirmation)`).catch((error) => {
+                    console.error('❌ Error in handleDoorClosingSequence from transcript check:', error)
+                    endCallProcessingRef.current = false
+                  })
+                } else {
+                  handleAgentEndCall({ detail: { reason: `${speaker} ended conversation (transcript confirmation)` } })
+                }
+              }
+            }, 3000)
+            goodbyeCheckAttempts = 0 // Reset
           }
+        } else {
+          goodbyeCheckAttempts = 0 // Reset if no goodbye detected
         }
       }
     }
@@ -869,7 +1012,7 @@ function TrainerPageContent() {
       window.removeEventListener('agent:user', debugListener as EventListener)
       window.removeEventListener('connection:status', debugListener as EventListener)
     }
-  }, [sessionActive, sessionId, endSession, transcript])
+  }, [sessionActive, sessionId, endSession, transcript, selectedAgent?.name, videoMode, handleDoorClosingSequence])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -1030,6 +1173,20 @@ function TrainerPageContent() {
                           <span className="sm:hidden">Knock</span>
                           <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
                         </button>
+                      </div>
+                    )}
+                    
+                    {/* Waiting for loop to complete overlay */}
+                    {waitingForLoopStart && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-10">
+                        <div className="text-white text-center pointer-events-none">
+                          <div className="animate-pulse mb-2">
+                            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <p className="text-sm">Waiting for animation to complete...</p>
+                        </div>
                       </div>
                     )}
                   </div>
