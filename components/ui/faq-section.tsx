@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import { motion, AnimatePresence, useAnimation } from "framer-motion"
 import { ChevronDown, Mail } from "lucide-react"
 import { useInView } from "framer-motion"
@@ -77,7 +76,7 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
             ) : null}
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-stretch w-full">
+          <div className="w-full max-w-4xl mx-auto">
             <motion.div className="w-full space-y-3">
               {items.map((item, index) => (
                 <FaqItem
@@ -87,27 +86,6 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
                   index={index}
                 />
               ))}
-            </motion.div>
-
-            <motion.div 
-              variants={{
-                hidden: { opacity: 0, x: 50 },
-                visible: { 
-                  opacity: 1, 
-                  x: 0,
-                  transition: { duration: 0.8, ease: "easeOut" }
-                }
-              }}
-              className="w-full flex items-end justify-end lg:sticky lg:top-24"
-            >
-              <div className="relative w-full max-w-md aspect-square rounded-2xl overflow-hidden border border-white/10">
-                <Image
-                  src="/website image 5.png"
-                  alt="Support representative"
-                  fill
-                  className="object-cover"
-                />
-              </div>
             </motion.div>
           </div>
 

@@ -13,6 +13,20 @@ export default function VideoRecordingPreview({ stream, isRecording }: VideoReco
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isMinimized, setIsMinimized] = useState(false)
   const [hasVideo, setHasVideo] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (typeof window !== 'undefined' && window.innerWidth < 768)
+      setIsMobile(isMobileDevice)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -46,8 +60,8 @@ export default function VideoRecordingPreview({ stream, isRecording }: VideoReco
             autoPlay
             muted
             playsInline
-            className="absolute inset-0 w-full h-full object-cover mirror"
-            style={{ transform: 'scaleX(-1)' }} // Mirror the video
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ transform: isMobile ? 'scaleX(1)' : 'scaleX(-1)' }} // Mirror on desktop only, mobile cameras already mirror
           />
 
           {/* Recording Indicator */}

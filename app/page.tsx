@@ -166,9 +166,6 @@ export default function Home() {
           regular: "Master Door to Door Sales with ",
           gradient: "AI-Powered Training",
         }}
-        description="Practice with AI homeowners • Get instant feedback • Close more deals"
-        ctaText="Try Your First AI Roleplay Free"
-        ctaHref="/trainer/select-homeowner"
         ctaSecondaryText="Book a Demo"
         onCtaSecondaryClick={() => setIsCalendarModalOpen(true)}
         bottomImage={undefined}
@@ -184,8 +181,8 @@ export default function Home() {
       {/* 2) Interactive Demo - See DoorIQ in Action */}
       <InteractiveDemoSection />
 
-      {/* 3) Meet Our Homeowners */}
-      <MeetHomeownersSection />
+      {/* 3) Meet Our Homeowners - ARCHIVED */}
+      {/* <MeetHomeownersSection /> */}
 
       {/* 4) Dashboard Section */}
       <DashboardSection />
@@ -196,8 +193,8 @@ export default function Home() {
       {/* 6) Social Proof */}
       <SocialProofSection />
 
-      {/* 7) Results / ROI */}
-      <ResultsSection />
+      {/* 7) Results / ROI - ARCHIVED */}
+      {/* <ResultsSection /> */}
 
       {/* 8) FAQ */}
       <FaqSection
@@ -220,43 +217,31 @@ function ProblemSolutionSection() {
   
   const problems = [
     {
-      icon: Target,
-      title: "Inconsistent Training",
-      description: "Managers don't have time to role-play with every rep, so training quality varies wildly across your team.",
-      color: "red"
+      title: "New Reps Burn Out in Week 1",
+      description: "Without real practice, they're learning on actual customers"
     },
     {
-      icon: Zap,
-      title: "Slow Ramp Time",
-      description: "New reps take months to get comfortable handling objections, costing you deals and momentum.",
-      color: "orange"
+      title: "No Way to Practice Without Knocking",
+      description: "Role-play doesn't cut it, but you can't waste leads"
     },
     {
-      icon: TrendingUp,
-      title: "No Performance Data",
-      description: "You have no objective way to measure who's improving, who's struggling, or what specific skills need work.",
-      color: "yellow"
+      title: "You're Guessing What Works",
+      description: "No data on objection handling, talk time, or close rates"
     }
   ]
 
   const solutions = [
     {
-      icon: Users,
-      title: "24/7 Unlimited Practice",
-      description: "Every rep gets unlimited, on-demand practice with AI homeowners who behave like real prospects.",
-      color: "blue"
+      title: "Unlimited Realistic Practice",
+      description: "Face 11+ AI homeowner personas from skeptical to eager"
     },
     {
-      icon: CheckCircle2,
-      title: "Instant Skill Development",
-      description: "Immediate, objective feedback on tone, pacing, objection handling, and rapport. Reps improve faster.",
-      color: "purple"
+      title: "Reps Ramp 3x Faster",
+      description: "Master objections and build confidence before their first real knock"
     },
     {
-      icon: BarChart3,
-      title: "Performance Metrics",
-      description: "Track every rep's progress with detailed analytics. Know exactly who needs help and where.",
-      color: "green"
+      title: "Know Exactly What's Working",
+      description: "Track objection handling, talk-time, and close techniques with AI-powered grading"
     }
   ]
 
@@ -272,19 +257,33 @@ function ProblemSolutionSection() {
         <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12" variants={fadeInUp}>
           <div className="text-center lg:text-left">
             <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-500 to-red-600 dark:from-red-400 dark:via-red-300 dark:to-red-400">Challenges</span> Every Sales Manager Face
+              The Reality of Door-to-Door Sales Training
             </h2>
             <div className="mt-6 space-y-4">
               {problems.map((problem, index) => (
                 <motion.div 
                   key={index}
                   className="flex items-start gap-3"
-                  variants={staggerItem}
+                  initial="hidden"
+                  animate={controls}
+                  variants={{
+                    hidden: { opacity: 0, x: -30 },
+                    visible: { 
+                      opacity: 1, 
+                      x: 0,
+                      transition: { delay: index * 1.0, duration: 0.6 }
+                    }
+                  }}
                 >
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 mt-3" />
-                  <p className="text-2xl lg:text-3xl font-semibold text-white">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-500">{problem.title}</span>
-                  </p>
+                  <div>
+                    <p className="text-2xl lg:text-3xl font-semibold text-white mb-1">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-500">{problem.title}</span>
+                    </p>
+                    <p className="text-lg lg:text-xl text-slate-300">
+                      {problem.description}
+                    </p>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -295,15 +294,15 @@ function ProblemSolutionSection() {
           >
             <Image
               src="/website image 1.png"
-              alt="Door-to-door sales challenge"
+              alt="Frustrated sales rep reviewing notes before a door knock"
               fill
               className="object-cover"
             />
           </motion.div>
         </motion.div>
 
-        {/* Problems - Cards */}
-        <motion.div 
+        {/* Problems - Cards - ARCHIVED */}
+        {/* <motion.div 
           className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20"
           variants={staggerContainer}
         >
@@ -323,7 +322,7 @@ function ProblemSolutionSection() {
               <p className="text-lg lg:text-xl text-white leading-relaxed">{problem.description}</p>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div> */}
 
         {/* Divider */}
         <motion.div 
@@ -353,32 +352,41 @@ function ProblemSolutionSection() {
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
             <h3 className="text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span>:
+              Practice on AI Homeowners Before Real Doors
             </h3>
             <div className="mt-6 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
-                <p className="text-2xl lg:text-3xl font-semibold text-white">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Scales Training</span> Across Your Team
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
-                <p className="text-2xl lg:text-3xl font-semibold text-white">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Accelerates</span> Rep Ramp Time
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
-                <p className="text-2xl lg:text-3xl font-semibold text-white">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Delivers</span> Objective Performance Insights
-                </p>
-              </div>
+              {solutions.map((solution, index) => (
+                <motion.div 
+                  key={index}
+                  className="flex items-start gap-3"
+                  initial="hidden"
+                  animate={controls}
+                  variants={{
+                    hidden: { opacity: 0, x: 30 },
+                    visible: { 
+                      opacity: 1, 
+                      x: 0,
+                      transition: { delay: index * 1.0, duration: 0.6 }
+                    }
+                  }}
+                >
+                  <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
+                  <div>
+                    <p className="text-2xl lg:text-3xl font-semibold text-white mb-1">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{solution.title}</span>
+                    </p>
+                    <p className="text-lg lg:text-xl text-slate-300">
+                      {solution.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </motion.div>
 
-        <motion.div 
+        {/* Solutions - Cards - ARCHIVED */}
+        {/* <motion.div 
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
           variants={staggerContainer}
         >
@@ -403,7 +411,7 @@ function ProblemSolutionSection() {
               </GlowCard>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div> */}
 
         <motion.div 
           className="text-center mt-16 mb-16"
@@ -452,7 +460,8 @@ function DashboardSection() {
           </p>
         </motion.div>
 
-        <motion.div
+        {/* Feature Cards - ARCHIVED */}
+        {/* <motion.div
           id="features"
           variants={fadeInUp}
           className="mb-8 sm:mb-12"
@@ -510,7 +519,7 @@ function DashboardSection() {
               </motion.div>
             ))}
           </div>
-        </motion.div>
+        </motion.div> */}
 
         <motion.div
           variants={fadeInScale}
@@ -771,6 +780,6 @@ const faqItems = [
   {
     question: 'Can DoorIQ plug into our existing tools?',
     answer:
-      'DoorIQ integrates with the systems sales leaders already use so insights and recordings stay centralized.',
+      'Currently, DoorIQ operates as a standalone platform and does not integrate with external CRM or sales tools. All your practice sessions, analytics, and performance data are stored securely within DoorIQ\'s platform. You can export reports and data manually when needed.',
   },
 ]

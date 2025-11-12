@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { ChevronRight, ChevronDown, TrendingUp } from "lucide-react"
@@ -5,6 +7,13 @@ import { DashboardHeroPreview } from "@/components/ui/dashboard-hero-preview"
 // import { LiveSessionPreview } from "@/components/ui/live-session-preview" // Archived - removed sample session from hero
 import { motion } from "framer-motion"
 import { useScrollAnimation, fadeInUp, fadeInLeft, fadeInRight, fadeInScale } from "@/hooks/useScrollAnimation"
+import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas"
+import { getAgentImageStyle } from "@/lib/agents/imageStyles"
+import { createClient } from "@/lib/supabase/client"
+import { COLOR_VARIANTS } from "@/components/ui/scrolling-agent-carousel"
 
 
 interface HeroSectionProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -65,6 +74,212 @@ const RetroGrid = ({
   )
 }
 
+// Inline Agent Carousel Component for Hero
+const InlineAgentCarousel = React.memo(() => {
+  const router = useRouter()
+  const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'laptop' | 'desktop'>('laptop')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth
+      if (width < 640) {
+        setScreenSize('mobile')
+      } else if (width < 1024) {
+        setScreenSize('tablet')
+      } else if (width < 1440) {
+        setScreenSize('laptop')
+      } else {
+        setScreenSize('desktop')
+      }
+    }
+    if (typeof window !== 'undefined') {
+      checkScreenSize()
+      window.addEventListener('resize', checkScreenSize)
+      return () => window.removeEventListener('resize', checkScreenSize)
+    }
+  }, [])
+
+  const agents = React.useMemo(() => {
+    return ALLOWED_AGENT_ORDER.slice(0, 12).map((agentName) => {
+      const metadata = PERSONA_METADATA[agentName]
+      return {
+        name: agentName.split(' ').slice(-1)[0],
+        fullName: agentName,
+        src: metadata?.bubble?.image || '/agents/default.png',
+        color: (metadata?.bubble?.color || 'primary') as keyof typeof COLOR_VARIANTS
+      }
+    })
+  }, [])
+
+  const handleAgentClick = async (agentName: AllowedAgentName) => {
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const metadata = PERSONA_METADATA[agentName]
+      const elevenAgentId = metadata?.card?.elevenAgentId
+
+      if (!elevenAgentId) {
+        router.push(`/trainer/select-homeowner?agent=${encodeURIComponent(agentName)}`)
+        return
+      }
+
+      if (session) {
+        router.push(`/trainer?agent=${encodeURIComponent(elevenAgentId)}`)
+      } else {
+        router.push(`/auth/login?next=${encodeURIComponent(`/trainer?agent=${encodeURIComponent(elevenAgentId)}`)}`)
+      }
+    } catch (error) {
+      console.error('Error checking auth:', error)
+      router.push('/auth/login')
+    }
+  }
+
+  if (!agents.length) {
+    return null
+  }
+
+  // Optimized item widths for different screen sizes
+  const getItemWidth = () => {
+    switch (screenSize) {
+      case 'mobile': return 80 + 16 // 96px
+      case 'tablet': return 112 + 20 // 132px
+      case 'laptop': return 144 + 28 // 172px (optimized for laptop - smaller)
+      case 'desktop': return 160 + 32 // 192px
+      default: return 144 + 28 // 172px default for laptop
+    }
+  }
+
+  const getAnimationDuration = () => {
+    switch (screenSize) {
+      case 'mobile': return 12.5
+      case 'tablet': return 35
+      case 'laptop': return 50 // Smooth scrolling for laptop
+      case 'desktop': return 65
+      default: return 50
+    }
+  }
+
+  const itemWidth = getItemWidth()
+  const animationDuration = getAnimationDuration()
+
+  return (
+    <div className="relative w-full overflow-hidden my-2 sm:my-3 lg:my-4 py-2 lg:py-3" ref={containerRef}>
+      <div className="relative w-full">
+        <motion.div 
+          className="flex items-center justify-center"
+          animate={{ 
+            x: [0, `-${(agents.length * itemWidth)}px`]
+          }}
+          transition={{
+            x: {
+              repeat: Infinity,
+              repeatType: "loop",
+              duration: animationDuration,
+              ease: "linear"
+            }
+          }}
+        >
+          {/* Quadruple the agents for seamless infinite loop */}
+          {[...agents, ...agents, ...agents, ...agents].map((agent, index) => {
+            const variantStyles = COLOR_VARIANTS[agent.color]
+            return (
+              <div
+                key={`${agent.fullName}-${index}`}
+                onClick={() => handleAgentClick(agent.fullName as AllowedAgentName)}
+                className="relative flex-shrink-0 cursor-pointer group transition-transform hover:scale-110 active:scale-95 mx-2 sm:mx-3 md:mx-4 lg:mx-5 xl:mx-6"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleAgentClick(agent.fullName as AllowedAgentName)
+                  }
+                }}
+              >
+                <div className="relative h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36 xl:h-40 xl:w-40 2xl:h-44 2xl:w-44">
+                  {/* Concentric circles */}
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className={cn(
+                        "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
+                        variantStyles.border[i],
+                        variantStyles.gradient
+                      )}
+                      animate={{
+                        rotate: 360,
+                        scale: [1, 1.05, 1],
+                        opacity: [0.7, 0.9, 0.7],
+                      }}
+                      transition={{
+                        rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+                        scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                        opacity: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                      }}
+                    >
+                      <div
+                        className={cn(
+                          "absolute inset-0 rounded-full mix-blend-screen",
+                          `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace("from-", "")}/20%,transparent_70%)]`
+                        )}
+                      />
+                    </motion.div>
+                  ))}
+
+                  {/* Profile Image in Center */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                      {(() => {
+                        const imageStyle = getAgentImageStyle(agent.fullName)
+                        const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                        let translateY = '0'
+                        const verticalNum = parseFloat(vertical)
+                        if (verticalNum !== 50) {
+                          const translatePercent = ((verticalNum - 50) / 150) * 100
+                          translateY = `${translatePercent}%`
+                        }
+                        const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                        const combinedTransform = translateY !== '0' 
+                          ? `scale(${scaleValue}) translateY(${translateY})`
+                          : imageStyle.transform || `scale(${scaleValue})`
+                        const finalStyle = {
+                          objectFit: 'cover' as const,
+                          objectPosition: `${horizontal} 50%`,
+                          transform: combinedTransform,
+                        }
+                        const imageSrc = agent.src.includes(' ') || agent.src.includes('&')
+                          ? agent.src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                          : agent.src
+                        return (
+                          <Image
+                            src={imageSrc}
+                            alt={agent.name}
+                            fill
+                            style={finalStyle}
+                            sizes="(max-width: 640px) 80px, (max-width: 768px) 112px, (max-width: 1024px) 128px, (max-width: 1440px) 144px, 160px"
+                            quality={95}
+                            priority={index < 6}
+                            unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
+                            onError={(e) => {
+                              console.error('❌ Hero carousel image failed to load:', agent.src, 'Encoded:', imageSrc)
+                              e.stopPropagation()
+                            }}
+                          />
+                        )
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </motion.div>
+      </div>
+    </div>
+  )
+})
+
 const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
   (
     {
@@ -75,9 +290,9 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         regular: "Designing your projects faster with ",
         gradient: "the largest figma UI kit.",
       },
-      description = "Sed ut perspiciatis unde omnis iste natus voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae.",
-      ctaText = "Browse courses",
-      ctaHref = "#",
+      description,
+      ctaText,
+      ctaHref,
       onCtaClick,
       ctaSecondaryText,
       ctaSecondaryHref,
@@ -93,14 +308,14 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         <div className="absolute top-0 z-[0] h-screen w-screen bg-purple-950/10 dark:bg-purple-950/10 bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]" />
         
         {/* Hero Section - Full Viewport Height */}
-        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center pt-0">
+        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center pt-0 pb-8 lg:pb-12">
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20 xl:px-24 2xl:px-32">
             {/* Centered Copy Layout */}
-            <div className="flex items-center justify-center pt-0 xl:pt-2 -mt-[95px]">
+            <div className="flex items-center justify-center pt-0 lg:pt-0 -mt-[40px] lg:-mt-[50px]">
               {/* Centered Copy */}
               <motion.div 
-                className="space-y-6 sm:space-y-8 max-w-5xl text-center flex flex-col items-center justify-center" 
+                className="space-y-3 sm:space-y-4 lg:space-y-4 max-w-5xl text-center flex flex-col items-center justify-center" 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
@@ -119,7 +334,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   </h1>
                 </motion.a>
                 <motion.h2 
-                  className="text-5xl sm:text-6xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+                  className="text-4xl sm:text-5xl md:text-6xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
@@ -129,55 +344,63 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     {subtitle.gradient}
                   </span>
                 </motion.h2>
-                {/* CTAs - Prominent and Large */}
-                <motion.div 
-                  className="flex items-center justify-center gap-5 sm:gap-6 flex-wrap pt-4 sm:pt-6"
+                {/* Agent Carousel */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.8 }}
+                >
+                  <InlineAgentCarousel />
+                </motion.div>
+                {/* Instructional Text - Below Carousel */}
+                <motion.p 
+                  className="text-white text-sm sm:text-base lg:text-lg mt-2 lg:mt-3"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.6 }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
                 >
-                  {/* Primary CTA */}
-                  <motion.span 
-                    className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
-                    whileHover={{ y: -3 }}
-                    transition={{ duration: 0.2 }}
+                  Click any agent above to start an immediate training session
+                </motion.p>
+                {/* Industry Cards - Temporarily Archived */}
+                {/* <motion.div 
+                  className="flex flex-wrap justify-center gap-2 sm:gap-3 w-full mt-3 lg:mt-4"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8, duration: 0.8 }}
+                >
+                  {[
+                    { name: "Solar", icon: "☀️" },
+                    { name: "Pest Control", icon: "🐛" },
+                    { name: "Roofing", icon: "🏠" },
+                    { name: "Security", icon: "🔒" },
+                    { name: "Internet", icon: "📡" },
+                    { name: "Windows", icon: "🪟" }
+                  ].map((industry, index) => (
+                    <motion.button
+                      key={industry.name}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.9 + index * 0.05, duration: 0.4 }}
+                      className="group relative flex flex-col items-center justify-center p-2 sm:p-3 lg:p-3 rounded-lg border-2 border-white/20 bg-white/5 hover:border-purple-400/50 hover:bg-white/10 transition-all hover:scale-105 active:scale-95 overflow-hidden min-w-[70px] sm:min-w-[80px] lg:min-w-[85px]"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-blue-500/0 group-hover:from-purple-500/20 group-hover:to-blue-500/20 transition-all duration-300 rounded-2xl" />
+                      <span className="text-2xl sm:text-2xl lg:text-3xl mb-1 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                        {industry.icon}
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-semibold text-white relative z-10 text-center">
+                        {industry.name}
+                      </span>
+                    </motion.button>
+                  ))}
+                </motion.div> */}
+                {/* Book a Demo Button - At Bottom */}
+                {ctaSecondaryText && (
+                  <motion.div 
+                    className="flex items-center justify-center pt-3 sm:pt-4 lg:pt-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.0, duration: 0.6 }}
                   >
-                    <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-                    <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
-                      {onCtaClick ? (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-                              try {
-                                navigator.vibrate(10)
-                              } catch {}
-                            }
-                            onCtaClick()
-                          }}
-                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/20 via-purple-400/30 to-transparent dark:from-zinc-300/5 dark:via-purple-400/20 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/30 hover:via-purple-400/40 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/30 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
-                        >
-                          {ctaText}
-                        </button>
-                      ) : (
-                        <a
-                          href={ctaHref}
-                          onClick={() => {
-                            if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-                              try {
-                                navigator.vibrate(10)
-                              } catch {}
-                            }
-                          }}
-                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/20 via-purple-400/30 to-transparent dark:from-zinc-300/5 dark:via-purple-400/20 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/30 hover:via-purple-400/40 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/30 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
-                        >
-                          {ctaText}
-                        </a>
-                      )}
-                    </div>
-                  </motion.span>
-                  {/* Secondary CTA */}
-                  {ctaSecondaryText && (
                     <motion.span 
                       className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
                       whileHover={{ y: -3 }}
@@ -222,53 +445,8 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                         )}
                       </div>
                     </motion.span>
-                  )}
-                </motion.div>
-                <motion.p 
-                  className="text-white text-xl sm:text-2xl lg:text-3xl xl:text-3xl 2xl:text-4xl max-w-7xl lg:whitespace-nowrap"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.6 }}
-                >
-                  {description}
-                </motion.p>
-                {/* Industry Cards - Matching Pricing Page Style */}
-                <motion.div 
-                  className="flex flex-wrap justify-center gap-4 w-full"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8, duration: 0.8 }}
-                >
-                  {[
-                    { name: "Solar", icon: "☀️" },
-                    { name: "Pest Control", icon: "🐛" },
-                    { name: "Roofing", icon: "🏠" },
-                    { name: "Security", icon: "🔒" },
-                    { name: "Internet", icon: "📡" },
-                    { name: "Windows", icon: "🪟" }
-                  ].map((industry, index) => (
-                    <motion.button
-                      key={industry.name}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.9 + index * 0.05, duration: 0.4 }}
-                      className="group relative flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-white/20 bg-white/5 hover:border-purple-400/50 hover:bg-white/10 transition-all hover:scale-105 active:scale-95 overflow-hidden min-w-[100px]"
-                    >
-                      {/* Hover glow effect */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-blue-500/0 group-hover:from-purple-500/20 group-hover:to-blue-500/20 transition-all duration-300 rounded-2xl" />
-                      
-                      {/* Industry icon */}
-                      <span className="text-4xl mb-2 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
-                        {industry.icon}
-                      </span>
-                      
-                      {/* Industry name */}
-                      <span className="text-sm font-semibold text-white relative z-10 text-center">
-                        {industry.name}
-                      </span>
-                    </motion.button>
-                  ))}
-                </motion.div>
+                  </motion.div>
+                )}
               </motion.div>
             </div>
           </div>

@@ -87,6 +87,35 @@ export function InteractiveDemoSection() {
       }
     }
   }, [])
+
+  // Auto-switch steps based on video time
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    const handleTimeUpdate = () => {
+      const currentTime = video.currentTime
+      
+      // Switch to step 2 at 19 seconds
+      if (currentTime >= 19 && currentTime < 33 && activeStep !== 1) {
+        setActiveStep(1)
+      }
+      // Switch to step 3 at 33 seconds
+      else if (currentTime >= 33 && activeStep !== 2) {
+        setActiveStep(2)
+      }
+      // Reset to step 1 if video loops back before 19 seconds
+      else if (currentTime < 19 && activeStep !== 0) {
+        setActiveStep(0)
+      }
+    }
+
+    video.addEventListener('timeupdate', handleTimeUpdate)
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate)
+    }
+  }, [activeStep])
   
   const handleStepClick = (index: number) => {
     setActiveStep(index)
@@ -95,7 +124,7 @@ export function InteractiveDemoSection() {
   return (
     <motion.section 
       ref={ref}
-      className="relative py-16 md:py-20" 
+      className="relative py-16 md:py-20 bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]" 
       id="dooriq-action"
       initial="hidden"
       animate={controls}
@@ -163,21 +192,37 @@ export function InteractiveDemoSection() {
               </motion.div>
             </motion.div>
 
-            {/* Social Proof */}
+            {/* Industry Cards */}
             <motion.div 
-              className="mt-6 flex items-center justify-center gap-8 text-sm text-slate-400"
+              className="flex flex-wrap justify-center gap-2 sm:gap-3 w-full mt-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 }}
+              transition={{ delay: 1, duration: 0.8 }}
             >
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span>No downloads required</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span>Works on any device</span>
-              </div>
+              {[
+                { name: "Solar", icon: "☀️" },
+                { name: "Pest Control", icon: "🐛" },
+                { name: "Roofing", icon: "🏠" },
+                { name: "Security", icon: "🔒" },
+                { name: "Internet", icon: "📡" },
+                { name: "Windows", icon: "🪟" }
+              ].map((industry, index) => (
+                <motion.button
+                  key={industry.name}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.1 + index * 0.05, duration: 0.4 }}
+                  className="group relative flex flex-col items-center justify-center p-2 sm:p-3 lg:p-3 rounded-lg border-2 border-white/20 bg-white/5 hover:border-purple-400/50 hover:bg-white/10 transition-all hover:scale-105 active:scale-95 overflow-hidden min-w-[70px] sm:min-w-[80px] lg:min-w-[85px]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-blue-500/0 group-hover:from-purple-500/20 group-hover:to-blue-500/20 transition-all duration-300 rounded-2xl" />
+                  <span className="text-2xl sm:text-2xl lg:text-3xl mb-1 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                    {industry.icon}
+                  </span>
+                  <span className="text-[10px] sm:text-xs font-semibold text-white relative z-10 text-center">
+                    {industry.name}
+                  </span>
+                </motion.button>
+              ))}
             </motion.div>
           </motion.div>
 
