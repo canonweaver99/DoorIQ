@@ -41,8 +41,11 @@ const demoSteps: DemoStep[] = [
 export function InteractiveDemoSection() {
   const [activeStep, setActiveStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [hasAutoSwitched, setHasAutoSwitched] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+  const stepIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const { ref, controls } = useScrollAnimation(0.2)
 
   // Auto-play video when scrolled into view
@@ -88,42 +91,72 @@ export function InteractiveDemoSection() {
     }
   }, [])
 
-  // Auto-switch steps based on video time
+  // Auto-switch steps every 2 seconds when section first comes into view
   useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
+    const section = sectionRef.current
+    if (!section) return
 
-    const handleTimeUpdate = () => {
-      const currentTime = video.currentTime
-      
-      // Switch to step 2 at 19 seconds
-      if (currentTime >= 19 && currentTime < 33 && activeStep !== 1) {
-        setActiveStep(1)
-      }
-      // Switch to step 3 at 33 seconds
-      else if (currentTime >= 33 && activeStep !== 2) {
-        setActiveStep(2)
-      }
-      // Reset to step 1 if video loops back before 19 seconds
-      else if (currentTime < 19 && activeStep !== 0) {
-        setActiveStep(0)
-      }
-    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasAutoSwitched) {
+            // Start auto-switching when section comes into view
+            setHasAutoSwitched(true)
+            setActiveStep(0) // Reset to first step
+            
+            // Clear any existing interval
+            if (stepIntervalRef.current) {
+              clearInterval(stepIntervalRef.current)
+            }
+            
+            // Switch steps every 2 seconds using functional state updates
+            stepIntervalRef.current = setInterval(() => {
+              setActiveStep((prevStep) => (prevStep + 1) % demoSteps.length)
+            }, 2000)
+          } else if (!entry.isIntersecting) {
+            // Stop auto-switching when section goes out of view
+            if (stepIntervalRef.current) {
+              clearInterval(stepIntervalRef.current)
+              stepIntervalRef.current = null
+            }
+            // Reset flag so it can auto-switch again when scrolled back into view
+            setHasAutoSwitched(false)
+            setActiveStep(0)
+          }
+        })
+      },
+      { threshold: 0.2, rootMargin: '0px' }
+    )
 
-    video.addEventListener('timeupdate', handleTimeUpdate)
+    observer.observe(section)
 
     return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate)
+      observer.disconnect()
+      if (stepIntervalRef.current) {
+        clearInterval(stepIntervalRef.current)
+      }
     }
-  }, [activeStep])
+  }, [hasAutoSwitched])
   
   const handleStepClick = (index: number) => {
     setActiveStep(index)
+    // Stop auto-switching when user manually clicks a step
+    if (stepIntervalRef.current) {
+      clearInterval(stepIntervalRef.current)
+      stepIntervalRef.current = null
+      setHasAutoSwitched(true) // Prevent auto-switching from restarting
+    }
   }
 
   return (
     <motion.section 
-      ref={ref}
+      ref={(node) => {
+        // Combine refs for both framer-motion and intersection observer
+        if (ref) {
+          ref.current = node
+        }
+        sectionRef.current = node
+      }}
       className="relative py-16 md:py-20 bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]" 
       id="dooriq-action"
       initial="hidden"
@@ -279,7 +312,7 @@ export function InteractiveDemoSection() {
                     }`} />}
                   </div>
                   <div className="flex-1">
-                    <div className={`text-xs text-slate-500 mb-1 transition-all duration-500 ${activeStep === index ? 'opacity-100' : 'opacity-70'}`}>Step {step.id}</div>
+                    <div className={`text-base font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'opacity-100' : 'opacity-80'}`}>Step {step.id}</div>
                     <h3 className={`font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'text-lg' : 'text-base'}`}>{step.title}</h3>
                     <p className={`text-base transition-all duration-300 overflow-hidden ${activeStep === index ? 'max-h-40 opacity-100 mt-2 text-white' : 'max-h-0 opacity-0 text-slate-300'}`}>{step.description}</p>
                   </div>
