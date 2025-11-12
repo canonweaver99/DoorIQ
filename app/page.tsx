@@ -166,10 +166,10 @@ export default function Home() {
           gradient: "AI-Powered Training",
         }}
         description="Practice with AI homeowners • Get instant feedback • Close more deals"
-        ctaText="Book a Demo"
-        onCtaClick={() => setIsCalendarModalOpen(true)}
-        ctaSecondaryText="Watch Demo"
-        ctaSecondaryHref="#dooriq-action"
+        ctaText="Try Your First AI Roleplay Free"
+        ctaHref="/trainer/select-homeowner"
+        ctaSecondaryText="Book a Demo"
+        onCtaSecondaryClick={() => setIsCalendarModalOpen(true)}
         bottomImage={undefined}
         gridOptions={{
           angle: 65,
