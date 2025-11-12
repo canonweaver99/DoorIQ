@@ -86,7 +86,6 @@ function TrainerPageContent() {
   const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
   const [showOutOfCredits, setShowOutOfCredits] = useState(false)
   const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
-  const [waitingForLoopStart, setWaitingForLoopStart] = useState(false) // Track if we're waiting for loop to reach beginning
   const loopVideoStartTimeRef = useRef<number>(0) // Track when loop video started playing
   const loopVideoDurationRef = useRef<number>(0) // Track loop video duration
   
@@ -555,8 +554,6 @@ function TrainerPageContent() {
           console.log(`🎬 Loop video position: ${currentTime.toFixed(2)}s / ${duration.toFixed(2)}s`)
           console.log(`🎬 Waiting ${timeUntilLoopStart.toFixed(2)}s for loop to reach beginning...`)
           
-          setWaitingForLoopStart(true)
-          
           // Wait for the loop to complete and reach the beginning
           await new Promise<void>((resolve) => {
             const checkLoopPosition = () => {
@@ -585,8 +582,6 @@ function TrainerPageContent() {
               resolve()
             }, 5000)
           })
-          
-          setWaitingForLoopStart(false)
         }
       }
       
@@ -1086,21 +1081,21 @@ function TrainerPageContent() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           
           {/* Top Section: Split View - Agent Left, Webcam Right - Stack on mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20" style={{ 
-            minHeight: '50%',
-            height: 'auto'
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20 flex-shrink-0" style={{ 
+            height: '50vh',
+            maxHeight: '50vh'
           }}>
             
             {/* Left: Agent */}
-            <div className="relative border-r-0 md:border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent" style={{ 
-              minHeight: '400px',
-              height: '50vh'
+            <div className="relative border-r-0 md:border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent overflow-hidden" style={{ 
+              height: '100%',
+              maxHeight: '100%'
             }}>
               {/* Full Agent Image - matching hero preview */}
-              <div className="absolute inset-0">
+              <div className="absolute inset-0 overflow-hidden">
                 {loading ? (
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
                     <div className="text-white text-center pointer-events-none">
@@ -1109,7 +1104,7 @@ function TrainerPageContent() {
                     </div>
                   </div>
                 ) : (
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full overflow-hidden">
                     {(() => {
                       const shouldUseVideo = agentHasVideos(selectedAgent?.name) && sessionActive
                       
@@ -1195,28 +1190,16 @@ function TrainerPageContent() {
                       </div>
                     )}
                     
-                    {/* Waiting for loop to complete overlay */}
-                    {waitingForLoopStart && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-10">
-                        <div className="text-white text-center pointer-events-none">
-                          <div className="animate-pulse mb-2">
-                            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                          <p className="text-sm">Waiting for animation to complete...</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
             </div>
             
             {/* Right: Webcam */}
-            <div className="relative bg-gradient-to-br from-green-950/20 to-transparent border-t md:border-t-0 border-purple-500/20" style={{ 
-              minHeight: '400px',
-              height: '50vh'
+            <div className="relative bg-gradient-to-br from-green-950/20 to-transparent border-t md:border-t-0 border-purple-500/20 overflow-hidden" style={{ 
+              height: '100%',
+              maxHeight: '100%',
+              minHeight: 0
             }}>
               <WebcamRecorder 
                 sessionActive={sessionActive} 
@@ -1226,12 +1209,12 @@ function TrainerPageContent() {
           </div>
 
           {/* Bottom Section: Live Transcript */}
-          <div className="flex flex-col relative flex-1 px-3 sm:px-6 py-2 sm:py-3">
+          <div className="flex flex-col relative flex-1 min-h-0 px-3 sm:px-6 py-2 sm:py-3 overflow-hidden z-0">
             
             {/* Bottom fade gradient overlay */}
             <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
             
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 sm:space-y-3">
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 sm:space-y-3 relative z-0">
               {transcript.length === 0 ? (
                 <div className="text-center text-slate-500 py-8 sm:py-12 px-2">
                   {sessionActive ? (
@@ -1250,16 +1233,16 @@ function TrainerPageContent() {
                         className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}
                       >
                         <div
-                          className={`max-w-[85%] sm:max-w-[75%] px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl ${
+                          className={`max-w-[85%] sm:max-w-[75%] px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg sm:rounded-xl ${
                             isUser
                               ? 'bg-indigo-600 text-white'
                               : 'bg-slate-700/80 text-slate-100'
                           }`}
                         >
-                          <div className="text-[9px] sm:text-[10px] font-semibold mb-1 opacity-60 uppercase tracking-wide">
+                          <div className="text-xs sm:text-sm font-semibold mb-1.5 opacity-70 uppercase tracking-wide">
                             {isUser ? 'You' : selectedAgent?.name || 'Agent'}
                           </div>
-                          <div className="text-xs sm:text-sm leading-relaxed break-words">{entry.text}</div>
+                          <div className="text-sm sm:text-base leading-relaxed break-words">{entry.text}</div>
                         </div>
                       </div>
                     )
