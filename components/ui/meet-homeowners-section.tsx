@@ -5,15 +5,18 @@ import { motion } from 'framer-motion'
 import { Users, Target, TrendingUp, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from '@/components/trainer/personas'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
+import { createClient } from '@/lib/supabase/client'
 
 export function MeetHomeownersSection() {
   const { ref, controls } = useScrollAnimation(0.2)
+  const router = useRouter()
   const [isMobile, setIsMobile] = useState(true) // Default to true for faster initial render
   
   useEffect(() => {
@@ -27,6 +30,36 @@ export function MeetHomeownersSection() {
       return () => window.removeEventListener('resize', checkMobile)
     }
   }, [])
+
+  const handleAgentClick = async (agentName: AllowedAgentName) => {
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      // Get the eleven_agent_id from persona metadata
+      const metadata = PERSONA_METADATA[agentName]
+      const elevenAgentId = metadata?.card?.elevenAgentId
+      
+      if (!elevenAgentId) {
+        console.error('No eleven_agent_id found for agent:', agentName)
+        // Fallback to select-homeowner page
+        router.push(`/trainer/select-homeowner?agent=${encodeURIComponent(agentName)}`)
+        return
+      }
+      
+      if (session) {
+        // User is authenticated - navigate directly to trainer page with agent selected
+        router.push(`/trainer?agent=${encodeURIComponent(elevenAgentId)}`)
+      } else {
+        // User is not authenticated - redirect to login with return path
+        router.push(`/auth/login?next=${encodeURIComponent(`/trainer?agent=${encodeURIComponent(elevenAgentId)}`)}`)
+      }
+    } catch (error) {
+      console.error('Error checking auth:', error)
+      // Fallback to login page
+      router.push('/auth/login')
+    }
+  }
   
   // Use the same agents as practice page with cutout bubble images
   const agentNames: AllowedAgentName[] = ['Austin', 'No Problem Nancy', 'Too Expensive Tim', 'Busy Beth', 'Skeptical Sam', 'Spouse Check Susan']
@@ -53,12 +86,14 @@ export function MeetHomeownersSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-8">
         {/* Introduction */}
         <motion.div className="text-center mb-8" variants={fadeInUp}>
-          <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+          <h2 className="text-[64px] sm:text-[72px] lg:text-[80px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
             Meet Your Training Partners
           </h2>
-          <p className="text-lg text-white max-w-3xl mx-auto">
-            These aren't just chatbots. They're AI-powered homeowners with real personalities, objections, and behaviors that mirror your toughest doors. 
-            Built for sales managers who need their reps to practice the scenarios that matter most.
+          <p className="text-xl sm:text-2xl text-white max-w-3xl mx-auto mb-4">
+            AI homeowners with real personalities and objections that mirror your toughest doors. Built for sales managers.
+          </p>
+          <p className="text-xl sm:text-2xl text-purple-300 max-w-3xl mx-auto font-semibold">
+            Click any agent below to start an immediate training session
           </p>
         </motion.div>
 
@@ -86,10 +121,18 @@ export function MeetHomeownersSection() {
               {[...agents, ...agents, ...agents, ...agents].map((agent, index) => {
                 const variantStyles = COLOR_VARIANTS[agent.color]
                 return (
-                  <Link
+                  <div
                     key={`${agent.fullName}-${index}`}
-                    href="/trainer/select-homeowner"
-                    className="relative flex-shrink-0 cursor-pointer group mx-6"
+                    onClick={() => handleAgentClick(agent.fullName)}
+                    className="relative flex-shrink-0 cursor-pointer group mx-6 transition-transform hover:scale-110 active:scale-95"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleAgentClick(agent.fullName)
+                      }
+                    }}
                   >
                     <div className="relative h-40 w-40">
                     {/* Concentric circles */}
@@ -176,9 +219,9 @@ export function MeetHomeownersSection() {
                       </div>
                     </div>
                   </div>
-                </Link>
-              )
-            })}
+                  </div>
+                )
+              })}
             </motion.div>
           </div>
         </motion.div>

@@ -10,6 +10,7 @@ interface RepProfileModalProps {
     id: string
     name: string
     score: number
+    avatar_url?: string
   }
   onClose: () => void
 }
@@ -88,9 +89,17 @@ export default function RepProfileModal({ rep, onClose }: RepProfileModalProps) 
         <div className="border-b border-white/10 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold ring-2 ring-purple-500/50">
-                {rep.name.charAt(0).toUpperCase()}
-              </div>
+              {rep.avatar_url ? (
+                <img 
+                  src={rep.avatar_url} 
+                  alt={rep.name}
+                  className="w-16 h-16 rounded-2xl object-cover ring-2 ring-purple-500/50"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold ring-2 ring-purple-500/50">
+                  {rep.name.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
                 <h2 className="text-2xl font-bold text-white">{rep.name}</h2>
                 <p className="text-sm text-slate-300">

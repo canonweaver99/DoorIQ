@@ -242,12 +242,12 @@ export function ContactSalesForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-purple-950/20 to-neutral-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto py-6 sm:py-8">
         {/* Header - Minimalist */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6 sm:mb-8"
+          className="text-center mb-6 sm:mb-8 px-4 sm:px-6 lg:px-8"
         >
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Schedule a Demo</h1>
           <p className="text-sm sm:text-base text-slate-400">Choose a time that works for you</p>
@@ -290,7 +290,7 @@ export function ContactSalesForm() {
             >
               {/* Cal.com Embed - Full Width, No Padding */}
               <div 
-                className="rounded-xl bg-white relative w-full shadow-2xl overflow-hidden"
+                className="relative w-full overflow-hidden"
                         style={{ 
                   minHeight: 'calc(100vh - 200px)',
                   height: 'calc(100vh - 200px)',
@@ -311,10 +311,10 @@ export function ContactSalesForm() {
                           config={{"layout":"month_view"}}
                         />
                         {!calLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/95 backdrop-blur-sm rounded-xl z-20">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-20">
                     <div className="flex flex-col items-center gap-3">
                       <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                      <p className="text-base font-medium text-slate-700">Loading calendar...</p>
+                      <p className="text-base font-medium text-white">Loading calendar...</p>
                             </div>
                           </div>
                         )}

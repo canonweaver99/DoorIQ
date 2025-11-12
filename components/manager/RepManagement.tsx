@@ -10,6 +10,7 @@ interface Rep {
   name: string
   email: string
   role: string
+  avatar_url?: string
   status: string
   score: number
   sessionsWeek: number
@@ -287,9 +288,17 @@ export default function RepManagement() {
 
                 {/* Profile */}
                 <div className="col-span-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/10">
-                    {rep.name.charAt(0).toUpperCase()}
-                  </div>
+                  {rep.avatar_url ? (
+                    <img 
+                      src={rep.avatar_url} 
+                      alt={rep.name}
+                      className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/10">
+                      {rep.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm font-semibold text-white">{rep.name}</p>
                     <p className="text-xs text-slate-400">{rep.lastActive}</p>

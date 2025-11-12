@@ -45,3 +45,13 @@ next-env.d.ts
 STRIPE_LIVE_KEYS.md
 PRODUCTION_ENV_VARS.md
 STRIPE_COMPLETE_CONFIG.md
+
+# Expo/Mobile
+mobile/.expo/
+mobile/.expo-shared/
+mobile/dist/
+mobile/web-build/
+mobile/node_modules/
+mobile/.metro-health-check*
+mobile/*.tsbuildinfo
+mobile/.env*.local

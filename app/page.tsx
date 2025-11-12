@@ -14,6 +14,7 @@ import { GlowCard } from '@/components/ui/spotlight-card'
 import { FaqSection } from '@/components/ui/faq-section'
 import { TestimonialsColumn, testimonialsData } from '@/components/ui/testimonials-columns-1'
 import { CalendarModal } from '@/components/ui/calendar-modal'
+import { DashboardHeroPreview } from '@/components/ui/dashboard-hero-preview'
 import { Target, Zap, TrendingUp, Users, CheckCircle2, BarChart3 } from 'lucide-react'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 import { vibrate } from '@/lib/utils'
@@ -180,19 +181,22 @@ export default function Home() {
         }}
       />
 
-      {/* 2) Problem/Solution Section */}
-      <ProblemSolutionSection />
-
-      {/* 3) Interactive Demo */}
+      {/* 2) Interactive Demo - See DoorIQ in Action */}
       <InteractiveDemoSection />
 
-      {/* 4) Meet Our Homeowners */}
+      {/* 3) Meet Our Homeowners */}
       <MeetHomeownersSection />
 
-      {/* 5) Social Proof */}
+      {/* 4) Dashboard Section */}
+      <DashboardSection />
+
+      {/* 5) Problem/Solution Section */}
+      <ProblemSolutionSection />
+
+      {/* 6) Social Proof */}
       <SocialProofSection />
 
-      {/* 6) Results / ROI */}
+      {/* 7) Results / ROI */}
       <ResultsSection />
 
       {/* 8) FAQ */}
@@ -200,10 +204,10 @@ export default function Home() {
         title="Frequently Asked Questions"
         items={faqItems}
         contactInfo={{
-          title: 'Leave Feedback',
-          description: 'We\'d love to hear your thoughts and suggestions to improve DoorIQ.',
-          buttonText: 'Leave Feedback',
-          onContact: () => window.open('https://mail.google.com/mail/?view=cm&fs=1&to=contact@dooriq.ai&su=Feedback&body=Hi%20DoorIQ%20Team,%0D%0A%0D%0AMy%20feedback:%0D%0A%0D%0A', '_blank')
+          title: 'Ready to See DoorIQ in Action?',
+          description: 'Book a personalized demo and see how DoorIQ can transform your sales training.',
+          buttonText: 'Book a Demo',
+          onContact: () => setIsCalendarModalOpen(true)
         }}
       />
     </div>
@@ -250,7 +254,7 @@ function ProblemSolutionSection() {
     },
     {
       icon: BarChart3,
-      title: "Clear Performance Metrics",
+      title: "Performance Metrics",
       description: "Track every rep's progress with detailed analytics. Know exactly who needs help and where.",
       color: "green"
     }
@@ -268,11 +272,22 @@ function ProblemSolutionSection() {
         <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12" variants={fadeInUp}>
           <div className="text-center lg:text-left">
             <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Challenge</span> Every Sales Manager Faces
+              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-500 to-red-600 dark:from-red-400 dark:via-red-300 dark:to-red-400">Challenges</span> Every Sales Manager Face
             </h2>
-            <p className="text-lg text-slate-300">
-              You know your team needs practice. But between recruiting, coaching, and hitting quotas, there's never enough time.
-            </p>
+            <div className="mt-6 space-y-4">
+              {problems.map((problem, index) => (
+                <motion.div 
+                  key={index}
+                  className="flex items-start gap-3"
+                  variants={staggerItem}
+                >
+                  <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 mt-3" />
+                  <p className="text-2xl lg:text-3xl font-semibold text-white">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-500">{problem.title}</span>
+                  </p>
+                </motion.div>
+              ))}
+            </div>
           </div>
           <motion.div 
             className="relative h-96 rounded-2xl overflow-hidden border border-white/10"
@@ -287,7 +302,7 @@ function ProblemSolutionSection() {
           </motion.div>
         </motion.div>
 
-        {/* Problems */}
+        {/* Problems - Cards */}
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20"
           variants={staggerContainer}
@@ -297,15 +312,15 @@ function ProblemSolutionSection() {
               key={index}
               variants={staggerItem}
               whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-              className="p-6 rounded-xl bg-red-900/10 border border-red-500/20"
+              className="p-8 rounded-xl bg-red-900/10 border border-red-500/20 h-full"
             >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 flex-shrink-0 rounded-full bg-red-500/20 flex items-center justify-center">
+              <div className="flex items-start gap-4 mb-2 min-h-[4rem]">
+                <div className="w-12 h-12 flex-shrink-0 rounded-full bg-red-500/20 flex items-center justify-center mt-1">
                   <problem.icon className="w-6 h-6 text-red-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white">{problem.title}</h3>
+                <h3 className="text-2xl lg:text-3xl font-semibold text-white leading-tight">{problem.title}</h3>
               </div>
-              <p className="text-base text-white leading-relaxed">{problem.description}</p>
+              <p className="text-lg lg:text-xl text-white leading-relaxed">{problem.description}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -338,8 +353,28 @@ function ProblemSolutionSection() {
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
             <h3 className="text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span> Solves This
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span>:
             </h3>
+            <div className="mt-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
+                <p className="text-2xl lg:text-3xl font-semibold text-white">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Scales Training</span> Across Your Team
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
+                <p className="text-2xl lg:text-3xl font-semibold text-white">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Accelerates</span> Rep Ramp Time
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
+                <p className="text-2xl lg:text-3xl font-semibold text-white">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Delivers</span> Objective Performance Insights
+                </p>
+              </div>
+            </div>
           </div>
         </motion.div>
 
@@ -358,20 +393,20 @@ function ProblemSolutionSection() {
                 customSize
                 className="p-8 h-full"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
+                <div className="flex items-start gap-4 mb-2 min-h-[4rem]">
+                  <div className="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mt-1">
                     <solution.icon className="w-6 h-6 text-purple-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-white">{solution.title}</h3>
+                  <h3 className="text-2xl lg:text-3xl font-semibold text-white leading-tight">{solution.title}</h3>
                 </div>
-                <p className="text-base text-white leading-relaxed">{solution.description}</p>
+                <p className="text-lg lg:text-xl text-white leading-relaxed">{solution.description}</p>
               </GlowCard>
             </motion.div>
           ))}
         </motion.div>
 
         <motion.div 
-          className="text-center mt-12"
+          className="text-center mt-16 mb-16"
           variants={fadeInUp}
         >
           <motion.div
@@ -379,11 +414,11 @@ function ProblemSolutionSection() {
             whileTap={{ scale: 0.95 }}
           >
             <Link 
-              href="/auth/signup" 
+              href="/pricing" 
               onClick={() => vibrate()}
-              className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-6 py-3 text-base font-semibold backdrop-blur-sm"
+              className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-8 py-4 text-lg font-semibold backdrop-blur-sm"
             >
-              Get Started Free
+              Get Started
             </Link>
           </motion.div>
         </motion.div>
@@ -393,6 +428,100 @@ function ProblemSolutionSection() {
 }
 
 // Animated Sections
+function DashboardSection() {
+  const { ref, controls } = useScrollAnimation(0.2)
+  
+  return (
+    <motion.section 
+      ref={ref}
+      className="relative w-full max-w-full mx-auto z-1 py-16"
+      initial="hidden"
+      animate={controls}
+      variants={staggerContainer}
+    >
+      <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto px-1.5 sm:px-4 lg:px-20 xl:px-24 2xl:px-32">
+        <motion.div 
+          className="text-center mb-8 sm:mb-12"
+          variants={fadeInUp}
+        >
+          <h2 className="text-3xl sm:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] pb-2">
+            Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Analytics</span>
+          </h2>
+          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-3xl mx-auto mt-6">
+            Track every rep's performance in real-time with detailed analytics and insights
+          </p>
+        </motion.div>
+
+        <motion.div
+          id="features"
+          variants={fadeInUp}
+          className="mb-8 sm:mb-12"
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap lg:justify-center gap-3 sm:gap-3 lg:gap-4 max-w-6xl mx-auto px-4">
+            {[
+              { feature: "AI-Powered Roleplay", isMobileOnly: true },
+              { feature: "Real-Time Feedback", isMobileOnly: true },
+              { feature: "Performance Analytics", isMobileOnly: true },
+              { feature: "Objection Handling", isMobileOnly: true },
+              { feature: "Team Leaderboards", isMobileOnly: true },
+              { feature: "Progress Tracking", isMobileOnly: true },
+              { feature: "Unlimited Practice", isMobileOnly: true },
+              { feature: "Manager Insights", isMobileOnly: true },
+            ].map((item, index) => (
+              <motion.div
+                key={`mobile-${index}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: index * 0.02 }}
+                className="px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap overflow-hidden text-ellipsis sm:hidden"
+                style={{ contain: 'layout style paint', willChange: 'transform, opacity' }}
+              >
+                {item.feature}
+              </motion.div>
+            ))}
+            {[
+              "AI-Powered Roleplay",
+              "Real-Time Feedback",
+              "Performance Analytics",
+              "Speech Analysis",
+              "Objection Handling",
+              "Upload Pitch Recordings",
+              "Team Leaderboards",
+              "Custom Grading",
+              "Progress Tracking",
+              "Export Reports",
+              "Manager Insights",
+              "Mobile Friendly",
+              "Unlimited Practice",
+              "In-App Messaging",
+              "Knowledge Base"
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: index * 0.02 }}
+                className="px-4 sm:px-5 lg:px-6 xl:px-7 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 border border-purple-500/30 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium text-white backdrop-blur-sm transition-all cursor-default text-center whitespace-nowrap flex-shrink-0 hidden sm:block"
+                style={{ contain: 'layout style paint', willChange: 'transform, opacity' }}
+              >
+                {feature}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          variants={fadeInScale}
+        >
+          <DashboardHeroPreview />
+        </motion.div>
+      </div>
+    </motion.section>
+  )
+}
+
 function SocialProofSection() {
   const { ref, controls } = useScrollAnimation(0.2)
   
@@ -422,12 +551,20 @@ function ResultsSection() {
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-4 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
-          <motion.h2 
-            className="text-[56px] leading-[1.1] tracking-tight font-geist text-center lg:text-left bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
-            variants={fadeInUp}
-          >
-            Results That Move the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Needle</span>
-          </motion.h2>
+          <div>
+            <motion.h2 
+              className="text-[56px] leading-[1.1] tracking-tight font-geist text-center lg:text-left bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+              variants={fadeInUp}
+            >
+              Results That Move the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Needle</span>
+            </motion.h2>
+            <motion.p 
+              className="text-lg sm:text-xl text-slate-300 mt-4 text-center lg:text-left max-w-xl"
+              variants={fadeInUp}
+            >
+              See measurable improvements in close rates, ramp time, and team performance
+            </motion.p>
+          </div>
           <motion.div 
             className="relative h-96 rounded-2xl overflow-hidden border border-white/10"
             variants={fadeInScale}

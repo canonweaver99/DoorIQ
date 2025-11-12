@@ -24,7 +24,7 @@ export async function GET() {
     // Get all team members
     const { data: teamMembers, error: membersError } = await supabase
       .from('users')
-      .select('id, full_name, email, role, virtual_earnings, created_at')
+      .select('id, full_name, email, role, virtual_earnings, created_at, avatar_url')
       .eq('team_id', userProfile.team_id)
       .order('virtual_earnings', { ascending: false })
 
@@ -108,6 +108,7 @@ export async function GET() {
           name: member.full_name,
           email: member.email,
           role: member.role,
+          avatar_url: member.avatar_url,
           status,
           score: avgScore,
           sessionsWeek: recentSessions?.length || 0,

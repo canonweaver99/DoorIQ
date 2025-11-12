@@ -45,8 +45,8 @@ export async function GET(request: Request) {
 
     switch (period) {
       case 'day':
-        // Show last 7 days with hourly data from 6am-midnight
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        // Show last 10 days grouped by day
+        startDate = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000)
         break
       case 'week':
         // Show last 8 weeks, Monday-Sunday
@@ -85,20 +85,9 @@ export async function GET(request: Request) {
 
       switch (period) {
         case 'day':
-          // Group by hour from 6am-midnight
-          const hour = date.getHours()
-          if (hour < 6) {
-            // Sessions before 6am count as previous day's midnight hour
-            const prevDay = new Date(date)
-            prevDay.setDate(prevDay.getDate() - 1)
-            periodKey = `${prevDay.toLocaleDateString('en-US', { weekday: 'short' })} 11PM`
-            fullPeriod = `${prevDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} 11:00 PM`
-          } else {
-            const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
-            const period = hour >= 12 ? 'PM' : 'AM'
-            periodKey = `${date.toLocaleDateString('en-US', { weekday: 'short' })} ${displayHour}${period}`
-            fullPeriod = `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${displayHour}:00 ${period}`
-          }
+          // Group by day (just date, no time)
+          periodKey = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          fullPeriod = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
           break
         case 'week':
           // Group by Monday-Sunday weeks
@@ -132,13 +121,44 @@ export async function GET(request: Request) {
     })
 
     // Convert to array format
-    const revenueData = Object.entries(groupedData).map(([period, data]) => ({
+    let revenueData = Object.entries(groupedData).map(([period, data]) => ({
       period,
       fullPeriod: (data as any).fullPeriod,
       revenue: Math.round(data.revenue),
       repsWhoSold: data.repsWhoSold.size,
       totalSales: data.totalSales
     }))
+
+    // For day period, fill in missing days with 0 revenue
+    if (period === 'day') {
+      const filledData: typeof revenueData = []
+      const today = new Date(now)
+      today.setHours(0, 0, 0, 0)
+      
+      for (let i = 9; i >= 0; i--) {
+        const date = new Date(today)
+        date.setDate(date.getDate() - i)
+        const dateKey = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        const existingData = revenueData.find(d => d.period === dateKey)
+        
+        if (existingData) {
+          filledData.push(existingData)
+        } else {
+          filledData.push({
+            period: dateKey,
+            fullPeriod: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            revenue: 0,
+            repsWhoSold: 0,
+            totalSales: 0
+          })
+        }
+      }
+      
+      revenueData = filledData
+    } else {
+      // Sort by period for other time periods
+      revenueData.sort((a, b) => a.period.localeCompare(b.period))
+    }
 
     return NextResponse.json({ revenueData })
   } catch (error) {

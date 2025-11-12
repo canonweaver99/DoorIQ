@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, User, TrendingUp, Calendar, Target, Award, BarChart3, DollarSign } from 'lucide-react'
 import Link from 'next/link'
@@ -41,7 +41,8 @@ interface RepStats {
   totalCallTime: number
 }
 
-export default function RepProfilePage({ params }: { params: { repId: string } }) {
+export default function RepProfilePage({ params }: { params: Promise<{ repId: string }> }) {
+  const resolvedParams = use(params)
   const [rep, setRep] = useState<RepProfile | null>(null)
   const [sessions, setSessions] = useState<SessionData[]>([])
   const [stats, setStats] = useState<RepStats | null>(null)
@@ -51,14 +52,14 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
 
   useEffect(() => {
     loadRepData()
-  }, [params.repId])
+  }, [resolvedParams.repId])
 
   const loadRepData = async () => {
     if (!supabase) return
     
     try {
       // Use API endpoint for secure, server-side verification
-      const response = await fetch(`/api/manager/rep/${params.repId}`)
+      const response = await fetch(`/api/manager/rep/${resolvedParams.repId}`)
       
       if (!response.ok) {
         const error = await response.json()
@@ -162,9 +163,17 @@ export default function RepProfilePage({ params }: { params: { repId: string } }
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-                {rep.full_name?.charAt(0)?.toUpperCase() || '?'}
-              </div>
+              {rep.avatar_url ? (
+                <img 
+                  src={rep.avatar_url} 
+                  alt={rep.full_name}
+                  className="w-20 h-20 rounded-2xl object-cover"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+                  {rep.full_name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+              )}
               <div className="flex-1">
                 <h1 className="text-2xl font-bold text-white">{rep.full_name || 'Unknown Rep'}</h1>
                 <p className="text-slate-400">{rep.email || 'No email'}</p>

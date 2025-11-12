@@ -2,7 +2,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { ChevronRight, ChevronDown, TrendingUp } from "lucide-react"
 import { DashboardHeroPreview } from "@/components/ui/dashboard-hero-preview"
-import { LiveSessionPreview } from "@/components/ui/live-session-preview"
+// import { LiveSessionPreview } from "@/components/ui/live-session-preview" // Archived - removed sample session from hero
 import { motion } from "framer-motion"
 import { useScrollAnimation, fadeInUp, fadeInLeft, fadeInRight, fadeInScale } from "@/hooks/useScrollAnimation"
 
@@ -96,14 +96,13 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center pt-0">
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20 xl:px-24 2xl:px-32">
-            {/* Split Screen: Copy Left, Live Session Right */}
-            <div className="grid grid-cols-1 lg:[grid-template-columns:48%_52%] xl:[grid-template-columns:50%_50%] 2xl:[grid-template-columns:50%_50%] gap-12 xl:gap-16 items-center pt-8 xl:pt-12 -mt-[95px]">
-              {/* Left Side - Copy */}
+            {/* Centered Copy Layout */}
+            <div className="flex items-center justify-center pt-8 xl:pt-12 -mt-[95px]">
+              {/* Centered Copy */}
               <motion.div 
-                className="space-y-5 text-center flex flex-col items-center justify-center" 
-                style={{ paddingRight: '0px' }}
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
+                className="space-y-6 sm:space-y-8 max-w-5xl text-center flex flex-col items-center justify-center" 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
                 <motion.a 
@@ -120,7 +119,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   </h1>
                 </motion.a>
                 <motion.h2 
-                  className="text-5xl sm:text-5xl lg:text-[56px] xl:text-[64px] 2xl:text-[72px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+                  className="text-5xl sm:text-6xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
@@ -130,9 +129,9 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     {subtitle.gradient}
                   </span>
                 </motion.h2>
-                {/* CTAs moved directly under sub header */}
+                {/* CTAs - Prominent and Large */}
                 <motion.div 
-                  className="flex items-center justify-center gap-4 flex-wrap pt-2"
+                  className="flex items-center justify-center gap-5 sm:gap-6 flex-wrap pt-4 sm:pt-6"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.6 }}
@@ -156,7 +155,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                             }
                             onCtaClick()
                           }}
-                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/20 via-purple-400/30 to-transparent dark:from-zinc-300/5 dark:via-purple-400/20 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/30 hover:via-purple-400/40 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/30 transition-all py-2.5 px-6 text-sm font-semibold"
+                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/20 via-purple-400/30 to-transparent dark:from-zinc-300/5 dark:via-purple-400/20 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/30 hover:via-purple-400/40 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/30 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
                         >
                           {ctaText}
                         </button>
@@ -170,7 +169,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                               } catch {}
                             }
                           }}
-                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/20 via-purple-400/30 to-transparent dark:from-zinc-300/5 dark:via-purple-400/20 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/30 hover:via-purple-400/40 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/30 transition-all py-2.5 px-6 text-sm font-semibold"
+                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/20 via-purple-400/30 to-transparent dark:from-zinc-300/5 dark:via-purple-400/20 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/30 hover:via-purple-400/40 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/30 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
                         >
                           {ctaText}
                         </a>
@@ -197,7 +196,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                               }
                               onCtaSecondaryClick()
                             }}
-                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-2.5 px-6 text-sm font-semibold"
+                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
                           >
                             {ctaSecondaryText}
                           </button>
@@ -216,7 +215,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                                 element?.scrollIntoView({ behavior: 'smooth' })
                               }
                             }}
-                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-2.5 px-6 text-sm font-semibold"
+                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
                           >
                             {ctaSecondaryText}
                           </a>
@@ -226,7 +225,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   )}
                 </motion.div>
                 <motion.p 
-                  className="text-white text-lg xl:text-xl 2xl:text-2xl"
+                  className="text-white text-xl sm:text-2xl lg:text-3xl xl:text-3xl 2xl:text-4xl max-w-7xl lg:whitespace-nowrap"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.6 }}
@@ -245,7 +244,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     "Pest Control",
                     "Roofing",
                     "Security",
-                    "HVAC",
+                    "Internet",
                     "Windows"
                   ].map((industry, index) => (
                     <motion.div
@@ -265,17 +264,6 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   ))}
                 </motion.div>
               </motion.div>
-
-              {/* Right Side - Live Session (Equal width on large monitors) */}
-              <motion.div 
-                className="w-full flex items-center justify-center mt-3 lg:mt-0" 
-                style={{ paddingLeft: '40px' }}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-              >
-                <LiveSessionPreview />
-              </motion.div>
             </div>
           </div>
 
@@ -285,8 +273,8 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
           </div>
         </section>
 
-        {/* Dashboard Section - Below the Fold */}
-        <section className="relative w-full max-w-full mx-auto z-1 py-16">
+        {/* Dashboard Section - Archived: Moved to allow See DoorIQ in Action section directly under hero */}
+        {/* <section className="relative w-full max-w-full mx-auto z-1 py-16">
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto px-1.5 sm:px-4 lg:px-20 xl:px-24 2xl:px-32">
             <motion.div 
               className="text-center mb-8 sm:mb-12 -mt-4"
@@ -303,7 +291,6 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
               </p>
             </motion.div>
 
-            {/* Features Pills */}
             <motion.div
               id="features"
               initial={{ opacity: 0, y: 30 }}
@@ -313,7 +300,6 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
               className="mb-8 sm:mb-12"
             >
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap lg:justify-center gap-3 sm:gap-3 lg:gap-4 max-w-6xl mx-auto px-4">
-                {/* Mobile-only features (most important) - shown on mobile, hidden on larger screens */}
                 {[
                   { feature: "AI-Powered Roleplay", isMobileOnly: true },
                   { feature: "Real-Time Feedback", isMobileOnly: true },
@@ -336,7 +322,6 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     {item.feature}
                   </motion.div>
                 ))}
-                {/* Desktop features - hidden on mobile, shown on larger screens */}
                 {[
                   "AI-Powered Roleplay",
                   "Real-Time Feedback",
@@ -378,7 +363,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
               <DashboardHeroPreview />
             </motion.div>
           </div>
-        </section>
+        </section> */}
       </div>
     )
   },

@@ -1,13 +1,11 @@
 /**
- * Upload Profile Pictures for Team Alpha
- * Uploads placeholder profile pictures for Team Alpha manager and all reps
+ * Update Team Alpha Reps with Real Names and Profile Pictures
+ * Updates all Team Alpha reps with realistic sales rep names and uploads profile pictures
  */
 
 require('dotenv').config({ path: '.env.local' })
 const { createClient } = require('@supabase/supabase-js')
 const https = require('https')
-const fs = require('fs')
-const path = require('path')
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -19,6 +17,27 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+// Realistic sales rep names
+const REAL_NAMES = [
+  'Mike Chen',
+  'Emily Rodriguez',
+  'Sarah Johnson',
+  'Lisa Anderson',
+  'David Martinez',
+  'Jessica Williams',
+  'Michael Thompson',
+  'Amanda Davis',
+  'James Wilson',
+  'Rachel Brown',
+  'Christopher Lee',
+  'Nicole Garcia',
+  'Daniel Moore',
+  'Lauren Taylor',
+  'Kevin White',
+  'Michelle Harris',
+  'Ryan Clark'
+]
 
 /**
  * Download an image from URL and return as buffer
@@ -55,13 +74,13 @@ function getPlaceholderAvatarUrl(name, size = 200) {
   const colorIndex = name.length % colors.length
   const bgColor = colors[colorIndex]
   
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&size=${size}&background=${bgColor}&color=fff&bold=true&format=png`
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=${bgColor}&color=fff&bold=true&format=png`
 }
 
 /**
  * Upload avatar for a user
  */
-async function uploadAvatarForUser(userId, userName, userEmail) {
+async function uploadAvatarForUser(userId, userName) {
   try {
     console.log(`   📸 Uploading avatar for ${userName}...`)
     
@@ -76,7 +95,7 @@ async function uploadAvatarForUser(userId, userName, userEmail) {
     const filePath = `${userId}/${fileName}`
     
     // Upload to Supabase storage
-    const { error: uploadError, data: uploadData } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('profile pics')
       .upload(filePath, imageBuffer, {
         upsert: true,
@@ -85,7 +104,6 @@ async function uploadAvatarForUser(userId, userName, userEmail) {
       })
     
     if (uploadError) {
-      // If bucket doesn't exist or permission issue, try to create/configure
       if (uploadError.message?.includes('not found') || uploadError.message?.includes('Bucket')) {
         console.error(`   ⚠️  Storage bucket issue: ${uploadError.message}`)
         console.error(`   💡 Make sure the 'profile pics' bucket exists in Supabase Storage`)
@@ -99,17 +117,6 @@ async function uploadAvatarForUser(userId, userName, userEmail) {
       .from('profile pics')
       .getPublicUrl(filePath)
     
-    // Update user record
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ avatar_url: publicUrl })
-      .eq('id', userId)
-    
-    if (updateError) {
-      throw updateError
-    }
-    
-    console.log(`   ✅ Avatar uploaded: ${publicUrl}`)
     return { success: true, url: publicUrl }
   } catch (error) {
     console.error(`   ❌ Error uploading avatar for ${userName}:`, error.message)
@@ -118,10 +125,10 @@ async function uploadAvatarForUser(userId, userName, userEmail) {
 }
 
 /**
- * Main function to upload avatars for Team Alpha
+ * Main function to update Team Alpha reps
  */
-async function uploadTeamAlphaAvatars() {
-  console.log('🚀 Uploading profile pictures for Team Alpha...\n')
+async function updateTeamAlphaReps() {
+  console.log('🚀 Updating Team Alpha reps with real names and profile pictures...\n')
   
   try {
     // Get Team Alpha team
@@ -137,46 +144,73 @@ async function uploadTeamAlphaAvatars() {
     
     console.log(`✅ Found team: ${team.name} (${team.id})\n`)
     
-    // Get all Team Alpha members (manager + reps)
-    const { data: members, error: membersError } = await supabase
+    // Get all Team Alpha reps (exclude manager)
+    const { data: reps, error: repsError } = await supabase
       .from('users')
       .select('id, email, full_name, role')
       .eq('team_id', team.id)
-      .order('role', { ascending: false }) // Manager first, then reps
+      .eq('role', 'rep')
+      .order('email', { ascending: true })
     
-    if (membersError || !members) {
-      throw new Error(`Failed to fetch team members: ${membersError?.message}`)
+    if (repsError || !reps) {
+      throw new Error(`Failed to fetch reps: ${repsError?.message}`)
     }
     
-    console.log(`📋 Found ${members.length} team members:`)
-    members.forEach(m => {
-      console.log(`   - ${m.full_name} (${m.email}) - ${m.role}`)
-    })
-    console.log('')
+    console.log(`📋 Found ${reps.length} reps to update\n`)
+    
+    if (reps.length > REAL_NAMES.length) {
+      console.warn(`⚠️  Warning: More reps (${reps.length}) than names (${REAL_NAMES.length}). Some will reuse names.\n`)
+    }
     
     let successCount = 0
     let errorCount = 0
     
-    // Upload avatars for each member
-    for (const member of members) {
-      const result = await uploadAvatarForUser(
-        member.id,
-        member.full_name || member.email,
-        member.email
-      )
+    // Update each rep with a real name and avatar
+    for (let i = 0; i < reps.length; i++) {
+      const rep = reps[i]
+      const newName = REAL_NAMES[i % REAL_NAMES.length]
       
-      if (result.success) {
+      console.log(`👤 Updating ${rep.email}...`)
+      console.log(`   Current name: ${rep.full_name}`)
+      console.log(`   New name: ${newName}`)
+      
+      try {
+        // Upload avatar first
+        const avatarResult = await uploadAvatarForUser(rep.id, newName)
+        
+        // Update user record with new name and avatar URL
+        const updateData = { full_name: newName }
+        if (avatarResult.success) {
+          updateData.avatar_url = avatarResult.url
+        }
+        
+        const { error: updateError } = await supabase
+          .from('users')
+          .update(updateData)
+          .eq('id', rep.id)
+        
+        if (updateError) {
+          throw updateError
+        }
+        
+        console.log(`   ✅ Updated successfully`)
+        if (avatarResult.success) {
+          console.log(`   ✅ Avatar: ${avatarResult.url}`)
+        }
         successCount++
-      } else {
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 300))
+      } catch (error) {
+        console.error(`   ❌ Error updating ${rep.email}:`, error.message)
         errorCount++
       }
       
-      // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 200))
+      console.log('')
     }
     
     console.log('\n' + '='.repeat(60))
-    console.log(`✅ Upload complete!`)
+    console.log(`✅ Update complete!`)
     console.log(`   Success: ${successCount}`)
     console.log(`   Errors: ${errorCount}`)
     console.log('='.repeat(60))
@@ -188,6 +222,5 @@ async function uploadTeamAlphaAvatars() {
 }
 
 // Run the script
-uploadTeamAlphaAvatars()
-
+updateTeamAlphaReps()
 
