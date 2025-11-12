@@ -6,9 +6,9 @@ import { Loader2, ArrowLeft, ChevronRight } from "lucide-react"
 import Cal, { getCalApi } from "@calcom/embed-react"
 
 const salesRepRanges = [
-  'Under 10 reps',
-  '10-50 reps',
-  '50+ reps'
+  'Between 10-50 reps',
+  'Between 50-100 reps',
+  'Over 100+ reps'
 ]
 
 const industries = [
@@ -28,6 +28,7 @@ interface FormData {
 function PricingPageContent() {
   const [currentStep, setCurrentStep] = useState(0)
   const [calLoaded, setCalLoaded] = useState(false)
+  const [customIndustry, setCustomIndustry] = useState('')
   const [formData, setFormData] = useState<FormData>({
     salesRepRange: '',
     industry: ''
@@ -49,7 +50,7 @@ function PricingPageContent() {
           setCalLoaded(true) // Show anyway if there's an error
         }
       })();
-    } else {
+            } else {
       setCalLoaded(false)
     }
   }, [currentStep])
@@ -60,41 +61,51 @@ function PricingPageContent() {
   }
 
   const handleSelectIndustry = (industry: string) => {
-    setFormData(prev => ({ ...prev, industry }))
-    setTimeout(() => setCurrentStep(2), 300)
+    if (industry === 'Other') {
+      setFormData(prev => ({ ...prev, industry: 'Other' }))
+      // Don't advance to next step yet - wait for custom input
+    } else {
+      setFormData(prev => ({ ...prev, industry }))
+      setTimeout(() => setCurrentStep(2), 300)
+    }
+  }
+
+  const handleCustomIndustrySubmit = () => {
+    if (customIndustry.trim()) {
+      setFormData(prev => ({ ...prev, industry: customIndustry.trim() }))
+      setTimeout(() => setCurrentStep(2), 300)
+    }
   }
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
+      const newStep = currentStep - 1
+      if (newStep === 1 && formData.industry === 'Other') {
+        // Reset Other selection when going back to industry step
+        setFormData(prev => ({ ...prev, industry: '' }))
+        setCustomIndustry('')
+      }
+      setCurrentStep(newStep)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center py-12 px-4">
-      <div className="max-w-4xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center px-4 pb-12 relative overflow-hidden" style={{ marginTop: '-20px' }}>
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+      <div className="max-w-4xl w-full relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8 sm:mb-12"
+          className="text-center mb-4 sm:mb-6"
         >
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-geist leading-[1.1] tracking-tight bg-clip-text text-transparent bg-[linear-gradient(180deg,_#FFF_0%,_rgba(200,_200,_200,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(150,_150,_150,_0.75)_100%)] mb-4">
             Get Started with DoorIQ
           </h1>
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={currentStep}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-lg sm:text-xl text-slate-300"
-            >
-              {currentStep === 0 && 'How many sales reps does your business have?'}
-              {currentStep === 1 && 'What industry are you in?'}
-              {currentStep === 2 && 'Schedule Your Demo'}
-            </motion.p>
-          </AnimatePresence>
         </motion.div>
 
         {/* Form Content */}
@@ -102,30 +113,52 @@ function PricingPageContent() {
           {currentStep === 0 && (
             <motion.div
               key="step-0"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8 lg:p-10"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 lg:p-12 shadow-2xl shadow-purple-500/5"
             >
-              <h2 className="text-2xl font-bold text-white mb-2">
-                Select your sales rep range
-              </h2>
-              <p className="text-slate-400 mb-8">
-                Choose the option that best describes your business
-              </p>
-              <div className="space-y-3">
-                {salesRepRanges.map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => handleSelectSalesRepRange(range)}
-                    className="group w-full flex items-center justify-between px-6 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    <span className="text-lg font-medium text-white">
-                      {range}
-                    </span>
-                    <ChevronRight className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
-                  </button>
-                ))}
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-25 animate-pulse" />
+              
+              <div className="relative z-10">
+                <motion.h2 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-3xl sm:text-4xl font-bold text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white"
+                >
+                  How many sales reps do you have?
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-lg sm:text-xl text-slate-300 mb-8"
+                >
+                  Choose the option that best describes your company
+                </motion.p>
+                <div className="space-y-4">
+                  {salesRepRanges.map((range, index) => (
+                    <motion.button
+                      key={range}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + index * 0.1 }}
+                      onClick={() => handleSelectSalesRepRange(range)}
+                      className="group relative w-full flex items-center justify-between px-8 py-5 rounded-full bg-gradient-to-r from-white/10 via-white/5 to-white/10 hover:from-white/20 hover:via-white/10 hover:to-white/20 border border-white/20 hover:border-purple-400/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-purple-500/20 overflow-hidden"
+                    >
+                      {/* Animated background gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      <span className="text-lg font-semibold text-white relative z-10">
+                        {range}
+                      </span>
+                      <ChevronRight className="w-5 h-5 text-purple-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300 relative z-10" />
+                    </motion.button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}
@@ -133,43 +166,106 @@ function PricingPageContent() {
           {currentStep === 1 && (
             <motion.div
               key="step-1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8 lg:p-10"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 lg:p-12 shadow-2xl shadow-purple-500/5"
             >
-              <button
-                onClick={handleBack}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm">← Back</span>
-              </button>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                Choose Your Industry
-              </h2>
-              <p className="text-slate-400 mb-8">
-                Choose the category that best fits your business. This helps us tailor your setup.
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {industries.map((industry) => (
-                  <button
-                    key={industry.name}
-                    onClick={() => handleSelectIndustry(industry.name)}
-                    className={`group flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all hover:scale-105 active:scale-95 relative ${
-                      formData.industry === industry.name
-                        ? 'border-white bg-white/10'
-                        : 'border-white/20 bg-white/5 hover:border-white/30'
-                    }`}
-                  >
-                    <span className="text-4xl mb-2">{industry.icon}</span>
-                    <span className="text-base font-medium text-white mb-1">
-                      {industry.name}
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 absolute bottom-3" />
-                  </button>
-                ))}
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-25 animate-pulse" />
+              
+              <div className="relative z-10">
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  onClick={handleBack}
+                  className="flex items-center gap-2 text-slate-300 hover:text-white mb-8 transition-colors group"
+                >
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  <span className="text-sm">Back</span>
+                </motion.button>
+                <motion.h2 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-3xl sm:text-4xl font-bold text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white"
+                >
+                  Choose Your Industry
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-lg sm:text-xl text-slate-300 mb-8"
+                >
+                  Choose the category that best fits your business. This helps us tailor your setup.
+                </motion.p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {industries.map((industry, index) => (
+                    <motion.button
+                      key={industry.name}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 + index * 0.05 }}
+                      onClick={() => handleSelectIndustry(industry.name)}
+                      className={`group relative flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all hover:scale-105 active:scale-95 overflow-hidden ${
+                        formData.industry === industry.name
+                          ? 'border-purple-400 bg-gradient-to-br from-purple-500/20 to-blue-500/20 shadow-lg shadow-purple-500/30'
+                          : 'border-white/20 bg-white/5 hover:border-purple-400/50 hover:bg-white/10'
+                      }`}
+                    >
+                      {/* Hover glow effect */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-blue-500/0 group-hover:from-purple-500/20 group-hover:to-blue-500/20 transition-all duration-300 rounded-2xl" />
+                      
+                      <span className="text-5xl mb-3 relative z-10 transform group-hover:scale-110 transition-transform duration-300">{industry.icon}</span>
+                      <span className="text-base font-semibold text-white relative z-10">
+                        {industry.name}
+                      </span>
+                      {industry.name !== 'Other' && (
+                        <ChevronRight className="w-4 h-4 text-purple-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 absolute bottom-3 z-10" />
+                      )}
+                    </motion.button>
+                  ))}
                 </div>
+                
+                {/* Custom Industry Input - Shows when "Other" is selected */}
+                {formData.industry === 'Other' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-6"
+                  >
+                    <label className="block text-sm font-medium text-white mb-2">
+                      Please specify your industry
+                    </label>
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={customIndustry}
+                        onChange={(e) => setCustomIndustry(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && customIndustry.trim()) {
+                            handleCustomIndustrySubmit()
+                          }
+                        }}
+                        placeholder="Enter your industry..."
+                        className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/20 transition-all"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleCustomIndustrySubmit}
+                        disabled={!customIndustry.trim()}
+                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-purple-500/30"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -220,7 +316,7 @@ function PricingPageContent() {
                     </div>
                   </div>
                 )}
-              </div>
+            </div>
             </motion.div>
           )}
         </AnimatePresence>

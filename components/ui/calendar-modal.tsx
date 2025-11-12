@@ -38,11 +38,11 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl w-full h-[90vh] max-h-[900px] p-0 overflow-hidden bg-white dark:bg-slate-900">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <div className="px-6 pt-8 pb-6 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-geist leading-[1.1] tracking-tight bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] mb-2">
             Schedule Your Demo
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400">
             Pick a time that works best for you
           </p>
         </div>
@@ -50,7 +50,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
           className="relative w-full h-full overflow-hidden rounded-2xl"
           style={{ 
             minHeight: '600px',
-            height: 'calc(100% - 80px)'
+            height: 'calc(100% - 100px)'
           }}
         >
           <Cal 
