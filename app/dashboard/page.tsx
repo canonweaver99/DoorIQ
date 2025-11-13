@@ -17,7 +17,10 @@ import {
   Zap,
   DollarSign,
   AlertCircle,
-  MessageCircle
+  MessageCircle,
+  Video,
+  Trash2,
+  Play
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
@@ -1654,128 +1657,347 @@ function OverviewTabContent() {
 }
 
 function LearningTabContent() {
-  const [selectedPlaybook, setSelectedPlaybook] = useState<string | null>(null)
+  const supabase = createClient()
+  const [userRole, setUserRole] = useState<'manager' | 'rep' | 'admin' | null>(null)
+  const [videos, setVideos] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
+  
+  // Upload form state
+  const [uploadTitle, setUploadTitle] = useState('')
+  const [uploadDescription, setUploadDescription] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const playbooks = [
-    {
-      id: 'objections',
-      title: 'Handling Price Objections',
-      description: 'Learn proven techniques to overcome budget concerns',
-      progress: 75,
-      lessons: 12,
-      duration: '45 min',
-      icon: Target,
-      iconColor: '#f59e0b',
-      iconBgColor: 'rgba(245, 158, 11, 0.25)',
-      borderColor: '#6a4a2a',
-      bg: '#3a2a1a',
-      textColor: 'text-amber-200',
-      glowColor: 'rgba(245, 158, 11, 0.1)'
-    },
-    {
-      id: 'rapport',
-      title: 'Building Instant Rapport',
-      description: 'Master the first 30 seconds of every conversation',
-      progress: 90,
-      lessons: 8,
-      duration: '30 min',
-      icon: MessageCircle,
-      iconColor: '#14b8a6',
-      iconBgColor: 'rgba(20, 184, 166, 0.25)',
-      borderColor: '#2a6a5a',
-      bg: '#1a3a2f',
-      textColor: 'text-teal-200',
-      glowColor: 'rgba(20, 184, 166, 0.1)'
-    },
-    {
-      id: 'closing',
-      title: 'Advanced Closing Techniques',
-      description: 'Close more deals with assumptive language',
-      progress: 60,
-      lessons: 15,
-      duration: '60 min',
-      icon: Zap,
-      iconColor: '#a855f7',
-      iconBgColor: 'rgba(168, 85, 247, 0.25)',
-      borderColor: '#4a2a6a',
-      bg: '#2a1a3a',
-      textColor: 'text-purple-200',
-      glowColor: 'rgba(138, 43, 226, 0.1)'
-    },
-    {
-      id: 'discovery',
-      title: 'Discovery Questions Mastery',
-      description: 'Ask the right questions to uncover pain points',
-      progress: 45,
-      lessons: 10,
-      duration: '40 min',
-      icon: Target,
-      iconColor: '#ec4899',
-      iconBgColor: 'rgba(236, 72, 153, 0.25)',
-      borderColor: '#6a2a4a',
-      bg: '#3a1a2a',
-      textColor: 'text-pink-200',
-      glowColor: 'rgba(236, 72, 153, 0.1)'
-    },
-  ]
+  useEffect(() => {
+    fetchUserRole()
+    fetchVideos()
+  }, [])
 
+  const fetchUserRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (userProfile) {
+      setUserRole(userProfile.role as 'manager' | 'rep' | 'admin')
+    }
+  }
+
+  const fetchVideos = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/team/learning-videos')
+      if (response.ok) {
+        const data = await response.json()
+        setVideos(data.videos || [])
+      }
+    } catch (error) {
+      console.error('Error fetching videos:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleFileSelect = (file: File) => {
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select a video file (MP4, WebM, MOV, or AVI)')
+      return
+    }
+    setUploadFile(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleUpload = async () => {
+    if (!uploadFile || !uploadTitle.trim()) {
+      alert('Please select a video file and enter a title')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', uploadFile)
+      formData.append('title', uploadTitle.trim())
+      if (uploadDescription.trim()) {
+        formData.append('description', uploadDescription.trim())
+      }
+
+      const response = await fetch('/api/team/learning-videos/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        // Reset form
+        setUploadTitle('')
+        setUploadDescription('')
+        setUploadFile(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+        // Refresh videos list
+        await fetchVideos()
+        alert('Video uploaded successfully!')
+      } else {
+        const error = await response.json()
+        alert(`Upload failed: ${error.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Failed to upload video. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDelete = async (videoId: string) => {
+    if (!confirm('Are you sure you want to delete this video?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/team/learning-videos?id=${videoId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        await fetchVideos()
+        alert('Video deleted successfully!')
+      } else {
+        const error = await response.json()
+        alert(`Delete failed: ${error.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert('Failed to delete video. Please try again.')
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    return date.toLocaleDateString()
+  }
+
+  const isManager = userRole === 'manager' || userRole === 'admin'
+
+  if (loading) {
   return (
-    <div className="space-y-4">
-      {/* Playbooks Grid */}
-      <div>
-        <h3 className="text-base font-bold text-white mb-4">Sales Playbooks</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {playbooks.map((playbook, idx) => {
-            const Icon = playbook.icon
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    )
+  }
+
             return (
+    <div className="space-y-6">
+      {isManager ? (
+        <>
+          {/* Upload Section for Managers */}
               <motion.div
-                key={playbook.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+            className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6"
+            style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+          >
+            <h3 className="text-lg font-bold text-white mb-4">Upload Training Video</h3>
+            
+            {/* File Upload Area */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+                isDragging ? 'border-[#a855f7] bg-[#a855f7]/10' : 'border-[#2a2a2a]'
+              }`}
+            >
+              <Video className="w-12 h-12 text-[#a855f7] mx-auto mb-4" />
+              <p className="text-white mb-2">
+                {uploadFile ? uploadFile.name : 'Drag & drop a video file here'}
+              </p>
+              <p className="text-sm text-slate-400 mb-4">
+                or click to browse (MP4, WebM, MOV, AVI)
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleFileSelect(file)
+                }}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 bg-[#a855f7] text-white rounded-lg hover:bg-[#9333ea] transition-colors"
+              >
+                Choose File
+              </button>
+            </div>
+
+            {/* Title and Description */}
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Title <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                  placeholder="Enter video title"
+                  className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#a855f7]"
+                />
+                  </div>
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Description (optional)
+                </label>
+                <textarea
+                  value={uploadDescription}
+                  onChange={(e) => setUploadDescription(e.target.value)}
+                  placeholder="Enter video description"
+                  rows={3}
+                  className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#a855f7] resize-none"
+                />
+              </div>
+              <button
+                onClick={handleUpload}
+                disabled={uploading || !uploadFile || !uploadTitle.trim()}
+                className="w-full px-6 py-3 bg-[#a855f7] text-white font-medium rounded-lg hover:bg-[#9333ea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {uploading ? 'Uploading...' : 'Upload Video'}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      ) : null}
+
+      {/* Videos List */}
+      <div>
+        <h3 className="text-lg font-bold text-white mb-4">
+          {isManager ? 'Team Training Videos' : 'Training Videos'}
+        </h3>
+        
+        {videos.length === 0 ? (
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-12 text-center">
+            <Video className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400">
+              {isManager ? 'No videos uploaded yet. Upload your first training video above.' : 'No training videos available yet.'}
+            </p>
+                    </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {videos.map((video, idx) => (
+                      <motion.div
+                key={video.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: idx * 0.1 }}
-                onClick={() => setSelectedPlaybook(playbook.id)}
-                className="rounded-lg p-5 cursor-pointer"
-                style={{ 
-                  backgroundColor: playbook.bg,
-                  border: `2px solid ${playbook.borderColor}`,
-                  boxShadow: `inset 0 0 20px ${playbook.glowColor}, 0 4px 16px rgba(0, 0, 0, 0.4)`
-                }}
+                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden hover:border-[#a855f7]/50 transition-colors"
+                style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
               >
-                <div>
-                  <h4 className={`text-xs font-semibold ${playbook.textColor} uppercase tracking-wide mb-3`}>
-                    {playbook.title}
+                {/* Video Player */}
+                <div className="relative bg-black aspect-video">
+                  {selectedVideo === video.id ? (
+                    <video
+                      src={video.video_url}
+                      controls
+                      className="w-full h-full"
+                      onLoadStart={() => setSelectedVideo(video.id)}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <button
+                        onClick={() => setSelectedVideo(video.id)}
+                        className="p-4 bg-[#a855f7]/80 hover:bg-[#a855f7] rounded-full transition-colors"
+                      >
+                        <Play className="w-8 h-8 text-white" />
+                      </button>
+                    </div>
+                  )}
+                  </div>
+                
+                {/* Video Info */}
+                <div className="p-4">
+                  <h4 className="text-base font-bold text-white mb-2 line-clamp-2">
+                    {video.title}
                   </h4>
-                  <p className="text-[15px] text-slate-300 leading-relaxed mb-3">{playbook.description}</p>
-
-                  <div className="flex items-center gap-2 text-xs text-green-400 font-semibold mb-4">
-                    <span>{playbook.lessons} lessons</span>
-                    <span>•</span>
-                    <span>{playbook.duration}</span>
+                  {video.description && (
+                    <p className="text-sm text-slate-400 mb-3 line-clamp-2">
+                      {video.description}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>{formatDate(video.created_at)}</span>
+                    {video.file_size && (
+                      <span>{formatFileSize(video.file_size)}</span>
+                    )}
                   </div>
-
-                  <div className="pt-3" style={{ borderTop: `1px solid ${playbook.borderColor}` }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-slate-300">Progress</span>
-                      <span className="text-lg font-bold text-white">{playbook.progress}%</span>
-                    </div>
-                    <div className="h-2 bg-[#0a0a0a] rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-[#a855f7]"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${playbook.progress}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 + idx * 0.1 }}
-                      />
-                    </div>
-                  </div>
+                  {video.uploaded_by_name && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Uploaded by {video.uploaded_by_name}
+                    </p>
+                  )}
+                  
+                  {/* Delete button for managers */}
+                  {isManager && (
+                    <button
+                      onClick={() => handleDelete(video.id)}
+                      className="mt-3 px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
+                  )}
                 </div>
               </motion.div>
-            )
-          })}
+            ))}
         </div>
+        )}
       </div>
-
     </div>
   )
 }
