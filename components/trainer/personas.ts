@@ -1,5 +1,5 @@
 export const ALLOWED_AGENT_ORDER = [
-  'Austin',
+  'Average Austin',
   'No Problem Nancy',
   'Already Got It Alan',
   'Not Interested Nick',
@@ -74,7 +74,7 @@ interface PersonaMetadata {
 }
 
 export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
-  Austin: {
+  'Average Austin': {
     bubble: {
       subtitle: 'Skeptical but Fair',
       description: 'Challenges pricing and pressure tactics. Practice trust building.',

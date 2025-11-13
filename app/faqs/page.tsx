@@ -15,7 +15,7 @@ const items = [
   },
   {
     question: 'Which AI homeowners can I practice with?',
-    answer: 'Free users have access to 3 basic AI agents: Austin (skeptical but fair), No Problem Nancy (easy-going), and Already Got It Alan (loyal to current provider). Paid subscribers get access to all 12+ AI training agents, including challenging personas like Not Interested Nick, Too Expensive Tim, and Tag Team Tanya & Tom.'
+    answer: 'Free users have access to 3 basic AI agents: Average Austin (skeptical but fair), No Problem Nancy (easy-going), and Already Got It Alan (loyal to current provider). Paid subscribers get access to all 12+ AI training agents, including challenging personas like Not Interested Nick, Too Expensive Tim, and Tag Team Tanya & Tom.'
   },
   {
     question: 'What kind of feedback do I get after a session?',

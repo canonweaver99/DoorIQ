@@ -31,7 +31,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
 
   // ALWAYS USE THESE IMAGES - both pre-session and during session
   const agentImageMap: Record<string, string> = {
-    'Austin': '/Austin Boss.png',
+    'Average Austin': '/Austin Boss.png',
     'No Problem Nancy': '/No Problem Nancy Black.png',
     'Already Got It Alan': '/Already got it Alan landscape.png',
     'Not Interested Nick': '/Not Interested Nick.png',
@@ -91,12 +91,12 @@ function TrainerPageContent() {
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
-    return agentName === 'Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan'
+    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan'
   }
   
   // Helper function to get video paths for an agent
   const getAgentVideoPaths = (agentName: string | null | undefined): { loop: string; closing: string; opening?: string } | null => {
-    if (agentName === 'Austin') {
+    if (agentName === 'Average Austin') {
       return {
         loop: '/austin-loop.mp4',
         closing: '/austin-door-close.mp4'

@@ -62,7 +62,7 @@ export function MeetHomeownersSection() {
   }
   
   // Use the same agents as practice page with cutout bubble images
-  const agentNames: AllowedAgentName[] = ['Austin', 'No Problem Nancy', 'Too Expensive Tim', 'Busy Beth', 'Skeptical Sam', 'Spouse Check Susan']
+  const agentNames: AllowedAgentName[] = ['Average Austin', 'No Problem Nancy', 'Too Expensive Tim', 'Busy Beth', 'Skeptical Sam', 'Spouse Check Susan']
   
   const agents = agentNames.map((agentName) => {
     const metadata = PERSONA_METADATA[agentName]
