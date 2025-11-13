@@ -68,7 +68,6 @@ export async function POST(request: NextRequest) {
     const sessionData: any = {
       user_id: user.id,
       agent_name: 'Uploaded Recording',
-      agent_id: 'uploaded',
       full_transcript: formattedTranscript,
       audio_url: fileUrl,
       duration_seconds: durationSeconds,
