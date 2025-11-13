@@ -23,6 +23,7 @@ function PricingPageContent() {
   const [showStickyHeader, setShowStickyHeader] = useState(false)
   const [showAnnualInvestment, setShowAnnualInvestment] = useState(false)
   const [showROICalculations, setShowROICalculations] = useState(false)
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null)
 
   // Handle scroll for sticky header
   useEffect(() => {
@@ -318,29 +319,52 @@ function PricingPageContent() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-center mb-6 pt-12"
+                    className="text-center mb-8 pt-12 relative pb-32"
                   >
-                    <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-2 tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
+                    <div
+                      className={cn(
+                        'z-[-10] pointer-events-none absolute -inset-10 size-[calc(100%+5rem)]',
+                        'bg-[linear-gradient(to_right,theme(colors.white/.085)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.white/.085)_1px,transparent_1px)]',
+                        'bg-[size:32px_32px]',
+                        '[mask-image:radial-gradient(ellipse_120%_100%_at_50%_50%,var(--background)_10%,transparent_80%)]',
+                      )}
+                    />
+                    <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-2 tracking-tight relative z-10" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
                       Just $2 Per Day, Per Rep
                     </h2>
-                    <p className="text-lg sm:text-xl lg:text-2xl text-white mb-2 font-medium">
+                    <p className="text-lg sm:text-xl lg:text-2xl text-white mb-8 font-medium relative z-10">
                       Less than their daily energy drink, infinite ROI potential
                     </p>
-                  </motion.div>
-
-                  {/* Interactive Calculator */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="mb-4"
-                  >
+                    
+                    {/* Interactive Calculator - Moved inside hero section */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="mb-4 relative z-10"
+                    >
                     <label className="block text-lg font-bold text-white mb-3 text-center tracking-wide">
                       Number of Sales Reps:
                     </label>
                     <div className="max-w-2xl mx-auto">
+                      {/* Rep Count Input - Above Slider */}
+                      <div className="text-center mb-4">
+                        <input
+                          type="number"
+                          min="5"
+                          max="100"
+                          value={numReps}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 5
+                            setNumReps(Math.max(5, Math.min(100, value)))
+                          }}
+                          className="inline-block px-4 py-2 rounded-lg border border-white/30 bg-black text-white text-xl font-bold font-mono text-center w-24 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all"
+                        />
+                        <span className="text-white text-lg ml-2">reps</span>
+                      </div>
+                      
                       {/* Slider */}
-                      <div className="relative mb-3">
+                      <div className="relative mb-8">
                       <input
                           type="range"
                           min="5"
@@ -364,53 +388,24 @@ function PricingPageContent() {
                         </div>
                       </div>
                       
-                      {/* Rep Count Display */}
-                      <div className="text-center">
-                        <motion.div 
-                          key={numReps}
-                          initial={{ scale: 0.9, opacity: 0.8 }}
-                          animate={{ 
-                            scale: 1,
-                            opacity: 1
-                          }}
+                      {/* Contact Sales CTA */}
+                      <div className="text-center mt-8">
+                        <motion.a
+                          href="/contact-sales"
+                          initial={{ opacity: 0.8 }}
+                          animate={{ opacity: 1 }}
+                          whileHover={{ opacity: 0.7 }}
                           transition={{ duration: 0.3 }}
-                          className="inline-block px-6 py-3 rounded-lg border-2 border-white/30 bg-black"
+                          className="text-white text-lg font-medium inline-flex items-center gap-2 group"
                         >
-                          <div className="text-4xl font-bold text-white mb-0.5 font-mono">{numReps}</div>
-                          <div className="text-sm text-white">reps</div>
-                        </motion.div>
-                        <p className="text-lg font-bold text-white mt-1.5 text-center tracking-wide">
-                          5 rep minimum for team accountability
-                        </p>
+                          <span>Contact Sales</span>
+                          <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                        </motion.a>
                       </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Investment & ROI Display */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="mb-8 max-w-6xl mx-auto mt-6"
-                  >
-                    <div className="relative">
-                      <div
-                        className={cn(
-                          'z-[-10] pointer-events-none absolute inset-0 size-full',
-                          'bg-[linear-gradient(to_right,theme(colors.white/.1)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.white/.1)_1px,transparent_1px)]',
-                          'bg-[size:32px_32px]',
-                          '[mask-image:radial-gradient(ellipse_at_center,var(--background)_10%,transparent)]',
-                        )}
-                      />
-
-                            <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                        viewport={{ once: true }}
-                        className="mx-auto w-full space-y-8"
-                      >
-                        <div className="grid md:grid-cols-2 gap-6 bg-black relative border border-white/20 p-4 mt-8">
+                      
+                      {/* Pricing Cards - Moved right under Contact Sales */}
+                      <div className="max-w-6xl mx-auto mt-6 relative z-10">
+                        <div className="grid md:grid-cols-2 gap-6 bg-black relative border border-white/20 p-4">
                           <Plus className="absolute -top-3 -left-3 size-5 text-white" />
                           <Plus className="absolute -top-3 -right-3 size-5 text-white" />
                           <Plus className="absolute -bottom-3 -left-3 size-5 text-white" />
@@ -419,7 +414,7 @@ function PricingPageContent() {
                           {/* Monthly Investment Card */}
                           <button
                             onClick={() => handleSelectPricingOption('monthly')}
-                            className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4 cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all group"
+                            className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4 cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all group text-left"
                           >
                             <BorderTrail
                               style={{
@@ -431,7 +426,6 @@ function PricingPageContent() {
                             <div className="space-y-1 mb-4">
                               <div className="flex items-center justify-between">
                                 <h3 className="leading-none font-semibold text-white">Monthly</h3>
-                                <ChevronRight className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                             </div>
                             <div className="mt-6 space-y-4">
@@ -453,14 +447,18 @@ function PricingPageContent() {
                               </div>
                               <div className="text-base text-white font-semibold">
                                 $2/day × {numReps} reps × 30 days
-                                </div>
-                                </div>
-                              </button>
+                              </div>
+                            </div>
+                            <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-gray-400 text-sm">Contact Sales</span>
+                              <ChevronRight className="w-5 h-5 text-white" />
+                            </div>
+                          </button>
 
                           {/* Annual Investment Card */}
                           <button
                             onClick={() => handleSelectPricingOption('annual')}
-                            className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4 overflow-hidden cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all group"
+                            className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4 overflow-hidden cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all group text-left"
                           >
                             {/* Green Triangle Corner */}
                             <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[60px] border-l-transparent border-t-[60px] border-t-emerald-500"></div>
@@ -477,8 +475,7 @@ function PricingPageContent() {
                                   Annual
                                   <Badge>Best Value</Badge>
                                 </h3>
-                                <ChevronRight className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
+                              </div>
                             </div>
                             <div className="mt-6 space-y-4">
                               <div className="text-white flex items-end text-xl">
@@ -487,7 +484,7 @@ function PricingPageContent() {
                                   key={pricing.annualMonthly}
                                   initial={{ scale: 1 }}
                                   animate={{ scale: [1, 1.05, 1] }}
-                              transition={{ duration: 0.3 }}
+                                  transition={{ duration: 0.3 }}
                                   className="text-white -mb-0.5 text-4xl font-extrabold tracking-tighter md:text-5xl font-mono"
                                 >
                                   {pricing.annualMonthly.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -495,18 +492,52 @@ function PricingPageContent() {
                                 <span>/month</span>
                               </div>
                               <div className="text-lg text-white font-semibold font-mono flex items-center gap-2">
-                                <span className="text-gray-500 text-base line-through opacity-60">${(pricing.monthly * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                <span className="text-gray-400 text-base line-through opacity-50">${(pricing.monthly * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                                 <span>= ${pricing.annual.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year</span>
                               </div>
                               <div className="text-base text-emerald-500 font-semibold">
                                 Save ${pricing.savings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year vs monthly
                               </div>
                             </div>
+                            <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
+                              <span className="text-gray-400 text-sm">Contact Sales</span>
+                              <ChevronRight className="w-5 h-5 text-white" />
+                            </div>
                           </button>
+                        </div>
                       </div>
+                    </div>
+                    </motion.div>
+                  </motion.div>
+
+                  {/* Investment & ROI Display */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="mb-8 max-w-6xl mx-auto mt-0 relative"
+                  >
+                    {/* Large Grid Background - Extended */}
+                    <div
+                      className={cn(
+                        'z-[-10] pointer-events-none absolute -inset-20 size-[calc(100%+10rem)]',
+                        'bg-[linear-gradient(to_right,theme(colors.white/.085)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.white/.085)_1px,transparent_1px)]',
+                        'bg-[size:32px_32px]',
+                        '[mask-image:radial-gradient(ellipse_120%_80%_at_50%_45%,var(--background)_10%,transparent_85%)]',
+                      )}
+                    />
+                    <div className="relative">
+
+                            <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        viewport={{ once: true }}
+                        className="mx-auto w-full space-y-4"
+                      >
 
                         {/* ROI Header Text */}
-                        <div className="text-center py-4">
+                        <div className="text-center py-4 relative z-10">
                           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-3 tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
                             Your Competitive Advantage
                           </h2>
@@ -520,7 +551,7 @@ function PricingPageContent() {
                           const investment = showAnnualInvestment ? pricing.annual : pricing.monthly * 12
                           const netProfit = showAnnualInvestment ? roi.annualROI : roi.annualValue - (pricing.monthly * 12)
                           return (
-                            <div className="bg-black relative border border-white/20 p-6 rounded-lg">
+                            <div className="bg-black relative border border-white/20 p-6 rounded-lg z-10">
                               <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                   <span className="text-white text-lg font-medium">Revenue:</span>
@@ -644,7 +675,7 @@ function PricingPageContent() {
                               whileInView={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.6, delay: 0.2 }}
                               viewport={{ once: true }}
-                              className="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-2 border-emerald-500/50 rounded-lg p-5 md:p-6"
+                              className="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-2 border-emerald-500/50 rounded-lg p-5 md:p-6 z-10"
                             >
                               <div className="absolute -top-2 -left-2 size-5 bg-emerald-500 rounded-full flex items-center justify-center">
                                 <span className="text-white text-sm">💰</span>
@@ -691,7 +722,7 @@ function PricingPageContent() {
                                 )
                               })()}
 
-                        <div className="text-white flex items-center justify-center gap-x-2 text-base md:text-lg font-medium">
+                        <div className="text-white flex items-center justify-center gap-x-2 text-base md:text-lg font-medium relative z-10">
                           <ShieldCheck className="size-4 text-emerald-500" />
                           <span>Access to all features with no hidden fees • 14-day free trial</span>
                         </div>
@@ -710,59 +741,59 @@ function PricingPageContent() {
                       Why DoorIQ vs. Traditional Training?
                     </h4>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
+                      <table className="w-full text-base md:text-lg">
                         <thead>
                           <tr className="border-b border-white/20">
-                            <th className="text-left py-3 text-white font-semibold">Feature</th>
-                            <th className="text-center py-3 text-white font-semibold">Traditional Training</th>
-                            <th className="text-center py-3 text-white font-bold bg-white/5">DoorIQ</th>
+                            <th className="text-left py-4 text-white font-semibold text-lg md:text-xl">Feature</th>
+                            <th className="text-center py-4 text-white font-semibold text-lg md:text-xl">Traditional Training</th>
+                            <th className="text-center py-4 text-white font-bold bg-white/5 text-lg md:text-xl">DoorIQ</th>
                           </tr>
                         </thead>
                         <tbody className="space-y-2">
                           <tr className="border-b border-white/10">
-                            <td className="py-3 text-white text-base font-medium">Cost per rep</td>
-                            <td className="text-center py-3 text-red-500 font-semibold text-lg">$2,000</td>
-                            <td className="text-center py-3 text-emerald-500 font-semibold text-lg">$2/day ($60/month)</td>
+                            <td className="py-4 text-white text-lg md:text-xl font-medium">Cost per rep</td>
+                            <td className="text-center py-4 text-red-500 font-semibold text-xl md:text-2xl">$2,000</td>
+                            <td className="text-center py-4 text-emerald-500 font-semibold text-xl md:text-2xl">$2/day ($60/month)</td>
                           </tr>
                           <tr className="border-b border-white/10">
-                            <td className="py-3 text-white text-base font-semibold">Annual training cost savings</td>
-                            <td className="text-center py-3 text-red-500 font-semibold text-lg">$58,000/year</td>
-                            <td className="text-center py-3 text-emerald-500 font-semibold text-lg">Save $58,000/year</td>
+                            <td className="py-4 text-white text-lg md:text-xl font-semibold">Annual training cost savings</td>
+                            <td className="text-center py-4 text-red-500 font-semibold text-xl md:text-2xl">$58,000/year</td>
+                            <td className="text-center py-4 text-emerald-500 font-semibold text-xl md:text-2xl">Save $58,000/year</td>
                           </tr>
                           <tr className="border-b border-white/10">
-                            <td className="py-3 text-white text-base font-medium">Time to first practice</td>
-                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                            <td className="py-4 text-white text-lg md:text-xl font-medium">Time to first practice</td>
+                            <td className="text-center py-4"><X className="w-6 h-6 md:w-7 md:h-7 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-4"><CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500 mx-auto" /></td>
                           </tr>
                           <tr className="border-b border-white/10">
-                            <td className="py-3 text-white text-base font-medium">Ongoing practice</td>
-                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                            <td className="py-4 text-white text-lg md:text-xl font-medium">Ongoing practice</td>
+                            <td className="text-center py-4"><X className="w-6 h-6 md:w-7 md:h-7 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-4"><CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500 mx-auto" /></td>
                           </tr>
                           <tr className="border-b border-white/10">
-                            <td className="py-3 text-white text-base font-medium">Available 24/7</td>
-                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                            <td className="py-4 text-white text-lg md:text-xl font-medium">Available 24/7</td>
+                            <td className="text-center py-4"><X className="w-6 h-6 md:w-7 md:h-7 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-4"><CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500 mx-auto" /></td>
                           </tr>
                           <tr className="border-b border-white/10">
-                            <td className="py-3 text-white text-base font-medium">Customized to your scripts</td>
-                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                            <td className="py-4 text-white text-lg md:text-xl font-medium">Customized to your scripts</td>
+                            <td className="text-center py-4"><X className="w-6 h-6 md:w-7 md:h-7 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-4"><CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500 mx-auto" /></td>
                           </tr>
                           <tr className="border-b border-white/10">
-                            <td className="py-3 text-white text-base font-medium">AI-powered scenarios</td>
-                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                            <td className="py-4 text-white text-lg md:text-xl font-medium">AI-powered scenarios</td>
+                            <td className="text-center py-4"><X className="w-6 h-6 md:w-7 md:h-7 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-4"><CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500 mx-auto" /></td>
                           </tr>
                           <tr className="border-b border-white/10">
-                            <td className="py-3 text-white text-base font-medium">Real-time feedback</td>
-                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                            <td className="py-4 text-white text-lg md:text-xl font-medium">Real-time feedback</td>
+                            <td className="text-center py-4"><X className="w-6 h-6 md:w-7 md:h-7 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-4"><CheckCircle2 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500 mx-auto" /></td>
                           </tr>
                           <tr>
-                            <td className="py-3 text-white text-base font-medium">Burned lead cost</td>
-                            <td className="text-center py-3 text-red-500 font-semibold">$300-500 each</td>
-                            <td className="text-center py-3 text-emerald-500 font-semibold">Prevented</td>
+                            <td className="py-4 text-white text-lg md:text-xl font-medium">Burned lead cost</td>
+                            <td className="text-center py-4 text-red-500 font-semibold text-xl md:text-2xl">$300-500 each</td>
+                            <td className="text-center py-4 text-emerald-500 font-semibold text-xl md:text-2xl">Prevented</td>
                           </tr>
                         </tbody>
                       </table>
@@ -825,26 +856,53 @@ function PricingPageContent() {
                   >
                     <h4 className="text-3xl md:text-4xl font-black text-white mb-6 text-center tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.01em' }}>Frequently Asked Questions</h4>
                     <div className="space-y-3 max-w-3xl mx-auto">
-                      <div className="p-5 rounded-lg border border-white/20 bg-black">
-                        <h5 className="text-white font-bold text-lg mb-2">Can I try DoorIQ before committing?</h5>
-                        <p className="text-sm text-white">Yes! We offer a 14-day free trial. Try DoorIQ risk-free and see the results for yourself.</p>
-                      </div>
-                      <div className="p-5 rounded-lg border border-white/20 bg-black">
-                        <h5 className="text-white font-bold text-lg mb-2">How quickly can my team start practicing?</h5>
-                        <p className="text-sm text-white">Your team can start practicing within minutes of signup. No lengthy onboarding or setup required.</p>
-                      </div>
-                      <div className="p-5 rounded-lg border border-white/20 bg-black">
-                        <h5 className="text-white font-bold text-lg mb-2">How is this different from roleplay?</h5>
-                        <p className="text-sm text-white">Real AI conversations, not awkward coworker practice. Our AI adapts to each rep's responses in real-time, providing authentic scenarios that mirror actual customer interactions.</p>
-                      </div>
-                      <div className="p-5 rounded-lg border border-white/20 bg-black">
-                        <h5 className="text-white font-bold text-lg mb-2">Can I track individual rep progress?</h5>
-                        <p className="text-sm text-white">Yes, detailed analytics for each rep. You'll see session completion rates, improvement trends, areas of strength, and specific skills that need development.</p>
-                      </div>
-                      <div className="p-5 rounded-lg border border-white/20 bg-black">
-                        <h5 className="text-white font-bold text-lg mb-2">What if I need to add or remove reps?</h5>
-                        <p className="text-sm text-white">You can adjust your team size anytime. We'll prorate your billing based on the changes.</p>
-                      </div>
+                      {[
+                        {
+                          question: "Can I try DoorIQ before committing?",
+                          answer: "Yes! We offer a 14-day free trial. Try DoorIQ risk-free and see the results for yourself."
+                        },
+                        {
+                          question: "How quickly can my team start practicing?",
+                          answer: "Your team can start practicing within minutes of signup. No lengthy onboarding or setup required."
+                        },
+                        {
+                          question: "How is this different from roleplay?",
+                          answer: "Real AI conversations, not awkward coworker practice. Our AI adapts to each rep's responses in real-time, providing authentic scenarios that mirror actual customer interactions."
+                        },
+                        {
+                          question: "Can I track individual rep progress?",
+                          answer: "Yes, detailed analytics for each rep. You'll see session completion rates, improvement trends, areas of strength, and specific skills that need development."
+                        },
+                        {
+                          question: "What if I need to add or remove reps?",
+                          answer: "You can adjust your team size anytime. We'll prorate your billing based on the changes."
+                        }
+                      ].map((faq, index) => (
+                        <div key={index} className="rounded-lg border border-white/20 bg-black overflow-hidden">
+                          <button
+                            onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+                            className="w-full p-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                          >
+                            <h5 className="text-white font-bold text-lg pr-4">{faq.question}</h5>
+                            <ChevronRight 
+                              className={`w-5 h-5 text-white flex-shrink-0 transition-transform ${openFAQ === index ? 'rotate-90' : ''}`}
+                            />
+                          </button>
+                          <AnimatePresence>
+                            {openFAQ === index && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                className="overflow-hidden"
+                              >
+                                <p className="text-base md:text-lg text-white px-5 pb-5 pt-0">{faq.answer}</p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      ))}
                     </div>
                   </motion.div>
 
