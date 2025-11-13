@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Loader2, ArrowLeft, ChevronRight, DollarSign, Calendar, TrendingUp, Users, CheckCircle2, Sparkles, X, Zap, Shield, Clock, Star, Award, Plus, ShieldCheck } from "lucide-react"
 import Cal, { getCalApi } from "@calcom/embed-react"
@@ -16,14 +17,39 @@ interface PricingData {
 }
 
 function PricingPageContent() {
+  const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState(0)
   const [calLoaded, setCalLoaded] = useState(false)
-  const [numReps, setNumReps] = useState<number>(15) // Start at sweet spot
+  const [numReps, setNumReps] = useState<number>(15) // Default to sweet spot
   const [selectedPricingOption, setSelectedPricingOption] = useState<'monthly' | 'annual' | null>(null)
   const [showStickyHeader, setShowStickyHeader] = useState(false)
   const [showAnnualInvestment, setShowAnnualInvestment] = useState(false)
   const [showROICalculations, setShowROICalculations] = useState(false)
   const [openFAQ, setOpenFAQ] = useState<number | null>(null)
+
+  // Initialize numReps from URL params or sessionStorage
+  useEffect(() => {
+    // First check URL params
+    const repsParam = searchParams.get('reps')
+    if (repsParam) {
+      const reps = parseInt(repsParam)
+      if (!isNaN(reps) && reps >= 5 && reps <= 100) {
+        setNumReps(reps)
+        return
+      }
+    }
+    
+    // Then check sessionStorage
+    if (typeof window !== 'undefined') {
+      const storedReps = sessionStorage.getItem('dooriq_pricing_reps')
+      if (storedReps) {
+        const reps = parseInt(storedReps)
+        if (!isNaN(reps) && reps >= 5 && reps <= 100) {
+          setNumReps(reps)
+        }
+      }
+    }
+  }, [searchParams])
 
   // Handle scroll for sticky header
   useEffect(() => {
@@ -319,7 +345,7 @@ function PricingPageContent() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-center mb-8 pt-12 relative pb-32"
+                    className="text-center mb-8 pt-12 relative pb-8"
                   >
                     <div
                       className={cn(
@@ -333,7 +359,7 @@ function PricingPageContent() {
                       Just $2 Per Day, Per Rep
                     </h2>
                     <p className="text-lg sm:text-xl lg:text-2xl text-white mb-8 font-medium relative z-10">
-                      Less than their daily energy drink, infinite ROI potential
+                      Unlimited practice sessions, huge ROI potential
                     </p>
                     
                     {/* Interactive Calculator - Moved inside hero section */}
@@ -449,8 +475,7 @@ function PricingPageContent() {
                                 $2/day × {numReps} reps × 30 days
                               </div>
                             </div>
-                            <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <span className="text-gray-400 text-sm">Contact Sales</span>
+                            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                               <ChevronRight className="w-5 h-5 text-white" />
                             </div>
                           </button>
@@ -499,8 +524,7 @@ function PricingPageContent() {
                                 Save ${pricing.savings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year vs monthly
                               </div>
                             </div>
-                            <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
-                              <span className="text-gray-400 text-sm">Contact Sales</span>
+                            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-30">
                               <ChevronRight className="w-5 h-5 text-white" />
                             </div>
                           </button>
@@ -515,7 +539,7 @@ function PricingPageContent() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="mb-8 max-w-6xl mx-auto mt-0 relative"
+                    className="mb-8 max-w-6xl mx-auto -mt-8 relative"
                   >
                     {/* Large Grid Background - Extended */}
                     <div
@@ -1004,6 +1028,12 @@ function PricingPageContent() {
 
 export default function PricingPage() {
   return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    }>
       <PricingPageContent />
+    </Suspense>
   )
 }
