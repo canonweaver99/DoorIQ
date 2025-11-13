@@ -426,7 +426,7 @@ function ProblemSolutionSection() {
               onClick={() => vibrate()}
               className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold backdrop-blur-sm"
             >
-              Get Started
+              See Pricing
             </Link>
           </motion.div>
         </motion.div>

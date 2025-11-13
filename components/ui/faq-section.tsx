@@ -123,14 +123,31 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
                   
                   {/* Right side - CTA Button */}
                   <div className="flex-shrink-0">
-                    <motion.button
-                      onClick={contactInfo.onContact}
-                      className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white transition-all px-8 py-4 text-base md:text-lg font-semibold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 whitespace-nowrap"
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
+                    <motion.span 
+                      className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
+                      whileHover={{ y: -3 }}
+                      transition={{ duration: 0.2 }}
                     >
-                      {contactInfo.buttonText}
-                    </motion.button>
+                      <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                      <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
+                        <motion.button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+                              try {
+                                navigator.vibrate(10)
+                              } catch {}
+                            }
+                            contactInfo.onContact?.()
+                          }}
+                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base md:text-lg font-semibold whitespace-nowrap"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {contactInfo.buttonText}
+                        </motion.button>
+                      </div>
+                    </motion.span>
                   </div>
                 </div>
               </div>
