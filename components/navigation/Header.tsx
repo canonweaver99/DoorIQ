@@ -309,7 +309,7 @@ function HeaderContent() {
         items: [
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
           ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 }]),
-          { name: 'Playbooks', href: hasActiveSubscription ? '/dashboard?tab=learning' : '/pricing', icon: NotebookPen },
+          { name: 'Learning', href: hasActiveSubscription ? '/dashboard?tab=learning' : '/pricing', icon: NotebookPen },
           { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
         ],
@@ -353,7 +353,7 @@ function HeaderContent() {
     const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }> = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 }]),
-      { name: 'Playbooks', href: '/dashboard?tab=learning', icon: NotebookPen },
+      { name: 'Learning', href: '/dashboard?tab=learning', icon: NotebookPen },
       { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
       // Archived: { name: 'Documentation', href: '/documentation', icon: BookOpen },
