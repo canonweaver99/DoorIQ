@@ -9,7 +9,7 @@ export default function TeamPage() {
           href="/team/invite"
           className="inline-flex items-center rounded-md bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-sm font-medium text-white shadow hover:from-purple-600 hover:to-pink-600"
         >
-          Invite a Friend
+          Invite a Sales Rep
         </a>
       </div>
     </div>

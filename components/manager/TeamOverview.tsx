@@ -418,7 +418,7 @@ export default function TeamOverview() {
 
         <Link href="/team/invite" className="action-card">
           <UserPlus className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
-          <p className="text-sm font-medium text-white">Invite a Friend</p>
+          <p className="text-sm font-medium text-white">Invite a Sales Rep</p>
         </Link>
 
         <Link href="/manager?tab=analytics" className="action-card">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Bell, Zap, Shield, Plus, Trash, Key, UserPlus, Target, CheckCircle2 } from 'lucide-react'
+import { Users, Bell, Shield, UserPlus, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 
 interface TeamMember {
@@ -80,7 +80,7 @@ export default function ManagerSettings() {
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-white mb-1">Manager Settings</h2>
-        <p className="text-slate-400">Configure team settings, permissions, and integrations</p>
+        <p className="text-slate-400">Configure team settings and permissions</p>
       </div>
 
       {/* Team Name Section */}
@@ -185,7 +185,7 @@ export default function ManagerSettings() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-medium text-white transition-all shadow-lg shadow-purple-600/30"
               >
                 <UserPlus className="w-4 h-4" />
-                Invite a Friend
+                Invite a Sales Rep
               </Link>
             </>
           ) : (
@@ -197,7 +197,7 @@ export default function ManagerSettings() {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-medium text-white transition-all shadow-lg shadow-purple-600/30"
               >
                 <UserPlus className="w-4 h-4" />
-                Invite a Friend
+                Invite a Sales Rep
               </Link>
             </div>
           )}
@@ -239,111 +239,6 @@ export default function ManagerSettings() {
           </div>
         </motion.div>
 
-        {/* Training Settings */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-green-500/10 rounded-xl border border-green-500/20">
-              <Target className="w-5 h-5 text-green-400" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Training Settings</h3>
-              <p className="text-xs text-slate-400">Configure requirements</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Minimum Passing Score</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="50"
-                  max="90"
-                  defaultValue="70"
-                  className="flex-1"
-                />
-                <span className="text-sm font-semibold text-white w-12 text-center">70%</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Required Sessions Per Week</label>
-              <input
-                type="number"
-                min="1"
-                max="20"
-                defaultValue="5"
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Certification Renewal</label>
-              <select className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40">
-                <option>Every 3 months</option>
-                <option>Every 6 months</option>
-                <option>Annually</option>
-              </select>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Integration Settings */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-amber-500/10 rounded-xl border border-amber-500/20">
-              <Zap className="w-5 h-5 text-amber-400" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Integrations</h3>
-              <p className="text-xs text-slate-400">Connect external services</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              { name: 'Salesforce CRM', status: 'Not Connected', color: 'slate' },
-              { name: 'Google Calendar', status: 'Not Connected', color: 'slate' },
-              { name: 'Slack', status: 'Not Connected', color: 'slate' },
-              { name: 'Zapier', status: 'Not Connected', color: 'slate' },
-            ].map((integration, idx) => (
-              <div key={idx} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
-                <div>
-                  <p className="text-sm font-semibold text-white">{integration.name}</p>
-                  <p className="text-xs text-slate-400">
-                    {integration.status}
-                  </p>
-                </div>
-                <button className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30">
-                  Connect
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 p-4 bg-gradient-to-br from-purple-600/10 to-indigo-600/10 border border-purple-500/20 rounded-xl">
-            <div className="flex items-start gap-3">
-              <Key className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-white mb-1">API Access</p>
-                <p className="text-xs text-slate-300 mb-3">Configure webhooks and API keys for custom integrations</p>
-                <button className="text-xs font-medium text-purple-400 hover:text-purple-300 transition-colors">
-                  Manage API Keys →
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </div>
   )

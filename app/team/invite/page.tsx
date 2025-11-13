@@ -92,7 +92,7 @@ export default function InviteFriendPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Invite a Friend</h1>
+        <h1 className="text-3xl font-bold text-white">Invite a Sales Rep</h1>
         <p className="mt-2 text-slate-400">
           Share DoorIQ with your friends and grow your network
         </p>
