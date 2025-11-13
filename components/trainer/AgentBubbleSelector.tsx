@@ -162,11 +162,34 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
       }
       
       if (!error && data) {
-        const filtered = data.filter((agent: AgentRow) => Boolean(agent.eleven_agent_id) && ALLOWED_AGENT_SET.has(agent.name as AllowedAgentName))
+        // Normalize agent names for backward compatibility (Austin -> Average Austin)
+        const normalizeAgentName = (name: string): AllowedAgentName | null => {
+          if (name === 'Austin') return 'Average Austin'
+          return ALLOWED_AGENT_SET.has(name as AllowedAgentName) ? (name as AllowedAgentName) : null
+        }
+        
+        const filtered = data.filter((agent: AgentRow) => {
+          if (!Boolean(agent.eleven_agent_id)) return false
+          const normalizedName = normalizeAgentName(agent.name)
+          return normalizedName !== null
+        }).map((agent: AgentRow) => {
+          // Normalize the name in the agent object for consistent handling
+          const normalizedName = normalizeAgentName(agent.name)
+          return normalizedName ? { ...agent, name: normalizedName } : agent
+        })
+        
         const sorted = filtered.sort((a: AgentRow, b: AgentRow) => ALLOWED_AGENT_ORDER.indexOf(a.name as AllowedAgentName) - ALLOWED_AGENT_ORDER.indexOf(b.name as AllowedAgentName))
 
         const hydrated = sorted.map((agent: AgentRow, index: number) => {
-          const agentSessions = sessions.filter((s: any) => s.agent_name === agent.name)
+          // Filter sessions by agent name, handling both "Austin" and "Average Austin" for backward compatibility
+          const agentSessions = sessions.filter((s: any) => {
+            const sessionAgentName = s.agent_name
+            const currentAgentName = agent.name
+            // Match if names are equal, or if one is "Austin" and the other is "Average Austin"
+            return sessionAgentName === currentAgentName || 
+                   (sessionAgentName === 'Austin' && currentAgentName === 'Average Austin') ||
+                   (sessionAgentName === 'Average Austin' && currentAgentName === 'Austin')
+          })
           const completedSessions = agentSessions.filter(s => s.overall_score !== null && s.overall_score > 0)
           const bestScore = completedSessions.length > 0 
             ? Math.max(...completedSessions.map(s => s.overall_score || 0))
