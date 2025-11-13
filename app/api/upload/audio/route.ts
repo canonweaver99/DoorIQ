@@ -41,8 +41,7 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const timestamp = Date.now()
-    const fileExt = file.name.split('.').pop()
-    const filename = `uploads/${user.id}/${timestamp}.${fileExt}`
+    const filename = `uploads/${user.id}/${timestamp}.${fileExt || 'webm'}`
 
     // Convert File to ArrayBuffer then to Uint8Array
     const arrayBuffer = await file.arrayBuffer()

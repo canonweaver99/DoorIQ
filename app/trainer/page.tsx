@@ -1033,7 +1033,7 @@ function TrainerPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-2 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <PaywallModal
         isOpen={showPaywall}
         onClose={() => setShowPaywall(false)}
@@ -1055,8 +1055,8 @@ function TrainerPageContent() {
         onClose={() => setShowOutOfCredits(false)}
       />
 
-      {/* Hero-Style Session Container */}
-      <div className="relative w-full max-w-7xl h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)] flex flex-col bg-black/40 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-purple-500/20 overflow-hidden">
+      {/* Full Screen Session Container */}
+      <div className="relative w-full h-screen flex flex-col bg-black/40 backdrop-blur-sm overflow-hidden">
         
         {/* Header with Timer and Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-3 sm:px-6 py-0.5 sm:py-1 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
