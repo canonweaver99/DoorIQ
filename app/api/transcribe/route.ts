@@ -40,6 +40,15 @@ export async function POST(request: NextRequest) {
     // For now, we'll use a simple alternating pattern, but this should be improved
     const formattedTranscript = await formatTranscriptWithSpeakers(transcription)
 
+    // Ensure transcript is always a valid array
+    if (!Array.isArray(formattedTranscript)) {
+      console.error('Invalid transcript format:', formattedTranscript)
+      return NextResponse.json({ 
+        error: 'Failed to format transcript',
+        details: 'Transcript must be an array'
+      }, { status: 500 })
+    }
+
     // Create session in database
     const supabase = await createServiceSupabaseClient()
     
@@ -52,6 +61,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Ensure duration is at least 1 second (some files might have 0 duration)
+    const durationSeconds = Math.max(1, Math.floor(transcription.duration || 0))
+
     // Create a new session
     const sessionData: any = {
       user_id: user.id,
@@ -59,9 +71,10 @@ export async function POST(request: NextRequest) {
       agent_id: 'uploaded',
       full_transcript: formattedTranscript,
       audio_url: fileUrl,
-      duration_seconds: Math.floor(transcription.duration || 0),
+      duration_seconds: durationSeconds,
       started_at: new Date().toISOString(),
-      ended_at: new Date().toISOString()
+      ended_at: new Date().toISOString(),
+      upload_type: 'file_upload'
     }
     
     const { data: session, error: sessionError } = await (supabase as any)
@@ -73,9 +86,12 @@ export async function POST(request: NextRequest) {
     if (sessionError) {
       console.error('Session creation error:', sessionError)
       console.error('Error details:', JSON.stringify(sessionError, null, 2))
+      console.error('Session data attempted:', JSON.stringify(sessionData, null, 2))
       return NextResponse.json({ 
         error: 'Failed to create session',
-        details: sessionError.message || JSON.stringify(sessionError)
+        details: sessionError.message || JSON.stringify(sessionError),
+        code: sessionError.code,
+        hint: sessionError.hint
       }, { status: 500 })
     }
 
@@ -97,8 +113,26 @@ async function formatTranscriptWithSpeakers(transcription: any) {
   // Extract text from transcription
   const fullText = transcription.text || ''
   
+  // If we have segments with timestamps, use those instead
+  if (transcription.segments && Array.isArray(transcription.segments) && transcription.segments.length > 0) {
+    return transcription.segments.map((segment: any, index: number) => ({
+      speaker: index % 2 === 0 ? 'rep' : 'customer',
+      text: segment.text || '',
+      timestamp: new Date(segment.start * 1000).toISOString()
+    }))
+  }
+  
   // Split into sentences for basic formatting
   const sentences = fullText.match(/[^.!?]+[.!?]+/g) || []
+  
+  // If no sentences found but we have text, use the whole text as one entry
+  if (sentences.length === 0 && fullText.trim().length > 0) {
+    return [{
+      speaker: 'rep',
+      text: fullText.trim(),
+      timestamp: new Date().toISOString()
+    }]
+  }
   
   // For now, create a simple alternating pattern
   // In production, you'd want to use speaker diarization or GPT-4 to identify speakers
@@ -108,13 +142,13 @@ async function formatTranscriptWithSpeakers(transcription: any) {
     timestamp: new Date().toISOString() // Placeholder timestamp
   }))
 
-  // If we have segments with timestamps, use those instead
-  if (transcription.segments && Array.isArray(transcription.segments)) {
-    return transcription.segments.map((segment: any, index: number) => ({
-      speaker: index % 2 === 0 ? 'rep' : 'customer',
-      text: segment.text,
-      timestamp: new Date(segment.start * 1000).toISOString()
-    }))
+  // Ensure we always return at least one entry (even if empty)
+  if (formatted.length === 0) {
+    return [{
+      speaker: 'rep',
+      text: fullText.trim() || 'No transcription available',
+      timestamp: new Date().toISOString()
+    }]
   }
 
   return formatted

@@ -41,11 +41,20 @@ interface RepStats {
   totalCallTime: number
 }
 
+interface SkillStats {
+  overall: { current: number; previous: number }
+  rapport: { current: number; previous: number }
+  discovery: { current: number; previous: number }
+  objection: { current: number; previous: number }
+  closing: { current: number; previous: number }
+}
+
 export default function RepProfilePage({ params }: { params: Promise<{ repId: string }> }) {
   const resolvedParams = use(params)
   const [rep, setRep] = useState<RepProfile | null>(null)
   const [sessions, setSessions] = useState<SessionData[]>([])
   const [stats, setStats] = useState<RepStats | null>(null)
+  const [skillStats, setSkillStats] = useState<SkillStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('month')
   const supabase = createClient()
@@ -82,6 +91,13 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
       setRep(data.rep)
       setSessions(data.sessions || [])
       setStats(data.stats)
+      setSkillStats(data.skillStats || {
+        overall: { current: 0, previous: 0 },
+        rapport: { current: 0, previous: 0 },
+        discovery: { current: 0, previous: 0 },
+        objection: { current: 0, previous: 0 },
+        closing: { current: 0, previous: 0 }
+      })
 
     } catch (error) {
       console.error('Error loading rep data:', error)
@@ -205,6 +221,169 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
             </div>
           </div>
         </motion.div>
+
+        {/* Performance Metric Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-8">
+            {/* Overall Score Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-lg p-5"
+              style={{ 
+                backgroundColor: '#2a1a3a',
+                border: '2px solid #4a2a6a',
+                boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-purple-200 uppercase tracking-wide">Overall Score</h3>
+                <svg className="w-3 h-3 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.overall?.current ?? 0}%</div>
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <p className="text-xs font-semibold text-green-400">
+                  {skillStats?.overall?.previous && skillStats.overall.previous > 0 
+                    ? `${(skillStats.overall.current - skillStats.overall.previous) > 0 ? '+' : ''}${skillStats.overall.current - skillStats.overall.previous}% from last week`
+                    : '0% from last week'
+                  }
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Rapport Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="rounded-lg p-5"
+              style={{ 
+                backgroundColor: '#1a3a2a',
+                border: '2px solid #2a6a4a',
+                boxShadow: 'inset 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-emerald-200 uppercase tracking-wide">Rapport</h3>
+                <svg className="w-3 h-3 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.rapport?.current ?? 0}%</div>
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <p className="text-xs font-semibold text-green-400">
+                  {skillStats?.rapport?.previous && skillStats.rapport.previous > 0 
+                    ? `${(skillStats.rapport.current - skillStats.rapport.previous) > 0 ? '+' : ''}${skillStats.rapport.current - skillStats.rapport.previous}% from last week`
+                    : '0% from last week'
+                  }
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Discovery Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="rounded-lg p-5"
+              style={{ 
+                backgroundColor: '#1a2a3a',
+                border: '2px solid #2a4a6a',
+                boxShadow: 'inset 0 0 20px rgba(59, 130, 246, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-blue-200 uppercase tracking-wide">Discovery</h3>
+                <svg className="w-3 h-3 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.discovery?.current ?? 0}%</div>
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <p className="text-xs font-semibold text-green-400">
+                  {skillStats?.discovery?.previous && skillStats.discovery.previous > 0 
+                    ? `${(skillStats.discovery.current - skillStats.discovery.previous) > 0 ? '+' : ''}${skillStats.discovery.current - skillStats.discovery.previous}% from last week`
+                    : '0% from last week'
+                  }
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Objection Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="rounded-lg p-5"
+              style={{ 
+                backgroundColor: '#3a2a1a',
+                border: '2px solid #6a4a2a',
+                boxShadow: 'inset 0 0 20px rgba(245, 158, 11, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-amber-200 uppercase tracking-wide">Objection</h3>
+                <svg className="w-3 h-3 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.objection?.current ?? 0}%</div>
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <p className="text-xs font-semibold text-green-400">
+                  {skillStats?.objection?.previous && skillStats.objection.previous > 0 
+                    ? `${(skillStats.objection.current - skillStats.objection.previous) > 0 ? '+' : ''}${skillStats.objection.current - skillStats.objection.previous}% from last week`
+                    : '0% from last week'
+                  }
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Closing Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="rounded-lg p-5"
+              style={{ 
+                backgroundColor: '#3a1a2a',
+                border: '2px solid #6a2a4a',
+                boxShadow: 'inset 0 0 20px rgba(236, 72, 153, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-pink-200 uppercase tracking-wide">Closing</h3>
+                <svg className="w-3 h-3 text-pink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.closing?.current ?? 0}%</div>
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <p className="text-xs font-semibold text-green-400">
+                  {skillStats?.closing?.previous && skillStats.closing.previous > 0 
+                    ? `${(skillStats.closing.current - skillStats.closing.previous) > 0 ? '+' : ''}${skillStats.closing.current - skillStats.closing.previous}% from last week`
+                    : '0% from last week'
+                  }
+                </p>
+              </div>
+            </motion.div>
+          </div>
 
         {/* Stats Cards */}
         {stats && (

@@ -2136,7 +2136,10 @@ function UploadTabContent() {
 
       if (!transcribeResponse.ok) {
         const errorData = await transcribeResponse.json()
-        throw new Error(errorData.error || 'Transcription failed')
+        const errorMessage = errorData.error || 'Transcription failed'
+        const errorDetails = errorData.details ? `: ${errorData.details}` : ''
+        const errorHint = errorData.hint ? ` (${errorData.hint})` : ''
+        throw new Error(`${errorMessage}${errorDetails}${errorHint}`)
       }
 
       const transcribeData = await transcribeResponse.json()

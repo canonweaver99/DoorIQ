@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ rep
     // Get rep sessions (limited for performance)
     const { data: sessions, error: sessionError } = await supabase
       .from('live_sessions')
-      .select('id, overall_score, virtual_earnings, created_at, agent_name, duration_seconds, sale_closed')
+      .select('id, overall_score, rapport_score, discovery_score, objection_handling_score, close_score, virtual_earnings, created_at, agent_name, duration_seconds, sale_closed')
       .eq('user_id', repId)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -76,13 +76,62 @@ export async function GET(request: NextRequest, context: { params: Promise<{ rep
       }
     }
 
+    // Calculate skill averages (current period - last 7 days)
+    const now = new Date()
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    
+    const recentSessions = sessions?.filter(s => {
+      const sessionDate = new Date(s.created_at)
+      return sessionDate >= sevenDaysAgo
+    }) || []
+    
+    // Previous period (7-14 days ago)
+    const fourteenDaysAgo = new Date()
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+    
+    const previousSessions = sessions?.filter(s => {
+      const sessionDate = new Date(s.created_at)
+      return sessionDate >= fourteenDaysAgo && sessionDate < sevenDaysAgo
+    }) || []
+
+    const calculateAverage = (sessions: any[], field: string) => {
+      const valid = sessions.filter(s => s[field] !== null && s[field] !== undefined)
+      if (valid.length === 0) return 0
+      return Math.round(valid.reduce((sum, s) => sum + (s[field] || 0), 0) / valid.length)
+    }
+
+    const skillStats = {
+      overall: {
+        current: calculateAverage(recentSessions, 'overall_score'),
+        previous: calculateAverage(previousSessions, 'overall_score')
+      },
+      rapport: {
+        current: calculateAverage(recentSessions, 'rapport_score'),
+        previous: calculateAverage(previousSessions, 'rapport_score')
+      },
+      discovery: {
+        current: calculateAverage(recentSessions, 'discovery_score'),
+        previous: calculateAverage(previousSessions, 'discovery_score')
+      },
+      objection: {
+        current: calculateAverage(recentSessions, 'objection_handling_score'),
+        previous: calculateAverage(previousSessions, 'objection_handling_score')
+      },
+      closing: {
+        current: calculateAverage(recentSessions, 'close_score'),
+        previous: calculateAverage(previousSessions, 'close_score')
+      }
+    }
+
     return NextResponse.json({
       rep: repData,
       sessions: sessions || [],
       stats: {
         ...stats,
         recentTrend
-      }
+      },
+      skillStats
     })
 
   } catch (error: any) {
