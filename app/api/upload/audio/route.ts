@@ -15,9 +15,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large (max 100MB)' }, { status: 400 })
     }
 
-    // Validate file type
-    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'video/mp4', 'video/quicktime']
-    if (!validTypes.includes(file.type)) {
+    // Validate file type - also check file extension as fallback
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'video/mp4', 'video/quicktime', 'audio/m4a']
+    const fileExt = file.name.split('.').pop()?.toLowerCase()
+    const validExtensions = ['mp3', 'wav', 'webm', 'mp4', 'mov', 'm4a']
+    
+    // Check both MIME type and file extension
+    const isValidType = validTypes.includes(file.type) || (fileExt && validExtensions.includes(fileExt))
+    
+    if (!isValidType) {
+      console.error('Invalid file type:', { type: file.type, name: file.name, ext: fileExt })
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
     }
 

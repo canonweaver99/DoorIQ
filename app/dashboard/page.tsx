@@ -2032,9 +2032,14 @@ function UploadTabContent() {
     const selectedFile = e.target.files?.[0]
     if (!selectedFile) return
 
-    // Validate file type
+    // Validate file type - check both MIME type and file extension
     const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'video/mp4', 'video/quicktime', 'audio/m4a']
-    if (!validTypes.includes(selectedFile.type)) {
+    const fileExt = selectedFile.name.split('.').pop()?.toLowerCase()
+    const validExtensions = ['mp3', 'wav', 'webm', 'mp4', 'mov', 'm4a']
+    
+    const isValidType = validTypes.includes(selectedFile.type) || (fileExt && validExtensions.includes(fileExt))
+    
+    if (!isValidType) {
       setError('Please upload an audio file (MP3, WAV, M4A, WEBM, MP4, or MOV)')
       return
     }
@@ -2064,8 +2069,14 @@ function UploadTabContent() {
     
     const droppedFile = e.dataTransfer.files[0]
     if (droppedFile) {
+      // Validate file type - check both MIME type and file extension
       const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'video/mp4', 'video/quicktime', 'audio/m4a']
-      if (validTypes.includes(droppedFile.type)) {
+      const fileExt = droppedFile.name.split('.').pop()?.toLowerCase()
+      const validExtensions = ['mp3', 'wav', 'webm', 'mp4', 'mov', 'm4a']
+      
+      const isValidType = validTypes.includes(droppedFile.type) || (fileExt && validExtensions.includes(fileExt))
+      
+      if (isValidType) {
         if (droppedFile.size > 100 * 1024 * 1024) {
           setError('File size must be less than 100MB')
           return
@@ -2169,7 +2180,18 @@ function UploadTabContent() {
     if (!blob) return
 
     setShowRecordingUI(false)
-    setFile(new File([blob], `recording-${Date.now()}.webm`, { type: blob.type }))
+    // Ensure the MIME type is set correctly for webm files
+    // MediaRecorder might return 'audio/webm;codecs=opus', so normalize it
+    let mimeType = blob.type || 'audio/webm'
+    if (mimeType.includes('webm')) {
+      mimeType = 'audio/webm'
+    } else if (mimeType.includes('mp4')) {
+      mimeType = 'audio/mp4'
+    }
+    
+    const file = new File([blob], `recording-${Date.now()}.webm`, { type: mimeType })
+    setFile(file)
+    setError(null)
   }
 
   const handleCancelRecording = () => {
