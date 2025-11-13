@@ -249,19 +249,15 @@ function DashboardPageContent() {
   }
 
   const handleTabClick = (tabId: string) => {
-    if ((tabId === 'learning' || tabId === 'upload') && !isPaidUser) {
-      window.location.href = '/pricing'
-      return
-    }
     setActiveTab(tabId)
   }
 
   const tabs = [
     { id: 'overview', label: 'Dashboard', icon: Home, locked: false },
-    { id: 'learning', label: 'Learning', icon: BookOpen, locked: !isPaidUser },
-    { id: 'upload', label: 'Upload', icon: Upload, locked: !isPaidUser },
+    { id: 'learning', label: 'Learning', icon: BookOpen, locked: false },
+    { id: 'upload', label: 'Upload', icon: Upload, locked: false },
     ...(hasTeam ? [
-      { id: 'team', label: 'Team', icon: UsersIcon, locked: !isPaidUser },
+      { id: 'team', label: 'Team', icon: UsersIcon, locked: false },
     ] : []),
   ]
 
