@@ -8,38 +8,21 @@ import { Badge } from "@/components/ui/badge"
 import { BorderTrail } from "@/components/ui/border-trail"
 import { cn } from "@/lib/utils"
 
-const salesRepRanges = [
-  'Between 10-50 reps',
-  'Between 50-100 reps',
-  'Over 100+ reps'
-]
-
-const industries = [
-  { name: 'Pest', icon: '🐛' },
-  { name: 'Windows', icon: '🪟' },
-  { name: 'Solar', icon: '☀️' },
-  { name: 'Roofing', icon: '🏠' },
-  { name: 'Internet', icon: '📡' },
-  { name: 'Other', icon: '⭐' },
-]
-
-interface FormData {
-  salesRepRange: string
-  industry: string
+interface PricingData {
+  numReps: number
+  pricingOption: 'monthly' | 'annual'
+  monthlyPrice: number
+  annualPrice: number
 }
 
 function PricingPageContent() {
   const [currentStep, setCurrentStep] = useState(0)
   const [calLoaded, setCalLoaded] = useState(false)
-  const [customIndustry, setCustomIndustry] = useState('')
   const [numReps, setNumReps] = useState<number>(15) // Start at sweet spot
+  const [selectedPricingOption, setSelectedPricingOption] = useState<'monthly' | 'annual' | null>(null)
   const [showStickyHeader, setShowStickyHeader] = useState(false)
   const [showAnnualInvestment, setShowAnnualInvestment] = useState(false)
   const [showROICalculations, setShowROICalculations] = useState(false)
-  const [formData, setFormData] = useState<FormData>({
-    salesRepRange: '',
-    industry: ''
-  })
 
   // Handle scroll for sticky header
   useEffect(() => {
@@ -186,57 +169,90 @@ function PricingPageContent() {
     return <motion.span>${displayValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</motion.span>
   }
 
-  // Initialize Cal.com embed when reaching step 2 (calendar step)
+  // Initialize Cal.com embed when reaching step 1 (calendar step)
   useEffect(() => {
-    if (currentStep === 2) {
+    if (currentStep === 1) {
       setCalLoaded(false)
       ;(async function () {
         try {
           const cal = await getCalApi({"namespace":"dooriq"});
-          cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
-      setTimeout(() => {
+          const pricing = calculatePricing(numReps)
+          
+          // Store pricing data for webhook access
+          const pricingData = {
+            numReps: numReps.toString(),
+            pricingOption: selectedPricingOption || 'monthly',
+            monthlyPrice: pricing.monthly.toString(),
+            annualPrice: pricing.annual.toString(),
+            selectedPrice: selectedPricingOption === 'annual' 
+              ? pricing.annual.toString() 
+              : pricing.monthly.toString()
+          }
+          
+          // Store in sessionStorage and also in a data attribute on the Cal container
+          sessionStorage.setItem('dooriq_pricing_data', JSON.stringify(pricingData));
+          
+          cal("ui", {
+            "hideEventTypeDetails": false,
+            "layout": "month_view"
+          });
+          
+          // Inject pricing data into Cal.com booking form when it loads
+          // This will be picked up by the webhook
+          const injectPricingData = () => {
+            try {
+              // Try to find Cal.com's booking form and inject data
+              const calForm = document.querySelector('[data-cal-namespace="dooriq"]') as HTMLElement
+              if (calForm) {
+                calForm.setAttribute('data-pricing-info', JSON.stringify(pricingData))
+              }
+              
+              // Also try to inject into any textarea/input fields that might be custom questions
+              // Note: This requires custom questions to be set up in Cal.com dashboard
+              setTimeout(() => {
+                const textareas = document.querySelectorAll('textarea[name*="question"], textarea[name*="notes"], textarea[name*="additional"]')
+                textareas.forEach((textarea: any) => {
+                  if (!textarea.value) {
+                    textarea.value = `Pricing Info: ${pricingData.numReps} reps, ${pricingData.pricingOption} plan, $${pricingData.selectedPrice}`
+                  }
+                })
+              }, 2000)
+            } catch (e) {
+              console.error('Error injecting pricing data:', e)
+            }
+          }
+          
+          // Try to inject after Cal loads
+          setTimeout(() => {
+            injectPricingData()
             setCalLoaded(true)
-          }, 1000)
+          }, 1500)
         } catch (error) {
           console.error('Error initializing Cal.com:', error)
           setCalLoaded(true) // Show anyway if there's an error
         }
       })();
-            } else {
+    } else {
       setCalLoaded(false)
     }
-  }, [currentStep])
+  }, [currentStep, numReps, selectedPricingOption])
 
-  const handleSelectIndustry = (industry: string) => {
-    if (industry === 'Other') {
-      setFormData(prev => ({ ...prev, industry: 'Other' }))
-      // Don't advance to next step yet - wait for custom input
-    } else {
-      setFormData(prev => ({ ...prev, industry }))
-      setTimeout(() => setCurrentStep(1), 300)
-    }
-  }
-
-  const handleCustomIndustrySubmit = () => {
-    if (customIndustry.trim()) {
-      setFormData(prev => ({ ...prev, industry: customIndustry.trim() }))
-      setTimeout(() => setCurrentStep(1), 300)
-    }
+  const handleSelectPricingOption = (option: 'monthly' | 'annual') => {
+    setSelectedPricingOption(option)
+    setTimeout(() => setCurrentStep(1), 300)
   }
 
   const handleContinueToCalendar = () => {
-    setTimeout(() => setCurrentStep(2), 300)
+    // If no pricing option selected, default to monthly
+    if (!selectedPricingOption) {
+      setSelectedPricingOption('monthly')
+    }
+    setTimeout(() => setCurrentStep(1), 300)
   }
 
   const handleBack = () => {
     if (currentStep > 0) {
-      const newStep = currentStep - 1
-      if (newStep === 0 && formData.industry === 'Other') {
-        // Reset Other selection when going back to pricing calculator
-        setFormData(prev => ({ ...prev, industry: '' }))
-        setCustomIndustry('')
-      }
-      setCurrentStep(newStep)
+      setCurrentStep(currentStep - 1)
     }
   }
 
@@ -273,7 +289,7 @@ function PricingPageContent() {
                   onClick={handleContinueToCalendar}
                   className="px-6 py-3 rounded-lg bg-white text-black hover:bg-gray-100 font-semibold transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2"
                 >
-                  <span>Get Started</span>
+                  <span>Schedule Demo</span>
                   <ChevronRight className="w-4 h-4" />
                 </motion.button>
               </div>
@@ -401,7 +417,10 @@ function PricingPageContent() {
                           <Plus className="absolute -right-3 -bottom-3 size-5 text-white" />
 
                           {/* Monthly Investment Card */}
-                          <div className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4">
+                          <button
+                            onClick={() => handleSelectPricingOption('monthly')}
+                            className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4 cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all group"
+                          >
                             <BorderTrail
                               style={{
                                 boxShadow:
@@ -412,6 +431,7 @@ function PricingPageContent() {
                             <div className="space-y-1 mb-4">
                               <div className="flex items-center justify-between">
                                 <h3 className="leading-none font-semibold text-white">Monthly</h3>
+                                <ChevronRight className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                             </div>
                             <div className="mt-6 space-y-4">
@@ -435,10 +455,13 @@ function PricingPageContent() {
                                 $2/day × {numReps} reps × 30 days
                                 </div>
                                 </div>
-                              </div>
+                              </button>
 
                           {/* Annual Investment Card */}
-                          <div className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4 overflow-hidden">
+                          <button
+                            onClick={() => handleSelectPricingOption('annual')}
+                            className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4 overflow-hidden cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all group"
+                          >
                             {/* Green Triangle Corner */}
                             <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[60px] border-l-transparent border-t-[60px] border-t-emerald-500"></div>
                             <BorderTrail
@@ -454,6 +477,7 @@ function PricingPageContent() {
                                   Annual
                                   <Badge>Best Value</Badge>
                                 </h3>
+                                <ChevronRight className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                             </div>
                             <div className="mt-6 space-y-4">
@@ -478,7 +502,7 @@ function PricingPageContent() {
                                 Save ${pricing.savings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year vs monthly
                               </div>
                             </div>
-                          </div>
+                          </button>
                       </div>
 
                         {/* ROI Header Text */}
@@ -865,108 +889,6 @@ function PricingPageContent() {
           {currentStep === 1 && (
             <motion.div
               key="step-1"
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="relative bg-black border border-white/20 rounded-lg p-8 sm:p-10 lg:p-12"
-            >
-              <div className="relative z-10">
-                {currentStep > 0 && (
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  onClick={handleBack}
-                  className="flex items-center gap-2 text-white hover:text-white mb-8 transition-colors group"
-                >
-                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                  <span className="text-sm">Back</span>
-                </motion.button>
-                )}
-                <motion.h2 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-3xl sm:text-4xl font-bold text-white mb-3"
-                >
-                  Choose Your Industry
-                </motion.h2>
-                <motion.p 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-lg sm:text-xl text-white mb-8"
-                >
-                  Choose the category that best fits your business. This helps us tailor your setup.
-                </motion.p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {industries.map((industry, index) => (
-                    <motion.button
-                      key={industry.name}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4 + index * 0.05 }}
-                      onClick={() => handleSelectIndustry(industry.name)}
-                      className={`group relative flex flex-col items-center justify-center p-6 rounded-lg border transition-all hover:scale-105 active:scale-95 ${
-                        formData.industry === industry.name
-                          ? 'border-white bg-white/10'
-                          : 'border-white/20 bg-black hover:border-white/40 hover:bg-white/5'
-                      }`}
-                    >
-                      <span className="text-5xl mb-3 relative z-10 transform group-hover:scale-110 transition-transform duration-300">{industry.icon}</span>
-                      <span className="text-base font-semibold text-white relative z-10">
-                        {industry.name}
-                      </span>
-                      {industry.name !== 'Other' && (
-                        <ChevronRight className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 absolute bottom-3 z-10" />
-                      )}
-                    </motion.button>
-                  ))}
-                </div>
-                
-                {/* Custom Industry Input - Shows when "Other" is selected */}
-                {formData.industry === 'Other' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="mt-6"
-                  >
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Please specify your industry
-                    </label>
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        value={customIndustry}
-                        onChange={(e) => setCustomIndustry(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && customIndustry.trim()) {
-                            handleCustomIndustrySubmit()
-                          }
-                        }}
-                        placeholder="Enter your industry..."
-                        className="flex-1 px-4 py-3 rounded-lg bg-black border border-white/20 text-white placeholder:text-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all"
-                        autoFocus
-                      />
-                      <button
-                        onClick={handleCustomIndustrySubmit}
-                        disabled={!customIndustry.trim()}
-                        className="px-6 py-3 rounded-lg bg-white text-black hover:bg-gray-100 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                      >
-                        Continue
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 2 && (
-            <motion.div
-              key="step-3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -977,7 +899,7 @@ function PricingPageContent() {
                 className="flex items-center gap-2 text-white hover:text-white mb-6 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm">← Back to pricing calculator</span>
+                <span className="text-sm">Back to pricing calculator</span>
               </button>
               {/* Cal.com Embed */}
               <div 
@@ -999,7 +921,9 @@ function PricingPageContent() {
                     overflow: "auto",
                     padding: "0"
                   }}
-                  config={{"layout":"month_view"}}
+                  config={{
+                    layout: "month_view"
+                  }}
                 />
                 {!calLoaded && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black z-20">
