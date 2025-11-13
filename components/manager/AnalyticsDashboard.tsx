@@ -130,13 +130,13 @@ export default function AnalyticsDashboard() {
       const response = await fetch(`/api/team/analytics?period=${timePeriod}`)
       if (response.ok) {
         const data = await response.json()
-        setAnalytics(data.analytics || getMockAnalytics())
+        setAnalytics(data.analytics || null)
       } else {
-        setAnalytics(getMockAnalytics())
+        setAnalytics(null)
       }
     } catch (error) {
       console.error('Error loading analytics:', error)
-      setAnalytics(getMockAnalytics())
+      setAnalytics(null)
     } finally {
       setLoading(false)
     }
@@ -208,14 +208,11 @@ export default function AnalyticsDashboard() {
       const response = await fetch(`/api/team/revenue?period=${revenueTimePeriod}`)
       if (response.ok) {
         const data = await response.json()
-        // Calculate average score percentage for each period
+        // Use actual data from API - no mock scores
         let dataWithScores = (data.revenueData || []).map((item: RevenueDataPoint) => {
-          // Calculate average score based on sessions - using a mock calculation for now
-          // In production, this would come from the API
-          const mockAvgScore = 65 + Math.random() * 20 // Random between 65-85%
           return {
             ...item,
-            avgScore: Math.round(mockAvgScore)
+            avgScore: item.avgScore || 0 // Use actual avgScore from API, default to 0 if not provided
           }
         })
         
