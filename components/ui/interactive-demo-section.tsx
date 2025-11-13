@@ -227,7 +227,7 @@ export function InteractiveDemoSection() {
 
             {/* Industry Cards */}
             <motion.div 
-              className="flex flex-wrap justify-center gap-2 sm:gap-3 w-full mt-4 sm:mt-5 lg:mt-6"
+              className="flex flex-wrap justify-center gap-1.5 sm:gap-2 w-full mt-4 sm:mt-5 lg:mt-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1, duration: 0.8 }}
@@ -245,13 +245,13 @@ export function InteractiveDemoSection() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.1 + index * 0.05, duration: 0.4 }}
-                  className="group relative flex flex-col items-center justify-center p-2 sm:p-3 lg:p-3 rounded-lg border-2 border-white/20 bg-white/5 hover:border-purple-400/50 hover:bg-white/10 transition-all hover:scale-105 active:scale-95 overflow-hidden min-w-[70px] sm:min-w-[80px] lg:min-w-[85px]"
+                  className="group relative flex flex-col items-center justify-center p-1.5 sm:p-2 lg:p-2.5 rounded-lg border-2 border-white/20 bg-white/5 hover:border-purple-400/50 hover:bg-white/10 transition-all hover:scale-105 active:scale-95 overflow-hidden min-w-[60px] sm:min-w-[70px] lg:min-w-[75px]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-blue-500/0 group-hover:from-purple-500/20 group-hover:to-blue-500/20 transition-all duration-300 rounded-2xl" />
-                  <span className="text-2xl sm:text-2xl lg:text-3xl mb-1 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-xl sm:text-xl lg:text-2xl mb-0.5 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
                     {industry.icon}
                   </span>
-                  <span className="text-[10px] sm:text-xs font-semibold text-white relative z-10 text-center">
+                  <span className="text-[9px] sm:text-[10px] font-semibold text-white relative z-10 text-center">
                     {industry.name}
                   </span>
                 </motion.button>

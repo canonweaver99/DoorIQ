@@ -3,39 +3,43 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Database, BarChart3, Settings, Home, UserCog, BookOpen } from 'lucide-react'
-import TeamOverview from '@/components/manager/TeamOverview'
+import { Users, Database, BarChart3, Settings, UserCog, BookOpen } from 'lucide-react'
 import RepManagement from '@/components/manager/RepManagement'
 import KnowledgeBase from '@/components/manager/KnowledgeBase'
 import AnalyticsDashboard from '@/components/manager/AnalyticsDashboard'
 import ManagerSettings from '@/components/manager/ManagerSettings'
 
-type Tab = 'overview' | 'reps' | 'knowledge' | 'analytics' | 'settings'
+type Tab = 'reps' | 'knowledge' | 'analytics' | 'settings'
 
 const tabs = [
-  { id: 'overview' as Tab, name: 'Team Overview', icon: Home },
+  { id: 'analytics' as Tab, name: 'Analytics', icon: BarChart3 },
   { id: 'reps' as Tab, name: 'Rep Management', icon: UserCog },
   { id: 'knowledge' as Tab, name: 'Knowledge Base', icon: Database },
-  { id: 'analytics' as Tab, name: 'Analytics', icon: BarChart3 },
   { id: 'settings' as Tab, name: 'Settings', icon: Settings },
 ]
 
 function ManagerPageContent() {
   const searchParams = useSearchParams()
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
-
-  // Set the active tab from URL parameter if provided
-  useEffect(() => {
+  
+  // Initialize activeTab from URL parameter using lazy initializer to match server render
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tabParam = searchParams.get('tab') as Tab | null
     if (tabParam && tabs.some(tab => tab.id === tabParam)) {
+      return tabParam
+    }
+    return 'analytics'
+  })
+
+  // Update active tab when URL parameter changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as Tab | null
+    if (tabParam && tabs.some(tab => tab.id === tabParam) && tabParam !== activeTab) {
       setActiveTab(tabParam)
     }
-  }, [searchParams])
+  }, [searchParams, activeTab])
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview':
-        return <TeamOverview />
       case 'reps':
         return <RepManagement />
       case 'knowledge':
@@ -45,7 +49,7 @@ function ManagerPageContent() {
       case 'settings':
         return <ManagerSettings />
       default:
-        return <TeamOverview />
+        return <AnalyticsDashboard />
     }
   }
 

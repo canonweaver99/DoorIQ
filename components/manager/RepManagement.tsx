@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
-import { Search, Filter, ChevronDown, MoreVertical, Mail, Target, X, TrendingUp, TrendingDown, CheckSquare, UserCheck, MessageSquare, Eye } from 'lucide-react'
+import { Search, Filter, ChevronDown, MoreVertical, Mail, Target, X, TrendingUp, TrendingDown, CheckSquare, UserCheck, MessageSquare, Eye, Download, ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react'
 import RepProfileModal from './RepProfileModal'
 
 interface Rep {
@@ -20,9 +20,27 @@ interface Rep {
   virtualEarnings: number
 }
 
+interface RepPerformance {
+  id: string
+  name: string
+  sessions: number
+  avgScore: number
+  trend: number
+  skills: {
+    rapport: number
+    discovery: number
+    objections: number
+    closing: number
+  }
+  revenue: number
+  lastActive: string
+}
+
 export default function RepManagement() {
   const [reps, setReps] = useState<Rep[]>([])
+  const [repPerformance, setRepPerformance] = useState<RepPerformance[]>([])
   const [loading, setLoading] = useState(true)
+  const [performanceLoading, setPerformanceLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('score')
@@ -34,6 +52,7 @@ export default function RepManagement() {
   // Load reps data
   useEffect(() => {
     loadReps()
+    loadRepPerformance()
   }, [])
 
   const loadReps = async () => {
@@ -47,6 +66,20 @@ export default function RepManagement() {
       console.error('Error loading reps:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadRepPerformance = async () => {
+    try {
+      const response = await fetch('/api/team/analytics?period=30')
+      if (response.ok) {
+        const data = await response.json()
+        setRepPerformance(data.analytics?.repPerformance || [])
+      }
+    } catch (error) {
+      console.error('Error loading rep performance:', error)
+    } finally {
+      setPerformanceLoading(false)
     }
   }
 
@@ -159,6 +192,104 @@ export default function RepManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Rep Performance Section */}
+      {!performanceLoading && repPerformance.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1">Complete Team Performance</h3>
+              <p className="text-sm text-white/60">Individual rep metrics and trends</p>
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-white/80 transition-all">
+              <Download className="w-4 h-4" />
+              Export Team Report
+            </button>
+          </div>
+          <div className="space-y-3">
+            {repPerformance.map((rep, idx) => (
+              <motion.div
+                key={rep.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="p-5 bg-black/20 border border-white/10 rounded-xl hover:border-purple-500/30 transition-all group cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${
+                        rep.avgScore >= 80 ? 'from-emerald-500/30 to-green-500/30 border-emerald-400/30' :
+                        rep.avgScore >= 70 ? 'from-blue-500/30 to-cyan-500/30 border-blue-400/30' :
+                        'from-amber-500/30 to-orange-500/30 border-amber-400/30'
+                      } border flex items-center justify-center`}>
+                        <span className="text-white font-bold text-lg">{rep.name.split(' ').map(n => n[0]).join('')}</span>
+                      </div>
+                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-[#1a1a2e] flex items-center justify-center ${
+                        rep.trend >= 0 ? 'bg-emerald-500' : 'bg-red-500'
+                      }`}>
+                        {rep.trend >= 0 ? (
+                          <ArrowUpRight className="w-3 h-3 text-white" />
+                        ) : (
+                          <ArrowDownRight className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-white font-semibold text-lg">{rep.name}</p>
+                        <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${
+                          rep.avgScore >= 80 ? 'bg-emerald-500/20 text-emerald-300' :
+                          rep.avgScore >= 70 ? 'bg-blue-500/20 text-blue-300' :
+                          'bg-amber-500/20 text-amber-300'
+                        }`}>
+                          {rep.avgScore >= 80 ? 'Excellent' : rep.avgScore >= 70 ? 'Good' : 'Needs Work'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-white/60">{rep.sessions} sessions • Last active {rep.lastActive}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-white mb-1">{rep.avgScore}%</p>
+                      <p className="text-xs text-white/50">Avg Score</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-emerald-300 mb-1">${(rep.revenue / 1000).toFixed(1)}k</p>
+                      <p className="text-xs text-white/50">Revenue</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-1">
+                        {Object.entries(rep.skills).map(([skill, score]) => (
+                          <div key={skill} className="flex items-center gap-2">
+                            <span className="text-xs text-white/50 w-20 text-right capitalize">{skill}:</span>
+                            <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full ${
+                                  score >= 80 ? 'bg-emerald-500' :
+                                  score >= 70 ? 'bg-blue-500' :
+                                  'bg-amber-500'
+                                }`}
+                                style={{ width: `${score}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-white/70 w-8">{score}%</span>
+                          </div>
+                        ))}
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       {/* Filters and Search */}
       <div className="flex flex-col md:flex-row gap-4">
         {/* Search */}

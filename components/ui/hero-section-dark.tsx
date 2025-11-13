@@ -46,9 +46,9 @@ interface HeroSectionProps extends React.HTMLAttributes<HTMLDivElement> {
 const RetroGrid = ({
   angle = 65,
   cellSize = 60,
-  opacity = 0.5,
-  lightLineColor = "gray",
-  darkLineColor = "gray",
+  opacity = 0.15,
+  lightLineColor = "rgb(100, 100, 120)",
+  darkLineColor = "rgb(60, 60, 80)",
 }) => {
   const gridStyles = {
     "--grid-angle": `${angle}deg`,
@@ -142,11 +142,11 @@ const InlineAgentCarousel = React.memo(() => {
   // Optimized item widths for different screen sizes
   const getItemWidth = () => {
     switch (screenSize) {
-      case 'mobile': return 64 + 12 // 76px (h-16 w-16 = 64px + margin)
-      case 'tablet': return 96 + 20 // 116px (h-24 w-24 = 96px + margin)
-      case 'laptop': return 112 + 24 // 136px (h-28 w-28 = 112px + margin)
-      case 'desktop': return 144 + 32 // 176px (h-36 w-36 = 144px + margin)
-      default: return 112 + 24 // 136px default for laptop
+      case 'mobile': return 80 + 16 // 96px
+      case 'tablet': return 112 + 20 // 132px
+      case 'laptop': return 144 + 28 // 172px (optimized for laptop - smaller)
+      case 'desktop': return 160 + 32 // 192px
+      default: return 144 + 28 // 172px default for laptop
     }
   }
 
@@ -164,7 +164,7 @@ const InlineAgentCarousel = React.memo(() => {
   const animationDuration = getAnimationDuration()
 
   return (
-    <div className="relative w-full overflow-hidden my-3 sm:my-4 lg:my-4 py-2 sm:py-2.5 lg:py-3" ref={containerRef}>
+    <div className="relative w-full overflow-hidden my-2 sm:my-3 lg:my-4 py-2 lg:py-3" ref={containerRef}>
       <div className="relative w-full">
         <motion.div 
           className="flex items-center justify-center"
@@ -187,7 +187,7 @@ const InlineAgentCarousel = React.memo(() => {
               <div
                 key={`${agent.fullName}-${index}`}
                 onClick={() => handleAgentClick(agent.fullName as AllowedAgentName)}
-                className="relative flex-shrink-0 cursor-pointer group transition-transform hover:scale-110 active:scale-95 mx-1.5 sm:mx-2.5 md:mx-3 lg:mx-5 xl:mx-6"
+                className="relative flex-shrink-0 cursor-pointer group transition-transform hover:scale-110 active:scale-95 mx-2 sm:mx-3 md:mx-4 lg:mx-5 xl:mx-6"
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -197,7 +197,7 @@ const InlineAgentCarousel = React.memo(() => {
                   }
                 }}
               >
-                <div className="relative h-16 w-16 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-36 lg:w-36 xl:h-40 xl:w-40 2xl:h-44 2xl:w-44">
+                <div className="relative h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36 xl:h-40 xl:w-40 2xl:h-44 2xl:w-44">
                   {/* Concentric circles */}
                   {[0, 1, 2].map((i) => (
                     <motion.div
@@ -308,14 +308,14 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         <div className="absolute top-0 z-[0] h-screen w-screen bg-purple-950/10 dark:bg-purple-950/10 bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]" />
         
         {/* Hero Section - Full Viewport Height */}
-        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center pt-16 sm:pt-20 lg:pt-0 pb-8 sm:pb-12 lg:pb-2">
+        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center pt-0 pb-0 lg:pb-2">
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-6 lg:px-20 xl:px-24 2xl:px-32">
             {/* Centered Copy Layout */}
-            <div className="flex items-center justify-center pt-0 lg:pt-0 -mt-[20px] sm:-mt-[30px] lg:-mt-[50px]">
+            <div className="flex items-center justify-center pt-0 lg:pt-0 -mt-[10px] sm:-mt-[30px] lg:-mt-[50px]">
               {/* Centered Copy */}
               <motion.div 
-                className="space-y-4 sm:space-y-5 lg:space-y-4 max-w-5xl text-center flex flex-col items-center justify-center px-2 sm:px-0" 
+                className="space-y-4 sm:space-y-4 lg:space-y-4 w-full max-w-5xl text-center flex flex-col items-center justify-center px-0 sm:px-0" 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
@@ -328,13 +328,14 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   transition={{ delay: 0.2, duration: 0.6 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <h1 className="text-sm sm:text-base text-white group font-geist px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-tr from-zinc-300/20 via-gray-400/20 to-transparent dark:from-zinc-300/5 dark:via-gray-400/5 border-[2px] border-black/5 dark:border-white/5 rounded-3xl cursor-pointer hover:border-purple-500/30 transition-all flex items-center gap-2">
+                  <h1 className="text-base text-white group font-geist px-6 py-3 bg-gradient-to-tr from-zinc-300/20 via-gray-400/20 to-transparent dark:from-zinc-300/5 dark:via-gray-400/5 border-[2px] border-black/5 dark:border-white/5 rounded-3xl cursor-pointer hover:border-purple-500/30 transition-all flex items-center gap-2">
                     {title}
-                    <ChevronRight className="inline w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 group-hover:translate-x-1 duration-300" />
+                    <ChevronRight className="inline w-4 h-4 ml-1 group-hover:translate-x-1 duration-300" />
                   </h1>
                 </motion.a>
                 <motion.h2 
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] leading-[1.15] sm:leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] px-3 sm:px-2"
+                  className="text-[2.5rem] leading-tight sm:text-4xl md:text-5xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] sm:leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] w-full break-words hyphens-auto"
+                  style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
@@ -346,7 +347,6 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 </motion.h2>
                 {/* Agent Carousel */}
                 <motion.div
-                  className="w-full mt-4 sm:mt-5 lg:mt-4"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.8 }}
@@ -355,7 +355,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 </motion.div>
                 {/* Instructional Text - Below Carousel */}
                 <motion.p 
-                  className="text-white text-xs sm:text-sm md:text-base lg:text-lg mt-3 sm:mt-4 lg:mt-3 px-4 sm:px-2 max-w-md sm:max-w-none"
+                  className="text-white text-sm sm:text-base lg:text-lg mt-2 lg:mt-3 px-0 sm:px-0"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.6 }}
@@ -397,13 +397,13 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 {/* Book a Demo Button - At Bottom */}
                 {ctaSecondaryText && (
                   <motion.div 
-                    className="flex items-center justify-center pt-4 sm:pt-5 lg:pt-4 w-full px-4 sm:px-0"
+                    className="flex items-center justify-center pt-3 sm:pt-4 lg:pt-4"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.0, duration: 0.6 }}
                   >
                     <motion.span 
-                      className="relative inline-block overflow-hidden rounded-full p-[1.5px] w-full sm:w-auto max-w-xs sm:max-w-none"
+                      className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
                       whileHover={{ y: -3 }}
                       transition={{ duration: 0.2 }}
                     >
@@ -420,7 +420,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                               }
                               onCtaSecondaryClick()
                             }}
-                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3 sm:py-3.5 px-6 sm:px-8 text-sm sm:text-base lg:text-lg font-semibold w-full sm:w-auto"
+                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
                           >
                             {ctaSecondaryText}
                           </button>
@@ -439,7 +439,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                                 element?.scrollIntoView({ behavior: 'smooth' })
                               }
                             }}
-                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3 sm:py-3.5 px-6 sm:px-8 text-sm sm:text-base lg:text-lg font-semibold w-full sm:w-auto"
+                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
                           >
                             {ctaSecondaryText}
                           </a>
@@ -453,8 +453,8 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
           </div>
 
           {/* Scroll Indicator - Moved Up */}
-          <div className="absolute bottom-8 sm:bottom-12 lg:bottom-16 left-1/2 -translate-x-1/2 animate-bounce z-20">
-            <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 animate-bounce z-20">
+            <ChevronDown className="w-6 h-6 text-purple-400" />
           </div>
         </section>
 

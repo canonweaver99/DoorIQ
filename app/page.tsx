@@ -171,10 +171,10 @@ export default function Home() {
         bottomImage={undefined}
         gridOptions={{
           angle: 65,
-          opacity: 0.3,
+          opacity: 0.15,
           cellSize: 50,
-          lightLineColor: "#4a4a4a",
-          darkLineColor: "#2a2a2a",
+          lightLineColor: "rgb(100, 100, 120)",
+          darkLineColor: "rgb(60, 60, 80)",
         }}
       />
 
@@ -536,7 +536,7 @@ function SocialProofSection() {
   
   return (
     <motion.section 
-      className="py-16" 
+      className="py-2 sm:py-4" 
       ref={ref}
       initial="hidden"
       animate={controls}

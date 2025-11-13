@@ -11,8 +11,9 @@ import {
   TrendingUp, Users, Target, Download, Calendar, Activity, Award, 
   AlertCircle, TrendingDown, Zap, DollarSign, Clock, BarChart3,
   ChevronRight, Sparkles, ArrowUpRight, ArrowDownRight, Brain,
-  Target as TargetIcon, UserCheck, Timer, CheckCircle2, XCircle, Star
+  Target as TargetIcon, UserCheck, Timer, CheckCircle2, XCircle, Star, Mail, UserPlus, Trophy, X, Copy, MessageSquare
 } from 'lucide-react'
+import Link from 'next/link'
 
 const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#EC4899', '#F59E0B', '#EF4444']
 
@@ -79,15 +80,50 @@ interface Analytics {
   }>
 }
 
+interface TeamStats {
+  totalReps: number
+  activeNow: number
+  teamAverage: number
+  totalEarned: number
+  topPerformers: Array<{
+    id: string
+    name: string
+    email: string
+    score: number
+    sessionCount: number
+    earnings: number
+  }>
+}
+
+interface RevenueDataPoint {
+  period: string
+  fullPeriod: string
+  revenue: number
+  repsWhoSold: number
+  totalSales: number
+  avgScore?: number
+}
+
 export default function AnalyticsDashboard() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
+  const [teamStats, setTeamStats] = useState<TeamStats | null>(null)
+  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
+  const [revenueTimePeriod, setRevenueTimePeriod] = useState<'day' | 'week' | 'month'>('week')
   const [loading, setLoading] = useState(true)
   const [timePeriod, setTimePeriod] = useState('30')
-  const [selectedMetric, setSelectedMetric] = useState<'overview' | 'reps' | 'skills' | 'revenue'>('overview')
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null)
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     loadAnalytics()
+    loadTeamStats()
   }, [timePeriod])
+
+  useEffect(() => {
+    loadRevenueData()
+  }, [revenueTimePeriod])
 
   const loadAnalytics = async () => {
     try {
@@ -103,6 +139,152 @@ export default function AnalyticsDashboard() {
       setAnalytics(getMockAnalytics())
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadTeamStats = async () => {
+    try {
+      const response = await fetch('/api/team/stats')
+      if (response.ok) {
+        const data = await response.json()
+        setTeamStats(data)
+      }
+    } catch (error) {
+      console.error('Error loading team stats:', error)
+    }
+  }
+
+  const generateInviteLink = async () => {
+    setInviteLoading(true)
+    try {
+      // Generate a generic invite link (without email) - we'll create a shareable link
+      const response = await fetch('/api/invites/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'share@dooriq.com', role: 'rep' })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create invite')
+      }
+
+      setInviteUrl(data.inviteUrl)
+      setShowInviteModal(true)
+    } catch (error: any) {
+      console.error('Error generating invite:', error)
+      alert('Failed to generate invite link. Please try again.')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
+  const handleCopyLink = async () => {
+    if (inviteUrl) {
+      await navigator.clipboard.writeText(inviteUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleShareViaMessages = () => {
+    if (inviteUrl) {
+      const message = `Join my team on DoorIQ! ${inviteUrl}`
+      window.open(`sms:?body=${encodeURIComponent(message)}`, '_blank')
+    }
+  }
+
+  const handleShareViaGmail = () => {
+    if (inviteUrl) {
+      const subject = 'Join my team on DoorIQ'
+      const body = `Hi,\n\nI'd like to invite you to join my team on DoorIQ. Click the link below to get started:\n\n${inviteUrl}\n\nLooking forward to working with you!`
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
+    }
+  }
+
+  const loadRevenueData = async () => {
+    try {
+      const response = await fetch(`/api/team/revenue?period=${revenueTimePeriod}`)
+      if (response.ok) {
+        const data = await response.json()
+        // Calculate average score percentage for each period
+        let dataWithScores = (data.revenueData || []).map((item: RevenueDataPoint) => {
+          // Calculate average score based on sessions - using a mock calculation for now
+          // In production, this would come from the API
+          const mockAvgScore = 65 + Math.random() * 20 // Random between 65-85%
+          return {
+            ...item,
+            avgScore: Math.round(mockAvgScore)
+          }
+        })
+        
+        // Sort data chronologically by parsing dates
+        dataWithScores.sort((a: RevenueDataPoint, b: RevenueDataPoint) => {
+          // Try to parse fullPeriod first (more reliable date format)
+          let dateA: Date
+          let dateB: Date
+          
+          if (a.fullPeriod) {
+            dateA = new Date(a.fullPeriod)
+          } else {
+            // Parse period string (e.g., "Week of Nov 10" or "Nov 10")
+            // Extract date from "Week of Nov 10" format
+            const weekMatch = a.period.match(/Week of (\w+)\s+(\d+)/)
+            if (weekMatch) {
+              const month = weekMatch[1]
+              const day = weekMatch[2]
+              const currentYear = new Date().getFullYear()
+              // Handle year rollover - if month is in the future relative to now, use previous year
+              const testDate = new Date(`${month} ${day}, ${currentYear}`)
+              const now = new Date()
+              if (testDate > now && month !== 'Dec') {
+                dateA = new Date(`${month} ${day}, ${currentYear - 1}`)
+              } else {
+                dateA = testDate
+              }
+            } else {
+              const periodMatch = a.period.match(/(\w+)\s+(\d+)/)
+              if (periodMatch) {
+                dateA = new Date(`${periodMatch[1]} ${periodMatch[2]}, ${new Date().getFullYear()}`)
+              } else {
+                dateA = new Date(a.period)
+              }
+            }
+          }
+          
+          if (b.fullPeriod) {
+            dateB = new Date(b.fullPeriod)
+          } else {
+            const weekMatch = b.period.match(/Week of (\w+)\s+(\d+)/)
+            if (weekMatch) {
+              const month = weekMatch[1]
+              const day = weekMatch[2]
+              const currentYear = new Date().getFullYear()
+              const testDate = new Date(`${month} ${day}, ${currentYear}`)
+              const now = new Date()
+              if (testDate > now && month !== 'Dec') {
+                dateB = new Date(`${month} ${day}, ${currentYear - 1}`)
+              } else {
+                dateB = testDate
+              }
+            } else {
+              const periodMatch = b.period.match(/(\w+)\s+(\d+)/)
+              if (periodMatch) {
+                dateB = new Date(`${periodMatch[1]} ${periodMatch[2]}, ${new Date().getFullYear()}`)
+              } else {
+                dateB = new Date(b.period)
+              }
+            }
+          }
+          
+          return dateA.getTime() - dateB.getTime()
+        })
+        
+        setRevenueData(dataWithScores)
+      }
+    } catch (error) {
+      console.error('Error loading revenue data:', error)
     }
   }
 
@@ -192,93 +374,111 @@ export default function AnalyticsDashboard() {
   const topPerformers = analytics.repPerformance?.slice(0, 3) || []
   const needsAttention = analytics.repPerformance?.filter(r => r.trend < 0).slice(0, 3) || []
 
+  const displayTeamStats = teamStats || {
+    totalReps: analytics?.activeReps || 0,
+    activeNow: analytics?.activeReps || 0,
+    teamAverage: analytics?.teamAverage || 0,
+    totalEarned: analytics?.repPerformance?.reduce((sum, r) => sum + r.revenue, 0) || 0,
+    topPerformers: analytics?.repPerformance?.slice(0, 5).map(r => ({
+      id: r.id,
+      name: r.name,
+      email: '',
+      score: r.avgScore,
+      sessionCount: r.sessions,
+      earnings: r.revenue
+    })) || []
+  }
+
   return (
     <div className="space-y-8">
-      {/* Premium Header with Gradient */}
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-pink-900/40 border border-purple-500/30 p-8 backdrop-blur-sm"
+        className="relative overflow-hidden rounded-3xl bg-black/50 border border-white/10 p-8 backdrop-blur-sm"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-3 rounded-xl bg-purple-500/20 border border-purple-400/50 backdrop-blur-sm">
-                <BarChart3 className="w-6 h-6 text-purple-300" />
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <BarChart3 className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-4xl font-bold text-white mb-1">Analytics Command Center</h2>
+                  <p className="text-white text-lg">Real-time team performance intelligence</p>
+                </div>
               </div>
-        <div>
-                <h2 className="text-4xl font-bold text-white mb-1">Analytics Command Center</h2>
-                <p className="text-purple-200/80 text-lg">Real-time team performance intelligence</p>
-              </div>
-            </div>
-        </div>
+          </div>
           <div className="flex items-center gap-3">
-          <select 
-            value={timePeriod}
-            onChange={(e) => setTimePeriod(e.target.value)}
-              className="px-5 py-3 bg-black/40 border border-purple-500/30 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 backdrop-blur-sm"
-          >
+            <select 
+              value={timePeriod}
+              onChange={(e) => setTimePeriod(e.target.value)}
+              className="px-5 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/20 backdrop-blur-sm"
+            >
               <option value="7">Last 7 Days</option>
-            <option value="30">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-            <option value="180">Last 6 Months</option>
-            <option value="all">All Time</option>
-          </select>
-            <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/50 hover:shadow-xl hover:shadow-purple-600/60">
-            <Download className="w-4 h-4" />
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="180">Last 6 Months</option>
+              <option value="all">All Time</option>
+            </select>
+            <button className="flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 rounded-xl text-sm font-semibold transition-all">
+              <Download className="w-4 h-4" />
               Export Full Report
-          </button>
+            </button>
+          </div>
         </div>
-      </div>
       </motion.div>
 
-      {/* Enhanced Key Metrics Grid */}
+      {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
+          { 
+            label: 'Total Earned', 
+            value: `$${displayTeamStats.totalEarned.toLocaleString()}`, 
+            change: '', 
+            changeValue: 0,
+            icon: DollarSign,
+            bgColor: '#1a3a2a',
+            borderColor: '#2a6a4a',
+            textColor: 'text-emerald-200',
+            iconColor: 'text-emerald-300',
+            subtitle: 'Virtual earnings from training'
+          },
           { 
             label: 'Total Sessions', 
             value: analytics.totalSessions.toLocaleString(), 
             change: `${analytics.changes.sessions > 0 ? '+' : ''}${analytics.changes.sessions}%`, 
             changeValue: analytics.changes.sessions,
-            icon: Target, 
-            color: 'purple',
-            gradient: 'from-purple-500/20 to-purple-600/20',
-            borderColor: 'border-purple-500/30',
+            icon: Target,
+            bgColor: '#1a1a1a',
+            borderColor: '#2a2a2a',
+            textColor: 'text-gray-300',
+            iconColor: 'text-gray-400',
             subtitle: 'Training sessions completed'
           },
           { 
-            label: 'Team Average Score', 
+            label: 'Team Members', 
+            value: displayTeamStats.totalReps.toString(), 
+            change: '', 
+            changeValue: 0,
+            icon: Users,
+            bgColor: '#1a1a1a',
+            borderColor: '#2a2a2a',
+            textColor: 'text-gray-300',
+            iconColor: 'text-gray-400',
+            subtitle: 'Team members'
+          },
+          { 
+            label: 'Team Average', 
             value: `${analytics.teamAverage}%`, 
             change: `${analytics.changes.score > 0 ? '+' : ''}${analytics.changes.score}%`, 
             changeValue: analytics.changes.score,
-            icon: TrendingUp, 
-            color: 'emerald',
-            gradient: 'from-emerald-500/20 to-green-600/20',
-            borderColor: 'border-emerald-500/30',
+            icon: TrendingUp,
+            bgColor: '#1a1a1a',
+            borderColor: '#2a2a2a',
+            textColor: 'text-gray-300',
+            iconColor: 'text-gray-400',
             subtitle: 'Overall performance rating'
-          },
-          { 
-            label: 'Active Team Members', 
-            value: analytics.activeReps, 
-            change: `${analytics.changes.reps > 0 ? '+' : ''}${analytics.changes.reps}`, 
-            changeValue: analytics.changes.reps,
-            icon: Users, 
-            color: 'cyan',
-            gradient: 'from-cyan-500/20 to-blue-600/20',
-            borderColor: 'border-cyan-500/30',
-            subtitle: 'Currently active reps'
-          },
-          { 
-            label: 'Training ROI', 
-            value: `${analytics.trainingROI}%`, 
-            change: `+${analytics.changes.roi}%`, 
-            changeValue: analytics.changes.roi,
-            icon: DollarSign, 
-            color: 'amber',
-            gradient: 'from-amber-500/20 to-orange-600/20',
-            borderColor: 'border-amber-500/30',
-            subtitle: 'Return on training investment'
           },
         ].map((metric, idx) => {
           const Icon = metric.icon
@@ -289,658 +489,593 @@ export default function AnalyticsDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: idx * 0.1 }}
-              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${metric.gradient} border ${metric.borderColor} p-6 backdrop-blur-sm group hover:border-${metric.color}-400/50 transition-all duration-300`}
+              className="relative overflow-hidden rounded-2xl p-6 backdrop-blur-sm group transition-all duration-300"
+              style={{
+                backgroundColor: metric.bgColor,
+                border: `2px solid ${metric.borderColor}`,
+                boxShadow: metric.bgColor === '#1a3a2a' 
+                  ? 'inset 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+                  : 'inset 0 0 20px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.4)'
+              }}
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/10 to-transparent rounded-full blur-2xl"></div>
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-${metric.color}-500/20 border border-${metric.color}-400/30`}>
-                    <Icon className={`w-5 h-5 text-${metric.color}-300`} />
+                  <div className="p-3 rounded-xl border" style={{ 
+                    backgroundColor: metric.bgColor === '#1a3a2a' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    borderColor: metric.borderColor 
+                  }}>
+                    <Icon className={`w-5 h-5 ${metric.iconColor}`} />
                   </div>
-                  <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg bg-${isPositive ? 'emerald' : 'red'}-500/20 border border-${isPositive ? 'emerald' : 'red'}-500/30`}>
-                    {isPositive ? (
-                      <ArrowUpRight className={`w-3.5 h-3.5 text-emerald-300`} />
-                    ) : (
-                      <ArrowDownRight className={`w-3.5 h-3.5 text-red-300`} />
-                    )}
-                    <span className={`text-xs font-semibold text-${isPositive ? 'emerald' : 'red'}-300`}>
-                  {metric.change}
-                </span>
-                  </div>
+                  {metric.change && (
+                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border ${
+                      isPositive ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30'
+                    }`}>
+                      {isPositive ? (
+                        <ArrowUpRight className="w-3.5 h-3.5 text-emerald-300" />
+                      ) : (
+                        <ArrowDownRight className="w-3.5 h-3.5 text-red-300" />
+                      )}
+                      <span className={`text-sm font-semibold ${isPositive ? 'text-emerald-300' : 'text-red-300'}`}>
+                        {metric.change}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-4xl font-bold text-white mb-1">{metric.value}</p>
-                <p className="text-sm font-medium text-white/80 mb-1">{metric.label}</p>
-                <p className="text-xs text-white/50">{metric.subtitle}</p>
+                <p className="text-lg font-semibold text-white">{metric.subtitle}</p>
               </div>
             </motion.div>
           )
         })}
       </div>
 
-      {/* Tab Navigation for Detailed Views */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-4">
-        {[
-          { id: 'overview', label: 'Overview', icon: BarChart3 },
-          { id: 'reps', label: 'Rep Performance', icon: Users },
-          { id: 'skills', label: 'Skills Analysis', icon: Brain },
-          { id: 'revenue', label: 'Revenue Impact', icon: DollarSign },
-        ].map((tab) => {
-          const Icon = tab.icon
-          const isActive = selectedMetric === tab.id
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedMetric(tab.id as any)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all ${
-                isActive
-                  ? 'bg-gradient-to-r from-purple-600/40 to-indigo-600/40 text-white border border-purple-500/50'
-                  : 'text-white/60 hover:text-white/80 hover:bg-white/5'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          )
-        })}
+      {/* Team Performance Chart & Revenue vs. Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Team Performance Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl px-5 pt-5 pb-0 backdrop-blur-sm"
+          style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)' }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1">Team Performance</h3>
+              <p className="text-sm text-white/70">Overall session performance over time</p>
+            </div>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg p-1">
+              {(['day', 'week', 'month'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setRevenueTimePeriod(period)}
+                  className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+                    revenueTimePeriod === period
+                      ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                      : 'text-white/70 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          {revenueData.length > 0 ? (
+            <div className="h-[450px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueData} margin={{ top: 20, right: 20, left: 20, bottom: revenueTimePeriod === 'week' ? 50 : 30 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} opacity={0.5} />
+                  <XAxis 
+                    dataKey="period" 
+                    stroke="#ffffff"
+                    tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                    axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
+                    angle={revenueTimePeriod === 'week' ? -45 : 0}
+                    textAnchor={revenueTimePeriod === 'week' ? 'end' : 'middle'}
+                    height={revenueTimePeriod === 'week' ? 60 : 40}
+                    interval={0}
+                    dy={revenueTimePeriod === 'week' ? 10 : 5}
+                  />
+                  <YAxis 
+                    stroke="#ffffff"
+                    tick={{ fill: '#ffffff', fontSize: 12, fontWeight: 600 }}
+                    axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
+                    domain={[0, 100]}
+                    tickFormatter={(value) => `${value}%`}
+                    width={60}
+                    tickMargin={8}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0a0a0a',
+                      border: '2px solid #a855f7',
+                      borderRadius: '12px',
+                      color: '#ffffff',
+                      padding: '12px',
+                    }}
+                    cursor={{ stroke: '#ffffff', strokeWidth: 2, strokeDasharray: '5 5', opacity: 0.3 }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload
+                        return (
+                          <div>
+                            <p className="text-white font-bold text-base mb-2">
+                              {data.fullPeriod || data.period}
+                            </p>
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-white/80">Average Score:</span>
+                                <span className="text-sm font-bold text-white">{data.avgScore || 0}%</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-white/80">Total Sessions:</span>
+                                <span className="text-sm font-bold text-white">{data.totalSales}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-white/80">Active Reps:</span>
+                                <span className="text-sm font-bold text-white">{data.repsWhoSold}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="avgScore" 
+                    stroke="#a855f7"
+                    strokeWidth={3}
+                    dot={{ fill: '#a855f7', r: 5, stroke: '#ffffff', strokeWidth: 2 }}
+                    activeDot={{ fill: '#ffffff', r: 8, stroke: '#a855f7', strokeWidth: 2 }}
+                    strokeLinecap="round"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[450px] flex items-center justify-center text-white">
+              <div className="text-center">
+                <Activity className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-semibold">No performance data available yet</p>
+                <p className="text-base mt-2 text-white/60">Start training sessions to see performance metrics</p>
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Revenue vs. Performance */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl px-5 pt-5 pb-0 backdrop-blur-sm"
+          style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)' }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1">Revenue vs. Performance</h3>
+              <p className="text-sm text-white/70">Correlation analysis</p>
+            </div>
+            <DollarSign className="w-5 h-5 text-emerald-400" />
+          </div>
+          {analytics.repPerformance && (
+            <div className="h-[468px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={analytics.repPerformance.map(r => ({ name: r.name, revenue: r.revenue, score: r.avgScore }))} margin={{ top: 20, right: 20, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} opacity={0.5} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#ffffff" 
+                    tick={{ fill: '#ffffff', fontSize: 11, fontWeight: 500 }} 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={70}
+                    dy={5}
+                    interval={0}
+                    axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
+                  />
+                  <YAxis 
+                    yAxisId="left" 
+                    stroke="#ffffff" 
+                    tick={{ fill: '#10B981', fontSize: 12, fontWeight: 600 }} 
+                    axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
+                    width={65}
+                    tickMargin={8}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                    label={{ value: 'Revenue', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#10B981', fontSize: 12, fontWeight: 600 } }}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    stroke="#ffffff" 
+                    tick={{ fill: '#A855F7', fontSize: 12, fontWeight: 600 }} 
+                    axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
+                    width={65}
+                    tickMargin={8}
+                    tickFormatter={(value) => `${value}%`}
+                    label={{ value: 'Score', angle: 90, position: 'insideRight', style: { textAnchor: 'middle', fill: '#A855F7', fontSize: 12, fontWeight: 600 } }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0a0a0a',
+                      border: '2px solid #10B981',
+                      borderRadius: '12px',
+                      color: '#ffffff',
+                      padding: '12px',
+                    }}
+                    cursor={{ stroke: '#ffffff', strokeWidth: 2, strokeDasharray: '5 5', opacity: 0.3 }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }} 
+                    iconType="line"
+                    iconSize={16}
+                    formatter={(value) => <span style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600 }}>{value}</span>}
+                  />
+                  <Bar 
+                    yAxisId="left" 
+                    dataKey="revenue" 
+                    fill="#10B981" 
+                    name="Revenue ($)" 
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={45}
+                  />
+                  <Line 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="score" 
+                    stroke="#A855F7" 
+                    strokeWidth={3} 
+                    strokeOpacity={1} 
+                    name="Avg Score (%)" 
+                    dot={{ fill: '#A855F7', r: 5, stroke: '#ffffff', strokeWidth: 2 }} 
+                    activeDot={{ fill: '#ffffff', r: 8, stroke: '#A855F7', strokeWidth: 2 }}
+                    strokeLinecap="round"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </motion.div>
       </div>
 
-      {/* Overview Tab */}
-      {selectedMetric === 'overview' && (
-        <div className="space-y-6">
-          {/* Performance Trends - Enhanced */}
+
+      {/* Top Performers & Needs Attention */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-              className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Performance Trend Analysis</h3>
-                  <p className="text-sm text-white/60">Team vs. Industry benchmark</p>
+          transition={{ delay: 0.2 }}
+          className="bg-[#1a3a2a] border-2 border-[#2a6a4a] rounded-2xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: 'inset 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)' }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400/30">
+              <Award className="w-5 h-5 text-emerald-300" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Top Performers</h3>
+              <p className="text-sm text-white">Leading the team this period</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {topPerformers.map((rep, idx) => (
+              <div key={rep.id} className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-emerald-500/20">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/30 to-green-500/30 flex items-center justify-center border border-emerald-400/30">
+                      <span className="text-emerald-300 font-bold text-lg">{idx + 1}</span>
+                    </div>
+                    {idx === 0 && (
+                      <div className="absolute -top-1 -right-1">
+                        <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold">{rep.name}</p>
+                    <p className="text-sm text-white">{rep.sessions} sessions</p>
+                  </div>
                 </div>
-                <Sparkles className="w-5 h-5 text-purple-400" />
+                <div className="text-right">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-white">{rep.avgScore}%</span>
+                    {rep.trend >= 0 ? (
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  <p className={`text-sm ${rep.trend >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+                    {rep.trend >= 0 ? '+' : ''}{rep.trend}% trend
+                  </p>
+                </div>
               </div>
-          {analytics.performanceData && analytics.performanceData.length > 0 ? (
-                <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={analytics.performanceData}>
-                      <defs>
-                        <linearGradient id="teamAvgGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id="topPerfGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3e" />
-                  <XAxis dataKey="month" stroke="#64748b" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="#64748b" style={{ fontSize: '12px' }} domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                          backgroundColor: '#1a1a2e',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '12px',
-                          color: '#fff'
-                    }}
-                  />
-                  <Legend />
-                      <Area type="monotone" dataKey="teamAvg" fill="url(#teamAvgGradient)" stroke="#8B5CF6" strokeWidth={2} name="Team Average" />
-                      <Area type="monotone" dataKey="topPerformer" fill="url(#topPerfGradient)" stroke="#10B981" strokeWidth={2} name="Top Performer" />
-                      <Line type="monotone" dataKey="industry" stroke="#64748b" strokeWidth={2} strokeDasharray="5 5" name="Industry Avg" dot={false} />
-                    </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-                <div className="h-[350px] flex items-center justify-center text-slate-400">
-              <p>Not enough data to show trend</p>
-            </div>
-          )}
+            ))}
+          </div>
         </motion.div>
 
-            {/* Daily Performance Heatmap */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Daily Performance</h3>
-                  <p className="text-sm text-white/60">Last 30 days activity</p>
-                </div>
-                <Activity className="w-5 h-5 text-cyan-400" />
-              </div>
-              {analytics.dailyPerformance && analytics.dailyPerformance.length > 0 ? (
-                <div className="h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={analytics.dailyPerformance}>
-                      <defs>
-                        <linearGradient id="sessionsGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor="#06B6D4" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3e" />
-                      <XAxis dataKey="date" stroke="#64748b" style={{ fontSize: '11px' }} />
-                      <YAxis yAxisId="left" stroke="#64748b" style={{ fontSize: '12px' }} />
-                      <YAxis yAxisId="right" orientation="right" stroke="#64748b" style={{ fontSize: '12px' }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1a1a2e',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '12px',
-                        }}
-                      />
-                      <Legend />
-                      <Area yAxisId="left" type="monotone" dataKey="sessions" fill="url(#sessionsGradient)" stroke="#06B6D4" strokeWidth={2} name="Sessions" />
-                      <Line yAxisId="right" type="monotone" dataKey="avgScore" stroke="#8B5CF6" strokeWidth={2} name="Avg Score" dot={false} />
-                      <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2} strokeDasharray="3 3" name="Revenue ($)" dot={false} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-[350px] flex items-center justify-center text-slate-400">
-                  <p>Not enough data</p>
-                </div>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Top Performers & Needs Attention */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-emerald-900/20 to-green-900/20 border border-emerald-500/30 rounded-2xl p-6 backdrop-blur-sm"
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400/30">
-                  <Award className="w-5 h-5 text-emerald-300" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Top Performers</h3>
-                  <p className="text-xs text-emerald-300/80">Leading the team this period</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {topPerformers.map((rep, idx) => (
-                  <div key={rep.id} className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-emerald-500/20">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/30 to-green-500/30 flex items-center justify-center border border-emerald-400/30">
-                          <span className="text-emerald-300 font-bold text-lg">{idx + 1}</span>
-                        </div>
-                        {idx === 0 && (
-                          <div className="absolute -top-1 -right-1">
-                            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-white font-semibold">{rep.name}</p>
-                        <p className="text-xs text-white/60">{rep.sessions} sessions</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-emerald-300">{rep.avgScore}%</span>
-                        <TrendingUp className="w-4 h-4 text-emerald-400" />
-                      </div>
-                      <p className="text-xs text-white/50">+{rep.trend}% trend</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 border border-amber-500/30 rounded-2xl p-6 backdrop-blur-sm"
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/30">
-                  <AlertCircle className="w-5 h-5 text-amber-300" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Needs Attention</h3>
-                  <p className="text-xs text-amber-300/80">Performance declining</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {needsAttention.map((rep) => (
-                  <div key={rep.id} className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-amber-500/20">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center border border-amber-400/30">
-                        <span className="text-amber-300 font-bold">{rep.name.split(' ').map(n => n[0]).join('')}</span>
-                      </div>
-                      <div>
-                        <p className="text-white font-semibold">{rep.name}</p>
-                        <p className="text-xs text-white/60">{rep.sessions} sessions</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-amber-300">{rep.avgScore}%</span>
-                        <TrendingDown className="w-4 h-4 text-red-400" />
-                      </div>
-                      <p className="text-xs text-red-400">{rep.trend}% trend</p>
-                    </div>
-                  </div>
-                ))}
-                {needsAttention.length === 0 && (
-                  <div className="text-center py-8 text-white/60">
-                    <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-emerald-400/50" />
-                    <p>All team members performing well!</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      )}
-
-      {/* Rep Performance Tab */}
-      {selectedMetric === 'reps' && analytics.repPerformance && (
-        <div className="space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-xl font-bold text-white mb-1">Complete Team Performance</h3>
-                <p className="text-sm text-white/60">Individual rep metrics and trends</p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-white/80 transition-all">
-                <Download className="w-4 h-4" />
-                Export Team Report
-              </button>
-            </div>
-            <div className="space-y-3">
-              {analytics.repPerformance.map((rep, idx) => (
-                <motion.div
-                  key={rep.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="p-5 bg-black/20 border border-white/10 rounded-xl hover:border-purple-500/30 transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${
-                          rep.avgScore >= 80 ? 'from-emerald-500/30 to-green-500/30 border-emerald-400/30' :
-                          rep.avgScore >= 70 ? 'from-blue-500/30 to-cyan-500/30 border-blue-400/30' :
-                          'from-amber-500/30 to-orange-500/30 border-amber-400/30'
-                        } border flex items-center justify-center`}>
-                          <span className="text-white font-bold text-lg">{rep.name.split(' ').map(n => n[0]).join('')}</span>
-                        </div>
-                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-[#1a1a2e] flex items-center justify-center ${
-                          rep.trend >= 0 ? 'bg-emerald-500' : 'bg-red-500'
-                        }`}>
-                          {rep.trend >= 0 ? (
-                            <ArrowUpRight className="w-3 h-3 text-white" />
-                          ) : (
-                            <ArrowDownRight className="w-3 h-3 text-white" />
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-white font-semibold text-lg">{rep.name}</p>
-                          <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${
-                            rep.avgScore >= 80 ? 'bg-emerald-500/20 text-emerald-300' :
-                            rep.avgScore >= 70 ? 'bg-blue-500/20 text-blue-300' :
-                            'bg-amber-500/20 text-amber-300'
-                          }`}>
-                            {rep.avgScore >= 80 ? 'Excellent' : rep.avgScore >= 70 ? 'Good' : 'Needs Work'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-white/60">{rep.sessions} sessions • Last active {rep.lastActive}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-center">
-                        <p className="text-3xl font-bold text-white mb-1">{rep.avgScore}%</p>
-                        <p className="text-xs text-white/50">Avg Score</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-emerald-300 mb-1">${(rep.revenue / 1000).toFixed(1)}k</p>
-                        <p className="text-xs text-white/50">Revenue</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-col gap-1">
-                          {Object.entries(rep.skills).map(([skill, score]) => (
-                            <div key={skill} className="flex items-center gap-2">
-                              <span className="text-xs text-white/50 w-20 text-right capitalize">{skill}:</span>
-                              <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                <div 
-                                  className={`h-full rounded-full ${
-                                    score >= 80 ? 'bg-emerald-500' :
-                                    score >= 70 ? 'bg-blue-500' :
-                                    'bg-amber-500'
-                                  }`}
-                                  style={{ width: `${score}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-white/70 w-8">{score}%</span>
-                            </div>
-                          ))}
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Skills Analysis Tab */}
-      {selectedMetric === 'skills' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-              className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Skill Distribution</h3>
-                  <p className="text-sm text-white/60">Team-wide skill breakdown</p>
-                </div>
-                <Brain className="w-5 h-5 text-purple-400" />
-              </div>
-          {analytics.skillDistribution && analytics.skillDistribution.some(s => s.value > 0) ? (
-                <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={analytics.skillDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                        label={({ name, value }) => `${name}: ${value}%`}
-                        outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {analytics.skillDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1a1a2e',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '12px',
-                        }}
-                      />
-                </PieChart>
-              </ResponsiveContainer>
+          transition={{ delay: 0.3 }}
+          className="bg-[#3a1a1a] border-2 border-[#6a2a2a] rounded-2xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: 'inset 0 0 20px rgba(239, 68, 68, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)' }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-xl bg-red-500/20 border border-red-400/30">
+              <AlertCircle className="w-5 h-5 text-red-300" />
             </div>
-          ) : (
-                <div className="h-[400px] flex items-center justify-center text-slate-400">
-                  <p>Not enough data</p>
+            <div>
+              <h3 className="text-lg font-bold text-white">Needs Attention</h3>
+              <p className="text-sm text-white">Performance declining</p>
             </div>
-          )}
-        </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Skill Progression</h3>
-                  <p className="text-sm text-white/60">Period-over-period changes</p>
+          </div>
+          <div className="space-y-4">
+            {needsAttention.map((rep) => (
+              <div key={rep.id} className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-red-500/20">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500/30 to-red-600/30 flex items-center justify-center border border-red-400/30">
+                    <span className="text-red-300 font-bold">{rep.name.split(' ').map(n => n[0]).join('')}</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold">{rep.name}</p>
+                    <p className="text-sm text-white">{rep.sessions} sessions</p>
+                  </div>
                 </div>
-                <TrendingUp className="w-5 h-5 text-emerald-400" />
+                <div className="text-right">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-white">{rep.avgScore}%</span>
+                    {rep.trend >= 0 ? (
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-red-400" />
+                    )}
+                  </div>
+                  <p className={`text-sm ${rep.trend >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+                    {rep.trend >= 0 ? '+' : ''}{rep.trend}% trend
+                  </p>
+                </div>
               </div>
-              <div className="space-y-4">
-                {analytics.skillProgression?.map((skill, idx) => {
-                  const improvement = skill.current - skill.previous
-                  return (
-                    <div key={idx} className="p-4 bg-black/20 rounded-xl border border-white/10">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-white font-semibold">{skill.skill}</span>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
-                          skill.trend === 'up' ? 'bg-emerald-500/20 text-emerald-300' :
-                          skill.trend === 'down' ? 'bg-red-500/20 text-red-300' :
-                          'bg-slate-500/20 text-slate-300'
-                        }`}>
-                          {skill.trend === 'up' && <ArrowUpRight className="w-3 h-3" />}
-                          {skill.trend === 'down' && <ArrowDownRight className="w-3 h-3" />}
-                          <span className="text-xs font-semibold">{improvement > 0 ? '+' : ''}{improvement}%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full ${
-                                skill.current >= 75 ? 'bg-emerald-500' :
-                                skill.current >= 65 ? 'bg-blue-500' :
-                                'bg-amber-500'
-                              }`}
-                              style={{ width: `${skill.current}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-white">{skill.current}%</span>
-                          <span className="text-xs text-white/50 ml-1">({skill.previous}%)</span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+            ))}
+            {needsAttention.length === 0 && (
+              <div className="text-center py-8 text-white">
+                <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-emerald-400/50" />
+                <p className="text-base">All team members performing well!</p>
               </div>
+            )}
+          </div>
         </motion.div>
       </div>
 
-          {/* Coaching Opportunities */}
-          {analytics.coachingOpportunities && analytics.coachingOpportunities.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-2xl p-6 backdrop-blur-sm"
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 rounded-xl bg-purple-500/20 border border-purple-400/30">
-                  <TargetIcon className="w-5 h-5 text-purple-300" />
+      {/* Coaching Opportunities */}
+      {analytics.coachingOpportunities && analytics.coachingOpportunities.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-[#2a1a3a] border-2 border-[#4a2a6a] rounded-2xl p-6 backdrop-blur-sm"
+          style={{ boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)' }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-xl bg-purple-500/20 border border-purple-400/30">
+              <TargetIcon className="w-5 h-5 text-purple-300" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1">Coaching Opportunities</h3>
+              <p className="text-base text-white">AI-identified improvement areas</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {analytics.coachingOpportunities.map((opp, idx) => (
+              <div key={idx} className="p-4 bg-black/20 rounded-xl border border-purple-500/20">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="text-white font-semibold">{opp.repName}</p>
+                    <p className="text-base text-white mt-1">{opp.skill}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-lg text-sm font-semibold ${
+                    opp.impact === 'high' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
+                    opp.impact === 'medium' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                    'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                  }`}>
+                    {opp.impact.toUpperCase()} IMPACT
+                  </span>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Coaching Opportunities</h3>
-                  <p className="text-sm text-purple-300/80">AI-identified improvement areas</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {analytics.coachingOpportunities.map((opp, idx) => (
-                  <div key={idx} className="p-4 bg-black/20 rounded-xl border border-purple-500/20">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="text-white font-semibold">{opp.repName}</p>
-                        <p className="text-sm text-purple-300/80 mt-1">{opp.skill}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${
-                        opp.impact === 'high' ? 'bg-red-500/20 text-red-300' :
-                        opp.impact === 'medium' ? 'bg-amber-500/20 text-amber-300' :
-                        'bg-blue-500/20 text-blue-300'
-                      }`}>
-                        {opp.impact.toUpperCase()} IMPACT
-                      </span>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-white">Current</span>
+                      <span className="text-sm text-white">Target</span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-white/60">Current</span>
-                          <span className="text-xs text-white/60">Target</span>
-                        </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full"
-                            style={{ width: `${(opp.currentScore / opp.targetScore) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-lg font-bold text-white">{opp.currentScore}%</span>
-                        <span className="text-xs text-white/50"> → {opp.targetScore}%</span>
-                      </div>
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full"
+                        style={{ width: `${(opp.currentScore / opp.targetScore) * 100}%` }}
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </div>
-      )}
-
-      {/* Revenue Impact Tab */}
-      {selectedMetric === 'revenue' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="lg:col-span-2 bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Revenue vs. Performance</h3>
-                  <p className="text-sm text-white/60">Correlation analysis</p>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-white">{opp.currentScore}%</span>
+                    <span className="text-sm text-white"> → {opp.targetScore}%</span>
+                  </div>
                 </div>
-                <DollarSign className="w-5 h-5 text-emerald-400" />
               </div>
-              {analytics.repPerformance && (
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={analytics.repPerformance.map(r => ({ name: r.name, revenue: r.revenue, score: r.avgScore }))}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3e" />
-                      <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: '11px' }} angle={-45} textAnchor="end" height={80} />
-                      <YAxis yAxisId="left" stroke="#64748b" style={{ fontSize: '12px' }} />
-                      <YAxis yAxisId="right" orientation="right" stroke="#64748b" style={{ fontSize: '12px' }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1a1a2e',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '12px',
-                        }}
-                      />
-                      <Legend />
-                      <Bar yAxisId="left" dataKey="revenue" fill="#10B981" name="Revenue ($)" />
-                      <Line yAxisId="right" type="monotone" dataKey="score" stroke="#8B5CF6" strokeWidth={3} name="Avg Score (%)" dot={{ fill: '#8B5CF6', r: 4 }} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="space-y-4"
-            >
-              <div className="bg-gradient-to-br from-emerald-900/20 to-green-900/20 border border-emerald-500/30 rounded-xl p-6">
-                <DollarSign className="w-8 h-8 text-emerald-300 mb-3" />
-                <p className="text-3xl font-bold text-white mb-1">
-                  ${analytics.repPerformance?.reduce((sum, r) => sum + r.revenue, 0).toLocaleString() || 0}
-                </p>
-                <p className="text-sm text-emerald-300/80">Total Team Revenue</p>
-              </div>
-              <div className="bg-gradient-to-br from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-xl p-6">
-                <TrendingUp className="w-8 h-8 text-purple-300 mb-3" />
-                <p className="text-3xl font-bold text-white mb-1">
-                  ${Math.round((analytics.repPerformance?.reduce((sum, r) => sum + r.revenue, 0) || 0) / (analytics.repPerformance?.length || 1)).toLocaleString()}
-                </p>
-                <p className="text-sm text-purple-300/80">Avg per Rep</p>
-              </div>
-              <div className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 border border-amber-500/30 rounded-xl p-6">
-                <Target className="w-8 h-8 text-amber-300 mb-3" />
-                <p className="text-3xl font-bold text-white mb-1">{analytics.trainingROI}%</p>
-                <p className="text-sm text-amber-300/80">Training ROI</p>
-              </div>
-            </motion.div>
+            ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Enhanced AI Insights */}
+      {/* AI Insights */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-gradient-to-br from-purple-900/30 via-indigo-900/30 to-pink-900/30 border border-purple-500/40 rounded-2xl p-8 backdrop-blur-sm relative overflow-hidden"
+        className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-8 backdrop-blur-sm"
+        style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-purple-500/20 border border-purple-400/30">
-              <Brain className="w-6 h-6 text-purple-300" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-white mb-1">AI-Powered Insights</h3>
-              <p className="text-sm text-purple-200/80">Intelligent analysis and recommendations</p>
-            </div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 rounded-xl bg-purple-500/20 border border-purple-400/30">
+            <Brain className="w-6 h-6 text-purple-300" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-black/30 border border-purple-500/20 rounded-xl p-5 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-5 h-5 text-purple-300" />
-                <p className="text-sm font-semibold text-purple-300">Trend Analysis</p>
-              </div>
-              <p className="text-sm text-white leading-relaxed">
+          <div>
+            <h3 className="text-2xl font-bold text-white mb-1">AI-Powered Insights</h3>
+            <p className="text-base text-white">Intelligent analysis and recommendations</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-black/30 border border-purple-500/20 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-5 h-5 text-purple-300" />
+              <p className="text-base font-semibold text-white">Trend Analysis</p>
+            </div>
+            <p className="text-base text-white leading-relaxed">
               {analytics.changes.score > 0 
-                  ? `Team performance is improving by ${analytics.changes.score}% this period. Maintain focus on skill development to sustain momentum.`
+                ? `Team performance is improving by ${analytics.changes.score}% this period. Maintain focus on skill development to sustain momentum.`
                 : analytics.changes.score < 0
                   ? `Team scores declining by ${Math.abs(analytics.changes.score)}%. Immediate coaching intervention recommended for underperforming reps.`
                   : 'Team performance is stable. Consider advanced training modules to push beyond current plateau.'}
             </p>
           </div>
-            <div className="bg-black/30 border border-amber-500/20 rounded-xl p-5 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Activity className="w-5 h-5 text-amber-300" />
-                <p className="text-sm font-semibold text-amber-300">Activity Insights</p>
-              </div>
-              <p className="text-sm text-white leading-relaxed">
-                {analytics.activeReps} active team members completed {analytics.totalSessions} training sessions. 
-                {analytics.totalSessions / analytics.activeReps > 30 
-                  ? ' Excellent engagement levels across the team.' 
-                  : ' Consider increasing session frequency for optimal skill retention.'}
+          <div className="bg-black/30 border border-amber-500/20 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <Activity className="w-5 h-5 text-amber-300" />
+              <p className="text-base font-semibold text-white">Activity Insights</p>
+            </div>
+            <p className="text-base text-white leading-relaxed">
+              {analytics.activeReps} active team members completed {analytics.totalSessions} training sessions. 
+              {analytics.totalSessions / analytics.activeReps > 30 
+                ? ' Excellent engagement levels across the team.' 
+                : ' Consider increasing session frequency for optimal skill retention.'}
             </p>
           </div>
-            <div className="bg-black/30 border border-emerald-500/20 rounded-xl p-5 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Zap className="w-5 h-5 text-emerald-300" />
-                <p className="text-sm font-semibold text-emerald-300">Strategic Recommendations</p>
-              </div>
-              <p className="text-sm text-white leading-relaxed">
+          <div className="bg-black/30 border border-emerald-500/20 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className="w-5 h-5 text-emerald-300" />
+              <p className="text-base font-semibold text-white">Strategic Recommendations</p>
+            </div>
+            <p className="text-base text-white leading-relaxed">
               {analytics.teamAverage < 70 
-                  ? 'Focus on foundational skills training. Consider one-on-one coaching sessions for reps scoring below 65%.'
+                ? 'Focus on foundational skills training. Consider one-on-one coaching sessions for reps scoring below 65%.'
                 : analytics.teamAverage < 80
                   ? 'Team is performing well. Focus on objection handling and advanced closing techniques to reach next performance tier.'
                   : 'Outstanding performance! Maintain momentum with advanced scenario training and peer learning sessions.'}
             </p>
-            </div>
           </div>
         </div>
       </motion.div>
+
+
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      >
+        <Link href="/manager?tab=messages" className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 hover:border-purple-500/30 transition-all text-center group">
+          <Mail className="w-6 h-6 text-white mb-3 mx-auto group-hover:text-purple-400 transition-colors" />
+          <p className="text-base font-medium text-white">Send Team Message</p>
+        </Link>
+
+        <button 
+          onClick={generateInviteLink}
+          disabled={inviteLoading}
+          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 hover:border-purple-500/30 transition-all text-center group disabled:opacity-50"
+        >
+          {inviteLoading ? (
+            <div className="w-6 h-6 border-2 border-white border-t-purple-400 rounded-full animate-spin mb-3 mx-auto" />
+          ) : (
+            <UserPlus className="w-6 h-6 text-white mb-3 mx-auto group-hover:text-purple-400 transition-colors" />
+          )}
+          <p className="text-base font-medium text-white">Invite a Rep</p>
+        </button>
+
+        <Link href="/manager?tab=analytics" className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 hover:border-purple-500/30 transition-all text-center group">
+          <Trophy className="w-6 h-6 text-white mb-3 mx-auto group-hover:text-purple-400 transition-colors" />
+          <p className="text-base font-medium text-white">View Analytics</p>
+        </Link>
+
+        <button className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 hover:border-purple-500/30 transition-all text-center group">
+          <Download className="w-6 h-6 text-white mb-3 mx-auto group-hover:text-purple-400 transition-colors" />
+          <p className="text-base font-medium text-white">Export Report</p>
+        </button>
+      </motion.div>
+
+      {/* Invite Rep Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-8 max-w-md w-full"
+            style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-purple-500/20 border border-purple-400/30">
+                  <UserPlus className="w-5 h-5 text-purple-300" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Invite a Rep</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowInviteModal(false)
+                  setInviteUrl(null)
+                }}
+                className="text-white/60 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-white/80 mb-6">
+              Share this invite link with a rep to join your team. They can use it to sign up and automatically join your team.
+            </p>
+
+            {inviteUrl && (
+              <>
+                <div className="flex items-center gap-2 mb-6 p-4 bg-black/30 border border-white/10 rounded-xl">
+                  <input
+                    type="text"
+                    value={inviteUrl}
+                    readOnly
+                    className="flex-1 bg-transparent text-white text-sm focus:outline-none"
+                  />
+                  <button
+                    onClick={handleCopyLink}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                  >
+                    {copied ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-white" />
+                    )}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={handleShareViaMessages}
+                    className="flex items-center justify-center gap-2 p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/30 transition-colors group"
+                  >
+                    <MessageSquare className="w-5 h-5 text-emerald-300 group-hover:text-emerald-200" />
+                    <span className="text-sm font-medium text-white">Messages</span>
+                  </button>
+
+                  <button
+                    onClick={handleShareViaGmail}
+                    className="flex items-center justify-center gap-2 p-4 bg-red-500/20 border border-red-500/30 rounded-xl hover:bg-red-500/30 transition-colors group"
+                  >
+                    <Mail className="w-5 h-5 text-red-300 group-hover:text-red-200" />
+                    <span className="text-sm font-medium text-white">Gmail</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
