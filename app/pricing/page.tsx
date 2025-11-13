@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Loader2, ArrowLeft, ChevronRight, Calculator, DollarSign, Calendar } from "lucide-react"
+import { Loader2, ArrowLeft, ChevronRight, DollarSign, Calendar, TrendingUp, Users, CheckCircle2, Sparkles, X, Zap, Shield, Clock, Star, Award, Plus, ShieldCheck } from "lucide-react"
 import Cal, { getCalApi } from "@calcom/embed-react"
+import { Badge } from "@/components/ui/badge"
+import { BorderTrail } from "@/components/ui/border-trail"
+import { cn } from "@/lib/utils"
 
 const salesRepRanges = [
   'Between 10-50 reps',
@@ -29,43 +32,163 @@ function PricingPageContent() {
   const [currentStep, setCurrentStep] = useState(0)
   const [calLoaded, setCalLoaded] = useState(false)
   const [customIndustry, setCustomIndustry] = useState('')
-  const [numReps, setNumReps] = useState<number>(10)
+  const [numReps, setNumReps] = useState<number>(15) // Start at sweet spot
+  const [showStickyHeader, setShowStickyHeader] = useState(false)
+  const [showAnnualInvestment, setShowAnnualInvestment] = useState(false)
+  const [showROICalculations, setShowROICalculations] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     salesRepRange: '',
     industry: ''
   })
 
-  // Calculate pricing based on number of reps
+  // Handle scroll for sticky header
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY
+      setShowStickyHeader(scrollPosition > 400 && currentStep === 0)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [currentStep])
+
+  // Calculate pricing based on number of reps - NEW $2/day model
   const calculatePricing = (reps: number) => {
-    if (reps < 10) return { monthly: 0, annual: 0 }
+    if (reps < 5) return { daily: 0, monthly: 0, annual: 0, annualMonthly: 0, annualDaily: 0, savings: 0 }
     
-    let monthly = 0
+    // $2/day per rep for monthly billing
+    const daily = reps * 2
+    const monthly = daily * 30 // $2/day × 30 days
     
-    // Reps 1-50: $50 each
-    const tier1Reps = Math.min(reps, 50)
-    monthly += tier1Reps * 50
+    // Annual: $1.60/day per rep (20% savings)
+    const annualDaily = reps * 1.60
+    const annualMonthly = annualDaily * 30
+    const annual = annualMonthly * 12
     
-    // Reps 51-100: $40 each
-    if (reps > 50) {
-      const tier2Reps = Math.min(reps - 50, 50)
-      monthly += tier2Reps * 40
-    }
+    // Calculate savings
+    const monthlyAnnual = monthly * 12
+    const savings = monthlyAnnual - annual
     
-    // Reps 101+: $35 each
-    if (reps > 100) {
-      const tier3Reps = reps - 100
-      monthly += tier3Reps * 35
-    }
-    
-    // Annual with 30% discount
-    const annual = monthly * 12 * 0.7
-    
-    return { monthly, annual }
+    return { daily, monthly, annual, annualMonthly, annualDaily, savings }
   }
 
-  // Initialize Cal.com embed when reaching step 3 (calendar step)
+
+  // Calculate ROI with exponential scaling based on team size
+  // Base: 1 extra deal per rep per month
+  // Exponential multiplier: Larger teams create compounding value
+  // Formula: revenue = base_revenue × exponential_multiplier
+  // Multiplier increases exponentially: 1.05^(reps/10)
+  // This means: 10 reps = 1.05x, 50 reps = 1.28x, 100 reps = 1.63x multiplier
+  const calculateROI = (reps: number, annualCost: number) => {
+    const averageCommissionPerDeal = 500 // $500 per deal (realistic)
+    const extraDealsPerRepPerMonth = 1 // 1 extra deal per month per rep (base)
+    const monthsPerYear = 12
+    
+    // Base annual value: reps × 1 extra deal/month × 12 months × $500
+    const baseAnnualValue = reps * extraDealsPerRepPerMonth * monthsPerYear * averageCommissionPerDeal
+    
+    // Exponential multiplier - larger teams create compounding value
+    const exponentialMultiplier = Math.pow(1.05, reps / 10) // Exponential growth
+    
+    // Total annual value with exponential scaling
+    const annualValue = baseAnnualValue * exponentialMultiplier
+    
+    const annualROI = annualValue - annualCost
+    const roiPercentage = annualCost > 0 ? ((annualValue - annualCost) / annualCost) * 100 : 0
+    
+    return {
+      annualValue,
+      annualCost,
+      annualROI,
+      roiPercentage,
+      averageCommission: averageCommissionPerDeal,
+      dealsPerRep: extraDealsPerRepPerMonth,
+      dealsPerRepPerYear: extraDealsPerRepPerMonth * monthsPerYear
+    }
+  }
+
+  // Get ROI indicator emoji and message based on percentage
+  const getROIIndicator = (roiPercentage: number) => {
+    if (roiPercentage >= 200) return { emoji: '🤯', label: 'Mind blown', color: 'text-emerald-500' }
+    if (roiPercentage >= 100) return { emoji: '🚀', label: 'Rocket ROI', color: 'text-emerald-500' }
+    if (roiPercentage >= 50) return { emoji: '🔥', label: 'Fire ROI', color: 'text-emerald-500' }
+    return { emoji: '✓', label: 'Solid ROI', color: 'text-emerald-500' }
+  }
+
+  // Get dynamic messaging based on team size
+  const getTeamSizeMessage = (reps: number) => {
+    if (reps >= 50) return "Enterprise transformation mode"
+    if (reps >= 31) return "Competition drives results"
+    if (reps >= 16) return "Team momentum building"
+    return "Foundation for growth"
+  }
+
+  // Animated counting component for dollar amounts
+  const AnimatedProfit = ({ value }: { value: number }) => {
+    const roundedValue = Math.round(value)
+    const [displayValue, setDisplayValue] = useState(roundedValue)
+    const frameRef = useRef<number | null>(null)
+    const previousValueRef = useRef(roundedValue)
+    
+    useEffect(() => {
+      const endValue = Math.round(value)
+      
+      // Only animate if value actually changed
+      if (previousValueRef.current === endValue) {
+        return
+      }
+      
+      // Cancel any ongoing animation
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current)
+      }
+      
+      const startValue = previousValueRef.current
+      previousValueRef.current = endValue
+      
+      // If values are very close, just set directly
+      if (Math.abs(startValue - endValue) < 0.5) {
+        setDisplayValue(endValue)
+        return
+      }
+      
+      const duration = 500 // 500ms animation
+      const startTime = Date.now()
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime
+        const progress = Math.min(elapsed / duration, 1)
+        
+        // Easing function for smooth animation
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4)
+        const currentValue = Math.round(startValue + (endValue - startValue) * easeOutQuart)
+        
+        setDisplayValue(currentValue)
+        
+        if (progress < 1) {
+          frameRef.current = requestAnimationFrame(animate)
+        } else {
+          setDisplayValue(endValue)
+          frameRef.current = null
+        }
+      }
+      
+      frameRef.current = requestAnimationFrame(animate)
+      
+      return () => {
+        if (frameRef.current) {
+          cancelAnimationFrame(frameRef.current)
+          frameRef.current = null
+        }
+      }
+    }, [value])
+    
+    return <motion.span>${displayValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</motion.span>
+  }
+
+  // Initialize Cal.com embed when reaching step 2 (calendar step)
   useEffect(() => {
-    if (currentStep === 3) {
+    if (currentStep === 2) {
       setCalLoaded(false)
       ;(async function () {
         try {
@@ -84,37 +207,32 @@ function PricingPageContent() {
     }
   }, [currentStep])
 
-  const handleSelectSalesRepRange = (range: string) => {
-    setFormData(prev => ({ ...prev, salesRepRange: range }))
-    setTimeout(() => setCurrentStep(1), 300)
-  }
-
   const handleSelectIndustry = (industry: string) => {
     if (industry === 'Other') {
       setFormData(prev => ({ ...prev, industry: 'Other' }))
       // Don't advance to next step yet - wait for custom input
     } else {
       setFormData(prev => ({ ...prev, industry }))
-      setTimeout(() => setCurrentStep(2), 300)
+      setTimeout(() => setCurrentStep(1), 300)
     }
   }
 
   const handleCustomIndustrySubmit = () => {
     if (customIndustry.trim()) {
       setFormData(prev => ({ ...prev, industry: customIndustry.trim() }))
-      setTimeout(() => setCurrentStep(2), 300)
+      setTimeout(() => setCurrentStep(1), 300)
     }
   }
 
   const handleContinueToCalendar = () => {
-    setTimeout(() => setCurrentStep(3), 300)
+    setTimeout(() => setCurrentStep(2), 300)
   }
 
   const handleBack = () => {
     if (currentStep > 0) {
       const newStep = currentStep - 1
-      if (newStep === 1 && formData.industry === 'Other') {
-        // Reset Other selection when going back to industry step
+      if (newStep === 0 && formData.industry === 'Other') {
+        // Reset Other selection when going back to pricing calculator
         setFormData(prev => ({ ...prev, industry: '' }))
         setCustomIndustry('')
       }
@@ -122,79 +240,627 @@ function PricingPageContent() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center px-4 pb-12 relative overflow-hidden" style={{ marginTop: '-20px' }}>
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-      <div className="max-w-4xl w-full relative z-10">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-4 sm:mb-6"
-        >
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-geist leading-[1.1] tracking-tight bg-clip-text text-transparent bg-[linear-gradient(180deg,_#FFF_0%,_rgba(200,_200,_200,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(150,_150,_150,_0.75)_100%)] mb-4">
-            Get Started with DoorIQ
-          </h1>
-        </motion.div>
+  const pricing = calculatePricing(numReps)
 
+  return (
+    <div className="min-h-screen bg-black relative overflow-hidden">
+      {/* Sticky Header */}
+      <AnimatePresence>
+        {showStickyHeader && (
+          <motion.div
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-white/20"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-6">
+                  <div className="text-white">
+                    <span className="text-2xl font-bold">{numReps}</span>
+                    <span className="text-sm text-white ml-1">reps</span>
+                  </div>
+                  <div className="text-white">
+                    <span className="text-lg font-semibold text-white">${pricing.monthly.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                    <span className="text-sm ml-1">/mo</span>
+                  </div>
+                  <div className="hidden sm:block text-white/60 text-sm">
+                    →
+                  </div>
+                </div>
+                <motion.button
+                  onClick={handleContinueToCalendar}
+                  className="px-6 py-3 rounded-lg bg-white text-black hover:bg-gray-100 font-semibold transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2"
+                >
+                  <span>Get Started</span>
+                  <ChevronRight className="w-4 h-4" />
+                </motion.button>
+              </div>
+      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="w-full relative z-10">
         {/* Form Content */}
         <AnimatePresence mode="wait">
-          {currentStep === 0 && (
+          {currentStep === 0 && (() => {
+            // Always calculate ROI based on annual cost for fair comparison
+            const roi = calculateROI(numReps, pricing.annual)
+            return (
             <motion.div
               key="step-0"
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 lg:p-12 shadow-2xl shadow-purple-500/5"
-            >
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-25 animate-pulse" />
-              
-              <div className="relative z-10">
-                <motion.h2 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-3xl sm:text-4xl font-bold text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white"
-                >
-                  How many sales reps do you have?
-                </motion.h2>
-                <motion.p 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-lg sm:text-xl text-slate-300 mb-8"
-                >
-                  Choose the option that best describes your company
-                </motion.p>
-                <div className="space-y-4">
-                  {salesRepRanges.map((range, index) => (
-                    <motion.button
-                      key={range}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + index * 0.1 }}
-                      onClick={() => handleSelectSalesRepRange(range)}
-                      className="group relative w-full flex items-center justify-between px-8 py-5 rounded-full bg-gradient-to-r from-white/10 via-white/5 to-white/10 hover:from-white/20 hover:via-white/10 hover:to-white/20 border border-white/20 hover:border-purple-400/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-purple-500/20 overflow-hidden"
-                    >
-                      {/* Animated background gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                className="w-full min-h-screen py-6 px-4 sm:px-6 lg:px-8"
+              >
+                <div className="max-w-7xl mx-auto">
+                  {/* NEW HERO SECTION */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-center mb-6 pt-12"
+                  >
+                    <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-2 tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
+                      Just $2 Per Day, Per Rep
+                    </h2>
+                    <p className="text-lg sm:text-xl lg:text-2xl text-white mb-2 font-medium">
+                      Less than their daily energy drink, infinite ROI potential
+                    </p>
+                  </motion.div>
+
+                  {/* Interactive Calculator */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="mb-4"
+                  >
+                    <label className="block text-lg font-bold text-white mb-3 text-center tracking-wide">
+                      Number of Sales Reps:
+                    </label>
+                    <div className="max-w-2xl mx-auto">
+                      {/* Slider */}
+                      <div className="relative mb-3">
+                      <input
+                          type="range"
+                          min="5"
+                          max="100"
+                        value={numReps}
+                        onChange={(e) => {
+                            const value = parseInt(e.target.value) || 5
+                            setNumReps(Math.max(5, Math.min(100, value)))
+                          }}
+                          className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer pricing-slider"
+                          style={{
+                            background: (() => {
+                              const percentage = ((numReps - 5) / 95) * 100
+                              return `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, rgba(255,255,255,0.1) ${percentage}%, rgba(255,255,255,0.1) 100%)`
+                            })()
+                          }}
+                        />
+                        <div className="flex justify-between mt-1 text-base font-semibold text-white">
+                          <span>5</span>
+                          <span>100+</span>
+                        </div>
+                      </div>
                       
-                      <span className="text-lg font-semibold text-white relative z-10">
-                        {range}
-                      </span>
-                      <ChevronRight className="w-5 h-5 text-purple-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300 relative z-10" />
+                      {/* Rep Count Display */}
+                      <div className="text-center">
+                        <motion.div 
+                          key={numReps}
+                          initial={{ scale: 0.9, opacity: 0.8 }}
+                          animate={{ 
+                            scale: 1,
+                            opacity: 1
+                          }}
+                          transition={{ duration: 0.3 }}
+                          className="inline-block px-6 py-3 rounded-lg border-2 border-white/30 bg-black"
+                        >
+                          <div className="text-4xl font-bold text-white mb-0.5 font-mono">{numReps}</div>
+                          <div className="text-sm text-white">reps</div>
+                        </motion.div>
+                        <p className="text-lg font-bold text-white mt-1.5 text-center tracking-wide">
+                          5 rep minimum for team accountability
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Investment & ROI Display */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="mb-8 max-w-6xl mx-auto mt-6"
+                  >
+                    <div className="relative">
+                      <div
+                        className={cn(
+                          'z-[-10] pointer-events-none absolute inset-0 size-full',
+                          'bg-[linear-gradient(to_right,theme(colors.white/.1)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.white/.1)_1px,transparent_1px)]',
+                          'bg-[size:32px_32px]',
+                          '[mask-image:radial-gradient(ellipse_at_center,var(--background)_10%,transparent)]',
+                        )}
+                      />
+
+                            <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        viewport={{ once: true }}
+                        className="mx-auto w-full space-y-8"
+                      >
+                        <div className="grid md:grid-cols-2 gap-6 bg-black relative border border-white/20 p-4 mt-8">
+                          <Plus className="absolute -top-3 -left-3 size-5 text-white" />
+                          <Plus className="absolute -top-3 -right-3 size-5 text-white" />
+                          <Plus className="absolute -bottom-3 -left-3 size-5 text-white" />
+                          <Plus className="absolute -right-3 -bottom-3 size-5 text-white" />
+
+                          {/* Monthly Investment Card */}
+                          <div className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4">
+                            <BorderTrail
+                              style={{
+                                boxShadow:
+                                  '0px 0px 60px 30px rgb(16 185 129 / 20%), 0 0 100px 60px rgb(0 0 0 / 50%), 0 0 140px 90px rgb(0 0 0 / 50%)',
+                              }}
+                              size={100}
+                            />
+                            <div className="space-y-1 mb-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="leading-none font-semibold text-white">Monthly</h3>
+                              </div>
+                            </div>
+                            <div className="mt-6 space-y-4">
+                              <div className="text-white flex items-end gap-0.5 text-xl">
+                                <span>$</span>
+                                <motion.span 
+                                  key={pricing.monthly}
+                                initial={{ scale: 1 }}
+                                  animate={{ scale: [1, 1.05, 1] }}
+                                  transition={{ duration: 0.3 }}
+                                  className="text-white -mb-0.5 text-4xl font-extrabold tracking-tighter md:text-5xl font-mono"
+                                >
+                                  {pricing.monthly.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </motion.span>
+                                <span>/month</span>
+                              </div>
+                              <div className="text-lg text-white font-semibold font-mono">
+                                = ${(pricing.monthly * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year
+                              </div>
+                              <div className="text-base text-white font-semibold">
+                                $2/day × {numReps} reps × 30 days
+                                </div>
+                                </div>
+                              </div>
+
+                          {/* Annual Investment Card */}
+                          <div className="relative w-full rounded-lg border border-white/20 px-4 pt-5 pb-4 overflow-hidden">
+                            {/* Green Triangle Corner */}
+                            <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[60px] border-l-transparent border-t-[60px] border-t-emerald-500"></div>
+                            <BorderTrail
+                              style={{
+                                boxShadow:
+                                  '0px 0px 60px 30px rgb(16 185 129 / 20%), 0 0 100px 60px rgb(0 0 0 / 50%), 0 0 140px 90px rgb(0 0 0 / 50%)',
+                              }}
+                              size={100}
+                            />
+                            <div className="space-y-1 mb-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="leading-none font-semibold text-white flex items-center gap-2">
+                                  Annual
+                                  <Badge>Best Value</Badge>
+                                </h3>
+                                </div>
+                            </div>
+                            <div className="mt-6 space-y-4">
+                              <div className="text-white flex items-end text-xl">
+                                <span>$</span>
+                                <motion.span 
+                                  key={pricing.annualMonthly}
+                                  initial={{ scale: 1 }}
+                                  animate={{ scale: [1, 1.05, 1] }}
+                              transition={{ duration: 0.3 }}
+                                  className="text-white -mb-0.5 text-4xl font-extrabold tracking-tighter md:text-5xl font-mono"
+                                >
+                                  {pricing.annualMonthly.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </motion.span>
+                                <span>/month</span>
+                              </div>
+                              <div className="text-lg text-white font-semibold font-mono flex items-center gap-2">
+                                <span className="text-gray-500 text-base line-through opacity-60">${(pricing.monthly * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                <span>= ${pricing.annual.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year</span>
+                              </div>
+                              <div className="text-base text-emerald-500 font-semibold">
+                                Save ${pricing.savings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year vs monthly
+                              </div>
+                            </div>
+                          </div>
+                      </div>
+
+                        {/* ROI Header Text */}
+                        <div className="text-center py-4">
+                          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-3 tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
+                            Your Competitive Advantage
+                          </h2>
+                          <p className="text-2xl md:text-3xl text-white font-medium">
+                            When each rep closes just <span className="text-emerald-500 font-semibold">{roi.dealsPerRep} extra deal{roi.dealsPerRep > 1 ? 's' : ''}/month</span>:
+                              </p>
+                            </div>
+
+                        {/* Simplified ROI Display */}
+                        {(() => {
+                          const investment = showAnnualInvestment ? pricing.annual : pricing.monthly * 12
+                          const netProfit = showAnnualInvestment ? roi.annualROI : roi.annualValue - (pricing.monthly * 12)
+                          return (
+                            <div className="bg-black relative border border-white/20 p-6 rounded-lg">
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-white text-lg font-medium">Revenue:</span>
+                                <motion.span 
+                                  key={roi.annualValue}
+                                  initial={{ scale: 1 }}
+                                  animate={{ scale: [1, 1.05, 1] }}
+                                  transition={{ duration: 0.3 }}
+                                    className="text-emerald-500 text-2xl font-bold font-mono"
+                                >
+                                    +${roi.annualValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </motion.span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-white text-lg font-medium">Investment:</span>
+                                  <motion.span 
+                                    key={investment}
+                                    initial={{ scale: 1 }}
+                                    animate={{ scale: [1, 1.05, 1] }}
+                                    transition={{ duration: 0.3 }}
+                                    className="text-red-400 text-2xl font-bold font-mono"
+                                  >
+                                    -${investment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                  </motion.span>
+                              </div>
+                                <div className="border-t border-white/20 pt-4 flex items-center justify-between">
+                                  <span className="text-white text-lg font-semibold">Net Profit:</span>
+                                  <motion.div
+                                    key={netProfit}
+                                    initial={{ scale: 0.9 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <span className="text-emerald-400 text-3xl font-bold font-mono">
+                                      ${netProfit.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    </span>
+                                  </motion.div>
+                            </div>
+
+                                {/* See Calculations Dropdown */}
+                                <div className="border-t border-white/20 pt-4">
+                                  <button
+                                    onClick={() => setShowROICalculations(!showROICalculations)}
+                                    className="w-full flex items-center justify-between text-emerald-400 hover:text-emerald-300 transition-colors text-lg font-semibold"
+                                  >
+                                    <span>{showROICalculations ? 'Hide' : 'See'} calculations</span>
+                                    <ChevronRight 
+                                      className={`w-5 h-5 transition-transform ${showROICalculations ? 'rotate-90' : ''}`}
+                                    />
+                                  </button>
+                                  {showROICalculations && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      className="mt-4 space-y-4 pt-4 border-t border-white/10"
+                                    >
+                                      <div className="space-y-2">
+                                        <div className="text-white text-xl font-bold">How we calculate revenue:</div>
+                                        <div className="text-white text-lg space-y-1">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-emerald-400 font-bold">{numReps}</span>
+                                            <span>reps</span>
+                                            <span className="text-white/60">×</span>
+                                            <span className="text-emerald-400 font-bold">{roi.dealsPerRep}</span>
+                                            <span>extra deal{roi.dealsPerRep > 1 ? 's' : ''} per month</span>
+                                            <span className="text-white/60">×</span>
+                                            <span className="text-emerald-400 font-bold">12</span>
+                                            <span>months</span>
+                                            <span className="text-white/60">×</span>
+                                            <span className="text-emerald-400 font-bold">${roi.averageCommission}</span>
+                                            <span>average value per deal</span>
+                                          </div>
+                                          <div className="text-emerald-400 text-2xl font-bold font-mono pt-2">
+                                            = ${roi.annualValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="space-y-2">
+                                        <div className="text-white text-xl font-bold">Your investment:</div>
+                                        <div className="text-white text-lg">
+                                          <span className="text-red-400 font-bold">${investment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                          <span className="ml-2">annual cost</span>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="space-y-2 pt-2 border-t border-white/10">
+                                        <div className="text-white text-xl font-bold">Net profit:</div>
+                                        <div className="text-white text-lg space-y-1">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-emerald-400 font-bold">${roi.annualValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                            <span>revenue</span>
+                                            <span className="text-white/60">-</span>
+                                            <span className="text-red-400 font-bold">${investment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                            <span>investment</span>
+                                          </div>
+                                          <div className="text-emerald-400 text-2xl font-bold font-mono pt-2">
+                                            = ${netProfit.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })()}
+
+                        {/* ROI Highlight Card */}
+                                {(() => {
+                                  const investment = showAnnualInvestment ? pricing.annual : pricing.monthly * 12
+                                  const roiPct = investment > 0 ? ((roi.annualValue - investment) / investment) * 100 : 0
+                          const returnPerDollar = investment > 0 ? roi.annualValue / investment : 0
+                          const paybackWeeks = investment > 0 ? Math.round((investment / (roi.annualValue / 12)) * 4) : 0
+                                  return (
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.6, delay: 0.2 }}
+                              viewport={{ once: true }}
+                              className="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-2 border-emerald-500/50 rounded-lg p-5 md:p-6"
+                            >
+                              <div className="absolute -top-2 -left-2 size-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-sm">💰</span>
+                          </div>
+                              <div className="grid md:grid-cols-3 gap-4 md:gap-6">
+                                <div className="text-center">
+                                  <motion.div
+                                    key={roiPct}
+                                    initial={{ scale: 0.9 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="text-3xl md:text-4xl font-bold text-emerald-400 mb-1 font-mono"
+                                  >
+                                    {roiPct.toFixed(0)}%
+                                  </motion.div>
+                                  <div className="text-xs font-semibold text-white uppercase tracking-wide">ROI</div>
+                            </div>
+                                <div className="text-center">
+                                  <motion.div
+                                    key={returnPerDollar}
+                                    initial={{ scale: 0.9 }}
+                                    animate={{ scale: 1 }}
+                                transition={{ duration: 0.3 }}
+                                    className="text-3xl md:text-4xl font-bold text-emerald-400 mb-1 font-mono"
+                                >
+                                    ${returnPerDollar.toFixed(0)}
+                                  </motion.div>
+                                  <div className="text-xs font-semibold text-white uppercase tracking-wide">Return per $1 invested</div>
+                              </div>
+                                <div className="text-center">
+                                  <motion.div
+                                    key={paybackWeeks}
+                                    initial={{ scale: 0.9 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="text-3xl md:text-4xl font-bold text-emerald-400 mb-1 font-mono"
+                                  >
+                                    {paybackWeeks}
+                                  </motion.div>
+                                  <div className="text-xs font-semibold text-white uppercase tracking-wide">Week payback period</div>
+                            </div>
+                              </div>
+                            </motion.div>
+                                )
+                              })()}
+
+                        <div className="text-white flex items-center justify-center gap-x-2 text-base md:text-lg font-medium">
+                          <ShieldCheck className="size-4 text-emerald-500" />
+                          <span>Access to all features with no hidden fees • 14-day free trial</span>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+
+                  {/* Enhanced Comparison Section */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="mb-12 p-8 rounded-lg border border-white/20 max-w-6xl mx-auto bg-black"
+                  >
+                    <h4 className="text-3xl md:text-4xl font-black text-white mb-6 tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.01em' }}>
+                      Why DoorIQ vs. Traditional Training?
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-white/20">
+                            <th className="text-left py-3 text-white font-semibold">Feature</th>
+                            <th className="text-center py-3 text-white font-semibold">Traditional Training</th>
+                            <th className="text-center py-3 text-white font-bold bg-white/5">DoorIQ</th>
+                          </tr>
+                        </thead>
+                        <tbody className="space-y-2">
+                          <tr className="border-b border-white/10">
+                            <td className="py-3 text-white text-base font-medium">Cost per rep</td>
+                            <td className="text-center py-3 text-red-500 font-semibold text-lg">$2,000</td>
+                            <td className="text-center py-3 text-emerald-500 font-semibold text-lg">$2/day ($60/month)</td>
+                          </tr>
+                          <tr className="border-b border-white/10">
+                            <td className="py-3 text-white text-base font-semibold">Annual training cost savings</td>
+                            <td className="text-center py-3 text-red-500 font-semibold text-lg">$58,000/year</td>
+                            <td className="text-center py-3 text-emerald-500 font-semibold text-lg">Save $58,000/year</td>
+                          </tr>
+                          <tr className="border-b border-white/10">
+                            <td className="py-3 text-white text-base font-medium">Time to first practice</td>
+                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                          </tr>
+                          <tr className="border-b border-white/10">
+                            <td className="py-3 text-white text-base font-medium">Ongoing practice</td>
+                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                          </tr>
+                          <tr className="border-b border-white/10">
+                            <td className="py-3 text-white text-base font-medium">Available 24/7</td>
+                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                          </tr>
+                          <tr className="border-b border-white/10">
+                            <td className="py-3 text-white text-base font-medium">Customized to your scripts</td>
+                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                          </tr>
+                          <tr className="border-b border-white/10">
+                            <td className="py-3 text-white text-base font-medium">AI-powered scenarios</td>
+                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                          </tr>
+                          <tr className="border-b border-white/10">
+                            <td className="py-3 text-white text-base font-medium">Real-time feedback</td>
+                            <td className="text-center py-3"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                            <td className="text-center py-3"><CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /></td>
+                          </tr>
+                          <tr>
+                            <td className="py-3 text-white text-base font-medium">Burned lead cost</td>
+                            <td className="text-center py-3 text-red-500 font-semibold">$300-500 each</td>
+                            <td className="text-center py-3 text-emerald-500 font-semibold">Prevented</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </motion.div>
+
+                  {/* Combined Trust Section */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.65 }}
+                    className="mb-12 max-w-6xl mx-auto"
+                  >
+                    {/* Tier 3: Stats Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6 pb-6 border-b border-white/10">
+                      <div className="flex flex-col items-center text-center p-6">
+                        <Star className="w-6 h-6 text-white mb-3" />
+                        <div className="text-4xl font-bold text-white mb-2 font-mono">50+</div>
+                        <div className="text-base text-white uppercase tracking-wide font-semibold">sales teams</div>
+                        </div>
+                      <div className="flex flex-col items-center text-center p-6">
+                        <Award className="w-6 h-6 text-white mb-3" />
+                        <div className="text-4xl font-bold text-white mb-2 font-mono">10,000+</div>
+                        <div className="text-base text-white uppercase tracking-wide font-semibold">practice sessions</div>
+                        </div>
+                      <div className="flex flex-col items-center text-center p-6">
+                        <Shield className="w-6 h-6 text-emerald-500 mb-3" />
+                        <div className="text-4xl font-bold text-white mb-2 font-mono">14-day</div>
+                        <div className="text-base text-white uppercase tracking-wide font-semibold">free trial</div>
+                      </div>
+                    </div>
+
+                    {/* Security Badges */}
+                    <div className="flex flex-wrap items-center justify-center gap-8 pt-4">
+                      <div className="flex items-center gap-3 text-white">
+                        <Shield className="w-6 h-6 text-emerald-500" />
+                        <span className="text-lg font-semibold">SOC 2 Compliant</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-white">
+                        <Shield className="w-6 h-6 text-emerald-500" />
+                        <span className="text-lg font-semibold">SSL Encrypted</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-white">
+                        <Shield className="w-6 h-6 text-emerald-500" />
+                        <span className="text-lg font-semibold">GDPR Compliant</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-white">
+                        <Shield className="w-6 h-6 text-emerald-500" />
+                        <span className="text-lg font-semibold">Bank-Level Security</span>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* FAQs Section */}
+                  <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 }}
+                    className="mb-12 max-w-5xl mx-auto"
+                  >
+                    <h4 className="text-3xl md:text-4xl font-black text-white mb-6 text-center tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.01em' }}>Frequently Asked Questions</h4>
+                    <div className="space-y-3 max-w-3xl mx-auto">
+                      <div className="p-5 rounded-lg border border-white/20 bg-black">
+                        <h5 className="text-white font-bold text-lg mb-2">Can I try DoorIQ before committing?</h5>
+                        <p className="text-sm text-white">Yes! We offer a 14-day free trial. Try DoorIQ risk-free and see the results for yourself.</p>
+                      </div>
+                      <div className="p-5 rounded-lg border border-white/20 bg-black">
+                        <h5 className="text-white font-bold text-lg mb-2">How quickly can my team start practicing?</h5>
+                        <p className="text-sm text-white">Your team can start practicing within minutes of signup. No lengthy onboarding or setup required.</p>
+                      </div>
+                      <div className="p-5 rounded-lg border border-white/20 bg-black">
+                        <h5 className="text-white font-bold text-lg mb-2">How is this different from roleplay?</h5>
+                        <p className="text-sm text-white">Real AI conversations, not awkward coworker practice. Our AI adapts to each rep's responses in real-time, providing authentic scenarios that mirror actual customer interactions.</p>
+                      </div>
+                      <div className="p-5 rounded-lg border border-white/20 bg-black">
+                        <h5 className="text-white font-bold text-lg mb-2">Can I track individual rep progress?</h5>
+                        <p className="text-sm text-white">Yes, detailed analytics for each rep. You'll see session completion rates, improvement trends, areas of strength, and specific skills that need development.</p>
+                      </div>
+                      <div className="p-5 rounded-lg border border-white/20 bg-black">
+                        <h5 className="text-white font-bold text-lg mb-2">What if I need to add or remove reps?</h5>
+                        <p className="text-sm text-white">You can adjust your team size anytime. We'll prorate your billing based on the changes.</p>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Enhanced CTA Button */}
+                  <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.0 }}
+                    className="space-y-3 max-w-3xl mx-auto pb-8"
+                >
+                    <p className="text-center text-white font-semibold text-lg mb-2">
+                      Limited spots for Q1 onboarding
+                    </p>
+                    <motion.button
+                      onClick={handleContinueToCalendar}
+                      className="w-full py-5 rounded-lg bg-white text-black hover:bg-gray-100 font-bold text-xl transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+                    >
+                      <span>Schedule 15-Min Demo</span>
+                      <ChevronRight className="w-5 h-5" />
                     </motion.button>
-                  ))}
+                    <div className="text-center space-y-2">
+                      <p className="text-sm text-white">
+                        Join <span className="text-white font-semibold">50+ sales teams</span> improving their close rates • No credit card required
+                      </p>
+                      <div className="flex items-center justify-center gap-4 pt-1">
+                        <div className="flex items-center gap-2 text-xs text-white">
+                          <Shield className="w-4 h-4 text-emerald-500" />
+                          <span>Cancel anytime</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-white">
+                          <span>Secure payment via</span>
+                          <span className="font-semibold text-white">Stripe</span>
+                        </div>
                 </div>
               </div>
             </motion.div>
-          )}
+                </div>
+              </motion.div>
+            )
+          })()}
 
           {currentStep === 1 && (
             <motion.div
@@ -203,27 +869,26 @@ function PricingPageContent() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 lg:p-12 shadow-2xl shadow-purple-500/5"
+              className="relative bg-black border border-white/20 rounded-lg p-8 sm:p-10 lg:p-12"
             >
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-25 animate-pulse" />
-              
               <div className="relative z-10">
+                {currentStep > 0 && (
                 <motion.button
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
                   onClick={handleBack}
-                  className="flex items-center gap-2 text-slate-300 hover:text-white mb-8 transition-colors group"
+                  className="flex items-center gap-2 text-white hover:text-white mb-8 transition-colors group"
                 >
                   <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                   <span className="text-sm">Back</span>
                 </motion.button>
+                )}
                 <motion.h2 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-3xl sm:text-4xl font-bold text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white"
+                  className="text-3xl sm:text-4xl font-bold text-white mb-3"
                 >
                   Choose Your Industry
                 </motion.h2>
@@ -231,7 +896,7 @@ function PricingPageContent() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-lg sm:text-xl text-slate-300 mb-8"
+                  className="text-lg sm:text-xl text-white mb-8"
                 >
                   Choose the category that best fits your business. This helps us tailor your setup.
                 </motion.p>
@@ -243,21 +908,18 @@ function PricingPageContent() {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.4 + index * 0.05 }}
                       onClick={() => handleSelectIndustry(industry.name)}
-                      className={`group relative flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all hover:scale-105 active:scale-95 overflow-hidden ${
+                      className={`group relative flex flex-col items-center justify-center p-6 rounded-lg border transition-all hover:scale-105 active:scale-95 ${
                         formData.industry === industry.name
-                          ? 'border-purple-400 bg-gradient-to-br from-purple-500/20 to-blue-500/20 shadow-lg shadow-purple-500/30'
-                          : 'border-white/20 bg-white/5 hover:border-purple-400/50 hover:bg-white/10'
+                          ? 'border-white bg-white/10'
+                          : 'border-white/20 bg-black hover:border-white/40 hover:bg-white/5'
                       }`}
                     >
-                      {/* Hover glow effect */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-blue-500/0 group-hover:from-purple-500/20 group-hover:to-blue-500/20 transition-all duration-300 rounded-2xl" />
-                      
                       <span className="text-5xl mb-3 relative z-10 transform group-hover:scale-110 transition-transform duration-300">{industry.icon}</span>
                       <span className="text-base font-semibold text-white relative z-10">
                         {industry.name}
                       </span>
                       {industry.name !== 'Other' && (
-                        <ChevronRight className="w-4 h-4 text-purple-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 absolute bottom-3 z-10" />
+                        <ChevronRight className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 absolute bottom-3 z-10" />
                       )}
                     </motion.button>
                   ))}
@@ -285,13 +947,13 @@ function PricingPageContent() {
                           }
                         }}
                         placeholder="Enter your industry..."
-                        className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/20 transition-all"
+                        className="flex-1 px-4 py-3 rounded-lg bg-black border border-white/20 text-white placeholder:text-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all"
                         autoFocus
                       />
                       <button
                         onClick={handleCustomIndustrySubmit}
                         disabled={!customIndustry.trim()}
-                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-purple-500/30"
+                        className="px-6 py-3 rounded-lg bg-white text-black hover:bg-gray-100 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                       >
                         Continue
                       </button>
@@ -302,176 +964,17 @@ function PricingPageContent() {
             </motion.div>
           )}
 
-          {currentStep === 2 && (() => {
-            const pricing = calculatePricing(numReps)
-            return (
-              <motion.div
-                key="step-2"
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 lg:p-12 shadow-2xl shadow-purple-500/5"
-              >
-                {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-3xl blur-xl opacity-25 animate-pulse" />
-                
-                <div className="relative z-10">
-                  <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                    onClick={handleBack}
-                    className="flex items-center gap-2 text-slate-300 hover:text-white mb-8 transition-colors group"
-                  >
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                    <span className="text-sm">Back</span>
-                  </motion.button>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-center mb-8"
-                  >
-                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white">
-                      Calculate Your Pricing
-                    </h2>
-                    <p className="text-lg sm:text-xl text-slate-300">
-                      See how much DoorIQ costs for your team
-                    </p>
-                  </motion.div>
-
-                  {/* Reps Input */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="mb-8"
-                  >
-                    <label className="block text-sm font-medium text-white mb-3">
-                      Number of Sales Reps
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="10"
-                        value={numReps}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value) || 10
-                          setNumReps(Math.max(10, value))
-                        }}
-                        className="w-full px-6 py-4 rounded-xl bg-white/10 border border-white/20 text-white text-2xl font-semibold focus:outline-none focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/20 transition-all"
-                      />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                        Minimum: 10
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Pricing Display */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
-                  >
-                    {/* Monthly Pricing */}
-                    <div className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:border-purple-400/50 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 rounded-lg bg-purple-500/20">
-                          <DollarSign className="w-5 h-5 text-purple-300" />
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-medium text-slate-300">Monthly</h3>
-                          <p className="text-xs text-slate-400">Per month</p>
-                        </div>
-                      </div>
-                      <div className="text-4xl font-bold text-white mb-2">
-                        ${pricing.monthly.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                      </div>
-                      <p className="text-sm text-slate-400">
-                        ${(pricing.monthly / numReps).toFixed(0)} per rep/month
-                      </p>
-                    </div>
-
-                    {/* Annual Pricing */}
-                    <div className="relative bg-gradient-to-br from-green-500/20 via-green-500/10 to-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-2xl p-6 hover:border-green-400/50 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 rounded-lg bg-green-500/20">
-                          <Calendar className="w-5 h-5 text-green-300" />
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-medium text-slate-300">Annual</h3>
-                          <p className="text-xs text-green-300 font-semibold">30% discount</p>
-                        </div>
-                      </div>
-                      <div className="text-4xl font-bold text-white mb-2">
-                        ${pricing.annual.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                      </div>
-                      <p className="text-sm text-slate-400">
-                        ${(pricing.annual / 12 / numReps).toFixed(0)} per rep/month
-                      </p>
-                      <div className="mt-2 text-xs text-green-300 font-semibold">
-                        Save ${((pricing.monthly * 12) - pricing.annual).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Pricing Breakdown */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="mb-8 p-6 rounded-xl bg-white/5 border border-white/10"
-                  >
-                    <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                      <Calculator className="w-4 h-4" />
-                      Pricing Breakdown
-                    </h4>
-                    <div className="space-y-2 text-sm text-slate-300">
-                      <div className="flex justify-between">
-                        <span>Reps 1-50:</span>
-                        <span className="text-white font-medium">$50/rep/month</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Reps 51-100:</span>
-                        <span className="text-white font-medium">$40/rep/month</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Reps 101+:</span>
-                        <span className="text-white font-medium">$35/rep/month</span>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Continue Button */}
-                  <motion.button
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    onClick={handleContinueToCalendar}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold text-lg transition-all shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                  >
-                    <span>Continue to Schedule</span>
-                    <ChevronRight className="w-5 h-5" />
-                  </motion.button>
-                </div>
-              </motion.div>
-            )
-          })()}
-
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <motion.div
               key="step-3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8 overflow-hidden"
+              className="bg-black border border-white/20 rounded-lg p-6 sm:p-8 overflow-hidden"
             >
               <button
                 onClick={handleBack}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+                className="flex items-center gap-2 text-white hover:text-white mb-6 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="text-sm">← Back to pricing calculator</span>
@@ -499,9 +1002,9 @@ function PricingPageContent() {
                   config={{"layout":"month_view"}}
                 />
                 {!calLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 backdrop-blur-sm z-20">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black z-20">
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="w-10 h-10 animate-spin text-purple-400" />
+                      <Loader2 className="w-10 h-10 animate-spin text-white" />
                       <p className="text-base font-medium text-white">
                         Loading calendar...
                       </p>
