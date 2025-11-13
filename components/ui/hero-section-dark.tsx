@@ -310,12 +310,12 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         {/* Hero Section - Full Viewport Height */}
         <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center pt-0 pb-0 lg:pb-2">
           <RetroGrid {...gridOptions} />
-          <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-8 lg:px-20 xl:px-24 2xl:px-32">
+          <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-6 lg:px-20 xl:px-24 2xl:px-32">
             {/* Centered Copy Layout */}
             <div className="flex items-center justify-center pt-0 lg:pt-0 -mt-[40px] lg:-mt-[50px]">
               {/* Centered Copy */}
               <motion.div 
-                className="space-y-3 sm:space-y-4 lg:space-y-4 max-w-5xl text-center flex flex-col items-center justify-center" 
+                className="space-y-3 sm:space-y-4 lg:space-y-4 max-w-5xl text-center flex flex-col items-center justify-center px-2 sm:px-0" 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
@@ -334,7 +334,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   </h1>
                 </motion.a>
                 <motion.h2 
-                  className="text-4xl sm:text-5xl md:text-6xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] px-2 sm:px-0"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
@@ -354,7 +354,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 </motion.div>
                 {/* Instructional Text - Below Carousel */}
                 <motion.p 
-                  className="text-white text-sm sm:text-base lg:text-lg mt-2 lg:mt-3"
+                  className="text-white text-sm sm:text-base lg:text-lg mt-2 lg:mt-3 px-2 sm:px-0"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.6 }}

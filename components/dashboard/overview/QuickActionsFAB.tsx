@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, PlayCircle, MessageCircle, FileText } from 'lucide-react'
+import { Plus, PlayCircle, FileText } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -10,7 +10,6 @@ import LastFeedbackModal from './LastFeedbackModal'
 
 export default function QuickActionsFAB() {
   const [isOpen, setIsOpen] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
   const [hasSession, setHasSession] = useState(true)
   const [userId, setUserId] = useState<string>('')
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
@@ -25,8 +24,6 @@ export default function QuickActionsFAB() {
       if (user) {
         setUserId(user.id)
         checkHasSession(user.id)
-        checkUnreadMessages(user.id)
-        subscribeToMessages(user.id)
       }
     }
 
@@ -45,49 +42,6 @@ export default function QuickActionsFAB() {
     setHasSession(!error && !!data)
   }
 
-  const checkUnreadMessages = async (userId: string) => {
-    const supabase = createClient()
-    const lastViewed = localStorage.getItem('lastMessagesView') || '2000-01-01'
-    
-    const { count } = await supabase
-      .from('messages')
-      .select('*', { count: 'exact', head: true })
-      .eq('recipient_id', userId)
-      .gt('created_at', lastViewed)
-    
-    setUnreadCount(count || 0)
-  }
-
-  const subscribeToMessages = (userId: string) => {
-    const supabase = createClient()
-    
-    const channel = supabase
-      .channel('messages-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `recipient_id=eq.${userId}`
-        },
-        () => {
-          checkUnreadMessages(userId)
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }
-
-  const handleMessagesClick = () => {
-    localStorage.setItem('lastMessagesView', new Date().toISOString())
-    setUnreadCount(0)
-    router.push('/messages')
-  }
-
   const handleFeedbackClick = () => {
     if (hasSession) {
       setShowFeedbackModal(true)
@@ -104,16 +58,6 @@ export default function QuickActionsFAB() {
       iconBg: 'bg-purple-500/20',
       iconColor: 'text-purple-400',
       disabled: false,
-    },
-    { 
-      icon: MessageCircle, 
-      label: 'Message Manager', 
-      onClick: handleMessagesClick,
-      bgColor: 'bg-blue-500/10',
-      iconBg: 'bg-blue-500/20',
-      iconColor: 'text-blue-400',
-      disabled: false,
-      badge: unreadCount > 0 ? unreadCount : undefined,
     },
     { 
       icon: FileText, 

@@ -16,6 +16,7 @@ export default function WebcamRecorder({ sessionActive, duration = 0, onStreamRe
   const [hasPermission, setHasPermission] = useState(false)
   const [isRequestingPermission, setIsRequestingPermission] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
@@ -24,6 +25,19 @@ export default function WebcamRecorder({ sessionActive, duration = 0, onStreamRe
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (typeof window !== 'undefined' && window.innerWidth < 768)
+      setIsMobile(isMobileDevice)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Request camera permission immediately on component mount
   useEffect(() => {
@@ -241,7 +255,7 @@ export default function WebcamRecorder({ sessionActive, duration = 0, onStreamRe
               muted
               className="w-full h-full object-contain"
               style={{
-                transform: 'scale(1)',
+                transform: isMobile ? 'scaleX(-1)' : 'scale(1)',
                 transformOrigin: 'center center'
               }}
             />

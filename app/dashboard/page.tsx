@@ -12,11 +12,12 @@ import {
   Award, 
   Calendar, 
   Clock, 
-  MessageSquare, 
   Upload,
   Sparkles,
   Zap,
-  DollarSign
+  DollarSign,
+  AlertCircle,
+  MessageCircle
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
@@ -261,7 +262,6 @@ function DashboardPageContent() {
     { id: 'upload', label: 'Upload', icon: Upload, locked: !isPaidUser },
     ...(hasTeam ? [
       { id: 'team', label: 'Team', icon: UsersIcon, locked: !isPaidUser },
-      { id: 'messages', label: 'Messages', icon: MessageSquare, locked: !isPaidUser },
     ] : []),
   ]
 
@@ -387,9 +387,6 @@ function DashboardPageContent() {
             {activeTab === 'team' && (
               <TeamTabContent />
             )}
-            {activeTab === 'messages' && (
-              <MessagesTabContent />
-            )}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -467,7 +464,7 @@ function OverviewTabContent() {
           'clock': Clock,
           'award': Award,
           'zap': Zap,
-          'alert-circle': MessageSquare
+          'alert-circle': AlertCircle
         }
         
         const mappedInsights = data.insights.map((insight: any) => ({
@@ -1614,13 +1611,13 @@ function OverviewTabContent() {
               const getIcon = () => {
                 switch(notif.type) {
                   case 'manager':
-                    return MessageSquare
+                    return MessageCircle
                   case 'leaderboard':
                     return TrendingUp
                   case 'achievement':
                     return Award
                   default:
-                    return MessageSquare
+                    return AlertCircle
                 }
               }
               const Icon = getIcon()
@@ -1686,7 +1683,7 @@ function LearningTabContent() {
       progress: 90,
       lessons: 8,
       duration: '30 min',
-      icon: MessageSquare,
+      icon: MessageCircle,
       iconColor: '#14b8a6',
       iconBgColor: 'rgba(20, 184, 166, 0.25)',
       borderColor: '#2a6a5a',
@@ -2141,188 +2138,6 @@ function TeamTabContent() {
       </motion.div>
         </>
       )}
-    </div>
-  )
-}
-
-function MessagesTabContent() {
-  const [selectedManager, setSelectedManager] = useState('canon weaver')
-  const [messageInput, setMessageInput] = useState('')
-
-  const managers = [
-    {
-      id: 1,
-      name: 'canon weaver',
-      role: 'Manager',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-      online: true,
-      unreadCount: 0
-    }
-  ]
-
-  const conversation = [
-    {
-      id: 1,
-      from: 'Manager',
-      message: 'Great job on handling objections this week. Your improvement is impressive.',
-      time: '2h ago',
-      isUser: false
-    },
-    {
-      id: 2,
-      from: 'You',
-      message: 'Thanks! I\'ve been practicing with the objection handling playbook.',
-      time: '1h ago',
-      isUser: true
-    }
-  ]
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 h-[calc(100vh-200px)] sm:h-[calc(100vh-300px)] lg:h-[calc(100vh-350px)] min-h-[500px] sm:min-h-[600px]">
-      {/* Left Sidebar - Managers List */}
-      <div className="lg:col-span-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 flex flex-col" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
-        <h3 className="text-base font-bold text-white mb-4">Your Managers</h3>
-        
-        {/* Search */}
-        <div className="relative mb-4">
-          <input
-            type="text"
-            placeholder="Search managers..."
-            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-sm text-white placeholder-[#8a8a8a] focus:outline-none focus:border-[#a855f7] transition-colors"
-          />
-          <svg className="absolute right-3 top-3 w-5 h-5 text-[#8a8a8a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-
-        {/* Managers List */}
-        <div className="flex-1 space-y-2 overflow-y-auto">
-          {managers.map((manager) => (
-            <motion.div
-              key={manager.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => setSelectedManager(manager.name)}
-              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                selectedManager === manager.name
-                  ? 'bg-[#a855f7]/10 border-l-4 border-l-[#a855f7]'
-                  : 'bg-[#0a0a0a] hover:bg-[#0a0a0a]/50'
-              }`}
-            >
-              <div className="relative">
-                <img
-                  src={manager.avatar}
-                  alt={manager.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                {manager.online && (
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-[#1a1a1a]" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{manager.name}</p>
-                <p className="text-xs text-[#8a8a8a]">{manager.online ? 'Online' : 'Offline'}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Pro Tip */}
-        <div className="mt-4 pt-4 border-t border-[#2a2a2a]">
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
-            <svg className="w-5 h-5 text-[#a855f7] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <p className="text-sm font-bold text-white mb-1">Pro Tip</p>
-              <p className="text-sm text-white leading-relaxed">
-                Regular check-ins with your manager lead to 23% better performance!
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Side - Conversation */}
-      <div className="lg:col-span-8 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg flex flex-col" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
-        {/* Conversation Header */}
-        <div className="px-6 py-4 border-b border-[#2a2a2a]">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-[#a855f7] flex items-center justify-center text-white font-bold text-sm">
-                {selectedManager.charAt(0).toUpperCase()}
-              </div>
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-[#1a1a1a]" />
-            </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-white">{selectedManager}</h3>
-                    <p className="text-sm text-white/60">Manager • Online</p>
-                  </div>
-          </div>
-        </div>
-
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {conversation.map((msg, idx) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.1 }}
-              className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-[70%] ${msg.isUser ? 'order-2' : 'order-1'}`}>
-                <div
-                  className={`rounded-lg px-4 py-3 ${
-                    msg.isUser
-                      ? 'bg-[#a855f7] text-white'
-                      : 'bg-[#0a0a0a] border border-[#2a2a2a] text-white'
-                  }`}
-                >
-                  <p className="text-base leading-relaxed">{msg.message}</p>
-                </div>
-                <p className="text-sm text-white/60 mt-1 px-1">
-                  {msg.time}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Message Input */}
-        <div className="p-4 border-t border-[#2a2a2a]">
-          <div className="flex items-center gap-3">
-            <button className="p-2 text-[#8a8a8a] hover:text-white transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-              </svg>
-            </button>
-            <button className="p-2 text-[#8a8a8a] hover:text-white transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-            <input
-              type="text"
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-base text-white placeholder-white/40 focus:outline-none focus:border-[#a855f7] transition-colors"
-            />
-            <button className="p-2 text-[#8a8a8a] hover:text-white transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-            </button>
-            <button className="p-2.5 bg-[#a855f7] hover:bg-[#9333ea] text-white rounded-lg transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

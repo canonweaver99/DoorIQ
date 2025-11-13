@@ -66,8 +66,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }, async (payload: any) => {
         const message = payload.new
         
-        // Don't show notification if we're already in messages
-        if (pathname.includes('/messages')) return
+        // Messaging feature archived - notifications disabled
+        return
 
         // Get sender info
         const { data: sender } = await supabase
@@ -101,12 +101,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }
 
   const handleNotificationClick = (notification: Notification) => {
-    // Navigate to messages
-    if (currentUser?.role === 'manager' || currentUser?.role === 'admin') {
-      router.push('/manager?tab=messages')
-    } else {
-      router.push('/messages')
-    }
+    // Messaging feature archived - navigation disabled
     clearNotification(notification.id)
   }
 

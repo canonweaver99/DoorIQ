@@ -41,7 +41,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/logger'
 import { Database } from '@/lib/supabase/database.types'
-import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { useSubscription } from '@/hooks/useSubscription'
 
 type User = Database['public']['Tables']['users']['Row']
@@ -108,7 +107,6 @@ function HeaderContent() {
   const profileEarnings = parseEarnings(user?.virtual_earnings ?? authMeta?.virtual_earnings)
   const profileAvatar = (user as any)?.avatar_url || authMeta?.avatar_url || null
   const userId = user?.id || authMeta?.id || null
-  const { unreadCount } = useUnreadMessages(userId)
   const subscription = useSubscription()
   const hasActiveSubscription = subscription.hasActiveSubscription
 
@@ -328,12 +326,6 @@ function HeaderContent() {
       {
         title: 'Support & Account',
         items: [
-          ...(user?.team_id ? [{
-            name: 'Messages', 
-            href: isManagerLike ? '/manager?tab=messages' : '/messages', 
-            icon: MessageCircle,
-            badge: unreadCount > 0 ? String(unreadCount) : undefined
-          }] : []),
           // Archived: { name: 'Documentation', href: '/documentation', icon: BookOpen },
           // Archived: { name: 'Help Center', href: '/support', icon: HelpCircle },
           // Archived: { name: 'Notifications', href: '/notifications', icon: Bell },
@@ -346,7 +338,7 @@ function HeaderContent() {
     // AI Insights removed per user request
 
     return sections
-  }, [isManagerLike, unreadCount, hasActiveSubscription, user?.team_id, (user as any)?.subscription_plan])
+  }, [isManagerLike, hasActiveSubscription, user?.team_id, (user as any)?.subscription_plan])
 
   const quickActions = [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
@@ -365,7 +357,6 @@ function HeaderContent() {
       { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
       // Archived: { name: 'Documentation', href: '/documentation', icon: BookOpen },
-      { name: 'Messages', href: isManagerLike ? '/manager?tab=messages' : '/messages', icon: MessageCircle, badge: unreadCount > 0 ? unreadCount : undefined },
       // Archived: { name: 'Support', href: '/support', icon: LifeBuoy },
       // Archived: { name: 'Integrations', href: '/integrations', icon: Plug },
       // Archived: { name: 'Notifications', href: '/notifications', icon: Bell },
@@ -377,7 +368,7 @@ function HeaderContent() {
     // AI Insights removed per user request
 
     return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }>
-  }, [isManagerLike, unreadCount, (user as any)?.subscription_plan, user?.team_id])
+  }, [isManagerLike, (user as any)?.subscription_plan, user?.team_id])
 
   const handleSignOut = async () => {
     try {

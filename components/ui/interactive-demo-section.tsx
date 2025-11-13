@@ -157,27 +157,27 @@ export function InteractiveDemoSection() {
         }
         sectionRef.current = node
       }}
-      className="relative pt-4 md:pt-6 pb-16 md:pb-20" 
+      className="relative pt-8 sm:pt-12 md:pt-16 pb-16 sm:pb-20 md:pb-24" 
       id="dooriq-action"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-8">
-        <motion.div className="text-center mb-12" variants={fadeInUp}>
-          <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div className="text-center mb-8 sm:mb-10 lg:mb-12" variants={fadeInUp}>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
             See <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span> in Action
           </h2>
-          <p className="text-lg text-slate-300 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg text-slate-300 max-w-3xl mx-auto px-2 sm:px-0">
             Watch how a sales rep trains with an AI homeowner in under 2 minutes. 
             No scripts. No staged demos. Just real practice.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 items-start">
           {/* Demo Video/Player - Takes up more space */}
           <motion.div 
-            className="order-2 lg:order-1 lg:col-span-3"
+            className="order-1 lg:order-1 lg:col-span-3"
             variants={fadeInScale}
           >
             <motion.div 
@@ -227,7 +227,7 @@ export function InteractiveDemoSection() {
 
             {/* Industry Cards */}
             <motion.div 
-              className="flex flex-wrap justify-center gap-2 sm:gap-3 w-full mt-6"
+              className="flex flex-wrap justify-center gap-2 sm:gap-3 w-full mt-4 sm:mt-5 lg:mt-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1, duration: 0.8 }}
@@ -261,7 +261,7 @@ export function InteractiveDemoSection() {
 
           {/* Steps - Smaller cards */}
           <motion.div 
-            className="order-1 lg:order-2 lg:col-span-2 space-y-4"
+            className="order-2 lg:order-2 lg:col-span-2 space-y-3 sm:space-y-4 mt-6 sm:mt-0"
             variants={staggerContainer}
           >
             {demoSteps.map((step, index) => (
@@ -276,8 +276,8 @@ export function InteractiveDemoSection() {
                   customSize
                   className={`cursor-pointer transition-all duration-500 ${
                     activeStep === index 
-                      ? 'p-6 scale-105 opacity-100' 
-                      : 'p-4 scale-95 opacity-70 hover:opacity-85'
+                      ? 'p-4 sm:p-5 lg:p-6 scale-105 opacity-100' 
+                      : 'p-3 sm:p-4 scale-95 opacity-70 hover:opacity-85'
                   }`}
                   onClick={() => handleStepClick(index)}
                 >

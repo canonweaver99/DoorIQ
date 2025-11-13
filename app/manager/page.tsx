@@ -3,21 +3,19 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Database, MessageSquare, BarChart3, Settings, Home, UserCog, BookOpen } from 'lucide-react'
+import { Users, Database, BarChart3, Settings, Home, UserCog, BookOpen } from 'lucide-react'
 import TeamOverview from '@/components/manager/TeamOverview'
 import RepManagement from '@/components/manager/RepManagement'
 import KnowledgeBase from '@/components/manager/KnowledgeBase'
-import MessagingCenter from '@/components/manager/MessagingCenter'
 import AnalyticsDashboard from '@/components/manager/AnalyticsDashboard'
 import ManagerSettings from '@/components/manager/ManagerSettings'
 
-type Tab = 'overview' | 'reps' | 'knowledge' | 'messages' | 'analytics' | 'settings'
+type Tab = 'overview' | 'reps' | 'knowledge' | 'analytics' | 'settings'
 
 const tabs = [
   { id: 'overview' as Tab, name: 'Team Overview', icon: Home },
   { id: 'reps' as Tab, name: 'Rep Management', icon: UserCog },
   { id: 'knowledge' as Tab, name: 'Knowledge Base', icon: Database },
-  { id: 'messages' as Tab, name: 'Messages', icon: MessageSquare },
   { id: 'analytics' as Tab, name: 'Analytics', icon: BarChart3 },
   { id: 'settings' as Tab, name: 'Settings', icon: Settings },
 ]
@@ -42,8 +40,6 @@ function ManagerPageContent() {
         return <RepManagement />
       case 'knowledge':
         return <KnowledgeBase />
-      case 'messages':
-        return <MessagingCenter />
       case 'analytics':
         return <AnalyticsDashboard />
       case 'settings':

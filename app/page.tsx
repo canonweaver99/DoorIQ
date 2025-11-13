@@ -248,18 +248,18 @@ function ProblemSolutionSection() {
   return (
     <motion.section 
       ref={ref}
-      className="py-16 md:py-20 relative"
+      className="py-12 sm:py-16 md:py-20 relative"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-8">
-        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12" variants={fadeInUp}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center mb-8 sm:mb-10 lg:mb-12" variants={fadeInUp}>
           <div className="text-center lg:text-left">
-            <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-6 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
               The Reality of Door-to-Door Sales Training
             </h2>
-            <div className="mt-6 space-y-4">
+            <div className="mt-4 sm:mt-5 lg:mt-6 space-y-3 sm:space-y-4">
               {problems.map((problem, index) => (
                 <motion.div 
                   key={index}
@@ -277,10 +277,10 @@ function ProblemSolutionSection() {
                 >
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 mt-3" />
                   <div>
-                    <p className="text-2xl lg:text-3xl font-semibold text-white mb-1">
+                    <p className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white mb-1 sm:mb-2">
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-500">{problem.title}</span>
                     </p>
-                    <p className="text-lg lg:text-xl text-slate-300">
+                    <p className="text-base sm:text-lg lg:text-xl text-slate-300">
                       {problem.description}
                     </p>
                   </div>
@@ -289,7 +289,7 @@ function ProblemSolutionSection() {
             </div>
           </div>
           <motion.div 
-            className="relative h-96 rounded-2xl overflow-hidden border border-white/10"
+            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 mt-6 sm:mt-0"
             variants={fadeInScale}
           >
             <Image
@@ -326,7 +326,7 @@ function ProblemSolutionSection() {
 
         {/* Divider */}
         <motion.div 
-          className="flex items-center justify-center mb-20"
+          className="flex items-center justify-center mb-12 sm:mb-16 lg:mb-20"
           variants={fadeInScale}
         >
           <div className="h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent w-full max-w-md" />
@@ -336,11 +336,11 @@ function ProblemSolutionSection() {
 
         {/* Solutions */}
         <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center mb-8 sm:mb-10 lg:mb-12"
           variants={fadeInUp}
         >
           <motion.div 
-            className="relative h-96 rounded-2xl overflow-hidden border border-white/10 lg:order-1"
+            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 lg:order-1 mt-6 sm:mt-0"
             variants={fadeInScale}
           >
             <Image
@@ -351,10 +351,10 @@ function ProblemSolutionSection() {
             />
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
-            <h3 className="text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
               Practice on AI Homeowners Before Real Doors
             </h3>
-            <div className="mt-6 space-y-4">
+            <div className="mt-4 sm:mt-5 lg:mt-6 space-y-3 sm:space-y-4">
               {solutions.map((solution, index) => (
                 <motion.div 
                   key={index}
@@ -372,10 +372,10 @@ function ProblemSolutionSection() {
                 >
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
                   <div>
-                    <p className="text-2xl lg:text-3xl font-semibold text-white mb-1">
+                    <p className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white mb-1 sm:mb-2">
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{solution.title}</span>
                     </p>
-                    <p className="text-lg lg:text-xl text-slate-300">
+                    <p className="text-base sm:text-lg lg:text-xl text-slate-300">
                       {solution.description}
                     </p>
                   </div>
@@ -414,7 +414,7 @@ function ProblemSolutionSection() {
         </motion.div> */}
 
         <motion.div 
-          className="text-center mt-16 mb-16"
+          className="text-center mt-12 sm:mt-14 lg:mt-16 mb-12 sm:mb-14 lg:mb-16"
           variants={fadeInUp}
         >
           <motion.div
@@ -424,7 +424,7 @@ function ProblemSolutionSection() {
             <Link 
               href="/pricing" 
               onClick={() => vibrate()}
-              className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-8 py-4 text-lg font-semibold backdrop-blur-sm"
+              className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold backdrop-blur-sm"
             >
               Get Started
             </Link>
@@ -442,20 +442,20 @@ function DashboardSection() {
   return (
     <motion.section 
       ref={ref}
-      className="relative w-full max-w-full mx-auto z-1 py-16"
+      className="relative w-full max-w-full mx-auto z-1 py-12 sm:py-14 lg:py-16"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
     >
-      <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto px-1.5 sm:px-4 lg:px-20 xl:px-24 2xl:px-32">
+      <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto px-4 sm:px-6 lg:px-20 xl:px-24 2xl:px-32">
         <motion.div 
-          className="text-center mb-8 sm:mb-12"
+          className="text-center mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0"
           variants={fadeInUp}
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] pb-2">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] pb-2">
             Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Analytics</span>
           </h2>
-          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-3xl mx-auto mt-6">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-3xl mx-auto mt-4 sm:mt-5 lg:mt-6">
             Track every rep's performance in real-time with detailed analytics and insights
           </p>
         </motion.div>
