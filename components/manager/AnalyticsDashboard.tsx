@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 import { 
   TrendingUp, Users, Target, Download, Calendar, Activity, Award, 
-  AlertCircle, TrendingDown, Zap, DollarSign, Clock, BarChart3,
+  AlertCircle, TrendingDown, Zap, DollarSign, Clock,
   ChevronRight, Sparkles, ArrowUpRight, ArrowDownRight, Brain,
   Target as TargetIcon, UserCheck, Timer, CheckCircle2, XCircle, Star, Mail, UserPlus, Trophy, X, Copy, MessageSquare
 } from 'lucide-react'
@@ -391,43 +391,20 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-black/50 border border-white/10 p-8 backdrop-blur-sm"
-      >
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <BarChart3 className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-4xl font-bold text-white mb-1">Analytics Command Center</h2>
-                  <p className="text-white text-lg">Real-time team performance intelligence</p>
-                </div>
-              </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <select 
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value)}
-              className="px-5 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/20 backdrop-blur-sm"
-            >
-              <option value="7">Last 7 Days</option>
-              <option value="30">Last 30 Days</option>
-              <option value="90">Last 90 Days</option>
-              <option value="180">Last 6 Months</option>
-              <option value="all">All Time</option>
-            </select>
-            <button className="flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 rounded-xl text-sm font-semibold transition-all">
-              <Download className="w-4 h-4" />
-              Export Full Report
-            </button>
-          </div>
-        </div>
-      </motion.div>
+      {/* Time Period Selector */}
+      <div className="flex items-center justify-end">
+        <select 
+          value={timePeriod}
+          onChange={(e) => setTimePeriod(e.target.value)}
+          className="px-5 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/20 backdrop-blur-sm"
+        >
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="90">Last 90 Days</option>
+          <option value="180">Last 6 Months</option>
+          <option value="all">All Time</option>
+        </select>
+      </div>
 
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -562,7 +539,7 @@ export default function AnalyticsDashboard() {
           {revenueData.length > 0 ? (
             <div className="h-[450px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={revenueData} margin={{ top: 20, right: 20, left: 20, bottom: revenueTimePeriod === 'week' ? 50 : 30 }}>
+                <LineChart data={revenueData} margin={{ top: 20, right: 20, left: 20, bottom: 50 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} opacity={0.5} />
                   <XAxis 
                     dataKey="period" 
@@ -571,9 +548,9 @@ export default function AnalyticsDashboard() {
                     axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
                     angle={revenueTimePeriod === 'week' ? -45 : 0}
                     textAnchor={revenueTimePeriod === 'week' ? 'end' : 'middle'}
-                    height={revenueTimePeriod === 'week' ? 60 : 40}
+                    height={60}
                     interval={0}
-                    dy={revenueTimePeriod === 'week' ? 10 : 5}
+                    dy={10}
                   />
                   <YAxis 
                     stroke="#ffffff"
@@ -660,18 +637,18 @@ export default function AnalyticsDashboard() {
             <DollarSign className="w-5 h-5 text-emerald-400" />
           </div>
           {analytics.repPerformance && (
-            <div className="h-[468px]">
+            <div className="h-[450px]">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={analytics.repPerformance.map(r => ({ name: r.name, revenue: r.revenue, score: r.avgScore }))} margin={{ top: 20, right: 20, left: 20, bottom: 60 }}>
+                <ComposedChart data={analytics.repPerformance.map(r => ({ name: r.name, revenue: r.revenue, score: r.avgScore }))} margin={{ top: 20, right: 20, left: 20, bottom: 50 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} opacity={0.5} />
                   <XAxis 
                     dataKey="name" 
                     stroke="#ffffff" 
-                    tick={{ fill: '#ffffff', fontSize: 11, fontWeight: 500 }} 
+                    tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }} 
                     angle={-45} 
                     textAnchor="end" 
-                    height={70}
-                    dy={5}
+                    height={60}
+                    dy={10}
                     interval={0}
                     axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
                   />
@@ -680,7 +657,7 @@ export default function AnalyticsDashboard() {
                     stroke="#ffffff" 
                     tick={{ fill: '#10B981', fontSize: 12, fontWeight: 600 }} 
                     axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
-                    width={65}
+                    width={60}
                     tickMargin={8}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                     label={{ value: 'Revenue', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#10B981', fontSize: 12, fontWeight: 600 } }}
@@ -707,10 +684,11 @@ export default function AnalyticsDashboard() {
                     cursor={{ stroke: '#ffffff', strokeWidth: 2, strokeDasharray: '5 5', opacity: 0.3 }}
                   />
                   <Legend 
-                    wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }} 
+                    verticalAlign="top"
+                    wrapperStyle={{ paddingTop: '0px', paddingBottom: '20px' }} 
                     iconType="line"
-                    iconSize={16}
-                    formatter={(value) => <span style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600 }}>{value}</span>}
+                    iconSize={20}
+                    formatter={(value) => <span style={{ color: '#ffffff', fontSize: '16px', fontWeight: 600 }}>{value}</span>}
                   />
                   <Bar 
                     yAxisId="left" 
