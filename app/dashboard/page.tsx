@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { 
   Home, 
   TrendingUp, 
@@ -20,11 +20,16 @@ import {
   MessageCircle,
   Video,
   Trash2,
-  Play
+  Play,
+  Loader2,
+  Mic,
+  Square,
+  X
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { useSubscription } from '@/hooks/useSubscription'
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 import Link from 'next/link'
@@ -2003,11 +2008,46 @@ function LearningTabContent() {
 }
 
 function UploadTabContent() {
+  const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [grading, setGrading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showRecordingUI, setShowRecordingUI] = useState(false)
+  const { isRecording, recordingTime, startRecording, stopRecording, cancelRecording, error: recordingError } = useVoiceRecorder()
   const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; size: string; date: string }>>([
     { name: 'sales-call-oct-15.mp3', size: '12.5 MB', date: '2 days ago' },
     { name: 'pitch-practice-session.mp3', size: '8.2 MB', date: '5 days ago' },
   ])
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (!selectedFile) return
+
+    // Validate file type
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'video/mp4', 'video/quicktime', 'audio/m4a']
+    if (!validTypes.includes(selectedFile.type)) {
+      setError('Please upload an audio file (MP3, WAV, M4A, WEBM, MP4, or MOV)')
+      return
+    }
+
+    // Validate file size (max 100MB)
+    if (selectedFile.size > 100 * 1024 * 1024) {
+      setError('File size must be less than 100MB')
+      return
+    }
+
+    setFile(selectedFile)
+    setError(null)
+  }
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -2021,7 +2061,120 @@ function UploadTabContent() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    // Handle file upload logic here
+    
+    const droppedFile = e.dataTransfer.files[0]
+    if (droppedFile) {
+      const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'video/mp4', 'video/quicktime', 'audio/m4a']
+      if (validTypes.includes(droppedFile.type)) {
+        if (droppedFile.size > 100 * 1024 * 1024) {
+          setError('File size must be less than 100MB')
+          return
+        }
+        setFile(droppedFile)
+        setError(null)
+      } else {
+        setError('Please upload an audio file (MP3, WAV, M4A, WEBM, MP4, or MOV)')
+      }
+    }
+  }
+
+  const handleUpload = async () => {
+    if (!file) return
+
+    setUploading(true)
+    setError(null)
+
+    try {
+      // Get auth token
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        throw new Error('Please log in to upload files')
+      }
+
+      // Step 1: Upload audio file
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadResponse = await fetch('/api/upload/audio', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json()
+        throw new Error(errorData.error || 'Upload failed')
+      }
+
+      const uploadData = await uploadResponse.json()
+
+      // Step 2: Transcribe audio and create session
+      setUploading(false)
+      setGrading(true)
+
+      const transcribeResponse = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          fileUrl: uploadData.fileUrl,
+          filename: uploadData.filename
+        })
+      })
+
+      if (!transcribeResponse.ok) {
+        const errorData = await transcribeResponse.json()
+        throw new Error(errorData.error || 'Transcription failed')
+      }
+
+      const transcribeData = await transcribeResponse.json()
+      const newSessionId = transcribeData.sessionId
+
+      // Step 3: Grade the session
+      const gradeResponse = await fetch('/api/grade/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: newSessionId })
+      })
+
+      if (!gradeResponse.ok) {
+        console.warn('Grading failed, but session was created')
+      }
+
+      setGrading(false)
+      setFile(null)
+      
+      // Redirect to analytics page
+      router.push(`/analytics/${newSessionId}`)
+
+    } catch (err: any) {
+      console.error('Upload/grading error:', err)
+      setError(err.message || 'Failed to process audio file')
+      setUploading(false)
+      setGrading(false)
+    }
+  }
+
+  const handleRecordNow = async () => {
+    setShowRecordingUI(true)
+    await startRecording()
+  }
+
+  const handleStopRecording = async () => {
+    const blob = await stopRecording()
+    if (!blob) return
+
+    setShowRecordingUI(false)
+    setFile(new File([blob], `recording-${Date.now()}.webm`, { type: blob.type }))
+  }
+
+  const handleCancelRecording = () => {
+    cancelRecording()
+    setShowRecordingUI(false)
   }
 
   return (
@@ -2034,14 +2187,28 @@ function UploadTabContent() {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`bg-[#1a1a1a] border-2 border-dashed rounded-lg p-10 text-center transition-all ${
+        onClick={() => !file && !uploading && !grading && fileInputRef.current?.click()}
+        className={`bg-[#1a1a1a] border-2 border-dashed rounded-lg p-10 text-center transition-all cursor-pointer ${
           isDragging ? 'border-[#a855f7]' : 'border-[#2a2a2a]'
-        }`}
+        } ${(uploading || grading) ? 'opacity-50 cursor-not-allowed' : ''}`}
         style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
       >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/*,video/mp4,video/quicktime"
+          onChange={handleFileSelect}
+          className="hidden"
+          disabled={uploading || grading}
+        />
+
         <div className="flex justify-center mb-4">
           <div className="p-6 rounded-full bg-[#0a0a0a] border border-[#2a2a2a]">
-            <Upload className="w-20 h-20 text-[#a855f7]" />
+            {file ? (
+              <Upload className="w-20 h-20 text-green-400" />
+            ) : (
+              <Upload className="w-20 h-20 text-[#a855f7]" />
+            )}
           </div>
         </div>
         
@@ -2052,14 +2219,80 @@ function UploadTabContent() {
           Drop your audio files here or click to browse. We support MP3, WAV, M4A and more.
         </p>
         
-        <div className="flex items-center justify-center gap-4">
-          <button className="px-8 py-3 bg-[#a855f7] text-white font-medium rounded-lg hover:bg-[#9333ea] transition-colors shadow-[0_2px_8px_rgba(168,85,247,0.3)]">
-            Choose Files
-          </button>
-          <button className="px-8 py-3 bg-transparent text-white font-medium rounded-lg border border-[#a855f7] hover:bg-[#a855f7]/10 transition-all">
-            Record Now
-          </button>
-        </div>
+        {file ? (
+          <div className="space-y-4">
+            <div className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-4 max-w-md mx-auto">
+              <p className="text-white font-medium mb-1">{file.name}</p>
+              <p className="text-xs text-[#8a8a8a]">
+                {(file.size / (1024 * 1024)).toFixed(2)} MB
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setFile(null)
+                  setError(null)
+                }}
+                disabled={uploading || grading}
+                className="px-6 py-2 bg-transparent text-white font-medium rounded-lg border border-[#2a2a2a] hover:bg-[#2a2a2a] transition-colors disabled:opacity-50"
+              >
+                Remove
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleUpload()
+                }}
+                disabled={uploading || grading}
+                className="px-8 py-3 bg-[#a855f7] text-white font-medium rounded-lg hover:bg-[#9333ea] transition-colors shadow-[0_2px_8px_rgba(168,85,247,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {(uploading || grading) ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {uploading ? 'Uploading...' : 'Processing...'}
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    Upload & Analyze
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                fileInputRef.current?.click()
+              }}
+              disabled={uploading || grading}
+              className="px-8 py-3 bg-[#a855f7] text-white font-medium rounded-lg hover:bg-[#9333ea] transition-colors shadow-[0_2px_8px_rgba(168,85,247,0.3)] disabled:opacity-50"
+            >
+              Choose Files
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleRecordNow()
+              }}
+              disabled={uploading || grading || isRecording}
+              className="px-8 py-3 bg-transparent text-white font-medium rounded-lg border border-[#a855f7] hover:bg-[#a855f7]/10 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              <Mic className="w-4 h-4" />
+              Record Now
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-4 bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2 max-w-md mx-auto">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <p className="text-sm text-red-300">{error}</p>
+          </div>
+        )}
 
         <div className="mt-8 flex items-center justify-center gap-8 text-sm text-[#8a8a8a]">
           <span>Max 100MB</span>
@@ -2069,6 +2302,46 @@ function UploadTabContent() {
           <span>Secure</span>
         </div>
       </motion.div>
+
+      {/* Recording UI */}
+      <AnimatePresence>
+        {showRecordingUI && isRecording && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6"
+            style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-white font-semibold">Recording</span>
+                <span className="text-[#8a8a8a] text-sm">{formatTime(recordingTime)}</span>
+              </div>
+              <button
+                onClick={handleCancelRecording}
+                className="text-[#8a8a8a] hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {recordingError && (
+              <div className="mb-4 bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-400" />
+                <p className="text-sm text-red-300">{recordingError}</p>
+              </div>
+            )}
+            <button
+              onClick={handleStopRecording}
+              className="w-full px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <Square className="w-4 h-4" />
+              Stop Recording
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Uploaded Files */}
       {uploadedFiles.length > 0 && (
@@ -2183,7 +2456,7 @@ function TeamTabContent() {
     
     // Top performer
     const topPerformer = teamMembers.length > 0 
-      ? teamMembers[0].full_name?.split(' ').map((n: string) => n[0]).join('') || teamMembers[0].full_name || 'N/A'
+      ? teamMembers[0].full_name || teamMembers[0].email?.split('@')[0] || 'N/A'
       : 'N/A'
     
     // Calculate team growth (placeholder - could calculate from previous period)
@@ -2347,8 +2620,7 @@ function TeamTabContent() {
               </div>
               
               <div className="text-right">
-                <p className="text-lg font-bold text-white">{member.score}</p>
-                <p className="text-xs text-white/60">points</p>
+                <p className="text-lg font-bold text-green-400">${(member.score || 0).toFixed(2)}</p>
               </div>
             </motion.div>
           ))}

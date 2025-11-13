@@ -561,13 +561,13 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
                 id={`rep-count-${index}`}
                 type="number"
                 min={minReps}
-                max="999"
+                max="500"
                 value={repCount}
-                onChange={(e) => setRepCount(Math.max(minReps, Math.min(999, parseInt(e.target.value) || minReps)))}
+                onChange={(e) => setRepCount(Math.max(minReps, Math.min(500, parseInt(e.target.value) || minReps)))}
                 className="flex-1 h-8 text-center rounded-md border border-border bg-background px-2 text-foreground text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
-                onClick={() => setRepCount(Math.min(999, repCount + 1))}
+                onClick={() => setRepCount(Math.min(500, repCount + 1))}
                 className="w-8 h-8 rounded-md border border-border bg-background hover:bg-muted transition-colors flex items-center justify-center font-semibold text-sm"
                 aria-label="Increase rep count"
               >

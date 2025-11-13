@@ -378,11 +378,11 @@ function PricingPageContent() {
                         <input
                           type="number"
                           min="5"
-                          max="100"
+                          max="500"
                           value={numReps}
                           onChange={(e) => {
                             const value = parseInt(e.target.value) || 5
-                            setNumReps(Math.max(5, Math.min(100, value)))
+                            setNumReps(Math.max(5, Math.min(500, value)))
                           }}
                           className="inline-block px-4 py-2 rounded-lg border border-white/30 bg-black text-white text-xl font-bold font-mono text-center w-24 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all"
                         />
@@ -394,23 +394,23 @@ function PricingPageContent() {
                       <input
                           type="range"
                           min="5"
-                          max="100"
+                          max="500"
                         value={numReps}
                         onChange={(e) => {
                             const value = parseInt(e.target.value) || 5
-                            setNumReps(Math.max(5, Math.min(100, value)))
+                            setNumReps(Math.max(5, Math.min(500, value)))
                           }}
                           className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer pricing-slider"
                           style={{
                             background: (() => {
-                              const percentage = ((numReps - 5) / 95) * 100
+                              const percentage = ((numReps - 5) / 495) * 100
                               return `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, rgba(255,255,255,0.1) ${percentage}%, rgba(255,255,255,0.1) 100%)`
                             })()
                           }}
                         />
                         <div className="flex justify-between mt-1 text-base font-semibold text-white">
                           <span>5</span>
-                          <span>100+</span>
+                          <span>500+</span>
                         </div>
                       </div>
                       
