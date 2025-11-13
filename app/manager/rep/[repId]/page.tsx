@@ -145,7 +145,7 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
     )
   }
 
-  // Prepare chart data for recent sessions
+  // Prepare chart data for recent sessions - always show at least 10 data points with zeros
   const chartData = sessions && sessions.length > 0 
     ? sessions.slice(0, 10).reverse().map((session, index) => ({
         session: `#${sessions.length - index}`,
@@ -153,7 +153,12 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
         earnings: session.virtual_earnings || 0,
         date: new Date(session.created_at).toLocaleDateString()
       }))
-    : []
+    : Array.from({ length: 10 }, (_, i) => ({
+        session: `#${i + 1}`,
+        score: 0,
+        earnings: 0,
+        date: ''
+      }))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e]">
@@ -385,9 +390,8 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
             </motion.div>
           </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Stats Cards - Always show */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -436,48 +440,46 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
               <p className="text-sm text-slate-400">Total Sessions</p>
             </motion.div>
           </div>
-        )}
 
-        {/* Performance Chart */}
-        {chartData.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 mb-8"
-          >
-            <h2 className="text-xl font-semibold text-white mb-6">Recent Performance</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis 
-                  dataKey="session" 
-                  stroke="#6B7280"
-                  tick={{ fill: '#6B7280', fontSize: 11 }}
-                />
-                <YAxis 
-                  stroke="#6B7280"
-                  tick={{ fill: '#6B7280', fontSize: 11 }}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: '#1e1e30',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    color: 'white'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="score" 
-                  stroke="#a855f7" 
-                  strokeWidth={2}
-                  dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </motion.div>
-        )}
+        {/* Performance Chart - Always show */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 mb-8"
+        >
+          <h2 className="text-xl font-semibold text-white mb-6">Recent Performance</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis 
+                dataKey="session" 
+                stroke="#6B7280"
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+              />
+              <YAxis 
+                stroke="#6B7280"
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+                domain={[0, 100]}
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: '#1e1e30',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: 'white'
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="score" 
+                stroke="#a855f7" 
+                strokeWidth={2}
+                dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
 
         {/* Recent Sessions - READ-ONLY */}
         <motion.div

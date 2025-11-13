@@ -2159,8 +2159,8 @@ function UploadTabContent() {
       setGrading(false)
       setFile(null)
       
-      // Redirect to analytics page
-      router.push(`/analytics/${newSessionId}`)
+      // Redirect to dashboard upload tab
+      router.push('/dashboard?tab=upload')
 
     } catch (err: any) {
       console.error('Upload/grading error:', err)

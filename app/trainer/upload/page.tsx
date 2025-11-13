@@ -115,9 +115,9 @@ export default function UploadTrainingPage() {
       setSessionId(newSessionId)
       setGrading(false)
 
-      // Redirect to analytics page after 2 seconds
+      // Redirect to dashboard upload tab after 2 seconds
       setTimeout(() => {
-        router.push(`/analytics/${newSessionId}`)
+        router.push('/dashboard?tab=upload')
       }, 2000)
 
     } catch (err: any) {
