@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 // CREATE session
 export async function POST(req: Request) {
   try {
-    const { agent_name } = await req.json()
+    const { agent_name, agent_id } = await req.json()
     
     // Get authenticated user
     const supabase = await createServerSupabaseClient()
@@ -19,13 +19,20 @@ export async function POST(req: Request) {
     
     // Create session with service role
     const serviceSupabase = await createServiceSupabaseClient()
+    const sessionData: any = {
+      user_id: user.id,
+      agent_name: agent_name,
+      started_at: new Date().toISOString()
+    }
+    
+    // Add agent_id if provided
+    if (agent_id) {
+      sessionData.agent_id = agent_id
+    }
+    
     const { data, error } = await (serviceSupabase as any)
       .from('live_sessions')
-      .insert({
-        user_id: user.id,
-        agent_name: agent_name,
-        started_at: new Date().toISOString()
-      })
+      .insert(sessionData)
       .select('id')
       .single()
     

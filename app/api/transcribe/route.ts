@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
       started_at: new Date().toISOString(),
       ended_at: new Date().toISOString(),
       upload_type: 'file_upload'
+      // Note: agent_id is optional and not included for uploaded recordings
     }
     
     const { data: session, error: sessionError } = await (supabase as any)

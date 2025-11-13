@@ -125,28 +125,48 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
                               !reason?.includes('end_call') && 
                               !reason?.includes('completed')
           
+          // If we were connected and this isn't a reconnection attempt, always dispatch end_call
+          // This ensures the session ends properly when ElevenLabs disconnects
+          const shouldDispatchEndCall = wasConnectedRef.current && !isReconnectingRef.current
+          
           if (isUnexpected && !isReconnectingRef.current) {
             console.warn('⚠️ Unexpected disconnect detected, attempting reconnection...')
             // Only attempt reconnect if we haven't exceeded max attempts
             if (reconnectAttemptsRef.current < maxReconnectAttempts) {
               attemptReconnect()
-              return // Don't dispatch end_call yet, wait to see if reconnect works
+              // Don't dispatch end_call yet, wait to see if reconnect works
+              // But still stop audio recording
+              if (audioRecordingActiveRef.current) {
+                console.log('🛑 Stopping audio recording during reconnection attempt')
+                stopAudioRecording()
+                audioRecordingActiveRef.current = false
+              }
+              return
             } else {
               console.error('❌ Max reconnection attempts reached, ending conversation')
+              // Fall through to dispatch end_call
             }
           }
           
-          // Dispatch agent:end_call event when disconnecting during active session
+          // Always dispatch agent:end_call event when disconnecting during active session
           // This is a reliable signal that ElevenLabs has ended the conversation
-          if (wasConnectedRef.current && !isReconnectingRef.current) {
+          if (shouldDispatchEndCall) {
             console.log('🔌 Disconnect detected during active session, dispatching agent:end_call event')
+            console.log('📊 Disconnect reason:', reason, 'wasConnected:', wasConnectedRef.current)
             window.dispatchEvent(new CustomEvent('agent:end_call', { 
               detail: { 
                 reason: reason || 'Connection ended',
-                source: isUnexpected ? 'unexpected_disconnect' : 'disconnect'
+                source: isUnexpected ? 'unexpected_disconnect' : 'disconnect',
+                timestamp: Date.now()
               } 
             }))
             wasConnectedRef.current = false // Reset for next connection
+          } else {
+            console.log('⚠️ onDisconnect called but not dispatching end_call:', {
+              wasConnected: wasConnectedRef.current,
+              isReconnecting: isReconnectingRef.current,
+              reason
+            })
           }
           
           setStatus('disconnected')

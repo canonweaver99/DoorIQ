@@ -430,7 +430,10 @@ function TrainerPageContent() {
       const resp = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_name: selectedAgent?.name }),
+        body: JSON.stringify({ 
+          agent_name: selectedAgent?.name,
+          agent_id: selectedAgent?.eleven_agent_id 
+        }),
       })
       
       if (!resp.ok) throw new Error('Failed to create session')
@@ -872,14 +875,17 @@ function TrainerPageContent() {
       
       // If we get disconnected during an active session, end the session
       // This catches cases where ElevenLabs disconnects without sending end_call
-      if (status === 'disconnected' && sessionActive && sessionId) {
+      if (status === 'disconnected' && sessionActive && sessionId && !endCallProcessingRef.current) {
         console.log('🔌 Connection disconnected during active session, ending session...')
         // Small delay to allow for end_call event to come through first (if it exists)
         setTimeout(() => {
-            if (sessionActive && sessionId) {
+            // Double-check that we still need to end (end_call might have been processed)
+            if (sessionActive && sessionId && !endCallProcessingRef.current) {
               console.log('🔚 Auto-ending session due to connection disconnect')
               console.log('📊 END CALL TRIGGER: Connection lost/disconnected')
               handleAgentEndCall({ detail: { reason: 'Connection lost', source: 'disconnect' } })
+            } else {
+              console.log('ℹ️ Connection disconnect detected but end_call already processed')
             }
         }, 2000) // 2 second delay to allow end_call event to process first
       }
