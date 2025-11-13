@@ -2017,10 +2017,7 @@ function UploadTabContent() {
   const [error, setError] = useState<string | null>(null)
   const [showRecordingUI, setShowRecordingUI] = useState(false)
   const { isRecording, recordingTime, startRecording, stopRecording, cancelRecording, error: recordingError } = useVoiceRecorder()
-  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; size: string; date: string }>>([
-    { name: 'sales-call-oct-15.mp3', size: '12.5 MB', date: '2 days ago' },
-    { name: 'pitch-practice-session.mp3', size: '8.2 MB', date: '5 days ago' },
-  ])
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; size: string; date: string }>>([])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -2197,6 +2194,10 @@ function UploadTabContent() {
   const handleCancelRecording = () => {
     cancelRecording()
     setShowRecordingUI(false)
+  }
+
+  const handleDeleteFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   return (
@@ -2401,7 +2402,13 @@ function UploadTabContent() {
                   <button className="px-4 py-2 bg-[#a855f7] text-white text-sm font-medium rounded-lg hover:bg-[#9333ea] transition-colors">
                     Analyze
                   </button>
-                  <button className="p-2 text-[#8a8a8a] hover:text-white transition-colors">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteFile(idx)
+                    }}
+                    className="p-2 text-[#8a8a8a] hover:text-red-400 transition-colors"
+                  >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>

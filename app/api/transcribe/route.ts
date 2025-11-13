@@ -53,25 +53,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a new session
+    const sessionData: any = {
+      user_id: user.id,
+      agent_name: 'Uploaded Recording',
+      agent_id: 'uploaded',
+      full_transcript: formattedTranscript,
+      audio_url: fileUrl,
+      duration_seconds: Math.floor(transcription.duration || 0),
+      started_at: new Date().toISOString(),
+      ended_at: new Date().toISOString()
+    }
+    
     const { data: session, error: sessionError } = await (supabase as any)
       .from('live_sessions')
-      .insert({
-        user_id: user.id,
-        agent_name: 'Uploaded Recording',
-        agent_id: 'uploaded',
-        full_transcript: formattedTranscript,
-        audio_url: fileUrl,
-        duration_seconds: Math.floor(transcription.duration || 0),
-        started_at: new Date().toISOString(),
-        ended_at: new Date().toISOString(),
-        upload_type: 'file_upload' as const
-      })
+      .insert(sessionData)
       .select('id')
       .single()
 
     if (sessionError) {
       console.error('Session creation error:', sessionError)
-      return NextResponse.json({ error: 'Failed to create session' }, { status: 500 })
+      console.error('Error details:', JSON.stringify(sessionError, null, 2))
+      return NextResponse.json({ 
+        error: 'Failed to create session',
+        details: sessionError.message || JSON.stringify(sessionError)
+      }, { status: 500 })
     }
 
     return NextResponse.json({
