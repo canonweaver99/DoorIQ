@@ -2145,22 +2145,13 @@ function UploadTabContent() {
       const transcribeData = await transcribeResponse.json()
       const newSessionId = transcribeData.sessionId
 
-      // Step 3: Grade the session
-      const gradeResponse = await fetch('/api/grade/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: newSessionId })
-      })
-
-      if (!gradeResponse.ok) {
-        console.warn('Grading failed, but session was created')
-      }
-
+      // Grading is triggered automatically by the transcription API in the background
       setGrading(false)
       setFile(null)
       
-      // Redirect to dashboard upload tab
-      router.push('/dashboard?tab=upload')
+      // Redirect to loading page, which will poll for grading completion
+      // and then redirect to analytics page with results
+      router.push(`/trainer/loading/${newSessionId}`)
 
     } catch (err: any) {
       console.error('Upload/grading error:', err)
