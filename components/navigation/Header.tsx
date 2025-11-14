@@ -97,6 +97,8 @@ function HeaderContent() {
   const [showMenuOnHover, setShowMenuOnHover] = useState(false)
   const [isLiveSession, setIsLiveSession] = useState(false)
   const [isAuthPage, setIsAuthPage] = useState(false)
+  const [isScrolledDown, setIsScrolledDown] = useState(false)
+  const [lastScrollY, setLastScrollY] = useState(0)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -490,11 +492,30 @@ function HeaderContent() {
     }
   }, [isSidebarOpen])
 
+  // Scroll detection for fading menu
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      
+      // Only fade if scrolled down more than 50px
+      if (currentScrollY > 50) {
+        setIsScrolledDown(currentScrollY > lastScrollY && currentScrollY > 50)
+      } else {
+        setIsScrolledDown(false)
+      }
+      
+      setLastScrollY(currentScrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
+
   return (
     <>
       {/* Centered oval navigation bar - Desktop */}
-      <div className={`hidden md:flex relative top-0 left-1/2 -translate-x-[50%] z-50 items-center space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl pl-6 pr-44 py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 mt-4 ${
-        isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl pl-6 pr-44 py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
+        isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10 flex-shrink-0">
               <Image 
