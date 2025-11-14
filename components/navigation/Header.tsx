@@ -500,9 +500,9 @@ function HeaderContent() {
               <Image 
                 src="/dooriqlogo.png" 
                 alt="DoorIQ Logo" 
-                width={77} 
-                height={24} 
-                className="h-[24px] w-auto object-contain"
+                width={120} 
+                height={20} 
+                className="h-[20px] w-auto object-contain"
                 priority
               />
             </Link>

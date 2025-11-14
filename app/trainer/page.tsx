@@ -88,10 +88,12 @@ function TrainerPageContent() {
   const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
   const loopVideoStartTimeRef = useRef<number>(0) // Track when loop video started playing
   const loopVideoDurationRef = useRef<number>(0) // Track loop video duration
+  const [showDoorOpeningVideo, setShowDoorOpeningVideo] = useState(false) // Track when to show door opening video
+  const doorOpeningVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for door opening video
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
-    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan'
+    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan' || agentName === 'Think About It Tina'
   }
   
   // Helper function to get video paths for an agent
@@ -132,6 +134,12 @@ function TrainerPageContent() {
       return {
         loop: '/already-got-it-alan-loop.mp4',
         closing: '/already-got-it-alan-closing-door.mp4'
+      }
+    }
+    if (agentName === 'Think About It Tina') {
+      return {
+        loop: '/think-about-it-tina-loop.mp4',
+        closing: '/think-about-it-tina-closing-door.mp4'
       }
     }
     return null
@@ -345,25 +353,37 @@ function TrainerPageContent() {
 
       const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id)
 
-      // Play knock sound
+      // Play door opening video on initial knock
+      setShowDoorOpeningVideo(true)
       try {
-        const knockAudio = new Audio('/sounds/knock.mp3')
-        knockAudio.volume = 0.5
-        await knockAudio.play()
-        await new Promise(resolve => setTimeout(resolve, 800))
+        // Wait for video element to be ready
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        if (doorOpeningVideoRef.current) {
+          const video = doorOpeningVideoRef.current
+          video.currentTime = 0
+          await video.play()
+          
+          // Wait for video to finish playing
+          await new Promise<void>((resolve) => {
+            const handleEnded = () => {
+              video.removeEventListener('ended', handleEnded)
+              resolve()
+            }
+            video.addEventListener('ended', handleEnded)
+            
+            // Fallback timeout in case video doesn't fire ended event
+            setTimeout(() => {
+              video.removeEventListener('ended', handleEnded)
+              resolve()
+            }, 5000) // Max 5 seconds wait
+          })
+        }
       } catch (e) {
-        logger.warn('Could not play knock sound', { error: e })
+        logger.warn('Could not play door opening video', { error: e })
       }
-
-      // Play door open sound
-      try {
-        const doorOpenAudio = new Audio('/sounds/door_open.mp3')
-        doorOpenAudio.volume = 0.4
-        await doorOpenAudio.play()
-        await new Promise(resolve => setTimeout(resolve, 500))
-      } catch (e) {
-        logger.warn('Could not play door open sound', { error: e })
-      }
+      
+      setShowDoorOpeningVideo(false)
 
       const result = await tokenPromise
       
@@ -423,6 +443,7 @@ function TrainerPageContent() {
       setLoading(false)
       setConversationToken(null)
       setSessionActive(false)
+      setShowDoorOpeningVideo(false)
     }
   }
 
@@ -468,6 +489,7 @@ function TrainerPageContent() {
     setSessionActive(false)
     setConversationToken(null)
     setVideoMode('loop') // Reset video mode for next session
+    setShowDoorOpeningVideo(false) // Reset door opening video state
 
     // Video recording disabled - archived for future
     // if (isVideoRecording) {
@@ -1179,8 +1201,34 @@ function TrainerPageContent() {
                       ) : null
                     })()}
                     
+                    {/* Door Opening Video Overlay - plays on initial knock */}
+                    {showDoorOpeningVideo && (() => {
+                      const videoPathRaw = '/DIY DAVE OPENIG DOOR.mp4'
+                      const videoPath = videoPathRaw.includes(' ') || videoPathRaw.includes('&')
+                        ? videoPathRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                        : videoPathRaw
+                      
+                      return (
+                        <div className="absolute inset-0 z-50 bg-black">
+                          <video
+                            ref={doorOpeningVideoRef}
+                            src={videoPath}
+                            className="w-full h-full object-cover"
+                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                            autoPlay
+                            muted
+                            playsInline
+                            onError={(e) => {
+                              console.error('❌ Door opening video failed to load:', videoPathRaw, 'Encoded:', videoPath, e)
+                              setShowDoorOpeningVideo(false)
+                            }}
+                          />
+                        </div>
+                      )
+                    })()}
+                    
                     {/* Knock Button Overlay - centered when not active */}
-                    {!sessionActive && !loading && selectedAgent && (
+                    {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
                         <button
                           onClick={() => startSession()}
