@@ -16,7 +16,6 @@ import {
   Settings as SettingsIcon,
   CreditCard,
   UserCircle,
-  MessageCircle,
   ShieldCheck,
   LifeBuoy,
   LogOut,
@@ -92,7 +91,6 @@ function HeaderContent() {
   const sidebarRef = useRef<HTMLDivElement | null>(null)
   const sidebarButtonRef = useRef<HTMLButtonElement | null>(null)
   const [portalReady, setPortalReady] = useState(false)
-  const [showNeedHand, setShowNeedHand] = useState(true)
   const [userCredits, setUserCredits] = useState<number>(0)
   const [showCreditsTooltip, setShowCreditsTooltip] = useState(false)
   const creditsTooltipRef = useRef<HTMLDivElement | null>(null)
@@ -910,30 +908,6 @@ function HeaderContent() {
                   </nav>
 
                   <div className="px-[19px] pb-[14px]">
-                    {showNeedHand && (
-                      <div className="relative rounded-xl border border-white/10 bg-white/5 px-[14px] py-[9px] mb-[9px] text-[14px] text-slate-300">
-                        <button
-                          onClick={() => setShowNeedHand(false)}
-                          className="absolute top-[9px] right-[9px] rounded-full bg-white/10 text-slate-400 p-[2px] hover:bg-white/20 hover:text-white transition"
-                          aria-label="Dismiss help section"
-                        >
-                          <X className="w-[12px] h-[12px]" />
-                        </button>
-                        <div className="flex items-center justify-between gap-[9px] pr-[28px]">
-                          <p className="font-semibold text-white text-[12.5px]">Need help?</p>
-                          <button
-                            onClick={() => {
-                              router.push('/support')
-                              setIsSidebarOpen(false)
-                            }}
-                            className="inline-flex items-center gap-[7px] rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-[12px] py-[5px] text-[10.5px] font-semibold text-white shadow-sm shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
-                          >
-                            Support
-                            <MessageCircle className="h-[12px] w-[12px]" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
                     {isSignedIn && (
                       <button
                         onClick={handleSignOut}
