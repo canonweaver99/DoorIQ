@@ -45,12 +45,24 @@ export default function LearningPage() {
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadDescription, setUploadDescription] = useState('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
+  const [isThumbnail, setIsThumbnail] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoPreviewRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
     fetchData()
     fetchUserRole()
   }, [])
+
+  // Cleanup video preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (videoPreview) {
+        URL.revokeObjectURL(videoPreview)
+      }
+    }
+  }, [videoPreview])
 
   const fetchUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -165,13 +177,75 @@ export default function LearningPage() {
 
   const isManager = userRole === 'manager' || userRole === 'admin'
 
-  const handleFileSelect = (file: File) => {
+  const generateThumbnail = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video')
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      
+      video.preload = 'metadata'
+      video.onloadedmetadata = () => {
+        // Set canvas size to video dimensions
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        
+        // Seek to 1 second or 25% of video duration (whichever is smaller)
+        const seekTime = Math.min(1, video.duration * 0.25)
+        video.currentTime = seekTime
+      }
+      
+      video.onseeked = () => {
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const thumbnailUrl = URL.createObjectURL(blob)
+              resolve(thumbnailUrl)
+            } else {
+              reject(new Error('Failed to generate thumbnail'))
+            }
+          }, 'image/jpeg', 0.8)
+        } else {
+          reject(new Error('Canvas context not available'))
+        }
+      }
+      
+      video.onerror = () => {
+        reject(new Error('Failed to load video'))
+      }
+      
+      video.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleFileSelect = async (file: File) => {
     const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo']
     if (!allowedTypes.includes(file.type)) {
       alert('Please select a video file (MP4, WebM, MOV, or AVI)')
       return
     }
+    
+    // Clean up previous preview if exists
+    if (videoPreview) {
+      URL.revokeObjectURL(videoPreview)
+      setVideoPreview(null)
+      setIsThumbnail(false)
+    }
+    
     setUploadFile(file)
+    
+    // Generate thumbnail preview
+    try {
+      const thumbnailUrl = await generateThumbnail(file)
+      setVideoPreview(thumbnailUrl)
+      setIsThumbnail(true)
+    } catch (error) {
+      console.error('Failed to generate thumbnail:', error)
+      // Create a simple video preview URL as fallback
+      const videoUrl = URL.createObjectURL(file)
+      setVideoPreview(videoUrl)
+      setIsThumbnail(false)
+    }
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -213,10 +287,16 @@ export default function LearningPage() {
       })
 
       if (response.ok) {
+        // Clean up preview URL
+        if (videoPreview) {
+          URL.revokeObjectURL(videoPreview)
+        }
         // Reset form
         setUploadTitle('')
         setUploadDescription('')
         setUploadFile(null)
+        setVideoPreview(null)
+        setIsThumbnail(false)
         if (fileInputRef.current) {
           fileInputRef.current.value = ''
         }
@@ -224,12 +304,17 @@ export default function LearningPage() {
         await fetchData()
         alert('Video uploaded successfully!')
       } else {
-        const error = await response.json()
-        alert(`Upload failed: ${error.error || 'Unknown error'}`)
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }))
+        const errorMessage = errorData.details 
+          ? `${errorData.error}: ${errorData.details}`
+          : errorData.error || 'Unknown error'
+        console.error('Upload failed:', errorData)
+        alert(`Upload failed: ${errorMessage}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error)
-      alert('Failed to upload video. Please try again.')
+      const errorMessage = error?.message || 'Network error. Please check your connection and try again.'
+      alert(`Failed to upload video: ${errorMessage}`)
     } finally {
       setUploading(false)
     }
@@ -380,33 +465,92 @@ export default function LearningPage() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+                className={`border-2 border-dashed rounded-lg transition-all ${
                   isDragging ? 'border-[#a855f7] bg-[#a855f7]/10' : 'border-[#2a2a2a]'
-                }`}
+                } ${videoPreview ? 'p-0' : 'p-8 text-center'}`}
               >
-                <Video className="w-12 h-12 text-[#a855f7] mx-auto mb-4" />
-                <p className="text-white mb-2">
-                  {uploadFile ? uploadFile.name : 'Drag & drop a video file here'}
-                </p>
-                <p className="text-sm text-slate-400 mb-4">
-                  or click to browse (MP4, WebM, MOV, AVI)
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) handleFileSelect(file)
-                  }}
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-[#a855f7] text-white rounded-lg hover:bg-[#9333ea] transition-colors"
-                >
-                  Choose File
-                </button>
+                {videoPreview ? (
+                  <div className="relative">
+                    {/* Video Preview Thumbnail */}
+                    <div className="relative bg-black aspect-video rounded-t-lg overflow-hidden">
+                      {isThumbnail ? (
+                        // Thumbnail image
+                        <img
+                          src={videoPreview}
+                          alt="Video preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        // Video preview fallback
+                        <video
+                          ref={videoPreviewRef}
+                          src={videoPreview}
+                          className="w-full h-full object-cover"
+                          muted
+                          playsInline
+                        />
+                      )}
+                      {/* Overlay with file info */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end">
+                        <div className="w-full p-4">
+                          <p className="text-white text-sm font-medium truncate">
+                            {uploadFile?.name}
+                          </p>
+                          {uploadFile && (
+                            <p className="text-xs text-slate-300 mt-1">
+                              {formatFileSize(uploadFile.size)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Change file button */}
+                    <div className="p-4 bg-[#0a0a0a] rounded-b-lg border-t border-[#2a2a2a]">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleFileSelect(file)
+                        }}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full px-4 py-2 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white rounded-lg transition-colors text-sm"
+                      >
+                        Change Video
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Video className="w-12 h-12 text-[#a855f7] mx-auto mb-4" />
+                    <p className="text-white mb-2">
+                      Drag & drop a video file here
+                    </p>
+                    <p className="text-sm text-slate-400 mb-4">
+                      or click to browse (MP4, WebM, MOV, AVI)
+                    </p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleFileSelect(file)
+                      }}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-2 bg-[#a855f7] text-white rounded-lg hover:bg-[#9333ea] transition-colors"
+                    >
+                      Choose File
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Title and Description */}

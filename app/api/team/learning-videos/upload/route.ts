@@ -11,18 +11,36 @@ export async function POST(request: Request) {
     }
 
     // Get user's team and verify manager role
-    const { data: userProfile } = await supabase
+    const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select('team_id, role')
       .eq('id', user.id)
       .single()
 
-    if (!userProfile?.team_id) {
-      return NextResponse.json({ error: 'User not in a team' }, { status: 404 })
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError)
+      return NextResponse.json({ 
+        error: 'Failed to fetch user profile',
+        details: profileError.message 
+      }, { status: 500 })
     }
 
-    if (!['manager', 'admin'].includes(userProfile.role)) {
-      return NextResponse.json({ error: 'Only managers can upload videos' }, { status: 403 })
+    if (!userProfile) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    }
+
+    if (!userProfile.team_id) {
+      return NextResponse.json({ 
+        error: 'User not in a team',
+        details: 'You must be part of a team to upload training videos'
+      }, { status: 404 })
+    }
+
+    if (!userProfile.role || !['manager', 'admin'].includes(userProfile.role)) {
+      return NextResponse.json({ 
+        error: 'Only managers can upload videos',
+        details: `Your role is "${userProfile.role || 'not set'}". Manager or admin role required.`
+      }, { status: 403 })
     }
 
     const formData = await request.formData()
@@ -42,7 +60,17 @@ export async function POST(request: Request) {
     const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo']
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json({ 
-        error: 'Invalid file type. Please upload a video file (MP4, WebM, MOV, AVI)' 
+        error: 'Invalid file type',
+        details: `File type "${file.type}" is not supported. Please upload a video file (MP4, WebM, MOV, AVI)`
+      }, { status: 400 })
+    }
+
+    // Validate file size (max 500MB)
+    const maxSize = 500 * 1024 * 1024 // 500MB
+    if (file.size > maxSize) {
+      return NextResponse.json({ 
+        error: 'File too large',
+        details: `File size is ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum allowed size is 500MB.`
       }, { status: 400 })
     }
 
@@ -64,10 +92,20 @@ export async function POST(request: Request) {
 
     if (uploadError) {
       console.error('Upload error:', uploadError)
+      // Check for specific error types
+      let errorMessage = uploadError.message || 'Unknown storage error'
+      if (uploadError.message?.includes('already exists')) {
+        errorMessage = 'A file with this name already exists. Please rename your file.'
+      } else if (uploadError.message?.includes('size')) {
+        errorMessage = 'File is too large. Please upload a smaller video file.'
+      } else if (uploadError.message?.includes('permission') || uploadError.message?.includes('policy')) {
+        errorMessage = 'Permission denied. Please contact support.'
+      }
       return NextResponse.json({ 
         error: 'Failed to upload video to storage.',
-        details: uploadError.message,
-        code: uploadError.code
+        details: errorMessage,
+        code: uploadError.code,
+        fullError: process.env.NODE_ENV === 'development' ? uploadError.message : undefined
       }, { status: 500 })
     }
 
@@ -94,10 +132,16 @@ export async function POST(request: Request) {
     if (dbError) {
       console.error('Database error:', dbError)
       // Try to clean up uploaded file
-      await supabase.storage.from(bucketName).remove([filePath])
+      try {
+        await supabase.storage.from(bucketName).remove([filePath])
+      } catch (cleanupError) {
+        console.error('Failed to cleanup uploaded file:', cleanupError)
+      }
       return NextResponse.json({ 
         error: 'Failed to save video metadata.',
-        details: dbError.message
+        details: dbError.message || 'Database error occurred',
+        code: dbError.code,
+        hint: dbError.hint
       }, { status: 500 })
     }
 
