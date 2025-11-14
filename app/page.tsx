@@ -256,7 +256,7 @@ function ProblemSolutionSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center mb-8 sm:mb-10 lg:mb-12" variants={fadeInUp}>
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
               The Reality of Door-to-Door Sales Training
             </h2>
             <div className="mt-4 sm:mt-5 lg:mt-6 space-y-3 sm:space-y-4">
@@ -784,6 +784,6 @@ const faqItems = [
   {
     question: 'Can DoorIQ plug into our existing tools?',
     answer:
-      'Currently, DoorIQ operates as a standalone platform and does not integrate with external CRM or sales tools. All your practice sessions, analytics, and performance data are stored securely within DoorIQ\'s platform. You can export reports and data manually when needed.',
+      'DoorIQ is designed to replace your current training software entirely. We offer a white label version for companies that includes custom objections tailored to your specific products and services, as well as custom design and branding to match your company\'s identity. This allows you to have a fully branded training platform that reflects your unique sales process and customer interactions.',
   },
 ]

@@ -186,14 +186,11 @@ const FaqItem = React.forwardRef<
           }
         }
       }}
-      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
       className={cn(
         "group rounded-lg",
         "transition-all duration-200 ease-in-out",
-        "border border-border/50",
-        isOpen
-          ? "bg-gradient-to-br from-background via-muted/50 to-background"
-          : "hover:bg-muted/50",
+        "border border-primary/30",
+        "bg-white",
       )}
     >
       <Button
@@ -204,8 +201,8 @@ const FaqItem = React.forwardRef<
         <h3
           className={cn(
             "text-lg font-medium transition-colors duration-200 text-left",
-            "text-foreground",
-            isOpen && "text-foreground",
+            "text-black",
+            isOpen && "text-black",
           )}
         >
           {question}
@@ -219,7 +216,7 @@ const FaqItem = React.forwardRef<
           className={cn(
             "p-0.5 rounded-full flex-shrink-0",
             "transition-colors duration-200",
-            isOpen ? "text-primary" : "text-muted-foreground",
+            isOpen ? "text-primary" : "text-gray-600",
           )}
         >
           <ChevronDown className="h-5 w-5" />
@@ -245,7 +242,7 @@ const FaqItem = React.forwardRef<
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -10, opacity: 0 }}
-                className="text-base text-foreground leading-relaxed"
+                className="text-base text-black leading-relaxed"
               >
                 {answer}
               </motion.p>

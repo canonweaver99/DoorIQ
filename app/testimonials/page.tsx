@@ -183,7 +183,7 @@ export default function TestimonialsPage() {
               {acceptedTestimonials.map((testimonial) => (
                 <div
                   key={testimonial.id}
-                  className="group p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-primary/50 transition-all duration-300"
+                  className="group p-4 rounded-xl border border-primary/30 bg-white hover:border-primary/50 transition-all duration-300"
                 >
                   {/* Stars */}
                   <div className="flex gap-1 mb-3">
@@ -193,29 +193,29 @@ export default function TestimonialsPage() {
                         className={`w-3 h-3 ${
                           i < testimonial.stars
                             ? 'fill-yellow-400 text-yellow-400'
-                            : 'fill-none text-gray-600'
+                            : 'fill-none text-gray-400'
                         }`}
                       />
                     ))}
                   </div>
 
                   {/* Testimonial Text */}
-                  <p className="text-white font-medium text-sm leading-relaxed mb-4">
+                  <p className="text-black font-medium text-sm leading-relaxed mb-4">
                     &ldquo;{testimonial.fullText}&rdquo;
                   </p>
 
                   {/* Author */}
-                  <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                  <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
                     {testimonial.profile_image_url && testimonial.profile_image_url.trim() !== "" && !testimonial.profile_image_url.includes("unsplash.com") && (
                       <img
                         src={testimonial.profile_image_url}
                         alt={testimonial.name}
-                        className="w-9 h-9 rounded-full ring-2 ring-white/20"
+                        className="w-9 h-9 rounded-full ring-2 ring-gray-200"
                       />
                     )}
                     <div>
-                      <p className="font-bold text-white text-sm">{testimonial.name}</p>
-                      <p className="text-xs text-slate-400 font-medium">{testimonial.location}</p>
+                      <p className="font-bold text-black text-sm">{testimonial.name}</p>
+                      <p className="text-xs text-gray-600 font-medium">{testimonial.location}</p>
                     </div>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ export default function TestimonialsPage() {
               {extendedTestimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="group p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-primary/50 transition-all duration-300"
+              className="group p-4 rounded-xl border border-primary/30 bg-white hover:border-primary/50 transition-all duration-300"
             >
               {/* Stars */}
               <div className="flex gap-1 mb-3">
@@ -233,29 +233,29 @@ export default function TestimonialsPage() {
                     className={`w-3 h-3 ${
                       i < testimonial.stars
                         ? 'fill-yellow-400 text-yellow-400'
-                        : 'fill-none text-gray-600'
+                        : 'fill-none text-gray-400'
                     }`}
                   />
                 ))}
               </div>
 
               {/* Testimonial Text */}
-              <p className="text-white font-medium text-sm leading-relaxed mb-4">
+              <p className="text-black font-medium text-sm leading-relaxed mb-4">
                 &ldquo;{testimonial.fullText}&rdquo;
               </p>
 
               {/* Author */}
-              <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+              <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
                 {testimonial.image && testimonial.image.trim() !== "" && !testimonial.image.includes("unsplash.com") && (
                   <img
                     src={testimonial.image}
                     alt={testimonial.name}
-                    className="w-9 h-9 rounded-full ring-2 ring-white/20"
+                    className="w-9 h-9 rounded-full ring-2 ring-gray-200"
                   />
                 )}
                 <div>
-                  <p className="font-bold text-white text-sm">{testimonial.name}</p>
-                  <p className="text-xs text-slate-400 font-medium">{testimonial.role}</p>
+                  <p className="font-bold text-black text-sm">{testimonial.name}</p>
+                  <p className="text-xs text-gray-600 font-medium">{testimonial.role}</p>
                 </div>
               </div>
             </div>
