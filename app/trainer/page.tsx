@@ -99,7 +99,8 @@ function TrainerPageContent() {
     if (agentName === 'Average Austin') {
       return {
         loop: '/austin-loop.mp4',
-        closing: '/austin-door-close.mp4'
+        closing: '/austin-door-close.mp4',
+        opening: '/austin-opening-door.mp4'
       }
     }
     if (agentName === 'Tag Team Tanya & Tom') {
@@ -704,17 +705,6 @@ function TrainerPageContent() {
       if (silenceTimer) {
         clearTimeout(silenceTimer)
         silenceTimer = null
-      }
-      
-      // Play door closing sound (non-blocking - don't wait for it)
-      try {
-        const doorCloseAudio = new Audio('/sounds/door_close.mp3')
-        doorCloseAudio.volume = 0.6
-        doorCloseAudio.play().catch((err) => {
-          console.warn('Could not play door close sound', err)
-        })
-      } catch (error) {
-        console.warn('Could not play door close sound', error)
       }
       
       // Wait for agent to finish speaking before ending session
