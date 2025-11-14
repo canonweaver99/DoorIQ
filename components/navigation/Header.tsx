@@ -319,7 +319,7 @@ function HeaderContent() {
         title: 'Training',
         items: [
           { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
-          { name: 'Upload Sales Call', href: hasActiveSubscription ? '/trainer/upload' : '/pricing', icon: Upload },
+          { name: 'Upload Sales Call', href: '/dashboard?tab=upload', icon: Upload },
           { name: 'Session History', href: '/sessions', icon: ClipboardList },
           ...(user?.team_id ? [{ name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 }] : []),
         ],

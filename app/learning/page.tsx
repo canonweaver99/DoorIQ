@@ -38,6 +38,14 @@ export default function LearningPage() {
   const [loading, setLoading] = useState(true)
   const [selectedVideo, setSelectedVideo] = useState<{ id: string; type: 'instructional' | 'team' } | null>(null)
   const [userRole, setUserRole] = useState<'manager' | 'rep' | 'admin' | null>(null)
+  
+  // Upload form state
+  const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [uploadTitle, setUploadTitle] = useState('')
+  const [uploadDescription, setUploadDescription] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchData()
@@ -156,6 +164,76 @@ export default function LearningPage() {
   }
 
   const isManager = userRole === 'manager' || userRole === 'admin'
+
+  const handleFileSelect = (file: File) => {
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select a video file (MP4, WebM, MOV, or AVI)')
+      return
+    }
+    setUploadFile(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleUpload = async () => {
+    if (!uploadFile || !uploadTitle.trim()) {
+      alert('Please select a video file and enter a title')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', uploadFile)
+      formData.append('title', uploadTitle.trim())
+      if (uploadDescription.trim()) {
+        formData.append('description', uploadDescription.trim())
+      }
+
+      const response = await fetch('/api/team/learning-videos/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        // Reset form
+        setUploadTitle('')
+        setUploadDescription('')
+        setUploadFile(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+        // Refresh videos list
+        await fetchData()
+        alert('Video uploaded successfully!')
+      } else {
+        const error = await response.json()
+        alert(`Upload failed: ${error.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Failed to upload video. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleDeleteTeamVideo = async (videoId: string) => {
     if (!confirm('Are you sure you want to delete this video?')) {
@@ -280,6 +358,91 @@ export default function LearningPage() {
                   </motion.div>
                 )
               })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Upload Section for Managers */}
+        {isManager && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+            className="mb-12"
+          >
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6"
+              style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+            >
+              <h3 className="text-lg font-bold text-white mb-4">Upload Training Video</h3>
+              
+              {/* File Upload Area */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+                  isDragging ? 'border-[#a855f7] bg-[#a855f7]/10' : 'border-[#2a2a2a]'
+                }`}
+              >
+                <Video className="w-12 h-12 text-[#a855f7] mx-auto mb-4" />
+                <p className="text-white mb-2">
+                  {uploadFile ? uploadFile.name : 'Drag & drop a video file here'}
+                </p>
+                <p className="text-sm text-slate-400 mb-4">
+                  or click to browse (MP4, WebM, MOV, AVI)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileSelect(file)
+                  }}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 bg-[#a855f7] text-white rounded-lg hover:bg-[#9333ea] transition-colors"
+                >
+                  Choose File
+                </button>
+              </div>
+
+              {/* Title and Description */}
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Title <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadTitle}
+                    onChange={(e) => setUploadTitle(e.target.value)}
+                    placeholder="Enter video title"
+                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#a855f7]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Description (optional)
+                  </label>
+                  <textarea
+                    value={uploadDescription}
+                    onChange={(e) => setUploadDescription(e.target.value)}
+                    placeholder="Enter video description"
+                    rows={3}
+                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#a855f7] resize-none"
+                  />
+                </div>
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading || !uploadFile || !uploadTitle.trim()}
+                  className="w-full px-6 py-3 bg-[#a855f7] text-white font-medium rounded-lg hover:bg-[#9333ea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? 'Uploading...' : 'Upload Video'}
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
