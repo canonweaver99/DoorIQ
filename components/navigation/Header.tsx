@@ -458,11 +458,9 @@ function HeaderContent() {
   }, [isSidebarOpen])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
-      <nav className="max-w-7xl mx-auto px-0 sm:px-4 lg:px-8">
-        <div className="flex items-center justify-center h-16 pt-2">
-          {/* Centered bar */}
-          <div className="hidden md:flex items-center space-x-6 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10">
+    <>
+      {/* Centered oval navigation bar - Desktop */}
+      <div className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 items-center space-x-6 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10">
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10">
               <Image 
                 src="/dooriqlogo.png" 
@@ -575,32 +573,29 @@ function HeaderContent() {
                 <HamburgerIcon open={isSidebarOpen} />
               </button>
             </div>
-          </div>
+      </div>
 
-          {/* Mobile header */}
-          <div className="flex md:hidden items-center justify-between w-full px-4">
-            <Link href="/" className="flex items-center">
-              <Image 
-                src="/dooriqlogo.png" 
-                alt="DoorIQ Logo" 
-                width={61} 
-                height={20} 
-                className="h-[20px] w-auto object-contain"
-                priority
-              />
-            </Link>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-slate-300 hover:text-white p-2 touch-target"
-            >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
+      {/* Mobile header */}
+      <div className="fixed top-4 right-4 z-50 md:hidden">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-slate-300 hover:text-white hover:bg-white/5 transition-all touch-target"
+        >
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 space-y-2 px-4">
+      {/* Mobile Navigation */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          {/* Mobile Navigation Panel */}
+          <div className="absolute top-0 right-0 bottom-0 w-full max-w-sm bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-l border-white/10 overflow-y-auto">
+            <div className="p-6 pt-20 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
@@ -691,9 +686,10 @@ function HeaderContent() {
                 </div>
               </div>
             )}
+            </div>
           </div>
-        )}
-      </nav>
+        </div>
+      )}
       {portalReady &&
         createPortal(
           <AnimatePresence>
@@ -921,7 +917,7 @@ function HeaderContent() {
           </AnimatePresence>,
           document.body
         )}
-    </header>
+    </>
   )
 }
 

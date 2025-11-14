@@ -286,7 +286,7 @@ function PricingPageContent() {
   const pricing = calculatePricing(numReps)
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden pt-32">
       {/* Sticky Header */}
       <AnimatePresence>
         {showStickyHeader && (

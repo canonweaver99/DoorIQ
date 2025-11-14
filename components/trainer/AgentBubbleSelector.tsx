@@ -320,7 +320,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center">
       <AnimatedGrid />
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-32">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

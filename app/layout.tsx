@@ -103,12 +103,10 @@ export default function RootLayout({
         />
         <ToastProvider>
           <NotificationProvider>
-            <Suspense fallback={<div style={{ height: 64 }} />}>
+            <Suspense fallback={null}>
               <Header />
             </Suspense>
-            {/* Spacer to avoid content under fixed nav (responsive height) */}
-            <div className="h-16 sm:h-16 md:h-16" />
-            <div className="min-h-[calc(100svh-64px)] flex flex-col">
+            <div className="min-h-screen flex flex-col">
               <div className="flex-1">
                 {children}
               </div>
