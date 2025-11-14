@@ -54,7 +54,7 @@ function ManagerPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#0a0a0a] py-8 px-4 sm:px-6 lg:px-8 pt-32">
       <div className="max-w-[1800px] mx-auto">
         {/* Header Section matching dashboard */}
         <motion.div

@@ -308,7 +308,7 @@ function DashboardPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-2 sm:py-4 lg:py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#0a0a0a] py-2 sm:py-4 lg:py-8 px-4 sm:px-6 lg:px-8 pt-32">
       <div className="max-w-[1800px] mx-auto">
         {/* Minimalist Header Section */}
         <motion.div

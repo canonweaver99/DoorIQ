@@ -460,14 +460,14 @@ function HeaderContent() {
   return (
     <>
       {/* Centered oval navigation bar - Desktop */}
-      <div className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 items-center space-x-6 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10">
-            <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10">
+      <div className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 items-center space-x-7 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl px-5 py-2.5 shadow-lg shadow-purple-500/10 scale-110">
+            <Link href="/" className="flex items-center pr-2.5 mr-2.5 border-r border-white/10">
               <Image 
                 src="/dooriqlogo.png" 
                 alt="DoorIQ Logo" 
-                width={77} 
-                height={24} 
-                className="h-[24px] w-auto object-contain"
+                width={85} 
+                height={26} 
+                className="h-[26px] w-auto object-contain"
                 priority
               />
             </Link>
@@ -479,10 +479,10 @@ function HeaderContent() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-all
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm transition-all
                     ${active ? 'text-white bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-5 h-5" />
                   <span className="tracking-tight">{item.name}</span>
                 </Link>
               )
