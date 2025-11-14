@@ -93,7 +93,7 @@ function TrainerPageContent() {
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
-    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan' || agentName === 'Think About It Tina'
+    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan' || agentName === 'Think About It Tina' || agentName === 'Too Expensive Tim'
   }
   
   // Helper function to get video paths for an agent
@@ -140,6 +140,13 @@ function TrainerPageContent() {
       return {
         loop: '/think-about-it-tina-loop.mp4',
         closing: '/think-about-it-tina-closing-door.mp4'
+      }
+    }
+    if (agentName === 'Too Expensive Tim') {
+      return {
+        loop: '/too-expensive-tim-loop.mp4',
+        closing: '/too-expensive-tim-closing-door.mp4',
+        opening: '/too-expensive-tim-opening-door.mp4'
       }
     }
     return null
@@ -1203,7 +1210,8 @@ function TrainerPageContent() {
                     
                     {/* Door Opening Video Overlay - plays on initial knock */}
                     {showDoorOpeningVideo && (() => {
-                      const videoPathRaw = '/DIY DAVE OPENIG DOOR.mp4'
+                      const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                      const videoPathRaw = videoPaths?.opening || '/DIY DAVE OPENIG DOOR.mp4' // Fallback to default if no opening video
                       const videoPath = videoPathRaw.includes(' ') || videoPathRaw.includes('&')
                         ? videoPathRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
                         : videoPathRaw
