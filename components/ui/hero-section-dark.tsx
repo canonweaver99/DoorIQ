@@ -308,11 +308,11 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         <div className="absolute top-0 z-[0] h-screen w-screen bg-purple-950/10 dark:bg-purple-950/10 bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]" />
         
         {/* Hero Section - Full Viewport Height */}
-        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-start sm:items-center pt-32 sm:pt-0 pb-0 lg:pb-2">
+        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-end justify-center pt-32 sm:pt-0 pb-24">
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-6 lg:px-20 xl:px-24 2xl:px-32">
             {/* Centered Copy Layout */}
-            <div className="flex items-center justify-center pt-0 lg:pt-0 -mt-[10px] sm:-mt-[30px] lg:-mt-[50px]">
+            <div className="flex items-center justify-center pt-0 lg:pt-0">
               {/* Centered Copy */}
               <motion.div 
                 className="space-y-4 sm:space-y-4 lg:space-y-4 w-full max-w-5xl text-center flex flex-col items-center justify-center px-0 sm:px-0" 
@@ -452,8 +452,8 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
             </div>
           </div>
 
-          {/* Scroll Indicator - Moved Up */}
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 animate-bounce z-20">
+          {/* Scroll Indicator - At Bottom */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-20">
             <ChevronDown className="w-6 h-6 text-purple-400" />
           </div>
         </section>

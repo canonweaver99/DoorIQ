@@ -151,7 +151,7 @@ export default function Home() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] pt-32">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       {/* Calendar Modal */}
       <CalendarModal 
         isOpen={isCalendarModalOpen} 
