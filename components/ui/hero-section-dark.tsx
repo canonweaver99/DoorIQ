@@ -142,7 +142,7 @@ const InlineAgentCarousel = React.memo(() => {
   // Optimized item widths for different screen sizes
   const getItemWidth = () => {
     switch (screenSize) {
-      case 'mobile': return 80 + 16 // 96px
+      case 'mobile': return 96 + 16 // 112px (increased from 80px)
       case 'tablet': return 112 + 20 // 132px
       case 'laptop': return 144 + 28 // 172px (optimized for laptop - smaller)
       case 'desktop': return 160 + 32 // 192px
@@ -197,7 +197,7 @@ const InlineAgentCarousel = React.memo(() => {
                   }
                 }}
               >
-                <div className="relative h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36 xl:h-40 xl:w-40 2xl:h-44 2xl:w-44">
+                <div className="relative h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36 xl:h-40 xl:w-40 2xl:h-44 2xl:w-44">
                   {/* Concentric circles */}
                   {[0, 1, 2].map((i) => (
                     <motion.div
@@ -257,7 +257,7 @@ const InlineAgentCarousel = React.memo(() => {
                             alt={agent.name}
                             fill
                             style={finalStyle}
-                            sizes="(max-width: 640px) 80px, (max-width: 768px) 112px, (max-width: 1024px) 128px, (max-width: 1440px) 144px, 160px"
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, (max-width: 1024px) 128px, (max-width: 1440px) 144px, 160px"
                             quality={95}
                             priority={index < 6}
                             unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
@@ -308,7 +308,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         <div className="absolute top-0 z-[0] h-screen w-screen bg-purple-950/10 dark:bg-purple-950/10 bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]" />
         
         {/* Hero Section - Full Viewport Height */}
-        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center pt-0 pb-0 lg:pb-2">
+        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-start sm:items-center pt-32 sm:pt-0 pb-0 lg:pb-2">
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-6 lg:px-20 xl:px-24 2xl:px-32">
             {/* Centered Copy Layout */}
