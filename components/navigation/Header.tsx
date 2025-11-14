@@ -98,6 +98,7 @@ function HeaderContent() {
   const creditsTooltipRef = useRef<HTMLDivElement | null>(null)
   const [showMenuOnHover, setShowMenuOnHover] = useState(false)
   const [isLiveSession, setIsLiveSession] = useState(false)
+  const [isAuthPage, setIsAuthPage] = useState(false)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -116,10 +117,16 @@ function HeaderContent() {
     setPortalReady(true)
   }, [])
 
-  // Check if we're on a trainer page (live session)
+  // Check if we're on auth pages
   useEffect(() => {
-    const isTrainerPage = pathname?.startsWith('/trainer')
-    setIsLiveSession(isTrainerPage)
+    const onAuthPage = pathname?.startsWith('/auth/login') || pathname?.startsWith('/auth/signup')
+    setIsAuthPage(onAuthPage)
+  }, [pathname])
+
+  // Check if we're on a live session page (trainer pages except select-homeowner)
+  useEffect(() => {
+    const isLiveSessionPage = pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner'
+    setIsLiveSession(isLiveSessionPage)
   }, [pathname])
 
   // Handle mouse position to show menu at top during live sessions
@@ -488,8 +495,8 @@ function HeaderContent() {
   return (
     <>
       {/* Centered oval navigation bar - Desktop */}
-      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 items-center space-x-6 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 scale-90 ${
-        isLiveSession && !showMenuOnHover ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 items-center space-x-6 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
+        isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10">
               <Image 
@@ -607,7 +614,7 @@ function HeaderContent() {
 
       {/* Mobile header */}
       <div className={`fixed top-4 right-4 z-50 md:hidden transition-opacity duration-300 ${
-        isLiveSession && !showMenuOnHover ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
