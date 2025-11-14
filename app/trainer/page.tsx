@@ -100,7 +100,7 @@ function TrainerPageContent() {
       return {
         loop: '/austin-loop.mp4',
         closing: '/austin-door-close.mp4',
-        opening: '/austin-opening-door.mp4'
+        opening: '/Austin opening the door.mp4'
       }
     }
     if (agentName === 'Tag Team Tanya & Tom') {
@@ -1109,14 +1109,20 @@ function TrainerPageContent() {
                         const videoPaths = getAgentVideoPaths(selectedAgent?.name)
                         if (!videoPaths) return null
                         
-                        const videoSrc = videoMode === 'opening' && videoPaths.opening
+                        const videoSrcRaw = videoMode === 'opening' && videoPaths.opening
                           ? videoPaths.opening
                           : videoMode === 'loop'
                           ? videoPaths.loop
                           : videoPaths.closing
                         
+                        // URL encode video path if it contains spaces to ensure proper loading
+                        const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
+                          ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                          : videoSrcRaw
+                        
                         return (
                           <video
+                            key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
                             ref={agentVideoRef}
                             src={videoSrc}
                             className="w-full h-full object-cover"
@@ -1134,7 +1140,7 @@ function TrainerPageContent() {
                               }
                             }}
                             onError={(e) => {
-                              console.error('❌ Video failed to load:', videoSrc)
+                              console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
                               e.stopPropagation()
                             }}
                           />
