@@ -262,7 +262,6 @@ function DashboardPageContent() {
 
   const tabs = [
     { id: 'overview', label: 'Dashboard', icon: Home, locked: false },
-    { id: 'learning', label: 'Learning', icon: BookOpen, locked: false },
     { id: 'upload', label: 'Upload', icon: Upload, locked: false },
     ...(hasTeam ? [
       { id: 'team', label: 'Team', icon: UsersIcon, locked: false },
@@ -381,9 +380,6 @@ function DashboardPageContent() {
           >
           {activeTab === 'overview' && (
             <OverviewTabContent />
-          )}
-          {activeTab === 'learning' && (
-            <LearningTabContent />
           )}
             {activeTab === 'upload' && (
               <UploadTabContent />
