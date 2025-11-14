@@ -346,7 +346,7 @@ function HeaderContent() {
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
           ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 }]),
           { name: 'Learning', href: '/learning', icon: NotebookPen },
-          { name: 'Manager', href: '/manager', icon: Users, managerOnly: true },
+          { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
         ],
       },
@@ -875,7 +875,6 @@ function HeaderContent() {
                             <div className="space-y-[5px]">
                               {visibleItems.map((item) => {
                                 const Icon = item.icon
-                                const active = isActive(item.href)
                                 return (
                                   <button
                                     key={item.name}
@@ -883,11 +882,7 @@ function HeaderContent() {
                                       router.push(item.href)
                                       setIsSidebarOpen(false)
                                     }}
-                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border px-[14px] py-[9px] text-[16.5px] transition-all ${
-                                      active
-                                        ? 'border-white/25 bg-white/10 text-white shadow-[0_8px_24px_rgba(109,40,217,0.2)]'
-                                        : 'border-white/5 text-slate-200 hover:border-white/15 hover:bg-white/5'
-                                    }`}
+                                    className="flex w-full items-center justify-between gap-[9px] rounded-xl border border-white/5 px-[14px] py-[9px] text-[16.5px] text-slate-200 transition-all hover:border-white/15 hover:bg-white/5"
                                   >
                                     <span className="flex items-center gap-[12px]">
                                       <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white shrink-0">
