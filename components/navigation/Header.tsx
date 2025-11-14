@@ -96,6 +96,8 @@ function HeaderContent() {
   const [userCredits, setUserCredits] = useState<number>(0)
   const [showCreditsTooltip, setShowCreditsTooltip] = useState(false)
   const creditsTooltipRef = useRef<HTMLDivElement | null>(null)
+  const [showMenuOnHover, setShowMenuOnHover] = useState(false)
+  const [isLiveSession, setIsLiveSession] = useState(false)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -113,6 +115,32 @@ function HeaderContent() {
   useEffect(() => {
     setPortalReady(true)
   }, [])
+
+  // Check if we're on a trainer page (live session)
+  useEffect(() => {
+    const isTrainerPage = pathname?.startsWith('/trainer')
+    setIsLiveSession(isTrainerPage)
+  }, [pathname])
+
+  // Handle mouse position to show menu at top during live sessions
+  useEffect(() => {
+    if (!isLiveSession) {
+      setShowMenuOnHover(false)
+      return
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Show menu when cursor is within top 100px of screen
+      if (e.clientY < 100) {
+        setShowMenuOnHover(true)
+      } else {
+        setShowMenuOnHover(false)
+      }
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [isLiveSession])
 
   useEffect(() => {
     const supabase = createClient()
@@ -286,7 +314,7 @@ function HeaderContent() {
     if (userRole === 'manager' || userRole === 'admin') {
       const insertIndex = Math.min(4, navItems.length)
       navItems.splice(insertIndex, 0, {
-        name: 'Manager Panel',
+        name: 'Manager',
         href: '/manager',
         icon: FileText,
       })
@@ -311,7 +339,7 @@ function HeaderContent() {
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
           ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 }]),
           { name: 'Learning', href: '/learning', icon: NotebookPen },
-          { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
+          { name: 'Manager', href: '/manager', icon: Users, managerOnly: true },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
         ],
       },
@@ -460,7 +488,9 @@ function HeaderContent() {
   return (
     <>
       {/* Centered oval navigation bar - Desktop */}
-      <div className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 items-center space-x-6 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10">
+      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 items-center space-x-6 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 scale-90 ${
+        isLiveSession && !showMenuOnHover ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+      }`}>
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10">
               <Image 
                 src="/dooriqlogo.png" 
@@ -576,7 +606,9 @@ function HeaderContent() {
       </div>
 
       {/* Mobile header */}
-      <div className="fixed top-4 right-4 z-50 md:hidden">
+      <div className={`fixed top-4 right-4 z-50 md:hidden transition-opacity duration-300 ${
+        isLiveSession && !showMenuOnHover ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+      }`}>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-slate-300 hover:text-white hover:bg-white/5 transition-all touch-target"
