@@ -417,18 +417,22 @@ function ProblemSolutionSection() {
           className="text-center mt-12 sm:mt-14 lg:mt-16 mb-12 sm:mb-14 lg:mb-16"
           variants={fadeInUp}
         >
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <motion.span 
+            className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
+            whileHover={{ y: -3 }}
+            transition={{ duration: 0.2 }}
           >
-            <Link 
-              href="/pricing" 
-              onClick={() => vibrate()}
-              className="inline-flex rounded-full text-center items-center justify-center bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-purple-500/20 text-white border border-purple-500/30 hover:border-purple-500/50 transition-all px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold backdrop-blur-sm"
-            >
-              See Pricing
-            </Link>
-          </motion.div>
+            <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+            <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
+              <Link
+                href="/pricing"
+                onClick={() => vibrate()}
+                className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+              >
+                See Pricing
+              </Link>
+            </div>
+          </motion.span>
         </motion.div>
       </div>
     </motion.section>
