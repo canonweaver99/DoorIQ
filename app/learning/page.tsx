@@ -281,9 +281,23 @@ export default function LearningPage() {
         formData.append('description', uploadDescription.trim())
       }
 
+      console.log('📤 Starting upload request...')
+      console.log('📦 File:', {
+        name: uploadFile.name,
+        size: uploadFile.size,
+        type: uploadFile.type
+      })
+      
       const response = await fetch('/api/team/learning-videos/upload', {
         method: 'POST',
         body: formData
+      })
+      
+      console.log('📥 Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
       })
 
       if (response.ok) {
@@ -304,15 +318,59 @@ export default function LearningPage() {
         await fetchData()
         alert('Video uploaded successfully!')
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }))
+        // Try to get error details from response
+        let errorData: any = { error: 'Unknown error occurred' }
+        const contentType = response.headers.get('content-type')
+        
+        try {
+          // Clone the response so we can read it multiple times
+          const responseClone = response.clone()
+          const responseText = await responseClone.text()
+          console.error('📄 Raw error response text:', responseText)
+          
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              errorData = JSON.parse(responseText)
+            } catch (jsonError) {
+              console.error('❌ Failed to parse JSON:', jsonError)
+              errorData = {
+                error: `Server error (${response.status})`,
+                details: responseText || `HTTP ${response.status} ${response.statusText}`
+              }
+            }
+          } else {
+            console.error('⚠️ Non-JSON error response')
+            errorData = { 
+              error: `Server error (${response.status})`,
+              details: responseText || `HTTP ${response.status} ${response.statusText}`
+            }
+          }
+        } catch (parseError: any) {
+          console.error('❌ Failed to read error response:', parseError)
+          console.error('Parse error details:', {
+            message: parseError?.message,
+            stack: parseError?.stack,
+            name: parseError?.name
+          })
+          errorData = {
+            error: `Server error (${response.status})`,
+            details: `Failed to read response: ${parseError?.message || 'Unknown error'}`
+          }
+        }
+        
         const errorMessage = errorData.details 
           ? `${errorData.error}: ${errorData.details}`
-          : errorData.error || 'Unknown error'
-        console.error('Upload failed:', errorData)
+          : errorData.error || `Upload failed with status ${response.status}`
+        
+        console.error('Upload failed - Status:', response.status)
+        console.error('Upload failed - Error data:', errorData)
+        console.error('Upload failed - Response headers:', Object.fromEntries(response.headers.entries()))
+        
         alert(`Upload failed: ${errorMessage}`)
       }
     } catch (error: any) {
-      console.error('Upload error:', error)
+      console.error('Upload error (catch block):', error)
+      console.error('Error stack:', error?.stack)
       const errorMessage = error?.message || 'Network error. Please check your connection and try again.'
       alert(`Failed to upload video: ${errorMessage}`)
     } finally {

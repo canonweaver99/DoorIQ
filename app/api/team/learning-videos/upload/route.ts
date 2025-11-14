@@ -2,13 +2,16 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
+  console.log('📤 Video upload request received')
   try {
     const supabase = await createServerSupabaseClient()
     
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
+      console.error('❌ Auth error:', authError)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    console.log('✅ User authenticated:', user.id)
 
     // Get user's team and verify manager role
     const { data: userProfile, error: profileError } = await supabase
@@ -48,11 +51,22 @@ export async function POST(request: Request) {
     const title = formData.get('title') as string
     const description = formData.get('description') as string | null
     
+    console.log('📋 Form data received:', {
+      hasFile: !!file,
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType: file?.type,
+      title,
+      hasDescription: !!description
+    })
+    
     if (!file) {
+      console.error('❌ No file provided')
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
     if (!title || title.trim() === '') {
+      console.error('❌ No title provided')
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
@@ -79,16 +93,26 @@ export async function POST(request: Request) {
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
     const filePath = `learning-videos/team-${userProfile.team_id}/${timestamp}-${safeName}`
 
+    console.log('📁 Uploading to path:', filePath)
+    console.log('📦 File details:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    })
+
     // Upload to session-videos bucket (supports video files)
     const bucketName = 'session-videos'
 
     // Upload to Supabase Storage
+    console.log('⬆️ Starting Supabase storage upload...')
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(filePath, file, {
         contentType: file.type,
         upsert: false
       })
+    
+    console.log('📤 Upload result:', { uploadData, uploadError })
 
     if (uploadError) {
       console.error('Upload error:', uploadError)
@@ -151,9 +175,12 @@ export async function POST(request: Request) {
     })
   } catch (error: any) {
     console.error('Error in video upload:', error)
+    console.error('Error stack:', error?.stack)
+    console.error('Error name:', error?.name)
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: error.message
+      details: error?.message || 'An unexpected error occurred',
+      type: error?.name || 'UnknownError'
     }, { status: 500 })
   }
 }
