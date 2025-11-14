@@ -458,9 +458,9 @@ function HeaderContent() {
   }, [isSidebarOpen])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
+    <header className="fixed top-0 left-0 right-0 z-50">
       <nav className="max-w-7xl mx-auto px-0 sm:px-4 lg:px-8">
-        <div className="flex items-center justify-center h-16">
+        <div className="flex items-center justify-center h-16 pt-2">
           {/* Centered bar */}
           <div className="hidden md:flex items-center space-x-6 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-2 shadow-lg shadow-purple-500/10">
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10">
