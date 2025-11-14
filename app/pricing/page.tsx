@@ -781,8 +781,12 @@ function PricingPageContent() {
                           </tr>
                           <tr className="border-b border-white/10">
                             <td className="py-4 text-white text-lg md:text-xl font-semibold">Annual training cost savings</td>
-                            <td className="text-center py-4 text-red-500 font-semibold text-xl md:text-2xl">$58,000/year</td>
-                            <td className="text-center py-4 text-emerald-500 font-semibold text-xl md:text-2xl">Save $58,000/year</td>
+                            <td className="text-center py-4 text-red-500 font-semibold text-xl md:text-2xl">
+                              ${(2000 * numReps).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year
+                            </td>
+                            <td className="text-center py-4 text-emerald-500 font-semibold text-xl md:text-2xl">
+                              Save ${((2000 * numReps) - (pricing.monthly * 12)).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year
+                            </td>
                           </tr>
                           <tr className="border-b border-white/10">
                             <td className="py-4 text-white text-lg md:text-xl font-medium">Time to first practice</td>

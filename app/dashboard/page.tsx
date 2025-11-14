@@ -2017,7 +2017,83 @@ function UploadTabContent() {
   const [error, setError] = useState<string | null>(null)
   const [showRecordingUI, setShowRecordingUI] = useState(false)
   const { isRecording, recordingTime, startRecording, stopRecording, cancelRecording, error: recordingError } = useVoiceRecorder()
-  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; size: string; date: string }>>([])
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ 
+    id: string
+    name: string
+    size: string
+    date: string
+    score: number | null
+    duration: number | null
+  }>>([])
+  const [loadingUploads, setLoadingUploads] = useState(true)
+
+  // Refresh uploaded files list
+  const refreshUploadedFiles = async () => {
+    setLoadingUploads(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        setLoadingUploads(false)
+        return
+      }
+
+      // Fetch sessions with upload_type = 'file_upload'
+      const { data: sessions, error } = await supabase
+        .from('live_sessions')
+        .select('id, created_at, overall_score, duration_seconds, audio_url')
+        .eq('user_id', user.id)
+        .eq('upload_type', 'file_upload')
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (error) {
+        console.error('Error fetching uploaded sessions:', error)
+        setLoadingUploads(false)
+        return
+      }
+
+      // Format sessions for display
+      const formatted = (sessions || []).map((session: any) => {
+        const date = new Date(session.created_at)
+        const fileName = session.audio_url 
+          ? session.audio_url.split('/').pop() || 'Uploaded Recording'
+          : 'Uploaded Recording'
+        
+        return {
+          id: session.id,
+          name: fileName.length > 50 ? fileName.substring(0, 50) + '...' : fileName,
+          size: session.duration_seconds 
+            ? `${Math.floor(session.duration_seconds / 60)}:${(session.duration_seconds % 60).toString().padStart(2, '0')}`
+            : 'N/A',
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          score: session.overall_score,
+          duration: session.duration_seconds
+        }
+      })
+
+      setUploadedFiles(formatted)
+      setLoadingUploads(false)
+    } catch (err) {
+      console.error('Error fetching uploaded sessions:', err)
+      setLoadingUploads(false)
+    }
+  }
+
+  // Fetch uploaded sessions from database on mount and when window regains focus
+  useEffect(() => {
+    refreshUploadedFiles()
+    
+    // Refresh when window regains focus (user returns from analytics page)
+    const handleFocus = () => {
+      refreshUploadedFiles()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -2190,10 +2266,6 @@ function UploadTabContent() {
     setShowRecordingUI(false)
   }
 
-  const handleDeleteFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
-  }
-
   return (
     <div className="space-y-4">
       {/* Upload Area */}
@@ -2361,7 +2433,7 @@ function UploadTabContent() {
       </AnimatePresence>
 
       {/* Uploaded Files */}
-      {uploadedFiles.length > 0 && (
+      {(uploadedFiles.length > 0 || loadingUploads) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -2371,46 +2443,60 @@ function UploadTabContent() {
         >
           <h3 className="text-base font-bold text-white mb-3">Recent Uploads</h3>
           
-          <div className="space-y-2.5">
-            {uploadedFiles.map((file, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 + idx * 0.1 }}
-                className="flex items-center justify-between p-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-                    <svg className="w-5 h-5 text-[#8a8a8a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                    </svg>
+          {loadingUploads ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 text-[#8a8a8a] animate-spin" />
+            </div>
+          ) : uploadedFiles.length > 0 ? (
+            <div className="space-y-2.5">
+              {uploadedFiles.map((file, idx) => (
+                <motion.div
+                  key={file.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 + idx * 0.1 }}
+                  className="flex items-center justify-between p-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] hover:bg-[#1a1a1a] transition-colors cursor-pointer"
+                  onClick={() => router.push(`/analytics/${file.id}`)}
+                >
+                  <div className="flex items-center gap-4">
+                    {/* Circular Upload Icon Bubble */}
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
+                      <Upload className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">{file.name}</p>
+                      <p className="text-xs text-[#8a8a8a]">
+                        {file.size} • {file.date}
+                        {file.score !== null && (
+                          <span className={`ml-2 font-semibold ${
+                            file.score >= 80 ? 'text-green-400' : 
+                            file.score >= 60 ? 'text-yellow-400' : 
+                            'text-red-400'
+                          }`}>
+                            • {file.score}%
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">{file.name}</p>
-                    <p className="text-xs text-[#8a8a8a]">{file.size} • {file.date}</p>
+                  
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/analytics/${file.id}`)
+                      }}
+                      className="px-4 py-2 bg-[#a855f7] text-white text-sm font-medium rounded-lg hover:bg-[#9333ea] transition-colors"
+                    >
+                      View Details
+                    </button>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <button className="px-4 py-2 bg-[#a855f7] text-white text-sm font-medium rounded-lg hover:bg-[#9333ea] transition-colors">
-                    Analyze
-                  </button>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteFile(idx)
-                    }}
-                    className="p-2 text-[#8a8a8a] hover:text-red-400 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[#8a8a8a] text-center py-4">No uploads yet</p>
+          )}
         </motion.div>
       )}
     </div>
