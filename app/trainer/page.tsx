@@ -93,7 +93,7 @@ function TrainerPageContent() {
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
-    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan' || agentName === 'Think About It Tina' || agentName === 'Too Expensive Tim'
+    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan' || agentName === 'Think About It Tina' || agentName === 'Too Expensive Tim' || agentName === 'Skeptical Sam' || agentName === 'Renter Randy' || agentName === 'DIY Dave' || agentName === 'Busy Beth'
   }
   
   // Helper function to get video paths for an agent
@@ -108,19 +108,22 @@ function TrainerPageContent() {
     if (agentName === 'Tag Team Tanya & Tom') {
       return {
         loop: '/tanya-tom-loop.mp4',
-        closing: '/tanya-tom-closing-door.mp4'
+        closing: '/tanya-tom-closing-door.mp4',
+        opening: '/tanya-tom-opening-door.mp4'
       }
     }
     if (agentName === 'Veteran Victor') {
       return {
         loop: '/veteran-victor-loop.mp4',
-        closing: '/veteran-victor-closing-door.mp4'
+        closing: '/veteran-victor-closing-door.mp4',
+        opening: '/veteran-victor-opening-door.mp4'
       }
     }
     if (agentName === 'No Problem Nancy') {
       return {
         loop: '/no-problem-nancy-loop.mp4',
-        closing: '/no-problem-nancy-closing-door.mp4'
+        closing: '/no-problem-nancy-closing-door.mp4',
+        opening: '/no-problem-nancy-opening-door.mp4'
       }
     }
     if (agentName === 'Just Treated Jerry') {
@@ -133,7 +136,8 @@ function TrainerPageContent() {
     if (agentName === 'Already Got It Alan') {
       return {
         loop: '/already-got-it-alan-loop.mp4',
-        closing: '/already-got-it-alan-closing-door.mp4'
+        closing: '/already-got-it-alan-closing-door.mp4',
+        opening: '/already-got-it-alan-opening-door.mp4'
       }
     }
     if (agentName === 'Think About It Tina') {
@@ -147,6 +151,34 @@ function TrainerPageContent() {
         loop: '/too-expensive-tim-loop.mp4',
         closing: '/too-expensive-tim-closing-door.mp4',
         opening: '/too-expensive-tim-opening-door.mp4'
+      }
+    }
+    if (agentName === 'Skeptical Sam') {
+      return {
+        loop: '/skeptical-sam-loop.mp4',
+        closing: '/skeptical-sam-closing-door.mp4',
+        opening: '/skeptical-sam-opening-door.mp4'
+      }
+    }
+    if (agentName === 'Renter Randy') {
+      return {
+        loop: '/renter-randy-loop.mp4',
+        closing: '/renter-randy-closing-door.mp4',
+        opening: '/renter-randy-opening-door.mp4'
+      }
+    }
+    if (agentName === 'DIY Dave') {
+      return {
+        loop: '/diy-dave-loop.mp4',
+        closing: '/diy-dave-closing-door.mp4',
+        opening: '/diy-dave-opening-door.mp4'
+      }
+    }
+    if (agentName === 'Busy Beth') {
+      return {
+        loop: '/busy-beth-opening-door.mp4',
+        closing: '/busy-beth-opening-door.mp4',
+        opening: '/busy-beth-opening-door.mp4'
       }
     }
     return null
