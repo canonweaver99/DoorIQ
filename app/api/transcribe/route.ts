@@ -175,11 +175,19 @@ async function formatTranscriptWithSpeakers(transcription: any) {
   
   // If we have segments with timestamps, use those instead
   if (transcription.segments && Array.isArray(transcription.segments) && transcription.segments.length > 0) {
-    return transcription.segments.map((segment: any, index: number) => ({
-      speaker: index % 2 === 0 ? 'rep' : 'customer',
-      text: segment.text || '',
-      timestamp: new Date(segment.start * 1000).toISOString()
-    }))
+    return transcription.segments.map((segment: any, index: number) => {
+      // Convert seconds to MM:SS format for timestamp
+      const totalSeconds = Math.floor(segment.start || 0)
+      const minutes = Math.floor(totalSeconds / 60)
+      const seconds = totalSeconds % 60
+      const timestamp = `${minutes}:${seconds.toString().padStart(2, '0')}`
+      
+      return {
+        speaker: index % 2 === 0 ? 'rep' : 'customer',
+        text: segment.text || '',
+        timestamp: new Date(segment.start * 1000).toISOString() // Keep ISO for internal use
+      }
+    })
   }
   
   // Split into sentences for basic formatting
@@ -196,11 +204,19 @@ async function formatTranscriptWithSpeakers(transcription: any) {
   
   // For now, create a simple alternating pattern
   // In production, you'd want to use speaker diarization or GPT-4 to identify speakers
-  const formatted = sentences.map((sentence: string, index: number) => ({
-    speaker: index % 2 === 0 ? 'rep' : 'customer',
-    text: sentence.trim(),
-    timestamp: new Date().toISOString() // Placeholder timestamp
-  }))
+  // Estimate timestamps based on sentence position (rough estimate: 3 seconds per sentence)
+  const formatted = sentences.map((sentence: string, index: number) => {
+    const estimatedSeconds = index * 3
+    const minutes = Math.floor(estimatedSeconds / 60)
+    const seconds = estimatedSeconds % 60
+    const timestamp = `${minutes}:${seconds.toString().padStart(2, '0')}`
+    
+    return {
+      speaker: index % 2 === 0 ? 'rep' : 'customer',
+      text: sentence.trim(),
+      timestamp: new Date(Date.now() + estimatedSeconds * 1000).toISOString() // ISO timestamp for internal use
+    }
+  })
 
   // Ensure we always return at least one entry (even if empty)
   if (formatted.length === 0) {

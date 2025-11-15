@@ -18,7 +18,7 @@ const TIPS = [
 export default function LoadingPage() {
   const params = useParams()
   const router = useRouter()
-  const [useStreaming, setUseStreaming] = useState(false) // Disable streaming UI - use old loading screen
+  const [useStreaming, setUseStreaming] = useState(true) // Enable streaming grading
   const [currentTip, setCurrentTip] = useState(0)
   const [status, setStatus] = useState('Saving your session...')
   const [gradingStatus, setGradingStatus] = useState<'idle' | 'in-progress' | 'completed' | 'error'>('idle')

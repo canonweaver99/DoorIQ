@@ -2564,14 +2564,78 @@ function TeamTabContent() {
       ? teamMembers[0].full_name || teamMembers[0].email?.split('@')[0] || 'N/A'
       : 'N/A'
     
-    // Calculate team growth (placeholder - could calculate from previous period)
-    const teamGrowth = 0 // TODO: Calculate from previous period if needed
+    // Calculate team growth - compare current period vs previous period
+    const now = new Date()
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    
+    // Get current period sessions
+    const { data: currentPeriodSessions } = await supabase
+      .from('live_sessions')
+      .select('overall_score, user_id')
+      .in('user_id', teamMembers.map((m: any) => m.id))
+      .gte('created_at', currentMonthStart.toISOString())
+      .not('overall_score', 'is', null)
+    
+    // Get previous period sessions
+    const { data: previousPeriodSessions } = await supabase
+      .from('live_sessions')
+      .select('overall_score, user_id')
+      .in('user_id', teamMembers.map((m: any) => m.id))
+      .gte('created_at', previousMonthStart.toISOString())
+      .lt('created_at', currentMonthStart.toISOString())
+      .not('overall_score', 'is', null)
+    
+    const currentAvg = currentPeriodSessions && currentPeriodSessions.length > 0
+      ? currentPeriodSessions.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / currentPeriodSessions.length
+      : 0
+    
+    const previousAvg = previousPeriodSessions && previousPeriodSessions.length > 0
+      ? previousPeriodSessions.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / previousPeriodSessions.length
+      : 0
+    
+    const teamGrowth = previousAvg > 0 
+      ? Math.round(((currentAvg - previousAvg) / previousAvg) * 100)
+      : currentAvg > 0 ? 100 : 0
     
     setTeamStats({
       teamSize,
       avgTeamScore,
       topPerformer,
       teamGrowth
+    })
+    
+    // Build leaderboard with change calculations (reuse date variables from above)
+    // Note: now, currentMonthStart, previousMonthStart already defined above
+    
+    // Get current period earnings for all members
+    const { data: currentPeriodEarnings } = await supabase
+      .from('live_sessions')
+      .select('user_id, virtual_earnings')
+      .in('user_id', teamMembers.map((m: any) => m.id))
+      .gte('created_at', currentMonthStart.toISOString())
+      .not('virtual_earnings', 'is', null)
+    
+    // Get previous period earnings
+    const { data: previousPeriodEarnings } = await supabase
+      .from('live_sessions')
+      .select('user_id, virtual_earnings')
+      .in('user_id', teamMembers.map((m: any) => m.id))
+      .gte('created_at', previousMonthStart.toISOString())
+      .lt('created_at', currentMonthStart.toISOString())
+      .not('virtual_earnings', 'is', null)
+    
+    // Calculate earnings per member for each period
+    const currentEarningsMap = new Map<string, number>()
+    currentPeriodEarnings?.forEach((s: any) => {
+      const current = currentEarningsMap.get(s.user_id) || 0
+      currentEarningsMap.set(s.user_id, current + (s.virtual_earnings || 0))
+    })
+    
+    const previousEarningsMap = new Map<string, number>()
+    previousPeriodEarnings?.forEach((s: any) => {
+      const current = previousEarningsMap.get(s.user_id) || 0
+      previousEarningsMap.set(s.user_id, current + (s.virtual_earnings || 0))
     })
     
     // Build leaderboard
@@ -2581,12 +2645,25 @@ function TeamTabContent() {
       const lastName = member.full_name?.split(' ').slice(1).join(' ') || ''
       const displayName = isYou ? `${firstName} ${lastName} (You)` : member.full_name || 'Team Member'
       
+      // Calculate change from previous period
+      const currentEarnings = currentEarningsMap.get(member.id) || 0
+      const previousEarnings = previousEarningsMap.get(member.id) || 0
+      const change = previousEarnings > 0
+        ? Math.round(((currentEarnings - previousEarnings) / previousEarnings) * 100)
+        : currentEarnings > 0 ? 100 : 0
+      
+      const changeDisplay = change > 0 
+        ? `+${change}%` 
+        : change < 0 
+        ? `${change}%` 
+        : '+0%'
+      
       return {
         rank: index + 1,
         name: displayName,
         score: member.virtual_earnings || 0,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name || member.email || 'User')}&background=random`,
-        change: '+0', // TODO: Calculate change from previous period
+        change: changeDisplay,
         badge: index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : undefined,
         isYou
       }

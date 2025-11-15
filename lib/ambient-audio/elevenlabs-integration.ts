@@ -180,12 +180,10 @@ export class ElevenLabsWebSocketIntegration implements ElevenLabsIntegration {
   async connect(): Promise<void> {
     if (this.connected) return;
 
-    // This would need the WebSocket URL from your existing API
-    // Implementation would be similar to your archived WebSocket code
-    console.log('🌐 WebSocket integration would be implemented here');
-    
-    // For now, we'll focus on the WebRTC approach
-    throw new Error('WebSocket integration not yet implemented - use WebRTC approach');
+    // WebSocket integration is not implemented - use WebRTC approach instead
+    // This class exists for type compatibility but should not be instantiated
+    console.warn('⚠️ ElevenLabsWebSocketIntegration: WebSocket approach not implemented. Use ElevenLabsWebRTCAudioHook instead.');
+    throw new Error('WebSocket integration not implemented - use WebRTC approach (ElevenLabsWebRTCAudioHook)');
   }
 
   disconnect(): void {
