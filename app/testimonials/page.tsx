@@ -56,7 +56,7 @@ const extendedTestimonials = [
   {
     ...testimonialsData[9],
     stars: 5,
-    fullText: "Really impressed. It's like talking to actual people. The software makes practicing feel real."
+    fullText: "The UI looks really good. Clean and easy to use. Really well designed interface."
   },
 ]
 

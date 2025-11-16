@@ -8,9 +8,9 @@ import { SignUpComponent, Testimonial } from '@/components/ui/sign-up'
 const testimonials: Testimonial[] = [
   {
     avatarSrc: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    name: 'Marcus Johnson',
-    handle: '@marcustops',
-    text: 'DoorIQ helped me increase my close rate by 40% in just 2 weeks. The AI training is incredible!',
+    name: 'John Gehring',
+    handle: 'Sales Rep (Ecoshield) Cleveland OH',
+    text: 'Definitely impressed and will be using this for my team',
   },
   {
     avatarSrc: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',

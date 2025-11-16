@@ -17,7 +17,7 @@ export const testimonialsData: Testimonials = [
     text: "The AI agents sound so real. I love using this software.",
     image: "",
     name: "Cooper Jones",
-    role: "Provo, UT",
+    role: "Sales Rep (HAWX) Gilbert AZ",
   },
   {
     text: "This is amazing. Sometimes I forget I'm even practicing.",
@@ -29,7 +29,7 @@ export const testimonialsData: Testimonials = [
     text: "The AI sounds just like real people. Really impressed.",
     image: "",
     name: "Camden Wiser",
-    role: "Austin, TX",
+    role: "Sales Rep (HAWX) Provo UT",
   },
   {
     text: "Mind blown by how real these agents sound. Love it.",
@@ -47,7 +47,7 @@ export const testimonialsData: Testimonials = [
     text: "The agents sound so real it's crazy. Really enjoying this.",
     image: "",
     name: "Lincoln Weaver",
-    role: "Round Rock, TX",
+    role: "LaGrange KY",
   },
   {
     text: "DoorIQ is awesome. The AI responds just like real people.",
@@ -68,10 +68,10 @@ export const testimonialsData: Testimonials = [
     role: "Cedar Park, TX",
   },
   {
-    text: "Really impressed. It's like talking to actual people.",
+    text: "The UI looks really good. Clean and easy to use.",
     image: "",
     name: "Bennett Black",
-    role: "Tempe, AZ",
+    role: "Software dev Austin TX",
   },
 ];
 
