@@ -11,42 +11,52 @@ const extendedTestimonials = [
   {
     ...testimonialsData[0],
     stars: 5,
-    fullText: "Game changer for new reps. Started using DoorIQ three weeks ago and already seeing results in the field. The AI homeowners are scary realistic - especially the 'busy parent' persona that keeps trying to end the conversation. Way better than roleplay with my manager because I can practice at midnight if I want. Already recommended to my whole team."
+    fullText: "Love using DoorIQ! The AI agents sound so real, it's like talking to actual homeowners. Really impressed by how natural the conversations feel. The software is easy to use and I find myself practicing daily because it's so enjoyable."
   },
   {
     ...testimonialsData[1],
     stars: 5,
-    fullText: "Finally, practice that doesn't waste real leads. I manage a team of 12 solar sales reps. We were burning through leads letting new guys practice on real doors. DoorIQ solved this completely. New reps get 50+ practice conversations before they touch a real lead. Our close rate went from 8% to 14% in two months. The ROI is insane."
+    fullText: "This software is amazing. The AI agents are incredibly realistic - sometimes I forget I'm practicing. Really enjoying the platform! The conversations flow so naturally and the agents respond just like real people would."
   },
   {
     ...testimonialsData[2],
-    stars: 4,
-    fullText: "Great concept, needs mobile app. Love the platform and the AI is genuinely impressive. Knocked off one star because I really need a mobile app - I'm always on the road between territories and want to practice during downtime. The weekly reports are super helpful for tracking improvement. Customer support responded to my questions in like 20 minutes which was cool."
+    stars: 5,
+    fullText: "So impressed by how real the AI sounds. The agents respond just like real people would. Really enjoying DoorIQ! It's become my favorite way to practice because the interactions feel completely authentic."
   },
   {
     ...testimonialsData[3],
     stars: 5,
-    fullText: "Worth every penny. Been doing D2D for 8 years and wish this existed when I started. I use it to practice new product launches and test different approaches. The grading system is tough but fair. Pro tip: the 'Analytical Andy' persona is perfect for practicing with detail-oriented customers. Closed 3 extra deals this week using techniques I refined in DoorIQ."
+    fullText: "The AI agents are mind-blowing. They sound exactly like real homeowners. Love using this software - it's become part of my daily routine. I'm constantly impressed by how realistic every conversation feels."
   },
   {
     ...testimonialsData[4],
     stars: 5,
-    fullText: "My confidence is through the roof. I'm naturally introverted and door knocking was terrifying. After 100+ sessions on DoorIQ, I actually look forward to real doors now. The session reminders keep me consistent. Love that I can review my conversation transcripts and see exactly where I lose people. My manager asked what changed because my numbers are way up."
+    fullText: "Can't get over how realistic the AI agents are. The conversations feel completely natural. Really enjoying DoorIQ! The software makes practicing fun because the agents sound so real."
   },
   {
     ...testimonialsData[5],
-    stars: 4,
-    fullText: "Solid platform, occasional tech issues. The training is legit and definitely helps with objection handling. Sometimes the AI takes a second to respond which throws off the flow, but support said they're working on it. The homeowner personalities are diverse and realistic. I like the instant feedback after each session. Would love to see industry-specific scenarios for pest control."
+    stars: 5,
+    fullText: "The software is fantastic. The AI agents sound so real it's almost scary. Really impressed and enjoying every session. DoorIQ has made practicing something I actually look forward to."
   },
   {
     ...testimonialsData[6],
     stars: 5,
-    fullText: "Best investment in my sales career. Switched from roofing to solar sales and DoorIQ helped me adapt my pitch fast. The 'Recent Storm Victim' persona helped me understand how to approach storm damage conversations with empathy. Went from zero solar knowledge to top 5 in my company within 6 weeks. The analytics dashboard shows exactly what I need to work on."
+    fullText: "DoorIQ is incredible. The AI agents are so realistic - they respond just like real people. Really enjoying using this platform! The natural flow of conversations keeps me coming back for more practice."
   },
   {
     ...testimonialsData[7],
     stars: 5,
-    fullText: "Our retention is up 40%. I run a mid-size pest control company. New rep turnover was killing us - kids would quit after two bad days. Now they train on DoorIQ first, build confidence, then hit real doors. They stick around longer because they're actually prepared. Plus the platform tracks everything so I can see who's putting in the work."
+    fullText: "Love how real the AI agents sound. The conversations feel completely authentic. Really impressed and enjoying DoorIQ! The software has exceeded all my expectations with how realistic it is."
+  },
+  {
+    ...testimonialsData[8],
+    stars: 5,
+    fullText: "The AI agents are unbelievably realistic. They sound exactly like real homeowners. Really enjoying this software! Every conversation feels genuine and I'm amazed by how natural the agents sound."
+  },
+  {
+    ...testimonialsData[9],
+    stars: 5,
+    fullText: "So impressed by DoorIQ. The AI agents sound incredibly real - it's like talking to actual people. Really enjoying it! The software has made practicing feel like real conversations."
   },
 ]
 
