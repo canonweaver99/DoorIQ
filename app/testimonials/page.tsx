@@ -11,52 +11,52 @@ const extendedTestimonials = [
   {
     ...testimonialsData[0],
     stars: 5,
-    fullText: "Love using DoorIQ! The AI agents sound so real, it's like talking to actual homeowners. Really impressed by how natural the conversations feel. The software is easy to use and I find myself practicing daily because it's so enjoyable."
+    fullText: "The AI agents sound so real. I love using this software. It's become part of my daily routine."
   },
   {
     ...testimonialsData[1],
     stars: 5,
-    fullText: "This software is amazing. The AI agents are incredibly realistic - sometimes I forget I'm practicing. Really enjoying the platform! The conversations flow so naturally and the agents respond just like real people would."
+    fullText: "This is amazing. Sometimes I forget I'm even practicing. The conversations flow so naturally."
   },
   {
     ...testimonialsData[2],
     stars: 5,
-    fullText: "So impressed by how real the AI sounds. The agents respond just like real people would. Really enjoying DoorIQ! It's become my favorite way to practice because the interactions feel completely authentic."
+    fullText: "The AI sounds just like real people. Really impressed. It's become my favorite way to practice."
   },
   {
     ...testimonialsData[3],
     stars: 5,
-    fullText: "The AI agents are mind-blowing. They sound exactly like real homeowners. Love using this software - it's become part of my daily routine. I'm constantly impressed by how realistic every conversation feels."
+    fullText: "Mind blown by how real these agents sound. Love it. Every conversation feels completely authentic."
   },
   {
     ...testimonialsData[4],
     stars: 5,
-    fullText: "Can't get over how realistic the AI agents are. The conversations feel completely natural. Really enjoying DoorIQ! The software makes practicing fun because the agents sound so real."
+    fullText: "Can't believe how realistic this is. Conversations feel natural. Makes practicing actually fun."
   },
   {
     ...testimonialsData[5],
     stars: 5,
-    fullText: "The software is fantastic. The AI agents sound so real it's almost scary. Really impressed and enjoying every session. DoorIQ has made practicing something I actually look forward to."
+    fullText: "The agents sound so real it's crazy. Really enjoying this. I look forward to every session."
   },
   {
     ...testimonialsData[6],
     stars: 5,
-    fullText: "DoorIQ is incredible. The AI agents are so realistic - they respond just like real people. Really enjoying using this platform! The natural flow of conversations keeps me coming back for more practice."
+    fullText: "DoorIQ is awesome. The AI responds just like real people. Keeps me coming back for more."
   },
   {
     ...testimonialsData[7],
     stars: 5,
-    fullText: "Love how real the AI agents sound. The conversations feel completely authentic. Really impressed and enjoying DoorIQ! The software has exceeded all my expectations with how realistic it is."
+    fullText: "Love how real the conversations feel. This is legit. Exceeded all my expectations honestly."
   },
   {
     ...testimonialsData[8],
     stars: 5,
-    fullText: "The AI agents are unbelievably realistic. They sound exactly like real homeowners. Really enjoying this software! Every conversation feels genuine and I'm amazed by how natural the agents sound."
+    fullText: "The agents sound exactly like real homeowners. So good. Every conversation feels genuine."
   },
   {
     ...testimonialsData[9],
     stars: 5,
-    fullText: "So impressed by DoorIQ. The AI agents sound incredibly real - it's like talking to actual people. Really enjoying it! The software has made practicing feel like real conversations."
+    fullText: "Really impressed. It's like talking to actual people. The software makes practicing feel real."
   },
 ]
 
