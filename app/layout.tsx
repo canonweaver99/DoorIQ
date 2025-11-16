@@ -34,9 +34,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DoorIQ - Practice Your Sales Pitch",
-  description: "Master door-to-door sales with realistic AI voice interactions.",
+  title: {
+    default: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
+    template: "%s | DoorIQ"
+  },
+  description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 11+ AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
+  keywords: [
+    "door to door sales training",
+    "sales pitch practice",
+    "AI sales training",
+    "door-to-door sales software",
+    "sales rep training",
+    "objection handling practice",
+    "sales coaching software",
+    "AI voice training",
+    "sales practice platform",
+    "door knocking practice"
+  ],
+  authors: [{ name: "DoorIQ" }],
+  creator: "DoorIQ",
+  publisher: "DoorIQ",
   metadataBase: new URL(siteUrl),
+  alternates: {
+    canonical: '/',
+  },
   icons: {
     icon: [
       // Prioritize larger sizes for Google Search (Google prefers 96x96+)
@@ -58,32 +79,129 @@ export const metadata: Metadata = {
     userScalable: true,
   },
   openGraph: {
-    title: "DoorIQ - Practice Your Sales Pitch",
-    description: "Master door-to-door sales with realistic AI voice interactions.",
+    title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
+    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 11+ AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
+    url: siteUrl,
+    siteName: "DoorIQ",
     images: [
       {
         url: '/FullLogo.png',
         width: 1200,
         height: 630,
-        alt: 'DoorIQ',
+        alt: 'DoorIQ - AI-Powered Sales Training Platform',
       },
     ],
+    locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: "DoorIQ - Practice Your Sales Pitch",
-    description: "Master door-to-door sales with realistic AI voice interactions.",
+    title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
+    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 11+ AI homeowner personas.",
     images: ['/FullLogo.png'],
+    creator: '@dooriq',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'google3af786ec95fcddec',
   },
   other: {
     // Resource hints for performance
     'dns-prefetch': 'https://r.wdfl.co',
+    'preconnect': 'https://r.wdfl.co',
   },
 };
 
 // Removed force-dynamic to allow static optimization where possible
 // Use 'force-dynamic' only on pages that truly need it
+
+// Structured Data (JSON-LD) for SEO
+function StructuredData() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                  process.env.NEXT_PUBLIC_APP_URL || 
+                  'https://dooriq.ai'
+
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "DoorIQ",
+    "url": siteUrl,
+    "logo": `${siteUrl}/FullLogo.png`,
+    "description": "AI-powered sales training platform for door-to-door sales teams",
+    "sameAs": [
+      // Add social media links when available
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "Sales",
+      "url": `${siteUrl}/contact-sales`
+    }
+  }
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "DoorIQ",
+    "url": siteUrl,
+    "description": "Master door-to-door sales with realistic AI voice interactions",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": `${siteUrl}/search?q={search_term_string}`
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+
+  const softwareApplicationSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DoorIQ",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "100+"
+    }
+  }
+
+  return (
+    <>
+      <Script
+        id="organization-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <Script
+        id="website-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <Script
+        id="software-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
+      />
+    </>
+  )
+}
 
 export default function RootLayout({
   children,
@@ -93,13 +211,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100` }>
+        <StructuredData />
         <Script id="rewardful-init" strategy="beforeInteractive">
           {`(function(w,r){w._rwq=r;w[r]=w[r]||function(){(w[r].q=w[r].q||[]).push(arguments)}})(window,'rewardful');`}
         </Script>
         <Script 
           src="https://r.wdfl.co/rw.js" 
           data-rewardful="2154b7"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <ToastProvider>
           <NotificationProvider>

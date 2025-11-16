@@ -4,20 +4,37 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { HeroSection } from '@/components/ui/hero-section-dark'
 import { InteractiveDemoSection } from '@/components/ui/interactive-demo-section'
-import { MeetHomeownersSection } from '@/components/ui/meet-homeowners-section'
 import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
-import { FaqSection } from '@/components/ui/faq-section'
-import { TestimonialsColumn, testimonialsData } from '@/components/ui/testimonials-columns-1'
-import { CalendarModal } from '@/components/ui/calendar-modal'
-import { DashboardHeroPreview } from '@/components/ui/dashboard-hero-preview'
-import { Target, Zap, TrendingUp, Users, CheckCircle2, BarChart3 } from 'lucide-react'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 import { vibrate } from '@/lib/utils'
+
+// Dynamic imports for below-the-fold components (code splitting)
+const FaqSection = dynamic(() => import('@/components/ui/faq-section').then(mod => ({ default: mod.FaqSection })), {
+  loading: () => <div className="min-h-[400px]" />,
+  ssr: true,
+})
+
+const DashboardHeroPreview = dynamic(() => import('@/components/ui/dashboard-hero-preview').then(mod => ({ default: mod.DashboardHeroPreview })), {
+  loading: () => <div className="min-h-[400px]" />,
+  ssr: true,
+})
+
+const CalendarModal = dynamic(() => import('@/components/ui/calendar-modal').then(mod => ({ default: mod.CalendarModal })), {
+  ssr: false, // Modal doesn't need SSR
+})
+
+const TestimonialsColumn = dynamic(() => import('@/components/ui/testimonials-columns-1').then(mod => ({ default: mod.TestimonialsColumn })), {
+  loading: () => <div className="min-h-[200px]" />,
+  ssr: true,
+})
+
+import { testimonialsData } from '@/components/ui/testimonials-columns-1'
 
 // Hook for intersection observer
 function useInView(threshold = 0.1) {
@@ -297,6 +314,8 @@ function ProblemSolutionSection() {
               alt="Frustrated sales rep reviewing notes before a door knock"
               fill
               className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              loading="lazy"
             />
           </motion.div>
         </motion.div>
@@ -348,6 +367,8 @@ function ProblemSolutionSection() {
               alt="Confident sales rep after training"
               fill
               className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              loading="lazy"
             />
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
@@ -587,6 +608,8 @@ function ResultsSection() {
               alt="Successful sales rep"
               fill
               className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              loading="lazy"
             />
           </motion.div>
         </div>
