@@ -8,21 +8,21 @@ import { SignUpComponent, Testimonial } from '@/components/ui/sign-up'
 const testimonials: Testimonial[] = [
   {
     avatarSrc: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    name: 'John Gehring',
-    handle: 'Sales Rep (Ecoshield) Cleveland OH',
-    text: 'Definitely impressed and will be using this for my team',
+    name: 'Cooper Jones',
+    handle: 'Sales Rep (HAWX) Gilbert AZ',
+    text: 'The AI agents sound so real. I love using this software.',
   },
   {
     avatarSrc: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    name: 'Sarah Chen',
-    handle: '@sarahsells',
-    text: 'Best sales training platform I\'ve used. The real-time feedback changed how I approach every door.',
+    name: 'Camden Wiser',
+    handle: 'Sales Rep (HAWX) Provo UT',
+    text: 'The AI sounds just like real people. Really impressed.',
   },
   {
     avatarSrc: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
-    name: 'David Martinez',
-    handle: '@davidclosing',
-    text: 'The leaderboard keeps me motivated. I went from struggling to top performer in my team!',
+    name: 'Bennett Black',
+    handle: 'Software dev Austin TX',
+    text: 'The UI looks really good. Clean and easy to use.',
   },
 ]
 
