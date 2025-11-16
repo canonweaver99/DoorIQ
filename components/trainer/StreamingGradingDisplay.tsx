@@ -104,7 +104,14 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                       [data.section]: data.data
                     }))
                     setCompletedSections(prev => new Set(prev).add(data.section))
-                    setStatus(`Analyzing: ${SECTION_LABELS[data.section] || data.section}`)
+                    // Convert underscore-separated strings to readable text
+                    const readableSection = SECTION_LABELS[data.section] || 
+                      data.section
+                        .replace(/_/g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ')
+                    setStatus(`Analyzing: ${readableSection}`)
                     break
 
                   case 'complete':
