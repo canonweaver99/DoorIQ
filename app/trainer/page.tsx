@@ -144,6 +144,7 @@ function TrainerPageContent() {
       return {
         loop: '/think-about-it-tina-loop.mp4',
         closing: '/think-about-it-tina-closing-door.mp4'
+        // Opening video not found in public directory - using loop as fallback
       }
     }
     if (agentName === 'Too Expensive Tim') {
@@ -176,8 +177,8 @@ function TrainerPageContent() {
     }
     if (agentName === 'Busy Beth') {
       return {
-        loop: '/busy-beth-opening-door.mp4',
-        closing: '/busy-beth-opening-door.mp4',
+        loop: '/busy-beth-opening-door.mp4', // TODO: Replace with busy-beth-loop.mp4 when available
+        closing: '/busy-beth-opening-door.mp4', // TODO: Replace with busy-beth-closing-door.mp4 when available
         opening: '/busy-beth-opening-door.mp4'
       }
     }

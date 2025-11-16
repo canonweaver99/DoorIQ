@@ -18,63 +18,63 @@
    - ✅ Closing: `too-expensive-tim-closing-door.mp4`
    - ✅ Opening: `too-expensive-tim-opening-door.mp4`
 
-### ⚠️ Missing Opening Video
-4. **Tag Team Tanya & Tom**
-   - ✅ Loop: `tanya-tom-loop.mp4`
-   - ✅ Closing: `tanya-tom-closing-door.mp4`
-   - ❌ Opening: **NEEDED**
-
-5. **Veteran Victor**
-   - ✅ Loop: `veteran-victor-loop.mp4`
-   - ✅ Closing: `veteran-victor-closing-door.mp4`
-   - ❌ Opening: **NEEDED**
-
-6. **No Problem Nancy**
-   - ✅ Loop: `no-problem-nancy-loop.mp4`
-   - ✅ Closing: `no-problem-nancy-closing-door.mp4`
-   - ❌ Opening: **NEEDED**
-
-7. **Already Got It Alan**
+4. **Already Got It Alan**
    - ✅ Loop: `already-got-it-alan-loop.mp4`
    - ✅ Closing: `already-got-it-alan-closing-door.mp4`
-   - ❌ Opening: **NEEDED**
+   - ✅ Opening: `already-got-it-alan-opening-door.mp4`
 
-8. **Think About It Tina**
-   - ✅ Loop: `think-about-it-tina-loop.mp4`
-   - ✅ Closing: `think-about-it-tina-closing-door.mp4`
-   - ❌ Opening: **NEEDED**
+5. **DIY Dave**
+   - ✅ Loop: `diy-dave-loop.mp4`
+   - ✅ Closing: `diy-dave-closing-door.mp4`
+   - ✅ Opening: `diy-dave-opening-door.mp4`
 
-### ⚠️ Missing Closing Video (Using Loop Temporarily)
-9. **Skeptical Sam**
-   - ✅ Loop: `skeptical-sam-loop.mp4`
-   - ⚠️ Closing: Using loop temporarily - **NEED CLOSING VIDEO**
+6. **Tag Team Tanya & Tom**
+   - ✅ Loop: `tanya-tom-loop.mp4`
+   - ✅ Closing: `tanya-tom-closing-door.mp4`
+   - ✅ Opening: `tanya-tom-opening-door.mp4`
 
-### ⚠️ Missing Loop Video (Using Opening Temporarily)
-10. **Renter Randy**
+7. **Veteran Victor**
+   - ✅ Loop: `veteran-victor-loop.mp4`
+   - ✅ Closing: `veteran-victor-closing-door.mp4`
+   - ✅ Opening: `veteran-victor-opening-door.mp4`
+
+8. **No Problem Nancy**
+   - ✅ Loop: `no-problem-nancy-loop.mp4`
+   - ✅ Closing: `no-problem-nancy-closing-door.mp4`
+   - ✅ Opening: `no-problem-nancy-opening-door.mp4`
+
+9. **Renter Randy**
+   - ✅ Loop: `renter-randy-loop.mp4`
+   - ✅ Closing: `renter-randy-closing-door.mp4`
+   - ✅ Opening: `renter-randy-opening-door.mp4`
+
+10. **Skeptical Sam**
+    - ✅ Loop: `skeptical-sam-loop.mp4`
+    - ✅ Closing: `skeptical-sam-closing-door.mp4`
+    - ✅ Opening: `skeptical-sam-opening-door.mp4`
+
+### ⚠️ Missing Opening Video
+11. **Think About It Tina**
+    - ✅ Loop: `think-about-it-tina-loop.mp4`
+    - ✅ Closing: `think-about-it-tina-closing-door.mp4`
+    - ❌ Opening: **NEEDED**
+
+### ⚠️ Missing Loop + Closing Videos
+12. **Busy Beth**
     - ⚠️ Loop: Using opening temporarily - **NEED LOOP VIDEO**
-    - ✅ Closing: `renter-randy-closing-door.mp4`
-    - ✅ Opening: `renter-randy-opening-door.mp4`
+    - ⚠️ Closing: Using opening temporarily - **NEED CLOSING VIDEO**
+    - ✅ Opening: `busy-beth-opening-door.mp4`
 
 ---
 
 ## Agents WITHOUT Videos (Not Configured)
 
-11. **Not Interested Nick**
+13. **Not Interested Nick**
     - ❌ Loop: **NEEDED**
     - ❌ Closing: **NEEDED**
     - ❌ Opening: **NEEDED**
 
-12. **DIY Dave**
-    - ❌ Loop: **NEEDED**
-    - ❌ Closing: **NEEDED**
-    - ❌ Opening: **NEEDED**
-
-13. **Spouse Check Susan**
-    - ❌ Loop: **NEEDED**
-    - ❌ Closing: **NEEDED**
-    - ❌ Opening: **NEEDED**
-
-14. **Busy Beth**
+14. **Spouse Check Susan**
     - ❌ Loop: **NEEDED**
     - ❌ Closing: **NEEDED**
     - ❌ Opening: **NEEDED**
@@ -85,15 +85,12 @@
 
 **Total Agents:** 14
 
-**Fully Complete:** 3 agents (Austin, Jerry, Tim)
-**Missing Opening Only:** 5 agents (Tanya & Tom, Victor, Nancy, Alan, Tina)
-**Missing Closing:** 1 agent (Sam)
-**Missing Loop:** 1 agent (Randy)
-**No Videos:** 4 agents (Nick, Dave, Susan, Beth)
+**Fully Complete:** 10 agents (Austin, Jerry, Tim, Alan, Dave, Tanya & Tom, Victor, Nancy, Randy, Sam)
+**Missing Opening Only:** 1 agent (Tina)
+**Missing Loop + Closing:** 1 agent (Beth)
+**No Videos:** 2 agents (Nick, Susan)
 
 **Priority Actions:**
-1. Get closing video for Skeptical Sam
-2. Get loop video for Renter Randy
-3. Get opening videos for 5 agents (Tanya & Tom, Victor, Nancy, Alan, Tina)
-4. Get all videos for 4 agents (Nick, Dave, Susan, Beth)
-
+1. Get opening video for Think About It Tina
+2. Get loop and closing videos for Busy Beth
+3. Get all videos for 2 agents (Nick, Susan)
