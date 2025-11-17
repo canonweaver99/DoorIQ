@@ -151,8 +151,13 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
   const getSectionProgress = () => {
     const total = Object.keys(SECTION_LABELS).length
-    const completed = completedSections.size
-    return Math.round((completed / total) * 100)
+    // Only count sections that are in SECTION_LABELS
+    const completed = Array.from(completedSections).filter(section => 
+      SECTION_LABELS.hasOwnProperty(section)
+    ).length
+    const percentage = Math.round((completed / total) * 100)
+    // Cap at 100% to prevent showing more than 100%
+    return Math.min(percentage, 100)
   }
 
   return (

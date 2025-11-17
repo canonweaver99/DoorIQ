@@ -439,17 +439,6 @@ export default function ScoresViewV2({
         </div>
       </section>
 
-      {/* AI Coaching Chat */}
-      <CoachingChat
-        sessionId={sessionId}
-        overallScore={overallScore}
-        scores={scores}
-        feedback={feedback}
-        fullTranscript={normalizedTranscript}
-        saleClosed={saleClosed}
-        virtualEarnings={virtualEarnings}
-      />
-
       {/* Patterns - "What patterns should I recognize?" */}
       <section>
         <div className="flex items-center gap-3 mb-6">
@@ -531,6 +520,17 @@ export default function ScoresViewV2({
           </div>
         )}
       </section>
+
+      {/* AI Coaching Chat - Moved to bottom */}
+      <CoachingChat
+        sessionId={sessionId}
+        overallScore={overallScore}
+        scores={scores}
+        feedback={feedback}
+        fullTranscript={normalizedTranscript}
+        saleClosed={saleClosed}
+        virtualEarnings={virtualEarnings}
+      />
 
     </div>
   )
