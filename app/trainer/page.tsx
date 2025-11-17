@@ -26,6 +26,20 @@ interface Agent {
   is_active: boolean
 }
 
+// Helper function to play audio sounds
+function playSound(src: string, volume = 0.9) {
+  try {
+    const audio = new Audio(src)
+    audio.volume = volume
+    audio.play().catch(() => {
+      // Silently fail if autoplay is blocked
+    })
+    return audio
+  } catch {
+    return null
+  }
+}
+
 const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) => {
   if (!agent) return null
 
@@ -406,6 +420,9 @@ function TrainerPageContent() {
       }
 
       const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id)
+
+      // Play knock sound when starting session
+      playSound('/sounds/knock.mp3', 0.95)
 
       // Play door opening video on initial knock
       setShowDoorOpeningVideo(true)

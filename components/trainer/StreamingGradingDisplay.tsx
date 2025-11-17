@@ -161,8 +161,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         <div className="text-center mb-8">
           {/* Main Status */}
           <motion.div
-            animate={{ rotate: isComplete ? 0 : 360 }}
-            transition={{ duration: 2, repeat: isComplete ? 0 : Infinity, ease: 'linear' }}
+            animate={isComplete ? {} : { rotate: 360 }}
+            transition={isComplete ? {} : { duration: 2, repeat: Infinity, ease: 'linear' }}
             className="inline-block mb-6"
           >
             {isComplete ? (
