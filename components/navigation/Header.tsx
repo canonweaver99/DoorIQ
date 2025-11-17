@@ -99,6 +99,7 @@ function HeaderContent() {
   const [isAuthPage, setIsAuthPage] = useState(false)
   const [isScrolledDown, setIsScrolledDown] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [avatarError, setAvatarError] = useState(false)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -199,6 +200,7 @@ function HeaderContent() {
         })
         setUser(userData)
         setAuthMeta(null)
+        setAvatarError(false) // Reset avatar error when user data changes
         
         // Fetch user credits
         const { data: limitData } = await supabase
@@ -546,78 +548,64 @@ function HeaderContent() {
 
             <div className="flex items-center gap-2 flex-shrink-0">
               {isSignedIn && (
-                <>
-                  <div className="pl-2 border-l border-white/10 relative">
-                    <p className="text-xs text-slate-300 leading-4">{user?.full_name ?? profileName}</p>
-                    <p 
-                      ref={creditsTooltipRef}
-                      className="text-[11px] text-purple-400 font-semibold relative"
-                    >
-                      {userCredits} credits
-                    </p>
-                    
-                    {/* Credits Tooltip for First-Time Users */}
-                    <AnimatePresence>
-                      {showCreditsTooltip && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8, y: -10 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.8, y: -10 }}
-                          transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-                          className="absolute left-0 top-full mt-2 z-50 w-64 p-4 bg-gradient-to-br from-purple-600/95 to-pink-600/95 backdrop-blur-sm rounded-lg border border-purple-400/30 shadow-[0px_0px_20px_rgba(168,85,247,0.4)]"
-                          style={{
-                            transformOrigin: 'top left',
-                          }}
-                        >
-                          {/* Arrow pointer */}
-                          <div className="absolute -top-2 left-4 w-4 h-4 bg-gradient-to-br from-purple-600 to-pink-600 border-l border-t border-purple-400/30 rotate-45"></div>
-                          
-                          <div className="relative">
-                            <button
-                              onClick={() => {
-                                setShowCreditsTooltip(false)
-                                if (typeof window !== 'undefined') {
-                                  localStorage.setItem('credits-tooltip-dismissed', 'true')
-                                }
-                              }}
-                              className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 text-xs transition-colors"
-                              aria-label="Dismiss tooltip"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                            
-                            <h3 className="text-sm font-semibold text-white mb-2">
-                              Welcome! Here's how credits work:
-                            </h3>
-                            <p className="text-xs text-slate-200 leading-relaxed mb-2">
-                              You start with <span className="font-semibold text-purple-200">5 free credits</span> to practice your sales skills with AI homeowners.
-                            </p>
-                            <p className="text-xs text-slate-200 leading-relaxed">
-                              Each training session uses 1 credit. Credits reset monthly, or you can purchase more anytime!
-                            </p>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  {profileAvatar && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-purple-500/30">
-                      <img 
-                        src={profileAvatar} 
-                        alt={profileName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none'
+                <div className="pl-2 border-l border-white/10 relative">
+                  <p className="text-xs text-slate-300 leading-4">{user?.full_name ?? profileName}</p>
+                  <p 
+                    ref={creditsTooltipRef}
+                    className="text-[11px] text-purple-400 font-semibold relative"
+                  >
+                    {userCredits} credits
+                  </p>
+                  
+                  {/* Credits Tooltip for First-Time Users */}
+                  <AnimatePresence>
+                    {showCreditsTooltip && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                        transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+                        className="absolute left-0 top-full mt-2 z-50 w-64 p-4 bg-gradient-to-br from-purple-600/95 to-pink-600/95 backdrop-blur-sm rounded-lg border border-purple-400/30 shadow-[0px_0px_20px_rgba(168,85,247,0.4)]"
+                        style={{
+                          transformOrigin: 'top left',
                         }}
-                      />
-                    </div>
-                  )}
-                </>
+                      >
+                        {/* Arrow pointer */}
+                        <div className="absolute -top-2 left-4 w-4 h-4 bg-gradient-to-br from-purple-600 to-pink-600 border-l border-t border-purple-400/30 rotate-45"></div>
+                        
+                        <div className="relative">
+                          <button
+                            onClick={() => {
+                              setShowCreditsTooltip(false)
+                              if (typeof window !== 'undefined') {
+                                localStorage.setItem('credits-tooltip-dismissed', 'true')
+                              }
+                            }}
+                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 text-xs transition-colors"
+                            aria-label="Dismiss tooltip"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          
+                          <h3 className="text-sm font-semibold text-white mb-2">
+                            Welcome! Here's how credits work:
+                          </h3>
+                          <p className="text-xs text-slate-200 leading-relaxed mb-2">
+                            You start with <span className="font-semibold text-purple-200">5 free credits</span> to practice your sales skills with AI homeowners.
+                          </p>
+                          <p className="text-xs text-slate-200 leading-relaxed">
+                            Each training session uses 1 credit. Credits reset monthly, or you can purchase more anytime!
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
               <button
                 ref={sidebarButtonRef}
                 onClick={() => setIsSidebarOpen((prev) => !prev)}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 transition-all ${
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 transition-all overflow-hidden ${
                   isSidebarOpen
                     ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 shadow-[0px_0px_18px_rgba(168,85,247,0.35)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -626,7 +614,20 @@ function HeaderContent() {
                 aria-expanded={isSidebarOpen}
                 aria-label="Open account navigation"
               >
-                <HamburgerIcon open={isSidebarOpen} />
+                {isSignedIn && profileAvatar && !avatarError ? (
+                  <img 
+                    src={profileAvatar} 
+                    alt={profileName}
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : isSignedIn ? (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
+                    {profileInitial}
+                  </div>
+                ) : (
+                  <HamburgerIcon open={isSidebarOpen} />
+                )}
               </button>
             </div>
       </div>
