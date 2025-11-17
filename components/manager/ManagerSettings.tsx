@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Users, Bell, Shield, UserPlus, CheckCircle2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Users, Bell, Shield, UserPlus, CheckCircle2, X, Trash2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 
 interface TeamMember {
@@ -21,6 +21,9 @@ export default function ManagerSettings() {
   const [editingTeamName, setEditingTeamName] = useState(false)
   const [savingTeamName, setSavingTeamName] = useState(false)
   const [teamNameSaved, setTeamNameSaved] = useState(false)
+  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null)
+  const [removing, setRemoving] = useState(false)
+  const [removeError, setRemoveError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTeamData()
@@ -72,6 +75,34 @@ export default function ManagerSettings() {
       console.error('Error updating team name:', error)
     } finally {
       setSavingTeamName(false)
+    }
+  }
+
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return
+
+    setRemoving(true)
+    setRemoveError(null)
+
+    try {
+      const response = await fetch(`/api/team/members/${memberToRemove.id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Remove member from local state
+        setTeamMembers(prev => prev.filter(m => m.id !== memberToRemove.id))
+        setMemberToRemove(null)
+      } else {
+        setRemoveError(data.error || 'Failed to remove team member')
+      }
+    } catch (error: any) {
+      console.error('Error removing team member:', error)
+      setRemoveError(error.message || 'Failed to remove team member')
+    } finally {
+      setRemoving(false)
     }
   }
 
@@ -165,7 +196,7 @@ export default function ManagerSettings() {
             <>
               <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
                 {teamMembers.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
+                  <div key={member.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-colors group">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{member.full_name}</p>
                       <p className="text-xs text-slate-400 truncate">{member.email}</p>
@@ -175,6 +206,15 @@ export default function ManagerSettings() {
                       <span className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-xs font-medium text-purple-300 capitalize">
                         {member.role}
                       </span>
+                      {member.role === 'rep' && (
+                        <button
+                          onClick={() => setMemberToRemove(member)}
+                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          title="Remove from team"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -240,6 +280,75 @@ export default function ManagerSettings() {
         </motion.div>
 
       </div>
+
+      {/* Remove Member Confirmation Modal */}
+      <AnimatePresence>
+        {memberToRemove && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !removing && setMemberToRemove(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-red-500/10 rounded-xl border border-red-500/20">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Remove Team Member</h3>
+              </div>
+
+              <p className="text-slate-300 mb-6">
+                Are you sure you want to remove <span className="font-semibold text-white">{memberToRemove.full_name}</span> from your team? 
+                They will no longer have access to team features, but their account and session history will be preserved.
+              </p>
+
+              {removeError && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-sm text-red-400">{removeError}</p>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setMemberToRemove(null)
+                    setRemoveError(null)
+                  }}
+                  disabled={removing}
+                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRemoveMember}
+                  disabled={removing}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {removing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Removing...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Remove
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

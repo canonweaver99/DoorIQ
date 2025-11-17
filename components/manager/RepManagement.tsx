@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
-import { Search, Filter, ChevronDown, MoreVertical, Mail, Target, X, TrendingUp, TrendingDown, CheckSquare, UserCheck, MessageSquare, Eye, Download, ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react'
+import { Search, Filter, ChevronDown, MoreVertical, Mail, Target, X, TrendingUp, TrendingDown, CheckSquare, UserCheck, MessageSquare, Eye, Download, ArrowUpRight, ArrowDownRight, ChevronRight, Trash2, AlertTriangle } from 'lucide-react'
 import RepProfileModal from './RepProfileModal'
 
 interface Rep {
@@ -48,6 +48,9 @@ export default function RepManagement() {
   const [selectedRep, setSelectedRep] = useState<Rep | null>(null)
   const [actionMenuRepId, setActionMenuRepId] = useState<string | null>(null)
   const actionMenuRef = useRef<HTMLDivElement | null>(null)
+  const [repToRemove, setRepToRemove] = useState<Rep | null>(null)
+  const [removing, setRemoving] = useState(false)
+  const [removeError, setRemoveError] = useState<string | null>(null)
 
   // Load reps data
   useEffect(() => {
@@ -94,7 +97,7 @@ export default function RepManagement() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [actionMenuRepId])
 
-  const handleAction = (action: 'message' | 'profile', repId: string) => {
+  const handleAction = (action: 'message' | 'profile' | 'remove', repId: string) => {
     switch (action) {
       case 'message':
         // Navigate to messages tab for this rep
@@ -104,8 +107,43 @@ export default function RepManagement() {
         // Navigate to rep's individual dashboard
         window.location.href = `/manager/rep/${repId}`
         break
+      case 'remove':
+        const rep = reps.find(r => r.id === repId)
+        if (rep) {
+          setRepToRemove(rep)
+        }
+        break
     }
     setActionMenuRepId(null)
+  }
+
+  const handleRemoveRep = async () => {
+    if (!repToRemove) return
+
+    setRemoving(true)
+    setRemoveError(null)
+
+    try {
+      const response = await fetch(`/api/team/members/${repToRemove.id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Remove rep from local state and refresh
+        await loadReps()
+        await loadRepPerformance()
+        setRepToRemove(null)
+      } else {
+        setRemoveError(data.error || 'Failed to remove rep')
+      }
+    } catch (error: any) {
+      console.error('Error removing rep:', error)
+      setRemoveError(error.message || 'Failed to remove rep')
+    } finally {
+      setRemoving(false)
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -217,6 +255,7 @@ export default function RepManagement() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 className="p-5 bg-black/20 border border-white/10 rounded-xl hover:border-purple-500/30 transition-all group cursor-pointer"
+                onClick={() => window.location.href = `/manager/rep/${rep.id}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -403,8 +442,8 @@ export default function RepManagement() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
-              className="px-6 py-4 hover:bg-white/5 transition-colors cursor-pointer"
-              onClick={() => setSelectedRep(rep)}
+              className="px-6 py-4 hover:bg-white/5 transition-colors cursor-pointer group"
+              onClick={() => window.location.href = `/manager/rep/${rep.id}`}
             >
               <div className="grid grid-cols-12 gap-4 items-center">
                 {/* Checkbox */}
@@ -496,20 +535,29 @@ export default function RepManagement() {
                       >
                         {[
                           {
+                            key: 'profile' as const,
+                            label: 'View Dashboard',
+                            icon: <Eye className="w-4 h-4 text-green-300" />,
+                          },
+                          {
                             key: 'message' as const,
                             label: 'Send Message',
                             icon: <MessageSquare className="w-4 h-4 text-purple-300" />,
                           },
                           {
-                            key: 'profile' as const,
-                            label: 'View Dashboard',
-                            icon: <Eye className="w-4 h-4 text-green-300" />,
+                            key: 'remove' as const,
+                            label: 'Remove from Team',
+                            icon: <Trash2 className="w-4 h-4 text-red-300" />,
                           },
                         ].map((item) => (
                           <button
                             key={item.key}
                             onClick={() => handleAction(item.key, rep.id)}
-                            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                            className={`flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                              item.key === 'remove'
+                                ? 'text-red-300 hover:text-red-200 hover:bg-red-500/10'
+                                : 'text-white/80 hover:text-white hover:bg-white/10'
+                            }`}
                             role="menuitem"
                           >
                             {item.icon}
@@ -533,6 +581,75 @@ export default function RepManagement() {
             rep={selectedRep}
             onClose={() => setSelectedRep(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Remove Rep Confirmation Modal */}
+      <AnimatePresence>
+        {repToRemove && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !removing && setRepToRemove(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-red-500/10 rounded-xl border border-red-500/20">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Remove Sales Rep</h3>
+              </div>
+
+              <p className="text-slate-300 mb-6">
+                Are you sure you want to remove <span className="font-semibold text-white">{repToRemove.name}</span> from your team? 
+                They will no longer have access to team features, but their account and session history will be preserved.
+              </p>
+
+              {removeError && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-sm text-red-400">{removeError}</p>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setRepToRemove(null)
+                    setRemoveError(null)
+                  }}
+                  disabled={removing}
+                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRemoveRep}
+                  disabled={removing}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {removing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Removing...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Remove
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

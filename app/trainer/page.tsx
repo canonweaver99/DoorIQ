@@ -1145,7 +1145,7 @@ function TrainerPageContent() {
             <button
               onClick={() => endSession()}
               disabled={loading || !sessionActive}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 hover:bg-red-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-medium rounded-lg transition-all touch-target"
+              className="px-4 py-2.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm sm:text-sm font-medium rounded-lg transition-all min-h-[44px] touch-manipulation"
             >
               {loading ? 'Ending...' : 'End'}
             </button>
@@ -1156,10 +1156,7 @@ function TrainerPageContent() {
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           
           {/* Top Section: Split View - Agent Left, Webcam Right - Stack on mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20 flex-shrink-0" style={{ 
-            height: '50vh',
-            maxHeight: '50vh'
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20 flex-shrink-0 h-[40vh] md:h-[50vh] max-h-[40vh] md:max-h-[50vh]">
             
             {/* Left: Agent */}
             <div className="relative border-r-0 md:border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent overflow-hidden" style={{ 
@@ -1287,7 +1284,7 @@ function TrainerPageContent() {
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
                         <button
                           onClick={() => startSession()}
-                          className="px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 active:from-emerald-700 active:to-cyan-700 text-white font-semibold text-base sm:text-lg lg:text-xl rounded-xl sm:rounded-2xl transition-all active:scale-95 shadow-lg hover:shadow-emerald-500/50 touch-target z-20"
+                          className="px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 active:from-emerald-700 active:to-cyan-700 text-white font-semibold text-base sm:text-lg lg:text-xl rounded-xl sm:rounded-2xl transition-all active:scale-95 shadow-lg hover:shadow-emerald-500/50 min-h-[56px] touch-manipulation z-20"
                         >
                           <span className="sm:hidden">Knock</span>
                           <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
@@ -1314,14 +1311,14 @@ function TrainerPageContent() {
           </div>
 
           {/* Bottom Section: Live Transcript */}
-          <div className="flex flex-col relative flex-1 min-h-0 px-3 sm:px-6 py-2 sm:py-3 overflow-hidden z-0">
+          <div className="flex flex-col relative flex-1 min-h-0 px-3 sm:px-6 py-3 sm:py-4 overflow-hidden z-0">
             
             {/* Bottom fade gradient overlay */}
-            <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10" />
+            <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-10" />
             
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 sm:space-y-3 relative z-0">
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 sm:space-y-4 relative z-0 pb-2">
               {transcript.length === 0 ? (
-                <div className="text-center text-slate-500 py-8 sm:py-12 px-2">
+                <div className="text-center text-slate-500 py-8 sm:py-12 px-4">
                   {sessionActive ? (
                     <p className="text-sm sm:text-base">Waiting for conversation to begin...</p>
                   ) : (
@@ -1329,7 +1326,7 @@ function TrainerPageContent() {
                   )}
                 </div>
               ) : (
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-3 sm:space-y-4 pb-4">
                   {transcript.map((entry) => {
                     const isUser = entry.speaker === 'user'
                     return (
@@ -1338,13 +1335,13 @@ function TrainerPageContent() {
                         className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}
                       >
                         <div
-                          className={`max-w-[85%] sm:max-w-[75%] px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg sm:rounded-xl ${
+                          className={`max-w-[90%] sm:max-w-[75%] px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-xl ${
                             isUser
                               ? 'bg-indigo-600 text-white'
                               : 'bg-slate-700/80 text-slate-100'
                           }`}
                         >
-                          <div className="text-xs sm:text-sm font-semibold mb-1.5 opacity-70 uppercase tracking-wide">
+                          <div className="text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 opacity-70 uppercase tracking-wide">
                             {isUser ? 'You' : selectedAgent?.name || 'Agent'}
                           </div>
                           <div className="text-sm sm:text-base leading-relaxed break-words">{entry.text}</div>
