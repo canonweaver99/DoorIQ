@@ -742,7 +742,6 @@ function TrainerPageContent() {
   useEffect(() => {
     let silenceTimer: NodeJS.Timeout | null = null
     let lastActivityTime = Date.now()
-    let goodbyeCheckAttempts = 0 // Track goodbye confirmation attempts
     
     const handleEndSessionRequest = () => {
       if (sessionActive && sessionId) {
@@ -838,7 +837,7 @@ function TrainerPageContent() {
       await handleDoorClosingSequence(reason)
     }
     
-    // Track agent and user activity - increased timeout to prevent premature endings
+    // Track agent and user activity - silence timeout as fallback
     const handleAgentActivity = () => {
       lastActivityTime = Date.now()
       // Reset the silence timer when agent or user is active
@@ -849,12 +848,12 @@ function TrainerPageContent() {
       if (sessionActive && sessionId) {
         silenceTimer = setTimeout(() => {
           const timeSinceLastActivity = Date.now() - lastActivityTime
-          // Increased to 30 seconds - allows for natural conversation pauses
-          // Only trigger if we've had actual silence (not just processing time)
-          if (sessionActive && sessionId && timeSinceLastActivity >= 30000) {
+          // 30 seconds timeout - only trigger if we've had actual silence and minimum conversation
+          if (sessionActive && sessionId && timeSinceLastActivity >= 30000 && transcript.length > 3) {
             console.log('⏱️ No activity for 30 seconds, auto-ending session...')
             console.log('📊 END CALL TRIGGER: Silence timeout (30 seconds)')
-            handleAgentEndCall({ detail: { reason: 'Extended silence detected' } })
+            console.log('📊 Transcript length:', transcript.length, 'lines')
+            handleAgentEndCall({ detail: { reason: 'Extended silence detected (30 seconds)' } })
           }
         }, 30000) // 30 seconds timeout
       }
@@ -871,84 +870,13 @@ function TrainerPageContent() {
     const handleAgentResponse = (e: any) => {
       console.log('📨 Agent response received, resetting activity timer')
       handleAgentActivity()
-      
-      // Check the response text for goodbye phrases - but require confirmation
-      // Only trigger on clear ending phrases, not ambiguous ones
-      if (e?.detail && typeof e.detail === 'string') {
-        const text = e.detail.toLowerCase()
-        // Only very clear ending phrases - removed ambiguous ones
-        const clearEndingPhrases = [
-          'goodbye', 'bye bye', 'see you later', 'talk to you later',
-          'closing the door', 'close the door now', 'thanks for stopping by',
-          "we're done here", "that's all for today", 'have a good day', 'have a nice day'
-        ]
-        // Check if the message ENDS with a clear goodbye phrase (not just contains it)
-        const endsWithGoodbye = clearEndingPhrases.some(phrase => {
-          return text.endsWith(phrase) || text.trim().endsWith(phrase + '.') || text.trim().endsWith(phrase + '!')
-        })
-        
-        if (endsWithGoodbye) {
-          console.log('🔚 Agent response ends with clear goodbye phrase, ending in 3 seconds...')
-          console.log('📊 END CALL TRIGGER: Goodbye phrase detected in agent response')
-          setTimeout(() => {
-            if (sessionActive && sessionId) {
-              handleAgentEndCall({ detail: { reason: 'Agent clearly ended conversation' } })
-            }
-          }, 3000) // Increased delay to ensure it's really ending
-        }
-      }
+      // Removed goodbye phrase detection - only ElevenLabs will trigger end calls
     }
     
-    // Listen for user activity and check for goodbye phrases
+    // Listen for user activity
     const handleUserActivity = (e: any) => {
       handleAgentActivity()
-      
-      // Check if user said goodbye - trigger door closing sequence
-      if (e?.detail && typeof e.detail === 'string' && sessionActive && sessionId) {
-        const text = e.detail.toLowerCase().trim()
-        
-        // User goodbye phrases - clear ending phrases
-        const userGoodbyePhrases = [
-          'goodbye', 'bye', 'bye bye', 'see you later', 'talk to you later',
-          'thanks', 'thank you', 'i have to go', 'i need to go', 'i gotta go',
-          'that\'s all', 'that\'s all for now', 'i\'m done', 'we\'re done',
-          'have a good day', 'have a nice day', 'take care', 'see ya'
-        ]
-        
-        // Check if the message contains or ends with a goodbye phrase
-        const containsGoodbye = userGoodbyePhrases.some(phrase => {
-          return text.includes(phrase) || 
-                 text.endsWith(phrase) || 
-                 text.trim().endsWith(phrase + '.') || 
-                 text.trim().endsWith(phrase + '!')
-        })
-        
-        if (containsGoodbye) {
-          console.log('👋 User said goodbye, starting door closing sequence...')
-          console.log('📊 END CALL TRIGGER: User goodbye phrase detected')
-          
-          // Prevent duplicate processing
-          if (endCallProcessingRef.current) {
-            console.log('⚠️ Already processing end_call, ignoring user goodbye')
-            return
-          }
-          
-          // Set processing flag immediately
-          endCallProcessingRef.current = true
-          
-          // Small delay to allow user to finish speaking, then trigger door closing
-          setTimeout(() => {
-            if (sessionActive && sessionId) {
-              handleDoorClosingSequence('User said goodbye').catch((error) => {
-                console.error('❌ Error in handleDoorClosingSequence from user goodbye:', error)
-                endCallProcessingRef.current = false // Reset on error
-              })
-            } else {
-              endCallProcessingRef.current = false // Reset if session ended
-            }
-          }, 2000) // 2 second delay to ensure user finished speaking
-        }
-      }
+      // Removed user goodbye phrase detection - only ElevenLabs will trigger end calls
     }
     
     // Listen for connection status changes (disconnect signals from ElevenLabs)
@@ -974,89 +902,7 @@ function TrainerPageContent() {
       }
     }
     
-    // Check transcript for goodbye phrases (backup method) - less aggressive
-    // Only check if we haven't seen activity in a while
-    const checkForEndCall = () => {
-      // Only check if it's been at least 20 seconds since last activity
-      const timeSinceActivity = Date.now() - lastActivityTime
-      if (timeSinceActivity < 20000) {
-        return // Too soon, don't check
-      }
-      
-      // Check if transcript ends with agent (homeowner) or user saying goodbye/ending phrases
-      if (transcript.length > 0) {
-        // Check last message (could be from agent or user)
-        const lastMessage = transcript[transcript.length - 1]
-        const lastText = (lastMessage?.text || '').toLowerCase().trim()
-        const isUser = lastMessage?.speaker === 'user'
-        
-        // Agent ending phrases
-        const agentEndingPhrases = [
-          'goodbye', 'bye bye', 'see you later', 'talk to you later',
-          'closing the door', 'close the door now', 'thanks for stopping by',
-          "we're done here", "that's all for today", 'have a good day', 'have a nice day'
-        ]
-        
-        // User ending phrases
-        const userEndingPhrases = [
-          'goodbye', 'bye', 'bye bye', 'see you later', 'talk to you later',
-          'thanks', 'thank you', 'i have to go', 'i need to go', 'i gotta go',
-          'that\'s all', 'that\'s all for now', 'i\'m done', 'we\'re done',
-          'have a good day', 'have a nice day', 'take care', 'see ya'
-        ]
-        
-        const endingPhrases = isUser ? userEndingPhrases : agentEndingPhrases
-        
-        // Check if the LAST message contains or ends with a clear goodbye
-        const containsGoodbye = endingPhrases.some(phrase => {
-          return lastText.includes(phrase) || 
-                 lastText.endsWith(phrase) || 
-                 lastText.endsWith(phrase + '.') || 
-                 lastText.endsWith(phrase + '!')
-        })
-        
-        if (containsGoodbye) {
-          goodbyeCheckAttempts++
-          // Require multiple confirmations (check 3 times = 6 seconds)
-          if (goodbyeCheckAttempts >= 3) {
-            const speaker = isUser ? 'User' : 'Agent'
-            console.log(`🔚 ${speaker} clearly ended conversation (transcript check), auto-ending session...`)
-            console.log('📊 END CALL TRIGGER: Goodbye phrase confirmed in transcript (3 checks)')
-            
-            // Prevent duplicate processing
-            if (endCallProcessingRef.current) {
-              goodbyeCheckAttempts = 0
-              return
-            }
-            
-            endCallProcessingRef.current = true
-            
-            setTimeout(() => {
-              if (sessionActive && sessionId) {
-                if (isUser) {
-                  handleDoorClosingSequence(`${speaker} ended conversation (transcript confirmation)`).catch((error) => {
-                    console.error('❌ Error in handleDoorClosingSequence from transcript check:', error)
-                    endCallProcessingRef.current = false
-                  })
-                } else {
-                  handleAgentEndCall({ detail: { reason: `${speaker} ended conversation (transcript confirmation)` } })
-                }
-              }
-            }, 3000)
-            goodbyeCheckAttempts = 0 // Reset
-          }
-        } else {
-          goodbyeCheckAttempts = 0 // Reset if no goodbye detected
-        }
-      }
-    }
-    
-    // Check for end call periodically - less frequent
-    const endCallCheckInterval = setInterval(() => {
-      if (sessionActive && sessionId) {
-        checkForEndCall()
-      }
-    }, 3000) // Check every 3 seconds (less aggressive)
+    // Removed transcript-based goodbye phrase detection - only ElevenLabs will trigger end calls
     
     // Set up initial silence timeout
     if (sessionActive && sessionId) {
@@ -1097,7 +943,7 @@ function TrainerPageContent() {
     
     return () => {
       if (silenceTimer) clearTimeout(silenceTimer)
-      clearInterval(endCallCheckInterval)
+      // Removed endCallCheckInterval cleanup - no longer using transcript-based goodbye detection
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
       window.removeEventListener('agent:end_call', handleAgentEndCall)
       window.removeEventListener('agent:message', handleAgentMessage)
