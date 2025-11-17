@@ -16,6 +16,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [currentToken, setCurrentToken] = useState(conversationToken)
+  const sessionIdRef = useRef<string | null>(sessionId) // Track sessionId with ref for callbacks
+  
+  // Update ref when sessionId changes
+  useEffect(() => {
+    sessionIdRef.current = sessionId
+  }, [sessionId])
   
   // Audio recording only (video is handled by dual camera compositor in trainer page)
   const { isRecording: isAudioRecording, startRecording: startAudioRecording, stopRecording: stopAudioRecording } = useSessionRecording(sessionId)
@@ -46,6 +52,28 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
     console.log('🎬 start() called')
     console.log('🎟️ currentToken:', currentToken ? currentToken.substring(0, 30) + '...' : 'MISSING')
     console.log('🤖 agentId:', agentId)
+    console.log('📋 sessionId:', sessionId)
+
+    // CRITICAL: Don't start if we're not in an active session
+    if (!sessionId) {
+      console.error('❌ No sessionId provided - refusing to start conversation outside of active session')
+      setErrorMessage('No session ID - conversation can only start during active training session')
+      setStatus('error')
+      dispatchStatus('error')
+      return
+    }
+
+    // Check if we're on the trainer page (basic check)
+    if (typeof window !== 'undefined') {
+      const isTrainerPage = window.location.pathname.includes('/trainer')
+      if (!isTrainerPage) {
+        console.error('❌ Not on trainer page - refusing to start conversation')
+        setErrorMessage('Conversation can only start on trainer page')
+        setStatus('error')
+        dispatchStatus('error')
+        return
+      }
+    }
 
     if (!agentId) {
       console.error('❌ No agent ID provided')
@@ -195,6 +223,24 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         },
         
         onMessage: (msg: any) => {
+          // CRITICAL: Don't process messages if we're not in an active session
+          // Use ref to get current sessionId value (callbacks capture stale values)
+          if (!sessionIdRef.current) {
+            console.warn('⚠️ Received message but no sessionId - ignoring message to prevent speaking outside session')
+            return
+          }
+          
+          // Check if we're still on the trainer page
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/trainer')) {
+            console.warn('⚠️ Received message but not on trainer page - ignoring message')
+            // Stop the conversation if we're not on the trainer page
+            if (conversationRef.current) {
+              console.log('🛑 Stopping conversation - no longer on trainer page')
+              conversationRef.current.endSession().catch(() => {})
+            }
+            return
+          }
+          
           console.log('📨 RAW MESSAGE FROM ELEVENLABS:', JSON.stringify(msg, null, 2))
           console.log('📨 Message type:', msg?.type)
           console.log('📨 Message keys:', Object.keys(msg || {}))
@@ -695,12 +741,22 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   }, [status, attemptReconnect, stopHealthMonitoringFn])
 
   useEffect(() => {
-    if (autostart) {
-      console.log('🎬 Autostart enabled, starting in 100ms...')
-      const id = setTimeout(() => start(), 100)
+    // Only autostart if we have a sessionId (active session)
+    if (autostart && sessionId) {
+      console.log('🎬 Autostart enabled with sessionId, starting in 100ms...')
+      const id = setTimeout(() => {
+        // Double-check sessionId still exists before starting
+        if (sessionId) {
+          start()
+        } else {
+          console.warn('⚠️ sessionId no longer exists, aborting autostart')
+        }
+      }, 100)
       return () => clearTimeout(id)
+    } else if (autostart && !sessionId) {
+      console.warn('⚠️ Autostart enabled but no sessionId - refusing to start conversation')
     }
-  }, [autostart, start])
+  }, [autostart, start, sessionId])
 
   // Update token when prop changes
   useEffect(() => {
@@ -797,9 +853,21 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
     }
   }, [])
 
+  // Monitor sessionId and stop conversation if it becomes null
+  useEffect(() => {
+    if (!sessionId && conversationRef.current) {
+      console.warn('⚠️ sessionId became null - stopping conversation immediately')
+      stop().catch((err) => {
+        console.error('❌ Error stopping conversation when sessionId became null:', err)
+      })
+    }
+  }, [sessionId, stop])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      console.log('🧹 ElevenLabsConversation component unmounting - cleaning up')
+      
       // Clear any pending timeouts
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
@@ -810,13 +878,17 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       
       // Stop audio recording on unmount
       if (audioRecordingActiveRef.current) {
+        console.log('🛑 Stopping audio recording on unmount')
         stopAudioRecording()
         audioRecordingActiveRef.current = false
       }
       
       if (conversationRef.current) {
         console.log('🧹 Cleaning up conversation on unmount')
-        conversationRef.current.endSession().catch(() => {})
+        conversationRef.current.endSession().catch((err: any) => {
+          console.error('❌ Error ending session on unmount:', err)
+        })
+        conversationRef.current = null
       }
     }
   }, [stopAudioRecording, stopHealthMonitoringFn])
