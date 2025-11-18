@@ -516,7 +516,7 @@ function HeaderContent() {
   return (
     <>
       {/* Centered oval navigation bar - Desktop */}
-      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl pl-6 pr-6 lg:pr-8 xl:pr-10 py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
+      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-6 pr-[92px]' : 'pl-6 pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
         isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10 flex-shrink-0">
@@ -546,13 +546,13 @@ function HeaderContent() {
               )
             })}
 
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {isSignedIn && (
-                <div className="pl-2 border-l border-white/10 relative">
-                  <p className="text-xs text-slate-300 leading-4">{user?.full_name ?? profileName}</p>
+            {isSignedIn && (
+              <div className="flex items-center gap-3 pl-2 border-l border-white/10 flex-shrink-0">
+                <div className="relative">
+                  <p className="text-xs text-slate-300 leading-4 whitespace-nowrap">{user?.full_name ?? profileName}</p>
                   <p 
                     ref={creditsTooltipRef}
-                    className="text-[11px] text-purple-400 font-semibold relative"
+                    className="text-[11px] text-purple-400 font-semibold relative whitespace-nowrap"
                   >
                     {userCredits} credits
                   </p>
@@ -601,35 +601,72 @@ function HeaderContent() {
                     )}
                   </AnimatePresence>
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <button
+                    ref={sidebarButtonRef}
+                    onClick={() => setIsSidebarOpen((prev) => !prev)}
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all overflow-hidden cursor-pointer shrink-0 ${
+                      isSidebarOpen
+                        ? 'border-purple-500/70 shadow-[0px_0px_20px_rgba(168,85,247,0.5)] ring-2 ring-purple-500/30 scale-105'
+                        : 'border-white/20 hover:border-purple-500/40 hover:shadow-[0px_0px_12px_rgba(168,85,247,0.3)] hover:scale-105'
+                    }`}
+                    aria-haspopup="menu"
+                    aria-expanded={isSidebarOpen}
+                    aria-label="Open account navigation"
+                  >
+                    {profileAvatar && !avatarError ? (
+                      <>
+                        <img 
+                          src={profileAvatar} 
+                          alt={profileName}
+                          className="w-full h-full object-cover rounded-full"
+                          onError={() => setAvatarError(true)}
+                        />
+                        {isSidebarOpen && (
+                          <div className="absolute inset-0 bg-purple-500/40 rounded-full ring-2 ring-purple-500/50" />
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold rounded-full">
+                          {profileInitial}
+                        </div>
+                        {isSidebarOpen && (
+                          <div className="absolute inset-0 bg-purple-500/40 rounded-full ring-2 ring-purple-500/50" />
+                        )}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setIsSidebarOpen((prev) => !prev)}
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all cursor-pointer shrink-0 ml-4 ${
+                      isSidebarOpen
+                        ? 'border-purple-500/70 shadow-[0px_0px_20px_rgba(168,85,247,0.5)] ring-2 ring-purple-500/30 scale-105 text-purple-400'
+                        : 'border-white/20 hover:border-purple-500/40 hover:shadow-[0px_0px_12px_rgba(168,85,247,0.3)] hover:scale-105 text-slate-300 hover:text-white'
+                    }`}
+                    aria-label="Toggle menu"
+                  >
+                    <HamburgerIcon open={isSidebarOpen} />
+                  </button>
+                </div>
+              </div>
+            )}
+            {!isSignedIn && (
               <button
                 ref={sidebarButtonRef}
                 onClick={() => setIsSidebarOpen((prev) => !prev)}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 transition-all overflow-hidden ${
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all overflow-hidden cursor-pointer shrink-0 ${
                   isSidebarOpen
-                    ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 shadow-[0px_0px_18px_rgba(168,85,247,0.35)]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                    ? 'border-purple-500/70 shadow-[0px_0px_20px_rgba(168,85,247,0.5)] ring-2 ring-purple-500/30 scale-105'
+                    : 'border-white/20 hover:border-purple-500/40 hover:shadow-[0px_0px_12px_rgba(168,85,247,0.3)] hover:scale-105'
                 }`}
                 aria-haspopup="menu"
                 aria-expanded={isSidebarOpen}
                 aria-label="Open account navigation"
               >
-                {isSignedIn && profileAvatar && !avatarError ? (
-                  <img 
-                    src={profileAvatar} 
-                    alt={profileName}
-                    className="w-full h-full object-cover"
-                    onError={() => setAvatarError(true)}
-                  />
-                ) : isSignedIn ? (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
-                    {profileInitial}
-                  </div>
-                ) : (
-                  <HamburgerIcon open={isSidebarOpen} />
-                )}
+                <HamburgerIcon open={isSidebarOpen} />
               </button>
-            </div>
+            )}
       </div>
 
       {/* Mobile header */}
