@@ -516,7 +516,7 @@ function HeaderContent() {
   return (
     <>
       {/* Centered oval navigation bar - Desktop */}
-      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-6 pr-[71px]' : 'pl-6 pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
+      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-6 pr-[69px]' : 'pl-6 pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
         isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10 flex-shrink-0">
