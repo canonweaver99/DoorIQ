@@ -222,6 +222,7 @@ function TrainerPageContent() {
   const signedUrlAbortRef = useRef<AbortController | null>(null)
   const endCallProcessingRef = useRef(false) // Track if end call is being processed
   const agentVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for Tanya & Tom video element
+  const lastConnectionStatusRef = useRef<'connected' | 'disconnected' | 'connecting' | 'error' | null>(null) // Track connection status changes
   
   const subscription = useSubscription()
   const sessionLimit = useSessionLimit()
@@ -801,10 +802,6 @@ function TrainerPageContent() {
       handleAgentActivity()
     }
     
-    window.addEventListener('agent:mode', handleAgentMode)
-    window.addEventListener('agent:ping', handleAgentPing)
-    window.addEventListener('agent:audio', handleAgentPing)
-    
     const handleAgentEndCall = async (e: any) => {
       console.log('📞 handleAgentEndCall triggered', { 
         sessionActive, 
@@ -935,9 +932,6 @@ function TrainerPageContent() {
       }
     }
     
-    // Track last connection status to detect changes
-    const lastConnectionStatusRef = useRef<'connected' | 'disconnected' | 'connecting' | 'error' | null>(null)
-    
     // Update status tracking when we receive connection status events
     const handleConnectionStatusWithTracking = (e: any) => {
       const status = e.detail
@@ -962,6 +956,11 @@ function TrainerPageContent() {
       handleAgentActivity() // Initialize timer
     }
     
+    // Guard against SSR - only set up event listeners on client
+    if (typeof window === 'undefined') {
+      return
+    }
+    
     // Log when event listeners are attached
     console.log('🎧 Setting up event listeners for auto-end', { sessionActive, sessionId })
     console.log('🎧 handleAgentEndCall function:', typeof handleAgentEndCall)
@@ -984,6 +983,11 @@ function TrainerPageContent() {
     // Listen for connection status changes (with tracking)
     window.addEventListener('connection:status', handleConnectionStatusWithTracking)
     
+    // Listen for agent mode changes to track speaking status
+    window.addEventListener('agent:mode', handleAgentMode)
+    window.addEventListener('agent:ping', handleAgentPing)
+    window.addEventListener('agent:audio', handleAgentPing)
+    
     // Debug: Log all custom events to see what's happening
     const debugListener = (e: Event) => {
       if (e.type.startsWith('agent:') || e.type === 'connection:status' || e.type === 'trainer:') {
@@ -998,6 +1002,10 @@ function TrainerPageContent() {
     
     return () => {
       if (silenceTimer) clearTimeout(silenceTimer)
+      
+      // Guard against SSR - only remove listeners if window exists
+      if (typeof window === 'undefined') return
+      
       // Removed endCallCheckInterval cleanup - no longer using transcript-based goodbye detection
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
       window.removeEventListener('agent:end_call', handleAgentEndCall)
