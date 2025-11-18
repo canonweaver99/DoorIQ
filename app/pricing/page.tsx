@@ -62,16 +62,29 @@ function PricingPageContent() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [currentStep])
 
-  // Calculate pricing based on number of reps - NEW $2/day model
+  // Calculate pricing based on number of reps - Tiered pricing model
   const calculatePricing = (reps: number) => {
-    if (reps < 5) return { daily: 0, monthly: 0, annual: 0, annualMonthly: 0, annualDaily: 0, savings: 0 }
+    if (reps < 5) return { daily: 0, monthly: 0, annual: 0, annualMonthly: 0, annualDaily: 0, savings: 0, perRepRate: 0, annualPerRepRate: 0 }
     
-    // $2/day per rep for monthly billing
-    const daily = reps * 2
-    const monthly = daily * 30 // $2/day × 30 days
+    // Determine per-rep rate based on tier
+    let perRepRate: number
+    if (reps >= 100) {
+      perRepRate = 1.25
+    } else if (reps >= 51) {
+      perRepRate = 1.50
+    } else if (reps >= 21) {
+      perRepRate = 1.75
+    } else {
+      perRepRate = 2.00 // 6-20 reps
+    }
     
-    // Annual: $1.60/day per rep (20% savings)
-    const annualDaily = reps * 1.60
+    // Monthly billing
+    const daily = reps * perRepRate
+    const monthly = daily * 30
+    
+    // Annual: 20% savings on the per-rep rate
+    const annualPerRepRate = perRepRate * 0.80
+    const annualDaily = reps * annualPerRepRate
     const annualMonthly = annualDaily * 30
     const annual = annualMonthly * 12
     
@@ -79,7 +92,7 @@ function PricingPageContent() {
     const monthlyAnnual = monthly * 12
     const savings = monthlyAnnual - annual
     
-    return { daily, monthly, annual, annualMonthly, annualDaily, savings }
+    return { daily, monthly, annual, annualMonthly, annualDaily, savings, perRepRate, annualPerRepRate }
   }
 
 
@@ -356,10 +369,10 @@ function PricingPageContent() {
                       )}
                     />
                     <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-2 tracking-tight relative z-10" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
-                      Just $2 Per Day, Per Rep
+                      Starting at $2 Per Day, Per Rep
                     </h2>
                     <p className="text-lg sm:text-xl lg:text-2xl text-white mb-8 font-medium relative z-10">
-                      Unlimited practice sessions, huge ROI potential
+                      Volume discounts available • Unlimited practice sessions, huge ROI potential
                     </p>
                     
                     {/* Interactive Calculator - Moved inside hero section */}
@@ -472,7 +485,7 @@ function PricingPageContent() {
                                 = ${(pricing.monthly * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year
                               </div>
                               <div className="text-base text-white font-semibold">
-                                $2/day × {numReps} reps × 30 days
+                                ${pricing.perRepRate.toFixed(2)}/day × {numReps} reps × 30 days
                               </div>
                             </div>
                             <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -777,7 +790,7 @@ function PricingPageContent() {
                           <tr className="border-b border-white/10">
                             <td className="py-4 text-white text-lg md:text-xl font-medium">Cost per rep</td>
                             <td className="text-center py-4 text-red-500 font-semibold text-xl md:text-2xl">$2,000</td>
-                            <td className="text-center py-4 text-emerald-500 font-semibold text-xl md:text-2xl">$2/day ($60/month)</td>
+                            <td className="text-center py-4 text-emerald-500 font-semibold text-xl md:text-2xl">${pricing.perRepRate.toFixed(2)}/day (${Math.round(pricing.monthly / numReps).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month)</td>
                           </tr>
                           <tr className="border-b border-white/10">
                             <td className="py-4 text-white text-lg md:text-xl font-semibold">Annual training cost savings</td>
