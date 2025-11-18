@@ -172,15 +172,29 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             console.log('🔌 Disconnect during active session - treating as call end (ElevenLabs ended call)')
             console.log('📊 Disconnect reason:', reason)
             
-            // Always dispatch agent:end_call event when disconnecting during active session
-            // This ensures we catch when ElevenLabs ends the call, even if reason format varies
-            window.dispatchEvent(new CustomEvent('agent:end_call', { 
-              detail: { 
-                reason: reason || 'Connection ended',
-                source: isUnexpected ? 'unexpected_disconnect' : 'disconnect',
-                timestamp: Date.now()
-              } 
-            }))
+            // CRITICAL: Dispatch agent:end_call event MULTIPLE times to ensure it's caught
+            // Use different methods to maximize reliability
+            const endCallData = {
+              reason: reason || 'Connection ended',
+              source: isUnexpected ? 'unexpected_disconnect' : 'disconnect',
+              timestamp: Date.now()
+            }
+            
+            // Method 1: Dispatch immediately
+            console.log('📢 Dispatching agent:end_call event (immediate)')
+            window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+            
+            // Method 2: Dispatch after a tiny delay (in case listener isn't ready)
+            setTimeout(() => {
+              console.log('📢 Dispatching agent:end_call event (delayed 50ms)')
+              window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+            }, 50)
+            
+            // Method 3: Dispatch after another delay as backup
+            setTimeout(() => {
+              console.log('📢 Dispatching agent:end_call event (delayed 200ms backup)')
+              window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+            }, 200)
             
             wasConnectedRef.current = false // Reset for next connection
             

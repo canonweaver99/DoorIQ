@@ -920,21 +920,33 @@ function TrainerPageContent() {
       const status = e.detail
       console.log('📊 Connection status changed:', status)
       
-      // If we get disconnected during an active session, end the session
+      // If we get disconnected during an active session, end the session IMMEDIATELY
       // This catches cases where ElevenLabs disconnects without sending end_call
       if (status === 'disconnected' && sessionActive && sessionId && !endCallProcessingRef.current) {
-        console.log('🔌 Connection disconnected during active session, ending session...')
-        // Small delay to allow for end_call event to come through first (if it exists)
-        setTimeout(() => {
-            // Double-check that we still need to end (end_call might have been processed)
-            if (sessionActive && sessionId && !endCallProcessingRef.current) {
-              console.log('🔚 Auto-ending session due to connection disconnect')
-              console.log('📊 END CALL TRIGGER: Connection lost/disconnected')
-              handleAgentEndCall({ detail: { reason: 'Connection lost', source: 'disconnect' } })
-            } else {
-              console.log('ℹ️ Connection disconnect detected but end_call already processed')
-            }
-        }, 2000) // 2 second delay to allow end_call event to process first
+        console.log('🔌 Connection disconnected during active session - ending session IMMEDIATELY')
+        console.log('📊 END CALL TRIGGER: Connection lost/disconnected')
+        // Call directly without delay - events might not fire reliably
+        handleAgentEndCall({ detail: { reason: 'Connection lost', source: 'disconnect' } })
+      }
+    }
+    
+    // Track last connection status to detect changes
+    const lastConnectionStatusRef = useRef<'connected' | 'disconnected' | 'connecting' | 'error' | null>(null)
+    
+    // Update status tracking when we receive connection status events
+    const handleConnectionStatusWithTracking = (e: any) => {
+      const status = e.detail
+      const previousStatus = lastConnectionStatusRef.current
+      lastConnectionStatusRef.current = status
+      
+      // Call the original handler
+      handleConnectionStatus(e)
+      
+      // Additional check: if we transitioned from connected to disconnected, trigger end call
+      if (previousStatus === 'connected' && status === 'disconnected' && sessionActive && sessionId && !endCallProcessingRef.current) {
+        console.log('🔄 Status transition detected: connected -> disconnected')
+        console.log('📊 END CALL TRIGGER: Status transition')
+        handleAgentEndCall({ detail: { reason: 'Connection lost (status transition)', source: 'status_tracking' } })
       }
     }
     
@@ -964,8 +976,8 @@ function TrainerPageContent() {
     // Listen for user activity too (they might be speaking)
     window.addEventListener('agent:user', handleUserActivity)
     
-    // Listen for connection status changes
-    window.addEventListener('connection:status', handleConnectionStatus)
+    // Listen for connection status changes (with tracking)
+    window.addEventListener('connection:status', handleConnectionStatusWithTracking)
     
     // Debug: Log all custom events to see what's happening
     const debugListener = (e: Event) => {
@@ -987,7 +999,7 @@ function TrainerPageContent() {
       window.removeEventListener('agent:message', handleAgentMessage)
       window.removeEventListener('agent:response', handleAgentResponse)
       window.removeEventListener('agent:user', handleUserActivity)
-      window.removeEventListener('connection:status', handleConnectionStatus)
+      window.removeEventListener('connection:status', handleConnectionStatusWithTracking)
       window.removeEventListener('agent:mode', handleAgentMode)
       window.removeEventListener('agent:ping', handleAgentPing)
       window.removeEventListener('agent:audio', handleAgentPing)
