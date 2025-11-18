@@ -29,6 +29,13 @@ export function createClient() {
         headers: {
           'X-Client-Info': 'dooriq-web'
         }
+      },
+      realtime: {
+        // Disable realtime WebSocket connections completely
+        // This prevents WebSocket connection errors in console
+        params: {
+          eventsPerSecond: 0
+        }
       }
     }
   )
@@ -39,15 +46,34 @@ export function createClient() {
     // Remove all channels and disconnect realtime
     const realtime = (client as any).realtime
     if (realtime) {
+      // Remove all existing channels
       realtime.channels.forEach((channel: any) => {
-        realtime.removeChannel(channel)
+        try {
+          realtime.removeChannel(channel)
+        } catch (e) {
+          // Ignore errors removing channels
+        }
       })
-      realtime.disconnect()
-      // Prevent auto-reconnection
+      
+      // Disconnect and prevent auto-reconnection
+      try {
+        realtime.disconnect()
+      } catch (e) {
+        // Ignore disconnect errors
+      }
+      
+      // Prevent auto-reconnection by clearing access token
       realtime.accessToken = null
+      
+      // Override the connect method to prevent reconnection attempts
+      const originalConnect = realtime.connect.bind(realtime)
+      realtime.connect = () => {
+        // Do nothing - prevent connection attempts
+        return realtime
+      }
     }
   } catch (e) {
-    // Ignore errors during realtime cleanup
+    // Ignore errors during realtime cleanup - this is expected if realtime isn't initialized
   }
   
   return client

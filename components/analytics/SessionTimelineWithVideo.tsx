@@ -208,7 +208,8 @@ export default function SessionTimelineWithVideo({
   useEffect(() => {
     const mediaElement = videoRef.current || audioRef.current
     if (!mediaElement) {
-      console.log('Video ref is null, will retry in useEffect')
+      // This is expected during initial mount - the video element may not be ready yet
+      // The effect will re-run when videoUrl/audioUrl changes and the element is available
       return
     }
 
