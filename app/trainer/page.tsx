@@ -239,8 +239,12 @@ function TrainerPageContent() {
   
   // Handle video mode changes for agents with videos
   useEffect(() => {
-    if (agentVideoRef.current && sessionActive) {
+    // CRITICAL: Allow closing mode even when sessionActive is false (during end sequence)
+    const shouldHandleVideo = agentVideoRef.current && (sessionActive || videoMode === 'closing')
+    
+    if (shouldHandleVideo && agentVideoRef.current) {
       const video = agentVideoRef.current
+      console.log('🎬 Video effect running:', { videoMode, sessionActive, videoSrc: video.src })
       
       if (videoMode === 'opening') {
         // Play opening door animation, then transition to loop
@@ -251,39 +255,60 @@ function TrainerPageContent() {
         const handleOpeningEnded = () => {
           console.log('🎬 Opening animation finished, transitioning to loop')
           setVideoMode('loop')
-          video.removeEventListener('ended', handleOpeningEnded)
+          if (agentVideoRef.current) {
+            agentVideoRef.current.removeEventListener('ended', handleOpeningEnded)
+          }
         }
         
         video.addEventListener('ended', handleOpeningEnded)
         
         return () => {
-          video.removeEventListener('ended', handleOpeningEnded)
+          if (agentVideoRef.current) {
+            agentVideoRef.current.removeEventListener('ended', handleOpeningEnded)
+          }
         }
       } else if (videoMode === 'closing') {
         // Play closing door animation (used when ending session)
+        console.log('🎬 Playing closing door animation')
         video.play().catch((err) => {
-          console.warn('Failed to play door animation:', err)
+          console.error('❌ Failed to play closing door animation:', err)
         })
         
         // Note: Door closing animation will complete and then endSession is called
         // No need to switch back to loop as session is ending
       } else if (videoMode === 'loop') {
         // Track when loop video starts and its duration
-        video.addEventListener('loadedmetadata', () => {
-          loopVideoDurationRef.current = video.duration
-          console.log('🎬 Loop video duration:', video.duration)
-        })
+        const handleLoadedMetadata = () => {
+          if (agentVideoRef.current) {
+            loopVideoDurationRef.current = agentVideoRef.current.duration
+            console.log('🎬 Loop video duration:', agentVideoRef.current.duration)
+          }
+        }
         
-        video.addEventListener('play', () => {
-          loopVideoStartTimeRef.current = Date.now() - (video.currentTime * 1000)
-          console.log('🎬 Loop video started, tracking playback position')
-        })
+        const handlePlay = () => {
+          if (agentVideoRef.current) {
+            loopVideoStartTimeRef.current = Date.now() - (agentVideoRef.current.currentTime * 1000)
+            console.log('🎬 Loop video started, tracking playback position')
+          }
+        }
+        
+        video.addEventListener('loadedmetadata', handleLoadedMetadata)
+        video.addEventListener('play', handlePlay)
         
         // Ensure loop video plays
         video.play().catch((err) => {
           console.warn('Failed to play loop video:', err)
         })
+        
+        return () => {
+          if (agentVideoRef.current) {
+            agentVideoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata)
+            agentVideoRef.current.removeEventListener('play', handlePlay)
+          }
+        }
       }
+    } else {
+      console.log('⚠️ Video effect skipped:', { hasVideoRef: !!agentVideoRef.current, sessionActive, videoMode })
     }
   }, [videoMode, sessionActive])
 
@@ -630,9 +655,17 @@ function TrainerPageContent() {
   // Shared function to handle door closing sequence and end session
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Starting door closing sequence:', reason)
+    console.log('🚪 Door closing sequence context:', {
+      reason,
+      selectedAgent: selectedAgent?.name,
+      videoMode,
+      sessionActive,
+      hasVideoRef: !!agentVideoRef.current
+    })
     
     // Check if this agent has video animations - if so, wait for loop to reach beginning, then play closing door video
     const hasVideos = agentHasVideos(selectedAgent?.name)
+    console.log('🎬 Agent has videos:', hasVideos, 'for agent:', selectedAgent?.name)
     
     if (hasVideos) {
       const agentName = selectedAgent?.name || 'Unknown'
@@ -773,7 +806,9 @@ function TrainerPageContent() {
         sessionId, 
         eventDetail: e?.detail,
         alreadyProcessing: endCallProcessingRef.current,
-        currentAgentMode: agentModeRef.current
+        currentAgentMode: agentModeRef.current,
+        eventType: e?.type,
+        timestamp: Date.now()
       })
       
       // Prevent duplicate processing
@@ -792,6 +827,7 @@ function TrainerPageContent() {
       endCallProcessingRef.current = true
       
       console.log('🚪 Agent ended call - waiting for agent to finish speaking...')
+      console.log('🚪 Starting door closing sequence flow...')
       
       // Clear any silence timers
       if (silenceTimer) {
@@ -911,12 +947,14 @@ function TrainerPageContent() {
     
     // Log when event listeners are attached
     console.log('🎧 Setting up event listeners for auto-end', { sessionActive, sessionId })
+    console.log('🎧 handleAgentEndCall function:', typeof handleAgentEndCall)
     
     // Listen for manual end session requests
     window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
     
     // Listen for agent end_call events (dispatched from ElevenLabsConversation)
     window.addEventListener('agent:end_call', handleAgentEndCall)
+    console.log('✅ agent:end_call event listener attached')
     
     // Listen for agent messages/responses to track activity
     // Note: agent:message is dispatched, but agent:response is the main one with actual text
