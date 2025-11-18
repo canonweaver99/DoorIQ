@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 import { vibrate } from '@/lib/utils'
+import { Users, TrendingUp, Clock, Smartphone, ChevronRight } from 'lucide-react'
 
 // Dynamic imports for below-the-fold components (code splitting)
 const FaqSection = dynamic(() => import('@/components/ui/faq-section').then(mod => ({ default: mod.FaqSection })), {
@@ -207,6 +208,9 @@ export default function Home() {
       {/* 5) Problem/Solution Section */}
       <ProblemSolutionSection />
 
+      {/* 5.5) Manager Pricing Section */}
+      <ManagerPricingSection onBookDemo={() => setIsCalendarModalOpen(true)} />
+
       {/* 6) Social Proof */}
       <SocialProofSection />
 
@@ -316,6 +320,8 @@ function ProblemSolutionSection() {
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
+              width={800}
+              height={600}
             />
           </motion.div>
         </motion.div>
@@ -369,6 +375,8 @@ function ProblemSolutionSection() {
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
+              width={800}
+              height={600}
             />
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
@@ -454,6 +462,159 @@ function ProblemSolutionSection() {
               </Link>
             </div>
           </motion.span>
+        </motion.div>
+      </div>
+    </motion.section>
+  )
+}
+
+// Manager Pricing Section
+function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
+  const { ref, controls } = useScrollAnimation(0.2)
+  
+  const benefits = [
+    {
+      icon: Clock,
+      title: "Year-Round Training",
+      description: "Not just onboarding—continuous skill development keeps your team sharp all season long"
+    },
+    {
+      icon: Smartphone,
+      title: "Virtual Manager in Every Pocket",
+      description: "Each rep has 24/7 access to AI coaching, consistent feedback, and practice scenarios"
+    },
+    {
+      icon: TrendingUp,
+      title: "Massive ROI Potential",
+      description: "Teams see 40% less manager shadowing time and 2x faster rep ramp-up"
+    },
+    {
+      icon: Users,
+      title: "Built for Teams 5+",
+      description: "Scale your training program without scaling your management overhead"
+    }
+  ]
+
+  return (
+    <motion.section 
+      ref={ref}
+      className="py-12 sm:py-16 md:py-20 relative"
+      initial="hidden"
+      animate={controls}
+      variants={staggerContainer}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <motion.div 
+          className="text-center mb-8 sm:mb-10 lg:mb-12"
+          variants={fadeInUp}
+        >
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Managers</span>: Scale Your Team's Performance
+          </h2>
+          <p className="text-lg sm:text-xl lg:text-2xl text-slate-300 max-w-3xl mx-auto">
+            Give every rep a virtual manager in their pocket. Year-round training that drives ROI for teams of 5+.
+          </p>
+        </motion.div>
+
+        {/* Benefits Grid */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-10 sm:mb-12 lg:mb-16"
+          variants={staggerContainer}
+        >
+          {benefits.map((benefit, index) => {
+            const Icon = benefit.icon
+            return (
+              <motion.div
+                key={index}
+                variants={staggerItem}
+                className="relative group"
+              >
+                <GlowCard
+                  glowColor={index % 2 === 0 ? 'purple' : 'blue'}
+                  customSize
+                  className="p-6 sm:p-8 h-full"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2">
+                        {benefit.title}
+                      </h3>
+                      <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
+                        {benefit.description}
+                      </p>
+                    </div>
+                  </div>
+                </GlowCard>
+              </motion.div>
+            )
+          })}
+        </motion.div>
+
+        {/* ROI Highlight */}
+        <motion.div
+          variants={fadeInUp}
+          className="bg-gradient-to-br from-emerald-500/10 to-purple-500/10 border border-emerald-500/30 rounded-xl sm:rounded-2xl p-6 sm:p-8 lg:p-10 mb-10 sm:mb-12"
+        >
+          <div className="text-center">
+            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+              The ROI That Matters
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
+              <div>
+                <div className="text-3xl sm:text-4xl font-bold text-emerald-400 mb-2">40%</div>
+                <div className="text-base sm:text-lg text-slate-300">Less manager shadowing time</div>
+              </div>
+              <div>
+                <div className="text-3xl sm:text-4xl font-bold text-emerald-400 mb-2">2×</div>
+                <div className="text-base sm:text-lg text-slate-300">Faster rep ramp-up</div>
+              </div>
+              <div>
+                <div className="text-3xl sm:text-4xl font-bold text-emerald-400 mb-2">24/7</div>
+                <div className="text-base sm:text-lg text-slate-300">Virtual manager availability</div>
+              </div>
+            </div>
+            <p className="text-base sm:text-lg text-slate-300 mt-6 max-w-2xl mx-auto">
+              When each rep closes just 1 extra deal per month, teams see massive returns. Calculate your ROI with our pricing calculator.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* CTA Buttons */}
+        <motion.div 
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
+          variants={fadeInUp}
+        >
+          <motion.span 
+            className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
+            whileHover={{ y: -3 }}
+            transition={{ duration: 0.2 }}
+          >
+            <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+            <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
+              <Link
+                href="/pricing?reps=5"
+                onClick={() => vibrate()}
+                className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+              >
+                See Pricing for Your Team
+                <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </motion.span>
+          
+          <motion.button
+            onClick={onBookDemo}
+            className="inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white px-8 py-3.5 text-base sm:text-lg font-semibold transition-all hover:scale-105 active:scale-95"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Book a Demo
+            <ChevronRight className="w-4 h-4 ml-2" />
+          </motion.button>
         </motion.div>
       </div>
     </motion.section>

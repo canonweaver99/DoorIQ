@@ -184,7 +184,12 @@ Return ONLY valid JSON array, no markdown, no code blocks:
       })
     }
 
-    return NextResponse.json({ insights: insights.slice(0, 4) })
+    // Add caching headers - insights can be cached for 5 minutes
+    return NextResponse.json({ insights: insights.slice(0, 4) }, {
+      headers: {
+        'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600',
+      },
+    })
 
   } catch (error: any) {
     console.error('Error generating insights:', error)
@@ -200,6 +205,10 @@ Return ONLY valid JSON array, no markdown, no code blocks:
           iconBgColor: 'rgba(16, 185, 129, 0.2)'
         }
       ]
+    }, {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=120',
+      },
     })
   }
 }

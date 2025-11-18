@@ -183,7 +183,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
     
-    return NextResponse.json(data)
+    // Add caching headers for GET requests
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+      },
+    })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }

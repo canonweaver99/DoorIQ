@@ -459,6 +459,9 @@ export default function SessionsPage() {
                                     className="object-cover"
                                     style={getAgentImageStyle(session.agent_name)}
                                     sizes={`${circleSize}px`}
+                                    width={circleSize}
+                                    height={circleSize}
+                                    loading="lazy"
                                   />
                                 </div>
                               </>
