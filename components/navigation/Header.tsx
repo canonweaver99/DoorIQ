@@ -639,7 +639,7 @@ function HeaderContent() {
                   </button>
                   <button
                     onClick={() => setIsSidebarOpen((prev) => !prev)}
-                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all cursor-pointer shrink-0 ml-4 ${
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all cursor-pointer shrink-0 ml-[21px] ${
                       isSidebarOpen
                         ? 'border-purple-500/70 shadow-[0px_0px_20px_rgba(168,85,247,0.5)] ring-2 ring-purple-500/30 scale-105 text-purple-400'
                         : 'border-white/20 hover:border-purple-500/40 hover:shadow-[0px_0px_12px_rgba(168,85,247,0.3)] hover:scale-105 text-slate-300 hover:text-white'
