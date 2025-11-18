@@ -516,7 +516,7 @@ function HeaderContent() {
   return (
     <>
       {/* Centered oval navigation bar - Desktop */}
-      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-6 pr-[69px]' : 'pl-6 pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
+      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-2 md:space-x-3 lg:space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-4 md:pl-5 lg:pl-6 pr-[69px]' : 'pl-4 md:pl-5 lg:pl-6 pr-4 md:pr-5 lg:pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
         isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
             <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10 flex-shrink-0">
@@ -525,7 +525,7 @@ function HeaderContent() {
                 alt="DoorIQ Logo" 
                 width={120} 
                 height={20} 
-                className="h-[20px] w-auto object-contain"
+                className="h-[20px] w-auto object-contain max-w-[100px] md:max-w-[120px]"
                 priority
               />
             </Link>
@@ -537,22 +537,22 @@ function HeaderContent() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-all
+                  className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-2 md:px-3 py-1.5 text-xs md:text-sm transition-all flex-shrink-0
                     ${active ? 'text-white bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="tracking-tight">{item.name}</span>
+                  <Icon className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                  <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
                 </Link>
               )
             })}
 
             {isSignedIn && (
-              <div className="flex items-center gap-3 pl-2 border-l border-white/10 flex-shrink-0">
-                <div className="relative">
-                  <p className="text-xs text-slate-300 leading-4 whitespace-nowrap">{user?.full_name ?? profileName}</p>
+              <div className="flex items-center gap-2 md:gap-3 pl-2 border-l border-white/10 flex-shrink-0 min-w-0">
+                <div className="relative min-w-0 max-w-[120px] md:max-w-[150px]">
+                  <p className="text-xs text-slate-300 leading-4 truncate">{user?.full_name ?? profileName}</p>
                   <p 
                     ref={creditsTooltipRef}
-                    className="text-[11px] text-purple-400 font-semibold relative whitespace-nowrap"
+                    className="text-[11px] text-purple-400 font-semibold relative truncate"
                   >
                     {userCredits} credits
                   </p>
@@ -670,14 +670,14 @@ function HeaderContent() {
       </div>
 
       {/* Mobile header */}
-      <div className={`fixed top-4 right-4 z-50 md:hidden transition-opacity duration-300 ${
+      <div className={`fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden transition-opacity duration-300 ${
         isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-slate-300 hover:text-white hover:bg-white/5 transition-all touch-target"
+          className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/10 bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-slate-300 hover:text-white hover:bg-white/5 transition-all touch-target"
         >
-          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
       </div>
 

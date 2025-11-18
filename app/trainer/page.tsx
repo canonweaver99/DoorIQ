@@ -1082,11 +1082,10 @@ function TrainerPageContent() {
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           
           {/* Top Section: Split View - Agent Left, Webcam Right - Stack on mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20 flex-shrink-0 h-[40vh] md:h-[50vh] max-h-[40vh] md:max-h-[50vh]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20 flex-shrink-0 h-[50vh] sm:h-[45vh] md:h-[50vh] min-h-[300px] md:min-h-0">
             
             {/* Left: Agent */}
-            <div className="relative border-r-0 md:border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent overflow-hidden" style={{ 
-              height: '100%',
+            <div className="relative border-r-0 md:border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent overflow-hidden h-[25vh] sm:h-[22.5vh] md:h-full min-h-[150px] md:min-h-0" style={{ 
               maxHeight: '100%'
             }}>
               {/* Full Agent Image - matching hero preview */}
@@ -1228,10 +1227,8 @@ function TrainerPageContent() {
             </div>
             
             {/* Right: Webcam */}
-            <div className="relative bg-gradient-to-br from-green-950/20 to-transparent border-t md:border-t-0 border-purple-500/20 overflow-hidden" style={{ 
-              height: '100%',
-              maxHeight: '100%',
-              minHeight: 0
+            <div className="relative bg-gradient-to-br from-green-950/20 to-transparent border-t md:border-t-0 border-purple-500/20 overflow-hidden h-[25vh] sm:h-[22.5vh] md:h-full min-h-[150px] md:min-h-0" style={{ 
+              maxHeight: '100%'
             }}>
               <WebcamRecorder 
                 sessionActive={sessionActive} 

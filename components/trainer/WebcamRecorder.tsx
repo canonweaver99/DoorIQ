@@ -215,9 +215,9 @@ export default function WebcamRecorder({ sessionActive, duration = 0, onStreamRe
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full w-full flex flex-col overflow-hidden">
       {/* Video Container - Full Size */}
-      <div className="flex-1 relative bg-slate-900/30 flex items-center justify-center">
+      <div className="flex-1 relative bg-slate-900/30 flex items-center justify-center min-h-0 overflow-hidden">
         {isRequestingPermission ? (
           <div className="text-center text-slate-400">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-3"></div>
@@ -247,13 +247,13 @@ export default function WebcamRecorder({ sessionActive, duration = 0, onStreamRe
             </button>
           </div>
         ) : (
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full flex items-center justify-center min-h-0 overflow-hidden">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-contain"
+              className="w-full h-full max-w-full max-h-full object-contain"
               style={{
                 transform: isMobile ? 'scaleX(-1)' : 'scale(1)',
                 transformOrigin: 'center center'
