@@ -1147,10 +1147,14 @@ function TrainerPageContent() {
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
                         <button
                           onClick={() => startSession()}
-                          className="px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 active:from-emerald-700 active:to-cyan-700 text-white font-semibold text-base sm:text-lg lg:text-xl rounded-xl sm:rounded-2xl transition-all active:scale-95 shadow-lg hover:shadow-emerald-500/50 min-h-[56px] touch-manipulation z-20"
+                          className="relative px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 active:from-emerald-700 active:via-teal-700 active:to-cyan-700 text-white font-bold text-base sm:text-lg lg:text-xl rounded-xl sm:rounded-2xl transition-all duration-300 active:scale-95 border-2 border-white/20 hover:border-white/30 backdrop-blur-sm min-h-[56px] touch-manipulation z-20 overflow-hidden group"
                         >
-                          <span className="sm:hidden">Knock</span>
-                          <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
+                          <span className="relative z-10 flex items-center gap-2">
+                            <span className="sm:hidden">Knock</span>
+                            <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
+                          </span>
+                          {/* Shine effect on hover */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
                         </button>
                       </div>
                     )}
@@ -1245,6 +1249,17 @@ function TrainerPageContent() {
         }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        .animate-shimmer {
+          animation: shimmer 1.5s ease-in-out infinite;
         }
       `}</style>
     </div>
