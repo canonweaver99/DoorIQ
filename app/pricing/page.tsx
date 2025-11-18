@@ -369,7 +369,7 @@ function PricingPageContent() {
                       )}
                     />
                     <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-2 tracking-tight relative z-10" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
-                      Starting at $2 Per Day, Per Rep
+                      Starting at ${pricing.perRepRate.toFixed(2)} Per Day, Per Rep
                     </h2>
                     <p className="text-lg sm:text-xl lg:text-2xl text-white mb-8 font-medium relative z-10">
                       Volume discounts available • Unlimited practice sessions, huge ROI potential
@@ -705,7 +705,23 @@ function PricingPageContent() {
                                   const investment = showAnnualInvestment ? pricing.annual : pricing.monthly * 12
                                   const roiPct = investment > 0 ? ((roi.annualValue - investment) / investment) * 100 : 0
                           const returnPerDollar = investment > 0 ? roi.annualValue / investment : 0
-                          const paybackWeeks = investment > 0 ? Math.round((investment / (roi.annualValue / 12)) * 4) : 0
+                          // Calculate payback period
+                          const monthlyRevenue = roi.annualValue / 12
+                          // For monthly plans: payback is monthly cost / monthly revenue (minimum 1 month since you pay upfront)
+                          // For annual plans: payback is annual cost / monthly revenue
+                          let paybackMonths: number
+                          if (showAnnualInvestment) {
+                            // Annual plan: total annual cost divided by monthly revenue
+                            paybackMonths = investment > 0 && monthlyRevenue > 0 ? pricing.annual / monthlyRevenue : 0
+                          } else {
+                            // Monthly plan: monthly cost divided by monthly revenue, minimum 1 month
+                            const monthlyPayback = pricing.monthly > 0 && monthlyRevenue > 0 ? pricing.monthly / monthlyRevenue : 0
+                            paybackMonths = Math.max(1, monthlyPayback) // Minimum 1 month since you pay upfront
+                          }
+                          const paybackWeeks = paybackMonths * (52 / 12) // 4.33 weeks per month
+                          // Round to nearest week, minimum 1 week
+                          const paybackDisplay = Math.max(1, Math.round(paybackWeeks))
+                          const paybackLabel = paybackDisplay === 1 ? 'Week' : 'Weeks'
                                   return (
                             <motion.div
                               initial={{ opacity: 0, y: 20 }}
@@ -744,15 +760,15 @@ function PricingPageContent() {
                               </div>
                                 <div className="text-center">
                                   <motion.div
-                                    key={paybackWeeks}
+                                    key={paybackDisplay}
                                     initial={{ scale: 0.9 }}
                                     animate={{ scale: 1 }}
                                     transition={{ duration: 0.3 }}
                                     className="text-3xl md:text-4xl font-bold text-emerald-400 mb-1 font-mono"
                                   >
-                                    {paybackWeeks}
+                                    {paybackDisplay}
                                   </motion.div>
-                                  <div className="text-xs font-semibold text-white uppercase tracking-wide">Week payback period</div>
+                                  <div className="text-xs font-semibold text-white uppercase tracking-wide">{paybackLabel} payback period</div>
                             </div>
                               </div>
                             </motion.div>
