@@ -144,26 +144,66 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         
         onDisconnect: (reason?: any) => {
           console.log('🔌 Disconnected:', reason)
+          console.log('📊 Disconnect context:', {
+            reason,
+            wasConnected: wasConnectedRef.current,
+            isReconnecting: isReconnectingRef.current,
+            hasSessionId: !!sessionIdRef.current,
+            reconnectAttempts: reconnectAttemptsRef.current
+          })
           
           // Stop health monitoring
           stopHealthMonitoringFn()
           
+          // CRITICAL: If we have an active sessionId, treat ANY disconnect as a call ending
+          // This ensures we always catch when ElevenLabs ends the call, regardless of reason format
+          const hasActiveSession = !!sessionIdRef.current
+          
           // Check if this was an unexpected disconnect (not a graceful end)
+          // But only for reconnection logic - we'll always dispatch end_call if we have a session
           const isUnexpected = wasConnectedRef.current && 
                               !reason?.includes('end_call') && 
-                              !reason?.includes('completed')
+                              !reason?.includes('completed') &&
+                              !reason?.includes('ended')
           
-          // If we were connected and this isn't a reconnection attempt, always dispatch end_call
-          // This ensures the session ends properly when ElevenLabs disconnects
-          const shouldDispatchEndCall = wasConnectedRef.current && !isReconnectingRef.current
+          // If we have an active session, always dispatch end_call - don't try to reconnect
+          // Reconnection should only happen for connection errors outside of active sessions
+          if (hasActiveSession && wasConnectedRef.current && !isReconnectingRef.current) {
+            console.log('🔌 Disconnect during active session - treating as call end (ElevenLabs ended call)')
+            console.log('📊 Disconnect reason:', reason)
+            
+            // Always dispatch agent:end_call event when disconnecting during active session
+            // This ensures we catch when ElevenLabs ends the call, even if reason format varies
+            window.dispatchEvent(new CustomEvent('agent:end_call', { 
+              detail: { 
+                reason: reason || 'Connection ended',
+                source: isUnexpected ? 'unexpected_disconnect' : 'disconnect',
+                timestamp: Date.now()
+              } 
+            }))
+            
+            wasConnectedRef.current = false // Reset for next connection
+            
+            setStatus('disconnected')
+            dispatchStatus('disconnected')
+            
+            // Stop audio recording when conversation ends
+            if (audioRecordingActiveRef.current) {
+              console.log('🛑 Stopping audio recording from onDisconnect')
+              stopAudioRecording()
+              audioRecordingActiveRef.current = false
+            }
+            
+            return // Don't attempt reconnection for active session disconnects
+          }
           
-          if (isUnexpected && !isReconnectingRef.current) {
-            console.warn('⚠️ Unexpected disconnect detected, attempting reconnection...')
+          // Only attempt reconnection if we DON'T have an active session (connection error outside session)
+          if (isUnexpected && !isReconnectingRef.current && !hasActiveSession) {
+            console.warn('⚠️ Unexpected disconnect detected (no active session), attempting reconnection...')
             // Only attempt reconnect if we haven't exceeded max attempts
             if (reconnectAttemptsRef.current < maxReconnectAttempts) {
               attemptReconnect()
-              // Don't dispatch end_call yet, wait to see if reconnect works
-              // But still stop audio recording
+              // Stop audio recording during reconnection attempt
               if (audioRecordingActiveRef.current) {
                 console.log('🛑 Stopping audio recording during reconnection attempt')
                 stopAudioRecording()
@@ -176,11 +216,9 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             }
           }
           
-          // Always dispatch agent:end_call event when disconnecting during active session
-          // This is a reliable signal that ElevenLabs has ended the conversation
-          if (shouldDispatchEndCall) {
-            console.log('🔌 Disconnect detected during active session, dispatching agent:end_call event')
-            console.log('📊 Disconnect reason:', reason, 'wasConnected:', wasConnectedRef.current)
+          // Fallback: dispatch end_call if we were connected (for edge cases)
+          if (wasConnectedRef.current && !isReconnectingRef.current && !hasActiveSession) {
+            console.log('🔌 Disconnect detected (no active session), dispatching agent:end_call event')
             window.dispatchEvent(new CustomEvent('agent:end_call', { 
               detail: { 
                 reason: reason || 'Connection ended',
@@ -188,26 +226,17 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
                 timestamp: Date.now()
               } 
             }))
-            wasConnectedRef.current = false // Reset for next connection
-          } else {
-            console.log('⚠️ onDisconnect called but not dispatching end_call:', {
-              wasConnected: wasConnectedRef.current,
-              isReconnecting: isReconnectingRef.current,
-              reason
-            })
+            wasConnectedRef.current = false
           }
           
           setStatus('disconnected')
           dispatchStatus('disconnected')
           
           // Stop audio recording when conversation ends
-          console.log('🛑 onDisconnect - audioRecordingActive:', audioRecordingActiveRef.current)
           if (audioRecordingActiveRef.current) {
-            console.log('🛑 Calling stopAudioRecording from onDisconnect')
+            console.log('🛑 Stopping audio recording from onDisconnect')
             stopAudioRecording()
             audioRecordingActiveRef.current = false
-          } else {
-            console.log('ℹ️ onDisconnect called but audio recording was not active')
           }
         },
         
