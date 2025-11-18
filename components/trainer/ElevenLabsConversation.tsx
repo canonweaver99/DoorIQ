@@ -43,9 +43,16 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   const MESSAGE_TIMEOUT = 30000 // 30 seconds without any message = potential connection issue
   const PING_TIMEOUT = 60000 // 60 seconds without ping = connection likely dead
 
+  // Helper to safely dispatch events (guards against SSR)
+  const safeDispatchEvent = (eventName: string, detail: any) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(eventName, { detail }))
+    }
+  }
+
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
     // Dispatch the status exactly as passed (don't map disconnected to 'idle')
-    window.dispatchEvent(new CustomEvent('connection:status', { detail: s }))
+    safeDispatchEvent('connection:status', s)
   }
 
   const start = useCallback(async () => {
@@ -182,18 +189,18 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             
             // Method 1: Dispatch immediately
             console.log('📢 Dispatching agent:end_call event (immediate)')
-            window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+            safeDispatchEvent('agent:end_call', endCallData)
             
             // Method 2: Dispatch after a tiny delay (in case listener isn't ready)
             setTimeout(() => {
               console.log('📢 Dispatching agent:end_call event (delayed 50ms)')
-              window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+              safeDispatchEvent('agent:end_call', endCallData)
             }, 50)
             
             // Method 3: Dispatch after another delay as backup
             setTimeout(() => {
               console.log('📢 Dispatching agent:end_call event (delayed 200ms backup)')
-              window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+              safeDispatchEvent('agent:end_call', endCallData)
             }, 200)
             
             wasConnectedRef.current = false // Reset for next connection
@@ -233,13 +240,11 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           // Fallback: dispatch end_call if we were connected (for edge cases)
           if (wasConnectedRef.current && !isReconnectingRef.current && !hasActiveSession) {
             console.log('🔌 Disconnect detected (no active session), dispatching agent:end_call event')
-            window.dispatchEvent(new CustomEvent('agent:end_call', { 
-              detail: { 
-                reason: reason || 'Connection ended',
-                source: isUnexpected ? 'unexpected_disconnect' : 'disconnect',
-                timestamp: Date.now()
-              } 
-            }))
+            safeDispatchEvent('agent:end_call', { 
+              reason: reason || 'Connection ended',
+              source: isUnexpected ? 'unexpected_disconnect' : 'disconnect',
+              timestamp: Date.now()
+            })
             wasConnectedRef.current = false
           }
           
@@ -257,12 +262,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
         onModeChange: (mode: any) => {
           console.log('🎯 Mode changed:', mode)
           // Mode can be: 'speaking', 'listening', 'idle', etc.
-          window.dispatchEvent(new CustomEvent('agent:mode', { detail: mode }))
+          safeDispatchEvent('agent:mode', mode)
         },
         
         onStatusChange: (status: any) => {
           console.log('📊 Status changed:', status)
-          window.dispatchEvent(new CustomEvent('agent:status', { detail: status }))
+          safeDispatchEvent('agent:status', status)
         },
         
         onMessage: (msg: any) => {
@@ -287,7 +292,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           console.log('📨 RAW MESSAGE FROM ELEVENLABS:', JSON.stringify(msg, null, 2))
           console.log('📨 Message type:', msg?.type)
           console.log('📨 Message keys:', Object.keys(msg || {}))
-          window.dispatchEvent(new CustomEvent('agent:message', { detail: msg }))
+          safeDispatchEvent('agent:message', msg)
           
           // Update last message time for connection health monitoring
           lastMessageTimeRef.current = Date.now()
@@ -297,13 +302,13 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             lastPingTimeRef.current = Date.now()
             console.log('🏓 Ping received, connection healthy')
             // Dispatch ping event to reset activity timer even without text
-            window.dispatchEvent(new CustomEvent('agent:ping', { detail: msg }))
+            safeDispatchEvent('agent:ping', msg)
           }
           
           // Also dispatch audio activity events to keep conversation alive
           if (msg?.type === 'audio' || msg?.type === 'audio_chunk') {
             console.log('🔊 Audio activity detected, connection still active')
-            window.dispatchEvent(new CustomEvent('agent:audio', { detail: msg }))
+            safeDispatchEvent('agent:audio', msg)
           }
           
           // AGGRESSIVE end_call detection - check every possible format
@@ -415,12 +420,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             console.log('🎯 Dispatching agent:end_call with data:', endCallData)
             
             // Dispatch multiple times to ensure it's caught
-            window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+            safeDispatchEvent('agent:end_call', endCallData)
             
             // Also dispatch after a small delay as backup
             setTimeout(() => {
               console.log('🔄 Re-dispatching agent:end_call event (backup)')
-              window.dispatchEvent(new CustomEvent('agent:end_call', { detail: endCallData }))
+              safeDispatchEvent('agent:end_call', endCallData)
             }, 100)
           }
           
@@ -550,13 +555,13 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           if (userText) {
             console.log('👤 USER TRANSCRIPT EXTRACTED:', userText)
             console.log('👤 Dispatching agent:user event with:', userText)
-            window.dispatchEvent(new CustomEvent('agent:user', { detail: userText }))
+            safeDispatchEvent('agent:user', userText)
           }
           
           if (agentText) {
             console.log('🤖 AGENT TRANSCRIPT EXTRACTED:', agentText)
             console.log('🤖 Dispatching agent:response event with:', agentText)
-            window.dispatchEvent(new CustomEvent('agent:response', { detail: agentText }))
+            safeDispatchEvent('agent:response', agentText)
           }
           
           if (!userText && !agentText) {
@@ -570,7 +575,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             if (interimText) {
               console.log('📝 Interim text:', interimText)
               // Dispatch delta event for live preview (optional - shows text as it's being spoken)
-              window.dispatchEvent(new CustomEvent('agent:delta', { detail: interimText }))
+              safeDispatchEvent('agent:delta', interimText)
             }
           }
           

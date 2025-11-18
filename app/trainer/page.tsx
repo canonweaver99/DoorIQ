@@ -349,6 +349,9 @@ function TrainerPageContent() {
   }, [])
 
   useEffect(() => {
+    // Guard against SSR - only run on client
+    if (typeof window === 'undefined') return
+
     const handleUserEvent = (e: any) => {
       if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
         pushFinal(e.detail, 'user')
@@ -365,8 +368,10 @@ function TrainerPageContent() {
     window.addEventListener('agent:response', handleAgentEvent)
 
     return () => {
-      window.removeEventListener('agent:user', handleUserEvent)
-      window.removeEventListener('agent:response', handleAgentEvent)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('agent:user', handleUserEvent)
+        window.removeEventListener('agent:response', handleAgentEvent)
+      }
     }
   }, [pushFinal])
 
