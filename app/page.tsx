@@ -476,7 +476,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
     {
       icon: Clock,
       title: "Year-Round Training",
-      description: "Not just onboarding—continuous skill development keeps your team sharp all season long"
+      description: "Not just onboarding - continuous skill development keeps your team sharp all season long"
     },
     {
       icon: Smartphone,

@@ -146,7 +146,7 @@ export const TestimonialsColumn = ({
                   className="p-10 rounded-3xl border border-primary/30 shadow-lg shadow-primary/10 max-w-xs w-full cursor-pointer hover:border-primary/50 hover:shadow-primary/20 transition-all duration-300 block bg-white"
                   key={`${loopIndex}-${testimonialIndex}`}
                 >
-                  <div className="text-black">{text}</div>
+                  <div className="text-slate-300">{text}</div>
                   <div className="flex items-center gap-2 mt-5">
                     {hasRealProfilePic && (
                       <img
@@ -158,10 +158,10 @@ export const TestimonialsColumn = ({
                       />
                     )}
                     <div className="flex flex-col">
-                      <div className="font-medium tracking-tight leading-5 text-black">
+                      <div className="font-medium tracking-tight leading-5 text-slate-300">
                         {name}
                       </div>
-                      <div className="leading-5 opacity-60 tracking-tight text-black">
+                      <div className="leading-5 opacity-60 tracking-tight text-slate-300">
                         {role}
                       </div>
                     </div>

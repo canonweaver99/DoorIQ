@@ -201,8 +201,8 @@ const FaqItem = React.forwardRef<
         <h3
           className={cn(
             "text-lg font-medium transition-colors duration-200 text-left",
-            "text-black",
-            isOpen && "text-black",
+            "text-slate-300",
+            isOpen && "text-slate-300",
           )}
         >
           {question}
@@ -242,7 +242,7 @@ const FaqItem = React.forwardRef<
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -10, opacity: 0 }}
-                className="text-base text-black leading-relaxed"
+                className="text-base text-slate-300 leading-relaxed"
               >
                 {answer}
               </motion.p>
