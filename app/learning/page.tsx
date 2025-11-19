@@ -427,8 +427,7 @@ export default function LearningPage() {
         </motion.div>
 
         {/* Instructional Videos Section */}
-        {instructionalVideos.length > 0 && (
-          <motion.div
+        <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
@@ -439,6 +438,42 @@ export default function LearningPage() {
               <h2 className="text-2xl font-bold text-white">How to Use DoorIQ</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Demo Video - Hardcoded */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.15 }}
+                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden hover:border-[#a855f7]/50 transition-colors relative"
+                style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+              >
+                {/* Demo Badge */}
+                <div className="absolute top-2 right-2 z-10">
+                  <span className="px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full">
+                    Demo
+                  </span>
+                </div>
+                
+                {/* Video Player */}
+                <div className="relative bg-black aspect-video">
+                  <video
+                    src="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
+                    controls
+                    className="w-full h-full"
+                    playsInline
+                  />
+                </div>
+                
+                {/* Video Info */}
+                <div className="p-4">
+                  <h4 className="text-base font-bold text-white mb-2 line-clamp-2">
+                    DoorIQ Demo Video
+                  </h4>
+                  <p className="text-sm text-slate-400 mb-3 line-clamp-2">
+                    See DoorIQ in action - watch how reps practice with AI homeowners
+                  </p>
+                </div>
+              </motion.div>
+              
               {instructionalVideos.map((video, idx) => {
                 const watched = isWatched(video.id, 'instructional')
                 const isSelected = selectedVideo?.id === video.id && selectedVideo?.type === 'instructional'
@@ -503,7 +538,6 @@ export default function LearningPage() {
               })}
             </div>
           </motion.div>
-        )}
 
         {/* Upload Section for Managers */}
         {isManager && (

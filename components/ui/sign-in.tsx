@@ -73,17 +73,17 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="h-[100dvh] flex flex-col md:flex-row w-[100dvw] bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28]">
+    <div className="min-h-screen h-[100dvh] flex flex-col md:flex-row w-full overflow-x-hidden bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28]">
       {/* Left column: sign-in form */}
-      <section className="flex-1 flex items-center justify-center p-8 pt-4">
-        <div className="w-full max-w-md">
-          <div className="flex flex-col gap-4">
-            <h1 className="animate-element animate-delay-100 text-3xl md:text-4xl font-semibold leading-tight">
+      <section className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 pt-6 sm:pt-8 md:pt-4 pb-6 sm:pb-8 md:pb-8 overflow-y-auto">
+        <div className="w-full max-w-md px-2 sm:px-0">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <h1 className="animate-element animate-delay-100 text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight break-words">
               {title}
             </h1>
-            <p className="animate-element animate-delay-200 text-slate-400 text-sm leading-snug">{description}</p>
+            <p className="animate-element animate-delay-200 text-slate-400 text-sm sm:text-sm leading-relaxed break-words">{description}</p>
 
-            <form className="space-y-3.5" onSubmit={onSignIn}>
+            <form className="space-y-3 sm:space-y-3.5" onSubmit={onSignIn}>
               <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Email Address</label>
                 <GlassInputWrapper>
@@ -91,7 +91,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
                     name="email"
                     type="email"
                     placeholder="you@company.com"
-                    className="w-full bg-transparent text-sm py-3 px-3 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                    className="w-full bg-transparent text-sm py-2.5 sm:py-3 px-3 rounded-2xl focus:outline-none text-white placeholder-slate-500"
                     required
                   />
                 </GlassInputWrapper>
@@ -105,34 +105,34 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
-                      className="w-full bg-transparent text-sm py-3 px-3 pr-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                      className="w-full bg-transparent text-sm py-2.5 sm:py-3 px-3 pr-10 sm:pr-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
                       required
                       minLength={6}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-3 flex items-center"
+                      className="absolute inset-y-0 right-2 sm:right-3 flex items-center"
                     >
                       {showPassword ? (
-                        <EyeOff className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+                        <EyeOff className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 hover:text-white transition-colors" />
                       ) : (
-                        <Eye className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+                        <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 hover:text-white transition-colors" />
                       )}
                     </button>
                   </div>
                 </GlassInputWrapper>
               </div>
 
-              <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
-                <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="animate-element animate-delay-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 text-sm">
+                <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0">
                   <input type="checkbox" name="rememberMe" className="custom-checkbox" />
-                  <span className="text-slate-300 group-hover:text-white transition-colors">Keep me signed in</span>
+                  <span className="text-slate-300 group-hover:text-white transition-colors whitespace-nowrap">Keep me signed in</span>
                 </label>
                 <button
                   type="button"
                   onClick={onResetPassword}
-                  className="hover:underline text-purple-400 hover:text-purple-300 transition-colors"
+                  className="hover:underline text-purple-400 hover:text-purple-300 transition-colors text-left sm:text-right whitespace-nowrap"
                 >
                   Reset password
                 </button>
@@ -147,27 +147,27 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-600 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-sm font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98]"
+                className="animate-element animate-delay-600 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-2.5 sm:py-3 text-sm font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 
-            <div className="animate-element animate-delay-700 relative flex items-center justify-center">
+            <div className="animate-element animate-delay-700 relative flex items-center justify-center mt-4 sm:mt-0">
               <span className="w-full border-t border-white/10"></span>
-              <span className="px-4 text-sm text-slate-400 bg-transparent absolute">Or continue with</span>
+              <span className="px-3 sm:px-4 text-xs sm:text-sm text-slate-400 bg-transparent absolute">Or continue with</span>
             </div>
 
             <button
               onClick={onGoogleSignIn}
               disabled={loading}
-              className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-white/10 rounded-xl py-3 text-sm hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
+              className="animate-element animate-delay-800 w-full flex items-center justify-center gap-2 sm:gap-3 border border-white/10 rounded-xl py-2.5 sm:py-3 text-xs sm:text-sm hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium touch-manipulation"
             >
               <GoogleIcon />
-              Continue with Google
+              <span className="whitespace-nowrap">Continue with Google</span>
             </button>
 
-            <p className="animate-element animate-delay-900 text-center text-sm text-slate-400">
+            <p className="animate-element animate-delay-900 text-center text-xs sm:text-sm text-slate-400 px-2 sm:px-0">
               New to DoorIQ?{' '}
               <button
                 type="button"
@@ -183,7 +183,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
 
       {/* Right column: hero image + testimonials */}
       {heroImageSrc && (
-        <section className="hidden md:block flex-1 relative -ml-24">
+        <section className="hidden md:block flex-1 relative -ml-12 lg:-ml-24 overflow-hidden">
           <div
             className="animate-slide-right animate-delay-300 absolute inset-0 rounded-none bg-cover bg-center shadow-2xl"
             style={{
@@ -195,7 +195,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
             <div className="absolute inset-0 bg-gradient-to-t from-[#07030f] via-transparent to-transparent"></div>
           </div>
           {testimonials.length > 0 && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 xl:gap-2.5 2xl:gap-3 px-2 xl:px-4 w-full justify-center z-10 max-w-[95vw] xl:max-w-full">
+            <div className="absolute bottom-4 md:bottom-6 lg:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 xl:gap-2.5 2xl:gap-3 px-2 xl:px-4 w-full justify-center z-10 max-w-[95vw] xl:max-w-full overflow-x-auto">
               <TestimonialCard testimonial={testimonials[0]} delay="animate-delay-1000" />
               {testimonials[1] && <TestimonialCard testimonial={testimonials[1]} delay="animate-delay-1200" />}
               {testimonials[2] && (

@@ -189,20 +189,20 @@ const FaqItem = React.forwardRef<
       className={cn(
         "group rounded-lg",
         "transition-all duration-200 ease-in-out",
-        "border border-primary/30",
-        "bg-white",
+        "border border-purple-500/30",
+        "bg-slate-800/90 backdrop-blur-sm",
       )}
     >
       <Button
         variant="ghost"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-8 py-6 h-auto justify-between hover:bg-transparent"
+        className="w-full px-8 py-6 h-auto justify-between hover:bg-slate-700/50"
       >
         <h3
           className={cn(
             "text-lg font-medium transition-colors duration-200 text-left",
-            "text-slate-300",
-            isOpen && "text-slate-300",
+            "text-white",
+            isOpen && "text-white",
           )}
         >
           {question}
@@ -216,7 +216,7 @@ const FaqItem = React.forwardRef<
           className={cn(
             "p-0.5 rounded-full flex-shrink-0",
             "transition-colors duration-200",
-            isOpen ? "text-primary" : "text-gray-600",
+            isOpen ? "text-purple-400" : "text-slate-300",
           )}
         >
           <ChevronDown className="h-5 w-5" />
@@ -242,7 +242,7 @@ const FaqItem = React.forwardRef<
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -10, opacity: 0 }}
-                className="text-base text-slate-300 leading-relaxed"
+                className="text-base text-slate-200 leading-relaxed"
               >
                 {answer}
               </motion.p>

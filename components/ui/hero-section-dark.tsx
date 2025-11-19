@@ -261,8 +261,6 @@ const InlineAgentCarousel = React.memo(() => {
                             quality={95}
                             priority={index < 6}
                             unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
-                            width={160}
-                            height={160}
                             onError={(e) => {
                               console.error('❌ Hero carousel image failed to load:', agent.src, 'Encoded:', imageSrc)
                               e.stopPropagation()

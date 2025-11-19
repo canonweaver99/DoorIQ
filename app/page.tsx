@@ -320,8 +320,6 @@ function ProblemSolutionSection() {
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
-              width={800}
-              height={600}
             />
           </motion.div>
         </motion.div>
@@ -375,8 +373,6 @@ function ProblemSolutionSection() {
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
-              width={800}
-              height={600}
             />
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
