@@ -420,20 +420,139 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             Your Struggles
           </button>
           <div className="w-px h-4 bg-border/20 dark:bg-slate-700" />
-          <button
+          <motion.button
             type="button"
             onClick={handleRandomAgent}
             disabled={loading || agents.length === 0}
+            whileHover={loading || agents.length === 0 ? {} : { scale: 1.05 }}
+            whileTap={loading || agents.length === 0 ? {} : { scale: 0.98 }}
             className={cn(
-              "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm sm:text-base font-semibold transition-all font-space",
-              "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white",
-              "hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400",
-              "shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50",
-              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+              "relative inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm sm:text-base font-bold transition-all font-space overflow-hidden",
+              "text-white",
+              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
             )}
+            style={{
+              background: loading || agents.length === 0 
+                ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)'
+                : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 25%, #ec4899 50%, #f59e0b 75%, #6366f1 100%)',
+              backgroundSize: '300% 300%',
+              boxShadow: loading || agents.length === 0
+                ? '0 10px 25px -5px rgba(99, 102, 241, 0.3), 0 0 20px rgba(139, 92, 246, 0.2)'
+                : '0 10px 30px -5px rgba(99, 102, 241, 0.4), 0 0 30px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+            }}
           >
-            🎲 Surprise Me
-          </button>
+            {/* Animated gradient background */}
+            {!loading && agents.length > 0 && (
+              <motion.div
+                className="absolute inset-0 opacity-100"
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 25%, #ec4899 50%, #f59e0b 75%, #6366f1 100%)',
+                  backgroundSize: '300% 300%',
+                }}
+              />
+            )}
+            
+            {/* Shimmer effect */}
+            {!loading && agents.length > 0 && (
+              <motion.div
+                className="absolute inset-0 opacity-30"
+                animate={{
+                  x: ['-100%', '200%'],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 1,
+                  ease: 'easeInOut',
+                }}
+                style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                  width: '50%',
+                }}
+              />
+            )}
+            
+            {/* Content */}
+            <span className="relative z-10 flex items-center gap-2">
+              <motion.span
+                animate={loading || agents.length === 0 ? {} : {
+                  rotate: [0, 15, -15, 15, -15, 0],
+                }}
+                transition={{
+                  duration: 0.5,
+                  repeat: Infinity,
+                  repeatDelay: 2,
+                  ease: 'easeInOut',
+                }}
+                className="text-lg"
+              >
+                🎲
+              </motion.span>
+              <span className="relative">
+                Surprise Me
+                {/* Sparkle dots */}
+                {!loading && agents.length > 0 && (
+                  <>
+                    <motion.span
+                      className="absolute -top-1 -right-1 text-[8px]"
+                      animate={{
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1, 0.5],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: 0,
+                      }}
+                    >
+                      ✨
+                    </motion.span>
+                    <motion.span
+                      className="absolute -bottom-1 -left-1 text-[8px]"
+                      animate={{
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1, 0.5],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: 0.75,
+                      }}
+                    >
+                      ✨
+                    </motion.span>
+                  </>
+                )}
+              </span>
+            </span>
+            
+            {/* Pulsing glow effect */}
+            {!loading && agents.length > 0 && (
+              <motion.div
+                className="absolute inset-0 rounded-full blur-xl opacity-50"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.6, 0.3],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                style={{
+                  background: 'radial-gradient(circle, rgba(236, 72, 153, 0.6) 0%, transparent 70%)',
+                }}
+              />
+            )}
+          </motion.button>
         </motion.div>
 
         {/* Agent Bubbles Grid - 4 columns */}

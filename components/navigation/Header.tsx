@@ -217,29 +217,22 @@ function HeaderContent() {
           setUserCredits(5)
         }
 
-        // Check if user is new (created within last 48 hours) or first time sign in and show credits tooltip
+        // Check if user is a first-time signup (created within last 5 minutes) and show credits tooltip
         if (userData.created_at) {
           const createdAt = new Date(userData.created_at)
           const now = new Date()
-          const hoursSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60)
-          const isNewUser = hoursSinceCreation < 48
+          const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60)
+          const isFirstTimeSignup = minutesSinceCreation < 5 // Only show for users who just signed up
           const tooltipDismissed = typeof window !== 'undefined' 
-            ? localStorage.getItem('credits-tooltip-dismissed') === 'true'
-            : false
-          const hasSeenTooltip = typeof window !== 'undefined' && userData
-            ? localStorage.getItem(`credits-tooltip-seen-${userData.id}`) === 'true'
+            ? localStorage.getItem('first-signup-credits-tooltip-dismissed') === 'true'
             : false
           
-          // Show for new users or first time sign in (if they haven't seen it before)
-          if ((isNewUser || !hasSeenTooltip) && !tooltipDismissed) {
+          // Show only for first-time signup users who haven't dismissed it
+          if (isFirstTimeSignup && !tooltipDismissed) {
             // Small delay to ensure DOM is ready
             setTimeout(() => {
               setShowCreditsTooltip(true)
-              // Mark as seen for this user
-              if (typeof window !== 'undefined' && userData) {
-                localStorage.setItem(`credits-tooltip-seen-${userData.id}`, 'true')
-              }
-            }, 1000)
+            }, 1500)
           }
         }
       } else {
@@ -557,46 +550,81 @@ function HeaderContent() {
                     {userCredits} credits
                   </p>
                   
-                  {/* Credits Tooltip for First-Time Users */}
+                  {/* Credits Tooltip for First-Time Signup Users */}
                   <AnimatePresence>
                     {showCreditsTooltip && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                        initial={{ opacity: 0, scale: 0.9, y: -10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.8, y: -10 }}
-                        transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-                        className="absolute left-0 top-full mt-2 z-50 w-64 p-4 bg-gradient-to-br from-purple-600/95 to-pink-600/95 backdrop-blur-sm rounded-lg border border-purple-400/30 shadow-[0px_0px_20px_rgba(168,85,247,0.4)]"
+                        exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                        transition={{ duration: 0.4, type: "spring", stiffness: 400, damping: 25 }}
+                        className="absolute left-0 top-full mt-3 z-50 w-72 sm:w-80"
                         style={{
                           transformOrigin: 'top left',
                         }}
                       >
-                        {/* Arrow pointer */}
-                        <div className="absolute -top-2 left-4 w-4 h-4 bg-gradient-to-br from-purple-600 to-pink-600 border-l border-t border-purple-400/30 rotate-45"></div>
+                        {/* Glowing background effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl blur-xl -z-10" />
                         
-                        <div className="relative">
-                          <button
-                            onClick={() => {
-                              setShowCreditsTooltip(false)
-                              if (typeof window !== 'undefined') {
-                                localStorage.setItem('credits-tooltip-dismissed', 'true')
-                              }
-                            }}
-                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-background/10 dark:bg-white/10 hover:bg-background/20 dark:hover:bg-white/20 flex items-center justify-center text-foreground/70 dark:text-slate-300 text-xs transition-colors"
-                            aria-label="Dismiss tooltip"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                        {/* Main card */}
+                        <div className="relative bg-gradient-to-br from-slate-900/95 via-purple-900/30 to-slate-900/95 backdrop-blur-xl rounded-2xl border border-purple-500/20 shadow-2xl overflow-hidden">
+                          {/* Animated gradient border */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/50 via-purple-500/50 to-pink-500/50 opacity-50 blur-sm" />
+                          <div className="absolute inset-[1px] bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 rounded-2xl" />
                           
-                          <h3 className="text-sm font-semibold text-foreground mb-2">
-                            Welcome! Here's how credits work:
-                          </h3>
-                          <p className="text-xs text-foreground/80 dark:text-slate-200 leading-relaxed mb-2">
-                            You start with <span className="font-semibold text-purple-400 dark:text-purple-200">5 free credits</span> to practice your sales skills with AI homeowners.
-                          </p>
-                          <p className="text-xs text-foreground/80 dark:text-slate-200 leading-relaxed">
-                            Each training session uses 1 credit. Credits reset monthly, or you can purchase more anytime!
-                          </p>
+                          {/* Content */}
+                          <div className="relative p-5">
+                            {/* Close button */}
+                            <button
+                              onClick={() => {
+                                setShowCreditsTooltip(false)
+                                if (typeof window !== 'undefined') {
+                                  localStorage.setItem('first-signup-credits-tooltip-dismissed', 'true')
+                                }
+                              }}
+                              className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all group"
+                              aria-label="Dismiss tooltip"
+                            >
+                              <X className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
+                            </button>
+                            
+                            {/* Icon */}
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="relative">
+                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl blur-md opacity-50" />
+                                <div className="relative w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                                  <span className="text-xl">🎁</span>
+                                </div>
+                              </div>
+                              <h3 className="text-lg font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+                                Welcome to DoorIQ!
+                              </h3>
+                            </div>
+                            
+                            {/* Content text */}
+                            <div className="space-y-3">
+                              <p className="text-sm text-slate-300 leading-relaxed">
+                                You get <span className="font-bold text-purple-300">5 free credits</span> to practice your sales skills with AI homeowners.
+                              </p>
+                              <div className="flex items-start gap-2 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+                                <span className="text-lg mt-0.5">🔄</span>
+                                <p className="text-sm text-slate-300 leading-relaxed">
+                                  Your credits <span className="font-semibold text-purple-300">refill each day</span> - so you can keep practicing!
+                                </p>
+                              </div>
+                              <p className="text-xs text-slate-400 leading-relaxed">
+                                Each training session uses 1 credit. Upgrade anytime for unlimited sessions!
+                              </p>
+                            </div>
+                            
+                            {/* Decorative elements */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-2xl -z-10" />
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-500/10 to-transparent rounded-full blur-xl -z-10" />
+                          </div>
                         </div>
+                        
+                        {/* Arrow pointer */}
+                        <div className="absolute -top-2 left-6 w-4 h-4 bg-gradient-to-br from-slate-900 via-purple-900/30 to-slate-900 border-l border-t border-purple-500/20 rotate-45" />
                       </motion.div>
                     )}
                   </AnimatePresence>
