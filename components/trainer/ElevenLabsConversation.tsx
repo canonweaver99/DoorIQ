@@ -176,41 +176,59 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
                               !reasonStr.includes('conversation ended') &&
                               !reasonStr.includes('call ended')
           
-          // If we have an active session, always dispatch end_call IMMEDIATELY - don't try to reconnect
-          // Reconnection should only happen for connection errors outside of active sessions
+          // If we have an active session, ALWAYS end the call - use MULTIPLE methods to ensure it's caught
           if (hasActiveSession && wasConnectedRef.current && !isReconnectingRef.current) {
-            console.log('🔌 Disconnect during active session - treating as call end (ElevenLabs ended call)')
+            console.log('🔌 Active session disconnected - FORCING call end')
             console.log('📊 Disconnect reason:', reason)
             
-            // CRITICAL: Dispatch agent:end_call event MULTIPLE times to ensure it's caught
-            // Use different methods to maximize reliability
+            // Create robust end call data
             const endCallData = {
               reason: reason || 'ElevenLabs ended conversation',
               source: isUnexpected ? 'unexpected_disconnect' : 'elevenlabs_disconnect',
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              sessionId: sessionIdRef.current
             }
             
-            // Method 1: Dispatch immediately (most important)
-            console.log('📢 Dispatching agent:end_call event (immediate)')
+            // Method 1: Direct window event dispatch (most reliable)
+            console.log('📢 Method 1: Dispatching agent:end_call event (immediate)')
             safeDispatchEvent('agent:end_call', endCallData)
             
-            // Method 2: Dispatch after a tiny delay (in case listener isn't ready)
-            setTimeout(() => {
-              console.log('📢 Dispatching agent:end_call event (delayed 50ms)')
-              safeDispatchEvent('agent:end_call', endCallData)
-            }, 50)
+            // Method 2: PostMessage to parent window (if in iframe)
+            if (typeof window !== 'undefined' && window.parent !== window) {
+              console.log('📢 Method 2: Posting message to parent window')
+              try {
+                window.parent.postMessage({
+                  type: 'agent:end_call',
+                  data: endCallData
+                }, '*')
+              } catch (e) {
+                console.warn('⚠️ PostMessage failed:', e)
+              }
+            }
             
-            // Method 3: Dispatch after another delay as backup
-            setTimeout(() => {
-              console.log('📢 Dispatching agent:end_call event (delayed 200ms backup)')
-              safeDispatchEvent('agent:end_call', endCallData)
-            }, 200)
+            // Method 3: Set global state (if available)
+            if (typeof window !== 'undefined') {
+              try {
+                (window as any).doorIQCallState = {
+                  isActive: false,
+                  ended: true,
+                  endReason: endCallData.reason,
+                  timestamp: endCallData.timestamp
+                }
+                console.log('📢 Method 3: Set global call state')
+              } catch (e) {
+                console.warn('⚠️ Global state set failed:', e)
+              }
+            }
             
-            // Method 4: Dispatch one more time after 500ms as final backup
-            setTimeout(() => {
-              console.log('📢 Dispatching agent:end_call event (delayed 500ms final backup)')
-              safeDispatchEvent('agent:end_call', endCallData)
-            }, 500)
+            // Method 4-7: Multiple delayed dispatches to catch late listeners
+            const delays = [50, 100, 200, 500, 1000]
+            delays.forEach((delay, index) => {
+              setTimeout(() => {
+                console.log(`📢 Method ${index + 4}: Dispatching agent:end_call event (delayed ${delay}ms)`)
+                safeDispatchEvent('agent:end_call', endCallData)
+              }, delay)
+            })
             
             wasConnectedRef.current = false // Reset for next connection
             
@@ -320,8 +338,33 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             safeDispatchEvent('agent:audio', msg)
           }
           
-          // AGGRESSIVE end_call detection - check every possible format
+          // ULTRA-AGGRESSIVE end_call detection - check EVERYTHING including string search
           const detectEndCall = (message: any, source: string): boolean => {
+            // Method 0: String search - check if "end_call" appears anywhere in the message
+            try {
+              const messageStr = JSON.stringify(message).toLowerCase()
+              if (messageStr.includes('end_call') || messageStr.includes('end_conversation') || messageStr.includes('"end"') && messageStr.includes('"call"')) {
+                console.log(`🛑 END_CALL DETECTED via string search (${source})!`)
+                console.log(`📋 Message string snippet:`, messageStr.substring(0, 200))
+                return true
+              }
+            } catch (e) {
+              // JSON.stringify failed, continue with other checks
+            }
+            
+            // Method 0.5: Check message content for end-related keywords
+            const content = message?.content || message?.text || message?.message || ''
+            if (typeof content === 'string') {
+              const contentLower = content.toLowerCase()
+              if ((contentLower.includes('end') && (contentLower.includes('call') || contentLower.includes('conversation'))) ||
+                  contentLower.includes('ending the call') ||
+                  contentLower.includes('call is ending')) {
+                console.log(`🛑 END_CALL DETECTED in content (${source})!`)
+                console.log(`📋 Content:`, content.substring(0, 100))
+                return true
+              }
+            }
+            
             // Format 1: Direct tool_call or function_call type
             if (message?.type === 'tool_call' || message?.type === 'function_call') {
               const toolName = message?.tool_name || message?.name || message?.function_name || message?.function?.name

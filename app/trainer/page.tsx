@@ -100,6 +100,7 @@ function TrainerPageContent() {
   const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
   const [showOutOfCredits, setShowOutOfCredits] = useState(false)
   const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
+  const [showDoorCloseAnimation, setShowDoorCloseAnimation] = useState(false) // Direct state trigger for door closing animation
   const loopVideoStartTimeRef = useRef<number>(0) // Track when loop video started playing
   const loopVideoDurationRef = useRef<number>(0) // Track loop video duration
   const [showDoorOpeningVideo, setShowDoorOpeningVideo] = useState(false) // Track when to show door opening video
@@ -774,6 +775,13 @@ function TrainerPageContent() {
     return { shouldEnd: false, reason: '' }
   }, [])
 
+  // Direct state-based call end handler - triggers animation immediately
+  const handleCallEnd = useCallback((reason: string) => {
+    console.log('🚪 handleCallEnd called - setting showDoorCloseAnimation state', { reason })
+    setShowDoorCloseAnimation(true) // This triggers the animation via state change
+    setVideoMode('closing') // Also set video mode immediately
+  }, [])
+
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Starting door closing sequence:', reason)
     console.log('🚪 Door closing sequence context:', {
@@ -781,8 +789,14 @@ function TrainerPageContent() {
       selectedAgent: selectedAgent?.name,
       videoMode,
       sessionActive,
+      showDoorCloseAnimation,
       hasVideoRef: !!agentVideoRef.current
     })
+    
+    // Ensure door close animation state is set
+    if (!showDoorCloseAnimation) {
+      setShowDoorCloseAnimation(true)
+    }
     
     // Check if this agent has video animations - if so, wait for loop to reach beginning, then play closing door video
     const hasVideos = agentHasVideos(selectedAgent?.name)
@@ -961,7 +975,10 @@ function TrainerPageContent() {
     const handleEndSessionRequest = () => {
       if (sessionActive && sessionId) {
         console.log('🔚 Manual end session requested')
-        endSession()
+        // Trigger door close animation via state change
+        handleCallEnd('Manual end session')
+        // Then end the session
+        endSession('manual')
       }
     }
     
@@ -1007,6 +1024,12 @@ function TrainerPageContent() {
       endCallProcessingRef.current = true
       console.log('🔒 Set endCallProcessingRef to true')
       
+      // CRITICAL: Trigger door close animation IMMEDIATELY via state change
+      // This ensures the animation starts right away, regardless of event propagation
+      const reason = e?.detail?.reason || 'Agent ended conversation'
+      console.log('🚪 Triggering door close animation via state change (immediate)')
+      handleCallEnd(reason)
+      
       console.log('🚪 Agent ended call - waiting for agent to finish speaking...')
       console.log('🚪 Starting door closing sequence flow...')
       
@@ -1048,8 +1071,7 @@ function TrainerPageContent() {
       // Additional buffer delay to ensure audio completes
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Use shared door closing sequence function
-      const reason = e?.detail?.reason || 'Agent ended conversation'
+      // Use shared door closing sequence function (animation already triggered via state)
       console.log('📊 END CALL TRIGGER DETAIL:', reason)
       await handleDoorClosingSequence(reason)
     }
@@ -1306,7 +1328,8 @@ function TrainerPageContent() {
                   <div className="relative w-full h-full overflow-hidden">
                     {(() => {
                       // CRITICAL: Keep video rendered during closing sequence even when sessionActive is false
-                      const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing')
+                      // Use state-based trigger (showDoorCloseAnimation) OR videoMode check
+                      const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
                       
                       // Use video for agents with video animations during active session or closing sequence
                       if (shouldUseVideo) {
