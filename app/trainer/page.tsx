@@ -659,59 +659,25 @@ function TrainerPageContent() {
     if (sessionId) {
       try {
         console.log('💾 Saving session data before redirect...')
-        console.log('📊 Session data:', {
-          id: sessionId,
-          transcriptLength: transcript.length,
-          duration,
-          agentName: selectedAgent?.name,
-          endReason: endReason || 'manual',
-          transcriptSample: transcript.slice(0, 3).map(t => `${t.speaker}: ${t.text.substring(0, 50)}`)
-        })
-        
-        // Ensure we have transcript entries before saving
-        if (transcript.length === 0) {
-          console.warn('⚠️ WARNING: Transcript is empty! This will cause grading to fail.')
-          console.warn('⚠️ Current transcript state:', transcript)
-        }
-        
-        // Wait for save to complete before redirecting to ensure data is persisted
-        const saveResponse = await fetch('/api/session', {
+        const savePromise = fetch('/api/session', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: sessionId,
-            transcript: transcript.length > 0 ? transcript : [], // Ensure it's always an array
+            transcript: transcript,
             duration_seconds: duration,
-            end_reason: endReason || 'manual',
-            agent_name: selectedAgent?.name || null,
-            homeowner_name: selectedAgent?.name || null, // Same as agent_name for now
-            agent_persona: selectedAgent?.name || null
+            end_reason: endReason || 'manual'
           }),
         })
         
-        if (!saveResponse.ok) {
-          const errorData = await saveResponse.json().catch(() => ({ error: 'Unknown error' }))
-          console.error('❌ Error saving session:', errorData)
-          console.error('❌ Transcript that failed to save:', transcript)
-          // Still redirect even if save fails - user can see error on loading page
-        } else {
-          const savedData = await saveResponse.json().catch(() => null)
-          console.log('✅ Session data saved successfully', savedData)
-          
-          // Verify transcript was saved by checking the response
-          if (transcript.length === 0) {
-            console.error('❌ CRITICAL: Transcript was empty when saving!')
-            console.error('❌ This will cause grading to fail. Transcript state:', transcript)
-          } else {
-            console.log(`✅ Transcript saved with ${transcript.length} entries`)
-          }
-          
-          // Small delay to ensure database write completes before redirecting
-          await new Promise(resolve => setTimeout(resolve, 500))
-        }
-        
+        // Redirect immediately, don't wait for save to complete
         console.log('🚀 Redirecting to loading page:', `/trainer/loading/${sessionId}`)
         const redirectUrl = `/trainer/loading/${sessionId}`
+        
+        // Try to save in background, but redirect regardless
+        savePromise.catch((error) => {
+          console.error('❌ Error saving session (continuing with redirect):', error)
+        })
         
         // Use window.location.href for reliable redirect (blocking)
         window.location.href = redirectUrl
