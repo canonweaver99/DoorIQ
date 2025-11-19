@@ -4,19 +4,23 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import ElevenLabsConversation from '@/components/trainer/ElevenLabsConversation'
-import WebcamRecorder from '@/components/trainer/WebcamRecorder'
-// import { useDualCameraRecording } from '@/hooks/useDualCameraRecording' // Archived - re-enable when ready
+import dynamicImport from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
 import { logger } from '@/lib/logger'
-import { PaywallModal } from '@/components/subscription'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
-import { LastCreditWarningModal } from '@/components/ui/LastCreditWarningModal'
-import { OutOfCreditsModal } from '@/components/ui/OutOfCreditsModal'
+
+// Dynamic imports for heavy components - only load when needed
+const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>
+})
+const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
+const PaywallModal = dynamicImport(() => import('@/components/subscription').then(mod => ({ default: mod.PaywallModal })), { ssr: false })
+const LastCreditWarningModal = dynamicImport(() => import('@/components/ui/LastCreditWarningModal').then(mod => ({ default: mod.LastCreditWarningModal })), { ssr: false })
+const OutOfCreditsModal = dynamicImport(() => import('@/components/ui/OutOfCreditsModal').then(mod => ({ default: mod.OutOfCreditsModal })), { ssr: false })
 
 interface Agent {
   id: string
@@ -221,10 +225,7 @@ function TrainerPageContent() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const signedUrlAbortRef = useRef<AbortController | null>(null)
-  const endCallProcessingRef = useRef(false) // Track if end call is being processed
   const agentVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for Tanya & Tom video element
-  const lastConnectionStatusRef = useRef<'connected' | 'disconnected' | 'connecting' | 'error' | null>(null) // Track connection status changes
-  // Removed transcript analysis refs - was causing issues
   
   const subscription = useSubscription()
   const sessionLimit = useSessionLimit()
@@ -629,13 +630,6 @@ function TrainerPageContent() {
       return
     }
     
-    // Reset processing flag when starting endSession (but only if we're actually ending)
-    // Don't reset if we're already processing, as that could allow duplicate calls
-    if (endCallProcessingRef.current) {
-      console.log('🔓 Resetting endCallProcessingRef to false in endSession')
-      endCallProcessingRef.current = false
-    }
-    
     setLoading(true)
     setSessionActive(false)
     setConversationToken(null)
@@ -714,11 +708,7 @@ function TrainerPageContent() {
     }
   }, [sessionId, duration, transcript, router, sessionActive])
 
-  // Track agent mode for speaking detection
-  const agentModeRef = useRef<'speaking' | 'listening' | 'idle' | null>(null)
-  
   // Shared function to handle door closing sequence and end session
-  // Removed analyzeTranscriptForEndCall - was causing issues with premature session endings
 
   // Direct state-based call end handler - triggers animation immediately
   const handleCallEnd = useCallback((reason: string) => {
@@ -912,11 +902,8 @@ function TrainerPageContent() {
     })
   }, [selectedAgent?.name, videoMode, endSession])
   
-  // Handle agent end call event with improved reliability
+  // Handle manual end session requests only
   useEffect(() => {
-    let silenceTimer: NodeJS.Timeout | null = null
-    let lastActivityTime = Date.now()
-    
     const handleEndSessionRequest = () => {
       if (sessionActive && sessionId) {
         console.log('🔚 Manual end session requested')
@@ -927,222 +914,22 @@ function TrainerPageContent() {
       }
     }
     
-    // Listen for agent mode changes to track speaking status
-    const handleAgentMode = (e: any) => {
-      const mode = e?.detail || e
-      agentModeRef.current = mode === 'speaking' ? 'speaking' : (mode === 'listening' ? 'listening' : 'idle')
-      console.log('🎙️ Agent mode changed:', agentModeRef.current)
-    }
-    
-    // Listen for ping/audio activity even without text responses
-    const handleAgentPing = (e: any) => {
-      console.log('🏓 Agent ping/audio activity detected, resetting activity timer')
-      handleAgentActivity()
-    }
-    
-    const handleAgentEndCall = async (e: any) => {
-      console.log('📞 handleAgentEndCall triggered', { 
-        sessionActive, 
-        sessionId, 
-        eventDetail: e?.detail,
-        alreadyProcessing: endCallProcessingRef.current
-      })
-      
-      // Prevent duplicate processing
-      if (endCallProcessingRef.current) {
-        console.log('⚠️ Already processing end_call, ignoring duplicate')
-        return
-      }
-      
-      // Only require sessionId
-      if (!sessionId) {
-        console.log('⚠️ Received end_call event but no sessionId, ignoring')
-        return
-      }
-      
-      // Set processing flag immediately to prevent duplicates
-      endCallProcessingRef.current = true
-      
-      // Clear any silence timers
-      if (silenceTimer) {
-        clearTimeout(silenceTimer)
-        silenceTimer = null
-      }
-      
-      // End session immediately without delays
-      const reason = e?.detail?.reason || 'Agent ended conversation'
-      console.log('🚪 Ending session immediately:', reason)
-      
-      // Trigger door close animation and handle session end
-      handleCallEnd(reason)
-      await handleDoorClosingSequence(reason)
-    }
-    
-    // Track agent and user activity - silence timeout as fallback
-    const handleAgentActivity = () => {
-      lastActivityTime = Date.now()
-      // Reset the silence timer when agent or user is active
-      if (silenceTimer) {
-        clearTimeout(silenceTimer)
-        silenceTimer = null
-      }
-      if (sessionActive && sessionId) {
-        silenceTimer = setTimeout(() => {
-          const timeSinceLastActivity = Date.now() - lastActivityTime
-          // 30 seconds timeout - only trigger if we've had actual silence and minimum conversation
-          if (sessionActive && sessionId && timeSinceLastActivity >= 30000 && transcript.length > 3) {
-            console.log('⏱️ No activity for 30 seconds, auto-ending session...')
-            console.log('📊 END CALL TRIGGER: Silence timeout (30 seconds)')
-            console.log('📊 Transcript length:', transcript.length, 'lines')
-            handleAgentEndCall({ detail: { reason: 'Extended silence detected (30 seconds)' } })
-          }
-        }, 30000) // 30 seconds timeout
-      }
-    }
-    
-    // Listen for agent messages to track activity
-    // Listen to BOTH agent:message AND agent:response events (both are dispatched)
-    const handleAgentMessage = (e: any) => {
-      console.log('📨 Agent message/response received, resetting activity timer')
-      handleAgentActivity()
-    }
-    
-    // Also listen for agent:response events (the main one that's dispatched)
-    const handleAgentResponse = (e: any) => {
-      console.log('📨 Agent response received, resetting activity timer')
-      handleAgentActivity()
-      // Removed goodbye phrase detection - only ElevenLabs will trigger end calls
-    }
-    
-    // Listen for user activity
-    const handleUserActivity = (e: any) => {
-      handleAgentActivity()
-      // Removed user goodbye phrase detection - only ElevenLabs will trigger end calls
-    }
-    
-    // Listen for connection status changes (disconnect signals from ElevenLabs)
-    const handleConnectionStatus = (e: any) => {
-      const status = e.detail
-      console.log('📊 Connection status changed:', status)
-      
-      // If we get disconnected during an active session, end the session IMMEDIATELY
-      // This catches cases where ElevenLabs disconnects without sending end_call
-      if (status === 'disconnected' && sessionActive && sessionId && !endCallProcessingRef.current) {
-        console.log('🔌 Connection disconnected during active session - ending session IMMEDIATELY')
-        console.log('📊 END CALL TRIGGER: Connection lost/disconnected')
-        // Call directly without delay - events might not fire reliably
-        handleAgentEndCall({ detail: { reason: 'Connection lost', source: 'disconnect' } })
-      }
-    }
-    
-    // Update status tracking when we receive connection status events
-    const handleConnectionStatusWithTracking = (e: any) => {
-      const status = e.detail
-      const previousStatus = lastConnectionStatusRef.current
-      lastConnectionStatusRef.current = status
-      
-      // Call the original handler
-      handleConnectionStatus(e)
-      
-      // Additional check: if we transitioned from connected to disconnected, trigger end call
-      if (previousStatus === 'connected' && status === 'disconnected' && sessionActive && sessionId && !endCallProcessingRef.current) {
-        console.log('🔄 Status transition detected: connected -> disconnected')
-        console.log('📊 END CALL TRIGGER: Status transition')
-        handleAgentEndCall({ detail: { reason: 'Connection lost (status transition)', source: 'status_tracking' } })
-      }
-    }
-    
-    // Removed transcript-based goodbye phrase detection - only ElevenLabs will trigger end calls
-    
-    // Set up initial silence timeout
-    if (sessionActive && sessionId) {
-      handleAgentActivity() // Initialize timer
-    }
-    
     // Guard against SSR - only set up event listeners on client
     if (typeof window === 'undefined') {
       return
     }
     
-    // Log when event listeners are attached
-    console.log('🎧 Setting up event listeners for auto-end', { sessionActive, sessionId })
-    console.log('🎧 handleAgentEndCall function:', typeof handleAgentEndCall)
-    
-    // Listen for manual end session requests
+    // Listen for manual end session requests only
     window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
     
-    // Listen for agent end_call events (dispatched from ElevenLabsConversation)
-    // Use capture phase to catch events earlier
-    const endCallHandler = (e: Event) => {
-      console.log('🎯 agent:end_call event RECEIVED in listener', {
-        type: e.type,
-        detail: (e as CustomEvent)?.detail,
-        timestamp: Date.now(),
-        sessionId,
-        sessionActive,
-        processing: endCallProcessingRef.current
-      })
-      handleAgentEndCall(e as any)
-    }
-    window.addEventListener('agent:end_call', endCallHandler, true) // Use capture phase
-    console.log('✅ agent:end_call event listener attached (capture phase)')
-    
-    // Listen for agent messages/responses to track activity
-    // Note: agent:message is dispatched, but agent:response is the main one with actual text
-    window.addEventListener('agent:message', handleAgentMessage)
-    window.addEventListener('agent:response', handleAgentResponse) // Main event for agent transcript
-    
-    // Listen for user activity too (they might be speaking)
-    window.addEventListener('agent:user', handleUserActivity)
-    
-    // Listen for connection status changes (with tracking)
-    window.addEventListener('connection:status', handleConnectionStatusWithTracking)
-    
-    // Listen for agent mode changes to track speaking status
-    window.addEventListener('agent:mode', handleAgentMode)
-    window.addEventListener('agent:ping', handleAgentPing)
-    window.addEventListener('agent:audio', handleAgentPing)
-    
-    // Debug: Log all custom events to see what's happening
-    const debugListener = (e: Event) => {
-      if (e.type.startsWith('agent:') || e.type === 'connection:status' || e.type === 'trainer:') {
-        console.log('🎯 Custom event dispatched:', e.type, e instanceof CustomEvent ? e.detail : '')
-      }
-    }
-    window.addEventListener('agent:end_call', debugListener as EventListener, { once: false })
-    window.addEventListener('agent:message', debugListener as EventListener, { once: false })
-    window.addEventListener('agent:response', debugListener as EventListener, { once: false })
-    window.addEventListener('agent:user', debugListener as EventListener, { once: false })
-    window.addEventListener('connection:status', debugListener as EventListener, { once: false })
-    
     return () => {
-      if (silenceTimer) clearTimeout(silenceTimer)
-      
       // Guard against SSR - only remove listeners if window exists
       if (typeof window === 'undefined') return
       
       // Cleanup
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
-      // Remove the capture phase listener
-      window.removeEventListener('agent:end_call', endCallHandler, true)
-      window.removeEventListener('agent:message', handleAgentMessage)
-      window.removeEventListener('agent:response', handleAgentResponse)
-      window.removeEventListener('agent:user', handleUserActivity)
-      window.removeEventListener('connection:status', handleConnectionStatusWithTracking)
-      window.removeEventListener('agent:mode', handleAgentMode)
-      window.removeEventListener('agent:ping', handleAgentPing)
-      window.removeEventListener('agent:audio', handleAgentPing)
-      window.removeEventListener('agent:end_call', debugListener as EventListener)
-      window.removeEventListener('agent:message', debugListener as EventListener)
-      window.removeEventListener('agent:response', debugListener as EventListener)
-      window.removeEventListener('agent:user', debugListener as EventListener)
-      window.removeEventListener('connection:status', debugListener as EventListener)
     }
-  }, [sessionActive, sessionId, endSession, transcript, selectedAgent?.name, videoMode, handleDoorClosingSequence])
-
-  // Sessions end only when:
-  // 1. ElevenLabs sends end_call event (via onDisconnect)
-  // 2. 30 second silence timeout (fallback safety)
+  }, [sessionActive, sessionId, endSession, handleCallEnd])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)

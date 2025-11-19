@@ -6,15 +6,19 @@ import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2 } from 'lucide-react'
-import { format } from 'date-fns'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
-import CircularProgress from '@/components/ui/CircularProgress'
-import ConfirmationModal from '@/components/ui/ConfirmationModal'
-import PasswordResetModal from '@/components/auth/PasswordResetModal'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
+
+import { format } from 'date-fns'
+
+// Dynamic imports for heavy components
+const CircularProgress = dynamic(() => import('@/components/ui/CircularProgress'), { ssr: false })
+const ConfirmationModal = dynamic(() => import('@/components/ui/ConfirmationModal'), { ssr: false })
+const PasswordResetModal = dynamic(() => import('@/components/auth/PasswordResetModal'), { ssr: false })
 
 type Session = Database['public']['Tables']['live_sessions']['Row']
 

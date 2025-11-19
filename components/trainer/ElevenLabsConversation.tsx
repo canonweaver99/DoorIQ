@@ -162,12 +162,9 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           // Stop health monitoring
           stopHealthMonitoringFn()
           
-          // CRITICAL: If we have an active sessionId, treat ANY disconnect as a call ending
-          // This ensures we always catch when ElevenLabs ends the call, regardless of reason format
           const hasActiveSession = !!sessionIdRef.current
           
-          // Check if this was an unexpected disconnect (not a graceful end)
-          // But only for reconnection logic - we'll always dispatch end_call if we have a session
+          // Check if this was an unexpected disconnect (for reconnection logic)
           const reasonStr = String(reason || '').toLowerCase()
           const isUnexpected = wasConnectedRef.current && 
                               !reasonStr.includes('end_call') && 
@@ -175,75 +172,6 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
                               !reasonStr.includes('ended') &&
                               !reasonStr.includes('conversation ended') &&
                               !reasonStr.includes('call ended')
-          
-          // If we have an active session, ALWAYS end the call - use MULTIPLE methods to ensure it's caught
-          if (hasActiveSession && wasConnectedRef.current && !isReconnectingRef.current) {
-            console.log('🔌 Active session disconnected - FORCING call end')
-            console.log('📊 Disconnect reason:', reason)
-            
-            // Create robust end call data
-            const endCallData = {
-              reason: reason || 'ElevenLabs ended conversation',
-              source: isUnexpected ? 'unexpected_disconnect' : 'elevenlabs_disconnect',
-              timestamp: Date.now(),
-              sessionId: sessionIdRef.current
-            }
-            
-            // Method 1: Direct window event dispatch (most reliable)
-            console.log('📢 Method 1: Dispatching agent:end_call event (immediate)')
-            safeDispatchEvent('agent:end_call', endCallData)
-            
-            // Method 2: PostMessage to parent window (if in iframe)
-            if (typeof window !== 'undefined' && window.parent !== window) {
-              console.log('📢 Method 2: Posting message to parent window')
-              try {
-                window.parent.postMessage({
-                  type: 'agent:end_call',
-                  data: endCallData
-                }, '*')
-              } catch (e) {
-                console.warn('⚠️ PostMessage failed:', e)
-              }
-            }
-            
-            // Method 3: Set global state (if available)
-            if (typeof window !== 'undefined') {
-              try {
-                (window as any).doorIQCallState = {
-                  isActive: false,
-                  ended: true,
-                  endReason: endCallData.reason,
-                  timestamp: endCallData.timestamp
-                }
-                console.log('📢 Method 3: Set global call state')
-              } catch (e) {
-                console.warn('⚠️ Global state set failed:', e)
-              }
-            }
-            
-            // Method 4-7: Multiple delayed dispatches to catch late listeners
-            const delays = [50, 100, 200, 500, 1000]
-            delays.forEach((delay, index) => {
-              setTimeout(() => {
-                console.log(`📢 Method ${index + 4}: Dispatching agent:end_call event (delayed ${delay}ms)`)
-                safeDispatchEvent('agent:end_call', endCallData)
-              }, delay)
-            })
-            
-            wasConnectedRef.current = false // Reset for next connection
-            
-            setStatus('disconnected')
-            dispatchStatus('disconnected')
-            
-            // Stop audio recording when conversation ends
-            if (audioRecordingActiveRef.current) {
-              console.log('🛑 Stopping audio recording from onDisconnect')
-              stopAudioRecording()
-              audioRecordingActiveRef.current = false
-            }
-            
-            return // Don't attempt reconnection for active session disconnects
-          }
           
           // Only attempt reconnection if we DON'T have an active session (connection error outside session)
           if (isUnexpected && !isReconnectingRef.current && !hasActiveSession) {
@@ -259,21 +187,11 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
               }
               return
             } else {
-              console.error('❌ Max reconnection attempts reached, ending conversation')
-              // Fall through to dispatch end_call
+              console.error('❌ Max reconnection attempts reached')
             }
           }
           
-          // Fallback: dispatch end_call if we were connected (for edge cases)
-          if (wasConnectedRef.current && !isReconnectingRef.current && !hasActiveSession) {
-            console.log('🔌 Disconnect detected (no active session), dispatching agent:end_call event')
-            safeDispatchEvent('agent:end_call', { 
-              reason: reason || 'Connection ended',
-              source: isUnexpected ? 'unexpected_disconnect' : 'disconnect',
-              timestamp: Date.now()
-            })
-            wasConnectedRef.current = false
-          }
+          wasConnectedRef.current = false // Reset for next connection
           
           setStatus('disconnected')
           dispatchStatus('disconnected')
@@ -337,150 +255,6 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             console.log('🔊 Audio activity detected, connection still active')
             safeDispatchEvent('agent:audio', msg)
           }
-          
-          // ULTRA-AGGRESSIVE end_call detection - check EVERYTHING including string search
-          const detectEndCall = (message: any, source: string): boolean => {
-            // Method 0: String search - check if "end_call" appears anywhere in the message
-            try {
-              const messageStr = JSON.stringify(message).toLowerCase()
-              if (messageStr.includes('end_call') || messageStr.includes('end_conversation') || messageStr.includes('"end"') && messageStr.includes('"call"')) {
-                console.log(`🛑 END_CALL DETECTED via string search (${source})!`)
-                console.log(`📋 Message string snippet:`, messageStr.substring(0, 200))
-                return true
-              }
-            } catch (e) {
-              // JSON.stringify failed, continue with other checks
-            }
-            
-            // Method 0.5: Check message content for end-related keywords
-            const content = message?.content || message?.text || message?.message || ''
-            if (typeof content === 'string') {
-              const contentLower = content.toLowerCase()
-              if ((contentLower.includes('end') && (contentLower.includes('call') || contentLower.includes('conversation'))) ||
-                  contentLower.includes('ending the call') ||
-                  contentLower.includes('call is ending')) {
-                console.log(`🛑 END_CALL DETECTED in content (${source})!`)
-                console.log(`📋 Content:`, content.substring(0, 100))
-                return true
-              }
-            }
-            
-            // Format 1: Direct tool_call or function_call type
-            if (message?.type === 'tool_call' || message?.type === 'function_call') {
-              const toolName = message?.tool_name || message?.name || message?.function_name || message?.function?.name
-              console.log(`🔍 [${source}] Checking tool call, name:`, toolName)
-              if (toolName === 'end_call') {
-                console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 1)!`)
-                return true
-              }
-            }
-            
-            // Format 2: Check for tool_calls array
-            if (message?.tool_calls && Array.isArray(message.tool_calls)) {
-              for (const tc of message.tool_calls) {
-                const toolName = tc?.function?.name || tc?.name || tc?.tool_name || tc?.type
-                console.log(`🔍 [${source}] Checking tool_calls array, name:`, toolName)
-                if (toolName === 'end_call') {
-                  console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 2 - tool_calls array)!`)
-                  return true
-                }
-              }
-            }
-            
-            // Format 3: Check nested function calls
-            if (message?.function?.name === 'end_call' || message?.function_name === 'end_call') {
-              console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 3 - nested function)!`)
-              return true
-            }
-            
-            // Format 4: Check in conversation_updated messages
-            if (message?.type === 'conversation_updated') {
-              const messages = message?.conversation?.messages || []
-              console.log(`🔍 [${source}] Checking conversation_updated, message count:`, messages.length)
-              
-              // Check ALL messages, not just recent ones
-              for (const m of messages) {
-                // Check tool_calls in message
-                if (m?.tool_calls && Array.isArray(m.tool_calls)) {
-                  for (const tc of m.tool_calls) {
-                    const toolName = tc?.function?.name || tc?.name || tc?.tool_name || tc?.type
-                    console.log(`🔍 [${source}] Tool call in message:`, toolName)
-                    if (toolName === 'end_call') {
-                      console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 4 - conversation_updated tool_calls)!`)
-                      return true
-                    }
-                  }
-                }
-                
-                // Check if message itself is a tool_call
-                if (m?.role === 'tool_call' || m?.role === 'function') {
-                  const toolName = m?.function?.name || m?.name || m?.tool_name
-                  console.log(`🔍 [${source}] Message is tool_call, name:`, toolName)
-                  if (toolName === 'end_call') {
-                    console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 4 - message role tool_call)!`)
-                    return true
-                  }
-                }
-                
-                // Deep check in nested structures
-                if (m?.function?.name === 'end_call') {
-                  console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 4 - deep nested)!`)
-                  return true
-                }
-              }
-            }
-            
-            // Format 5: Check anywhere in the message recursively
-            const checkRecursively = (obj: any, depth = 0): boolean => {
-              if (depth > 5) return false // Prevent infinite recursion
-              if (!obj || typeof obj !== 'object') return false
-              
-              // Check common keys
-              if (obj.name === 'end_call' || obj.tool_name === 'end_call' || obj.function_name === 'end_call') {
-                return true
-              }
-              if (obj.function?.name === 'end_call') {
-                return true
-              }
-              
-              // Recursively check all properties
-              for (const key in obj) {
-                if (typeof obj[key] === 'object' && obj[key] !== null) {
-                  if (checkRecursively(obj[key], depth + 1)) return true
-                }
-              }
-              
-              return false
-            }
-            
-            if (checkRecursively(message)) {
-              console.log(`🛑 END_CALL TOOL DETECTED (${source} - Format 5 - recursive search)!`)
-              return true
-            }
-            
-            return false
-          }
-          
-          // Check if end_call is detected
-          if (detectEndCall(msg, 'onMessage')) {
-            console.log('🎯 END_CALL DETECTED! Dispatching agent:end_call event immediately...')
-            const endCallData = {
-              reason: msg?.arguments?.reason || msg?.parameters?.reason || msg?.detail?.reason || 'Agent ended call',
-              notes: msg?.arguments?.notes || msg?.parameters?.notes || msg?.detail?.notes || '',
-              source: 'tool_detection'
-            }
-            console.log('🎯 Dispatching agent:end_call with data:', endCallData)
-            
-            // Dispatch multiple times to ensure it's caught
-            safeDispatchEvent('agent:end_call', endCallData)
-            
-            // Also dispatch after a small delay as backup
-            setTimeout(() => {
-              console.log('🔄 Re-dispatching agent:end_call event (backup)')
-              safeDispatchEvent('agent:end_call', endCallData)
-            }, 100)
-          }
-          
           
           // Extract transcript text from various message formats
           const extractTranscripts = (message: any) => {

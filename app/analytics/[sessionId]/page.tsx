@@ -4,11 +4,14 @@ import { useMemo, useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import ScoresView from '@/components/analytics/ScoresView'
-import ScoresViewV2 from '@/components/analytics/ScoresViewV2'
-import TranscriptView from '@/components/analytics/TranscriptView'
-import TranscriptViewV2 from '@/components/analytics/TranscriptViewV2'
-import AudioPlayer from '@/components/analytics/AudioPlayer'
+import dynamic from 'next/dynamic'
+
+// Dynamic imports for heavy analytics components
+const ScoresView = dynamic(() => import('@/components/analytics/ScoresView'), { ssr: false })
+const ScoresViewV2 = dynamic(() => import('@/components/analytics/ScoresViewV2'), { ssr: false })
+const TranscriptView = dynamic(() => import('@/components/analytics/TranscriptView'), { ssr: false })
+const TranscriptViewV2 = dynamic(() => import('@/components/analytics/TranscriptViewV2'), { ssr: false })
+const AudioPlayer = dynamic(() => import('@/components/analytics/AudioPlayer'), { ssr: false })
 
 interface SessionData {
   id: string
