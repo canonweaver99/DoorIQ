@@ -43,7 +43,7 @@ export function InteractiveDemoSection() {
   const [isPlaying, setIsPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
-  const sectionRef = useRef<HTMLElement>(null)
+  const sectionRef = useRef<HTMLElement | null>(null)
   const stepIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const hasAutoSwitchedRef = useRef(false)
   const { ref, controls } = useScrollAnimation(0.2)
@@ -152,23 +152,23 @@ export function InteractiveDemoSection() {
     <motion.section 
       ref={(node) => {
         // Combine refs for both framer-motion and intersection observer
-        if (ref) {
-          ref.current = node
+        if (ref && node) {
+          ref.current = node as HTMLDivElement
         }
         sectionRef.current = node
       }}
-      className="relative pt-8 sm:pt-12 md:pt-16 pb-16 sm:pb-20 md:pb-24" 
+      className="relative pt-6 sm:pt-10 md:pt-14 pb-12 sm:pb-16 md:pb-20" 
       id="dooriq-action"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div className="text-center mb-8 sm:mb-10 lg:mb-12" variants={fadeInUp}>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+        <motion.div className="text-center mb-6 sm:mb-8 lg:mb-12" variants={fadeInUp}>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
             See <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span> in Action
           </h2>
-          <p className="text-base sm:text-lg text-slate-300 max-w-3xl mx-auto px-2 sm:px-0">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-3xl mx-auto px-2 sm:px-0">
             Watch how a sales rep trains with an AI homeowner in under 2 minutes. 
             No scripts. No staged demos. Just real practice.
           </p>
@@ -312,9 +312,9 @@ export function InteractiveDemoSection() {
                     }`} />}
                   </div>
                   <div className="flex-1">
-                    <div className={`text-base font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'opacity-100' : 'opacity-80'}`}>Step {step.id}</div>
-                    <h3 className={`font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'text-lg' : 'text-base'}`}>{step.title}</h3>
-                    <p className={`text-base transition-all duration-300 overflow-hidden ${activeStep === index ? 'max-h-40 opacity-100 mt-2 text-white' : 'max-h-0 opacity-0 text-slate-300'}`}>{step.description}</p>
+                    <div className={`text-sm sm:text-base font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'opacity-100' : 'opacity-80'}`}>Step {step.id}</div>
+                    <h3 className={`font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}`}>{step.title}</h3>
+                    <p className={`text-sm sm:text-base transition-all duration-300 overflow-hidden ${activeStep === index ? 'max-h-40 opacity-100 mt-2 text-white' : 'max-h-0 opacity-0 text-slate-300'}`}>{step.description}</p>
                   </div>
                 </div>
                 </GlowCard>

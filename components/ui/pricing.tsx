@@ -273,10 +273,10 @@ export function PricingSection({
         />
         <div className="relative z-10 container-responsive">
           <div className={`${maxWidth} mx-auto text-center space-y-1 mb-3`}>
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl lg:text-5xl text-neutral-900 dark:text-white">
+            <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl lg:text-5xl text-neutral-900 dark:text-white">
               {title}
             </h2>
-            <p className="text-muted-foreground text-sm sm:text-base whitespace-pre-line">
+            <p className="text-muted-foreground text-xs sm:text-sm lg:text-base whitespace-pre-line">
               {description}
             </p>
           </div>
@@ -482,15 +482,15 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
         </div>
       )}
       <div className="flex-1 flex flex-col text-center">
-        <h3 className="text-2xl font-bold text-white mt-1">{plan.name}</h3>
-        <p className="mt-1.5 text-sm font-medium text-slate-400">
+        <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">{plan.name}</h3>
+        <p className="mt-1.5 text-xs sm:text-sm font-medium text-slate-400">
           {plan.description}
         </p>
         <div className="mt-3 flex flex-col items-center gap-1">
           {typeof calculateTotalPrice() === 'number' ? (
             <>
               <div className="flex items-baseline justify-center gap-x-1">
-                <span className="text-5xl font-extrabold tracking-tight text-white">
+                <span className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
                   <NumberFlow
                     value={calculateTotalPrice() as number}
                     format={{
@@ -501,7 +501,7 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
                     className="font-variant-numeric: tabular-nums"
                   />
                 </span>
-                <span className="text-sm font-semibold leading-6 tracking-wide text-slate-400">
+                <span className="text-xs sm:text-sm font-semibold leading-6 tracking-wide text-slate-400">
                   / {plan.period}
                 </span>
               </div>
@@ -513,7 +513,7 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
                     transition={{ duration: 0.3 }}
-                    className="text-sm font-medium text-slate-500 mt-1"
+                    className="text-xs sm:text-sm font-medium text-slate-500 mt-1"
                   >
                     ${plan.yearlyTotal} / year
                   </motion.p>
@@ -521,7 +521,7 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
               </AnimatePresence>
             </>
           ) : (
-            <span className="text-3xl font-extrabold tracking-tight text-white">
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               {plan.price}
             </span>
           )}

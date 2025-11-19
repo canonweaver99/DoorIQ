@@ -269,39 +269,39 @@ function ProblemSolutionSection() {
   return (
     <motion.section 
       ref={ref}
-      className="py-12 sm:py-16 md:py-20 relative"
+      className="py-8 sm:py-12 md:py-16 lg:py-20 relative"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center mb-8 sm:mb-10 lg:mb-12" variants={fadeInUp}>
+        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center mb-6 sm:mb-8 lg:mb-12" variants={fadeInUp}>
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-3 sm:mb-4 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
               The Reality of Door-to-Door Sales Training
             </h2>
-            <div className="mt-4 sm:mt-5 lg:mt-6 space-y-3 sm:space-y-4">
+            <div className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4">
               {problems.map((problem, index) => (
                 <motion.div 
                   key={index}
-                  className="flex items-start gap-3"
+                  className="flex items-start gap-2 sm:gap-3"
                   initial="hidden"
                   animate={controls}
                   variants={{
-                    hidden: { opacity: 0, x: -30 },
+                    hidden: { opacity: 0, x: -20 },
                     visible: { 
                       opacity: 1, 
                       x: 0,
-                      transition: { delay: index * 1.0, duration: 0.6 }
+                      transition: { delay: index * 0.15, duration: 0.4 }
                     }
                   }}
                 >
-                  <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 mt-3" />
-                  <div>
-                    <p className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white mb-1 sm:mb-2">
+                  <div className="flex-shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 mt-1.5 sm:mt-2" />
+                  <div className="flex-1">
+                    <p className="text-lg sm:text-xl lg:text-3xl font-semibold text-white mb-1 sm:mb-2">
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-500">{problem.title}</span>
                     </p>
-                    <p className="text-base sm:text-lg lg:text-xl text-slate-300">
+                    <p className="text-sm sm:text-base lg:text-xl text-slate-300">
                       {problem.description}
                     </p>
                   </div>
@@ -310,7 +310,7 @@ function ProblemSolutionSection() {
             </div>
           </div>
           <motion.div 
-            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 mt-6 sm:mt-0"
+            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 mt-6 sm:mt-0 bg-slate-800/50"
             variants={fadeInScale}
           >
             <Image
@@ -319,7 +319,8 @@ function ProblemSolutionSection() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
-              loading="lazy"
+              priority={false}
+              quality={90}
             />
           </motion.div>
         </motion.div>
@@ -349,21 +350,21 @@ function ProblemSolutionSection() {
 
         {/* Divider */}
         <motion.div 
-          className="flex items-center justify-center mb-12 sm:mb-16 lg:mb-20"
+          className="flex items-center justify-center mb-8 sm:mb-12 lg:mb-20"
           variants={fadeInScale}
         >
           <div className="h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent w-full max-w-md" />
-          <div className="mx-4 text-2xl font-bold text-purple-400">→</div>
+          <div className="mx-2 sm:mx-4 text-lg sm:text-xl lg:text-2xl font-bold text-purple-400">→</div>
           <div className="h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent w-full max-w-md" />
         </motion.div>
 
         {/* Solutions */}
         <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center mb-8 sm:mb-10 lg:mb-12"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center mb-6 sm:mb-8 lg:mb-12"
           variants={fadeInUp}
         >
           <motion.div 
-            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 lg:order-1 mt-6 sm:mt-0"
+            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 lg:order-1 mt-6 sm:mt-0 bg-slate-800/50"
             variants={fadeInScale}
           >
             <Image
@@ -372,35 +373,36 @@ function ProblemSolutionSection() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
-              loading="lazy"
+              priority={false}
+              quality={90}
             />
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
-            <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
               Practice on AI Homeowners Before Real Doors
             </h3>
-            <div className="mt-4 sm:mt-5 lg:mt-6 space-y-3 sm:space-y-4">
+            <div className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4">
               {solutions.map((solution, index) => (
                 <motion.div 
                   key={index}
-                  className="flex items-start gap-3"
+                  className="flex items-start gap-2 sm:gap-3"
                   initial="hidden"
                   animate={controls}
                   variants={{
-                    hidden: { opacity: 0, x: 30 },
+                    hidden: { opacity: 0, x: 20 },
                     visible: { 
                       opacity: 1, 
                       x: 0,
-                      transition: { delay: index * 1.0, duration: 0.6 }
+                      transition: { delay: index * 0.15, duration: 0.4 }
                     }
                   }}
                 >
-                  <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-3" />
-                  <div>
-                    <p className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white mb-1 sm:mb-2">
+                  <div className="flex-shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-1.5 sm:mt-2" />
+                  <div className="flex-1">
+                    <p className="text-lg sm:text-xl lg:text-3xl font-semibold text-white mb-1 sm:mb-2">
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{solution.title}</span>
                     </p>
-                    <p className="text-base sm:text-lg lg:text-xl text-slate-300">
+                    <p className="text-sm sm:text-base lg:text-xl text-slate-300">
                       {solution.description}
                     </p>
                   </div>
@@ -439,7 +441,7 @@ function ProblemSolutionSection() {
         </motion.div> */}
 
         <motion.div 
-          className="text-center mt-12 sm:mt-14 lg:mt-16 mb-12 sm:mb-14 lg:mb-16"
+          className="text-center mt-8 sm:mt-10 lg:mt-16 mb-8 sm:mb-10 lg:mb-16"
           variants={fadeInUp}
         >
           <motion.span 
@@ -494,7 +496,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
   return (
     <motion.section 
       ref={ref}
-      className="py-12 sm:py-16 md:py-20 relative"
+      className="py-8 sm:py-12 md:py-16 lg:py-20 relative"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
@@ -502,20 +504,20 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div 
-          className="text-center mb-8 sm:mb-10 lg:mb-12"
+          className="text-center mb-6 sm:mb-8 lg:mb-12"
           variants={fadeInUp}
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-4 sm:mb-5 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
             Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Managers</span>: Scale Your Team's Performance
           </h2>
-          <p className="text-lg sm:text-xl lg:text-2xl text-slate-300 max-w-3xl mx-auto">
+          <p className="text-sm sm:text-base lg:text-2xl text-slate-300 max-w-3xl mx-auto">
             Give every rep a virtual manager in their pocket. Year-round training that drives ROI for teams of 5+.
           </p>
         </motion.div>
 
         {/* Benefits Grid */}
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-10 sm:mb-12 lg:mb-16"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-16"
           variants={staggerContainer}
         >
           {benefits.map((benefit, index) => {
@@ -536,10 +538,10 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                       <Icon className="w-6 h-6 text-purple-400" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2">
+                      <h3 className="text-base sm:text-lg lg:text-2xl font-semibold text-white mb-1.5 sm:mb-2">
                         {benefit.title}
                       </h3>
-                      <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
+                      <p className="text-sm sm:text-base lg:text-lg text-slate-300 leading-relaxed">
                         {benefit.description}
                       </p>
                     </div>
@@ -553,27 +555,27 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
         {/* ROI Highlight */}
         <motion.div
           variants={fadeInUp}
-          className="bg-gradient-to-br from-emerald-500/10 to-purple-500/10 border border-emerald-500/30 rounded-xl sm:rounded-2xl p-6 sm:p-8 lg:p-10 mb-10 sm:mb-12"
+          className="bg-gradient-to-br from-emerald-500/10 to-purple-500/10 border border-emerald-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-10 mb-6 sm:mb-8 lg:mb-12"
         >
           <div className="text-center">
-            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+            <h3 className="text-xl sm:text-2xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">
               The ROI That Matters
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto">
               <div>
-                <div className="text-3xl sm:text-4xl font-bold text-emerald-400 mb-2">40%</div>
-                <div className="text-base sm:text-lg text-slate-300">Less manager shadowing time</div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-400 mb-1.5 sm:mb-2">40%</div>
+                <div className="text-sm sm:text-base lg:text-lg text-slate-300">Less manager shadowing time</div>
               </div>
               <div>
-                <div className="text-3xl sm:text-4xl font-bold text-emerald-400 mb-2">2×</div>
-                <div className="text-base sm:text-lg text-slate-300">Faster rep ramp-up</div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-400 mb-1.5 sm:mb-2">2×</div>
+                <div className="text-sm sm:text-base lg:text-lg text-slate-300">Faster rep ramp-up</div>
               </div>
               <div>
-                <div className="text-3xl sm:text-4xl font-bold text-emerald-400 mb-2">24/7</div>
-                <div className="text-base sm:text-lg text-slate-300">Virtual manager availability</div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-400 mb-1.5 sm:mb-2">24/7</div>
+                <div className="text-sm sm:text-base lg:text-lg text-slate-300">Virtual manager availability</div>
               </div>
             </div>
-            <p className="text-base sm:text-lg text-slate-300 mt-6 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base lg:text-lg text-slate-300 mt-4 sm:mt-5 lg:mt-6 max-w-2xl mx-auto">
               When each rep closes just 1 extra deal per month, teams see massive returns. Calculate your ROI with our pricing calculator.
             </p>
           </div>
@@ -634,10 +636,10 @@ function DashboardSection() {
           className="text-center mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0"
           variants={fadeInUp}
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] pb-2">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] pb-2">
             Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Analytics</span>
           </h2>
-          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-3xl mx-auto mt-4 sm:mt-5 lg:mt-6">
+          <p className="text-xs sm:text-sm lg:text-lg text-slate-300 max-w-3xl mx-auto mt-3 sm:mt-4 lg:mt-6">
             Track every rep's performance in real-time with detailed analytics and insights
           </p>
         </motion.div>
@@ -903,7 +905,7 @@ function TestimonialsSection() {
       </div>
 
       <h3 
-        className="text-center text-2xl sm:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.1] tracking-tight font-geist mt-6 px-4 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] break-words"
+        className="text-center text-xl sm:text-2xl lg:text-[56px] leading-[1.2] sm:leading-[1.1] tracking-tight font-geist mt-4 sm:mt-5 lg:mt-6 px-4 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] break-words"
       >
         What Sales Teams Say About <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span>
       </h3>
