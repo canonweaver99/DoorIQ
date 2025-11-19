@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 // UPDATE session (save transcript and scores)
 export async function PATCH(req: Request) {
   try {
-    const { id, transcript, duration_seconds, end_reason } = await req.json()
+    const { id, transcript, duration_seconds, end_reason, agent_name, homeowner_name, agent_persona } = await req.json()
     
     console.log('🔧 PATCH: Updating session:', id)
     console.log('📝 PATCH: Transcript lines:', transcript?.length || 0)
@@ -74,17 +74,26 @@ export async function PATCH(req: Request) {
     
     const now = new Date().toISOString()
 
+    // Build update object with all provided fields
+    const updateData: any = {
+      ended_at: now,
+      duration_seconds: duration_seconds,
+      full_transcript: formattedTranscript,
+      overall_score: null,
+      sale_closed: false,
+      virtual_earnings: 0,
+      return_appointment: false
+    }
+    
+    // Add optional fields if provided
+    if (agent_name) updateData.agent_name = agent_name
+    if (homeowner_name) updateData.homeowner_name = homeowner_name
+    if (agent_persona) updateData.agent_persona = agent_persona
+    if (end_reason) updateData.end_reason = end_reason
+
     const { data, error } = await (supabase as any)
       .from('live_sessions')
-      .update({
-        ended_at: now,
-        duration_seconds: duration_seconds,
-        full_transcript: formattedTranscript,
-        overall_score: null,
-        sale_closed: false,
-        virtual_earnings: 0,
-        return_appointment: false
-      })
+      .update(updateData)
       .eq('id', id)
       .select('id')
       .single()

@@ -622,25 +622,39 @@ function TrainerPageContent() {
     if (sessionId) {
       try {
         console.log('💾 Saving session data before redirect...')
-        const savePromise = fetch('/api/session', {
+        console.log('📊 Session data:', {
+          id: sessionId,
+          transcriptLength: transcript.length,
+          duration,
+          agentName: selectedAgent?.name,
+          endReason: endReason || 'manual'
+        })
+        
+        // Wait for save to complete before redirecting to ensure data is persisted
+        const saveResponse = await fetch('/api/session', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: sessionId,
             transcript: transcript,
             duration_seconds: duration,
-            end_reason: endReason || 'manual'
+            end_reason: endReason || 'manual',
+            agent_name: selectedAgent?.name || null,
+            homeowner_name: selectedAgent?.name || null, // Same as agent_name for now
+            agent_persona: selectedAgent?.name || null
           }),
         })
         
-        // Redirect immediately, don't wait for save to complete
+        if (!saveResponse.ok) {
+          const errorData = await saveResponse.json().catch(() => ({ error: 'Unknown error' }))
+          console.error('❌ Error saving session:', errorData)
+          // Still redirect even if save fails - user can see error on loading page
+        } else {
+          console.log('✅ Session data saved successfully')
+        }
+        
         console.log('🚀 Redirecting to loading page:', `/trainer/loading/${sessionId}`)
         const redirectUrl = `/trainer/loading/${sessionId}`
-        
-        // Try to save in background, but redirect regardless
-        savePromise.catch((error) => {
-          console.error('❌ Error saving session (continuing with redirect):', error)
-        })
         
         // Use window.location.href for reliable redirect (blocking)
         window.location.href = redirectUrl
@@ -675,9 +689,14 @@ function TrainerPageContent() {
       return { shouldEnd: false, reason: '' }
     }
 
-    // Get the last 3 entries for analysis (recent conversation)
-    const recentEntries = transcriptEntries.slice(-3)
+    // Get the last 5 entries for analysis (recent conversation) - increased to catch more context
+    const recentEntries = transcriptEntries.slice(-5)
     const recentText = recentEntries.map(e => e.text.toLowerCase()).join(' ')
+    
+    // Debug logging
+    if (recentEntries.length > 0) {
+      console.log('🔍 Analyzing transcript for end call triggers. Recent entries:', recentEntries.map(e => `${e.speaker}: "${e.text}"`))
+    }
 
     // Firm rejection indicators (only from homeowner/agent)
     const firmRejectionPatterns = [
@@ -687,8 +706,9 @@ function TrainerPageContent() {
 
     // Goodbye indicators
     const goodbyePatterns = [
-      /\b(goodbye|bye|see you|have a nice day|thanks anyway|thank you anyway|no thank you|maybe another time|another time|later|take care|have a good one)\b/i,
+      /\b(goodbye|bye|see you|have a nice day|have a good day|thanks anyway|thank you anyway|no thank you|maybe another time|another time|later|take care|have a good one)\b/i,
       /\b(i have to go|i need to go|i'm busy|got to go|gotta go|talk to you later|catch you later)\b/i,
+      /(have a nice day|have a good day|have a good one)/i, // More flexible matching for these phrases
     ]
 
     // Check for firm rejection from homeowner (agent) - need 3 consecutive rejections
@@ -735,16 +755,41 @@ function TrainerPageContent() {
     }
 
     // Check for goodbye (can trigger immediately)
+    // Check the most recent entry first for faster detection
+    const mostRecentEntry = recentEntries[recentEntries.length - 1]
+    if (mostRecentEntry) {
+      const entryText = mostRecentEntry.text.toLowerCase()
+      for (const pattern of goodbyePatterns) {
+        if (pattern.test(entryText)) {
+          // Goodbye from homeowner (agent) is most definitive
+          if (mostRecentEntry.speaker === 'homeowner') {
+            console.log('👋 Goodbye detected from homeowner:', mostRecentEntry.text)
+            rejectionCountRef.current = 0 // Reset rejection count
+            return { shouldEnd: true, reason: 'Goodbye - homeowner ended conversation' }
+          }
+          // Goodbye from user also indicates end
+          if (mostRecentEntry.speaker === 'user') {
+            console.log('👋 Goodbye detected from user:', mostRecentEntry.text)
+            rejectionCountRef.current = 0 // Reset rejection count
+            return { shouldEnd: true, reason: 'Goodbye - user ended conversation' }
+          }
+        }
+      }
+    }
+    
+    // Also check all recent entries (fallback)
     for (const pattern of goodbyePatterns) {
       if (pattern.test(recentText)) {
         const matchingEntry = recentEntries.find(e => pattern.test(e.text.toLowerCase()))
         // Goodbye from homeowner (agent) is most definitive
         if (matchingEntry?.speaker === 'homeowner') {
+          console.log('👋 Goodbye detected from homeowner (fallback):', matchingEntry.text)
           rejectionCountRef.current = 0 // Reset rejection count
           return { shouldEnd: true, reason: 'Goodbye - homeowner ended conversation' }
         }
         // Goodbye from user also indicates end
         if (matchingEntry?.speaker === 'user') {
+          console.log('👋 Goodbye detected from user (fallback):', matchingEntry.text)
           rejectionCountRef.current = 0 // Reset rejection count
           return { shouldEnd: true, reason: 'Goodbye - user ended conversation' }
         }
@@ -1135,13 +1180,14 @@ function TrainerPageContent() {
       clearTimeout(transcriptAnalysisRef.current)
     }
 
-    // Wait a bit after new transcript entry to allow for context
+    // Wait a bit after new transcript entry to allow for context (reduced delay for faster response)
     transcriptAnalysisRef.current = setTimeout(() => {
       const analysis = analyzeTranscriptForEndCall(transcript)
       
       if (analysis.shouldEnd && !endCallProcessingRef.current) {
         console.log('🎯 Transcript analysis detected end call trigger:', analysis.reason)
         console.log('📝 Recent transcript entries:', transcript.slice(-5).map(e => `${e.speaker}: ${e.text}`))
+        console.log('📝 Full transcript length:', transcript.length)
         
         // Set processing flag to prevent duplicate triggers
         endCallProcessingRef.current = true
@@ -1151,8 +1197,14 @@ function TrainerPageContent() {
           console.error('❌ Error in handleDoorClosingSequence from transcript analysis:', error)
           endCallProcessingRef.current = false // Reset on error
         })
+      } else if (!analysis.shouldEnd) {
+        // Log when analysis runs but doesn't detect end (for debugging)
+        const lastEntry = transcript[transcript.length - 1]
+        if (lastEntry) {
+          console.log('🔍 Transcript analysis ran, no end trigger detected. Last entry:', `${lastEntry.speaker}: ${lastEntry.text}`)
+        }
       }
-    }, 2000) // Wait 2 seconds after last transcript entry to analyze
+    }, 1500) // Wait 1.5 seconds after last transcript entry to analyze (reduced from 2s for faster response)
 
     return () => {
       if (transcriptAnalysisRef.current) {

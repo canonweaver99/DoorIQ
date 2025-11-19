@@ -211,18 +211,30 @@ function DashboardPageContent() {
     const oneWeekAgo = new Date()
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
     
-    const { data: sessionsThisWeekData } = await supabase
+    const { data: sessionsThisWeekData, error: weekError } = await supabase
       .from('live_sessions')
-      .select('overall_score, created_at')
+      .select('id, overall_score, created_at, ended_at, agent_name')
       .eq('user_id', user.id)
       .gte('created_at', oneWeekAgo.toISOString())
       .order('created_at', { ascending: false })
     
-    // Get total sessions count (all time)
-    const { data: allSessionsData } = await supabase
+    if (weekError) {
+      console.error('❌ Error fetching weekly sessions:', weekError)
+    } else {
+      console.log('📊 Sessions this week:', sessionsThisWeekData?.length || 0, sessionsThisWeekData)
+    }
+    
+    // Get total sessions count (all time) - include all sessions regardless of status
+    const { data: allSessionsData, error: allError } = await supabase
       .from('live_sessions')
-      .select('id')
+      .select('id, created_at, ended_at, agent_name')
       .eq('user_id', user.id)
+    
+    if (allError) {
+      console.error('❌ Error fetching all sessions:', allError)
+    } else {
+      console.log('📊 Total sessions:', allSessionsData?.length || 0, 'Sample:', allSessionsData?.slice(0, 3))
+    }
     
     const sessionsThisWeek = sessionsThisWeekData?.length || 0
     const totalSessions = allSessionsData?.length || 0
@@ -516,7 +528,7 @@ function OverviewTabContent() {
     // Get recent sessions with agent_name (for display) - fetch all sessions, not just graded ones
     const { data: recentSessionsData, error: recentSessionsError } = await supabase
       .from('live_sessions')
-      .select('id, overall_score, created_at, homeowner_name, agent_name, agent_persona, virtual_earnings')
+      .select('id, overall_score, created_at, ended_at, homeowner_name, agent_name, agent_persona, virtual_earnings, duration_seconds')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(10)
@@ -528,6 +540,16 @@ function OverviewTabContent() {
     }
     
     console.log('📊 Raw recent sessions data:', recentSessionsData)
+    console.log('📊 Recent sessions count:', recentSessionsData?.length || 0)
+    if (recentSessionsData && recentSessionsData.length > 0) {
+      console.log('📊 Sample session:', {
+        id: recentSessionsData[0].id,
+        agent_name: recentSessionsData[0].agent_name,
+        created_at: recentSessionsData[0].created_at,
+        ended_at: recentSessionsData[0].ended_at,
+        has_score: recentSessionsData[0].overall_score !== null
+      })
+    }
     
     // Format recent sessions for display
     if (recentSessionsData && recentSessionsData.length > 0) {
