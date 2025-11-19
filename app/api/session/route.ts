@@ -105,66 +105,6 @@ export async function PATCH(req: Request) {
     
     console.log('✅ PATCH: Session updated successfully:', data.id)
     
-    // Trigger grading immediately in the background (fire-and-forget)
-    if (formattedTranscript.length > 0) {
-      console.log('🎯 PATCH: Triggering background grading for session:', id)
-      console.log('📝 PATCH: Transcript has', formattedTranscript.length, 'lines')
-      
-      // Determine base URL using request host header (works with any port)
-      const host = req.headers.get('host') || 'localhost:3000'
-      const protocol = host.includes('localhost') ? 'http' : 'https'
-      const baseUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}`
-        : `${protocol}://${host}`
-      
-      console.log('🌐 Using API URL:', baseUrl)
-      
-      // Fire-and-forget grading request - DO NOT await
-      fetch(`${baseUrl}/api/grade/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: id }),
-        // Important: Set a reasonable timeout (increased for retries)
-        signal: AbortSignal.timeout(120000) // 120 second timeout (2 minutes)
-      }).then(async resp => {
-        if (resp.ok) {
-          console.log('✅ PATCH: Background grading completed successfully')
-          const result = await resp.json()
-          console.log('📊 Grading result:', {
-            success: result.success,
-            lines_graded: result.lines_graded,
-            overall_score: result.scores?.overall
-          })
-        } else {
-          const error = await resp.text()
-          console.error('❌ PATCH: Background grading failed:', resp.status, error)
-          
-          // Retry once after 5 seconds if it failed
-          console.log('🔄 Retrying grading in 5 seconds...')
-          setTimeout(() => {
-            fetch(`${baseUrl}/api/grade/session`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ sessionId: id })
-            }).then(r => {
-              if (r.ok) {
-                console.log('✅ PATCH: Grading retry succeeded')
-              } else {
-                console.error('❌ PATCH: Grading retry also failed')
-              }
-            }).catch(e => console.error('❌ PATCH: Retry error:', e))
-          }, 5000)
-        }
-      }).catch(err => {
-        console.error('❌ PATCH: Background grading error:', err.message)
-        // Don't retry on network errors - user has navigated away
-      })
-      
-      console.log('⚡ PATCH: Grading triggered (non-blocking), returning immediately')
-    } else {
-      console.warn('⚠️ PATCH: No transcript to grade')
-    }
-    
     return NextResponse.json({ id: data.id })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
