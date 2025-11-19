@@ -57,20 +57,59 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServiceSupabaseClient()
     
-    // Fetch session data (same as non-streaming version)
-    const { data: session, error: sessionError } = await supabase
-      .from('live_sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .single()
+    // Fetch session data with retry logic - transcript might still be saving
+    let session: any = null
+    let attempts = 0
+    const maxAttempts = 10 // Wait up to 5 seconds (10 attempts * 500ms)
     
-    if (sessionError || !session) {
+    while (attempts < maxAttempts) {
+      const { data, error: sessionError } = await supabase
+        .from('live_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single()
+      
+      if (sessionError || !data) {
+        if (attempts === 0) {
+          // First attempt failed - return error immediately
+          return new Response('Session not found', { status: 404 })
+        }
+        // Retry on subsequent attempts
+        attempts++
+        await new Promise(resolve => setTimeout(resolve, 500))
+        continue
+      }
+      
+      session = data
+      
+      // Check if transcript is available
+      if ((session as any).full_transcript && (session as any).full_transcript.length > 0) {
+        // Transcript is available, proceed with grading
+        break
+      }
+      
+      // Transcript not available yet, wait and retry
+      attempts++
+      if (attempts < maxAttempts) {
+        logger.info(`Waiting for transcript to be saved (attempt ${attempts}/${maxAttempts})`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+    
+    // Final check after all retries
+    if (!session) {
       return new Response('Session not found', { status: 404 })
     }
     
     if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
-      return new Response('No transcript to grade', { status: 400 })
+      logger.error('No transcript available after retries', { sessionId, attempts })
+      return new Response('No transcript to grade - transcript may still be saving. Please wait a moment and refresh.', { status: 400 })
     }
+    
+    logger.info(`Transcript found after ${attempts} attempts`, { 
+      sessionId, 
+      transcriptLength: (session as any).full_transcript.length 
+    })
 
     // Get user profile and team config (simplified for streaming)
     const { data: userProfile } = await supabase

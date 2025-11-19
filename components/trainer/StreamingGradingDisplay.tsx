@@ -57,6 +57,12 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   useEffect(() => {
     const connectToStream = async () => {
       try {
+        setStatus('Saving session data...')
+        
+        // Wait a moment for transcript to be saved (since we redirect immediately)
+        // This gives the PATCH request time to complete
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
         setStatus('Connecting to AI...')
         
         const response = await fetch('/api/grade/stream', {
