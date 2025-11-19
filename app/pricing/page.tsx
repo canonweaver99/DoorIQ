@@ -96,7 +96,39 @@ function PricingPageContent() {
   }
 
 
-  // Calculate ROI with exponential scaling based on team size
+  // Calculate Monthly ROI
+  // Base: 1 extra deal per rep per month
+  // Exponential multiplier: Larger teams create compounding value
+  // Formula: revenue = base_revenue × exponential_multiplier
+  // Multiplier increases exponentially: 1.05^(reps/10)
+  // This means: 10 reps = 1.05x, 50 reps = 1.28x, 100 reps = 1.63x multiplier
+  const calculateMonthlyROI = (reps: number, monthlyCost: number) => {
+    const averageCommissionPerDeal = 500 // $500 per deal (realistic)
+    const extraDealsPerRepPerMonth = 1 // 1 extra deal per month per rep (base)
+    
+    // Base monthly value: reps × 1 extra deal/month × $500
+    const baseMonthlyValue = reps * extraDealsPerRepPerMonth * averageCommissionPerDeal
+    
+    // Exponential multiplier - larger teams create compounding value
+    const exponentialMultiplier = Math.pow(1.05, reps / 10) // Exponential growth
+    
+    // Total monthly value with exponential scaling
+    const monthlyValue = baseMonthlyValue * exponentialMultiplier
+    
+    const monthlyROI = monthlyValue - monthlyCost
+    const roiPercentage = monthlyCost > 0 ? ((monthlyValue - monthlyCost) / monthlyCost) * 100 : 0
+    
+    return {
+      monthlyValue,
+      monthlyCost,
+      monthlyROI,
+      roiPercentage,
+      averageCommission: averageCommissionPerDeal,
+      dealsPerRep: extraDealsPerRepPerMonth
+    }
+  }
+
+  // Calculate ROI with exponential scaling based on team size (kept for annual calculations if needed)
   // Base: 1 extra deal per rep per month
   // Exponential multiplier: Larger teams create compounding value
   // Formula: revenue = base_revenue × exponential_multiplier
@@ -341,8 +373,8 @@ function PricingPageContent() {
         {/* Form Content */}
         <AnimatePresence mode="wait">
           {currentStep === 0 && (() => {
-            // Always calculate ROI based on annual cost for fair comparison
-            const roi = calculateROI(numReps, pricing.annual)
+            // Calculate monthly ROI: monthly investment vs monthly revenue (1 extra deal per rep)
+            const monthlyROI = calculateMonthlyROI(numReps, pricing.monthly)
             return (
             <motion.div
               key="step-0"
@@ -368,10 +400,10 @@ function PricingPageContent() {
                         '[mask-image:radial-gradient(ellipse_120%_100%_at_50%_50%,var(--background)_10%,transparent_80%)]',
                       )}
                     />
-                    <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-2 tracking-tight relative z-10" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
+                    <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-2 tracking-tight relative z-10 font-space" style={{ letterSpacing: '-0.02em' }}>
                       Starting at ${pricing.perRepRate.toFixed(2)} Per Day, Per Rep
                     </h2>
-                    <p className="text-lg sm:text-xl lg:text-2xl text-white mb-8 font-medium relative z-10">
+                    <p className="text-lg sm:text-xl lg:text-2xl text-white mb-8 font-medium relative z-10 font-sans">
                       Volume discounts available • Unlimited practice sessions, huge ROI potential
                     </p>
                     
@@ -382,7 +414,7 @@ function PricingPageContent() {
                       transition={{ delay: 0.3 }}
                       className="mb-4 relative z-10"
                     >
-                    <label className="block text-lg font-bold text-white mb-3 text-center tracking-wide">
+                    <label className="block text-lg font-bold text-white mb-3 text-center tracking-wide font-space">
                       Number of Sales Reps:
                     </label>
                     <div className="max-w-2xl mx-auto">
@@ -399,7 +431,7 @@ function PricingPageContent() {
                           }}
                           className="inline-block px-4 py-2 rounded-lg border border-white/30 bg-black text-white text-xl font-bold font-mono text-center w-24 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all"
                         />
-                        <span className="text-white text-lg ml-2">reps</span>
+                        <span className="text-white text-lg ml-2 font-sans">reps</span>
                       </div>
                       
                       {/* Slider */}
@@ -421,7 +453,7 @@ function PricingPageContent() {
                             })()
                           }}
                         />
-                        <div className="flex justify-between mt-1 text-base font-semibold text-white">
+                        <div className="flex justify-between mt-1 text-base font-semibold text-white font-sans">
                           <span>5</span>
                           <span>500+</span>
                         </div>
@@ -435,7 +467,7 @@ function PricingPageContent() {
                           animate={{ opacity: 1 }}
                           whileHover={{ opacity: 0.7 }}
                           transition={{ duration: 0.3 }}
-                          className="text-white text-lg font-medium inline-flex items-center gap-2 group"
+                          className="text-white text-lg font-medium inline-flex items-center gap-2 group font-sans"
                         >
                           <span>Contact Sales</span>
                           <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -464,7 +496,7 @@ function PricingPageContent() {
                             />
                             <div className="space-y-1 mb-4">
                               <div className="flex items-center justify-between">
-                                <h3 className="leading-none font-semibold text-white">Monthly</h3>
+                                <h3 className="leading-none font-semibold text-white font-space">Monthly</h3>
                               </div>
                             </div>
                             <div className="mt-6 space-y-4">
@@ -481,10 +513,10 @@ function PricingPageContent() {
                                 </motion.span>
                                 <span>/month</span>
                               </div>
-                              <div className="text-lg text-white font-semibold font-mono">
+                              <div className="text-lg text-white font-semibold font-mono font-sans">
                                 = ${(pricing.monthly * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year
                               </div>
-                              <div className="text-base text-white font-semibold">
+                              <div className="text-base text-white font-semibold font-sans">
                                 ${pricing.perRepRate.toFixed(2)}/day × {numReps} reps × 30 days
                               </div>
                             </div>
@@ -509,7 +541,7 @@ function PricingPageContent() {
                             />
                             <div className="space-y-1 mb-4">
                               <div className="flex items-center justify-between">
-                                <h3 className="leading-none font-semibold text-white flex items-center gap-2">
+                                <h3 className="leading-none font-semibold text-white flex items-center gap-2 font-space">
                                   Annual
                                   <Badge>Best Value</Badge>
                                 </h3>
@@ -529,11 +561,11 @@ function PricingPageContent() {
                                 </motion.span>
                                 <span>/month</span>
                               </div>
-                              <div className="text-lg text-white font-semibold font-mono flex items-center gap-2">
+                              <div className="text-lg text-white font-semibold font-mono flex items-center gap-2 font-sans">
                                 <span className="text-gray-400 text-base line-through opacity-50">${(pricing.monthly * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                                 <span>= ${pricing.annual.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year</span>
                               </div>
-                              <div className="text-base text-emerald-500 font-semibold">
+                              <div className="text-base text-emerald-500 font-semibold font-sans">
                                 Save ${pricing.savings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year vs monthly
                               </div>
                             </div>
@@ -575,56 +607,58 @@ function PricingPageContent() {
 
                         {/* ROI Header Text */}
                         <div className="text-center py-4 relative z-10">
-                          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-3 tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>
+                          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-3 tracking-tight font-space" style={{ letterSpacing: '-0.02em' }}>
                             Your Competitive Advantage
                           </h2>
-                          <p className="text-2xl md:text-3xl text-white font-medium">
-                            When each rep closes just <span className="text-emerald-500 font-semibold">{roi.dealsPerRep} extra deal{roi.dealsPerRep > 1 ? 's' : ''}/month</span>:
+                          <p className="text-2xl md:text-3xl text-white font-medium font-sans">
+                            When each rep closes just <span className="text-emerald-500 font-semibold">{monthlyROI.dealsPerRep} extra deal{monthlyROI.dealsPerRep > 1 ? 's' : ''} this month</span>:
                               </p>
                             </div>
 
-                        {/* Simplified ROI Display */}
+                        {/* Simplified Monthly ROI Display */}
                         {(() => {
-                          const investment = showAnnualInvestment ? pricing.annual : pricing.monthly * 12
-                          const netProfit = showAnnualInvestment ? roi.annualROI : roi.annualValue - (pricing.monthly * 12)
+                          const monthlyInvestment = pricing.monthly
+                          const monthlyRevenue = monthlyROI.monthlyValue
+                          const monthlyNetProfit = monthlyROI.monthlyROI
+                          const monthlyROIPercentage = monthlyROI.roiPercentage
                           return (
                             <div className="bg-black relative border border-white/20 p-6 rounded-lg z-10">
                               <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-white text-lg font-medium">Revenue:</span>
+                                  <span className="text-white text-lg font-medium font-sans">Revenue:</span>
                                 <motion.span 
-                                  key={roi.annualValue}
+                                  key={monthlyRevenue}
                                   initial={{ scale: 1 }}
                                   animate={{ scale: [1, 1.05, 1] }}
                                   transition={{ duration: 0.3 }}
                                     className="text-emerald-500 text-2xl font-bold font-mono"
                                 >
-                                    +${roi.annualValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    +${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                                 </motion.span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                  <span className="text-white text-lg font-medium">Investment:</span>
+                                  <span className="text-white text-lg font-medium font-sans">Investment:</span>
                                   <motion.span 
-                                    key={investment}
+                                    key={monthlyInvestment}
                                     initial={{ scale: 1 }}
                                     animate={{ scale: [1, 1.05, 1] }}
                                     transition={{ duration: 0.3 }}
                                     className="text-red-400 text-2xl font-bold font-mono"
                                   >
-                                    -${investment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    -${monthlyInvestment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                                   </motion.span>
                               </div>
                                 <div className="border-t border-white/20 pt-4 flex items-center justify-between">
-                                  <span className="text-white text-lg font-semibold">Net Profit:</span>
+                                  <span className="text-white text-lg font-semibold font-sans">Net Profit:</span>
                                   <motion.div
-                                    key={netProfit}
+                                    key={monthlyNetProfit}
                                     initial={{ scale: 0.9 }}
                                     animate={{ scale: 1 }}
                                     transition={{ duration: 0.3 }}
                                     className="flex items-center gap-2"
                                   >
                                     <span className="text-emerald-400 text-3xl font-bold font-mono">
-                                      ${netProfit.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                      ${monthlyNetProfit.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ({monthlyROIPercentage.toFixed(0)}%)
                                     </span>
                                   </motion.div>
                             </div>
@@ -633,7 +667,7 @@ function PricingPageContent() {
                                 <div className="border-t border-white/20 pt-4">
                                   <button
                                     onClick={() => setShowROICalculations(!showROICalculations)}
-                                    className="w-full flex items-center justify-between text-emerald-400 hover:text-emerald-300 transition-colors text-lg font-semibold"
+                                    className="w-full flex items-center justify-between text-emerald-400 hover:text-emerald-300 transition-colors text-lg font-semibold font-sans"
                                   >
                                     <span>{showROICalculations ? 'Hide' : 'See'} calculations</span>
                                     <ChevronRight 
@@ -648,47 +682,44 @@ function PricingPageContent() {
                                       className="mt-4 space-y-4 pt-4 border-t border-white/10"
                                     >
                                       <div className="space-y-2">
-                                        <div className="text-white text-xl font-bold">How we calculate revenue:</div>
+                                        <div className="text-white text-xl font-bold font-space">How we calculate monthly revenue:</div>
                                         <div className="text-white text-lg space-y-1">
                                           <div className="flex items-center gap-2">
                                             <span className="text-emerald-400 font-bold">{numReps}</span>
                                             <span>reps</span>
                                             <span className="text-white/60">×</span>
-                                            <span className="text-emerald-400 font-bold">{roi.dealsPerRep}</span>
-                                            <span>extra deal{roi.dealsPerRep > 1 ? 's' : ''} per month</span>
+                                            <span className="text-emerald-400 font-bold">{monthlyROI.dealsPerRep}</span>
+                                            <span>extra deal{monthlyROI.dealsPerRep > 1 ? 's' : ''} this month</span>
                                             <span className="text-white/60">×</span>
-                                            <span className="text-emerald-400 font-bold">12</span>
-                                            <span>months</span>
-                                            <span className="text-white/60">×</span>
-                                            <span className="text-emerald-400 font-bold">${roi.averageCommission}</span>
+                                            <span className="text-emerald-400 font-bold">${monthlyROI.averageCommission}</span>
                                             <span>average value per deal</span>
                                           </div>
                                           <div className="text-emerald-400 text-2xl font-bold font-mono pt-2">
-                                            = ${roi.annualValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                            = ${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                           </div>
                                         </div>
                                       </div>
                                       
                                       <div className="space-y-2">
-                                        <div className="text-white text-xl font-bold">Your investment:</div>
+                                        <div className="text-white text-xl font-bold font-space">Your monthly investment:</div>
                                         <div className="text-white text-lg">
-                                          <span className="text-red-400 font-bold">${investment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                                          <span className="ml-2">annual cost</span>
+                                          <span className="text-red-400 font-bold">${monthlyInvestment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                          <span className="ml-2">per month</span>
                                         </div>
                                       </div>
                                       
                                       <div className="space-y-2 pt-2 border-t border-white/10">
-                                        <div className="text-white text-xl font-bold">Net profit:</div>
+                                        <div className="text-white text-xl font-bold font-space">Monthly net profit:</div>
                                         <div className="text-white text-lg space-y-1">
                                           <div className="flex items-center gap-2">
-                                            <span className="text-emerald-400 font-bold">${roi.annualValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                            <span className="text-emerald-400 font-bold">${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                                             <span>revenue</span>
                                             <span className="text-white/60">-</span>
-                                            <span className="text-red-400 font-bold">${investment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                                            <span className="text-red-400 font-bold">${monthlyInvestment.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                                             <span>investment</span>
                                           </div>
                                           <div className="text-emerald-400 text-2xl font-bold font-mono pt-2">
-                                            = ${netProfit.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                            = ${monthlyNetProfit.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ({monthlyROIPercentage.toFixed(0)}% ROI)
                                           </div>
                                         </div>
                                       </div>
@@ -700,28 +731,16 @@ function PricingPageContent() {
                           )
                         })()}
 
-                        {/* ROI Highlight Card */}
+                        {/* Monthly ROI Highlight Card */}
                                 {(() => {
-                                  const investment = showAnnualInvestment ? pricing.annual : pricing.monthly * 12
-                                  const roiPct = investment > 0 ? ((roi.annualValue - investment) / investment) * 100 : 0
-                          const returnPerDollar = investment > 0 ? roi.annualValue / investment : 0
-                          // Calculate payback period
-                          const monthlyRevenue = roi.annualValue / 12
-                          // For monthly plans: payback is monthly cost / monthly revenue (minimum 1 month since you pay upfront)
-                          // For annual plans: payback is annual cost / monthly revenue
-                          let paybackMonths: number
-                          if (showAnnualInvestment) {
-                            // Annual plan: total annual cost divided by monthly revenue
-                            paybackMonths = investment > 0 && monthlyRevenue > 0 ? pricing.annual / monthlyRevenue : 0
-                          } else {
-                            // Monthly plan: monthly cost divided by monthly revenue, minimum 1 month
-                            const monthlyPayback = pricing.monthly > 0 && monthlyRevenue > 0 ? pricing.monthly / monthlyRevenue : 0
-                            paybackMonths = Math.max(1, monthlyPayback) // Minimum 1 month since you pay upfront
-                          }
-                          const paybackWeeks = paybackMonths * (52 / 12) // 4.33 weeks per month
-                          // Round to nearest week, minimum 1 week
-                          const paybackDisplay = Math.max(1, Math.round(paybackWeeks))
-                          const paybackLabel = paybackDisplay === 1 ? 'Week' : 'Weeks'
+                                  const monthlyROIPct = monthlyROI.roiPercentage
+                                  const returnPerDollar = pricing.monthly > 0 ? monthlyROI.monthlyValue / pricing.monthly : 0
+                          // Calculate payback period in days (monthly revenue / daily cost)
+                          const dailyCost = pricing.monthly / 30
+                          const paybackDays = dailyCost > 0 && monthlyROI.monthlyValue > 0 ? (pricing.monthly / monthlyROI.monthlyValue) * 30 : 0
+                          // Round to nearest day, minimum 1 day
+                          const paybackDisplay = Math.max(1, Math.round(paybackDays))
+                          const paybackLabel = paybackDisplay === 1 ? 'Day' : 'Days'
                                   return (
                             <motion.div
                               initial={{ opacity: 0, y: 20 }}
@@ -736,15 +755,15 @@ function PricingPageContent() {
                               <div className="grid md:grid-cols-3 gap-4 md:gap-6">
                                 <div className="text-center">
                                   <motion.div
-                                    key={roiPct}
+                                    key={monthlyROIPct}
                                     initial={{ scale: 0.9 }}
                                     animate={{ scale: 1 }}
                                     transition={{ duration: 0.3 }}
                                     className="text-3xl md:text-4xl font-bold text-emerald-400 mb-1 font-mono"
                                   >
-                                    {roiPct.toFixed(0)}%
+                                    {monthlyROIPct.toFixed(0)}%
                                   </motion.div>
-                                  <div className="text-xs font-semibold text-white uppercase tracking-wide">ROI</div>
+                                  <div className="text-xs font-semibold text-white uppercase tracking-wide font-sans">Monthly ROI</div>
                             </div>
                                 <div className="text-center">
                                   <motion.div
@@ -756,7 +775,7 @@ function PricingPageContent() {
                                 >
                                     ${returnPerDollar.toFixed(0)}
                                   </motion.div>
-                                  <div className="text-xs font-semibold text-white uppercase tracking-wide">Return per $1 invested</div>
+                                  <div className="text-xs font-semibold text-white uppercase tracking-wide font-sans">Return per $1 invested</div>
                               </div>
                                 <div className="text-center">
                                   <motion.div
@@ -768,14 +787,14 @@ function PricingPageContent() {
                                   >
                                     {paybackDisplay}
                                   </motion.div>
-                                  <div className="text-xs font-semibold text-white uppercase tracking-wide">{paybackLabel} payback period</div>
+                                  <div className="text-xs font-semibold text-white uppercase tracking-wide font-sans">{paybackLabel} payback period</div>
                             </div>
                               </div>
                             </motion.div>
                                 )
                               })()}
 
-                        <div className="text-white flex items-center justify-center gap-x-2 text-base md:text-lg font-medium relative z-10">
+                        <div className="text-white flex items-center justify-center gap-x-2 text-base md:text-lg font-medium relative z-10 font-sans">
                           <ShieldCheck className="size-4 text-emerald-500" />
                           <span>Access to all features with no hidden fees • 14-day free trial</span>
                         </div>
@@ -790,16 +809,16 @@ function PricingPageContent() {
                     transition={{ delay: 0.6 }}
                     className="mb-12 p-8 rounded-lg border border-white/20 max-w-6xl mx-auto bg-black"
                   >
-                    <h4 className="text-3xl md:text-4xl font-black text-white mb-6 tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.01em' }}>
+                    <h4 className="text-3xl md:text-4xl font-black text-white mb-6 tracking-tight font-space" style={{ letterSpacing: '-0.01em' }}>
                       Why DoorIQ vs. Traditional Training?
                     </h4>
                     <div className="overflow-x-auto">
                       <table className="w-full text-base md:text-lg">
                         <thead>
                           <tr className="border-b border-white/20">
-                            <th className="text-left py-4 text-white font-semibold text-lg md:text-xl">Feature</th>
-                            <th className="text-center py-4 text-white font-semibold text-lg md:text-xl">Traditional Training</th>
-                            <th className="text-center py-4 text-white font-bold bg-white/5 text-lg md:text-xl">DoorIQ</th>
+                            <th className="text-left py-4 text-white font-semibold text-lg md:text-xl font-space">Feature</th>
+                            <th className="text-center py-4 text-white font-semibold text-lg md:text-xl font-space">Traditional Training</th>
+                            <th className="text-center py-4 text-white font-bold bg-white/5 text-lg md:text-xl font-space">DoorIQ</th>
                           </tr>
                         </thead>
                         <tbody className="space-y-2">
@@ -911,7 +930,7 @@ function PricingPageContent() {
                     transition={{ delay: 0.9 }}
                     className="mb-12 max-w-5xl mx-auto"
                   >
-                    <h4 className="text-3xl md:text-4xl font-black text-white mb-6 text-center tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.01em' }}>Frequently Asked Questions</h4>
+                    <h4 className="text-3xl md:text-4xl font-black text-white mb-6 text-center tracking-tight font-space" style={{ letterSpacing: '-0.01em' }}>Frequently Asked Questions</h4>
                     <div className="space-y-3 max-w-3xl mx-auto">
                       {[
                         {
@@ -940,7 +959,7 @@ function PricingPageContent() {
                             onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
                             className="w-full p-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
                           >
-                            <h5 className="text-white font-bold text-lg pr-4">{faq.question}</h5>
+                            <h5 className="text-white font-bold text-lg pr-4 font-space">{faq.question}</h5>
                             <ChevronRight 
                               className={`w-5 h-5 text-white flex-shrink-0 transition-transform ${openFAQ === index ? 'rotate-90' : ''}`}
                             />
@@ -954,7 +973,7 @@ function PricingPageContent() {
                                 transition={{ duration: 0.3, ease: "easeInOut" }}
                                 className="overflow-hidden"
                               >
-                                <p className="text-base md:text-lg text-white px-5 pb-5 pt-0">{faq.answer}</p>
+                                <p className="text-base md:text-lg text-white px-5 pb-5 pt-0 font-sans">{faq.answer}</p>
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -970,7 +989,7 @@ function PricingPageContent() {
                     transition={{ delay: 1.0 }}
                     className="space-y-3 max-w-3xl mx-auto pb-8"
                 >
-                    <p className="text-center text-white font-semibold text-lg mb-2">
+                    <p className="text-center text-white font-semibold text-lg mb-2 font-sans">
                       Limited spots for Q1 onboarding
                     </p>
                     <motion.button
@@ -981,15 +1000,15 @@ function PricingPageContent() {
                       <ChevronRight className="w-5 h-5" />
                     </motion.button>
                     <div className="text-center space-y-2">
-                      <p className="text-sm text-white">
+                      <p className="text-sm text-white font-sans">
                         Join <span className="text-white font-semibold">50+ sales teams</span> improving their close rates • No credit card required
                       </p>
                       <div className="flex items-center justify-center gap-4 pt-1">
-                        <div className="flex items-center gap-2 text-xs text-white">
+                        <div className="flex items-center gap-2 text-xs text-white font-sans">
                           <Shield className="w-4 h-4 text-emerald-500" />
                           <span>Cancel anytime</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-white">
+                        <div className="flex items-center gap-2 text-xs text-white font-sans">
                           <span>Secure payment via</span>
                           <span className="font-semibold text-white">Stripe</span>
                         </div>

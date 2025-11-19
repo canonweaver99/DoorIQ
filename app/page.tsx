@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { HeroSection } from '@/components/ui/hero-section-dark'
 import { InteractiveDemoSection } from '@/components/ui/interactive-demo-section'
@@ -16,10 +16,6 @@ import { vibrate, cn } from '@/lib/utils'
 import { Users, TrendingUp, Clock, Smartphone, ChevronRight } from 'lucide-react'
 
 // Dynamic imports for below-the-fold components (code splitting)
-const FaqSection = dynamic(() => import('@/components/ui/faq-section').then(mod => ({ default: mod.FaqSection })), {
-  loading: () => <div className="min-h-[400px]" />,
-  ssr: true,
-})
 
 const DashboardHeroPreview = dynamic(() => import('@/components/ui/dashboard-hero-preview').then(mod => ({ default: mod.DashboardHeroPreview })), {
   loading: () => <div className="min-h-[400px]" />,
@@ -90,6 +86,7 @@ function useCountUp(end: number, duration = 2000, startWhen = false) {
 export default function Home() {
   const router = useRouter()
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null)
 
   // Handle email verification tokens from hash fragments
   useEffect(() => {
@@ -169,7 +166,7 @@ export default function Home() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836]">
       {/* Calendar Modal */}
       <CalendarModal 
         isOpen={isCalendarModalOpen} 
@@ -218,16 +215,53 @@ export default function Home() {
       {/* <ResultsSection /> */}
 
       {/* 8) FAQ */}
-      <FaqSection
-        title="Frequently Asked Questions"
-        items={faqItems}
-        contactInfo={{
-          title: 'Ready to See DoorIQ in Action?',
-          description: 'Book a personalized demo and see how DoorIQ can transform your sales training.',
-          buttonText: 'Book a Demo',
-          onContact: () => setIsCalendarModalOpen(true)
-        }}
-      />
+      <motion.section
+        className="py-8 sm:py-12 md:py-16 lg:py-20 relative"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9 }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            className="mb-12 max-w-5xl mx-auto"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+          >
+            <h4 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold text-foreground mb-6 sm:mb-8 lg:mb-12 text-center">
+              Frequently Asked Questions
+            </h4>
+            <div className="space-y-3 max-w-3xl mx-auto">
+              {faqItems.map((faq, index) => (
+                <div key={index} className="rounded-lg border border-border/20 dark:border-white/20 bg-card dark:bg-black overflow-hidden">
+                  <button
+                    onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+                    className="w-full p-5 flex items-center justify-between text-left hover:bg-background/50 dark:hover:bg-white/5 transition-colors"
+                  >
+                    <h5 className="text-foreground font-semibold text-base sm:text-lg lg:text-xl font-space pr-4">{faq.question}</h5>
+                    <ChevronRight 
+                      className={`w-5 h-5 text-foreground flex-shrink-0 transition-transform ${openFAQ === index ? 'rotate-90' : ''}`}
+                    />
+                  </button>
+                  <AnimatePresence>
+                    {openFAQ === index && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <p className="text-base sm:text-lg lg:text-xl text-foreground/80 font-sans leading-relaxed px-5 pb-5 pt-0">{faq.answer}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </motion.section>
     </div>
   );
 }
@@ -277,7 +311,7 @@ function ProblemSolutionSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center mb-6 sm:mb-8 lg:mb-12" variants={fadeInUp}>
           <div className="text-center lg:text-left">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 text-white">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 text-foreground">
               The Reality of Door-to-Door Sales Training
             </h2>
             <motion.div 
@@ -295,7 +329,7 @@ function ProblemSolutionSection() {
                     <p className="text-lg sm:text-xl lg:text-3xl font-semibold mb-1 sm:mb-2 font-space">
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-400 to-pink-500">{problem.title}</span>
                     </p>
-                    <p className="text-base sm:text-lg lg:text-xl text-slate-100 font-sans leading-relaxed">
+                    <p className="text-base sm:text-lg lg:text-xl text-foreground/80 font-sans leading-relaxed">
                       {problem.description}
                     </p>
                   </div>
@@ -304,7 +338,7 @@ function ProblemSolutionSection() {
             </motion.div>
           </div>
           <motion.div 
-            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-orange-500/20 mt-6 sm:mt-0 bg-gradient-to-br from-slate-800/60 to-slate-900/60 shadow-lg shadow-orange-500/10"
+            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-orange-500/20 dark:border-orange-500/20 mt-6 sm:mt-0 bg-card/60 dark:bg-slate-800/60 shadow-lg shadow-orange-500/10 dark:shadow-orange-500/10"
             variants={fadeInScale}
           >
             <Image
@@ -358,7 +392,7 @@ function ProblemSolutionSection() {
           variants={fadeInUp}
         >
           <motion.div 
-            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-indigo-500/20 lg:order-1 mt-6 sm:mt-0 bg-gradient-to-br from-slate-800/60 to-slate-900/60 shadow-lg shadow-indigo-500/10"
+            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-indigo-500/20 dark:border-indigo-500/20 lg:order-1 mt-6 sm:mt-0 bg-card/60 dark:bg-slate-800/60 shadow-lg shadow-indigo-500/10 dark:shadow-indigo-500/10"
             variants={fadeInScale}
           >
             <Image
@@ -491,29 +525,35 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
     return { monthlyPrice, annualPrice, perRepRate, annualPerRepRate }
   }
 
-  // Calculate ROI
-  const calculateROI = (reps: number, annualCost: number) => {
-    const averageCommissionPerDeal = 500
-    const extraDealsPerRepPerMonth = 1
-    const monthsPerYear = 12
+  // Calculate Monthly ROI
+  const calculateMonthlyROI = (reps: number, monthlyCost: number) => {
+    const averageCommissionPerDeal = 500 // $500 per deal (realistic)
+    const extraDealsPerRepPerMonth = 1 // 1 extra deal per month per rep (base)
     
-    const baseAnnualValue = reps * extraDealsPerRepPerMonth * monthsPerYear * averageCommissionPerDeal
-    const exponentialMultiplier = Math.pow(1.05, reps / 10)
-    const annualValue = baseAnnualValue * exponentialMultiplier
+    // Base monthly value: reps × 1 extra deal/month × $500
+    const baseMonthlyValue = reps * extraDealsPerRepPerMonth * averageCommissionPerDeal
     
-    const annualROI = annualValue - annualCost
-    const roiPercentage = annualCost > 0 ? ((annualValue - annualCost) / annualCost) * 100 : 0
+    // Exponential multiplier - larger teams create compounding value
+    const exponentialMultiplier = Math.pow(1.05, reps / 10) // Exponential growth
+    
+    // Total monthly value with exponential scaling
+    const monthlyValue = baseMonthlyValue * exponentialMultiplier
+    
+    const monthlyROI = monthlyValue - monthlyCost
+    const roiPercentage = monthlyCost > 0 ? ((monthlyValue - monthlyCost) / monthlyCost) * 100 : 0
     
     return {
-      annualValue,
-      annualCost,
-      annualROI,
+      monthlyValue,
+      monthlyCost,
+      monthlyROI,
       roiPercentage,
+      averageCommission: averageCommissionPerDeal,
+      dealsPerRep: extraDealsPerRepPerMonth
     }
   }
 
   const pricing = calculatePricing(numReps)
-  const roi = calculateROI(numReps, pricing.annualPrice)
+  const monthlyROI = calculateMonthlyROI(numReps, pricing.monthlyPrice)
 
   return (
     <motion.section 
@@ -529,10 +569,10 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
           className="text-center mb-6 sm:mb-8"
           variants={fadeInUp}
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight tracking-tight font-space font-bold mb-3 sm:mb-4 text-white">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight tracking-tight font-space font-bold mb-3 sm:mb-4 text-foreground">
             Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Managers</span>
           </h2>
-          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-2xl mx-auto font-sans">
+          <p className="text-sm sm:text-base lg:text-lg text-foreground/70 max-w-2xl mx-auto font-sans">
             Scale your team's performance with AI-powered training that delivers measurable results
           </p>
         </motion.div>
@@ -560,17 +600,17 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                       <GlowCard
                         glowColor={index % 2 === 0 ? 'purple' : 'blue'}
                         customSize
-                        className="px-[16px] py-[14.44px] sm:px-[20px] sm:py-[18.05px] h-full bg-black/60"
+                        className="px-[16px] py-[14.44px] sm:px-[20px] sm:py-[18.05px] h-full bg-card/60 dark:bg-black/60"
                       >
                         <div className="flex items-start gap-[12px]">
                           <div className="flex-shrink-0 w-[40px] h-[40px] rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
                             <Icon className="w-[20px] h-[20px] text-purple-400" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-base sm:text-lg font-semibold text-white mb-[3.61px] sm:mb-[5.415px] font-space">
+                            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-[3.61px] sm:mb-[5.415px] font-space">
                               {benefit.title}
                             </h3>
-                            <p className="text-sm sm:text-base text-slate-100 leading-[1.35375] font-sans">
+                            <p className="text-sm sm:text-base text-foreground/80 leading-[1.35375] font-sans">
                               {benefit.description}
                             </p>
                           </div>
@@ -595,17 +635,17 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
               />
               
               {/* ROI Calculator Card */}
-              <div className="bg-gradient-to-br from-black via-slate-950 to-black border-2 border-purple-500/40 rounded-2xl p-5 sm:p-6 md:p-8 relative z-10 shadow-2xl shadow-purple-500/10">
+              <div className="bg-gradient-to-br from-card via-card/95 to-card dark:from-black dark:via-slate-950 dark:to-black border-2 border-border/40 dark:border-white/40 rounded-2xl p-5 sm:p-6 md:p-8 relative z-10 shadow-2xl shadow-purple-500/10">
               {/* ROI Header */}
               <div className="text-center mb-6">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 tracking-tight font-space" style={{ letterSpacing: '-0.02em' }}>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground mb-2 tracking-tight font-space" style={{ letterSpacing: '-0.02em' }}>
                   Calculate Your ROI
                 </h3>
               </div>
 
               {/* Team Size Input */}
               <div className="mb-6">
-                <label className="block text-sm sm:text-base font-bold text-white mb-3 text-center tracking-wide font-space">
+                <label className="block text-sm sm:text-base font-bold text-foreground mb-3 text-center tracking-wide font-space">
                   Number of Sales Reps:
                 </label>
                 <div className="max-w-full mx-auto">
@@ -620,9 +660,9 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                         const value = parseInt(e.target.value) || 5
                         setNumReps(Math.max(5, Math.min(500, value)))
                       }}
-                      className="inline-block px-4 py-2 rounded-lg border-2 border-purple-500/40 bg-black text-white text-xl font-bold font-space text-center w-24 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 transition-all"
+                      className="inline-block px-4 py-2 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-xl font-bold font-space text-center w-24 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
                     />
-                    <span className="text-white text-base ml-2 font-sans">reps</span>
+                    <span className="text-foreground text-base ml-2 font-sans">reps</span>
                   </div>
                   
                   {/* Slider */}
@@ -645,7 +685,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                       }}
                     />
                     {/* Slider labels */}
-                    <div className="flex justify-between mt-2 text-xs font-semibold text-white font-sans">
+                    <div className="flex justify-between mt-2 text-xs font-semibold text-foreground font-sans">
                       <span>5</span>
                       <span>500</span>
                     </div>
@@ -656,22 +696,22 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
               {/* Pricing Cards - Monthly and Annual */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
                 {/* Monthly Card */}
-                <div className="relative w-full rounded-lg border border-purple-500/30 px-3 sm:px-4 pt-3 pb-3 bg-black/60">
-                  <h3 className="text-xs sm:text-sm font-semibold text-white mb-2 font-space">Monthly</h3>
-                  <div className="text-white flex items-end gap-0.5">
+                <div className="relative w-full rounded-lg border border-border/30 dark:border-white/30 px-3 sm:px-4 pt-3 pb-3 bg-card/60 dark:bg-black/60">
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-2 font-space">Monthly</h3>
+                  <div className="text-foreground flex items-end gap-0.5">
                     <span className="text-sm">$</span>
                     <motion.span 
                       key={pricing.monthlyPrice}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 0.3 }}
-                      className="text-white -mb-0.5 text-xl sm:text-2xl font-extrabold tracking-tighter font-space"
+                      className="text-foreground -mb-0.5 text-xl sm:text-2xl font-extrabold tracking-tighter font-space"
                     >
                       {pricing.monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </motion.span>
                     <span className="text-xs">/mo</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-white/70 font-semibold font-sans mt-1">
+                  <div className="text-[10px] sm:text-xs text-foreground/70 font-semibold font-sans mt-1">
                     ${(pricing.monthlyPrice * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/yr
                   </div>
                 </div>
@@ -680,42 +720,42 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                 <div className="relative w-full rounded-lg border-2 border-emerald-500/50 px-3 sm:px-4 pt-3 pb-3 overflow-hidden bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
                   {/* Green Triangle Corner */}
                   <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[28px] border-l-transparent border-t-[28px] border-t-emerald-500"></div>
-                  <h3 className="text-xs sm:text-sm font-semibold text-white mb-2 font-space flex items-center gap-1">
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-2 font-space flex items-center gap-1">
                     Annual
                     <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-black font-bold rounded">Best</span>
                   </h3>
-                  <div className="text-white flex items-end">
+                  <div className="text-foreground flex items-end">
                     <span className="text-sm">$</span>
                     <motion.span 
                       key={Math.round(pricing.annualPrice / 12)}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 0.3 }}
-                      className="text-white -mb-0.5 text-xl sm:text-2xl font-extrabold tracking-tighter font-space"
+                      className="text-foreground -mb-0.5 text-xl sm:text-2xl font-extrabold tracking-tighter font-space"
                     >
                       {Math.round(pricing.annualPrice / 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </motion.span>
                     <span className="text-xs">/mo</span>
                   </div>
-                  <div className="text-[10px] sm:text-xs text-emerald-300 font-semibold font-sans mt-1">
+                  <div className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-300 font-semibold font-sans mt-1">
                     ${pricing.annualPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/yr
                   </div>
                 </div>
               </div>
 
-              {/* ROI Results - Enhanced */}
-              <div className="space-y-3 border-t-2 border-purple-500/30 pt-5 pb-2">
+              {/* ROI Results - Enhanced (Monthly) */}
+              <div className="space-y-3 border-t-2 border-border/30 dark:border-white/30 pt-5 pb-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-white text-sm font-medium font-sans">Revenue:</span>
+                  <span className="text-foreground text-sm font-medium font-sans">Revenue:</span>
                   <div className="flex items-center gap-2">
                     <motion.span 
-                      key={Math.round(roi.annualValue)}
+                      key={Math.round(monthlyROI.monthlyValue)}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 0.3 }}
                       className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-300 text-lg sm:text-xl font-bold font-space"
                     >
-                      +${Math.round(roi.annualValue).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      +${Math.round(monthlyROI.monthlyValue).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                     </motion.span>
                   </div>
                 </div>
@@ -728,25 +768,25 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                   </Link>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-white text-sm font-medium font-sans">Investment:</span>
-                  <span className="text-red-400 text-lg sm:text-xl font-bold font-space">
-                    -${pricing.annualPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  <span className="text-foreground text-sm font-medium font-sans">Investment:</span>
+                  <span className="text-red-500 dark:text-red-400 text-lg sm:text-xl font-bold font-space">
+                    -${pricing.monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                   </span>
                 </div>
                 <div className="border-t-2 border-emerald-500/40 pt-3 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg px-3 py-2 -mx-3 sm:-mx-4">
-                  <span className="text-white text-base font-semibold font-sans">Net Profit:</span>
+                  <span className="text-foreground text-base font-semibold font-sans">Net Profit:</span>
                   <motion.div
-                    key={Math.round(roi.annualROI)}
+                    key={Math.round(monthlyROI.monthlyROI)}
                     initial={{ scale: 1 }}
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 0.3 }}
                     className="flex items-center gap-2"
                   >
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400 text-2xl sm:text-3xl md:text-4xl font-black font-space">
-                      ${Math.round(roi.annualROI).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      ${Math.round(monthlyROI.monthlyROI).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </span>
                     <span className="text-emerald-400 text-lg sm:text-xl font-bold font-space">
-                      ({Math.round(roi.roiPercentage)}%)
+                      ({Math.round(monthlyROI.roiPercentage)}%)
                     </span>
                   </motion.div>
                 </div>
@@ -789,7 +829,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
           <Link
             href="/pricing?reps=5"
             onClick={() => vibrate()}
-            className="text-sm text-slate-400 hover:text-slate-200 font-medium font-sans transition-colors flex items-center gap-1 group"
+            className="text-sm text-foreground/60 hover:text-foreground/80 font-medium font-sans transition-colors flex items-center gap-1 group"
           >
             See Full Pricing Details
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -817,10 +857,10 @@ function DashboardSection() {
           className="text-center mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0"
           variants={fadeInUp}
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-space font-bold text-white pb-2">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-space font-bold text-foreground pb-2">
             Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Analytics</span>
           </h2>
-          <p className="text-base sm:text-lg lg:text-xl text-slate-100 max-w-3xl mx-auto mt-3 sm:mt-4 lg:mt-6 font-sans leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-foreground/80 max-w-3xl mx-auto mt-3 sm:mt-4 lg:mt-6 font-sans leading-relaxed">
             Track every rep's performance in real-time with detailed analytics and insights
           </p>
         </motion.div>
@@ -1045,14 +1085,14 @@ function AnimatedStatCard({
       >
         <div className="flex flex-col items-center justify-center h-full">
           <motion.div 
-            className="text-4xl font-bold text-slate-100"
+            className="text-4xl font-bold text-foreground"
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: delay / 1000, duration: 0.5 }}
           >
             {rawValue || `${prefix}${displayValue}${suffix}`}
           </motion.div>
-          <div className="mt-2 text-white text-base">{label}</div>
+          <div className="mt-2 text-foreground text-base">{label}</div>
         </div>
       </GlowCard>
     </motion.div>
@@ -1086,7 +1126,7 @@ function TestimonialsSection() {
       </div>
 
       <h3 
-        className="text-center text-xl sm:text-2xl lg:text-[56px] leading-[1.2] sm:leading-[1.1] tracking-tight font-space font-bold mt-4 sm:mt-5 lg:mt-6 px-4 sm:px-0 text-white break-words"
+        className="text-center text-xl sm:text-2xl lg:text-[56px] leading-[1.2] sm:leading-[1.1] tracking-tight font-space font-bold mt-4 sm:mt-5 lg:mt-6 px-4 sm:px-0 text-foreground break-words"
       >
         What Sales Teams Say About <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">DoorIQ</span>
       </h3>
@@ -1125,28 +1165,23 @@ function TestimonialsSection() {
 
 const faqItems = [
   {
-    question: 'How quickly can we get reps practicing?',
-    answer:
-      'Most teams run their first session in under 15 minutes. Invite reps, pick a homeowner persona, and start holding real-feel conversations immediately.',
+    question: "Can I try DoorIQ before committing?",
+    answer: "Yes! We offer a 14-day free trial. Try DoorIQ risk-free and see the results for yourself."
   },
   {
-    question: 'Does DoorIQ replace live manager coaching?',
-    answer:
-      'DoorIQ gives managers leverage - reps can practice high-frequency reps independently while leaders review the tough moments together.',
+    question: "How quickly can my team start practicing?",
+    answer: "Your team can start practicing within minutes of signup. No lengthy onboarding or setup required."
   },
   {
-    question: 'Can new hires ramp with guided scenarios?',
-    answer:
-      'Yes. New teammates get curated objection flows and pacing tips that match their experience level so confidence builds from day one.',
+    question: "How is this different from roleplay?",
+    answer: "Real AI conversations, not awkward coworker practice. Our AI adapts to each rep's responses in real-time, providing authentic scenarios that mirror actual customer interactions."
   },
   {
-    question: 'How do we track improvement over time?',
-    answer:
-      'You will see trends for objection handling, tone, discovery depth, and more. Scores roll into the leaderboard so progress stays visible.',
+    question: "Can I track individual rep progress?",
+    answer: "Yes, detailed analytics for each rep. You'll see session completion rates, improvement trends, areas of strength, and specific skills that need development."
   },
   {
-    question: 'Can DoorIQ plug into our existing tools?',
-    answer:
-      'DoorIQ is designed to replace your current training software entirely. We offer a white label version for companies that includes custom objections tailored to your specific products and services, as well as custom design and branding to match your company\'s identity. This allows you to have a fully branded training platform that reflects your unique sales process and customer interactions.',
-  },
+    question: "What if I need to add or remove reps?",
+    answer: "You can adjust your team size anytime. We'll prorate your billing based on the changes."
+  }
 ]

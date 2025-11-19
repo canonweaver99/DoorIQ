@@ -50,7 +50,7 @@ export function DashboardHeroPreview() {
   }
 
   return (
-    <div className="w-full max-w-[2000px] mx-auto bg-black/50 backdrop-blur-sm rounded-xl sm:rounded-2xl overflow-hidden shadow-lg shadow-indigo-500/10 border border-indigo-500/30 font-sans">
+    <div className="w-full max-w-[2000px] mx-auto bg-black/70 backdrop-blur-sm rounded-xl sm:rounded-2xl overflow-hidden shadow-lg shadow-indigo-500/10 border border-indigo-500/30 font-sans">
       <div className="px-6 sm:px-8 lg:px-10 py-6 sm:py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

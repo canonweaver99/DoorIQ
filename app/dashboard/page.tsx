@@ -332,10 +332,10 @@ function DashboardPageContent() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6">
             {/* Left: Welcome & Time */}
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 font-space">
                 Welcome back, {userName}
               </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-white/70 text-xs sm:text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-white/70 text-xs sm:text-sm font-sans">
                 <span className="flex items-center gap-2">
                   <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="break-words">{formatDate(currentTime)}</span>
@@ -643,10 +643,10 @@ function OverviewTabContent() {
           value: avgOverall,
           change: '+7%',
           feedback: 'Consistency across all areas improving. Rapport and discovery skills show promise.',
-          borderColor: '#4a2a6a',
-          textColor: 'text-purple-200',
-          bg: '#2a1a3a',
-          glowColor: 'rgba(138, 43, 226, 0.1)'
+          borderColor: '#8b5cf6',
+          textColor: 'text-purple-300',
+          bg: '#4c1d6a',
+          glowColor: 'rgba(139, 92, 246, 0.5)'
         },
         {
           id: 'rapport',
@@ -654,10 +654,10 @@ function OverviewTabContent() {
           value: avgRapport,
           change: '+5%',
           feedback: 'Incorporate personalized questions within the first 30 seconds.',
-          borderColor: '#2a6a4a',
-          textColor: 'text-emerald-200',
-          bg: '#1a3a2a',
-          glowColor: 'rgba(16, 185, 129, 0.1)'
+          borderColor: '#10b981',
+          textColor: 'text-emerald-300',
+          bg: '#065f46',
+          glowColor: 'rgba(16, 185, 129, 0.5)'
         },
         {
           id: 'discovery',
@@ -665,10 +665,10 @@ function OverviewTabContent() {
           value: avgDiscovery,
           change: '+13%',
           feedback: 'Dig deeper into pain points with follow-up questions.',
-          borderColor: '#2a4a6a',
-          textColor: 'text-blue-200',
-          bg: '#1a2a3a',
-          glowColor: 'rgba(59, 130, 246, 0.1)'
+          borderColor: '#3b82f6',
+          textColor: 'text-blue-300',
+          bg: '#1e40af',
+          glowColor: 'rgba(59, 130, 246, 0.5)'
         },
         {
           id: 'objection',
@@ -676,10 +676,10 @@ function OverviewTabContent() {
           value: avgObjection,
           change: '+8%',
           feedback: 'Reframe price concerns as investment discussions.',
-          borderColor: '#6a4a2a',
-          textColor: 'text-amber-200',
-          bg: '#3a2a1a',
-          glowColor: 'rgba(245, 158, 11, 0.1)'
+          borderColor: '#f59e0b',
+          textColor: 'text-amber-300',
+          bg: '#92400e',
+          glowColor: 'rgba(245, 158, 11, 0.5)'
         },
         {
           id: 'closing',
@@ -687,10 +687,10 @@ function OverviewTabContent() {
           value: avgClosing,
           change: '+6%',
           feedback: 'Use assumptive language: "When we install" vs "If you decide".',
-          borderColor: '#6a2a4a',
-          textColor: 'text-pink-200',
-          bg: '#3a1a2a',
-          glowColor: 'rgba(236, 72, 153, 0.1)'
+          borderColor: '#ec4899',
+          textColor: 'text-pink-300',
+          bg: '#9f1239',
+          glowColor: 'rgba(236, 72, 153, 0.5)'
         }
       ])
     } else {
@@ -702,10 +702,10 @@ function OverviewTabContent() {
           value: 0,
           change: '+0%',
           feedback: 'Complete your first session to see your scores.',
-          borderColor: '#4a2a6a',
-          textColor: 'text-purple-200',
-          bg: '#2a1a3a',
-          glowColor: 'rgba(138, 43, 226, 0.1)'
+          borderColor: '#8b5cf6',
+          textColor: 'text-purple-300',
+          bg: '#4c1d6a',
+          glowColor: 'rgba(139, 92, 246, 0.5)'
         },
         {
           id: 'rapport',
@@ -713,10 +713,10 @@ function OverviewTabContent() {
           value: 0,
           change: '+0%',
           feedback: 'Build connection in the first 30 seconds.',
-          borderColor: '#2a6a4a',
-          textColor: 'text-emerald-200',
-          bg: '#1a3a2a',
-          glowColor: 'rgba(16, 185, 129, 0.1)'
+          borderColor: '#10b981',
+          textColor: 'text-emerald-300',
+          bg: '#065f46',
+          glowColor: 'rgba(16, 185, 129, 0.5)'
         },
         {
           id: 'discovery',
@@ -724,10 +724,10 @@ function OverviewTabContent() {
           value: 0,
           change: '+0%',
           feedback: 'Ask questions to uncover pain points.',
-          borderColor: '#2a4a6a',
-          textColor: 'text-blue-200',
-          bg: '#1a2a3a',
-          glowColor: 'rgba(59, 130, 246, 0.1)'
+          borderColor: '#3b82f6',
+          textColor: 'text-blue-300',
+          bg: '#1e40af',
+          glowColor: 'rgba(59, 130, 246, 0.5)'
         },
         {
           id: 'objection',
@@ -735,10 +735,10 @@ function OverviewTabContent() {
           value: 0,
           change: '+0%',
           feedback: 'Turn concerns into opportunities.',
-          borderColor: '#6a4a2a',
-          textColor: 'text-amber-200',
-          bg: '#3a2a1a',
-          glowColor: 'rgba(245, 158, 11, 0.1)'
+          borderColor: '#f59e0b',
+          textColor: 'text-amber-300',
+          bg: '#92400e',
+          glowColor: 'rgba(245, 158, 11, 0.5)'
         },
         {
           id: 'closing',
@@ -746,10 +746,10 @@ function OverviewTabContent() {
           value: 0,
           change: '+0%',
           feedback: 'Use assumptive language to close.',
-          borderColor: '#6a2a4a',
-          textColor: 'text-pink-200',
-          bg: '#3a1a2a',
-          glowColor: 'rgba(236, 72, 153, 0.1)'
+          borderColor: '#ec4899',
+          textColor: 'text-pink-300',
+          bg: '#9f1239',
+          glowColor: 'rgba(236, 72, 153, 0.5)'
         }
       ])
     }
@@ -942,7 +942,7 @@ function OverviewTabContent() {
             }}
           >
             <div>
-              <h3 className={`text-[9px] sm:text-xs font-semibold ${metric.textColor} uppercase tracking-wide mb-1 sm:mb-2`}>
+              <h3 className={`text-[9px] sm:text-xs font-semibold ${metric.textColor} uppercase tracking-wide mb-1 sm:mb-2 font-space`}>
                 {metric.title}
               </h3>
               
@@ -974,7 +974,7 @@ function OverviewTabContent() {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-white mb-1">Performance Trend</h3>
+              <h3 className="text-sm sm:text-base font-bold text-white mb-1 font-space">Performance Trend</h3>
               <p className="text-xs sm:text-sm text-white/60">Track your improvement over time</p>
             </div>
             
@@ -1207,7 +1207,7 @@ function OverviewTabContent() {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-white mb-1">Earnings Trend</h3>
+              <h3 className="text-sm sm:text-base font-bold text-white mb-1 font-space">Earnings Trend</h3>
               <p className="text-xs sm:text-sm text-white/60">Track your virtual earnings</p>
             </div>
             
@@ -1451,7 +1451,7 @@ function OverviewTabContent() {
           style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
         >
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 className="text-sm sm:text-base font-bold text-white">Recent Sessions</h3>
+            <h3 className="text-sm sm:text-base font-bold text-white font-space">Recent Sessions</h3>
             <Link href="/sessions" className="text-xs sm:text-sm text-[#a855f7] hover:text-[#9333ea] transition-colors touch-target flex items-center">
               <span className="hidden sm:inline">View All →</span>
               <span className="sm:hidden">All →</span>
@@ -1576,7 +1576,7 @@ function OverviewTabContent() {
           className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 sm:p-4 min-h-[280px] sm:min-h-[320px]"
           style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
         >
-          <h3 className="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3">Insights</h3>
+          <h3 className="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3 font-space">Insights</h3>
 
           <div className="space-y-2 sm:space-y-2.5">
             {insightsData.map((insight, idx) => {
@@ -1599,7 +1599,7 @@ function OverviewTabContent() {
                       <Icon className="w-4 h-4" style={{ color: insight.iconColor }} />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-xs font-bold text-white mb-1">{insight.title}</h4>
+                      <h4 className="text-xs font-bold text-white mb-1 font-space">{insight.title}</h4>
                       <p className="text-[11px] text-white leading-relaxed">
                         {insight.percentage && <span className="text-[#a855f7] font-semibold">{insight.percentage}</span>}
                         {insight.percentage && ' '}
@@ -1621,7 +1621,7 @@ function OverviewTabContent() {
           className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 sm:p-4 min-h-[280px] sm:min-h-[320px]"
           style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
         >
-          <h3 className="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3">Notifications</h3>
+          <h3 className="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3 font-space">Notifications</h3>
 
           <div className="space-y-2 sm:space-y-2.5">
             {notificationsData.length === 0 ? (
@@ -1663,7 +1663,7 @@ function OverviewTabContent() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-0.5">
-                        <h4 className="text-xs font-bold text-white">{notif.title}</h4>
+                        <h4 className="text-xs font-bold text-white font-space">{notif.title}</h4>
                         <span className="text-[10px] text-white/60 font-medium">{notif.time}</span>
                       </div>
                       <p className="text-[11px] text-white leading-relaxed">{notif.message}</p>
@@ -1864,7 +1864,7 @@ function LearningTabContent() {
             className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6"
             style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
           >
-            <h3 className="text-lg font-bold text-white mb-4">Upload Training Video</h3>
+            <h3 className="text-lg font-bold text-white mb-4 font-space">Upload Training Video</h3>
             
             {/* File Upload Area */}
             <div

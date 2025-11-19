@@ -422,8 +422,8 @@ export default function LearningPage() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Learning Center</h1>
-          <p className="text-slate-400">Learn how to get the most out of DoorIQ</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-space">Learning Center</h1>
+          <p className="text-slate-400 font-sans">Learn how to get the most out of DoorIQ</p>
         </motion.div>
 
         {/* Instructional Videos Section */}

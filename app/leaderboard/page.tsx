@@ -248,7 +248,7 @@ export default function LeaderboardPage() {
         {/* Header */}
         <div className="text-center mb-4">
           <div className="flex items-center justify-center gap-3 mb-2">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg">Leaderboard</h1>
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg font-space">Leaderboard</h1>
             <button
               onClick={handleManualRefresh}
               disabled={refreshing}
@@ -258,8 +258,8 @@ export default function LeaderboardPage() {
               <RefreshCw className={`w-4 h-4 text-white ${refreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
-          <p className="text-base text-slate-400 drop-shadow-md">See how you rank against your team</p>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-base text-slate-400 drop-shadow-md font-sans">See how you rank against your team</p>
+          <p className="text-xs text-slate-500 mt-1 font-sans">
             Last updated: {lastUpdated.toLocaleTimeString()}
             <span className="ml-2 inline-flex items-center gap-1">
               <span className="relative flex h-2 w-2">
@@ -295,7 +295,7 @@ export default function LeaderboardPage() {
             <div className="order-1 md:order-1">
               <div className="bg-slate-900/80 backdrop-blur-xl rounded-xl p-3 border-2 border-slate-600 text-center transform translate-y-4 shadow-2xl">
                 <Medal className="w-8 h-8 text-slate-400 mx-auto mb-2 drop-shadow-lg" />
-                <h3 className="text-xs font-bold text-white mb-0.5 drop-shadow truncate">{leaderboard[1].full_name}</h3>
+                <h3 className="text-xs font-bold text-white mb-0.5 drop-shadow truncate font-space">{leaderboard[1].full_name}</h3>
                 <p className="text-lg font-bold text-slate-300 mb-0.5 drop-shadow">
                   ${leaderboard[1].virtual_earnings.toFixed(2)}
                 </p>

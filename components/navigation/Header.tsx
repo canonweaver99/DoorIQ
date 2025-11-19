@@ -516,10 +516,10 @@ function HeaderContent() {
   return (
     <>
       {/* Centered oval navigation bar - Desktop */}
-      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-2 md:space-x-3 lg:space-x-4 rounded-full border border-white/10 bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-4 md:pl-5 lg:pl-6 pr-[69px]' : 'pl-4 md:pl-5 lg:pl-6 pr-4 md:pr-5 lg:pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
+      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-2 md:space-x-3 lg:space-x-4 rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-4 md:pl-5 lg:pl-6 pr-[69px]' : 'pl-4 md:pl-5 lg:pl-6 pr-4 md:pr-5 lg:pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
         isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
-            <Link href="/" className="flex items-center pr-2 mr-2 border-r border-white/10 flex-shrink-0">
+            <Link href="/" className="flex items-center pr-2 mr-2 border-r border-border/20 dark:border-white/10 flex-shrink-0">
               <Image 
                 src="/dooriqlogo.png" 
                 alt="DoorIQ Logo" 
@@ -537,19 +537,19 @@ function HeaderContent() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-2 md:px-3 py-1.5 text-xs md:text-sm transition-all flex-shrink-0
-                    ${active ? 'text-white bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                  className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-2 md:px-3 py-1.5 text-sm md:text-base transition-all flex-shrink-0 font-space
+                    ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
                 >
-                  <Icon className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                  <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
                   <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
                 </Link>
               )
             })}
 
             {isSignedIn && (
-              <div className="flex items-center gap-2 md:gap-3 pl-2 border-l border-white/10 flex-shrink-0 min-w-0">
+              <div className="flex items-center gap-2 md:gap-3 pl-2 border-l border-border/20 dark:border-white/10 flex-shrink-0 min-w-0">
                 <div className="relative min-w-0 max-w-[120px] md:max-w-[150px]">
-                  <p className="text-xs text-slate-300 leading-4 truncate">{user?.full_name ?? profileName}</p>
+                  <p className="text-sm md:text-base text-foreground/80 leading-4 truncate font-space font-medium">{user?.full_name ?? profileName}</p>
                   <p 
                     ref={creditsTooltipRef}
                     className="text-[11px] text-purple-400 font-semibold relative truncate"
@@ -581,19 +581,19 @@ function HeaderContent() {
                                 localStorage.setItem('credits-tooltip-dismissed', 'true')
                               }
                             }}
-                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 text-xs transition-colors"
+                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-background/10 dark:bg-white/10 hover:bg-background/20 dark:hover:bg-white/20 flex items-center justify-center text-foreground/70 dark:text-slate-300 text-xs transition-colors"
                             aria-label="Dismiss tooltip"
                           >
                             <X className="w-3 h-3" />
                           </button>
                           
-                          <h3 className="text-sm font-semibold text-white mb-2">
+                          <h3 className="text-sm font-semibold text-foreground mb-2">
                             Welcome! Here's how credits work:
                           </h3>
-                          <p className="text-xs text-slate-200 leading-relaxed mb-2">
-                            You start with <span className="font-semibold text-purple-200">5 free credits</span> to practice your sales skills with AI homeowners.
+                          <p className="text-xs text-foreground/80 dark:text-slate-200 leading-relaxed mb-2">
+                            You start with <span className="font-semibold text-purple-400 dark:text-purple-200">5 free credits</span> to practice your sales skills with AI homeowners.
                           </p>
-                          <p className="text-xs text-slate-200 leading-relaxed">
+                          <p className="text-xs text-foreground/80 dark:text-slate-200 leading-relaxed">
                             Each training session uses 1 credit. Credits reset monthly, or you can purchase more anytime!
                           </p>
                         </div>
@@ -675,7 +675,7 @@ function HeaderContent() {
       }`}>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/10 bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-slate-300 hover:text-white hover:bg-white/5 transition-all touch-target"
+          className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all touch-target"
         >
           {isMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
@@ -686,11 +686,11 @@ function HeaderContent() {
         <div className="fixed inset-0 z-40 md:hidden">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"
             onClick={() => setIsMenuOpen(false)}
           />
           {/* Mobile Navigation Panel */}
-          <div className="absolute top-0 right-0 bottom-0 w-full max-w-sm bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-l border-white/10 overflow-y-auto">
+          <div className="absolute top-0 right-0 bottom-0 w-full max-w-sm bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-l border-border/20 dark:border-white/10 overflow-y-auto">
             <div className="p-6 pt-20 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon
@@ -700,17 +700,17 @@ function HeaderContent() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-all
-                    ${active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base sm:text-lg font-medium transition-all font-space
+                    ${active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 text-foreground font-semibold' : 'text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white'}`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                   <span className="tracking-tight">{item.name}</span>
                 </Link>
               )
             })}
             {isSignedIn ? (
-              <div className="border-t border-white/10 pt-4 mt-4">
-                <p className="px-4 text-xs uppercase tracking-[0.3em] text-slate-400">Account</p>
+              <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4">
+                <p className="px-4 text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Account</p>
                 <div className="mt-2 space-y-2">
                   {profileNavigation.filter(item => {
                     if (item.managerOnly) {
@@ -725,14 +725,14 @@ function HeaderContent() {
                         key={item.name}
                         href={item.href}
                         onClick={() => setIsMenuOpen(false)}
-                        className={`flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-all ${
+                        className={`flex items-center justify-between px-4 py-3 rounded-lg text-base sm:text-lg font-medium transition-all font-space ${
                           active
-                            ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 text-white'
-                            : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                            ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 text-foreground font-semibold'
+                            : 'text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white'
                         }`}
                       >
                         <span className="flex items-center space-x-3">
-                          <Icon className="w-5 h-5" />
+                          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                           <span className="tracking-tight">{item.name}</span>
                         </span>
                         {item.badge && item.badge > 0 && (
@@ -749,33 +749,33 @@ function HeaderContent() {
                     setIsMenuOpen(false)
                     await handleSignOut()
                   }}
-                  className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-sm font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40"
+                  className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-border/20 dark:border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-base sm:text-lg font-semibold text-foreground dark:text-white transition hover:from-purple-500/40 hover:to-pink-500/40 font-space"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
                 </button>
                 {user && (
-                  <div className="px-4 py-3 border-t border-white/10 mt-4">
-                    <p className="text-sm font-medium text-white">{profileName}</p>
-                    <p className="text-xs text-purple-400 font-semibold mt-1">{userCredits} credits</p>
+                  <div className="px-4 py-3 border-t border-border/20 dark:border-white/10 mt-4">
+                    <p className="text-base sm:text-lg font-medium text-foreground font-space">{profileName}</p>
+                    <p className="text-sm text-purple-400 font-semibold mt-1 font-space">{userCredits} credits</p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="border-t border-white/10 pt-4 mt-4 px-4">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Get Started</p>
+              <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4 px-4">
+                <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 mb-3 font-space">Get Started</p>
                 <div className="space-y-2">
                   <Link
                     href="/auth/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-base sm:text-lg font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500 font-space"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/auth/signup"
                     onClick={() => setIsMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-border/20 dark:border-white/20 bg-background/50 dark:bg-white/5 px-4 py-3 text-base sm:text-lg font-semibold text-foreground dark:text-white transition hover:bg-background dark:hover:bg-white/10 font-space"
                   >
                     Sign Up
                   </Link>
@@ -793,7 +793,7 @@ function HeaderContent() {
               <>
                 <motion.div
                   key="sidebar-backdrop"
-                  className="hidden md:block fixed inset-0 z-[998] bg-black/70"
+                  className="hidden md:block fixed inset-0 z-[998] bg-background/70 dark:bg-black/70"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.7 }}
                   exit={{ opacity: 0 }}
@@ -804,7 +804,7 @@ function HeaderContent() {
                 <motion.div
                   key="sidebar-panel"
                   ref={sidebarRef}
-                  className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-white/10 bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)]"
+                  className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-border/20 dark:border-white/10 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)]"
                   role="menu"
                   initial={{ opacity: 0, x: 64 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -813,12 +813,12 @@ function HeaderContent() {
                 >
                   <div className="px-[19px] pt-[14px] pb-[9px] flex items-center justify-between">
                     <div>
-                      <p className="text-[11.5px] uppercase tracking-[0.3em] text-slate-400">Account</p>
-                      <h2 className="mt-[5px] text-[19px] font-semibold text-white">DoorIQ Control Center</h2>
+                      <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Account</p>
+                      <h2 className="mt-[5px] text-lg sm:text-xl md:text-2xl font-semibold text-foreground font-space">DoorIQ Control Center</h2>
                     </div>
                     <button
                       onClick={() => setIsSidebarOpen(false)}
-                      className="rounded-full bg-white/10 text-slate-300 p-[7px] hover:bg-white/20 transition"
+                      className="rounded-full bg-background/50 dark:bg-white/10 text-foreground/70 dark:text-slate-300 p-[7px] hover:bg-background dark:hover:bg-white/20 transition"
                       aria-label="Close account navigation"
                     >
                       <X className="w-[16.5px] h-[16.5px]" />
@@ -827,7 +827,7 @@ function HeaderContent() {
 
                   <div className="px-[19px]">
                     {isSignedIn ? (
-                      <div className="rounded-xl border border-white/10 bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
+                      <div className="rounded-xl border border-border/20 dark:border-white/10 bg-card/60 dark:bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
                         <div className="flex items-center gap-[12px]">
                           {profileAvatar ? (
                             <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border border-purple-500/30">
@@ -843,18 +843,18 @@ function HeaderContent() {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-[14px] font-semibold text-white leading-tight truncate">{profileName}</p>
-                            <p className="text-[11.5px] text-slate-300 leading-tight truncate">{profileEmail}</p>
+                            <p className="text-sm sm:text-base font-semibold text-foreground leading-tight truncate font-space">{profileName}</p>
+                            <p className="text-xs sm:text-sm text-foreground/70 dark:text-slate-300 leading-tight truncate font-sans">{profileEmail}</p>
                           </div>
                         </div>
-                        <div className="mt-[12px] flex items-center justify-between text-[14px] text-slate-300">
+                        <div className="mt-[12px] flex items-center justify-between text-sm sm:text-base text-foreground/70 dark:text-slate-300">
                           <div>
-                            <p className="text-[10.5px] uppercase tracking-[0.2em] text-slate-400">Earnings</p>
-                            <p className="mt-[2px] text-[16.5px] font-semibold text-white">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
+                            <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-foreground/50 dark:text-slate-400 font-space">Earnings</p>
+                            <p className="mt-[2px] text-base sm:text-lg font-semibold text-foreground font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                           </div>
                           <button
                             onClick={() => router.push('/billing?tab=settings')}
-                            className="inline-flex items-center gap-[5px] rounded-full border border-white/10 bg-white/5 px-[12px] py-[5px] text-[10.5px] uppercase tracking-[0.15em] text-slate-200 hover:bg-white/10 transition"
+                            className="inline-flex items-center gap-[5px] rounded-full border border-border/20 dark:border-white/10 bg-background/50 dark:bg-white/5 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-foreground/80 dark:text-slate-200 hover:bg-background dark:hover:bg-white/10 transition font-space"
                           >
                             Manage Account
                             <ArrowRight className="h-[12px] w-[12px]" />
@@ -862,16 +862,16 @@ function HeaderContent() {
                         </div>
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-white/10 bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
-                        <p className="text-[14px] font-semibold text-white mb-[9px]">Get Started with DoorIQ</p>
-                        <p className="text-[11.5px] text-slate-300 leading-snug mb-[14px]">Sign in to track your progress, compete on the leaderboard, and unlock all features.</p>
+                      <div className="rounded-xl border border-border/20 dark:border-white/10 bg-card/60 dark:bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
+                        <p className="text-base sm:text-lg font-semibold text-foreground mb-[9px] font-space">Get Started with DoorIQ</p>
+                        <p className="text-sm text-foreground/70 dark:text-slate-300 leading-snug mb-[14px] font-sans">Sign in to track your progress, compete on the leaderboard, and unlock all features.</p>
                         <div className="space-y-[7px]">
                           <button
                             onClick={() => {
                               router.push('/auth/login')
                               setIsSidebarOpen(false)
                             }}
-                            className="w-full flex items-center justify-center gap-[9px] rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-[14px] py-[9px] text-[14px] font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500"
+                            className="w-full flex items-center justify-center gap-[9px] rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-[14px] py-[9px] text-base sm:text-lg font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500 font-space"
                           >
                             Sign In
                           </button>
@@ -880,7 +880,7 @@ function HeaderContent() {
                               router.push('/auth/signup')
                               setIsSidebarOpen(false)
                             }}
-                            className="w-full flex items-center justify-center gap-[9px] rounded-lg border border-white/20 bg-white/5 px-[14px] py-[9px] text-[14px] font-semibold text-white transition hover:bg-white/10"
+                            className="w-full flex items-center justify-center gap-[9px] rounded-lg border border-border/20 dark:border-white/20 bg-background/50 dark:bg-white/5 px-[14px] py-[9px] text-base sm:text-lg font-semibold text-foreground dark:text-white transition hover:bg-background dark:hover:bg-white/10 font-space"
                           >
                             Sign Up
                           </button>
@@ -900,7 +900,7 @@ function HeaderContent() {
                               router.push(action.href)
                               setIsSidebarOpen(false)
                             }}
-                            className="group flex flex-col items-center justify-center gap-[7px] rounded-xl border border-white/5 bg-white/5 px-[9px] py-[12px] text-[11.5px] text-slate-200 transition hover:bg-white/10 hover:border-white/15"
+                            className="group flex flex-col items-center justify-center gap-[7px] rounded-xl border border-border/10 dark:border-white/5 bg-card/50 dark:bg-white/5 px-[9px] py-[12px] text-xs sm:text-sm text-foreground/80 dark:text-slate-200 transition hover:bg-background dark:hover:bg-white/10 hover:border-border/20 dark:hover:border-white/15 font-space"
                           >
                             <span className="flex h-[33px] w-[33px] items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/40 to-indigo-500/40 text-white">
                               <Icon className="h-[16.5px] w-[16.5px]" />
@@ -928,7 +928,7 @@ function HeaderContent() {
 
                         return (
                           <div key={section.title}>
-                            <p className="text-[10.5px] uppercase tracking-[0.25em] text-slate-500 mb-[7px]">{section.title}</p>
+                            <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-foreground/50 dark:text-slate-500 mb-[7px] font-space">{section.title}</p>
                             <div className="space-y-[5px]">
                               {visibleItems.map((item) => {
                                 const Icon = item.icon
@@ -939,19 +939,19 @@ function HeaderContent() {
                                       router.push(item.href)
                                       setIsSidebarOpen(false)
                                     }}
-                                    className="flex w-full items-center justify-between gap-[9px] rounded-xl border border-white/5 px-[14px] py-[9px] text-[16.5px] text-slate-200 transition-all hover:border-white/15 hover:bg-white/5"
+                                    className="flex w-full items-center justify-between gap-[9px] rounded-xl border border-border/10 dark:border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-foreground/80 dark:text-slate-200 transition-all hover:border-border/20 dark:hover:border-white/15 hover:bg-background/50 dark:hover:bg-white/5 font-space"
                                   >
                                     <span className="flex items-center gap-[12px]">
                                       <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white shrink-0">
                                         <Icon className="h-[16.5px] w-[16.5px]" />
                                       </span>
-                                      <span className="text-[14px] font-medium tracking-tight">{item.name}</span>
+                                      <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
                                     </span>
                                     {item.badge && (
                                       <span className={`rounded-full px-[7px] py-[2px] text-[10.5px] font-semibold ${
                                         item.name === 'Messages' && Number(item.badge) > 0
                                           ? 'bg-purple-500 text-white'
-                                          : 'bg-purple-500/20 text-purple-200 uppercase tracking-[0.15em]'
+                                          : 'bg-purple-500/20 text-purple-400 dark:text-purple-200 uppercase tracking-[0.15em]'
                                       }`}>
                                         {item.badge}
                                       </span>

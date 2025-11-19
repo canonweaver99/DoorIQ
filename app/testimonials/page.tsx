@@ -173,10 +173,10 @@ export default function TestimonialsPage() {
       <div className="container mx-auto px-4 py-16 md:py-24">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-space">
             What Our Customers Say
           </h1>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto font-sans">
             Real feedback from sales teams and reps who are mastering door-to-door sales with DoorIQ
           </p>
         </div>
@@ -210,7 +210,7 @@ export default function TestimonialsPage() {
                   </div>
 
                   {/* Testimonial Text */}
-                  <p className="text-white font-medium text-sm leading-relaxed mb-4">
+                  <p className="text-white font-medium text-sm leading-relaxed mb-4 font-sans">
                     &ldquo;{testimonial.fullText}&rdquo;
                   </p>
 
@@ -224,8 +224,8 @@ export default function TestimonialsPage() {
                       />
                     )}
                     <div>
-                      <p className="font-bold text-white text-sm">{testimonial.name}</p>
-                      <p className="text-xs text-slate-300 font-medium">{testimonial.location}</p>
+                      <p className="font-bold text-white text-sm font-space">{testimonial.name}</p>
+                      <p className="text-xs text-slate-300 font-medium font-sans">{testimonial.location}</p>
                     </div>
                   </div>
                 </div>
@@ -250,7 +250,7 @@ export default function TestimonialsPage() {
               </div>
 
               {/* Testimonial Text */}
-              <p className="text-white font-medium text-sm leading-relaxed mb-4">
+              <p className="text-white font-medium text-sm leading-relaxed mb-4 font-sans">
                 &ldquo;{testimonial.fullText}&rdquo;
               </p>
 
@@ -264,8 +264,8 @@ export default function TestimonialsPage() {
                   />
                 )}
                 <div>
-                  <p className="font-bold text-white text-sm">{testimonial.name}</p>
-                  <p className="text-xs text-slate-300 font-medium">{testimonial.role}</p>
+                  <p className="font-bold text-white text-sm font-space">{testimonial.name}</p>
+                  <p className="text-xs text-slate-300 font-medium font-sans">{testimonial.role}</p>
                 </div>
               </div>
             </div>
@@ -289,7 +289,7 @@ export default function TestimonialsPage() {
         {showForm && !submitted && (
           <div className="max-w-2xl mx-auto mb-12">
             <div className="p-8 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
-              <h2 className="text-2xl font-bold text-white mb-6">Leave a Review</h2>
+              <h2 className="text-2xl font-bold text-white mb-6 font-space">Leave a Review</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

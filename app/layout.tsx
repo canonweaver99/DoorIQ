@@ -9,6 +9,7 @@ import Header from "@/components/navigation/Header";
 import { Footer } from "@/components/ui/footer-section";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ToastProvider } from "@/components/ui/toast";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 // Resolve a canonical base URL for metadata to remove Next.js warnings in dev
 const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
@@ -241,8 +242,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.variable} ${geistMono.variable} ${playfairDisplay.variable} ${spaceGrotesk.variable} ${poppins.variable} ${bebasNeue.variable} antialiased bg-slate-900 text-slate-100` }>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const storedTheme = localStorage.getItem('theme');
+                  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  const theme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+                  document.documentElement.classList.remove('light', 'dark');
+                  document.documentElement.classList.add(theme);
+                } catch (e) {
+                  document.documentElement.classList.add('dark');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className={`${inter.variable} ${geistMono.variable} ${playfairDisplay.variable} ${spaceGrotesk.variable} ${poppins.variable} ${bebasNeue.variable} antialiased bg-background text-foreground`}>
         <StructuredData />
         <Script id="rewardful-init" strategy="beforeInteractive">
           {`(function(w,r){w._rwq=r;w[r]=w[r]||function(){(w[r].q=w[r].q||[]).push(arguments)}})(window,'rewardful');`}
@@ -252,21 +272,23 @@ export default function RootLayout({
           data-rewardful="2154b7"
           strategy="lazyOnload"
         />
-        <ToastProvider>
-          <NotificationProvider>
-            <Suspense fallback={null}>
-              <Header />
-            </Suspense>
-            <div className="min-h-screen flex flex-col">
-              <div className="flex-1">
-                {children}
+        <ThemeProvider>
+          <ToastProvider>
+            <NotificationProvider>
+              <Suspense fallback={null}>
+                <Header />
+              </Suspense>
+              <div className="min-h-screen flex flex-col">
+                <div className="flex-1">
+                  {children}
+                </div>
+                <div className="px-4 sm:px-6 lg:px-8 pb-10">
+                  <Footer />
+                </div>
               </div>
-              <div className="px-4 sm:px-6 lg:px-8 pb-10">
-                <Footer />
-              </div>
-            </div>
-          </NotificationProvider>
-        </ToastProvider>
+            </NotificationProvider>
+          </ToastProvider>
+        </ThemeProvider>
         <SpeedInsights />
         <Analytics />
       </body>

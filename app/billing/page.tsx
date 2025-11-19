@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Bell,
   Moon,
+  Sun,
   Save,
   X,
   User,
@@ -27,6 +28,7 @@ import { Database } from '@/lib/supabase/database.types'
 import { Toggle } from '@/components/ui/toggle'
 import AvatarUpload from '@/components/ui/AvatarUpload'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { useTheme } from '@/contexts/ThemeContext'
 
 export const dynamic = 'force-dynamic'
 
@@ -96,6 +98,12 @@ function BillingPageContent() {
   const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { theme: currentTheme, setTheme, toggleTheme } = useTheme()
+
+  // Sync settings darkMode with theme
+  useEffect(() => {
+    setSettings(prev => ({ ...prev, darkMode: currentTheme === 'dark' }))
+  }, [currentTheme])
 
   useEffect(() => {
     loadSubscriptionDetails()
@@ -457,7 +465,7 @@ function BillingPageContent() {
           {/* Left Sidebar - Account Settings Navigation */}
           <aside className="w-full lg:w-64 flex-shrink-0">
             <div className="bg-background/70 backdrop-blur-sm rounded-xl border border-border p-4">
-              <h2 className="text-lg font-semibold text-foreground mb-4">Account Settings</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-4 font-space">Account Settings</h2>
               <nav className="space-y-1">
                 <Link
                   href="/billing?tab=settings"
@@ -539,14 +547,14 @@ function BillingPageContent() {
             <div className="bg-background/70 backdrop-blur-sm rounded-xl border border-border p-6">
               {activeTab === 'settings' && (
                 <>
-                  <h1 className="text-2xl font-bold text-foreground mb-6">Account Settings</h1>
-                  <p className="text-muted-foreground mb-6">Manage your app preferences and profile</p>
+                  <h1 className="text-2xl font-bold text-foreground mb-6 font-space">Account Settings</h1>
+                  <p className="text-muted-foreground mb-6 font-sans">Manage your app preferences and profile</p>
 
                   {/* Profile & Personalization Section */}
                   <div className="bg-background/50 rounded-lg border border-border p-6 mb-6">
                     <div className="flex items-center mb-6">
                       <User className="w-5 h-5 text-foreground mr-2" />
-                      <h2 className="text-xl font-semibold text-foreground">Profile & Personalization</h2>
+                      <h2 className="text-xl font-semibold text-foreground font-space">Profile & Personalization</h2>
                     </div>
 
                     <div className="space-y-6">
@@ -658,7 +666,7 @@ function BillingPageContent() {
                   <div className="bg-background/50 rounded-lg border border-border p-6 mb-6">
                     <div className="flex items-center mb-6">
                       <Bell className="w-5 h-5 text-foreground mr-2" />
-                      <h2 className="text-xl font-semibold text-foreground">Notifications</h2>
+                      <h2 className="text-xl font-semibold text-foreground font-space">Notifications</h2>
                     </div>
 
                     <div className="space-y-4">
@@ -706,11 +714,31 @@ function BillingPageContent() {
                   {/* Appearance Section */}
                   <div className="bg-background/50 rounded-lg border border-border p-6 mb-6">
                     <div className="flex items-center mb-6">
-                      <Moon className="w-5 h-5 text-foreground mr-2" />
-                      <h2 className="text-xl font-semibold text-foreground">Appearance</h2>
+                      {currentTheme === 'dark' ? (
+                        <Moon className="w-5 h-5 text-foreground mr-2" />
+                      ) : (
+                        <Sun className="w-5 h-5 text-foreground mr-2" />
+                      )}
+                      <h2 className="text-xl font-semibold text-foreground font-space">Appearance</h2>
                     </div>
 
                     <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Dark Mode</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Switch between light and dark themes
+                          </p>
+                        </div>
+                        <Toggle
+                          checked={currentTheme === 'dark'}
+                          onCheckedChange={(checked) => {
+                            setTheme(checked ? 'dark' : 'light')
+                            setSettings({ ...settings, darkMode: checked })
+                          }}
+                        />
+                      </div>
+
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-foreground">Sound Effects</p>
@@ -755,7 +783,7 @@ function BillingPageContent() {
 
               {activeTab === 'subscription' && (
                 <>
-                  <h1 className="text-2xl font-bold text-foreground mb-6">Manage Subscription</h1>
+                  <h1 className="text-2xl font-bold text-foreground mb-6 font-space">Manage Subscription</h1>
 
               {/* Yearly Upgrade Banner */}
               {showYearlyBanner && subscription.yearlySavings && (
@@ -820,7 +848,7 @@ function BillingPageContent() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="text-lg font-semibold text-foreground mb-2">
+                          <h3 className="text-lg font-semibold text-foreground mb-2 font-space">
                             {getPlanName(subscription)}
                           </h3>
                           <button
@@ -945,8 +973,8 @@ function BillingPageContent() {
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-background border border-border rounded-full mb-4">
                     <CreditCard className="w-8 h-8 text-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">No Active Subscription</h3>
-                  <p className="text-muted-foreground mb-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-2 font-space">No Active Subscription</h3>
+                  <p className="text-muted-foreground mb-6 font-sans">
                     Start a subscription to access all premium features
                   </p>
                   <Link
@@ -968,7 +996,7 @@ function BillingPageContent() {
                     className="bg-background rounded-xl border border-border p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
                   >
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-bold text-foreground">Switch Plan</h2>
+                      <h2 className="text-2xl font-bold text-foreground font-space">Switch Plan</h2>
                       <button
                         onClick={() => setShowPlanSwitcher(false)}
                         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -1020,7 +1048,7 @@ function BillingPageContent() {
                           : 'border-border'
                       }`}>
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-lg font-semibold text-foreground">Free</h3>
+                          <h3 className="text-lg font-semibold text-foreground font-space">Free</h3>
                           {!hasActiveSubscription && (
                             <span className="px-2 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
                               Current
@@ -1076,7 +1104,7 @@ function BillingPageContent() {
                           : 'border-border'
                       }`}>
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-lg font-semibold text-foreground">Individual</h3>
+                          <h3 className="text-lg font-semibold text-foreground font-space">Individual</h3>
                           {hasActiveSubscription && subscription?.plan === 'individual' && 
                            subscription?.price?.interval === planBillingInterval && (
                             <span className="px-2 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
@@ -1177,7 +1205,7 @@ function BillingPageContent() {
 
               {activeTab === 'purchase-history' && (
                 <>
-                  <h1 className="text-2xl font-bold text-foreground mb-6">Purchase History</h1>
+                  <h1 className="text-2xl font-bold text-foreground mb-6 font-space">Purchase History</h1>
                   {loadingPurchases ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -1189,7 +1217,7 @@ function BillingPageContent() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-sm font-semibold text-foreground">{purchase.description}</h3>
+                                <h3 className="text-sm font-semibold text-foreground font-space">{purchase.description}</h3>
                                 <span className={`px-2 py-0.5 text-xs font-medium rounded ${
                                   purchase.status === 'paid' 
                                     ? 'bg-green-500/20 text-green-400 border border-green-500/30'
@@ -1247,8 +1275,8 @@ function BillingPageContent() {
                       <div className="inline-flex items-center justify-center w-16 h-16 bg-background border border-border rounded-full mb-4">
                         <FileText className="w-8 h-8 text-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold text-foreground mb-2">No Purchase History</h3>
-                      <p className="text-muted-foreground mb-6">
+                      <h3 className="text-lg font-semibold text-foreground mb-2 font-space">No Purchase History</h3>
+                      <p className="text-muted-foreground mb-6 font-sans">
                         Your purchase history will appear here once you make a subscription or purchase credits.
                       </p>
                       <Link
@@ -1264,7 +1292,7 @@ function BillingPageContent() {
 
               {activeTab === 'cards' && (
                 <>
-                  <h1 className="text-2xl font-bold text-foreground mb-6">Stored Cards</h1>
+                  <h1 className="text-2xl font-bold text-foreground mb-6 font-space">Stored Cards</h1>
                   {paymentMethod ? (
                     <div className="space-y-4">
                       <div className="p-4 border border-border bg-background/50 rounded-lg">
@@ -1301,8 +1329,8 @@ function BillingPageContent() {
                       <div className="inline-flex items-center justify-center w-16 h-16 bg-background border border-border rounded-full mb-4">
                         <CreditCard className="w-8 h-8 text-foreground" />
                       </div>
-                      <h3 className="text-lg font-semibold text-foreground mb-2">No Payment Methods</h3>
-                      <p className="text-muted-foreground mb-6">
+                      <h3 className="text-lg font-semibold text-foreground mb-2 font-space">No Payment Methods</h3>
+                      <p className="text-muted-foreground mb-6 font-sans">
                         Add a payment method to start your subscription.
                       </p>
                       <Link

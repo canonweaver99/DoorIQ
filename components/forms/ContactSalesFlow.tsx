@@ -108,7 +108,7 @@ export function ContactSalesFlow() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8 sm:mb-12"
         >
-          <h1 className="text-4xl sm:text-5xl font-bold text-neutral-900 dark:text-white mb-3">
+          <h1 className="text-4xl sm:text-5xl font-bold text-neutral-900 dark:text-white mb-3 font-space">
             Get Started with DoorIQ
           </h1>
           <AnimatePresence mode="wait">
@@ -117,7 +117,7 @@ export function ContactSalesFlow() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-lg sm:text-xl text-neutral-700 dark:text-neutral-300"
+              className="text-lg sm:text-xl text-neutral-700 dark:text-neutral-300 font-sans"
             >
               {currentStep === 0 && 'How many sales reps does your business have?'}
               {currentStep === 1 && 'What industry are you in?'}
@@ -136,10 +136,10 @@ export function ContactSalesFlow() {
               exit={{ opacity: 0, x: -20 }}
               className="bg-neutral-100 dark:bg-neutral-800 rounded-2xl p-6 sm:p-8"
             >
-              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">
+              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2 font-space">
                 Select your sales rep range
               </h2>
-              <p className="text-neutral-600 dark:text-neutral-400 mb-6">
+              <p className="text-neutral-600 dark:text-neutral-400 mb-6 font-sans">
                 Choose the option that best describes your business
               </p>
               <div className="space-y-3">
@@ -173,10 +173,10 @@ export function ContactSalesFlow() {
                 <ArrowLeft className="w-4 h-4" />
                 <span className="text-sm">← Back to sales rep selection</span>
               </button>
-              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">
+              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2 font-space">
                 Choose Your Industry
               </h2>
-              <p className="text-neutral-600 dark:text-neutral-400 mb-6">
+              <p className="text-neutral-600 dark:text-neutral-400 mb-6 font-sans">
                 Choose the category that best fits your business. This helps us tailor your setup.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

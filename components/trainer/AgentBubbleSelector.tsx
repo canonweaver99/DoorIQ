@@ -297,7 +297,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
         <AnimatedGrid />
-        <div className="relative z-10 text-white">Loading homeowners…</div>
+        <div className="relative z-10 text-foreground font-space text-lg sm:text-xl">Loading homeowners…</div>
       </div>
     )
   }
@@ -306,9 +306,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
         <AnimatedGrid />
-        <div className="relative z-10 text-center text-slate-300 space-y-3">
-          <p className="text-xl font-semibold">No homeowner agents found</p>
-          <p className="text-sm text-slate-500 max-w-sm">
+        <div className="relative z-10 text-center text-foreground/80 space-y-3">
+          <p className="text-xl sm:text-2xl font-semibold font-space">No homeowner agents found</p>
+          <p className="text-base sm:text-lg text-foreground/60 max-w-sm font-sans">
             Add active homeowner personas in Supabase with an ElevenLabs agent ID to see them here.
           </p>
         </div>
@@ -317,7 +317,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center">
+    <div className="relative min-h-screen w-full overflow-hidden bg-background dark:bg-black flex flex-col items-center justify-center">
       <AnimatedGrid />
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-32">
@@ -328,10 +328,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           transition={{ duration: 0.6 }}
           className="text-center mb-6 flex flex-col items-center gap-2"
         >
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent pb-1 leading-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold bg-gradient-to-b from-foreground to-foreground/70 dark:from-white dark:to-slate-300 bg-clip-text text-transparent pb-1">
             Choose Your Challenge
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-base sm:text-lg text-foreground/70 font-sans">
             Select a homeowner to begin your training session
           </p>
         </motion.div>
@@ -341,29 +341,29 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-6 flex flex-wrap items-center justify-center gap-4 px-4 py-3 bg-[#1a1a1a]/50 border border-[#2a2a2a] rounded-lg backdrop-blur-sm max-w-3xl mx-auto"
+          className="mb-6 flex flex-wrap items-center justify-center gap-4 px-4 py-3 bg-card/50 dark:bg-[#1a1a1a]/50 border border-border/20 dark:border-[#2a2a2a] rounded-lg backdrop-blur-sm max-w-3xl mx-auto"
         >
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Difficulty:</span>
+          <span className="text-xs sm:text-sm font-semibold text-foreground/60 dark:text-slate-400 uppercase tracking-wider font-space">Difficulty:</span>
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-green-400 flex-shrink-0" />
-              <span className="text-xs text-slate-300">Easy</span>
+              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-300 font-space">Easy</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 flex-shrink-0" />
-              <span className="text-xs text-slate-300">Moderate</span>
+              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-300 font-space">Moderate</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-orange-400 flex-shrink-0" />
-              <span className="text-xs text-slate-300">Hard</span>
+              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-300 font-space">Hard</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-blue-400 flex-shrink-0" />
-              <span className="text-xs text-slate-300">Very Hard</span>
+              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-300 font-space">Very Hard</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-red-400 flex-shrink-0" />
-              <span className="text-xs text-slate-300">Expert</span>
+              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-300 font-space">Expert</span>
             </div>
           </div>
         </motion.div>
@@ -378,10 +378,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('all')}
             className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space",
               filter === 'all'
-                ? "bg-white/20 text-white border border-white/30"
-                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                ? "bg-white/20 text-foreground dark:text-white border border-border/30 dark:border-white/30"
+                : "bg-background/50 dark:bg-white/5 text-foreground/60 dark:text-slate-400 border border-border/20 dark:border-white/10 hover:bg-background dark:hover:bg-white/10"
             )}
           >
             All
@@ -389,10 +389,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('difficulty')}
             className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space",
               filter === 'difficulty'
-                ? "bg-white/20 text-white border border-white/30"
-                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                ? "bg-white/20 text-foreground dark:text-white border border-border/30 dark:border-white/30"
+                : "bg-background/50 dark:bg-white/5 text-foreground/60 dark:text-slate-400 border border-border/20 dark:border-white/10 hover:bg-background dark:hover:bg-white/10"
             )}
           >
             By Difficulty
@@ -400,10 +400,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('unplayed')}
             className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space",
               filter === 'unplayed'
-                ? "bg-white/20 text-white border border-white/30"
-                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                ? "bg-white/20 text-foreground dark:text-white border border-border/30 dark:border-white/30"
+                : "bg-background/50 dark:bg-white/5 text-foreground/60 dark:text-slate-400 border border-border/20 dark:border-white/10 hover:bg-background dark:hover:bg-white/10"
             )}
           >
             Unplayed First
@@ -411,21 +411,21 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('struggles')}
             className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space",
               filter === 'struggles'
-                ? "bg-white/20 text-white border border-white/30"
-                : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                ? "bg-white/20 text-foreground dark:text-white border border-border/30 dark:border-white/30"
+                : "bg-background/50 dark:bg-white/5 text-foreground/60 dark:text-slate-400 border border-border/20 dark:border-white/10 hover:bg-background dark:hover:bg-white/10"
             )}
           >
             Your Struggles
           </button>
-          <div className="w-px h-4 bg-slate-700" />
+          <div className="w-px h-4 bg-border/20 dark:bg-slate-700" />
           <button
             type="button"
             onClick={handleRandomAgent}
             disabled={loading || agents.length === 0}
             className={cn(
-              "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all",
+              "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm sm:text-base font-semibold transition-all font-space",
               "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white",
               "hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400",
               "shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50",
@@ -445,7 +445,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             const isSelected = selectedAgent === agent.agentId
             
             // Uniform grey background - difficulty shown via dot color
-            const cardBg = 'bg-[#1a1a1a] border border-[#2a2a2a]'
+            const cardBg = 'bg-card dark:bg-[#1a1a1a] border border-border/20 dark:border-[#2a2a2a]'
 
             return (
               <motion.div
@@ -613,21 +613,21 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 {/* Suggested Badge */}
                 {suggestedAgent === agent.name && !agent.isLocked && (
                   <div className="absolute top-1 right-1 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-500/40">
-                    <span className="text-[10px] text-yellow-200 font-semibold">⭐ Suggested</span>
+                    <span className="text-xs text-yellow-200 font-semibold font-space">⭐ Suggested</span>
                   </div>
                 )}
                 
                 {/* Locked Badge */}
                 {agent.isLocked && (
                   <div className="absolute top-1 right-1 bg-slate-800/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-700">
-                    <span className="text-[10px] text-slate-300">🔒 Locked</span>
+                    <span className="text-xs text-foreground/80 dark:text-slate-300 font-space">🔒 Locked</span>
                   </div>
                 )}
                 
                 {/* Mastered Badge */}
                 {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
                   <div className="absolute top-1 right-1 bg-yellow-500/20 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-yellow-500/30">
-                    <span className="text-[10px] text-yellow-300">🏆</span>
+                    <span className="text-xs text-yellow-300 font-space">🏆</span>
                   </div>
                 )}
 
@@ -640,7 +640,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 >
                   {/* Name and difficulty */}
                   <div className="flex items-center justify-center gap-2">
-                    <h3 className="text-xl font-bold text-white tracking-tight">{agent.name}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-foreground dark:text-white tracking-tight font-space">{agent.name}</h3>
                     <div className={cn(
                       "w-2.5 h-2.5 rounded-full flex-shrink-0",
                       agent.difficulty === 'Easy' ? 'bg-green-400' :
@@ -652,20 +652,20 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </div>
                   
                   {/* Combined summary */}
-                  <p className="text-sm text-white/80 max-w-[240px] mx-auto leading-relaxed font-medium">
+                  <p className="text-sm sm:text-base text-foreground/80 dark:text-white/80 max-w-[240px] mx-auto leading-relaxed font-sans">
                     {agent.description}
                   </p>
                   
                   {/* Stats if available - Larger and more readable */}
                   {agent.sessionCount && agent.sessionCount > 0 ? (
-                    <div className="text-base font-bold pt-2">
-                      <span className="text-white/90">{agent.sessionCount}x attempted</span>
+                    <div className="text-base sm:text-lg font-bold pt-2 font-space">
+                      <span className="text-foreground/90 dark:text-white/90">{agent.sessionCount}x attempted</span>
                       {agent.bestScore && agent.bestScore > 0 ? (
-                        <span className="text-emerald-400 ml-2 tabular-nums">• Best: {agent.bestScore}%</span>
+                        <span className="text-emerald-500 dark:text-emerald-400 ml-2 tabular-nums">• Best: {agent.bestScore}%</span>
                       ) : null}
                     </div>
                   ) : (
-                    <div className="text-base font-semibold text-amber-400/90 pt-2">
+                    <div className="text-base sm:text-lg font-semibold text-amber-500 dark:text-amber-400/90 pt-2 font-space">
                       ✨ Not yet attempted
                     </div>
                   )}
@@ -682,7 +682,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           transition={{ delay: 0.8 }}
           className="text-center mt-6"
         >
-          <p className="text-xs text-slate-500">
+          <p className="text-sm sm:text-base text-foreground/60 dark:text-slate-500 font-sans">
             Hover over a bubble to see it animate • Click to start your session
           </p>
         </motion.div>

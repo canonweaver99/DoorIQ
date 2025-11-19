@@ -328,13 +328,13 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   transition={{ delay: 0.2, duration: 0.6 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <h1 className="text-base text-white group font-space font-semibold px-6 py-3 bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/10 dark:via-purple-500/10 border-[2px] border-indigo-500/20 dark:border-indigo-500/20 rounded-3xl cursor-pointer hover:border-indigo-400/50 transition-all flex items-center gap-2">
+                  <h1 className="text-base text-foreground group font-space font-semibold px-6 py-3 bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/10 dark:via-purple-500/10 border-[2px] border-indigo-500/20 dark:border-indigo-500/20 rounded-3xl cursor-pointer hover:border-indigo-400/50 transition-all flex items-center gap-2">
                     {title}
                     <ChevronRight className="inline w-4 h-4 ml-1 group-hover:translate-x-1 duration-300" />
                   </h1>
                 </motion.a>
                 <motion.h2 
-                  className="text-[2.5rem] leading-tight sm:text-4xl md:text-5xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] sm:leading-[1.1] tracking-tight font-space font-bold text-white w-full break-words hyphens-auto"
+                  className="text-[2.5rem] leading-tight sm:text-4xl md:text-5xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] sm:leading-[1.1] tracking-tight font-space font-bold text-foreground w-full break-words hyphens-auto"
                   style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -355,7 +355,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 </motion.div>
                 {/* Instructional Text - Below Carousel */}
                 <motion.p 
-                  className="text-slate-100 text-base sm:text-lg lg:text-xl mt-2 lg:mt-3 px-0 sm:px-0 font-sans leading-relaxed"
+                  className="text-foreground/80 text-base sm:text-lg lg:text-xl mt-2 lg:mt-3 px-0 sm:px-0 font-sans leading-relaxed"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.6 }}
