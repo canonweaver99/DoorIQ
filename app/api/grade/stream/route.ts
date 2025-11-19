@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Fetch session data with retry logic - transcript might still be saving
     let session: any = null
     let attempts = 0
-    const maxAttempts = 30 // Wait up to 15 seconds (30 attempts * 500ms)
+    const maxAttempts = 120 // Wait up to 60 seconds (120 attempts * 500ms)
     
     while (attempts < maxAttempts) {
       const { data, error: sessionError } = await supabase
@@ -82,17 +82,42 @@ export async function POST(request: NextRequest) {
       
       session = data
       
-      // Check if transcript is available
-      if ((session as any).full_transcript && (session as any).full_transcript.length > 0) {
+      // Check if transcript is available - handle both array and JSONB string formats
+      const transcript = (session as any).full_transcript
+      let transcriptArray: any[] = []
+      
+      if (transcript) {
+        // Handle JSONB string format
+        if (typeof transcript === 'string') {
+          try {
+            transcriptArray = JSON.parse(transcript)
+          } catch (e) {
+            logger.error('Failed to parse transcript string', { sessionId, transcriptType: typeof transcript })
+          }
+        } else if (Array.isArray(transcript)) {
+          transcriptArray = transcript
+        }
+      }
+      
+      if (transcriptArray && transcriptArray.length > 0) {
         // Transcript is available, proceed with grading
-        logger.info(`Transcript found after ${attempts} attempts`)
+        logger.info(`Transcript found after ${attempts} attempts (${(attempts * 500) / 1000}s)`, {
+          transcriptLength: transcriptArray.length,
+          transcriptType: typeof transcript,
+          isArray: Array.isArray(transcript)
+        })
+        // Update session with parsed transcript for later use
+        (session as any).full_transcript = transcriptArray
         break
       }
       
       // Transcript not available yet, wait and retry
       attempts++
       if (attempts < maxAttempts) {
-        logger.info(`Waiting for transcript to be saved (attempt ${attempts}/${maxAttempts})`)
+        // Log every 10 attempts (every 5 seconds) to avoid spam
+        if (attempts % 10 === 0) {
+          logger.info(`Waiting for transcript to be saved (attempt ${attempts}/${maxAttempts}, ${(attempts * 500) / 1000}s elapsed)`)
+        }
         await new Promise(resolve => setTimeout(resolve, 500))
       }
     }
@@ -102,16 +127,38 @@ export async function POST(request: NextRequest) {
       return new Response('Session not found', { status: 404 })
     }
     
-    if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
+    // Final transcript check with proper parsing
+    const finalTranscript = (session as any).full_transcript
+    let finalTranscriptArray: any[] = []
+    
+    if (finalTranscript) {
+      if (typeof finalTranscript === 'string') {
+        try {
+          finalTranscriptArray = JSON.parse(finalTranscript)
+        } catch (e) {
+          logger.error('Failed to parse final transcript string', { sessionId, error: e })
+        }
+      } else if (Array.isArray(finalTranscript)) {
+        finalTranscriptArray = finalTranscript
+      }
+    }
+    
+    if (!finalTranscriptArray || finalTranscriptArray.length === 0) {
       logger.error('No transcript available after retries', { 
         sessionId, 
         attempts,
         sessionExists: !!session,
-        hasTranscript: !!(session as any).full_transcript,
-        transcriptLength: (session as any).full_transcript?.length || 0
+        hasTranscript: !!finalTranscript,
+        transcriptType: typeof finalTranscript,
+        transcriptValue: finalTranscript,
+        transcriptLength: finalTranscriptArray.length,
+        sessionKeys: session ? Object.keys(session) : []
       })
       return new Response(`No transcript to grade – transcript may still be saving. Please wait a moment and refresh. SessionId: "${sessionId}"`, { status: 400 })
     }
+    
+    // Update session with parsed transcript
+    (session as any).full_transcript = finalTranscriptArray
 
     // Get user profile and team config (simplified for streaming)
     const { data: userProfile } = await supabase

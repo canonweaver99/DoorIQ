@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native'
+import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useAuth } from '../../contexts/AuthContext'
 import { sessionApi, elevenApi } from '../../lib/api/client'
@@ -29,6 +30,7 @@ export default function TrainingSessionScreen() {
   const [loading, setLoading] = useState(false)
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const transcriptEndRef = useRef<ScrollView>(null)
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions()
 
   useEffect(() => {
     if (params.sessionId === 'new' && params.agent) {
@@ -197,15 +199,32 @@ export default function TrainingSessionScreen() {
         )}
       </View>
 
-      {/* Agent Image */}
+      {/* Webcam Container - Shows camera when active, placeholder when inactive */}
       <View style={styles.agentContainer}>
-        <View style={styles.agentImagePlaceholder}>
-          <Text style={styles.agentImageText}>{selectedAgent.name.charAt(0)}</Text>
-        </View>
-        {!sessionActive && (
-          <View style={styles.overlay}>
-            <Text style={styles.overlayText}>{selectedAgent.name}</Text>
+        {sessionActive && cameraPermission?.granted ? (
+          <CameraView
+            style={styles.camera}
+            facing="front"
+          />
+        ) : sessionActive && !cameraPermission?.granted ? (
+          <View style={styles.cameraPlaceholder}>
+            <Text style={styles.cameraPlaceholderText}>Camera permission needed</Text>
+            <TouchableOpacity 
+              style={styles.permissionButton} 
+              onPress={requestCameraPermission}
+            >
+              <Text style={styles.permissionButtonText}>Grant Permission</Text>
+            </TouchableOpacity>
           </View>
+        ) : (
+          <>
+            <View style={styles.agentImagePlaceholder}>
+              <Text style={styles.agentImageText}>{selectedAgent.name.charAt(0)}</Text>
+            </View>
+            <View style={styles.overlay}>
+              <Text style={styles.overlayText}>{selectedAgent.name}</Text>
+            </View>
+          </>
         )}
       </View>
 
@@ -214,9 +233,6 @@ export default function TrainingSessionScreen() {
         ref={transcriptEndRef}
         style={styles.transcriptContainer}
         contentContainerStyle={styles.transcriptContent}
-        onContentSizeChange={() => {
-          transcriptEndRef.current?.scrollToEnd({ animated: true })
-        }}
       >
         {transcript.length === 0 ? (
           <View style={styles.emptyTranscript}>
@@ -324,6 +340,36 @@ const styles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  camera: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  cameraPlaceholder: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+  },
+  cameraPlaceholderText: {
+    color: '#888',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  permissionButton: {
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  permissionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   agentImagePlaceholder: {
     width: 120,
