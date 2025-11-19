@@ -334,7 +334,7 @@ export default function SessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] pt-32 pb-4 lg:pb-6 xl:pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] pt-8 pb-4 lg:pb-6 xl:pb-8">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-4 pt-3">

@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Play, CheckCircle2, TrendingUp } from 'lucide-react'
-import { GlowCard } from '@/components/ui/spotlight-card'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
 
 interface DemoStep {
@@ -165,10 +164,10 @@ export function InteractiveDemoSection() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div className="text-center mb-6 sm:mb-8 lg:mb-12" variants={fadeInUp}>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-            See <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span> in Action
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 text-white">
+            See <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">DoorIQ</span> in Action
           </h2>
-          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-3xl mx-auto px-2 sm:px-0">
+          <p className="text-base sm:text-lg lg:text-xl text-slate-100 max-w-3xl mx-auto px-2 sm:px-0 font-sans leading-relaxed">
             Watch how a sales rep trains with an AI homeowner in under 2 minutes. 
             No scripts. No staged demos. Just real practice.
           </p>
@@ -182,8 +181,8 @@ export function InteractiveDemoSection() {
           >
             <motion.div 
               ref={videoContainerRef}
-              className="relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-2xl"
-              whileHover={{ scale: 1.02 }}
+              className="relative aspect-video rounded-xl sm:rounded-2xl overflow-hidden bg-black/50 backdrop-blur-sm border border-indigo-500/30 shadow-lg shadow-indigo-500/10"
+              whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.3 }}
             >
               {/* Video Player */}
@@ -216,17 +215,17 @@ export function InteractiveDemoSection() {
               
               {/* Step indicator */}
               <motion.div 
-                className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5 z-10"
+                className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 z-10 border border-indigo-500/30"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.8 }}
               >
-                <span className="text-sm text-white font-medium">Step {demoSteps[activeStep].id}: {demoSteps[activeStep].title}</span>
+                <span className="text-xs sm:text-sm text-white font-semibold font-space">Step {demoSteps[activeStep].id}: {demoSteps[activeStep].title}</span>
               </motion.div>
             </motion.div>
 
-            {/* Industry Cards */}
-            <motion.div 
+            {/* Industry Cards - ARCHIVED */}
+            {/* <motion.div 
               className="flex flex-wrap justify-center gap-1.5 sm:gap-2 w-full mt-4 sm:mt-5 lg:mt-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -245,18 +244,17 @@ export function InteractiveDemoSection() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.1 + index * 0.05, duration: 0.4 }}
-                  className="group relative flex flex-col items-center justify-center p-1.5 sm:p-2 lg:p-2.5 rounded-lg border-2 border-white/20 bg-white/5 hover:border-purple-400/50 hover:bg-white/10 transition-all hover:scale-105 active:scale-95 overflow-hidden min-w-[60px] sm:min-w-[70px] lg:min-w-[75px]"
+                  className="group relative flex flex-col items-center justify-center p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl border border-indigo-500/30 bg-black/50 backdrop-blur-sm hover:border-indigo-400/50 hover:bg-indigo-500/10 transition-all hover:scale-105 active:scale-95 overflow-hidden min-w-[60px] sm:min-w-[70px] lg:min-w-[80px]"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-blue-500/0 group-hover:from-purple-500/20 group-hover:to-blue-500/20 transition-all duration-300 rounded-2xl" />
-                  <span className="text-xl sm:text-xl lg:text-2xl mb-0.5 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-xl sm:text-2xl lg:text-2xl mb-1 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
                     {industry.icon}
                   </span>
-                  <span className="text-[9px] sm:text-[10px] font-semibold text-white relative z-10 text-center">
+                  <span className="text-[10px] sm:text-xs font-semibold text-white relative z-10 text-center font-sans">
                     {industry.name}
                   </span>
                 </motion.button>
               ))}
-            </motion.div>
+            </motion.div> */}
           </motion.div>
 
           {/* Steps - Smaller cards */}
@@ -268,56 +266,64 @@ export function InteractiveDemoSection() {
               <motion.div
                 key={step.id}
                 variants={staggerItem}
-                whileHover={{ x: 10 }}
+                whileHover={{ x: 5 }}
                 transition={{ duration: 0.2 }}
               >
-                <GlowCard
-                  glowColor={step.color}
-                  customSize
-                  className={`cursor-pointer transition-all duration-500 ${
-                    activeStep === index 
-                      ? 'p-4 sm:p-5 lg:p-6 scale-105 opacity-100' 
-                      : 'p-3 sm:p-4 scale-95 opacity-70 hover:opacity-85'
-                  }`}
+                <motion.div
                   onClick={() => handleStepClick(index)}
+                  className={`cursor-pointer rounded-lg sm:rounded-xl border transition-all duration-300 ${
+                    activeStep === index 
+                      ? 'border-indigo-500/50 bg-black/70 backdrop-blur-sm p-4 sm:p-5 lg:p-6 scale-[1.02] shadow-lg shadow-indigo-500/20' 
+                      : 'border-indigo-500/30 bg-black/50 backdrop-blur-sm p-3 sm:p-4 hover:border-indigo-400/40 hover:bg-black/60 opacity-80 hover:opacity-90'
+                  }`}
+                  whileHover={{ scale: activeStep === index ? 1.02 : 1.01 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                <div className="flex items-start gap-3">
-                  <div className={`flex-shrink-0 rounded-full flex items-center justify-center transition-all duration-500 ${
-                    activeStep === index ? 'w-10 h-10' : 'w-8 h-8'
-                  } ${
-                    step.color === 'blue' ? 'bg-blue-500/20' :
-                    step.color === 'purple' ? 'bg-purple-500/20' :
-                    'bg-green-500/20'
-                  }`}>
-                    {step.icon === 'play' && <Play className={`transition-all duration-500 ${
-                      activeStep === index ? 'w-5 h-5' : 'w-4 h-4'
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className={`flex-shrink-0 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                      activeStep === index ? 'w-10 h-10 sm:w-12 sm:h-12' : 'w-8 h-8 sm:w-10 sm:h-10'
                     } ${
-                      step.color === 'blue' ? 'text-blue-400' :
-                      step.color === 'purple' ? 'text-purple-400' :
-                      'text-green-400'
-                    }`} />}
-                    {step.icon === 'check' && <CheckCircle2 className={`transition-all duration-500 ${
-                      activeStep === index ? 'w-5 h-5' : 'w-4 h-4'
-                    } ${
-                      step.color === 'blue' ? 'text-blue-400' :
-                      step.color === 'purple' ? 'text-purple-400' :
-                      'text-green-400'
-                    }`} />}
-                    {step.icon === 'trend' && <TrendingUp className={`transition-all duration-500 ${
-                      activeStep === index ? 'w-5 h-5' : 'w-4 h-4'
-                    } ${
-                      step.color === 'blue' ? 'text-blue-400' :
-                      step.color === 'purple' ? 'text-purple-400' :
-                      'text-green-400'
-                    }`} />}
+                      activeStep === index 
+                        ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30' 
+                        : 'bg-indigo-500/20'
+                    }`}>
+                      {step.icon === 'play' && <Play className={`transition-all duration-300 ${
+                        activeStep === index ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-4 h-4'
+                      } text-indigo-400`} />}
+                      {step.icon === 'check' && <CheckCircle2 className={`transition-all duration-300 ${
+                        activeStep === index ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-4 h-4'
+                      } text-purple-400`} />}
+                      {step.icon === 'trend' && <TrendingUp className={`transition-all duration-300 ${
+                        activeStep === index ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-4 h-4'
+                      } text-pink-400`} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-xs sm:text-sm font-semibold text-indigo-400 mb-1 transition-all duration-300 font-space ${activeStep === index ? 'opacity-100' : 'opacity-70'}`}>
+                        Step {step.id}
+                      </div>
+                      <h3 className={`font-semibold text-white mb-1 transition-all duration-300 font-space ${
+                        activeStep === index 
+                          ? 'text-base sm:text-lg lg:text-xl' 
+                          : 'text-sm sm:text-base'
+                      }`}>
+                        {step.title}
+                      </h3>
+                      <motion.p 
+                        initial={false}
+                        animate={{
+                          height: activeStep === index ? 'auto' : 0,
+                          opacity: activeStep === index ? 1 : 0,
+                        }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className={`text-sm sm:text-base overflow-hidden text-slate-100 leading-relaxed font-sans ${
+                          activeStep === index ? 'mt-2' : ''
+                        }`}
+                      >
+                        {step.description}
+                      </motion.p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <div className={`text-sm sm:text-base font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'opacity-100' : 'opacity-80'}`}>Step {step.id}</div>
-                    <h3 className={`font-semibold text-white mb-1 transition-all duration-500 ${activeStep === index ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}`}>{step.title}</h3>
-                    <p className={`text-sm sm:text-base transition-all duration-300 overflow-hidden ${activeStep === index ? 'max-h-40 opacity-100 mt-2 text-white' : 'max-h-0 opacity-0 text-slate-300'}`}>{step.description}</p>
-                  </div>
-                </div>
-                </GlowCard>
+                </motion.div>
               </motion.div>
             ))}
           </motion.div>

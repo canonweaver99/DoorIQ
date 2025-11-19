@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono, Playfair_Display, Space_Grotesk, Poppins, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import Script from "next/script";
@@ -33,12 +33,44 @@ const geistMono = Geist_Mono({
   preload: false, // Not critical, can load later
 });
 
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: 'swap',
+  preload: false,
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: 'swap',
+  preload: false,
+});
+
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: 'swap',
+  preload: false,
+});
+
+const bebasNeue = Bebas_Neue({
+  variable: "--font-bebas",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: 'swap',
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: {
     default: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
     template: "%s | DoorIQ"
   },
-  description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 11+ AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
+  description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
   keywords: [
     "door to door sales training",
     "sales pitch practice",
@@ -80,7 +112,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
-    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 11+ AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
+    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
     url: siteUrl,
     siteName: "DoorIQ",
     images: [
@@ -97,7 +129,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
-    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 11+ AI homeowner personas.",
+    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas.",
     images: ['/FullLogo.png'],
     creator: '@dooriq',
   },
@@ -210,7 +242,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100` }>
+      <body className={`${inter.variable} ${geistMono.variable} ${playfairDisplay.variable} ${spaceGrotesk.variable} ${poppins.variable} ${bebasNeue.variable} antialiased bg-slate-900 text-slate-100` }>
         <StructuredData />
         <Script id="rewardful-init" strategy="beforeInteractive">
           {`(function(w,r){w._rwq=r;w[r]=w[r]||function(){(w[r].q=w[r].q||[]).push(arguments)}})(window,'rewardful');`}

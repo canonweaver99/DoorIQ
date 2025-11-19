@@ -50,22 +50,22 @@ export function DashboardHeroPreview() {
   }
 
   return (
-    <div className="w-full max-w-[2000px] mx-auto bg-[#0a0a0a] rounded-2xl overflow-hidden shadow-[0_20px_70px_rgba(139,92,246,0.2)] border border-white/10 font-sans">
-      <div className="px-10 py-8">
+    <div className="w-full max-w-[2000px] mx-auto bg-black/50 backdrop-blur-sm rounded-xl sm:rounded-2xl overflow-hidden shadow-lg shadow-indigo-500/10 border border-indigo-500/30 font-sans">
+      <div className="px-6 sm:px-8 lg:px-10 py-6 sm:py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-1">Dashboard</h2>
-            <p className="text-sm font-medium text-gray-400">{formatDate(startDate)} - {formatDate(today)}</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 font-space">Dashboard</h2>
+            <p className="text-xs sm:text-sm font-medium text-slate-400 font-sans">{formatDate(startDate)} - {formatDate(today)}</p>
           </div>
-          <button className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+          <button className="px-4 sm:px-5 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-white text-xs sm:text-sm font-semibold rounded-lg border border-indigo-500/30 transition-all font-sans">
             Download
           </button>
         </div>
 
         {/* Tabs - Only Overview shown */}
-        <div className="flex gap-6 mb-6 border-b border-white/10 overflow-x-auto">
-          <div className="pb-3 px-1 text-sm font-semibold whitespace-nowrap text-white border-b-2 border-purple-500">
+        <div className="flex gap-6 mb-6 border-b border-indigo-500/30 overflow-x-auto">
+          <div className="pb-3 px-1 text-sm font-semibold whitespace-nowrap text-white border-b-2 border-indigo-500">
             <span className="flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -82,27 +82,20 @@ export function DashboardHeroPreview() {
               {/* Overall Card */}
               <div 
                 onClick={() => toggleCard('overall')}
-                className="rounded-lg cursor-pointer transition-all will-change-transform p-1 sm:p-2 lg:p-4"
-                style={{ 
-                  backgroundColor: '#2a1a3a',
-                  border: '2px solid #4a2a6a',
-                  boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
-                  outline: 'none',
-                  transform: 'scale(1) sm:scale(0.95)'
-                }}
+                className="rounded-lg sm:rounded-xl cursor-pointer transition-all will-change-transform p-2 sm:p-3 lg:p-4 border border-indigo-500/30 bg-black/50 backdrop-blur-sm hover:border-indigo-400/50 hover:bg-black/60"
               >
                 <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <h3 className="text-[9px] sm:text-xs font-semibold text-purple-200 uppercase tracking-wide">Overall Score</h3>
-                  <svg className={`w-3 h-3 text-purple-300 transition-transform ${cardStates.overall ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <h3 className="text-[9px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wide font-space">Overall Score</h3>
+                  <svg className={`w-3 h-3 text-indigo-400 transition-transform ${cardStates.overall ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">83%</div>
+                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums font-space">83%</div>
                 <div className="flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
-                  <p className="text-[9px] sm:text-xs font-semibold text-green-400">+7% from last week</p>
+                  <p className="text-[9px] sm:text-xs font-semibold text-emerald-400 font-sans">+7% from last week</p>
                 </div>
                 {cardStates.overall && (
                   <motion.div 
@@ -110,11 +103,10 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 overflow-hidden"
-                    style={{ borderTop: '1px solid #4a2a6a' }}
+                    className="mt-3 pt-3 overflow-hidden border-t border-indigo-500/30"
                   >
-                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
-                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Focus on consistency across all areas. Your rapport and discovery skills show promise.</p>
+                    <p className="text-xs sm:text-sm font-bold text-indigo-400 mb-2 font-space">AI Feedback</p>
+                    <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed font-sans">Focus on consistency across all areas. Your rapport and discovery skills show promise.</p>
                   </motion.div>
                 )}
               </div>
@@ -122,27 +114,20 @@ export function DashboardHeroPreview() {
               {/* Rapport Card */}
               <div 
                 onClick={() => toggleCard('rapport')}
-                className="rounded-lg cursor-pointer transition-all will-change-transform p-1 sm:p-2 lg:p-4"
-                style={{ 
-                  backgroundColor: '#1a3a2a',
-                  border: '2px solid #2a6a4a',
-                  boxShadow: 'inset 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
-                  outline: 'none',
-                  transform: 'scale(1) sm:scale(0.95)'
-                }}
+                className="rounded-lg sm:rounded-xl cursor-pointer transition-all will-change-transform p-2 sm:p-3 lg:p-4 border border-indigo-500/30 bg-black/50 backdrop-blur-sm hover:border-indigo-400/50 hover:bg-black/60"
               >
                 <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <h3 className="text-[9px] sm:text-xs font-semibold text-emerald-200 uppercase tracking-wide">Rapport</h3>
-                  <svg className={`w-3 h-3 text-emerald-300 transition-transform ${cardStates.rapport ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <h3 className="text-[9px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wide font-space">Rapport</h3>
+                  <svg className={`w-3 h-3 text-indigo-400 transition-transform ${cardStates.rapport ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">88%</div>
+                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums font-space">88%</div>
                 <div className="flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
-                  <p className="text-[9px] sm:text-xs font-semibold text-green-400">+5% from last week</p>
+                  <p className="text-[9px] sm:text-xs font-semibold text-emerald-400 font-sans">+5% from last week</p>
                 </div>
                 {cardStates.rapport && (
                   <motion.div 
@@ -150,11 +135,10 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 overflow-hidden"
-                    style={{ borderTop: '1px solid #2a6a4a' }}
+                    className="mt-3 pt-3 overflow-hidden border-t border-indigo-500/30"
                   >
-                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
-                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Incorporate personalized questions within the first 30 seconds. Reference specific details about their property.</p>
+                    <p className="text-xs sm:text-sm font-bold text-indigo-400 mb-2 font-space">AI Feedback</p>
+                    <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed font-sans">Incorporate personalized questions within the first 30 seconds. Reference specific details about their property.</p>
                   </motion.div>
                 )}
               </div>
@@ -162,27 +146,20 @@ export function DashboardHeroPreview() {
               {/* Discovery Card */}
               <div 
                 onClick={() => toggleCard('discovery')}
-                className="rounded-lg cursor-pointer transition-all will-change-transform p-1 sm:p-2 lg:p-4"
-                style={{ 
-                  backgroundColor: '#1a2a3a',
-                  border: '2px solid #2a4a6a',
-                  boxShadow: 'inset 0 0 20px rgba(59, 130, 246, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
-                  outline: 'none',
-                  transform: 'scale(1) sm:scale(0.95)'
-                }}
+                className="rounded-lg sm:rounded-xl cursor-pointer transition-all will-change-transform p-2 sm:p-3 lg:p-4 border border-indigo-500/30 bg-black/50 backdrop-blur-sm hover:border-indigo-400/50 hover:bg-black/60"
               >
                 <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <h3 className="text-[9px] sm:text-xs font-semibold text-blue-200 uppercase tracking-wide">Discovery</h3>
-                  <svg className={`w-3 h-3 text-blue-300 transition-transform ${cardStates.discovery ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <h3 className="text-[9px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wide font-space">Discovery</h3>
+                  <svg className={`w-3 h-3 text-indigo-400 transition-transform ${cardStates.discovery ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">82%</div>
+                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums font-space">82%</div>
                 <div className="flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
-                  <p className="text-[9px] sm:text-xs font-semibold text-green-400">+13% from last week</p>
+                  <p className="text-[9px] sm:text-xs font-semibold text-emerald-400 font-sans">+13% from last week</p>
                 </div>
                 {cardStates.discovery && (
                   <motion.div 
@@ -190,11 +167,10 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 overflow-hidden"
-                    style={{ borderTop: '1px solid #2a4a6a' }}
+                    className="mt-3 pt-3 overflow-hidden border-t border-indigo-500/30"
                   >
-                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
-                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Dig deeper into pain points with follow-up questions about specific frustrations.</p>
+                    <p className="text-xs sm:text-sm font-bold text-indigo-400 mb-2 font-space">AI Feedback</p>
+                    <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed font-sans">Dig deeper into pain points with follow-up questions about specific frustrations.</p>
                   </motion.div>
                 )}
               </div>
@@ -202,27 +178,20 @@ export function DashboardHeroPreview() {
               {/* Objection Card */}
               <div 
                 onClick={() => toggleCard('objection')}
-                className="rounded-lg cursor-pointer transition-all will-change-transform p-1 sm:p-2 lg:p-4"
-                style={{ 
-                  backgroundColor: '#3a2a1a',
-                  border: '2px solid #6a4a2a',
-                  boxShadow: 'inset 0 0 20px rgba(245, 158, 11, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
-                  outline: 'none',
-                  transform: 'scale(1) sm:scale(0.95)'
-                }}
+                className="rounded-lg sm:rounded-xl cursor-pointer transition-all will-change-transform p-2 sm:p-3 lg:p-4 border border-indigo-500/30 bg-black/50 backdrop-blur-sm hover:border-indigo-400/50 hover:bg-black/60"
               >
                 <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <h3 className="text-[9px] sm:text-xs font-semibold text-amber-200 uppercase tracking-wide">Objection</h3>
-                  <svg className={`w-3 h-3 text-amber-300 transition-transform ${cardStates.objection ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <h3 className="text-[9px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wide font-space">Objection</h3>
+                  <svg className={`w-3 h-3 text-indigo-400 transition-transform ${cardStates.objection ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">79%</div>
+                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums font-space">79%</div>
                 <div className="flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
-                  <p className="text-[9px] sm:text-xs font-semibold text-green-400">+8% from last week</p>
+                  <p className="text-[9px] sm:text-xs font-semibold text-emerald-400 font-sans">+8% from last week</p>
                 </div>
                 {cardStates.objection && (
                   <motion.div 
@@ -230,11 +199,10 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 overflow-hidden"
-                    style={{ borderTop: '1px solid #6a4a2a' }}
+                    className="mt-3 pt-3 overflow-hidden border-t border-indigo-500/30"
                   >
-                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
-                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Reframe price concerns as investment discussions. Pivot to ROI and break down savings.</p>
+                    <p className="text-xs sm:text-sm font-bold text-indigo-400 mb-2 font-space">AI Feedback</p>
+                    <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed font-sans">Reframe price concerns as investment discussions. Pivot to ROI and break down savings.</p>
                   </motion.div>
                 )}
               </div>
@@ -242,27 +210,20 @@ export function DashboardHeroPreview() {
               {/* Closing Card */}
               <div 
                 onClick={() => toggleCard('closing')}
-                className="rounded-lg cursor-pointer transition-all will-change-transform p-1 sm:p-2 lg:p-4"
-                style={{ 
-                  backgroundColor: '#3a1a2a',
-                  border: '2px solid #6a2a4a',
-                  boxShadow: 'inset 0 0 20px rgba(236, 72, 153, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)',
-                  outline: 'none',
-                  transform: 'scale(1) sm:scale(0.95)'
-                }}
+                className="rounded-lg sm:rounded-xl cursor-pointer transition-all will-change-transform p-2 sm:p-3 lg:p-4 border border-indigo-500/30 bg-black/50 backdrop-blur-sm hover:border-indigo-400/50 hover:bg-black/60"
               >
                 <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <h3 className="text-[9px] sm:text-xs font-semibold text-pink-200 uppercase tracking-wide">Closing</h3>
-                  <svg className={`w-3 h-3 text-pink-300 transition-transform ${cardStates.closing ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <h3 className="text-[9px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wide font-space">Closing</h3>
+                  <svg className={`w-3 h-3 text-indigo-400 transition-transform ${cardStates.closing ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">85%</div>
+                <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums font-space">85%</div>
                 <div className="flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
-                  <p className="text-[9px] sm:text-xs font-semibold text-green-400">+6% from last week</p>
+                  <p className="text-[9px] sm:text-xs font-semibold text-emerald-400 font-sans">+6% from last week</p>
                 </div>
                 {cardStates.closing && (
                   <motion.div 
@@ -270,11 +231,10 @@ export function DashboardHeroPreview() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-3 pt-3 overflow-hidden"
-                    style={{ borderTop: '1px solid #6a2a4a' }}
+                    className="mt-3 pt-3 overflow-hidden border-t border-indigo-500/30"
                   >
-                    <p className="text-sm font-bold text-purple-300 mb-2">AI Feedback</p>
-                    <p className="text-sm font-medium text-slate-200 leading-relaxed">Use assumptive language in your close. Replace questions with statements like 'When we install this'.</p>
+                    <p className="text-xs sm:text-sm font-bold text-indigo-400 mb-2 font-space">AI Feedback</p>
+                    <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed font-sans">Use assumptive language in your close. Replace questions with statements like 'When we install this'.</p>
                   </motion.div>
                 )}
               </div>
@@ -286,19 +246,19 @@ export function DashboardHeroPreview() {
               <div ref={chartContainerRef} className="lg:col-span-3 pt-4" style={{ maxWidth: '98%' }}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-white mb-1">Performance Overview</h3>
-                    <p className="text-sm text-gray-400">Weekly trend analysis</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-white mb-1 font-space">Performance Overview</h3>
+                    <p className="text-xs sm:text-sm text-slate-400 font-sans">Weekly trend analysis</p>
                   </div>
                   {/* Time Range Tabs */}
-                  <div className="flex gap-1 bg-white/5 rounded-lg p-1">
+                  <div className="flex gap-1 bg-black/50 border border-indigo-500/30 rounded-lg p-1">
                     {(['day', 'week', 'month'] as const).map((range) => (
                       <button
                         key={range}
                         onClick={() => setChartTimeRange(range)}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 font-sans ${
                           chartTimeRange === range
-                            ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
-                            : 'text-gray-400 hover:text-white'
+                            ? 'bg-indigo-500/30 text-white border border-indigo-500/50'
+                            : 'text-slate-400 hover:text-white'
                         }`}
                       >
                         {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -308,15 +268,15 @@ export function DashboardHeroPreview() {
                 </div>
                 <div className="relative" style={{ height: '353px' }}>
                   {/* Y-Axis */}
-                  <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs font-bold text-gray-300 pr-2 border-r border-gray-700">
-                    <span className="text-white text-sm">100%</span>
-                    <span className="text-white text-sm">75%</span>
-                    <span className="text-white text-sm">50%</span>
-                    <span className="text-white text-sm">25%</span>
-                    <span className="text-white text-sm">0%</span>
+                  <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs font-bold text-slate-300 pr-2 border-r border-indigo-500/30">
+                    <span className="text-white text-sm font-space">100%</span>
+                    <span className="text-white text-sm font-space">75%</span>
+                    <span className="text-white text-sm font-space">50%</span>
+                    <span className="text-white text-sm font-space">25%</span>
+                    <span className="text-white text-sm font-space">0%</span>
                   </div>
                   
-                   <div className="ml-12 h-full pb-8 relative border-b border-gray-700" ref={chartRef} style={{ paddingRight: '25px' }}>
+                   <div className="ml-12 h-full pb-8 relative border-b border-indigo-500/30" ref={chartRef} style={{ paddingRight: '25px' }}>
                     {/* Tooltip overlay - positioned absolutely */}
                     {hoveredPoint && chartRef.current && (() => {
                       const rect = chartRef.current.getBoundingClientRect()
@@ -466,10 +426,10 @@ export function DashboardHeroPreview() {
               {/* Right Column - Recent Sessions + Notifications */}
               <div className="lg:col-span-2 space-y-4">
                 {/* Recent Sessions */}
-                <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
+                <div className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-white">Recent Sessions</h3>
-                    <button className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium">
+                    <h3 className="text-sm font-bold text-white font-space">Recent Sessions</h3>
+                    <button className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium font-sans">
                       View All →
                     </button>
                   </div>
@@ -484,7 +444,7 @@ export function DashboardHeroPreview() {
                       const strokeDashoffset = circumference - (session.percent / 100) * circumference
                       
                       return (
-                        <div key={index} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#222222] hover:bg-[#2a2a2a] transition-colors border border-white/5">
+                        <div key={index} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/30 hover:bg-black/50 transition-colors border border-indigo-500/20">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="relative">
                               <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${session.color} to-transparent blur-md`}></div>
@@ -495,14 +455,14 @@ export function DashboardHeroPreview() {
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-xs font-semibold text-white truncate">{session.name}</div>
-                              <div className="text-[10px] text-white/50 mt-0.5">{session.time}</div>
+                              <div className="text-xs font-semibold text-white truncate font-sans">{session.name}</div>
+                              <div className="text-[10px] text-slate-400 mt-0.5 font-sans">{session.time}</div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <div className="relative w-8 h-8">
                               <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" r="16" stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="none" />
+                                <circle cx="18" cy="18" r="16" stroke="rgba(99, 102, 241, 0.2)" strokeWidth="3" fill="none" />
                                 <circle
                                   cx="18"
                                   cy="18"
@@ -516,10 +476,10 @@ export function DashboardHeroPreview() {
                                 />
                               </svg>
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-[9px] font-bold text-white">{session.percent}%</span>
+                                <span className="text-[9px] font-bold text-white font-space">{session.percent}%</span>
                               </div>
                             </div>
-                            <div className="text-xs font-bold text-green-400 tabular-nums">+${session.earned}</div>
+                            <div className="text-xs font-bold text-emerald-400 tabular-nums font-sans">+${session.earned}</div>
                           </div>
                         </div>
                       )
@@ -528,8 +488,8 @@ export function DashboardHeroPreview() {
                 </div>
 
                 {/* Notifications */}
-                <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4" style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}>
-                  <h3 className="text-sm font-bold text-white mb-2">Notifications</h3>
+                <div className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4">
+                  <h3 className="text-sm font-bold text-white mb-2 font-space">Notifications</h3>
                 
                   <div className="space-y-2">
                     {[
@@ -569,19 +529,19 @@ export function DashboardHeroPreview() {
                       const iconColor = iconColors[notif.type] || iconColors.manager
                       
                       return (
-                        <div key={index} className="p-2 rounded-lg border border-[#2a2a2a] transition-colors cursor-pointer" style={{ backgroundColor: colors.bg }}>
+                        <div key={index} className="p-2 rounded-lg border border-indigo-500/20 transition-colors cursor-pointer bg-black/30 hover:bg-black/50">
                           <div className="flex items-start gap-2">
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.iconBg }}>
-                              <svg className="w-3.5 h-3.5" style={{ color: iconColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-500/20">
+                              <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d={notif.icon} />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between mb-0.5">
-                                <h4 className="text-[11px] font-bold text-white">{notif.title}</h4>
-                                <span className="text-[9px] text-white/60 font-medium">{notif.time}</span>
+                                <h4 className="text-[11px] font-bold text-white font-space">{notif.title}</h4>
+                                <span className="text-[9px] text-slate-400 font-medium font-sans">{notif.time}</span>
                               </div>
-                              <p className="text-[10px] text-white leading-relaxed">{notif.message}</p>
+                              <p className="text-[10px] text-slate-200 leading-relaxed font-sans">{notif.message}</p>
                             </div>
                           </div>
                         </div>

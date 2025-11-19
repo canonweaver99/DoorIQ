@@ -305,7 +305,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
   ) => {
     return (
       <div className={cn("relative", className)} ref={ref} {...props}>
-        <div className="absolute top-0 z-[0] h-screen w-screen bg-purple-950/10 dark:bg-purple-950/10 bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]" />
+        <div className="absolute top-0 z-[0] h-screen w-screen bg-indigo-950/20 dark:bg-indigo-950/20 bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(99,102,241,0.25),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(99,102,241,0.35),rgba(255,255,255,0))]" />
         
         {/* Hero Section - Full Viewport Height */}
         <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center justify-center pt-16 sm:pt-0 pb-0">
@@ -328,20 +328,20 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   transition={{ delay: 0.2, duration: 0.6 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <h1 className="text-base text-white group font-geist px-6 py-3 bg-gradient-to-tr from-zinc-300/20 via-gray-400/20 to-transparent dark:from-zinc-300/5 dark:via-gray-400/5 border-[2px] border-black/5 dark:border-white/5 rounded-3xl cursor-pointer hover:border-purple-500/30 transition-all flex items-center gap-2">
+                  <h1 className="text-base text-white group font-space font-semibold px-6 py-3 bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/10 dark:via-purple-500/10 border-[2px] border-indigo-500/20 dark:border-indigo-500/20 rounded-3xl cursor-pointer hover:border-indigo-400/50 transition-all flex items-center gap-2">
                     {title}
                     <ChevronRight className="inline w-4 h-4 ml-1 group-hover:translate-x-1 duration-300" />
                   </h1>
                 </motion.a>
                 <motion.h2 
-                  className="text-[2.5rem] leading-tight sm:text-4xl md:text-5xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] sm:leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] w-full break-words hyphens-auto"
+                  className="text-[2.5rem] leading-tight sm:text-4xl md:text-5xl lg:text-[72px] xl:text-[80px] 2xl:text-[88px] sm:leading-[1.1] tracking-tight font-space font-bold text-white w-full break-words hyphens-auto"
                   style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
                 >
                   {subtitle.regular}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300 animate-gradient-flow">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-flow">
                     {subtitle.gradient}
                   </span>
                 </motion.h2>
@@ -355,7 +355,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                 </motion.div>
                 {/* Instructional Text - Below Carousel */}
                 <motion.p 
-                  className="text-white text-sm sm:text-base lg:text-lg mt-2 lg:mt-3 px-0 sm:px-0"
+                  className="text-slate-100 text-base sm:text-lg lg:text-xl mt-2 lg:mt-3 px-0 sm:px-0 font-sans leading-relaxed"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.6 }}
@@ -420,7 +420,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                               }
                               onCtaSecondaryClick()
                             }}
-                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
                           >
                             {ctaSecondaryText}
                           </button>
@@ -439,7 +439,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                                 element?.scrollIntoView({ behavior: 'smooth' })
                               }
                             }}
-                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
                           >
                             {ctaSecondaryText}
                           </a>
@@ -454,7 +454,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
 
           {/* Scroll Indicator - At Bottom */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-20">
-            <ChevronDown className="w-6 h-6 text-purple-400" />
+            <ChevronDown className="w-6 h-6 text-indigo-400" />
           </div>
         </section>
 

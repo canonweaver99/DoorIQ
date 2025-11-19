@@ -12,7 +12,7 @@ import { InteractiveDemoSection } from '@/components/ui/interactive-demo-section
 import { Button } from '@/components/ui/button'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { useScrollAnimation, fadeInUp, fadeInScale, staggerContainer, staggerItem } from '@/hooks/useScrollAnimation'
-import { vibrate } from '@/lib/utils'
+import { vibrate, cn } from '@/lib/utils'
 import { Users, TrendingUp, Clock, Smartphone, ChevronRight } from 'lucide-react'
 
 // Dynamic imports for below-the-fold components (code splitting)
@@ -254,7 +254,7 @@ function ProblemSolutionSection() {
   const solutions = [
     {
       title: "Unlimited Realistic Practice",
-      description: "Face 11+ AI homeowner personas from skeptical to eager"
+      description: "Face 14 AI homeowner personas from skeptical to eager"
     },
     {
       title: "Reps Ramp 3x Faster",
@@ -277,40 +277,34 @@ function ProblemSolutionSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center mb-6 sm:mb-8 lg:mb-12" variants={fadeInUp}>
           <div className="text-center lg:text-left">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-3 sm:mb-4 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 text-white">
               The Reality of Door-to-Door Sales Training
             </h2>
-            <div className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4">
+            <motion.div 
+              className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4"
+              variants={staggerContainer}
+            >
               {problems.map((problem, index) => (
                 <motion.div 
                   key={index}
                   className="flex items-start gap-2 sm:gap-3"
-                  initial="hidden"
-                  animate={controls}
-                  variants={{
-                    hidden: { opacity: 0, x: -20 },
-                    visible: { 
-                      opacity: 1, 
-                      x: 0,
-                      transition: { delay: index * 0.15, duration: 0.4 }
-                    }
-                  }}
+                  variants={staggerItem}
                 >
-                  <div className="flex-shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 mt-1.5 sm:mt-2" />
+                  <div className="flex-shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-r from-orange-400 to-red-500 mt-1.5 sm:mt-2" />
                   <div className="flex-1">
-                    <p className="text-lg sm:text-xl lg:text-3xl font-semibold text-white mb-1 sm:mb-2">
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-500">{problem.title}</span>
+                    <p className="text-lg sm:text-xl lg:text-3xl font-semibold mb-1 sm:mb-2 font-space">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-400 to-pink-500">{problem.title}</span>
                     </p>
-                    <p className="text-sm sm:text-base lg:text-xl text-slate-300">
+                    <p className="text-base sm:text-lg lg:text-xl text-slate-100 font-sans leading-relaxed">
                       {problem.description}
                     </p>
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
           <motion.div 
-            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 mt-6 sm:mt-0 bg-slate-800/50"
+            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-orange-500/20 mt-6 sm:mt-0 bg-gradient-to-br from-slate-800/60 to-slate-900/60 shadow-lg shadow-orange-500/10"
             variants={fadeInScale}
           >
             <Image
@@ -353,9 +347,9 @@ function ProblemSolutionSection() {
           className="flex items-center justify-center mb-8 sm:mb-12 lg:mb-20"
           variants={fadeInScale}
         >
-          <div className="h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent w-full max-w-md" />
-          <div className="mx-2 sm:mx-4 text-lg sm:text-xl lg:text-2xl font-bold text-purple-400">→</div>
-          <div className="h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent w-full max-w-md" />
+          <div className="h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent w-full max-w-md" />
+          <div className="mx-2 sm:mx-4 text-lg sm:text-xl lg:text-2xl font-bold text-indigo-400">→</div>
+          <div className="h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent w-full max-w-md" />
         </motion.div>
 
         {/* Solutions */}
@@ -364,7 +358,7 @@ function ProblemSolutionSection() {
           variants={fadeInUp}
         >
           <motion.div 
-            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 lg:order-1 mt-6 sm:mt-0 bg-slate-800/50"
+            className="relative h-64 sm:h-80 lg:h-96 rounded-xl sm:rounded-2xl overflow-hidden border border-indigo-500/20 lg:order-1 mt-6 sm:mt-0 bg-gradient-to-br from-slate-800/60 to-slate-900/60 shadow-lg shadow-indigo-500/10"
             variants={fadeInScale}
           >
             <Image
@@ -378,37 +372,31 @@ function ProblemSolutionSection() {
             />
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
-            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
+            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 text-white">
               Practice on AI Homeowners Before Real Doors
             </h3>
-            <div className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4">
+            <motion.div 
+              className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4"
+              variants={staggerContainer}
+            >
               {solutions.map((solution, index) => (
                 <motion.div 
                   key={index}
                   className="flex items-start gap-2 sm:gap-3"
-                  initial="hidden"
-                  animate={controls}
-                  variants={{
-                    hidden: { opacity: 0, x: 20 },
-                    visible: { 
-                      opacity: 1, 
-                      x: 0,
-                      transition: { delay: index * 0.15, duration: 0.4 }
-                    }
-                  }}
+                  variants={staggerItem}
                 >
-                  <div className="flex-shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-1.5 sm:mt-2" />
+                  <div className="flex-shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 mt-1.5 sm:mt-2" />
                   <div className="flex-1">
-                    <p className="text-lg sm:text-xl lg:text-3xl font-semibold text-white mb-1 sm:mb-2">
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{solution.title}</span>
+                    <p className="text-lg sm:text-xl lg:text-3xl font-semibold mb-1 sm:mb-2 font-space">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">{solution.title}</span>
                     </p>
-                    <p className="text-sm sm:text-base lg:text-xl text-slate-300">
+                    <p className="text-base sm:text-lg lg:text-xl text-slate-100 font-sans leading-relaxed">
                       {solution.description}
                     </p>
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -439,28 +427,6 @@ function ProblemSolutionSection() {
             </motion.div>
           ))}
         </motion.div> */}
-
-        <motion.div 
-          className="text-center mt-8 sm:mt-10 lg:mt-16 mb-8 sm:mb-10 lg:mb-16"
-          variants={fadeInUp}
-        >
-          <motion.span 
-            className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
-            whileHover={{ y: -3 }}
-            transition={{ duration: 0.2 }}
-          >
-            <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-            <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
-              <Link
-                href="/pricing"
-                onClick={() => vibrate()}
-                className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
-              >
-                See Pricing
-              </Link>
-            </div>
-          </motion.span>
-        </motion.div>
       </div>
     </motion.section>
   )
@@ -469,6 +435,7 @@ function ProblemSolutionSection() {
 // Manager Pricing Section
 function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
   const { ref, controls } = useScrollAnimation(0.2)
+  const [numReps, setNumReps] = useState(15)
   
   const benefits = [
     {
@@ -483,8 +450,8 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
     },
     {
       icon: TrendingUp,
-      title: "Massive ROI Potential",
-      description: "Teams see 40% less manager shadowing time and 2x faster rep ramp-up"
+      title: "40% Less Shadowing",
+      description: "Teams see significantly reduced manager shadowing time, freeing up leadership for strategic initiatives"
     },
     {
       icon: Users,
@@ -493,97 +460,305 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
     }
   ]
 
+  // Calculate pricing based on number of reps - matching pricing page logic
+  const calculatePricing = (reps: number) => {
+    if (reps < 5) return { monthlyPrice: 0, annualPrice: 0, perRepRate: 0, annualPerRepRate: 0 }
+    
+    // Determine per-rep daily rate based on tier (matching pricing page)
+    let perRepDailyRate: number
+    if (reps >= 100) {
+      perRepDailyRate = 1.25
+    } else if (reps >= 51) {
+      perRepDailyRate = 1.50
+    } else if (reps >= 21) {
+      perRepDailyRate = 1.75
+    } else {
+      perRepDailyRate = 2.00 // 5-20 reps
+    }
+    
+    // Monthly billing: daily rate * 30 days
+    const monthlyPrice = reps * perRepDailyRate * 30
+    
+    // Annual: 20% savings on the per-rep rate
+    const annualPerRepDailyRate = perRepDailyRate * 0.80
+    const annualMonthlyPrice = reps * annualPerRepDailyRate * 30
+    const annualPrice = annualMonthlyPrice * 12
+    
+    // Per rep rates for display (monthly and annual)
+    const perRepRate = perRepDailyRate * 30 // monthly per rep rate
+    const annualPerRepRate = annualPerRepDailyRate * 30 // annual monthly per rep rate
+    
+    return { monthlyPrice, annualPrice, perRepRate, annualPerRepRate }
+  }
+
+  // Calculate ROI
+  const calculateROI = (reps: number, annualCost: number) => {
+    const averageCommissionPerDeal = 500
+    const extraDealsPerRepPerMonth = 1
+    const monthsPerYear = 12
+    
+    const baseAnnualValue = reps * extraDealsPerRepPerMonth * monthsPerYear * averageCommissionPerDeal
+    const exponentialMultiplier = Math.pow(1.05, reps / 10)
+    const annualValue = baseAnnualValue * exponentialMultiplier
+    
+    const annualROI = annualValue - annualCost
+    const roiPercentage = annualCost > 0 ? ((annualValue - annualCost) / annualCost) * 100 : 0
+    
+    return {
+      annualValue,
+      annualCost,
+      annualROI,
+      roiPercentage,
+    }
+  }
+
+  const pricing = calculatePricing(numReps)
+  const roi = calculateROI(numReps, pricing.annualPrice)
+
   return (
     <motion.section 
       ref={ref}
-      className="py-8 sm:py-12 md:py-16 lg:py-20 relative"
+      className="pt-6 sm:pt-8 md:pt-10 pb-8 sm:pb-10 md:pb-12 relative min-h-[85vh] flex items-center"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        {/* Compact Header */}
         <motion.div 
-          className="text-center mb-6 sm:mb-8 lg:mb-12"
+          className="text-center mb-6 sm:mb-8"
           variants={fadeInUp}
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-            Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Managers</span>: Scale Your Team's Performance
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight tracking-tight font-space font-bold mb-3 sm:mb-4 text-white">
+            Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Managers</span>
           </h2>
-          <p className="text-sm sm:text-base lg:text-2xl text-slate-300 max-w-3xl mx-auto">
-            Give every rep a virtual manager in their pocket. Year-round training that drives ROI for teams of 5+.
+          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-2xl mx-auto font-sans">
+            Scale your team's performance with AI-powered training that delivers measurable results
           </p>
         </motion.div>
 
-        {/* Benefits Grid */}
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-16"
-          variants={staggerContainer}
-        >
-          {benefits.map((benefit, index) => {
-            const Icon = benefit.icon
-            return (
-              <motion.div
-                key={index}
-                variants={staggerItem}
-                className="relative group"
-              >
-                <GlowCard
-                  glowColor={index % 2 === 0 ? 'purple' : 'blue'}
-                  customSize
-                  className="p-6 sm:p-8 h-full"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                      <Icon className="w-6 h-6 text-purple-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-base sm:text-lg lg:text-2xl font-semibold text-white mb-1.5 sm:mb-2">
-                        {benefit.title}
-                      </h3>
-                      <p className="text-sm sm:text-base lg:text-lg text-slate-300 leading-relaxed">
-                        {benefit.description}
-                      </p>
-                    </div>
-                  </div>
-                </GlowCard>
-              </motion.div>
-            )
-          })}
-        </motion.div>
-
-        {/* ROI Highlight */}
+        {/* 50/50 Split - Benefits Left, ROI Calculator Right */}
         <motion.div
           variants={fadeInUp}
-          className="bg-gradient-to-br from-emerald-500/10 to-purple-500/10 border border-emerald-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-10 mb-6 sm:mb-8 lg:mb-12"
+          className="mb-6"
         >
-          <div className="text-center">
-            <h3 className="text-xl sm:text-2xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">
-              The ROI That Matters
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto">
-              <div>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-400 mb-1.5 sm:mb-2">40%</div>
-                <div className="text-sm sm:text-base lg:text-lg text-slate-300">Less manager shadowing time</div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-start">
+            {/* Left Side - Benefits Grid */}
+            <div className="relative">
+              <motion.div 
+                className="grid grid-cols-1 gap-[12px] sm:gap-[16px] h-full"
+                variants={staggerContainer}
+              >
+                {benefits.map((benefit, index) => {
+                  const Icon = benefit.icon
+                  return (
+                    <motion.div
+                      key={index}
+                      variants={staggerItem}
+                      className="relative group"
+                    >
+                      <GlowCard
+                        glowColor={index % 2 === 0 ? 'purple' : 'blue'}
+                        customSize
+                        className="px-[16px] py-[14.44px] sm:px-[20px] sm:py-[18.05px] h-full bg-black/60"
+                      >
+                        <div className="flex items-start gap-[12px]">
+                          <div className="flex-shrink-0 w-[40px] h-[40px] rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                            <Icon className="w-[20px] h-[20px] text-purple-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-base sm:text-lg font-semibold text-white mb-[3.61px] sm:mb-[5.415px] font-space">
+                              {benefit.title}
+                            </h3>
+                            <p className="text-sm sm:text-base text-slate-100 leading-[1.35375] font-sans">
+                              {benefit.description}
+                            </p>
+                          </div>
+                        </div>
+                      </GlowCard>
+                    </motion.div>
+                  )
+                })}
+              </motion.div>
+            </div>
+
+            {/* Right Side - ROI Calculator */}
+            <div className="relative">
+              {/* Grid Background */}
+              <div
+                className={cn(
+                  'z-[-10] pointer-events-none absolute -inset-8',
+                  'bg-[linear-gradient(to_right,theme(colors.white/.06)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.white/.06)_1px,transparent_1px)]',
+                  'bg-[size:24px_24px]',
+                  '[mask-image:radial-gradient(ellipse_100%_100%_at_50%_50%,var(--background)_20%,transparent_70%)]',
+                )}
+              />
+              
+              {/* ROI Calculator Card */}
+              <div className="bg-gradient-to-br from-black via-slate-950 to-black border-2 border-purple-500/40 rounded-2xl p-5 sm:p-6 md:p-8 relative z-10 shadow-2xl shadow-purple-500/10">
+              {/* ROI Header */}
+              <div className="text-center mb-6">
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 tracking-tight font-space" style={{ letterSpacing: '-0.02em' }}>
+                  Calculate Your ROI
+                </h3>
               </div>
-              <div>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-400 mb-1.5 sm:mb-2">2×</div>
-                <div className="text-sm sm:text-base lg:text-lg text-slate-300">Faster rep ramp-up</div>
+
+              {/* Team Size Input */}
+              <div className="mb-6">
+                <label className="block text-sm sm:text-base font-bold text-white mb-3 text-center tracking-wide font-space">
+                  Number of Sales Reps:
+                </label>
+                <div className="max-w-full mx-auto">
+                  {/* Rep Count Input */}
+                  <div className="text-center mb-3">
+                    <input
+                      type="number"
+                      min="5"
+                      max="500"
+                      value={numReps}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 5
+                        setNumReps(Math.max(5, Math.min(500, value)))
+                      }}
+                      className="inline-block px-4 py-2 rounded-lg border-2 border-purple-500/40 bg-black text-white text-xl font-bold font-space text-center w-24 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 transition-all"
+                    />
+                    <span className="text-white text-base ml-2 font-sans">reps</span>
+                  </div>
+                  
+                  {/* Slider */}
+                  <div className="relative mb-4">
+                    <input
+                      type="range"
+                      min="5"
+                      max="500"
+                      value={numReps}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 5
+                        setNumReps(Math.max(5, Math.min(500, value)))
+                      }}
+                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer pricing-slider"
+                      style={{
+                        background: (() => {
+                          const percentage = ((numReps - 5) / 495) * 100
+                          return `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, rgba(255,255,255,0.1) ${percentage}%, rgba(255,255,255,0.1) 100%)`
+                        })()
+                      }}
+                    />
+                    {/* Slider labels */}
+                    <div className="flex justify-between mt-2 text-xs font-semibold text-white font-sans">
+                      <span>5</span>
+                      <span>500</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-400 mb-1.5 sm:mb-2">24/7</div>
-                <div className="text-sm sm:text-base lg:text-lg text-slate-300">Virtual manager availability</div>
+
+              {/* Pricing Cards - Monthly and Annual */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+                {/* Monthly Card */}
+                <div className="relative w-full rounded-lg border border-purple-500/30 px-3 sm:px-4 pt-3 pb-3 bg-black/60">
+                  <h3 className="text-xs sm:text-sm font-semibold text-white mb-2 font-space">Monthly</h3>
+                  <div className="text-white flex items-end gap-0.5">
+                    <span className="text-sm">$</span>
+                    <motion.span 
+                      key={pricing.monthlyPrice}
+                      initial={{ scale: 1 }}
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 0.3 }}
+                      className="text-white -mb-0.5 text-xl sm:text-2xl font-extrabold tracking-tighter font-space"
+                    >
+                      {pricing.monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </motion.span>
+                    <span className="text-xs">/mo</span>
+                  </div>
+                  <div className="text-[10px] sm:text-xs text-white/70 font-semibold font-sans mt-1">
+                    ${(pricing.monthlyPrice * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/yr
+                  </div>
+                </div>
+
+                {/* Annual Card */}
+                <div className="relative w-full rounded-lg border-2 border-emerald-500/50 px-3 sm:px-4 pt-3 pb-3 overflow-hidden bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
+                  {/* Green Triangle Corner */}
+                  <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[28px] border-l-transparent border-t-[28px] border-t-emerald-500"></div>
+                  <h3 className="text-xs sm:text-sm font-semibold text-white mb-2 font-space flex items-center gap-1">
+                    Annual
+                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-black font-bold rounded">Best</span>
+                  </h3>
+                  <div className="text-white flex items-end">
+                    <span className="text-sm">$</span>
+                    <motion.span 
+                      key={Math.round(pricing.annualPrice / 12)}
+                      initial={{ scale: 1 }}
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 0.3 }}
+                      className="text-white -mb-0.5 text-xl sm:text-2xl font-extrabold tracking-tighter font-space"
+                    >
+                      {Math.round(pricing.annualPrice / 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </motion.span>
+                    <span className="text-xs">/mo</span>
+                  </div>
+                  <div className="text-[10px] sm:text-xs text-emerald-300 font-semibold font-sans mt-1">
+                    ${pricing.annualPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/yr
+                  </div>
+                </div>
+              </div>
+
+              {/* ROI Results - Enhanced */}
+              <div className="space-y-3 border-t-2 border-purple-500/30 pt-5 pb-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-white text-sm font-medium font-sans">Revenue:</span>
+                  <div className="flex items-center gap-2">
+                    <motion.span 
+                      key={Math.round(roi.annualValue)}
+                      initial={{ scale: 1 }}
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 0.3 }}
+                      className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-300 text-lg sm:text-xl font-bold font-space"
+                    >
+                      +${Math.round(roi.annualValue).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </motion.span>
+                  </div>
+                </div>
+                <div className="flex justify-end -mt-2">
+                  <Link
+                    href={`/pricing?reps=${numReps}`}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 font-medium font-sans transition-colors underline decoration-emerald-400/50 hover:decoration-emerald-300"
+                  >
+                    See calc
+                  </Link>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white text-sm font-medium font-sans">Investment:</span>
+                  <span className="text-red-400 text-lg sm:text-xl font-bold font-space">
+                    -${pricing.annualPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+                <div className="border-t-2 border-emerald-500/40 pt-3 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg px-3 py-2 -mx-3 sm:-mx-4">
+                  <span className="text-white text-base font-semibold font-sans">Net Profit:</span>
+                  <motion.div
+                    key={Math.round(roi.annualROI)}
+                    initial={{ scale: 1 }}
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 0.3 }}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400 text-2xl sm:text-3xl md:text-4xl font-black font-space">
+                      ${Math.round(roi.annualROI).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-emerald-400 text-lg sm:text-xl font-bold font-space">
+                      ({Math.round(roi.roiPercentage)}%)
+                    </span>
+                  </motion.div>
+                </div>
+              </div>
               </div>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-slate-300 mt-4 sm:mt-5 lg:mt-6 max-w-2xl mx-auto">
-              When each rep closes just 1 extra deal per month, teams see massive returns. Calculate your ROI with our pricing calculator.
-            </p>
           </div>
         </motion.div>
 
-        {/* CTA Buttons */}
+        {/* Prominent Book Demo CTA */}
         <motion.div 
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
+          className="flex flex-col items-center justify-center gap-3 sm:gap-4"
           variants={fadeInUp}
         >
           <motion.span 
@@ -593,26 +768,32 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
           >
             <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
             <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
-              <Link
-                href="/pricing?reps=5"
-                onClick={() => vibrate()}
-                className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+                    try {
+                      navigator.vibrate(10)
+                    } catch {}
+                  }
+                  onBookDemo()
+                }}
+                className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
               >
-                See Pricing for Your Team
+                Book a Demo
                 <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </button>
             </div>
           </motion.span>
           
-          <motion.button
-            onClick={onBookDemo}
-            className="inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white px-8 py-3.5 text-base sm:text-lg font-semibold transition-all hover:scale-105 active:scale-95"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <Link
+            href="/pricing?reps=5"
+            onClick={() => vibrate()}
+            className="text-sm text-slate-400 hover:text-slate-200 font-medium font-sans transition-colors flex items-center gap-1 group"
           >
-            Book a Demo
-            <ChevronRight className="w-4 h-4 ml-2" />
-          </motion.button>
+            See Full Pricing Details
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </motion.div>
       </div>
     </motion.section>
@@ -636,10 +817,10 @@ function DashboardSection() {
           className="text-center mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0"
           variants={fadeInUp}
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-geist bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] pb-2">
-            Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Analytics</span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-space font-bold text-white pb-2">
+            Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Analytics</span>
           </h2>
-          <p className="text-xs sm:text-sm lg:text-lg text-slate-300 max-w-3xl mx-auto mt-3 sm:mt-4 lg:mt-6">
+          <p className="text-base sm:text-lg lg:text-xl text-slate-100 max-w-3xl mx-auto mt-3 sm:mt-4 lg:mt-6 font-sans leading-relaxed">
             Track every rep's performance in real-time with detailed analytics and insights
           </p>
         </motion.div>
@@ -752,7 +933,7 @@ function ResultsSection() {
               Results That Move the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Needle</span>
             </motion.h2>
             <motion.p 
-              className="text-lg sm:text-xl text-slate-300 mt-4 text-center lg:text-left max-w-xl"
+              className="text-lg sm:text-xl text-slate-200 mt-4 text-center lg:text-left max-w-xl"
               variants={fadeInUp}
             >
               See measurable improvements in close rates, ramp time, and team performance
@@ -896,7 +1077,7 @@ function TestimonialsSection() {
     >
       <div className="flex justify-center">
         <motion.div 
-          className="border py-1 px-4 rounded-lg"
+          className="border border-indigo-500/30 bg-indigo-500/10 py-1 px-4 rounded-lg text-indigo-300"
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.2 }}
         >
@@ -905,9 +1086,9 @@ function TestimonialsSection() {
       </div>
 
       <h3 
-        className="text-center text-xl sm:text-2xl lg:text-[56px] leading-[1.2] sm:leading-[1.1] tracking-tight font-geist mt-4 sm:mt-5 lg:mt-6 px-4 sm:px-0 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)] break-words"
+        className="text-center text-xl sm:text-2xl lg:text-[56px] leading-[1.2] sm:leading-[1.1] tracking-tight font-space font-bold mt-4 sm:mt-5 lg:mt-6 px-4 sm:px-0 text-white break-words"
       >
-        What Sales Teams Say About <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">DoorIQ</span>
+        What Sales Teams Say About <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">DoorIQ</span>
       </h3>
 
       <motion.div

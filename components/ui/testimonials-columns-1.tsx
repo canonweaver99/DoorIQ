@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { motion } from "motion/react";
 
 export type Testimonial = {
@@ -97,12 +97,28 @@ export const TestimonialsColumn = ({
 
   // Add one review card per column
   const itemsToShow = [...testimonials, emptyReviewCard];
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [animateDistance, setAnimateDistance] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      // Calculate the actual height of the first set of items
+      const firstSet = contentRef.current.querySelector('[data-set="0"]') as HTMLElement;
+      if (firstSet) {
+        const height = firstSet.getBoundingClientRect().height;
+        setAnimateDistance(-height);
+      }
+    }
+  }, [testimonials]);
 
   return (
-    <div className={className}>
+    <div className={`${className} overflow-hidden`}>
       <motion.div
+        ref={containerRef}
         animate={{
-          translateY: "-50%",
+          y: animateDistance !== 0 ? [0, animateDistance] : 0,
         }}
         transition={{
           duration: duration || 10,
@@ -110,11 +126,14 @@ export const TestimonialsColumn = ({
           ease: "linear",
           repeatType: "loop",
         }}
-        className="flex flex-col gap-6 pb-6 bg-background"
+        className="flex flex-col gap-6 pb-6"
+        style={{ willChange: 'transform' }}
       >
+        <div ref={contentRef} className="contents">
         {Array.from({ length: 2 }).map((_, loopIndex) => (
           <React.Fragment key={loopIndex}>
-            {itemsToShow.map((item, testimonialIndex) => {
+            <div data-set={loopIndex} className="flex flex-col gap-6">
+              {itemsToShow.map((item, testimonialIndex) => {
               const testimonial = item as any;
               if (testimonial.isEmpty) {
                 return (
@@ -128,7 +147,7 @@ export const TestimonialsColumn = ({
                       <div className="font-medium tracking-tight leading-5 text-primary/80 mb-2">
                         Enjoying your time?
                       </div>
-                      <div className="text-sm opacity-60">
+                      <div className="text-sm text-slate-300">
                         Leave a review
                       </div>
                     </div>
@@ -146,7 +165,7 @@ export const TestimonialsColumn = ({
                   className="p-10 rounded-3xl border border-purple-500/30 shadow-lg shadow-purple-500/10 max-w-xs w-full cursor-pointer hover:border-purple-500/50 hover:shadow-purple-500/20 transition-all duration-300 block bg-slate-800/90 backdrop-blur-sm"
                   key={`${loopIndex}-${testimonialIndex}`}
                 >
-                  <div className="text-white">{text}</div>
+                  <div className="text-slate-100 leading-relaxed text-base">{text}</div>
                   <div className="flex items-center gap-2 mt-5">
                     {hasRealProfilePic && (
                       <img
@@ -161,7 +180,7 @@ export const TestimonialsColumn = ({
                       <div className="font-medium tracking-tight leading-5 text-white">
                         {name}
                       </div>
-                      <div className="leading-5 opacity-70 tracking-tight text-slate-200">
+                      <div className="leading-5 text-slate-200 tracking-tight text-sm">
                         {role}
                       </div>
                     </div>
@@ -169,8 +188,10 @@ export const TestimonialsColumn = ({
                 </a>
               );
             })}
+            </div>
           </React.Fragment>
         ))}
+        </div>
       </motion.div>
     </div>
   );

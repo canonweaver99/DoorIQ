@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { motion, AnimatePresence, useAnimation } from "framer-motion"
-import { ChevronDown, Mail } from "lucide-react"
-import { useInView } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useScrollAnimation, fadeInUp, staggerContainer, staggerItem } from "@/hooks/useScrollAnimation"
 
 interface FaqSectionProps extends React.HTMLAttributes<HTMLElement> {
   title: string
@@ -25,59 +25,35 @@ interface FaqSectionProps extends React.HTMLAttributes<HTMLElement> {
 
 const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
   ({ className, title, description, items, contactInfo, ...props }, ref) => {
-    const sectionRef = React.useRef<HTMLElement>(null)
-    const controls = useAnimation()
-    const isInView = useInView(sectionRef, { once: true, amount: 0.2 })
-
-    React.useEffect(() => {
-      if (isInView) {
-        controls.start("visible")
-      }
-    }, [isInView, controls])
+    const { ref: scrollRef, controls } = useScrollAnimation(0.2)
 
     return (
       <motion.section
-        ref={sectionRef}
+        ref={scrollRef}
         className={cn(
-          "py-16 w-full bg-gradient-to-b from-transparent via-muted/50 to-transparent",
+          "py-8 sm:py-12 md:py-16 lg:py-20 w-full",
           className,
         )}
         initial="hidden"
         animate={controls}
-        variants={{
-          hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.1,
-              delayChildren: 0.2
-            }
-          }
-        }}
+        variants={staggerContainer}
         {...props}
       >
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-4 sm:px-4 lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-4 sm:px-6 lg:px-8">
           <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 50 },
-              visible: { 
-                opacity: 1, 
-                y: 0,
-                transition: { duration: 0.8, ease: "easeOut" }
-              }
-            }}
-            className="max-w-2xl mx-auto text-center mb-12"
+            variants={fadeInUp}
+            className="max-w-2xl mx-auto text-center mb-8 sm:mb-10 lg:mb-12"
           >
-            <h2 className="text-[56px] leading-[1.1] tracking-tight font-geist mb-3 bg-clip-text text-transparent bg-[linear-gradient(180deg,_#000_0%,_rgba(0,_0,_0,_0.75)_100%)] dark:bg-[linear-gradient(180deg,_#FFF_0%,_rgba(255,_255,_255,_0.00)_202.08%)]">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">{title}</span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 text-white">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">{title}</span>
             </h2>
             {description ? (
-              <p className="text-sm text-muted-foreground">{description}</p>
+              <p className="text-base sm:text-lg lg:text-xl text-slate-100 font-sans leading-relaxed">{description}</p>
             ) : null}
           </motion.div>
 
           <div className="w-full max-w-4xl mx-auto">
-            <motion.div className="w-full space-y-3">
+            <motion.div className="w-full space-y-3 sm:space-y-4" variants={staggerContainer}>
               {items.map((item, index) => (
                 <FaqItem
                   key={index}
@@ -91,32 +67,20 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
 
           {contactInfo ? (
             <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { 
-                  opacity: 1, 
-                  y: 0,
-                  transition: { duration: 0.6, delay: 0.4, ease: "easeOut" }
-                }
-              }}
-              className="w-full max-w-7xl mx-auto mt-16"
+              variants={fadeInUp}
+              className="w-full max-w-7xl mx-auto mt-12 sm:mt-16"
             >
-              <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 backdrop-blur-sm p-8 md:p-12">
+              <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-indigo-500/30 bg-black/50 backdrop-blur-sm p-6 sm:p-8 md:p-12">
                 {/* Background glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-purple-500/5 opacity-50" />
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5 opacity-50" />
                 
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
                   {/* Left side - Content */}
                   <div className="flex-1 text-center md:text-left">
-                    <div className="inline-flex items-center justify-center md:justify-start gap-3 mb-4">
-                      <div className="p-2 rounded-full bg-purple-500/20">
-                        <Mail className="h-5 w-5 text-purple-400" />
-                      </div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-white">
-                        {contactInfo.title}
-                      </h3>
-                    </div>
-                    <p className="text-base md:text-lg text-slate-300 max-w-2xl">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 sm:mb-3 font-space">
+                      {contactInfo.title}
+                    </h3>
+                    <p className="text-base sm:text-lg md:text-xl text-slate-100 max-w-2xl font-sans leading-relaxed">
                       {contactInfo.description}
                     </p>
                   </div>
@@ -140,11 +104,12 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
                             }
                             contactInfo.onContact?.()
                           }}
-                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-zinc-300/10 via-purple-400/20 to-transparent dark:from-zinc-300/5 dark:via-purple-400/15 text-gray-900 dark:text-white border-input border-[1px] hover:bg-gradient-to-tr hover:from-zinc-300/20 hover:via-purple-400/30 hover:to-transparent dark:hover:from-zinc-300/10 dark:hover:via-purple-400/25 transition-all py-3.5 px-8 text-base md:text-lg font-semibold whitespace-nowrap"
+                          className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-6 sm:px-8 text-base sm:text-lg font-semibold whitespace-nowrap"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
                           {contactInfo.buttonText}
+                          <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </motion.button>
                       </div>
                     </motion.span>
@@ -173,34 +138,22 @@ const FaqItem = React.forwardRef<
   return (
     <motion.div
       ref={ref}
-      variants={{
-        hidden: { opacity: 0, y: 20, scale: 0.95 },
-        visible: { 
-          opacity: 1, 
-          y: 0, 
-          scale: 1,
-          transition: { 
-            duration: 0.5, 
-            delay: index * 0.1,
-            ease: "easeOut"
-          }
-        }
-      }}
+      variants={staggerItem}
       className={cn(
-        "group rounded-lg",
+        "group rounded-lg sm:rounded-xl",
         "transition-all duration-200 ease-in-out",
-        "border border-purple-500/30",
-        "bg-slate-800/90 backdrop-blur-sm",
+        "border border-indigo-500/30",
+        "bg-black/50 backdrop-blur-sm",
       )}
     >
       <Button
         variant="ghost"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-8 py-6 h-auto justify-between hover:bg-slate-700/50"
+        className="w-full px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 h-auto justify-between transition-all"
       >
         <h3
           className={cn(
-            "text-lg font-medium transition-colors duration-200 text-left",
+            "text-base sm:text-lg md:text-xl font-medium transition-colors duration-200 text-left font-space",
             "text-white",
             isOpen && "text-white",
           )}
@@ -214,9 +167,9 @@ const FaqItem = React.forwardRef<
           }}
           transition={{ duration: 0.2 }}
           className={cn(
-            "p-0.5 rounded-full flex-shrink-0",
+            "p-0.5 rounded-full flex-shrink-0 ml-4",
             "transition-colors duration-200",
-            isOpen ? "text-purple-400" : "text-slate-300",
+            isOpen ? "text-indigo-400" : "text-slate-300",
           )}
         >
           <ChevronDown className="h-5 w-5" />
@@ -237,12 +190,12 @@ const FaqItem = React.forwardRef<
               transition: { duration: 0.2, ease: "easeIn" },
             }}
           >
-            <div className="px-8 pb-6 pt-2">
+            <div className="px-4 sm:px-6 md:px-8 pb-4 sm:pb-5 md:pb-6 pt-2">
               <motion.p
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -10, opacity: 0 }}
-                className="text-base text-slate-200 leading-relaxed"
+                className="text-base sm:text-lg md:text-xl text-slate-100 leading-relaxed font-sans"
               >
                 {answer}
               </motion.p>
