@@ -57,47 +57,75 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServiceSupabaseClient()
     
-    // Simple retry: wait up to 10 seconds for transcript to be saved
-    let transcript: any[] | null = null
-    let sessionData: any = null
+    // Fetch session data with retry logic - transcript might still be saving
+    let session: any = null
+    let attempts = 0
+    const maxAttempts = 30 // Wait up to 15 seconds (30 attempts * 500ms)
     
-    for (let i = 0; i < 20; i++) {
-      const { data } = await supabase
+    while (attempts < maxAttempts) {
+      const { data, error: sessionError } = await supabase
         .from('live_sessions')
-        .select('full_transcript, user_id, agent_name')
+        .select('*')
         .eq('id', sessionId)
         .single()
       
-      if (data) {
-        sessionData = data
-        const fullTranscript = (data as any).full_transcript
-        if (fullTranscript && Array.isArray(fullTranscript) && fullTranscript.length > 0) {
-          transcript = fullTranscript
-          break
+      if (sessionError || !data) {
+        if (attempts === 0) {
+          // First attempt failed - return error immediately
+          return new Response('Session not found', { status: 404 })
         }
+        // Retry on subsequent attempts
+        attempts++
+        await new Promise(resolve => setTimeout(resolve, 500))
+        continue
       }
       
-      if (i < 19) {
+      session = data
+      
+      // Check if transcript is available
+      if ((session as any).full_transcript && (session as any).full_transcript.length > 0) {
+        // Transcript is available, proceed with grading
+        logger.info(`Transcript found after ${attempts} attempts`)
+        break
+      }
+      
+      // Transcript not available yet, wait and retry
+      attempts++
+      if (attempts < maxAttempts) {
+        logger.info(`Waiting for transcript to be saved (attempt ${attempts}/${maxAttempts})`)
         await new Promise(resolve => setTimeout(resolve, 500))
       }
     }
     
-    if (!transcript || transcript.length === 0 || !sessionData) {
+    // Final check after all retries
+    if (!session) {
+      return new Response('Session not found', { status: 404 })
+    }
+    
+    if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
+      logger.error('No transcript available after retries', { 
+        sessionId, 
+        attempts,
+        sessionExists: !!session,
+        hasTranscript: !!(session as any).full_transcript,
+        transcriptLength: (session as any).full_transcript?.length || 0
+      })
       return new Response(`No transcript to grade – transcript may still be saving. Please wait a moment and refresh. SessionId: "${sessionId}"`, { status: 400 })
     }
 
-    // Get user profile
+    // Get user profile and team config (simplified for streaming)
     const { data: userProfile } = await supabase
       .from('users')
-      .select('full_name')
-      .eq('id', (sessionData as any).user_id)
+      .select('team_id, full_name')
+      .eq('id', (session as any).user_id)
       .single()
     
     const salesRepName = (userProfile as any)?.full_name || 'Sales Rep'
-    const customerName = (sessionData as any).agent_name || 'Homeowner'
+    const customerName = (session as any).agent_name || 'Homeowner'
 
     // Build the transcript
-    const formattedTranscript = transcript
+    const transcriptToGrade = (session as any).full_transcript
+    const formattedTranscript = transcriptToGrade
       .map((entry: any, index: number) => {
         const speaker = entry.speaker === 'user' ? salesRepName : customerName
         const timestamp = entry.timestamp || '0:00'
