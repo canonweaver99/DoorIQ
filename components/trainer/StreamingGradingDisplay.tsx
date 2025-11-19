@@ -44,8 +44,6 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   const [isComplete, setIsComplete] = useState(false)
   const [startTime] = useState(Date.now())
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [retryCount, setRetryCount] = useState(0)
-  const [isRetrying, setIsRetrying] = useState(false)
 
   useEffect(() => {
     // Update elapsed time every second
@@ -56,20 +54,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
     return () => clearInterval(interval)
   }, [startTime])
 
-  const connectToStream = async (isRetry = false) => {
+  const connectToStream = async () => {
     try {
-      if (!isRetry) {
-        setStatus('Saving session data...')
-        // Wait for transcript to be saved - give it time since we redirect immediately after save
-        // The backend also has retry logic, but this helps reduce unnecessary retries
-        await new Promise(resolve => setTimeout(resolve, 2000))
-      } else {
-        setStatus('Retrying connection...')
-        // Exponential backoff: 2s, 4s, 8s
-        const backoffDelay = Math.min(2000 * Math.pow(2, retryCount - 1), 8000)
-        await new Promise(resolve => setTimeout(resolve, backoffDelay))
-      }
-      
       setStatus('Connecting to AI...')
       setError(null)
       
@@ -81,23 +67,6 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error')
-        
-        // Check if it's a transcript not ready error - retry these
-        if (response.status === 400 && errorText.includes('No transcript to grade')) {
-          // If we haven't retried too many times, retry
-          if (retryCount < 3) {
-            console.log(`Transcript not ready, retrying (attempt ${retryCount + 1}/3)...`)
-            setRetryCount(prev => prev + 1)
-            setIsRetrying(true)
-            // Retry after a delay
-            setTimeout(() => {
-              setIsRetrying(false)
-              connectToStream(true)
-            }, 3000)
-            return
-          }
-        }
-        
         throw new Error(`Failed to start streaming: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
@@ -169,44 +138,22 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       } catch (err: any) {
         console.error('Streaming error:', err)
         const errorMessage = err?.message || 'Unknown error occurred'
-        
-        // Check if it's a transcript error and we can retry
-        if (errorMessage.includes('No transcript to grade') && retryCount < 3) {
-          console.log(`Transcript error detected, retrying (attempt ${retryCount + 1}/3)...`)
-          setRetryCount(prev => prev + 1)
-          setIsRetrying(true)
-          setTimeout(() => {
-            setIsRetrying(false)
-            connectToStream(true)
-          }, 3000)
-          return
-        }
-        
         setError(errorMessage)
         setStatus('Error connecting to AI')
-        
-        // Log detailed error for debugging
-        console.error('Streaming error details:', {
-          message: errorMessage,
-          stack: err?.stack,
-          sessionId,
-          retryCount
-        })
       }
     }
 
   useEffect(() => {
-    connectToStream(false)
+    connectToStream()
   }, [sessionId, onComplete])
   
   const handleRetry = () => {
-    setRetryCount(0)
     setError(null)
     setSections({})
     setCompletedSections(new Set())
     setCurrentSection('')
     setIsComplete(false)
-    connectToStream(false)
+    connectToStream()
   }
 
   const formatTime = (ms: number) => {
@@ -257,15 +204,12 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
                 {error}
               </div>
-              {error.includes('No transcript to grade') && (
-                <button
-                  onClick={handleRetry}
-                  disabled={isRetrying}
-                  className="w-full px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isRetrying ? 'Retrying...' : 'Retry Connection'}
-                </button>
-              )}
+              <button
+                onClick={handleRetry}
+                className="w-full px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors"
+              >
+                Retry Connection
+              </button>
             </div>
           )}
         </div>
