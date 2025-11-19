@@ -385,13 +385,19 @@ function TrainerPageContent() {
 
     const handleUserEvent = (e: any) => {
       if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
+        console.log('📝 Adding user transcript entry:', e.detail.substring(0, 50))
         pushFinal(e.detail, 'user')
+      } else {
+        console.warn('⚠️ Invalid user event:', e)
       }
     }
 
     const handleAgentEvent = (e: any) => {
       if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
+        console.log('📝 Adding agent transcript entry:', e.detail.substring(0, 50))
         pushFinal(e.detail, 'homeowner')
+      } else {
+        console.warn('⚠️ Invalid agent event:', e)
       }
     }
 
@@ -621,8 +627,12 @@ function TrainerPageContent() {
       return
     }
     
-    // Reset processing flag when starting endSession
-    endCallProcessingRef.current = false
+    // Reset processing flag when starting endSession (but only if we're actually ending)
+    // Don't reset if we're already processing, as that could allow duplicate calls
+    if (endCallProcessingRef.current) {
+      console.log('🔓 Resetting endCallProcessingRef to false in endSession')
+      endCallProcessingRef.current = false
+    }
     
     setLoading(true)
     setSessionActive(false)
@@ -654,8 +664,15 @@ function TrainerPageContent() {
           transcriptLength: transcript.length,
           duration,
           agentName: selectedAgent?.name,
-          endReason: endReason || 'manual'
+          endReason: endReason || 'manual',
+          transcriptSample: transcript.slice(0, 3).map(t => `${t.speaker}: ${t.text.substring(0, 50)}`)
         })
+        
+        // Ensure we have transcript entries before saving
+        if (transcript.length === 0) {
+          console.warn('⚠️ WARNING: Transcript is empty! This will cause grading to fail.')
+          console.warn('⚠️ Current transcript state:', transcript)
+        }
         
         // Wait for save to complete before redirecting to ensure data is persisted
         const saveResponse = await fetch('/api/session', {
@@ -663,7 +680,7 @@ function TrainerPageContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: sessionId,
-            transcript: transcript,
+            transcript: transcript.length > 0 ? transcript : [], // Ensure it's always an array
             duration_seconds: duration,
             end_reason: endReason || 'manual',
             agent_name: selectedAgent?.name || null,
@@ -675,9 +692,22 @@ function TrainerPageContent() {
         if (!saveResponse.ok) {
           const errorData = await saveResponse.json().catch(() => ({ error: 'Unknown error' }))
           console.error('❌ Error saving session:', errorData)
+          console.error('❌ Transcript that failed to save:', transcript)
           // Still redirect even if save fails - user can see error on loading page
         } else {
-          console.log('✅ Session data saved successfully')
+          const savedData = await saveResponse.json().catch(() => null)
+          console.log('✅ Session data saved successfully', savedData)
+          
+          // Verify transcript was saved by checking the response
+          if (transcript.length === 0) {
+            console.error('❌ CRITICAL: Transcript was empty when saving!')
+            console.error('❌ This will cause grading to fail. Transcript state:', transcript)
+          } else {
+            console.log(`✅ Transcript saved with ${transcript.length} entries`)
+          }
+          
+          // Small delay to ensure database write completes before redirecting
+          await new Promise(resolve => setTimeout(resolve, 500))
         }
         
         console.log('🚀 Redirecting to loading page:', `/trainer/loading/${sessionId}`)
@@ -1038,10 +1068,11 @@ function TrainerPageContent() {
         alreadyProcessing: endCallProcessingRef.current,
         currentAgentMode: agentModeRef.current,
         eventType: e?.type,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        transcriptLength: transcript.length
       })
       
-      // Prevent duplicate processing
+      // Prevent duplicate processing - but allow if we're not actually processing
       if (endCallProcessingRef.current) {
         console.log('⚠️ Already processing end_call, ignoring duplicate')
         return
@@ -1050,11 +1081,13 @@ function TrainerPageContent() {
       // Only require sessionId - don't check sessionActive as it might be false already
       if (!sessionId) {
         console.log('⚠️ Received end_call event but no sessionId, ignoring')
+        console.log('⚠️ Current sessionId state:', sessionId)
         return
       }
       
       // Set processing flag immediately to prevent duplicates
       endCallProcessingRef.current = true
+      console.log('🔒 Set endCallProcessingRef to true')
       
       console.log('🚪 Agent ended call - waiting for agent to finish speaking...')
       console.log('🚪 Starting door closing sequence flow...')
@@ -1197,8 +1230,20 @@ function TrainerPageContent() {
     window.addEventListener('trainer:end-session-requested', handleEndSessionRequest)
     
     // Listen for agent end_call events (dispatched from ElevenLabsConversation)
-    window.addEventListener('agent:end_call', handleAgentEndCall)
-    console.log('✅ agent:end_call event listener attached')
+    // Use capture phase to catch events earlier
+    const endCallHandler = (e: Event) => {
+      console.log('🎯 agent:end_call event RECEIVED in listener', {
+        type: e.type,
+        detail: (e as CustomEvent)?.detail,
+        timestamp: Date.now(),
+        sessionId,
+        sessionActive,
+        processing: endCallProcessingRef.current
+      })
+      handleAgentEndCall(e as any)
+    }
+    window.addEventListener('agent:end_call', endCallHandler, true) // Use capture phase
+    console.log('✅ agent:end_call event listener attached (capture phase)')
     
     // Listen for agent messages/responses to track activity
     // Note: agent:message is dispatched, but agent:response is the main one with actual text
@@ -1240,7 +1285,8 @@ function TrainerPageContent() {
         transcriptAnalysisRef.current = null
       }
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
-      window.removeEventListener('agent:end_call', handleAgentEndCall)
+      // Remove the capture phase listener
+      window.removeEventListener('agent:end_call', endCallHandler, true)
       window.removeEventListener('agent:message', handleAgentMessage)
       window.removeEventListener('agent:response', handleAgentResponse)
       window.removeEventListener('agent:user', handleUserActivity)
