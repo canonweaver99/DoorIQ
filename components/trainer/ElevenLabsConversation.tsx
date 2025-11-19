@@ -168,12 +168,15 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           
           // Check if this was an unexpected disconnect (not a graceful end)
           // But only for reconnection logic - we'll always dispatch end_call if we have a session
+          const reasonStr = String(reason || '').toLowerCase()
           const isUnexpected = wasConnectedRef.current && 
-                              !reason?.includes('end_call') && 
-                              !reason?.includes('completed') &&
-                              !reason?.includes('ended')
+                              !reasonStr.includes('end_call') && 
+                              !reasonStr.includes('completed') &&
+                              !reasonStr.includes('ended') &&
+                              !reasonStr.includes('conversation ended') &&
+                              !reasonStr.includes('call ended')
           
-          // If we have an active session, always dispatch end_call - don't try to reconnect
+          // If we have an active session, always dispatch end_call IMMEDIATELY - don't try to reconnect
           // Reconnection should only happen for connection errors outside of active sessions
           if (hasActiveSession && wasConnectedRef.current && !isReconnectingRef.current) {
             console.log('🔌 Disconnect during active session - treating as call end (ElevenLabs ended call)')
@@ -182,12 +185,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             // CRITICAL: Dispatch agent:end_call event MULTIPLE times to ensure it's caught
             // Use different methods to maximize reliability
             const endCallData = {
-              reason: reason || 'Connection ended',
-              source: isUnexpected ? 'unexpected_disconnect' : 'disconnect',
+              reason: reason || 'ElevenLabs ended conversation',
+              source: isUnexpected ? 'unexpected_disconnect' : 'elevenlabs_disconnect',
               timestamp: Date.now()
             }
             
-            // Method 1: Dispatch immediately
+            // Method 1: Dispatch immediately (most important)
             console.log('📢 Dispatching agent:end_call event (immediate)')
             safeDispatchEvent('agent:end_call', endCallData)
             
@@ -202,6 +205,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
               console.log('📢 Dispatching agent:end_call event (delayed 200ms backup)')
               safeDispatchEvent('agent:end_call', endCallData)
             }, 200)
+            
+            // Method 4: Dispatch one more time after 500ms as final backup
+            setTimeout(() => {
+              console.log('📢 Dispatching agent:end_call event (delayed 500ms final backup)')
+              safeDispatchEvent('agent:end_call', endCallData)
+            }, 500)
             
             wasConnectedRef.current = false // Reset for next connection
             

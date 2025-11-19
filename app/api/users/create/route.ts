@@ -26,6 +26,10 @@ export async function POST(request: Request) {
     // Generate a rep ID
     const repId = `REP-${Date.now().toString().slice(-6)}`
     
+    // Set initial credits and daily reset date for new users
+    // New users get 5 credits and will have daily resets (if created after cutoff date)
+    const today = new Date().toISOString().split('T')[0]
+    
     const { error } = await admin
       .from('users')
       .insert({ 
@@ -34,7 +38,9 @@ export async function POST(request: Request) {
         full_name,
         rep_id: repId,
         role: 'rep',
-        virtual_earnings: 0
+        virtual_earnings: 0,
+        credits: 5, // Initial 5 credits for new users
+        last_daily_credit_reset: today // Set today as reset date (will reset tomorrow)
       } as any)
 
     if (error) {
@@ -49,21 +55,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Grant 5 free credits to new free users
+    // Also create user_session_limits record for tracking
     const { error: creditsError } = await admin
       .from('user_session_limits')
       .insert({
         user_id: id,
         sessions_this_month: 0,
         sessions_limit: 5,
-        last_reset_date: new Date().toISOString().split('T')[0]
+        last_reset_date: today
       })
 
     if (creditsError) {
       console.error('⚠️ Failed to create credits record:', creditsError)
       // Don't fail the request if credits creation fails - user was created successfully
     } else {
-      console.log('✅ Granted 5 free credits to new user')
+      console.log('✅ Granted 5 free credits to new user (with daily reset for new users)')
     }
 
     // Send notification email to admin about new user signup

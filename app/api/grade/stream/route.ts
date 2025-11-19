@@ -215,15 +215,38 @@ Return ONLY valid JSON. No commentary.`
           // Parse final complete response
           let gradingResult
           try {
+            // Try to parse the accumulated content
             gradingResult = JSON.parse(accumulatedContent)
-          } catch (parseError) {
-            logger.error('Failed to parse streaming response', parseError)
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-              type: 'error', 
-              message: 'Failed to parse AI response' 
-            })}\n\n`))
-            controller.close()
-            return
+          } catch (parseError: any) {
+            logger.error('Failed to parse streaming response', parseError, {
+              accumulatedLength: accumulatedContent.length,
+              firstChars: accumulatedContent.substring(0, 200),
+              lastChars: accumulatedContent.substring(Math.max(0, accumulatedContent.length - 200))
+            })
+            
+            // Try to fix common JSON issues
+            let fixedContent = accumulatedContent.trim()
+            
+            // Remove any trailing commas before closing braces/brackets
+            fixedContent = fixedContent.replace(/,(\s*[}\]])/g, '$1')
+            
+            // Try parsing again
+            try {
+              gradingResult = JSON.parse(fixedContent)
+              logger.info('Successfully parsed after fixing JSON')
+            } catch (secondParseError) {
+              // If still fails, send error and close
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+                type: 'error', 
+                message: 'Failed to parse AI response: ' + (parseError?.message || 'Unknown error'),
+                details: {
+                  parseError: parseError?.message,
+                  contentLength: accumulatedContent.length
+                }
+              })}\n\n`))
+              controller.close()
+              return
+            }
           }
 
           // Save to database (same logic as non-streaming)
@@ -306,12 +329,28 @@ Return ONLY valid JSON. No commentary.`
           controller.close()
           
         } catch (error: any) {
-          logger.error('Streaming grading error', error)
+          logger.error('Streaming grading error', error, {
+            errorMessage: error?.message,
+            errorStack: error?.stack,
+            sessionId
+          })
+          
+          // Send detailed error information
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
             type: 'error', 
-            message: error.message 
+            message: error?.message || 'Unknown error occurred during streaming',
+            details: {
+              errorType: error?.name || 'Unknown',
+              sessionId
+            }
           })}\n\n`))
-          controller.close()
+          
+          // Ensure stream is closed
+          try {
+            controller.close()
+          } catch (closeError) {
+            logger.error('Error closing stream', closeError)
+          }
         }
       }
     })

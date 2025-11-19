@@ -274,12 +274,39 @@ function TrainerPageContent() {
       } else if (videoMode === 'closing') {
         // Play closing door animation (used when ending session)
         console.log('🎬 Playing closing door animation')
-        video.play().catch((err) => {
-          console.error('❌ Failed to play closing door animation:', err)
-        })
         
-        // Note: Door closing animation will complete and then endSession is called
-        // No need to switch back to loop as session is ending
+        // Ensure video is loaded and ready
+        const handleCanPlay = () => {
+          console.log('🎬 Closing video can play, starting playback')
+          video.play().catch((err) => {
+            console.error('❌ Failed to play closing door animation:', err)
+          })
+          video.removeEventListener('canplay', handleCanPlay)
+        }
+        
+        // If video is already ready, play immediately
+        if (video.readyState >= 3) { // HAVE_FUTURE_DATA or higher
+          video.play().catch((err) => {
+            console.error('❌ Failed to play closing door animation:', err)
+          })
+        } else {
+          video.addEventListener('canplay', handleCanPlay)
+        }
+        
+        // Also try to play on loadeddata as backup
+        const handleLoadedData = () => {
+          console.log('🎬 Closing video loaded, ensuring playback')
+          video.play().catch((err) => {
+            console.error('❌ Failed to play closing door animation (loadeddata):', err)
+          })
+          video.removeEventListener('loadeddata', handleLoadedData)
+        }
+        video.addEventListener('loadeddata', handleLoadedData)
+        
+        return () => {
+          video.removeEventListener('canplay', handleCanPlay)
+          video.removeEventListener('loadeddata', handleLoadedData)
+        }
       } else if (videoMode === 'loop') {
         // Track when loop video starts and its duration
         const handleLoadedMetadata = () => {
@@ -863,48 +890,109 @@ function TrainerPageContent() {
       
       console.log(`🎬 Switching to closing door video for ${agentName}...`)
       
-      // Switch to closing door video - React will re-render with new src
-      setVideoMode('closing')
+      // Get the closing video path to verify it exists
+      const videoPaths = getAgentVideoPaths(agentName)
+      const closingVideoPath = videoPaths?.closing
       
-      // Wait for React to update and video element to be ready
-      await new Promise(resolve => setTimeout(resolve, 200))
-      
-      // Wait for closing door video to finish before ending session
-      await new Promise<void>((resolve) => {
-        const video = agentVideoRef.current
-        if (!video) {
-          console.warn('⚠️ Video ref not available, proceeding anyway')
-          resolve()
-          return
-        }
+      if (!closingVideoPath) {
+        console.warn('⚠️ No closing video path found, skipping video animation')
+      } else {
+        // Switch to closing door video - React will re-render with new src
+        setVideoMode('closing')
         
-        // Ensure video is playing
-        video.play().catch((err) => {
-          console.warn('Video play failed:', err)
+        // Wait for React to update and video element to be ready
+        // Also wait for video source to actually change
+        await new Promise<void>((resolve) => {
+          let attempts = 0
+          const maxAttempts = 20 // 2 seconds max wait
+          
+          const checkVideoReady = () => {
+            const video = agentVideoRef.current
+            attempts++
+            
+            if (!video) {
+              if (attempts >= maxAttempts) {
+                console.warn('⚠️ Video ref not available after waiting, proceeding anyway')
+                resolve()
+                return
+              }
+              setTimeout(checkVideoReady, 100)
+              return
+            }
+            
+            // Check if video source has changed to closing video
+            const currentSrc = video.src || video.currentSrc || ''
+            const closingVideoFileName = closingVideoPath.split('/').pop() || ''
+            
+            // Check if src matches (allowing for URL encoding differences)
+            const srcMatches = currentSrc.includes(closingVideoFileName) || 
+                              currentSrc.includes(encodeURIComponent(closingVideoFileName))
+            
+            if (srcMatches || video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+              console.log('🎬 Closing video is ready, src:', currentSrc)
+              resolve()
+            } else if (attempts >= maxAttempts) {
+              console.warn('⚠️ Video source not updated after waiting, proceeding anyway')
+              resolve()
+            } else {
+              setTimeout(checkVideoReady, 100)
+            }
+          }
+          
+          // Start checking after a brief delay to allow React to render
+          setTimeout(checkVideoReady, 100)
         })
         
-        const handleVideoEnd = () => {
-          console.log(`🎬 Closing door video finished for ${agentName}`)
-          video.removeEventListener('ended', handleVideoEnd)
-          resolve()
-        }
-        
-        // Check if video already ended (edge case)
-        if (video.ended) {
-          console.log('🎬 Video already ended')
-          resolve()
-          return
-        }
-        
-        video.addEventListener('ended', handleVideoEnd)
-        
-        // Fallback timeout in case video doesn't fire ended event
-        setTimeout(() => {
-          console.log('⏰ Closing door video timeout, proceeding anyway')
-          video.removeEventListener('ended', handleVideoEnd)
-          resolve()
-        }, 10000) // 10 second timeout
-      })
+        // Wait for closing door video to finish before ending session
+        await new Promise<void>((resolve) => {
+          const video = agentVideoRef.current
+          if (!video) {
+            console.warn('⚠️ Video ref not available, proceeding anyway')
+            resolve()
+            return
+          }
+          
+          // Ensure video is playing
+          const playPromise = video.play().catch((err) => {
+            console.warn('Video play failed:', err)
+            // If play fails, still wait a bit in case it recovers
+            setTimeout(() => resolve(), 2000)
+          })
+          
+          const handleVideoEnd = () => {
+            console.log(`🎬 Closing door video finished for ${agentName}`)
+            video.removeEventListener('ended', handleVideoEnd)
+            video.removeEventListener('error', handleVideoError)
+            resolve()
+          }
+          
+          const handleVideoError = (e: any) => {
+            console.error('❌ Closing video error:', e)
+            video.removeEventListener('ended', handleVideoEnd)
+            video.removeEventListener('error', handleVideoError)
+            // Still resolve after a delay to not block the session end
+            setTimeout(() => resolve(), 1000)
+          }
+          
+          // Check if video already ended (edge case)
+          if (video.ended) {
+            console.log('🎬 Video already ended')
+            resolve()
+            return
+          }
+          
+          video.addEventListener('ended', handleVideoEnd)
+          video.addEventListener('error', handleVideoError)
+          
+          // Fallback timeout in case video doesn't fire ended event
+          setTimeout(() => {
+            console.log('⏰ Closing door video timeout, proceeding anyway')
+            video.removeEventListener('ended', handleVideoEnd)
+            video.removeEventListener('error', handleVideoError)
+            resolve()
+          }, 10000) // 10 second timeout
+        })
+      }
     }
     
     // Set session inactive before ending
@@ -1289,9 +1377,10 @@ function TrainerPageContent() {
                 ) : (
                   <div className="relative w-full h-full overflow-hidden">
                     {(() => {
-                      const shouldUseVideo = agentHasVideos(selectedAgent?.name) && sessionActive
+                      // CRITICAL: Keep video rendered during closing sequence even when sessionActive is false
+                      const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing')
                       
-                      // Use video for agents with video animations during active session
+                      // Use video for agents with video animations during active session or closing sequence
                       if (shouldUseVideo) {
                         const videoPaths = getAgentVideoPaths(selectedAgent?.name)
                         if (!videoPaths) return null

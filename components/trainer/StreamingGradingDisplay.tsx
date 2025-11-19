@@ -66,14 +66,15 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         })
 
         if (!response.ok) {
-          throw new Error('Failed to start streaming')
+          const errorText = await response.text().catch(() => 'Unknown error')
+          throw new Error(`Failed to start streaming: ${response.status} ${response.statusText} - ${errorText}`)
         }
 
         const reader = response.body?.getReader()
         const decoder = new TextDecoder()
 
         if (!reader) {
-          throw new Error('No reader available')
+          throw new Error('No reader available - response body is null')
         }
 
         setStatus('AI is analyzing your conversation...')
@@ -136,8 +137,16 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
       } catch (err: any) {
         console.error('Streaming error:', err)
-        setError(err.message)
+        const errorMessage = err?.message || 'Unknown error occurred'
+        setError(errorMessage)
         setStatus('Error connecting to AI')
+        
+        // Log detailed error for debugging
+        console.error('Streaming error details:', {
+          message: errorMessage,
+          stack: err?.stack,
+          sessionId
+        })
       }
     }
 
