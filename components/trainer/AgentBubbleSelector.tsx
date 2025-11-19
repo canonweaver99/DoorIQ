@@ -496,42 +496,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
               >
                 🎲
               </motion.span>
-              <span className="relative">
-                Surprise Me
-                {/* Sparkle dots */}
-                {!loading && agents.length > 0 && (
-                  <>
-                    <motion.span
-                      className="absolute -top-1 -right-1 text-[8px]"
-                      animate={{
-                        opacity: [0, 1, 0],
-                        scale: [0.5, 1, 0.5],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        delay: 0,
-                      }}
-                    >
-                      ✨
-                    </motion.span>
-                    <motion.span
-                      className="absolute -bottom-1 -left-1 text-[8px]"
-                      animate={{
-                        opacity: [0, 1, 0],
-                        scale: [0.5, 1, 0.5],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        delay: 0.75,
-                      }}
-                    >
-                      ✨
-                    </motion.span>
-                  </>
-                )}
-              </span>
+              <span>Surprise Me</span>
             </span>
             
             {/* Pulsing glow effect */}

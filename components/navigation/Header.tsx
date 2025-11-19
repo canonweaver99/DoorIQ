@@ -32,6 +32,7 @@ import {
   ArrowRight,
   Database as DatabaseIcon,
   Upload,
+  DollarSign,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef, useMemo } from 'react'
@@ -305,7 +306,7 @@ function HeaderContent() {
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
       { name: 'Sessions', href: '/sessions', icon: FileText },
       { name: 'Learning', href: '/learning', icon: NotebookPen },
-      { name: 'Pricing', href: '/pricing', icon: Trophy },
+      { name: 'Pricing', href: '/pricing', icon: DollarSign },
     ]
 
     // Only show Leaderboard for users on a team plan (have a team_id)
