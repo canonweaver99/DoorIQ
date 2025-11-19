@@ -657,30 +657,15 @@ function TrainerPageContent() {
 
     if (sessionId) {
       try {
-        console.log('💾 Saving session data before redirect...')
-        console.log('📝 Transcript length:', transcript.length, 'lines')
-        console.log('📝 Transcript sample:', transcript.slice(0, 3))
-        console.log('📝 Full transcript state:', JSON.stringify(transcript.slice(0, 5), null, 2))
+        console.log('💾 Finalizing session...')
+        console.log('📝 Local transcript length:', transcript.length, 'lines')
+        console.log('📝 Note: Transcripts are saved incrementally to database during session')
         
-        // CRITICAL: Verify transcript exists before saving
-        if (!transcript || transcript.length === 0) {
-          console.error('❌ CRITICAL ERROR: Transcript is empty! Cannot save session.')
-          console.error('❌ Session ID:', sessionId)
-          console.error('❌ End reason:', endReason || 'manual')
-          console.error('❌ Duration:', duration)
-          console.error('❌ Transcript state:', transcript)
-          console.error('❌ This means no conversation was captured. Check ElevenLabs connection.')
-          
-          // Still try to save with empty transcript so we can debug
-          // But this will fail grading, which is expected
-        }
-        
-        // CRITICAL: Wait for save to complete before redirecting
-        // This ensures the transcript is in the database before grading starts
-        console.log('💾 Saving session data...', {
+        // Finalize session - transcript is already saved incrementally via /api/session/transcript
+        // We still send transcript here as a backup/verification, but it's optional
+        console.log('💾 Finalizing session data...', {
           sessionId,
-          transcriptLines: transcript.length,
-          transcriptIsArray: Array.isArray(transcript),
+          localTranscriptLines: transcript.length,
           duration,
           endReason: endReason || 'manual'
         })
@@ -690,7 +675,7 @@ function TrainerPageContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: sessionId,
-            transcript: transcript || [], // Ensure we always send an array
+            transcript: transcript.length > 0 ? transcript : undefined, // Optional - already saved incrementally
             duration_seconds: duration,
             end_reason: endReason || 'manual'
           }),

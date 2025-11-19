@@ -50,6 +50,32 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
     }
   }
 
+  // Save transcript directly to database
+  const saveTranscriptToDatabase = useCallback(async (sessionId: string, speaker: 'user' | 'homeowner', text: string) => {
+    try {
+      const response = await fetch('/api/session/transcript', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          speaker,
+          text
+        })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(error.error || 'Failed to save transcript')
+      }
+      
+      const result = await response.json()
+      console.log('✅ Transcript saved:', { entryId: result.entryId, transcriptLength: result.transcriptLength })
+    } catch (error) {
+      console.error('❌ Error saving transcript:', error)
+      throw error
+    }
+  }, [])
+
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
     // Dispatch the status exactly as passed (don't map disconnected to 'idle')
     safeDispatchEvent('connection:status', s)
@@ -378,15 +404,24 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           
           console.log('🔍 EXTRACTION RESULT:', { userText, agentText, messageType: msg?.type })
           
-          if (userText) {
+          // Save transcripts directly to database instead of using events
+          if (userText && sessionIdRef.current) {
             console.log('👤 USER TRANSCRIPT EXTRACTED:', userText)
-            console.log('👤 Dispatching agent:user event with:', userText)
+            console.log('💾 Saving user transcript to database...')
+            saveTranscriptToDatabase(sessionIdRef.current, 'user', userText).catch((err) => {
+              console.error('❌ Failed to save user transcript:', err)
+            })
+            // Still dispatch event for UI updates
             safeDispatchEvent('agent:user', userText)
           }
           
-          if (agentText) {
+          if (agentText && sessionIdRef.current) {
             console.log('🤖 AGENT TRANSCRIPT EXTRACTED:', agentText)
-            console.log('🤖 Dispatching agent:response event with:', agentText)
+            console.log('💾 Saving agent transcript to database...')
+            saveTranscriptToDatabase(sessionIdRef.current, 'homeowner', agentText).catch((err) => {
+              console.error('❌ Failed to save agent transcript:', err)
+            })
+            // Still dispatch event for UI updates
             safeDispatchEvent('agent:response', agentText)
           }
           

@@ -70,29 +70,47 @@ export async function PATCH(req: Request) {
     
     const supabase = await createServiceSupabaseClient()
     
-    // Convert transcript to ensure proper format
-    const formattedTranscript = transcript && Array.isArray(transcript)
-      ? transcript.map((entry: any) => ({
-          speaker: entry.speaker,
-          text: entry.text || entry.message || '',
-          timestamp: entry.timestamp ? new Date(entry.timestamp).toISOString() : new Date().toISOString()
-        }))
-      : []
+    const now = new Date().toISOString()
+    // Get current transcript from database (it's saved incrementally)
+    const { data: currentSession, error: fetchError } = await (supabase as any)
+      .from('live_sessions')
+      .select('full_transcript')
+      .eq('id', id)
+      .single()
     
-    console.log('📝 PATCH: Formatted transcript lines:', formattedTranscript.length)
-    if (formattedTranscript.length > 0) {
-      console.log('📝 PATCH: Formatted transcript sample:', formattedTranscript[0])
-    } else {
-      console.warn('⚠️ PATCH: Formatted transcript is empty!')
+    let finalTranscript = currentSession?.full_transcript || []
+    
+    // If transcript is provided in request, use it (backup/verification)
+    // Otherwise, use what's already in the database
+    if (transcript && Array.isArray(transcript) && transcript.length > 0) {
+      console.log('📝 PATCH: Using provided transcript as backup/verification')
+      const formattedTranscript = transcript.map((entry: any) => ({
+        speaker: entry.speaker,
+        text: entry.text || entry.message || '',
+        timestamp: entry.timestamp ? new Date(entry.timestamp).toISOString() : new Date().toISOString()
+      }))
+      
+      // Merge with database transcript (database is source of truth, but use provided if longer)
+      if (formattedTranscript.length > finalTranscript.length) {
+        console.log('📝 PATCH: Provided transcript is longer, using it')
+        finalTranscript = formattedTranscript
+      } else {
+        console.log('📝 PATCH: Database transcript is longer or equal, keeping database version')
+      }
     }
     
-    const now = new Date().toISOString()
+    console.log('📝 PATCH: Final transcript lines:', finalTranscript.length)
+    if (finalTranscript.length > 0) {
+      console.log('📝 PATCH: Final transcript sample:', finalTranscript[0])
+    } else {
+      console.warn('⚠️ PATCH: Final transcript is empty!')
+    }
 
     // Build update object with all provided fields
     const updateData: any = {
       ended_at: now,
       duration_seconds: duration_seconds,
-      full_transcript: formattedTranscript,
+      full_transcript: finalTranscript,
       overall_score: null,
       sale_closed: false,
       virtual_earnings: 0,
