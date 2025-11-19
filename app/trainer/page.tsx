@@ -223,6 +223,9 @@ function TrainerPageContent() {
   const endCallProcessingRef = useRef(false) // Track if end call is being processed
   const agentVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for Tanya & Tom video element
   const lastConnectionStatusRef = useRef<'connected' | 'disconnected' | 'connecting' | 'error' | null>(null) // Track connection status changes
+  const transcriptAnalysisRef = useRef<NodeJS.Timeout | null>(null) // Track transcript analysis interval
+  const rejectionCountRef = useRef(0) // Track consecutive firm rejections
+  const lastRejectionTimeRef = useRef<number>(0) // Track when last rejection occurred
   
   const subscription = useSubscription()
   const sessionLimit = useSessionLimit()
@@ -506,6 +509,9 @@ function TrainerPageContent() {
       
       setSessionId(newId)
       setSessionActive(true)
+      // Reset rejection tracking for new session
+      rejectionCountRef.current = 0
+      lastRejectionTimeRef.current = 0
       // Start with opening animation if available (Jerry), otherwise start with loop
       if (agentHasVideos(selectedAgent?.name)) {
         const videoPaths = getAgentVideoPaths(selectedAgent?.name)
@@ -571,6 +577,10 @@ function TrainerPageContent() {
   }
 
   const endSession = useCallback(async (endReason?: string) => {
+    // Reset rejection count when session ends
+    rejectionCountRef.current = 0
+    lastRejectionTimeRef.current = 0
+    
     console.log('🔚 endSession called', { 
       sessionId, 
       duration, 
@@ -659,6 +669,91 @@ function TrainerPageContent() {
   const agentModeRef = useRef<'speaking' | 'listening' | 'idle' | null>(null)
   
   // Shared function to handle door closing sequence and end session
+  // Analyze transcript for end call indicators
+  const analyzeTranscriptForEndCall = useCallback((transcriptEntries: TranscriptEntry[]): { shouldEnd: boolean; reason: string } => {
+    if (!transcriptEntries || transcriptEntries.length === 0) {
+      return { shouldEnd: false, reason: '' }
+    }
+
+    // Get the last 3 entries for analysis (recent conversation)
+    const recentEntries = transcriptEntries.slice(-3)
+    const recentText = recentEntries.map(e => e.text.toLowerCase()).join(' ')
+
+    // Firm rejection indicators (only from homeowner/agent)
+    const firmRejectionPatterns = [
+      /\b(not interested|no thanks|i said no|definitely not|absolutely not|no way|never|not happening|leave me alone|go away|stop|don't call|don't come back)\b/i,
+      /\b(i don't want|i'm not interested|not for me|not today|not ever|hard no|firm no)\b/i,
+    ]
+
+    // Goodbye indicators
+    const goodbyePatterns = [
+      /\b(goodbye|bye|see you|have a nice day|thanks anyway|thank you anyway|no thank you|maybe another time|another time|later|take care|have a good one)\b/i,
+      /\b(i have to go|i need to go|i'm busy|got to go|gotta go|talk to you later|catch you later)\b/i,
+    ]
+
+    // Check for firm rejection from homeowner (agent) - need 3 consecutive rejections
+    for (const pattern of firmRejectionPatterns) {
+      const matchingEntry = recentEntries.find(e => 
+        pattern.test(e.text.toLowerCase()) && e.speaker === 'homeowner'
+      )
+      
+      if (matchingEntry) {
+        const now = Date.now()
+        const timeSinceLastRejection = now - lastRejectionTimeRef.current
+        
+        // Reset count if more than 30 seconds since last rejection (new conversation thread)
+        if (timeSinceLastRejection > 30000) {
+          rejectionCountRef.current = 0
+        }
+        
+        // Increment rejection count
+        rejectionCountRef.current += 1
+        lastRejectionTimeRef.current = now
+        
+        console.log(`🚫 Firm rejection detected (count: ${rejectionCountRef.current}/3):`, matchingEntry.text)
+        
+        // Only trigger after 3rd rejection
+        if (rejectionCountRef.current >= 3) {
+          rejectionCountRef.current = 0 // Reset for next session
+          return { shouldEnd: true, reason: 'Firm rejection - third consecutive rejection detected' }
+        }
+        
+        // Don't check other patterns if we found a rejection (but not enough yet)
+        return { shouldEnd: false, reason: '' }
+      }
+    }
+
+    // Reset rejection count if we see positive engagement (user responding after rejection)
+    const hasUserResponse = recentEntries.some(e => e.speaker === 'user')
+    if (hasUserResponse && rejectionCountRef.current > 0) {
+      const timeSinceLastRejection = Date.now() - lastRejectionTimeRef.current
+      // If user responded within 10 seconds of rejection, reset count (they're engaging)
+      if (timeSinceLastRejection < 10000) {
+        console.log('🔄 User responded after rejection, resetting rejection count')
+        rejectionCountRef.current = 0
+      }
+    }
+
+    // Check for goodbye (can trigger immediately)
+    for (const pattern of goodbyePatterns) {
+      if (pattern.test(recentText)) {
+        const matchingEntry = recentEntries.find(e => pattern.test(e.text.toLowerCase()))
+        // Goodbye from homeowner (agent) is most definitive
+        if (matchingEntry?.speaker === 'homeowner') {
+          rejectionCountRef.current = 0 // Reset rejection count
+          return { shouldEnd: true, reason: 'Goodbye - homeowner ended conversation' }
+        }
+        // Goodbye from user also indicates end
+        if (matchingEntry?.speaker === 'user') {
+          rejectionCountRef.current = 0 // Reset rejection count
+          return { shouldEnd: true, reason: 'Goodbye - user ended conversation' }
+        }
+      }
+    }
+
+    return { shouldEnd: false, reason: '' }
+  }, [])
+
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Starting door closing sequence:', reason)
     console.log('🚪 Door closing sequence context:', {
@@ -1006,7 +1101,11 @@ function TrainerPageContent() {
       // Guard against SSR - only remove listeners if window exists
       if (typeof window === 'undefined') return
       
-      // Removed endCallCheckInterval cleanup - no longer using transcript-based goodbye detection
+      // Clean up transcript analysis timer
+      if (transcriptAnalysisRef.current) {
+        clearTimeout(transcriptAnalysisRef.current)
+        transcriptAnalysisRef.current = null
+      }
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
       window.removeEventListener('agent:end_call', handleAgentEndCall)
       window.removeEventListener('agent:message', handleAgentMessage)
@@ -1023,6 +1122,44 @@ function TrainerPageContent() {
       window.removeEventListener('connection:status', debugListener as EventListener)
     }
   }, [sessionActive, sessionId, endSession, transcript, selectedAgent?.name, videoMode, handleDoorClosingSequence])
+
+  // Analyze transcript for automatic end call triggers
+  useEffect(() => {
+    // Only analyze if session is active and we have transcript entries
+    if (!sessionActive || !sessionId || transcript.length === 0 || endCallProcessingRef.current) {
+      return
+    }
+
+    // Clear any existing analysis timer
+    if (transcriptAnalysisRef.current) {
+      clearTimeout(transcriptAnalysisRef.current)
+    }
+
+    // Wait a bit after new transcript entry to allow for context
+    transcriptAnalysisRef.current = setTimeout(() => {
+      const analysis = analyzeTranscriptForEndCall(transcript)
+      
+      if (analysis.shouldEnd && !endCallProcessingRef.current) {
+        console.log('🎯 Transcript analysis detected end call trigger:', analysis.reason)
+        console.log('📝 Recent transcript entries:', transcript.slice(-5).map(e => `${e.speaker}: ${e.text}`))
+        
+        // Set processing flag to prevent duplicate triggers
+        endCallProcessingRef.current = true
+        
+        // Trigger door closing sequence
+        handleDoorClosingSequence(analysis.reason).catch((error) => {
+          console.error('❌ Error in handleDoorClosingSequence from transcript analysis:', error)
+          endCallProcessingRef.current = false // Reset on error
+        })
+      }
+    }, 2000) // Wait 2 seconds after last transcript entry to analyze
+
+    return () => {
+      if (transcriptAnalysisRef.current) {
+        clearTimeout(transcriptAnalysisRef.current)
+      }
+    }
+  }, [transcript, sessionActive, sessionId, analyzeTranscriptForEndCall, handleDoorClosingSequence])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)

@@ -75,37 +75,37 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
   return (
     <div className="min-h-screen h-[100dvh] flex flex-col md:flex-row w-full overflow-x-hidden bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28]">
       {/* Left column: sign-in form */}
-      <section className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 pt-6 sm:pt-8 md:pt-4 pb-6 sm:pb-8 md:pb-8 overflow-y-auto">
-        <div className="w-full max-w-md px-2 sm:px-0">
+      <section className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 pt-4 sm:pt-6 md:pt-4 pb-4 sm:pb-6 md:pb-8 overflow-y-auto">
+        <div className="w-full max-w-md px-2 sm:px-3 md:px-0">
           <div className="flex flex-col gap-3 sm:gap-4">
-            <h1 className="animate-element animate-delay-100 text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight break-words">
+            <h1 className="animate-element animate-delay-100 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight break-words">
               {title}
             </h1>
-            <p className="animate-element animate-delay-200 text-slate-400 text-sm sm:text-sm leading-relaxed break-words">{description}</p>
+            <p className="animate-element animate-delay-200 text-slate-400 text-xs sm:text-sm leading-relaxed break-words hyphens-auto">{description}</p>
 
             <form className="space-y-3 sm:space-y-3.5" onSubmit={onSignIn}>
               <div className="animate-element animate-delay-300">
-                <label className="text-sm font-medium text-slate-300 mb-2 block">Email Address</label>
+                <label className="text-xs sm:text-sm font-medium text-slate-300 mb-1.5 sm:mb-2 block">Email Address</label>
                 <GlassInputWrapper>
                   <input
                     name="email"
                     type="email"
                     placeholder="you@company.com"
-                    className="w-full bg-transparent text-sm py-2.5 sm:py-3 px-3 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                    className="w-full bg-transparent text-xs sm:text-sm py-2 sm:py-2.5 md:py-3 px-3 rounded-2xl focus:outline-none text-white placeholder-slate-500"
                     required
                   />
                 </GlassInputWrapper>
               </div>
 
               <div className="animate-element animate-delay-400">
-                <label className="text-sm font-medium text-slate-300 mb-2 block">Password</label>
+                <label className="text-xs sm:text-sm font-medium text-slate-300 mb-1.5 sm:mb-2 block">Password</label>
                 <GlassInputWrapper>
                   <div className="relative">
                     <input
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
-                      className="w-full bg-transparent text-sm py-2.5 sm:py-3 px-3 pr-10 sm:pr-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                      className="w-full bg-transparent text-xs sm:text-sm py-2 sm:py-2.5 md:py-3 px-3 pr-9 sm:pr-10 md:pr-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
                       required
                       minLength={6}
                     />
@@ -124,15 +124,15 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
                 </GlassInputWrapper>
               </div>
 
-              <div className="animate-element animate-delay-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 text-sm">
-                <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0">
-                  <input type="checkbox" name="rememberMe" className="custom-checkbox" />
-                  <span className="text-slate-300 group-hover:text-white transition-colors whitespace-nowrap">Keep me signed in</span>
+              <div className="animate-element animate-delay-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 text-xs sm:text-sm">
+                <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0 min-w-0">
+                  <input type="checkbox" name="rememberMe" className="custom-checkbox flex-shrink-0" />
+                  <span className="text-slate-300 group-hover:text-white transition-colors whitespace-nowrap text-xs sm:text-sm">Keep me signed in</span>
                 </label>
                 <button
                   type="button"
                   onClick={onResetPassword}
-                  className="hover:underline text-purple-400 hover:text-purple-300 transition-colors text-left sm:text-right whitespace-nowrap"
+                  className="hover:underline text-purple-400 hover:text-purple-300 transition-colors text-left sm:text-right whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
                 >
                   Reset password
                 </button>
@@ -147,7 +147,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-600 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-2.5 sm:py-3 text-sm font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
+                className="animate-element animate-delay-600 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
