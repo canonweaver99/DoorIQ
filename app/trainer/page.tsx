@@ -1220,50 +1220,14 @@ function TrainerPageContent() {
     }
   }, [sessionActive, sessionId, endSession, transcript, selectedAgent?.name, videoMode, handleDoorClosingSequence])
 
-  // Analyze transcript for automatic end call triggers
-  useEffect(() => {
-    // Only analyze if session is active and we have transcript entries
-    if (!sessionActive || !sessionId || transcript.length === 0 || endCallProcessingRef.current) {
-      return
-    }
-
-    // Clear any existing analysis timer
-    if (transcriptAnalysisRef.current) {
-      clearTimeout(transcriptAnalysisRef.current)
-    }
-
-    // Wait a bit after new transcript entry to allow for context (reduced delay for faster response)
-    transcriptAnalysisRef.current = setTimeout(() => {
-      const analysis = analyzeTranscriptForEndCall(transcript)
-      
-      if (analysis.shouldEnd && !endCallProcessingRef.current) {
-        console.log('🎯 Transcript analysis detected end call trigger:', analysis.reason)
-        console.log('📝 Recent transcript entries:', transcript.slice(-5).map(e => `${e.speaker}: ${e.text}`))
-        console.log('📝 Full transcript length:', transcript.length)
-        
-        // Set processing flag to prevent duplicate triggers
-        endCallProcessingRef.current = true
-        
-        // Trigger door closing sequence
-        handleDoorClosingSequence(analysis.reason).catch((error) => {
-          console.error('❌ Error in handleDoorClosingSequence from transcript analysis:', error)
-          endCallProcessingRef.current = false // Reset on error
-        })
-      } else if (!analysis.shouldEnd) {
-        // Log when analysis runs but doesn't detect end (for debugging)
-        const lastEntry = transcript[transcript.length - 1]
-        if (lastEntry) {
-          console.log('🔍 Transcript analysis ran, no end trigger detected. Last entry:', `${lastEntry.speaker}: ${lastEntry.text}`)
-        }
-      }
-    }, 1500) // Wait 1.5 seconds after last transcript entry to analyze (reduced from 2s for faster response)
-
-    return () => {
-      if (transcriptAnalysisRef.current) {
-        clearTimeout(transcriptAnalysisRef.current)
-      }
-    }
-  }, [transcript, sessionActive, sessionId, analyzeTranscriptForEndCall, handleDoorClosingSequence])
+  // Transcript analysis disabled - only ElevenLabs end_call events trigger session end
+  // This was causing issues with transcript saving and premature session endings
+  // Sessions now end only when:
+  // 1. ElevenLabs sends end_call event (via onDisconnect or tool detection)
+  // 2. 30 second silence timeout (fallback safety)
+  // useEffect(() => {
+  //   // Disabled transcript analysis - was interfering with transcript saving
+  // }, [transcript, sessionActive, sessionId])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
