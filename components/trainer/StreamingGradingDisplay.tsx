@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Loader2, TrendingUp, MessageSquare, Target, Lightbulb, Zap } from 'lucide-react'
 
@@ -54,10 +54,48 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
     return () => clearInterval(interval)
   }, [startTime])
 
-  const connectToStream = async () => {
+  // Check if transcript is available before starting grading
+  const waitForTranscript = useCallback(async (maxRetries = 10, retryDelay = 500): Promise<boolean> => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await fetch(`/api/session?id=${sessionId}`)
+        if (response.ok) {
+          const session = await response.json()
+          const transcript = session.full_transcript
+          
+          if (transcript && Array.isArray(transcript) && transcript.length > 0) {
+            console.log(`✅ Transcript available after ${attempt + 1} attempt(s), ${transcript.length} lines`)
+            return true
+          }
+        }
+      } catch (error) {
+        console.warn(`⚠️ Error checking transcript (attempt ${attempt + 1}):`, error)
+      }
+      
+      if (attempt < maxRetries - 1) {
+        setStatus(`Waiting for transcript... (${attempt + 1}/${maxRetries})`)
+        await new Promise(resolve => setTimeout(resolve, retryDelay))
+        // Exponential backoff: increase delay with each retry
+        retryDelay = Math.min(retryDelay * 1.5, 2000)
+      }
+    }
+    
+    console.error(`❌ Transcript not available after ${maxRetries} attempts`)
+    return false
+  }, [sessionId])
+
+  const connectToStream = useCallback(async () => {
     try {
-      setStatus('Connecting to AI...')
+      setStatus('Checking transcript availability...')
       setError(null)
+      
+      // Wait for transcript to be available before starting grading
+      const transcriptReady = await waitForTranscript()
+      if (!transcriptReady) {
+        throw new Error('Transcript not available. The session may not have been saved properly.')
+      }
+      
+      setStatus('Connecting to AI...')
       
       const response = await fetch('/api/grade/stream', {
         method: 'POST',
@@ -110,7 +148,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                       data.section
                         .replace(/_/g, ' ')
                         .split(' ')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                         .join(' ')
                     setStatus(`Analyzing: ${readableSection}`)
                     break
@@ -138,23 +176,29 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       } catch (err: any) {
         console.error('Streaming error:', err)
         const errorMessage = err?.message || 'Unknown error occurred'
-        setError(errorMessage)
+        
+        // Check if it's a "No transcript" error - provide helpful retry
+        if (errorMessage.includes('No transcript to grade')) {
+          setError('Transcript not ready yet. This usually means the session is still being saved. Click retry to check again.')
+        } else {
+          setError(errorMessage)
+        }
         setStatus('Error connecting to AI')
       }
-    }
+  }, [sessionId, waitForTranscript, onComplete])
 
   useEffect(() => {
     connectToStream()
-  }, [sessionId, onComplete])
+  }, [connectToStream])
   
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     setError(null)
     setSections({})
     setCompletedSections(new Set())
     setCurrentSection('')
     setIsComplete(false)
     connectToStream()
-  }
+  }, [connectToStream])
 
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000)

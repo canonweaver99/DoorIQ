@@ -70,8 +70,27 @@ export async function POST(request: NextRequest) {
     
     const transcript = (session as any).full_transcript
     
+    // Enhanced logging for debugging
+    logger.info('Grading stream check', {
+      sessionId,
+      hasTranscript: !!transcript,
+      transcriptType: Array.isArray(transcript) ? 'array' : typeof transcript,
+      transcriptLength: Array.isArray(transcript) ? transcript.length : 'N/A',
+      sessionEndedAt: (session as any).ended_at,
+      sessionDuration: (session as any).duration_seconds
+    })
+    
     if (!transcript || !Array.isArray(transcript) || transcript.length === 0) {
-      return new Response(`No transcript to grade. SessionId: "${sessionId}"`, { status: 400 })
+      const errorMsg = `No transcript to grade. SessionId: "${sessionId}". Transcript exists: ${!!transcript}, Type: ${Array.isArray(transcript) ? 'array' : typeof transcript}, Length: ${Array.isArray(transcript) ? transcript.length : 'N/A'}`
+      logger.error('No transcript available for grading', {
+        sessionId,
+        transcriptExists: !!transcript,
+        transcriptType: typeof transcript,
+        transcriptIsArray: Array.isArray(transcript),
+        transcriptLength: Array.isArray(transcript) ? transcript.length : null,
+        sessionEndedAt: (session as any).ended_at
+      })
+      return new Response(errorMsg, { status: 400 })
     }
 
     // Get user profile

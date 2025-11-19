@@ -54,23 +54,37 @@ export async function PATCH(req: Request) {
     
     console.log('🔧 PATCH: Updating session:', id)
     console.log('📝 PATCH: Transcript lines:', transcript?.length || 0)
+    console.log('📝 PATCH: Transcript type:', Array.isArray(transcript) ? 'array' : typeof transcript)
+    console.log('📝 PATCH: Transcript is null/undefined:', transcript === null || transcript === undefined)
     console.log('⏱️ PATCH: Duration:', duration_seconds)
     if (end_reason) {
       console.log('📊 PATCH: End reason:', end_reason)
     }
     
+    // WARNING: If transcript is empty, log it for debugging
+    if (!transcript || (Array.isArray(transcript) && transcript.length === 0)) {
+      console.warn('⚠️ WARNING: Empty transcript received! This may indicate a problem.')
+      console.warn('⚠️ Session ID:', id)
+      console.warn('⚠️ End reason:', end_reason)
+    }
+    
     const supabase = await createServiceSupabaseClient()
     
     // Convert transcript to ensure proper format
-    const formattedTranscript = transcript
+    const formattedTranscript = transcript && Array.isArray(transcript)
       ? transcript.map((entry: any) => ({
           speaker: entry.speaker,
-          text: entry.text,
+          text: entry.text || entry.message || '',
           timestamp: entry.timestamp ? new Date(entry.timestamp).toISOString() : new Date().toISOString()
         }))
       : []
     
-    console.log('📝 PATCH: Formatted transcript sample:', formattedTranscript[0])
+    console.log('📝 PATCH: Formatted transcript lines:', formattedTranscript.length)
+    if (formattedTranscript.length > 0) {
+      console.log('📝 PATCH: Formatted transcript sample:', formattedTranscript[0])
+    } else {
+      console.warn('⚠️ PATCH: Formatted transcript is empty!')
+    }
     
     const now = new Date().toISOString()
 

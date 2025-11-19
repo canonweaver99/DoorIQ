@@ -659,15 +659,33 @@ function TrainerPageContent() {
       try {
         console.log('💾 Saving session data before redirect...')
         console.log('📝 Transcript length:', transcript.length, 'lines')
+        console.log('📝 Transcript sample:', transcript.slice(0, 3))
+        
+        // CRITICAL: Verify transcript exists before saving
+        if (!transcript || transcript.length === 0) {
+          console.error('❌ WARNING: Transcript is empty! This should not happen.')
+          console.error('❌ Session ID:', sessionId)
+          console.error('❌ End reason:', endReason || 'manual')
+          console.error('❌ Duration:', duration)
+          // Still try to save - maybe there's a race condition and transcript will be there
+        }
         
         // CRITICAL: Wait for save to complete before redirecting
         // This ensures the transcript is in the database before grading starts
+        console.log('💾 Saving session data...', {
+          sessionId,
+          transcriptLines: transcript.length,
+          transcriptIsArray: Array.isArray(transcript),
+          duration,
+          endReason: endReason || 'manual'
+        })
+        
         const saveResponse = await fetch('/api/session', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: sessionId,
-            transcript: transcript,
+            transcript: transcript || [], // Ensure we always send an array
             duration_seconds: duration,
             end_reason: endReason || 'manual'
           }),
@@ -678,7 +696,14 @@ function TrainerPageContent() {
           console.error('❌ Error saving session:', saveResponse.status, errorText)
           // Still redirect even if save fails - grading endpoint has retry logic
         } else {
-          console.log('✅ Session data saved successfully before redirect')
+          const savedData = await saveResponse.json().catch(() => null)
+          console.log('✅ Session data saved successfully', {
+            sessionId: savedData?.id || sessionId,
+            transcriptLines: transcript.length
+          })
+          
+          // Small delay to ensure database write is committed
+          await new Promise(resolve => setTimeout(resolve, 300))
         }
         
         // Now redirect after save completes
