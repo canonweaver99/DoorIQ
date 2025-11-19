@@ -390,19 +390,7 @@ function TrainerPageContent() {
     // Guard against SSR - only run on client
     if (typeof window === 'undefined') return
 
-    let userEventCount = 0
-    let agentEventCount = 0
-
     const handleUserEvent = (e: any) => {
-      userEventCount++
-      console.log(`📝 [${userEventCount}] User event received:`, {
-        hasDetail: !!e?.detail,
-        detailType: typeof e?.detail,
-        detailLength: typeof e?.detail === 'string' ? e.detail.length : 0,
-        preview: typeof e?.detail === 'string' ? e.detail.substring(0, 50) : 'N/A',
-        currentTranscriptLength: transcript.length
-      })
-      
       if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
         console.log('📝 Adding user transcript entry:', e.detail.substring(0, 50))
         pushFinal(e.detail, 'user')
@@ -412,15 +400,6 @@ function TrainerPageContent() {
     }
 
     const handleAgentEvent = (e: any) => {
-      agentEventCount++
-      console.log(`📝 [${agentEventCount}] Agent event received:`, {
-        hasDetail: !!e?.detail,
-        detailType: typeof e?.detail,
-        detailLength: typeof e?.detail === 'string' ? e.detail.length : 0,
-        preview: typeof e?.detail === 'string' ? e.detail.substring(0, 50) : 'N/A',
-        currentTranscriptLength: transcript.length
-      })
-      
       if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
         console.log('📝 Adding agent transcript entry:', e.detail.substring(0, 50))
         pushFinal(e.detail, 'homeowner')
@@ -429,34 +408,16 @@ function TrainerPageContent() {
       }
     }
 
-    console.log('🎧 Setting up transcript event listeners')
     window.addEventListener('agent:user', handleUserEvent)
     window.addEventListener('agent:response', handleAgentEvent)
 
-    // Log transcript state periodically during active session
-    const transcriptMonitor = setInterval(() => {
-      if (sessionActive) {
-        console.log('📊 Transcript state check:', {
-          length: transcript.length,
-          userEvents: userEventCount,
-          agentEvents: agentEventCount,
-          sample: transcript.slice(-2).map((e: any) => ({ speaker: e.speaker, text: e.text?.substring(0, 30) }))
-        })
-      }
-    }, 10000) // Every 10 seconds
-
     return () => {
-      console.log('🧹 Cleaning up transcript event listeners', {
-        totalUserEvents: userEventCount,
-        totalAgentEvents: agentEventCount
-      })
-      clearInterval(transcriptMonitor)
       if (typeof window !== 'undefined') {
         window.removeEventListener('agent:user', handleUserEvent)
         window.removeEventListener('agent:response', handleAgentEvent)
       }
     }
-  }, [pushFinal, sessionActive])
+  }, [pushFinal])
 
   // Moved to after endSession definition
 
@@ -698,35 +659,6 @@ function TrainerPageContent() {
       try {
         console.log('💾 Saving session data before redirect...')
         console.log('📝 Transcript length:', transcript.length, 'lines')
-        console.log('📝 Transcript sample:', transcript.slice(0, 3))
-        
-        // CRITICAL: Validate transcript before saving
-        if (!transcript || transcript.length === 0) {
-          console.error('❌ CRITICAL: Transcript is empty! Cannot save session without transcript.')
-          console.error('❌ This will cause grading to fail. Transcript state:', transcript)
-          // Try to wait a bit more in case transcript is still being populated
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          // Check again after wait
-          if (!transcript || transcript.length === 0) {
-            console.error('❌ Transcript still empty after wait. Proceeding anyway but grading will fail.')
-          }
-        }
-        
-        // Validate transcript format
-        const validTranscript = transcript.filter((entry: any) => 
-          entry && 
-          entry.speaker && 
-          entry.text && 
-          typeof entry.text === 'string' && 
-          entry.text.trim().length > 0
-        )
-        
-        if (validTranscript.length === 0 && transcript.length > 0) {
-          console.error('❌ CRITICAL: All transcript entries are invalid!')
-          console.error('❌ Invalid entries:', transcript)
-        } else if (validTranscript.length < transcript.length) {
-          console.warn(`⚠️ Filtered ${transcript.length - validTranscript.length} invalid transcript entries`)
-        }
         
         // CRITICAL: Wait for save to complete before redirecting
         // This ensures the transcript is in the database before grading starts
@@ -735,7 +667,7 @@ function TrainerPageContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: sessionId,
-            transcript: validTranscript.length > 0 ? validTranscript : transcript, // Use validated transcript if available
+            transcript: transcript,
             duration_seconds: duration,
             end_reason: endReason || 'manual'
           }),
@@ -744,14 +676,9 @@ function TrainerPageContent() {
         if (!saveResponse.ok) {
           const errorText = await saveResponse.text().catch(() => 'Unknown error')
           console.error('❌ Error saving session:', saveResponse.status, errorText)
-          console.error('❌ SessionId:', sessionId)
-          console.error('❌ Transcript length:', transcript.length)
           // Still redirect even if save fails - grading endpoint has retry logic
         } else {
-          const saveData = await saveResponse.json().catch(() => ({}))
           console.log('✅ Session data saved successfully before redirect')
-          console.log('✅ Saved session ID:', saveData.id || sessionId)
-          console.log('✅ Transcript entries saved:', validTranscript.length || transcript.length)
         }
         
         // Now redirect after save completes

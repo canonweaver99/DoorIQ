@@ -59,54 +59,18 @@ export async function PATCH(req: Request) {
       console.log('📊 PATCH: End reason:', end_reason)
     }
     
-    // CRITICAL: Validate transcript before processing
-    if (!transcript || !Array.isArray(transcript)) {
-      console.error('❌ PATCH: Invalid transcript format - not an array:', typeof transcript)
-      return NextResponse.json({ error: 'Transcript must be an array' }, { status: 400 })
-    }
-    
-    if (transcript.length === 0) {
-      console.error('❌ PATCH: CRITICAL - Transcript is empty! Session:', id)
-      console.error('❌ This will cause grading to fail. Check why transcript was not collected.')
-    }
-    
     const supabase = await createServiceSupabaseClient()
     
-    // Convert transcript to ensure proper format and filter invalid entries
+    // Convert transcript to ensure proper format
     const formattedTranscript = transcript
-      .filter((entry: any) => {
-        // Filter out invalid entries
-        if (!entry || typeof entry !== 'object') {
-          console.warn('⚠️ PATCH: Skipping invalid transcript entry (not an object):', entry)
-          return false
-        }
-        if (!entry.speaker || (entry.speaker !== 'user' && entry.speaker !== 'homeowner')) {
-          console.warn('⚠️ PATCH: Skipping transcript entry with invalid speaker:', entry.speaker)
-          return false
-        }
-        if (!entry.text || typeof entry.text !== 'string' || !entry.text.trim()) {
-          console.warn('⚠️ PATCH: Skipping transcript entry with empty text:', entry)
-          return false
-        }
-        return true
-      })
-      .map((entry: any) => ({
-        speaker: entry.speaker,
-        text: entry.text.trim(),
-        timestamp: entry.timestamp ? new Date(entry.timestamp).toISOString() : new Date().toISOString()
-      }))
+      ? transcript.map((entry: any) => ({
+          speaker: entry.speaker,
+          text: entry.text,
+          timestamp: entry.timestamp ? new Date(entry.timestamp).toISOString() : new Date().toISOString()
+        }))
+      : []
     
-    console.log('📝 PATCH: Formatted transcript entries:', formattedTranscript.length)
     console.log('📝 PATCH: Formatted transcript sample:', formattedTranscript[0])
-    
-    if (formattedTranscript.length === 0 && transcript.length > 0) {
-      console.error('❌ PATCH: CRITICAL - All transcript entries were filtered out as invalid!')
-      console.error('❌ Original transcript:', JSON.stringify(transcript.slice(0, 5), null, 2))
-      return NextResponse.json({ 
-        error: 'All transcript entries are invalid. Cannot save empty transcript.',
-        details: 'Transcript entries must have valid speaker (user/homeowner) and non-empty text'
-      }, { status: 400 })
-    }
     
     const now = new Date().toISOString()
 
@@ -131,26 +95,15 @@ export async function PATCH(req: Request) {
       .from('live_sessions')
       .update(updateData)
       .eq('id', id)
-      .select('id, full_transcript')
+      .select('id')
       .single()
     
     if (error) {
       console.error('❌ PATCH: Update failed:', error)
-      console.error('❌ Error details:', JSON.stringify(error, null, 2))
-      console.error('❌ Update data:', JSON.stringify(updateData, null, 2))
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
-    // Verify transcript was saved
-    const savedTranscriptLength = data?.full_transcript?.length || 0
     console.log('✅ PATCH: Session updated successfully:', data.id)
-    console.log('✅ PATCH: Saved transcript length:', savedTranscriptLength)
-    
-    if (savedTranscriptLength === 0 && formattedTranscript.length > 0) {
-      console.error('❌ PATCH: CRITICAL - Transcript was not saved properly!')
-      console.error('❌ Expected:', formattedTranscript.length, 'entries')
-      console.error('❌ Saved:', savedTranscriptLength, 'entries')
-    }
     
     return NextResponse.json({ id: data.id })
   } catch (e: any) {
