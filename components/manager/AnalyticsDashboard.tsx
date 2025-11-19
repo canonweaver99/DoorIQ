@@ -104,13 +104,16 @@ interface RevenueDataPoint {
   avgScore?: number
 }
 
-export default function AnalyticsDashboard() {
+interface AnalyticsDashboardProps {
+  timePeriod?: string
+}
+
+export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashboardProps = {}) {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [teamStats, setTeamStats] = useState<TeamStats | null>(null)
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
   const [revenueTimePeriod, setRevenueTimePeriod] = useState<'day' | 'week' | 'month'>('week')
   const [loading, setLoading] = useState(true)
-  const [timePeriod, setTimePeriod] = useState('30')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [inviteUrl, setInviteUrl] = useState<string | null>(null)
   const [inviteLoading, setInviteLoading] = useState(false)
@@ -388,21 +391,6 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Time Period Selector */}
-      <div className="flex items-center justify-end">
-        <select 
-          value={timePeriod}
-          onChange={(e) => setTimePeriod(e.target.value)}
-          className="px-5 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/20 backdrop-blur-sm font-space"
-        >
-          <option value="7">Last 7 Days</option>
-          <option value="30">Last 30 Days</option>
-          <option value="90">Last 90 Days</option>
-          <option value="180">Last 6 Months</option>
-          <option value="all">All Time</option>
-        </select>
-      </div>
-
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[

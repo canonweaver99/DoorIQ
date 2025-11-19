@@ -20,6 +20,7 @@ const tabs = [
 
 function ManagerPageContent() {
   const searchParams = useSearchParams()
+  const [timePeriod, setTimePeriod] = useState('30')
   
   // Initialize activeTab from URL parameter using lazy initializer to match server render
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -45,11 +46,11 @@ function ManagerPageContent() {
       case 'knowledge':
         return <KnowledgeBase />
       case 'analytics':
-        return <AnalyticsDashboard />
+        return <AnalyticsDashboard timePeriod={timePeriod} />
       case 'settings':
         return <ManagerSettings />
       default:
-        return <AnalyticsDashboard />
+        return <AnalyticsDashboard timePeriod={timePeriod} />
     }
   }
 
@@ -76,38 +77,57 @@ function ManagerPageContent() {
 
         {/* Tab Navigation matching dashboard style */}
         <div className="mb-8 border-b border-[#2a2a2a]">
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-            {tabs.map((tab, index) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.id
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+              {tabs.map((tab, index) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
 
-              return (
-                <motion.button
-                  key={tab.id}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 font-space ${
-                    isActive
-                      ? 'text-white bg-[#1a1a1a]'
-                      : 'text-[#888888] hover:text-[#bbbbbb]'
-                  }`}
+                return (
+                  <motion.button
+                    key={tab.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 font-space ${
+                      isActive
+                        ? 'text-white bg-[#1a1a1a]'
+                        : 'text-[#888888] hover:text-[#bbbbbb]'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{tab.name}</span>
+                    
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabBorder"
+                        className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#a855f7]"
+                        style={{ boxShadow: '0 2px 8px rgba(168, 85, 247, 0.3)' }}
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </motion.button>
+                )
+              })}
+            </div>
+            
+            {/* Time Period Selector - only show for Analytics tab */}
+            {activeTab === 'analytics' && (
+              <div className="flex items-center">
+                <select 
+                  value={timePeriod}
+                  onChange={(e) => setTimePeriod(e.target.value)}
+                  className="px-5 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/20 backdrop-blur-sm font-space"
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.name}</span>
-                  
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTabBorder"
-                      className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#a855f7]"
-                      style={{ boxShadow: '0 2px 8px rgba(168, 85, 247, 0.3)' }}
-                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                </motion.button>
-              )
-            })}
+                  <option value="7">Last 7 Days</option>
+                  <option value="30">Last 30 Days</option>
+                  <option value="90">Last 90 Days</option>
+                  <option value="180">Last 6 Months</option>
+                  <option value="all">All Time</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
