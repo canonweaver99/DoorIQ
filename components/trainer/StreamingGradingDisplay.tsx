@@ -59,9 +59,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       try {
         setStatus('Saving session data...')
         
-        // Wait a moment for transcript to be saved (since we redirect immediately)
-        // This gives the PATCH request time to complete
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Reduced delay since we now wait for save to complete before redirecting
+        // This is just a safety buffer in case of any timing edge cases
+        await new Promise(resolve => setTimeout(resolve, 500))
         
         setStatus('Connecting to AI...')
         

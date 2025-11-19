@@ -245,11 +245,18 @@ function TrainerPageContent() {
   // Handle video mode changes for agents with videos
   useEffect(() => {
     // CRITICAL: Allow closing mode even when sessionActive is false (during end sequence)
-    const shouldHandleVideo = agentVideoRef.current && (sessionActive || videoMode === 'closing')
+    // Also trigger when showDoorCloseAnimation state is set
+    const shouldHandleVideo = agentVideoRef.current && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
     
     if (shouldHandleVideo && agentVideoRef.current) {
       const video = agentVideoRef.current
-      console.log('🎬 Video effect running:', { videoMode, sessionActive, videoSrc: video.src })
+      console.log('🎬 Video effect running:', { videoMode, sessionActive, showDoorCloseAnimation, videoSrc: video.src })
+      
+      // If showDoorCloseAnimation is true, ensure we're in closing mode
+      if (showDoorCloseAnimation && videoMode !== 'closing') {
+        console.log('🎬 showDoorCloseAnimation is true, setting videoMode to closing')
+        setVideoMode('closing')
+      }
       
       if (videoMode === 'opening') {
         // Play opening door animation, then transition to loop
@@ -272,9 +279,9 @@ function TrainerPageContent() {
             agentVideoRef.current.removeEventListener('ended', handleOpeningEnded)
           }
         }
-      } else if (videoMode === 'closing') {
+      } else if (videoMode === 'closing' || showDoorCloseAnimation) {
         // Play closing door animation (used when ending session)
-        console.log('🎬 Playing closing door animation')
+        console.log('🎬 Playing closing door animation (triggered by:', showDoorCloseAnimation ? 'showDoorCloseAnimation state' : 'videoMode', ')')
         
         // Ensure video is loaded and ready
         const handleCanPlay = () => {
@@ -340,9 +347,9 @@ function TrainerPageContent() {
         }
       }
     } else {
-      console.log('⚠️ Video effect skipped:', { hasVideoRef: !!agentVideoRef.current, sessionActive, videoMode })
+      console.log('⚠️ Video effect skipped:', { hasVideoRef: !!agentVideoRef.current, sessionActive, videoMode, showDoorCloseAnimation })
     }
-  }, [videoMode, sessionActive])
+  }, [videoMode, sessionActive, showDoorCloseAnimation])
 
   const fetchAgents = async () => {
     try {
@@ -638,7 +645,10 @@ function TrainerPageContent() {
     setLoading(true)
     setSessionActive(false)
     setConversationToken(null)
-    setVideoMode('loop') // Reset video mode for next session
+    // Don't reset videoMode if we're showing closing animation - let it finish
+    if (videoMode !== 'closing' && !showDoorCloseAnimation) {
+      setVideoMode('loop') // Reset video mode for next session
+    }
     setShowDoorOpeningVideo(false) // Reset door opening video state
 
     // Video recording disabled - archived for future
@@ -660,7 +670,11 @@ function TrainerPageContent() {
     if (sessionId) {
       try {
         console.log('💾 Saving session data before redirect...')
-        const savePromise = fetch('/api/session', {
+        console.log('📝 Transcript length:', transcript.length, 'lines')
+        
+        // CRITICAL: Wait for save to complete before redirecting
+        // This ensures the transcript is in the database before grading starts
+        const saveResponse = await fetch('/api/session', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -671,14 +685,17 @@ function TrainerPageContent() {
           }),
         })
         
-        // Redirect immediately, don't wait for save to complete
+        if (!saveResponse.ok) {
+          const errorText = await saveResponse.text().catch(() => 'Unknown error')
+          console.error('❌ Error saving session:', saveResponse.status, errorText)
+          // Still redirect even if save fails - grading endpoint has retry logic
+        } else {
+          console.log('✅ Session data saved successfully before redirect')
+        }
+        
+        // Now redirect after save completes
         console.log('🚀 Redirecting to loading page:', `/trainer/loading/${sessionId}`)
         const redirectUrl = `/trainer/loading/${sessionId}`
-        
-        // Try to save in background, but redirect regardless
-        savePromise.catch((error) => {
-          console.error('❌ Error saving session (continuing with redirect):', error)
-        })
         
         // Use window.location.href for reliable redirect (blocking)
         window.location.href = redirectUrl
@@ -1336,7 +1353,10 @@ function TrainerPageContent() {
                         const videoPaths = getAgentVideoPaths(selectedAgent?.name)
                         if (!videoPaths) return null
                         
-                        const videoSrcRaw = videoMode === 'opening' && videoPaths.opening
+                        // Prioritize closing video if showDoorCloseAnimation is true
+                        const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
+                          ? videoPaths.closing
+                          : videoMode === 'opening' && videoPaths.opening
                           ? videoPaths.opening
                           : videoMode === 'loop'
                           ? videoPaths.loop
@@ -1359,10 +1379,20 @@ function TrainerPageContent() {
                             loop={videoMode === 'loop'}
                             playsInline
                             onLoadedData={() => {
-                              // Ensure video plays when loaded
+                              // Ensure video plays when loaded, especially for closing video
                               if (agentVideoRef.current) {
+                                console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
                                 agentVideoRef.current.play().catch((err) => {
                                   console.warn('Video autoplay failed:', err)
+                                })
+                              }
+                            }}
+                            onCanPlay={() => {
+                              // Force play when video is ready, especially for closing animation
+                              if (agentVideoRef.current && (showDoorCloseAnimation || videoMode === 'closing')) {
+                                console.log('🎬 Video can play, forcing play for closing animation')
+                                agentVideoRef.current.play().catch((err) => {
+                                  console.warn('Video force play failed:', err)
                                 })
                               }
                             }}
