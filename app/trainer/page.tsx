@@ -224,9 +224,7 @@ function TrainerPageContent() {
   const endCallProcessingRef = useRef(false) // Track if end call is being processed
   const agentVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for Tanya & Tom video element
   const lastConnectionStatusRef = useRef<'connected' | 'disconnected' | 'connecting' | 'error' | null>(null) // Track connection status changes
-  const transcriptAnalysisRef = useRef<NodeJS.Timeout | null>(null) // Track transcript analysis interval
-  const rejectionCountRef = useRef(0) // Track consecutive firm rejections
-  const lastRejectionTimeRef = useRef<number>(0) // Track when last rejection occurred
+  // Removed transcript analysis refs - was causing issues
   
   const subscription = useSubscription()
   const sessionLimit = useSessionLimit()
@@ -550,9 +548,7 @@ function TrainerPageContent() {
       
       setSessionId(newId)
       setSessionActive(true)
-      // Reset rejection tracking for new session
-      rejectionCountRef.current = 0
-      lastRejectionTimeRef.current = 0
+      // Session started
       // Start with opening animation if available (Jerry), otherwise start with loop
       if (agentHasVideos(selectedAgent?.name)) {
         const videoPaths = getAgentVideoPaths(selectedAgent?.name)
@@ -618,9 +614,7 @@ function TrainerPageContent() {
   }
 
   const endSession = useCallback(async (endReason?: string) => {
-    // Reset rejection count when session ends
-    rejectionCountRef.current = 0
-    lastRejectionTimeRef.current = 0
+    // Session ending
     
     console.log('🔚 endSession called', { 
       sessionId, 
@@ -724,73 +718,7 @@ function TrainerPageContent() {
   const agentModeRef = useRef<'speaking' | 'listening' | 'idle' | null>(null)
   
   // Shared function to handle door closing sequence and end session
-  // Analyze transcript for end call indicators
-  const analyzeTranscriptForEndCall = useCallback((transcriptEntries: TranscriptEntry[]): { shouldEnd: boolean; reason: string } => {
-    if (!transcriptEntries || transcriptEntries.length === 0) {
-      return { shouldEnd: false, reason: '' }
-    }
-
-    // Get the last 5 entries for analysis (recent conversation) - increased to catch more context
-    const recentEntries = transcriptEntries.slice(-5)
-    const recentText = recentEntries.map(e => e.text.toLowerCase()).join(' ')
-    
-    // Debug logging
-    if (recentEntries.length > 0) {
-      console.log('🔍 Analyzing transcript for end call triggers. Recent entries:', recentEntries.map(e => `${e.speaker}: "${e.text}"`))
-    }
-
-    // Firm rejection indicators (only from homeowner/agent)
-    const firmRejectionPatterns = [
-      /\b(not interested|no thanks|i said no|definitely not|absolutely not|no way|never|not happening|leave me alone|go away|stop|don't call|don't come back)\b/i,
-      /\b(i don't want|i'm not interested|not for me|not today|not ever|hard no|firm no)\b/i,
-    ]
-
-    // Check for firm rejection from homeowner (agent) - need 3 consecutive rejections
-    for (const pattern of firmRejectionPatterns) {
-      const matchingEntry = recentEntries.find(e => 
-        pattern.test(e.text.toLowerCase()) && e.speaker === 'homeowner'
-      )
-      
-      if (matchingEntry) {
-        const now = Date.now()
-        const timeSinceLastRejection = now - lastRejectionTimeRef.current
-        
-        // Reset count if more than 30 seconds since last rejection (new conversation thread)
-        if (timeSinceLastRejection > 30000) {
-          rejectionCountRef.current = 0
-        }
-        
-        // Increment rejection count
-        rejectionCountRef.current += 1
-        lastRejectionTimeRef.current = now
-        
-        console.log(`🚫 Firm rejection detected (count: ${rejectionCountRef.current}/3):`, matchingEntry.text)
-        
-        // Only trigger after 3rd rejection
-        if (rejectionCountRef.current >= 3) {
-          rejectionCountRef.current = 0 // Reset for next session
-          return { shouldEnd: true, reason: 'Firm rejection - third consecutive rejection detected' }
-        }
-        
-        // Don't check other patterns if we found a rejection (but not enough yet)
-        return { shouldEnd: false, reason: '' }
-      }
-    }
-
-    // Reset rejection count if we see positive engagement (user responding after rejection)
-    const hasUserResponse = recentEntries.some(e => e.speaker === 'user')
-    if (hasUserResponse && rejectionCountRef.current > 0) {
-      const timeSinceLastRejection = Date.now() - lastRejectionTimeRef.current
-      // If user responded within 10 seconds of rejection, reset count (they're engaging)
-      if (timeSinceLastRejection < 10000) {
-        console.log('🔄 User responded after rejection, resetting rejection count')
-        rejectionCountRef.current = 0
-      }
-    }
-
-    // No goodbye detection - only ElevenLabs end_call events trigger session end
-    return { shouldEnd: false, reason: '' }
-  }, [])
+  // Removed analyzeTranscriptForEndCall - was causing issues with premature session endings
 
   // Direct state-based call end handler - triggers animation immediately
   const handleCallEnd = useCallback((reason: string) => {
@@ -1017,38 +945,23 @@ function TrainerPageContent() {
         sessionActive, 
         sessionId, 
         eventDetail: e?.detail,
-        alreadyProcessing: endCallProcessingRef.current,
-        currentAgentMode: agentModeRef.current,
-        eventType: e?.type,
-        timestamp: Date.now(),
-        transcriptLength: transcript.length
+        alreadyProcessing: endCallProcessingRef.current
       })
       
-      // Prevent duplicate processing - but allow if we're not actually processing
+      // Prevent duplicate processing
       if (endCallProcessingRef.current) {
         console.log('⚠️ Already processing end_call, ignoring duplicate')
         return
       }
       
-      // Only require sessionId - don't check sessionActive as it might be false already
+      // Only require sessionId
       if (!sessionId) {
         console.log('⚠️ Received end_call event but no sessionId, ignoring')
-        console.log('⚠️ Current sessionId state:', sessionId)
         return
       }
       
       // Set processing flag immediately to prevent duplicates
       endCallProcessingRef.current = true
-      console.log('🔒 Set endCallProcessingRef to true')
-      
-      // CRITICAL: Trigger door close animation IMMEDIATELY via state change
-      // This ensures the animation starts right away, regardless of event propagation
-      const reason = e?.detail?.reason || 'Agent ended conversation'
-      console.log('🚪 Triggering door close animation via state change (immediate)')
-      handleCallEnd(reason)
-      
-      console.log('🚪 Agent ended call - waiting for agent to finish speaking...')
-      console.log('🚪 Starting door closing sequence flow...')
       
       // Clear any silence timers
       if (silenceTimer) {
@@ -1056,40 +969,12 @@ function TrainerPageContent() {
         silenceTimer = null
       }
       
-      // Wait for agent to finish speaking before ending session
-      const waitForAgentToFinish = async () => {
-        const maxWaitTime = 8000 // Maximum 8 seconds wait
-        const checkInterval = 200 // Check every 200ms
-        const startTime = Date.now()
-        
-        return new Promise<void>((resolve) => {
-          const checkIfDoneSpeaking = () => {
-            const elapsed = Date.now() - startTime
-            const isStillSpeaking = agentModeRef.current === 'speaking'
-            
-            if (!isStillSpeaking || elapsed >= maxWaitTime) {
-              const reason = elapsed >= maxWaitTime ? 'timeout' : 'agent_finished_speaking'
-              console.log(`🔚 Agent finished speaking (${reason}), elapsed: ${elapsed}ms`)
-              resolve()
-            } else {
-              console.log(`⏳ Agent still speaking (${elapsed}ms elapsed)...`)
-              setTimeout(checkIfDoneSpeaking, checkInterval)
-            }
-          }
-          
-          // Start checking after a brief initial delay
-          setTimeout(checkIfDoneSpeaking, 500)
-        })
-      }
+      // End session immediately without delays
+      const reason = e?.detail?.reason || 'Agent ended conversation'
+      console.log('🚪 Ending session immediately:', reason)
       
-      // Wait for agent to finish, with a minimum delay of 3 seconds and max of 8 seconds
-      await waitForAgentToFinish()
-      
-      // Additional buffer delay to ensure audio completes
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Use shared door closing sequence function (animation already triggered via state)
-      console.log('📊 END CALL TRIGGER DETAIL:', reason)
+      // Trigger door close animation and handle session end
+      handleCallEnd(reason)
       await handleDoorClosingSequence(reason)
     }
     
@@ -1236,11 +1121,7 @@ function TrainerPageContent() {
       // Guard against SSR - only remove listeners if window exists
       if (typeof window === 'undefined') return
       
-      // Clean up transcript analysis timer
-      if (transcriptAnalysisRef.current) {
-        clearTimeout(transcriptAnalysisRef.current)
-        transcriptAnalysisRef.current = null
-      }
+      // Cleanup
       window.removeEventListener('trainer:end-session-requested', handleEndSessionRequest)
       // Remove the capture phase listener
       window.removeEventListener('agent:end_call', endCallHandler, true)
@@ -1259,14 +1140,9 @@ function TrainerPageContent() {
     }
   }, [sessionActive, sessionId, endSession, transcript, selectedAgent?.name, videoMode, handleDoorClosingSequence])
 
-  // Transcript analysis disabled - only ElevenLabs end_call events trigger session end
-  // This was causing issues with transcript saving and premature session endings
-  // Sessions now end only when:
-  // 1. ElevenLabs sends end_call event (via onDisconnect or tool detection)
+  // Sessions end only when:
+  // 1. ElevenLabs sends end_call event (via onDisconnect)
   // 2. 30 second silence timeout (fallback safety)
-  // useEffect(() => {
-  //   // Disabled transcript analysis - was interfering with transcript saving
-  // }, [transcript, sessionActive, sessionId])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
