@@ -333,10 +333,10 @@ export default function AnalyticsPage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Sessions
             </Link>
-            <h1 className="text-3xl font-semibold text-white">Session Analysis</h1>
+            <h1 className="text-3xl font-semibold text-white">AI-Powered Performance Analysis</h1>
             {session && (
               <p className="text-gray-500 text-sm">
-                {session.agent_name || 'Training Session'}
+                {session.agent_name || 'Practice Session'} • Know Exactly What's Working
               </p>
             )}
           </div>
@@ -344,7 +344,7 @@ export default function AnalyticsPage() {
           {grading && (
             <div className="inline-flex items-center gap-3 bg-purple-500/10 border border-purple-500/30 rounded-full px-5 py-2 text-purple-300">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Analyzing conversation...</span>
+              <span className="text-sm">AI is analyzing your conversation...</span>
             </div>
           )}
         </div>

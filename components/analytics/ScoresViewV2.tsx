@@ -173,7 +173,7 @@ export default function ScoresViewV2({
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-8">
                 <div>
-                  <div className="text-sm uppercase tracking-[0.25em] text-slate-500 mb-2">Session Performance</div>
+                  <div className="text-sm uppercase tracking-[0.25em] text-slate-500 mb-2">AI-Powered Training Results</div>
                   <h2 className="text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent">
                     {getScoreMessage(overallScore)}
                   </h2>
@@ -443,7 +443,7 @@ export default function ScoresViewV2({
       <section>
         <div className="flex items-center gap-3 mb-6">
           <Target className="w-5 h-5 text-blue-400" />
-          <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">AI-Powered Insights</h3>
+          <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">Know Exactly What's Working</h3>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
@@ -452,7 +452,7 @@ export default function ScoresViewV2({
             <div className="rounded-3xl bg-gradient-to-br from-emerald-900/20 to-green-800/20 backdrop-blur-xl border border-emerald-500/20 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Award className="w-6 h-6 text-emerald-400" />
-                <h4 className="font-bold text-lg text-white">Your Strengths</h4>
+                <h4 className="font-bold text-lg text-white">What Worked</h4>
               </div>
               <ul className="space-y-3">
                 {feedback.strengths.map((strength, i) => (
@@ -476,7 +476,7 @@ export default function ScoresViewV2({
             <div className="rounded-3xl bg-gradient-to-br from-amber-900/20 to-orange-800/20 backdrop-blur-xl border border-amber-500/20 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <TrendingUp className="w-6 h-6 text-amber-400" />
-                <h4 className="font-bold text-lg text-white">Growth Opportunities</h4>
+                <h4 className="font-bold text-lg text-white">Areas to Improve</h4>
               </div>
               <ul className="space-y-3">
                 {feedback.improvements.map((improvement, i) => (
@@ -499,10 +499,10 @@ export default function ScoresViewV2({
         {/* Actionable Tips */}
         {feedback.specific_tips.length > 0 && (
           <div className="mt-6 rounded-3xl bg-gradient-to-br from-blue-900/20 to-indigo-800/20 backdrop-blur-xl border border-blue-500/20 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Sparkles className="w-6 h-6 text-blue-400" />
-              <h4 className="font-bold text-lg text-white">Actionable Tips for Next Session</h4>
-            </div>
+              <div className="flex items-center gap-3 mb-4">
+                <Sparkles className="w-6 h-6 text-blue-400" />
+                <h4 className="font-bold text-lg text-white">Practice Tips for Your Next Session</h4>
+              </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {feedback.specific_tips.map((tip, i) => (
                 <motion.div

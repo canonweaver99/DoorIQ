@@ -59,7 +59,7 @@ export default function LoadingPage() {
     
     // Set grading status to in-progress immediately (backend already started it)
     setGradingStatus('in-progress')
-    setStatus('Analyzing your conversation with AI...')
+    setStatus('AI is analyzing your conversation...')
 
     // Poll for session grading completion
     const checkSession = async () => {
@@ -86,7 +86,7 @@ export default function LoadingPage() {
           if (graded) {
             console.log('✅ Grading complete! Redirecting to analytics...')
             setGradingStatus('completed')
-            setStatus('Grading complete! Loading your results...')
+            setStatus('Analysis complete! Loading your performance insights...')
             
             // Small delay for UI smoothness
             setTimeout(() => {
@@ -182,11 +182,11 @@ export default function LoadingPage() {
                   }`}
                 />
                 <span>
-                  Grading:{' '}
+                  AI Analysis:{' '}
                   {gradingStatus === 'idle'
                     ? 'Waiting'
                     : gradingStatus === 'in-progress'
-                    ? 'Analyzing...'
+                    ? 'Analyzing conversation...'
                     : gradingStatus === 'completed'
                     ? 'Complete'
                     : 'Retrying'}

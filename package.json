@@ -6,7 +6,7 @@
     "mobile"
   ],
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev -p 3002",
     "build": "next build",
     "start": "next start",
     "test:grading": "tsx scripts/test-grading-pipeline.ts",

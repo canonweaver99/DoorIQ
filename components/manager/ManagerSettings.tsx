@@ -110,8 +110,8 @@ export default function ManagerSettings() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-1">Manager Settings</h2>
-        <p className="text-slate-400">Configure team settings and permissions</p>
+        <h2 className="text-2xl font-bold text-white mb-1 font-space">Manager Settings</h2>
+        <p className="text-slate-400 font-sans">Configure team settings and permissions</p>
       </div>
 
       {/* Team Name Section */}
@@ -126,14 +126,14 @@ export default function ManagerSettings() {
             <Shield className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Team Information</h3>
-            <p className="text-xs text-slate-400">Update your team name and settings</p>
+            <h3 className="text-lg font-semibold text-white font-space">Team Information</h3>
+            <p className="text-xs text-slate-400 font-sans">Update your team name and settings</p>
           </div>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Team Name</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2 font-space">Team Name</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -147,7 +147,7 @@ export default function ManagerSettings() {
                 <button
                   onClick={handleSaveTeamName}
                   disabled={savingTeamName}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/50 text-white rounded-xl font-medium transition-colors"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/50 text-white rounded-xl font-medium transition-colors font-space"
                 >
                   {savingTeamName ? 'Saving...' : 'Save'}
                 </button>
@@ -183,8 +183,8 @@ export default function ManagerSettings() {
               <Users className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">Team Members</h3>
-              <p className="text-xs text-slate-400">Manage roles and permissions</p>
+              <h3 className="text-lg font-semibold text-white font-space">Team Members</h3>
+              <p className="text-xs text-slate-400 font-sans">Manage roles and permissions</p>
             </div>
           </div>
 
@@ -198,12 +198,12 @@ export default function ManagerSettings() {
                 {teamMembers.map((member) => (
                   <div key={member.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-colors group">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{member.full_name}</p>
-                      <p className="text-xs text-slate-400 truncate">{member.email}</p>
+                      <p className="text-sm font-semibold text-white truncate font-space">{member.full_name}</p>
+                      <p className="text-xs text-slate-400 truncate font-sans">{member.email}</p>
                       <p className="text-xs text-green-400 mt-1">${member.virtual_earnings.toLocaleString()} earned</p>
                     </div>
                     <div className="flex items-center gap-3 ml-3">
-                      <span className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-xs font-medium text-purple-300 capitalize">
+                      <span className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-xs font-medium text-purple-300 capitalize font-space">
                         {member.role}
                       </span>
                       {member.role === 'rep' && (
@@ -222,7 +222,7 @@ export default function ManagerSettings() {
 
               <Link
                 href="/team/invite"
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-medium text-white transition-all shadow-lg shadow-purple-600/30"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-medium text-white transition-all shadow-lg shadow-purple-600/30 font-space"
               >
                 <UserPlus className="w-4 h-4" />
                 Invite a Sales Rep
@@ -255,8 +255,8 @@ export default function ManagerSettings() {
               <Bell className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">Notifications</h3>
-              <p className="text-xs text-slate-400">Alert preferences</p>
+              <h3 className="text-lg font-semibold text-white font-space">Notifications</h3>
+              <p className="text-xs text-slate-400 font-sans">Alert preferences</p>
             </div>
           </div>
 
@@ -302,7 +302,7 @@ export default function ManagerSettings() {
                 <div className="p-2 bg-red-500/10 rounded-xl border border-red-500/20">
                   <AlertTriangle className="w-5 h-5 text-red-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Remove Team Member</h3>
+                <h3 className="text-lg font-semibold text-white font-space">Remove Team Member</h3>
               </div>
 
               <p className="text-slate-300 mb-6">
@@ -323,14 +323,14 @@ export default function ManagerSettings() {
                     setRemoveError(null)
                   }}
                   disabled={removing}
-                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed font-space"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRemoveMember}
                   disabled={removing}
-                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space"
                 >
                   {removing ? (
                     <>

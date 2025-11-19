@@ -435,7 +435,7 @@ export default function LearningPage() {
           >
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="w-5 h-5 text-purple-400" />
-              <h2 className="text-2xl font-bold text-white">How to Use DoorIQ</h2>
+              <h2 className="text-2xl font-bold text-white font-space">How to Use DoorIQ</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Demo Video - Hardcoded */}
@@ -465,10 +465,10 @@ export default function LearningPage() {
                 
                 {/* Video Info */}
                 <div className="p-4">
-                  <h4 className="text-base font-bold text-white mb-2 line-clamp-2">
+                  <h4 className="text-base font-bold text-white mb-2 line-clamp-2 font-space">
                     DoorIQ Demo Video
                   </h4>
-                  <p className="text-sm text-slate-400 mb-3 line-clamp-2">
+                  <p className="text-sm text-slate-400 mb-3 line-clamp-2 font-sans">
                     See DoorIQ in action - watch how reps practice with AI homeowners
                   </p>
                 </div>
@@ -519,16 +519,16 @@ export default function LearningPage() {
                     
                     {/* Video Info */}
                     <div className="p-4">
-                      <h4 className="text-base font-bold text-white mb-2 line-clamp-2">
+                      <h4 className="text-base font-bold text-white mb-2 line-clamp-2 font-space">
                         {video.title}
                       </h4>
                       {video.description && (
-                        <p className="text-sm text-slate-400 mb-3 line-clamp-2">
+                        <p className="text-sm text-slate-400 mb-3 line-clamp-2 font-sans">
                           {video.description}
                         </p>
                       )}
                       {video.file_size && (
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 font-sans">
                           {formatFileSize(video.file_size)}
                         </p>
                       )}
@@ -550,7 +550,7 @@ export default function LearningPage() {
             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6"
               style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
             >
-              <h3 className="text-lg font-bold text-white mb-4">Upload Training Video</h3>
+              <h3 className="text-lg font-bold text-white mb-4 font-space">Upload Training Video</h3>
               
               {/* File Upload Area */}
               <div
@@ -585,11 +585,11 @@ export default function LearningPage() {
                       {/* Overlay with file info */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end">
                         <div className="w-full p-4">
-                          <p className="text-white text-sm font-medium truncate">
+                          <p className="text-white text-sm font-medium truncate font-sans">
                             {uploadFile?.name}
                           </p>
                           {uploadFile && (
-                            <p className="text-xs text-slate-300 mt-1">
+                            <p className="text-xs text-slate-300 mt-1 font-sans">
                               {formatFileSize(uploadFile.size)}
                             </p>
                           )}
@@ -610,7 +610,7 @@ export default function LearningPage() {
                       />
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full px-4 py-2 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white rounded-lg transition-colors text-sm"
+                        className="w-full px-4 py-2 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white rounded-lg transition-colors text-sm font-space"
                       >
                         Change Video
                       </button>
@@ -619,10 +619,10 @@ export default function LearningPage() {
                 ) : (
                   <>
                     <Video className="w-12 h-12 text-[#a855f7] mx-auto mb-4" />
-                    <p className="text-white mb-2">
+                    <p className="text-white mb-2 font-sans">
                       Drag & drop a video file here
                     </p>
-                    <p className="text-sm text-slate-400 mb-4">
+                    <p className="text-sm text-slate-400 mb-4 font-sans">
                       or click to browse (MP4, WebM, MOV, AVI)
                     </p>
                     <input
@@ -637,7 +637,7 @@ export default function LearningPage() {
                     />
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 bg-[#a855f7] text-white rounded-lg hover:bg-[#9333ea] transition-colors"
+                      className="px-4 py-2 bg-[#a855f7] text-white rounded-lg hover:bg-[#9333ea] transition-colors font-space"
                     >
                       Choose File
                     </button>
@@ -648,7 +648,7 @@ export default function LearningPage() {
               {/* Title and Description */}
               <div className="mt-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-sm font-medium text-white mb-2 font-space">
                     Title <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -656,11 +656,11 @@ export default function LearningPage() {
                     value={uploadTitle}
                     onChange={(e) => setUploadTitle(e.target.value)}
                     placeholder="Enter video title"
-                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#a855f7]"
+                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#a855f7] font-sans"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-sm font-medium text-white mb-2 font-space">
                     Description (optional)
                   </label>
                   <textarea
@@ -668,13 +668,13 @@ export default function LearningPage() {
                     onChange={(e) => setUploadDescription(e.target.value)}
                     placeholder="Enter video description"
                     rows={3}
-                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#a855f7] resize-none"
+                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#a855f7] resize-none font-sans"
                   />
                 </div>
                 <button
                   onClick={handleUpload}
                   disabled={uploading || !uploadFile || !uploadTitle.trim()}
-                  className="w-full px-6 py-3 bg-[#a855f7] text-white font-medium rounded-lg hover:bg-[#9333ea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-6 py-3 bg-[#a855f7] text-white font-medium rounded-lg hover:bg-[#9333ea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-space"
                 >
                   {uploading ? 'Uploading...' : 'Upload Video'}
                 </button>
@@ -691,7 +691,7 @@ export default function LearningPage() {
         >
           <div className="flex items-center gap-2 mb-6">
             <Video className="w-5 h-5 text-purple-400" />
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-white font-space">
               {isManager ? 'Team Training Videos' : 'Training Videos'}
             </h2>
           </div>
@@ -699,7 +699,7 @@ export default function LearningPage() {
           {teamVideos.length === 0 ? (
             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-12 text-center">
               <Video className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400">
+              <p className="text-slate-400 font-sans">
                 {isManager ? 'No videos uploaded yet.' : 'No training videos available yet.'}
               </p>
             </div>
@@ -750,22 +750,22 @@ export default function LearningPage() {
                     
                     {/* Video Info */}
                     <div className="p-4">
-                      <h4 className="text-base font-bold text-white mb-2 line-clamp-2">
+                      <h4 className="text-base font-bold text-white mb-2 line-clamp-2 font-space">
                         {video.title}
                       </h4>
                       {video.description && (
-                        <p className="text-sm text-slate-400 mb-3 line-clamp-2">
+                        <p className="text-sm text-slate-400 mb-3 line-clamp-2 font-sans">
                           {video.description}
                         </p>
                       )}
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                      <div className="flex items-center justify-between text-xs text-slate-500 mb-2 font-sans">
                         <span>{formatDate(video.created_at)}</span>
                         {video.file_size && (
                           <span>{formatFileSize(video.file_size)}</span>
                         )}
                       </div>
                       {video.uploaded_by_name && (
-                        <p className="text-xs text-slate-500 mb-2">
+                        <p className="text-xs text-slate-500 mb-2 font-sans">
                           Uploaded by {video.uploaded_by_name}
                         </p>
                       )}
@@ -774,7 +774,7 @@ export default function LearningPage() {
                       {isManager && (
                         <button
                           onClick={() => handleDeleteTeamVideo(video.id)}
-                          className="mt-2 px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex items-center gap-2"
+                          className="mt-2 px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex items-center gap-2 font-space"
                         >
                           <Trash2 className="w-3 h-3" />
                           Delete

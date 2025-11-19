@@ -239,15 +239,15 @@ export default function TeamOverview() {
         >
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-white">Team Performance</h3>
-              <p className="text-sm text-slate-400 mt-1">Total team revenue over time</p>
+              <h3 className="text-lg font-semibold text-white font-space">Team Performance</h3>
+              <p className="text-sm text-slate-400 mt-1 font-sans">Total team revenue over time</p>
             </div>
             
             {/* Time Period Toggle */}
             <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg p-1">
               <button
                 onClick={() => setTimePeriod('day')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 font-space ${
                   timePeriod === 'day'
                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
                     : 'text-slate-400 hover:text-white'
@@ -257,7 +257,7 @@ export default function TeamOverview() {
               </button>
               <button
                 onClick={() => setTimePeriod('week')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 font-space ${
                   timePeriod === 'week'
                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
                     : 'text-slate-400 hover:text-white'
@@ -267,7 +267,7 @@ export default function TeamOverview() {
               </button>
               <button
                 onClick={() => setTimePeriod('month')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 font-space ${
                   timePeriod === 'month'
                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
                     : 'text-slate-400 hover:text-white'
@@ -304,18 +304,18 @@ export default function TeamOverview() {
                       const data = payload[0].payload
                       return (
                         <div className="bg-[#1e1e30]/95 border border-white/20 rounded-lg p-3 shadow-xl backdrop-blur-sm">
-                          <p className="text-white font-semibold mb-2">
+                          <p className="text-white font-semibold mb-2 font-space">
                             {data.fullPeriod || data.period}
                           </p>
                           <div className="space-y-1">
-                            <p className="text-sm text-white">
-                              Revenue: <span className="font-bold text-white">${data.revenue.toLocaleString()}</span>
+                            <p className="text-sm text-white font-sans">
+                              Revenue: <span className="font-bold text-white font-space">${data.revenue.toLocaleString()}</span>
                             </p>
-                            <p className="text-sm text-white">
-                              Reps Who Sold: <span className="font-bold text-white">{data.repsWhoSold}</span>
+                            <p className="text-sm text-white font-sans">
+                              Reps Who Sold: <span className="font-bold text-white font-space">{data.repsWhoSold}</span>
                             </p>
-                            <p className="text-sm text-white">
-                              Total Sales: <span className="font-bold text-white">{data.totalSales}</span>
+                            <p className="text-sm text-white font-sans">
+                              Total Sales: <span className="font-bold text-white font-space">{data.totalSales}</span>
                             </p>
                           </div>
                         </div>
@@ -353,8 +353,8 @@ export default function TeamOverview() {
           className="lg:col-span-2 overview-card p-6"
         >
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white">Top Performers</h3>
-            <p className="text-sm text-slate-400 mt-1">Highest scoring reps (last 30 days)</p>
+            <h3 className="text-lg font-semibold text-white font-space">Top Performers</h3>
+            <p className="text-sm text-slate-400 mt-1 font-sans">Highest scoring reps (last 30 days)</p>
           </div>
 
           {stats.topPerformers.length > 0 ? (
@@ -369,17 +369,17 @@ export default function TeamOverview() {
                     className="performer-item"
                   >
                     <div className="flex items-center flex-1 gap-3">
-                      <span className="text-sm font-medium text-slate-500 w-6">{index + 1}</span>
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold ring-2 ring-white/5">
+                      <span className="text-sm font-medium text-slate-500 w-6 font-space">{index + 1}</span>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold ring-2 ring-white/5 font-space">
                         {performer.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{performer.name}</p>
-                        <p className="text-xs text-slate-400">{performer.sessionCount} sessions</p>
+                        <p className="text-sm font-medium text-white truncate font-space">{performer.name}</p>
+                        <p className="text-xs text-slate-400 font-sans">{performer.sessionCount} sessions</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-white">{performer.score}%</span>
+                      <span className="text-sm font-semibold text-white font-space">{performer.score}%</span>
                     </div>
                   </motion.li>
                 ))}
@@ -389,15 +389,15 @@ export default function TeamOverview() {
                 href="/manager?tab=reps"
                 className="block w-full mt-6 py-2 text-sm text-center text-slate-400 hover:text-white transition-colors"
               >
-                View All Reps →
+                <span className="font-sans">View All Reps →</span>
               </Link>
             </>
           ) : (
             <div className="flex items-center justify-center py-12 text-slate-400">
               <div className="text-center">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No performance data yet</p>
-                <p className="text-sm mt-1">Team members need to complete training sessions</p>
+                <p className="font-sans">No performance data yet</p>
+                <p className="text-sm mt-1 font-sans">Team members need to complete training sessions</p>
               </div>
             </div>
           )}
@@ -413,17 +413,17 @@ export default function TeamOverview() {
       >
         <Link href="/manager?tab=messages" className="action-card">
           <Mail className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
-          <p className="text-sm font-medium text-white">Send Team Message</p>
+          <p className="text-sm font-medium text-white font-space">Send Team Message</p>
         </Link>
 
         <Link href="/team/invite" className="action-card">
           <UserPlus className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
-          <p className="text-sm font-medium text-white">Invite a Sales Rep</p>
+          <p className="text-sm font-medium text-white font-space">Invite a Sales Rep</p>
         </Link>
 
         <Link href="/manager?tab=analytics" className="action-card">
           <Trophy className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
-          <p className="text-sm font-medium text-white">View Analytics</p>
+          <p className="text-sm font-medium text-white font-space">View Analytics</p>
         </Link>
 
         <button 

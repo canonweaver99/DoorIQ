@@ -222,8 +222,8 @@ export default function RepManagement() {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <UserCheck className="w-16 h-16 text-slate-600 mb-4" />
-        <h3 className="text-xl font-semibold text-white mb-2">No Team Members Yet</h3>
-        <p className="text-slate-400">Invite team members to get started</p>
+        <h3 className="text-xl font-semibold text-white mb-2 font-space">No Team Members Yet</h3>
+        <p className="text-slate-400 font-sans">Invite team members to get started</p>
       </div>
     )
   }
@@ -239,8 +239,8 @@ export default function RepManagement() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-bold text-white mb-1">Complete Team Performance</h3>
-              <p className="text-sm text-white/60">Individual rep metrics and trends</p>
+              <h3 className="text-xl font-bold text-white mb-1 font-space">Complete Team Performance</h3>
+              <p className="text-sm text-white/60 font-sans">Individual rep metrics and trends</p>
             </div>
             <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-white/80 transition-all">
               <Download className="w-4 h-4" />
@@ -265,7 +265,7 @@ export default function RepManagement() {
                         rep.avgScore >= 70 ? 'from-blue-500/30 to-cyan-500/30 border-blue-400/30' :
                         'from-amber-500/30 to-orange-500/30 border-amber-400/30'
                       } border flex items-center justify-center`}>
-                        <span className="text-white font-bold text-lg">{rep.name.split(' ').map(n => n[0]).join('')}</span>
+                        <span className="text-white font-bold text-lg font-space">{rep.name.split(' ').map(n => n[0]).join('')}</span>
                       </div>
                       <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-[#1a1a2e] flex items-center justify-center ${
                         rep.trend >= 0 ? 'bg-emerald-500' : 'bg-red-500'
@@ -279,7 +279,7 @@ export default function RepManagement() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="text-white font-semibold text-lg">{rep.name}</p>
+                        <p className="text-white font-semibold text-lg font-space">{rep.name}</p>
                         <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${
                           rep.avgScore >= 80 ? 'bg-emerald-500/20 text-emerald-300' :
                           rep.avgScore >= 70 ? 'bg-blue-500/20 text-blue-300' :
@@ -293,12 +293,12 @@ export default function RepManagement() {
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-white mb-1">{rep.avgScore}%</p>
-                      <p className="text-xs text-white/50">Avg Score</p>
+                      <p className="text-3xl font-bold text-white mb-1 font-space">{rep.avgScore}%</p>
+                      <p className="text-xs text-white/50 font-sans">Avg Score</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-emerald-300 mb-1">${(rep.revenue / 1000).toFixed(1)}k</p>
-                      <p className="text-xs text-white/50">Revenue</p>
+                      <p className="text-2xl font-bold text-emerald-300 mb-1 font-space">${(rep.revenue / 1000).toFixed(1)}k</p>
+                      <p className="text-xs text-white/50 font-sans">Revenue</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex flex-col gap-1">
@@ -377,17 +377,17 @@ export default function RepManagement() {
           className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4"
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm text-white font-medium">
+            <p className="text-sm text-white font-medium font-sans">
               {selectedReps.length} rep{selectedReps.length > 1 ? 's' : ''} selected
             </p>
             <div className="flex items-center gap-2">
-              <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-all">
+              <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-all font-space">
                 Assign Training
               </button>
-              <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-all">
+              <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-all font-space">
                 Send Message
               </button>
-              <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-all">
+              <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-all font-space">
                 Set Challenge
               </button>
             </div>
@@ -414,7 +414,7 @@ export default function RepManagement() {
               />
             </div>
             <div className="col-span-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rep</span>
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-space">Rep</span>
             </div>
             <div className="col-span-2">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</span>
@@ -470,8 +470,8 @@ export default function RepManagement() {
                     </div>
                   )}
                   <div>
-                    <p className="text-sm font-semibold text-white">{rep.name}</p>
-                    <p className="text-xs text-slate-400">{rep.lastActive}</p>
+                    <p className="text-sm font-semibold text-white font-space">{rep.name}</p>
+                    <p className="text-xs text-slate-400 font-sans">{rep.lastActive}</p>
                   </div>
                 </div>
 
@@ -486,7 +486,7 @@ export default function RepManagement() {
                 {/* Score */}
                 <div className="col-span-2">
                   <div className="flex items-center gap-2">
-                    <span className={`text-lg font-bold ${
+                    <span className={`text-lg font-bold font-space ${
                       rep.score >= 80 ? 'text-green-400' : rep.score >= 60 ? 'text-yellow-400' : 'text-red-400'
                     }`}>
                       {rep.score}%
@@ -496,7 +496,7 @@ export default function RepManagement() {
 
                 {/* Sessions */}
                 <div className="col-span-2 hidden lg:block">
-                  <span className="text-sm font-semibold text-white">{rep.sessionsWeek} sessions</span>
+                  <span className="text-sm font-semibold text-white font-sans">{rep.sessionsWeek} sessions</span>
                 </div>
 
                 {/* Trend */}
@@ -504,7 +504,7 @@ export default function RepManagement() {
                   {rep.trend !== 0 && (
                     <div className={`flex items-center gap-1 ${rep.trendUp ? 'text-green-400' : 'text-red-400'}`}>
                       {rep.trendUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                      <span className="text-sm font-semibold">{Math.abs(rep.trend)}%</span>
+                      <span className="text-sm font-semibold font-space">{Math.abs(rep.trend)}%</span>
                     </div>
                   )}
                 </div>
@@ -605,7 +605,7 @@ export default function RepManagement() {
                 <div className="p-2 bg-red-500/10 rounded-xl border border-red-500/20">
                   <AlertTriangle className="w-5 h-5 text-red-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Remove Sales Rep</h3>
+                <h3 className="text-lg font-semibold text-white font-space">Remove Sales Rep</h3>
               </div>
 
               <p className="text-slate-300 mb-6">
@@ -626,14 +626,14 @@ export default function RepManagement() {
                     setRemoveError(null)
                   }}
                   disabled={removing}
-                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed font-space"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRemoveRep}
                   disabled={removing}
-                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space"
                 >
                   {removing ? (
                     <>

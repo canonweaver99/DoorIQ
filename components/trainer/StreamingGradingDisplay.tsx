@@ -28,7 +28,7 @@ const SECTION_ICONS: { [key: string]: any } = {
 }
 
 const SECTION_LABELS: { [key: string]: string } = {
-  session_summary: 'Session Analysis',
+  session_summary: 'AI-Powered Analysis',
   scores: 'Performance Scores',
   feedback: 'Detailed Feedback',
   objection_analysis: 'Objection Handling',
@@ -39,7 +39,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   const [sections, setSections] = useState<StreamingSection>({})
   const [completedSections, setCompletedSections] = useState<Set<string>>(new Set())
   const [currentSection, setCurrentSection] = useState<string>('')
-  const [status, setStatus] = useState('Initializing AI analysis...')
+  const [status, setStatus] = useState('AI is analyzing your conversation...')
   const [error, setError] = useState<string | null>(null)
   const [isComplete, setIsComplete] = useState(false)
   const [startTime] = useState(Date.now())
@@ -116,7 +116,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
   const connectToStream = useCallback(async () => {
     try {
-      setStatus('Checking transcript availability...')
+      setStatus('Preparing AI analysis...')
       setError(null)
       
       // Wait for transcript to be available before starting grading
@@ -125,7 +125,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         throw new Error('Transcript not available. The session may not have been saved properly.')
       }
       
-      setStatus('Connecting to AI...')
+      setStatus('AI is analyzing your conversation...')
       
       const response = await fetch('/api/grade/stream', {
         method: 'POST',

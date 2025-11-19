@@ -362,8 +362,8 @@ export default function AnalyticsDashboard() {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <Activity className="w-20 h-20 text-slate-600 mb-4" />
-        <h3 className="text-2xl font-semibold text-white mb-2">No Analytics Data Yet</h3>
-        <p className="text-slate-400">Complete training sessions to see performance insights</p>
+        <h3 className="text-2xl font-semibold text-white mb-2 font-space">No Analytics Data Yet</h3>
+        <p className="text-slate-400 font-sans">Complete training sessions to see performance insights</p>
       </div>
     )
   }
@@ -393,7 +393,7 @@ export default function AnalyticsDashboard() {
         <select 
           value={timePeriod}
           onChange={(e) => setTimePeriod(e.target.value)}
-          className="px-5 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/20 backdrop-blur-sm"
+          className="px-5 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/20 backdrop-blur-sm font-space"
         >
           <option value="7">Last 7 Days</option>
           <option value="30">Last 30 Days</option>
@@ -489,14 +489,14 @@ export default function AnalyticsDashboard() {
                       ) : (
                         <ArrowDownRight className="w-3.5 h-3.5 text-red-300" />
                       )}
-                      <span className={`text-sm font-semibold ${isPositive ? 'text-emerald-300' : 'text-red-300'}`}>
+                      <span className={`text-sm font-semibold font-space ${isPositive ? 'text-emerald-300' : 'text-red-300'}`}>
                         {metric.change}
                       </span>
                     </div>
                   )}
                 </div>
-                <p className="text-4xl font-bold text-white mb-1">{metric.value}</p>
-                <p className="text-lg font-semibold text-white">{metric.subtitle}</p>
+                <p className="text-4xl font-bold text-white mb-1 font-space">{metric.value}</p>
+                <p className="text-lg font-semibold text-white font-space">{metric.subtitle}</p>
               </div>
             </motion.div>
           )
@@ -514,15 +514,15 @@ export default function AnalyticsDashboard() {
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-xl font-bold text-white mb-1">Team Performance</h3>
-              <p className="text-sm text-white/70">Overall session performance over time</p>
+              <h3 className="text-xl font-bold text-white mb-1 font-space">Team Performance</h3>
+              <p className="text-sm text-white/70 font-sans">Overall session performance over time</p>
             </div>
             <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg p-1">
               {(['day', 'week', 'month'] as const).map((period) => (
                 <button
                   key={period}
                   onClick={() => setRevenueTimePeriod(period)}
-                  className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 font-space ${
                     revenueTimePeriod === period
                       ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
                       : 'text-white/70 hover:text-white hover:bg-white/5'
@@ -572,13 +572,13 @@ export default function AnalyticsDashboard() {
                         const data = payload[0].payload
                         return (
                           <div>
-                            <p className="text-white font-bold text-base mb-2">
+                            <p className="text-white font-bold text-base mb-2 font-space">
                               {data.fullPeriod || data.period}
                             </p>
                             <div className="space-y-1">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm text-white/80">Average Score:</span>
-                                <span className="text-sm font-bold text-white">{data.avgScore || 0}%</span>
+                                <span className="text-sm font-bold text-white font-space">{data.avgScore || 0}%</span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="text-sm text-white/80">Total Sessions:</span>
@@ -611,7 +611,7 @@ export default function AnalyticsDashboard() {
             <div className="h-[450px] flex items-center justify-center text-white">
               <div className="text-center">
                 <Activity className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-semibold">No performance data available yet</p>
+                <p className="text-lg font-semibold font-sans">No performance data available yet</p>
                 <p className="text-base mt-2 text-white/60">Start training sessions to see performance metrics</p>
               </div>
             </div>
@@ -628,7 +628,7 @@ export default function AnalyticsDashboard() {
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-xl font-bold text-white mb-1">Revenue vs. Performance</h3>
+              <h3 className="text-xl font-bold text-white mb-1 font-space">Revenue vs. Performance</h3>
               <p className="text-sm text-white/70">Correlation analysis</p>
             </div>
             <DollarSign className="w-5 h-5 text-emerald-400" />
@@ -729,7 +729,7 @@ export default function AnalyticsDashboard() {
               <Award className="w-5 h-5 text-emerald-300" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">Top Performers</h3>
+              <h3 className="text-lg font-bold text-white font-space">Top Performers</h3>
               <p className="text-sm text-white">Leading the team this period</p>
             </div>
           </div>
@@ -739,7 +739,7 @@ export default function AnalyticsDashboard() {
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/30 to-green-500/30 flex items-center justify-center border border-emerald-400/30">
-                      <span className="text-emerald-300 font-bold text-lg">{idx + 1}</span>
+                      <span className="text-emerald-300 font-bold text-lg font-space">{idx + 1}</span>
                     </div>
                     {idx === 0 && (
                       <div className="absolute -top-1 -right-1">
@@ -748,13 +748,13 @@ export default function AnalyticsDashboard() {
                     )}
                   </div>
                   <div>
-                    <p className="text-white font-semibold">{rep.name}</p>
+                    <p className="text-white font-semibold font-space">{rep.name}</p>
                     <p className="text-sm text-white">{rep.sessions} sessions</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-white">{rep.avgScore}%</span>
+                    <span className="text-2xl font-bold text-white font-space">{rep.avgScore}%</span>
                     {rep.trend >= 0 ? (
                       <TrendingUp className="w-4 h-4 text-emerald-400" />
                     ) : (
@@ -782,7 +782,7 @@ export default function AnalyticsDashboard() {
               <AlertCircle className="w-5 h-5 text-red-300" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">Needs Attention</h3>
+              <h3 className="text-lg font-bold text-white font-space">Needs Attention</h3>
               <p className="text-sm text-white">Performance declining</p>
             </div>
           </div>
@@ -791,16 +791,16 @@ export default function AnalyticsDashboard() {
               <div key={rep.id} className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-red-500/20">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500/30 to-red-600/30 flex items-center justify-center border border-red-400/30">
-                    <span className="text-red-300 font-bold">{rep.name.split(' ').map(n => n[0]).join('')}</span>
+                    <span className="text-red-300 font-bold font-space">{rep.name.split(' ').map(n => n[0]).join('')}</span>
                   </div>
                   <div>
-                    <p className="text-white font-semibold">{rep.name}</p>
+                    <p className="text-white font-semibold font-space">{rep.name}</p>
                     <p className="text-sm text-white">{rep.sessions} sessions</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-white">{rep.avgScore}%</span>
+                    <span className="text-2xl font-bold text-white font-space">{rep.avgScore}%</span>
                     {rep.trend >= 0 ? (
                       <TrendingUp className="w-4 h-4 text-emerald-400" />
                     ) : (
@@ -837,7 +837,7 @@ export default function AnalyticsDashboard() {
               <TargetIcon className="w-5 h-5 text-purple-300" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white mb-1">Coaching Opportunities</h3>
+              <h3 className="text-xl font-bold text-white mb-1 font-space">Coaching Opportunities</h3>
               <p className="text-base text-white">AI-identified improvement areas</p>
             </div>
           </div>
@@ -849,7 +849,7 @@ export default function AnalyticsDashboard() {
                     <p className="text-white font-semibold">{opp.repName}</p>
                     <p className="text-base text-white mt-1">{opp.skill}</p>
                   </div>
-                  <span className={`px-2 py-1 rounded-lg text-sm font-semibold ${
+                  <span className={`px-2 py-1 rounded-lg text-sm font-semibold font-space ${
                     opp.impact === 'high' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
                     opp.impact === 'medium' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
                     'bg-blue-500/20 text-blue-300 border border-blue-500/30'
@@ -871,7 +871,7 @@ export default function AnalyticsDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-bold text-white">{opp.currentScore}%</span>
+                    <span className="text-lg font-bold text-white font-space">{opp.currentScore}%</span>
                     <span className="text-sm text-white"> → {opp.targetScore}%</span>
                   </div>
                 </div>
@@ -894,7 +894,7 @@ export default function AnalyticsDashboard() {
             <Brain className="w-6 h-6 text-purple-300" />
           </div>
           <div>
-            <h3 className="text-2xl font-bold text-white mb-1">AI-Powered Insights</h3>
+            <h3 className="text-2xl font-bold text-white mb-1 font-space">AI-Powered Insights</h3>
             <p className="text-base text-white">Intelligent analysis and recommendations</p>
           </div>
         </div>
@@ -902,7 +902,7 @@ export default function AnalyticsDashboard() {
           <div className="bg-black/30 border border-purple-500/20 rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-5 h-5 text-purple-300" />
-              <p className="text-base font-semibold text-white">Trend Analysis</p>
+              <p className="text-base font-semibold text-white font-space">Trend Analysis</p>
             </div>
             <p className="text-base text-white leading-relaxed">
               {analytics.changes.score > 0 
@@ -991,7 +991,7 @@ export default function AnalyticsDashboard() {
                 <div className="p-2 rounded-xl bg-purple-500/20 border border-purple-400/30">
                   <UserPlus className="w-5 h-5 text-purple-300" />
                 </div>
-                <h3 className="text-xl font-bold text-white">Invite a Rep</h3>
+                <h3 className="text-xl font-bold text-white font-space">Invite a Rep</h3>
               </div>
               <button
                 onClick={() => {

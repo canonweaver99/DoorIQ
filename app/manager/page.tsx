@@ -65,10 +65,10 @@ function ManagerPageContent() {
         >
           {/* Title & Description */}
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
+            <h1 className="text-4xl font-bold text-white mb-2 font-space">
               Manager Panel
             </h1>
-            <p className="text-white/70">
+            <p className="text-white/70 font-sans">
               Oversee your team performance, manage reps, and track analytics
             </p>
           </div>
@@ -88,7 +88,7 @@ function ManagerPageContent() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                  className={`relative flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 font-space ${
                     isActive
                       ? 'text-white bg-[#1a1a1a]'
                       : 'text-[#888888] hover:text-[#bbbbbb]'

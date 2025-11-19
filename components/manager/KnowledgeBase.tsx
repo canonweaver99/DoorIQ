@@ -258,13 +258,13 @@ export default function KnowledgeBase() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Knowledge Base Management</h2>
-          <p className="text-slate-400 mt-1">Manage company knowledge and training data</p>
+          <h2 className="text-2xl font-bold text-white font-space">Knowledge Base Management</h2>
+          <p className="text-slate-400 mt-1 font-sans">Manage company knowledge and training data</p>
         </div>
         <button
           onClick={saveConfig}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 font-space"
         >
           {saving ? (
             <>
@@ -291,7 +291,7 @@ export default function KnowledgeBase() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all whitespace-nowrap ${
+                className={`relative flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all whitespace-nowrap font-space ${
                   isActive
                     ? 'text-white'
                     : 'text-slate-400 hover:text-white'
@@ -356,13 +356,13 @@ function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setC
   return (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Company Name</label>
+        <label className="block text-sm font-medium text-slate-300 mb-2 font-space">Company Name</label>
         <input
           type="text"
           value={config.company_name || ''}
           onChange={(e) => setConfig({ ...config, company_name: e.target.value })}
           placeholder="e.g., Pest Control Pro"
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans"
         />
       </div>
 
@@ -373,7 +373,7 @@ function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setC
           onChange={(e) => setConfig({ ...config, company_mission: e.target.value })}
           placeholder="Protect homes and families by providing superior pest control services with exceptional customer care..."
           rows={3}
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans"
         />
       </div>
 
@@ -384,7 +384,7 @@ function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setC
           onChange={(e) => setConfig({ ...config, product_description: e.target.value })}
           placeholder="Comprehensive pest control services including quarterly treatments, rodent protection, termite inspections..."
           rows={4}
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans"
         />
       </div>
 
@@ -395,7 +395,7 @@ function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setC
           onChange={(e) => setConfig({ ...config, service_guarantees: e.target.value })}
           placeholder="100% satisfaction guarantee. If pests return within treatment period, we re-treat at no additional cost..."
           rows={3}
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans"
         />
       </div>
     </div>
