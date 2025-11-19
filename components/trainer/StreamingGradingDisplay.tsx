@@ -59,9 +59,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       try {
         setStatus('Saving session data...')
         
-        // Reduced delay since we now wait for save to complete before redirecting
-        // This is just a safety buffer in case of any timing edge cases
-        await new Promise(resolve => setTimeout(resolve, 500))
+        // Wait for transcript to be saved - give it time since we redirect immediately after save
+        // The backend also has retry logic, but this helps reduce unnecessary retries
+        await new Promise(resolve => setTimeout(resolve, 2000))
         
         setStatus('Connecting to AI...')
         

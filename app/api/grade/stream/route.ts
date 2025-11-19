@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Fetch session data with retry logic - transcript might still be saving
     let session: any = null
     let attempts = 0
-    const maxAttempts = 10 // Wait up to 5 seconds (10 attempts * 500ms)
+    const maxAttempts = 30 // Wait up to 15 seconds (30 attempts * 500ms)
     
     while (attempts < maxAttempts) {
       const { data, error: sessionError } = await supabase
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
       // Check if transcript is available
       if ((session as any).full_transcript && (session as any).full_transcript.length > 0) {
         // Transcript is available, proceed with grading
+        logger.info(`Transcript found after ${attempts} attempts`)
         break
       }
       
@@ -102,14 +103,15 @@ export async function POST(request: NextRequest) {
     }
     
     if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
-      logger.error('No transcript available after retries', { sessionId, attempts })
-      return new Response('No transcript to grade - transcript may still be saving. Please wait a moment and refresh.', { status: 400 })
+      logger.error('No transcript available after retries', { 
+        sessionId, 
+        attempts,
+        sessionExists: !!session,
+        hasTranscript: !!(session as any).full_transcript,
+        transcriptLength: (session as any).full_transcript?.length || 0
+      })
+      return new Response(`No transcript to grade – transcript may still be saving. Please wait a moment and refresh. SessionId: "${sessionId}"`, { status: 400 })
     }
-    
-    logger.info(`Transcript found after ${attempts} attempts`, { 
-      sessionId, 
-      transcriptLength: (session as any).full_transcript.length 
-    })
 
     // Get user profile and team config (simplified for streaming)
     const { data: userProfile } = await supabase
