@@ -727,13 +727,6 @@ function TrainerPageContent() {
       /\b(i don't want|i'm not interested|not for me|not today|not ever|hard no|firm no)\b/i,
     ]
 
-    // Goodbye indicators
-    const goodbyePatterns = [
-      /\b(goodbye|bye|see you|have a nice day|have a good day|thanks anyway|thank you anyway|no thank you|maybe another time|another time|later|take care|have a good one)\b/i,
-      /\b(i have to go|i need to go|i'm busy|got to go|gotta go|talk to you later|catch you later)\b/i,
-      /(have a nice day|have a good day|have a good one)/i, // More flexible matching for these phrases
-    ]
-
     // Check for firm rejection from homeowner (agent) - need 3 consecutive rejections
     for (const pattern of firmRejectionPatterns) {
       const matchingEntry = recentEntries.find(e => 
@@ -777,48 +770,7 @@ function TrainerPageContent() {
       }
     }
 
-    // Check for goodbye (can trigger immediately)
-    // Check the most recent entry first for faster detection
-    const mostRecentEntry = recentEntries[recentEntries.length - 1]
-    if (mostRecentEntry) {
-      const entryText = mostRecentEntry.text.toLowerCase()
-      for (const pattern of goodbyePatterns) {
-        if (pattern.test(entryText)) {
-          // Goodbye from homeowner (agent) is most definitive
-          if (mostRecentEntry.speaker === 'homeowner') {
-            console.log('👋 Goodbye detected from homeowner:', mostRecentEntry.text)
-            rejectionCountRef.current = 0 // Reset rejection count
-            return { shouldEnd: true, reason: 'Goodbye - homeowner ended conversation' }
-          }
-          // Goodbye from user also indicates end
-          if (mostRecentEntry.speaker === 'user') {
-            console.log('👋 Goodbye detected from user:', mostRecentEntry.text)
-            rejectionCountRef.current = 0 // Reset rejection count
-            return { shouldEnd: true, reason: 'Goodbye - user ended conversation' }
-          }
-        }
-      }
-    }
-    
-    // Also check all recent entries (fallback)
-    for (const pattern of goodbyePatterns) {
-      if (pattern.test(recentText)) {
-        const matchingEntry = recentEntries.find(e => pattern.test(e.text.toLowerCase()))
-        // Goodbye from homeowner (agent) is most definitive
-        if (matchingEntry?.speaker === 'homeowner') {
-          console.log('👋 Goodbye detected from homeowner (fallback):', matchingEntry.text)
-          rejectionCountRef.current = 0 // Reset rejection count
-          return { shouldEnd: true, reason: 'Goodbye - homeowner ended conversation' }
-        }
-        // Goodbye from user also indicates end
-        if (matchingEntry?.speaker === 'user') {
-          console.log('👋 Goodbye detected from user (fallback):', matchingEntry.text)
-          rejectionCountRef.current = 0 // Reset rejection count
-          return { shouldEnd: true, reason: 'Goodbye - user ended conversation' }
-        }
-      }
-    }
-
+    // No goodbye detection - only ElevenLabs end_call events trigger session end
     return { shouldEnd: false, reason: '' }
   }, [])
 
