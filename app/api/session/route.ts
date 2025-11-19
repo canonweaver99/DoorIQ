@@ -109,7 +109,7 @@ export async function PATCH(req: Request) {
       .from('live_sessions')
       .update(updateData)
       .eq('id', id)
-      .select('id')
+      .select('id, full_transcript')
       .single()
     
     if (error) {
@@ -117,7 +117,21 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
-    console.log('✅ PATCH: Session updated successfully:', data.id)
+    // Verify the transcript was actually saved
+    const savedTranscript = data.full_transcript
+    console.log('✅ PATCH: Session updated successfully:', {
+      id: data.id,
+      transcriptSaved: !!savedTranscript,
+      transcriptLength: Array.isArray(savedTranscript) ? savedTranscript.length : 0
+    })
+    
+    if (!savedTranscript || (Array.isArray(savedTranscript) && savedTranscript.length === 0)) {
+      console.error('❌ CRITICAL: Transcript was NOT saved to database!', {
+        sessionId: id,
+        updateDataTranscriptLength: formattedTranscript.length,
+        savedTranscriptLength: Array.isArray(savedTranscript) ? savedTranscript.length : 'N/A'
+      })
+    }
     
     return NextResponse.json({ id: data.id })
   } catch (e: any) {

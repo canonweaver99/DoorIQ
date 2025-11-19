@@ -660,14 +660,19 @@ function TrainerPageContent() {
         console.log('💾 Saving session data before redirect...')
         console.log('📝 Transcript length:', transcript.length, 'lines')
         console.log('📝 Transcript sample:', transcript.slice(0, 3))
+        console.log('📝 Full transcript state:', JSON.stringify(transcript.slice(0, 5), null, 2))
         
         // CRITICAL: Verify transcript exists before saving
         if (!transcript || transcript.length === 0) {
-          console.error('❌ WARNING: Transcript is empty! This should not happen.')
+          console.error('❌ CRITICAL ERROR: Transcript is empty! Cannot save session.')
           console.error('❌ Session ID:', sessionId)
           console.error('❌ End reason:', endReason || 'manual')
           console.error('❌ Duration:', duration)
-          // Still try to save - maybe there's a race condition and transcript will be there
+          console.error('❌ Transcript state:', transcript)
+          console.error('❌ This means no conversation was captured. Check ElevenLabs connection.')
+          
+          // Still try to save with empty transcript so we can debug
+          // But this will fail grading, which is expected
         }
         
         // CRITICAL: Wait for save to complete before redirecting
@@ -917,10 +922,20 @@ function TrainerPageContent() {
       }
     }
     
+    // CRITICAL: Capture transcript state BEFORE setting session inactive
+    // This ensures we have the transcript even if state gets cleared
+    const currentTranscript = transcript
+    console.log('🔚 Door closing sequence complete, preparing to end session...', {
+      transcriptLength: currentTranscript.length,
+      reason,
+      sessionId
+    })
+    
     // Set session inactive before ending
     setSessionActive(false)
     
     // End the session after door closing sequence completes
+    // Pass transcript explicitly to avoid closure issues
     console.log('🔚 Calling endSession after door closing sequence...')
     endSession(reason).catch((error) => {
       console.error('❌ Error in endSession from handleDoorClosingSequence:', error)

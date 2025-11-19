@@ -55,7 +55,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   }, [startTime])
 
   // Check if transcript is available before starting grading
-  const waitForTranscript = useCallback(async (maxRetries = 10, retryDelay = 500): Promise<boolean> => {
+  const waitForTranscript = useCallback(async (maxRetries = 15, retryDelay = 500): Promise<boolean> => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         const response = await fetch(`/api/session?id=${sessionId}`)
@@ -63,10 +63,22 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           const session = await response.json()
           const transcript = session.full_transcript
           
+          console.log(`🔍 Attempt ${attempt + 1}/${maxRetries}: Checking transcript...`, {
+            hasTranscript: !!transcript,
+            transcriptType: Array.isArray(transcript) ? 'array' : typeof transcript,
+            transcriptLength: Array.isArray(transcript) ? transcript.length : 'N/A',
+            sessionEndedAt: session.ended_at,
+            sessionDuration: session.duration_seconds
+          })
+          
           if (transcript && Array.isArray(transcript) && transcript.length > 0) {
             console.log(`✅ Transcript available after ${attempt + 1} attempt(s), ${transcript.length} lines`)
             return true
+          } else if (transcript && !Array.isArray(transcript)) {
+            console.warn(`⚠️ Transcript exists but is not an array. Type: ${typeof transcript}`)
           }
+        } else {
+          console.warn(`⚠️ Failed to fetch session (attempt ${attempt + 1}):`, response.status, response.statusText)
         }
       } catch (error) {
         console.warn(`⚠️ Error checking transcript (attempt ${attempt + 1}):`, error)
@@ -80,7 +92,25 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       }
     }
     
-    console.error(`❌ Transcript not available after ${maxRetries} attempts`)
+    // Final check - log detailed info about what we found
+    try {
+      const finalCheck = await fetch(`/api/session?id=${sessionId}`)
+      if (finalCheck.ok) {
+        const session = await finalCheck.json()
+        console.error(`❌ Transcript not available after ${maxRetries} attempts. Final session state:`, {
+          sessionId,
+          hasTranscript: !!session.full_transcript,
+          transcriptType: typeof session.full_transcript,
+          transcriptLength: Array.isArray(session.full_transcript) ? session.full_transcript.length : 'N/A',
+          endedAt: session.ended_at,
+          duration: session.duration_seconds,
+          endReason: session.end_reason
+        })
+      }
+    } catch (e) {
+      console.error('❌ Failed to fetch final session state:', e)
+    }
+    
     return false
   }, [sessionId])
 
