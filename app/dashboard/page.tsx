@@ -62,7 +62,7 @@ interface TabNavigationProps {
 
 function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
   return (
-    <div className="mb-4 sm:mb-6 lg:mb-8 border-b border-[#2a2a2a]">
+    <div className="mb-4 sm:mb-6 lg:mb-8 border-b border-indigo-500/30">
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pb-1 -mb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {tabs.map((tab, index) => {
           const isActive = activeTab === tab.id
@@ -76,12 +76,12 @@ function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
               transition={{ duration: 0.3, delay: index * 0.05 }}
               onClick={() => !tab.locked && onChange(tab.id)}
               disabled={tab.locked}
-              className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 touch-target ${
+              className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 touch-target font-sans ${
                 tab.locked
-                  ? 'text-[#4a4a4a] cursor-not-allowed'
+                  ? 'text-indigo-500/30 cursor-not-allowed'
                   : isActive
-                  ? 'text-white bg-[#1a1a1a]'
-                  : 'text-[#888888] hover:text-[#bbbbbb] active:text-white active:bg-[#1a1a1a]'
+                  ? 'text-white bg-black/50'
+                  : 'text-slate-400 hover:text-white active:text-white active:bg-black/30'
               }`}
             >
               <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -90,8 +90,8 @@ function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
               {isActive && (
                 <motion.div
                   layoutId="activeTabBorder"
-                  className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#a855f7]"
-                  style={{ boxShadow: '0 2px 8px rgba(168, 85, 247, 0.3)' }}
+                  className="absolute bottom-0 left-0 right-0 h-[3px] bg-indigo-500"
+                  style={{ boxShadow: '0 2px 8px rgba(99, 102, 241, 0.5)' }}
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -320,7 +320,7 @@ function DashboardPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-32 pb-2 sm:pb-4 lg:pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] pt-32 pb-2 sm:pb-4 lg:pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[1800px] mx-auto">
         {/* Minimalist Header Section */}
         <motion.div
@@ -355,13 +355,13 @@ function DashboardPageContent() {
                   initial={{ opacity: 0, scale: 0.9, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: idx * 0.1 }}
-                  className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 sm:p-4"
+                  className="bg-black/70 backdrop-blur-sm border border-indigo-500/30 rounded-lg p-3 sm:p-4 hover:border-indigo-400/50 transition-colors"
                   style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
                 >
                   <div className="flex items-center justify-between gap-2 sm:gap-4">
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="text-[10px] sm:text-xs text-white/60 truncate">{stat.label}</p>
-                      <p className={`text-lg sm:text-xl lg:${stat.valueClass} font-bold text-white leading-tight truncate`}>{stat.value}</p>
+                      <p className="text-[10px] sm:text-xs text-indigo-300/80 truncate font-space uppercase tracking-wide">{stat.label}</p>
+                      <p className={`text-lg sm:text-xl lg:${stat.valueClass} font-bold text-white leading-tight truncate font-space tabular-nums`}>{stat.value}</p>
                     </div>
                     <div 
                       className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-full shrink-0"
@@ -519,19 +519,32 @@ function OverviewTabContent() {
     if (!user) return
     
     // Get ALL user sessions for calculating averages and trends (with dates and earnings)
-    const { data: allSessions } = await supabase
+    // Include both graded and ungraded sessions for complete data
+    const { data: allSessionsRaw } = await supabase
       .from('live_sessions')
-      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, virtual_earnings')
+      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, virtual_earnings, analytics')
       .eq('user_id', user.id)
-      .not('overall_score', 'is', null)
+      .order('created_at', { ascending: false })
+    
+    // Filter to only sessions with scores for trend calculations
+    const allSessions = (allSessionsRaw || []).filter((s: any) => s.overall_score !== null && s.overall_score !== undefined)
+    
+    console.log('📊 All sessions fetched:', allSessionsRaw?.length || 0, 'Total')
+    console.log('📊 Sessions with scores:', allSessions.length, 'Graded')
     
     // Get recent sessions with agent_name (for display) - fetch all sessions, not just graded ones
     const { data: recentSessionsData, error: recentSessionsError } = await supabase
       .from('live_sessions')
-      .select('id, overall_score, created_at, ended_at, homeowner_name, agent_name, agent_persona, virtual_earnings, duration_seconds')
+      .select('id, overall_score, created_at, ended_at, homeowner_name, agent_name, agent_persona, virtual_earnings, analytics, duration_seconds')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(10)
+    
+    console.log('📊 Recent sessions query result:', {
+      count: recentSessionsData?.length || 0,
+      error: recentSessionsError?.message,
+      sample: recentSessionsData?.[0]
+    })
     
     if (recentSessionsError) {
       console.error('❌ Error fetching recent sessions:', recentSessionsError)
@@ -569,7 +582,7 @@ function OverviewTabContent() {
           id: session.id,
             name: displayName,
             score: session.overall_score ?? 0,
-            earned: session.virtual_earnings ?? 0,
+            earned: session.virtual_earnings ?? (session.analytics?.virtual_earnings) ?? 0,
           avatar: getAgentBubbleImage(agentName),
           time: timeAgo < 1 ? 'Just now' : timeAgo < 24 ? `${timeAgo}h ago` : `${Math.floor(timeAgo / 24)}d ago`,
           gradient: gradients[idx % gradients.length]
@@ -844,12 +857,17 @@ function OverviewTabContent() {
         hourEnd.setHours(hourNum + 3, 0, 0, 0)
         
         const sessionsInHour = allSessions.filter((s: any) => {
-          if (!s.created_at || !s.virtual_earnings) return false
+          if (!s.created_at) return false
+          const earnings = s.virtual_earnings || (s.analytics?.virtual_earnings) || 0
+          if (!earnings) return false
           const sessionDate = new Date(s.created_at)
           return sessionDate >= hourStart && sessionDate < hourEnd
         })
         
-        const total = sessionsInHour.reduce((sum: number, s: any) => sum + (s.virtual_earnings || 0), 0)
+        const total = sessionsInHour.reduce((sum: number, s: any) => {
+          const earnings = s.virtual_earnings || (s.analytics?.virtual_earnings) || 0
+          return sum + earnings
+        }, 0)
         return { day: hour, earnings: total }
       })
       
@@ -861,12 +879,17 @@ function OverviewTabContent() {
         nextDay.setDate(nextDay.getDate() + 1)
         
         const sessionsInDay = allSessions.filter((s: any) => {
-          if (!s.created_at || !s.virtual_earnings) return false
+          if (!s.created_at) return false
+          const earnings = s.virtual_earnings || (s.analytics?.virtual_earnings) || 0
+          if (!earnings) return false
           const sessionDate = new Date(s.created_at)
           return sessionDate >= dayDate && sessionDate < nextDay
         })
         
-        const total = sessionsInDay.reduce((sum: number, s: any) => sum + (s.virtual_earnings || 0), 0)
+        const total = sessionsInDay.reduce((sum: number, s: any) => {
+          const earnings = s.virtual_earnings || (s.analytics?.virtual_earnings) || 0
+          return sum + earnings
+        }, 0)
         return { day: dayName, earnings: total }
       })
       
@@ -879,14 +902,35 @@ function OverviewTabContent() {
         weekEnd.setDate(weekEnd.getDate() + 7)
         
         const sessionsInWeek = allSessions.filter((s: any) => {
-          if (!s.created_at || !s.virtual_earnings) return false
+          if (!s.created_at) return false
+          const earnings = s.virtual_earnings || (s.analytics?.virtual_earnings) || 0
+          if (!earnings) return false
           const sessionDate = new Date(s.created_at)
           return sessionDate >= weekStart && sessionDate < weekEnd
         })
         
-        const total = sessionsInWeek.reduce((sum: number, s: any) => sum + (s.virtual_earnings || 0), 0)
+        const total = sessionsInWeek.reduce((sum: number, s: any) => {
+          const earnings = s.virtual_earnings || (s.analytics?.virtual_earnings) || 0
+          return sum + earnings
+        }, 0)
         earningsMonthData.push({ day: `Week ${4 - i}`, earnings: total })
       }
+      
+      console.log('📊 Performance data calculated:', {
+        day: dayData.length,
+        week: weekData.length,
+        month: monthWeeks.length,
+        sampleDay: dayData[0],
+        sampleWeek: weekData[0]
+      })
+      
+      console.log('💰 Earnings data calculated:', {
+        day: earningsDayData.length,
+        week: earningsWeekData.length,
+        month: earningsMonthData.length,
+        sampleDay: earningsDayData[0],
+        sampleWeek: earningsWeekData[0]
+      })
       
       setPerformanceData({
         day: dayData,
@@ -918,15 +962,29 @@ function OverviewTabContent() {
     }
   }
 
-  const currentData = performanceData[chartTimeRange]
-  const currentEarnings = earningsData[earningsTimeRange]
+  const currentData = performanceData[chartTimeRange] || []
+  const currentEarnings = earningsData[earningsTimeRange] || []
+  
+  // Safety check for empty data
+  const hasData = currentData.length > 0 && currentData.some((p: any) => p.overall > 0)
+  const hasEarningsData = currentEarnings.length > 0 && currentEarnings.some((e: any) => e.earnings > 0)
+  
+  console.log('📊 Chart data check:', {
+    chartTimeRange,
+    dataLength: currentData.length,
+    hasData,
+    samplePoint: currentData[0],
+    earningsLength: currentEarnings.length,
+    hasEarningsData,
+    sampleEarnings: currentEarnings[0]
+  })
 
   // Use real notifications if available, otherwise show empty state
   const notificationsData = notifications.length > 0 ? notifications : []
 
   return (
     <div className="space-y-6">
-      {/* Performance Metrics Cards - Vibrant */}
+      {/* Performance Metrics Cards - Demo Style */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 lg:gap-4">
         {performanceMetrics.map((metric, idx) => (
           <motion.div
@@ -934,29 +992,23 @@ function OverviewTabContent() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.4, delay: idx * 0.05 }}
-            className="rounded-lg p-1 sm:p-2 lg:p-4 will-change-transform"
-            style={{ 
-              backgroundColor: metric.bg,
-              border: `2px solid ${metric.borderColor}`,
-              boxShadow: `inset 0 0 20px ${metric.glowColor}, 0 4px 16px rgba(0, 0, 0, 0.4)`
-            }}
+            className="rounded-lg sm:rounded-xl cursor-pointer transition-all will-change-transform p-2 sm:p-3 lg:p-4 border border-indigo-500/30 bg-black/50 backdrop-blur-sm hover:border-indigo-400/50 hover:bg-black/60"
           >
-            <div>
-              <h3 className={`text-[9px] sm:text-xs font-semibold ${metric.textColor} uppercase tracking-wide mb-1 sm:mb-2 font-space`}>
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <h3 className="text-[9px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wide font-space">
                 {metric.title}
               </h3>
-              
-              <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums">
-                {metric.value}%
-              </div>
-              
-              <div className="text-[9px] sm:text-[10px] sm:text-xs text-green-400 font-semibold mb-1 sm:mb-2 lg:mb-3">
-                {metric.change}
-              </div>
-
-              <div className="pt-1 sm:pt-2 lg:pt-3 hidden sm:block" style={{ borderTop: `1px solid ${metric.borderColor}` }}>
-                <p className="text-xs sm:text-sm lg:text-[15px] text-slate-300 leading-relaxed">{metric.feedback}</p>
-              </div>
+            </div>
+            
+            <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums font-space">
+              {metric.value}%
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              <p className="text-[9px] sm:text-xs font-semibold text-emerald-400 font-sans">{metric.change} from last week</p>
             </div>
           </motion.div>
         ))}
@@ -969,25 +1021,24 @@ function OverviewTabContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 sm:p-6"
-          style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4), 0 0 24px rgba(168, 85, 247, 0.1)' }}
+          className="bg-black/70 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4 sm:p-6"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div>
               <h3 className="text-sm sm:text-base font-bold text-white mb-1 font-space">Performance Trend</h3>
-              <p className="text-xs sm:text-sm text-white/60">Track your improvement over time</p>
+              <p className="text-xs sm:text-sm text-slate-400 font-sans">Track your improvement over time</p>
             </div>
             
             {/* Time Range Selector */}
-            <div className="flex gap-1 sm:gap-2 bg-[#0a0a0a] rounded-lg p-1 border border-[#2a2a2a]">
+            <div className="flex gap-1 bg-black/50 border border-indigo-500/30 rounded-lg p-1">
               {(['day', 'week', 'month'] as const).map((range) => (
                 <button
                   key={range}
                   onClick={() => setChartTimeRange(range)}
-                  className={`px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md transition-all duration-200 touch-target ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 font-sans ${
                     chartTimeRange === range
-                      ? 'bg-[#a855f7] text-white shadow-lg shadow-purple-500/30'
-                      : 'text-[#8a8a8a] hover:text-white active:text-white active:bg-[#a855f7]/30'
+                      ? 'bg-indigo-500/30 text-white border border-indigo-500/50'
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -1017,14 +1068,26 @@ function OverviewTabContent() {
                     transform: 'translateX(-50%)',
                   }}
                 >
-                  <div className="bg-[#1e1e30]/95 border border-white/20 rounded-lg p-3 shadow-xl backdrop-blur-sm">
-                    <p className="text-white font-semibold mb-2">
+                  <div className="bg-black/95 border rounded-lg px-3 py-2 shadow-lg" style={{ borderColor: (() => {
+                    if (hoveredPoint.value >= 85) return '#10b981'
+                    if (hoveredPoint.value >= 75) return '#22c55e'
+                    if (hoveredPoint.value >= 65) return '#84cc16'
+                    if (hoveredPoint.value >= 55) return '#eab308'
+                    if (hoveredPoint.value >= 45) return '#f97316'
+                    return '#ef4444'
+                  })() }}>
+                    <div className="font-bold text-lg text-center leading-tight mb-1" style={{ color: (() => {
+                      if (hoveredPoint.value >= 85) return '#10b981'
+                      if (hoveredPoint.value >= 75) return '#22c55e'
+                      if (hoveredPoint.value >= 65) return '#84cc16'
+                      if (hoveredPoint.value >= 55) return '#eab308'
+                      if (hoveredPoint.value >= 45) return '#f97316'
+                      return '#ef4444'
+                    })() }}>
+                      {hoveredPoint.value}%
+                    </div>
+                    <div className="text-slate-400 text-xs text-center whitespace-nowrap font-sans">
                       {hoveredPoint.day}
-                    </p>
-                    <div className="space-y-1">
-                      <p className="text-sm text-white">
-                        Score: <span className="font-bold text-white">{hoveredPoint.value}%</span>
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -1032,9 +1095,14 @@ function OverviewTabContent() {
             })()}
             <svg className="w-full h-full overflow-visible" viewBox="0 0 900 320" style={{ paddingLeft: '20px' }}>
               <defs>
+                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#A855F7" />
+                  <stop offset="50%" stopColor="#EC4899" />
+                  <stop offset="100%" stopColor="#F472B6" />
+                </linearGradient>
                 <linearGradient id="chartAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#ec4899" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#ec4899" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#A855F7" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#EC4899" stopOpacity="0.05" />
                 </linearGradient>
               </defs>
 
@@ -1073,47 +1141,53 @@ function OverviewTabContent() {
               })}
 
               {/* Area under curve - Gradient fill */}
-              <motion.path
-                key={`area-${chartTimeRange}`}
-                d={`M 80 280 ${currentData.map((point, idx) => {
-                  const spacing = 660
-                  const offset = 80
-                  const x = 60 + offset + (idx * (spacing / (currentData.length - 1)))
-                  const y = 280 - (point.overall * 2.8)
-                  return `L ${x} ${y}`
-                }).join(' ')} L ${60 + 80 + ((currentData.length - 1) * (660 / (currentData.length - 1)))} 280 Z`}
+              {currentData.length > 0 && (
+                <motion.path
+                  key={`area-${chartTimeRange}`}
+                  d={`M 80 280 ${currentData.map((point, idx) => {
+                    const spacing = 660
+                    const offset = 80
+                    const divisor = Math.max(1, currentData.length - 1)
+                    const x = 60 + offset + (idx * (spacing / divisor))
+                    const y = 280 - (point.overall * 2.8)
+                    return `L ${x} ${y}`
+                  }).join(' ')} L ${60 + 80 + ((Math.max(0, currentData.length - 1)) * (660 / Math.max(1, currentData.length - 1)))} 280 Z`}
                 fill="url(#chartAreaGradient)"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8 }}
-              />
+                />
+              )}
 
-              {/* Vibrant pink/magenta line with glow */}
-              <motion.path
-                key={`line-${chartTimeRange}`}
-                d={currentData.map((point, idx) => {
-                  const spacing = 660
-                  const offset = 80
-                  const x = 60 + offset + (idx * (spacing / (currentData.length - 1)))
-                  const y = 280 - (point.overall * 2.8)
-                  return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
-                }).join(' ')}
-                fill="none"
-                stroke="#ec4899"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="drop-shadow(0 0 8px rgba(236, 72, 153, 0.4))"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 0.6, ease: "easeInOut" }}
-              />
+              {/* Vibrant purple/pink gradient line */}
+              {currentData.length > 0 && (
+                <motion.path
+                  key={`line-${chartTimeRange}`}
+                  d={currentData.map((point, idx) => {
+                    const spacing = 660
+                    const offset = 80
+                    const divisor = Math.max(1, currentData.length - 1)
+                    const x = 60 + offset + (idx * (spacing / divisor))
+                    const y = 280 - (point.overall * 2.8)
+                    return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
+                  }).join(' ')}
+                  fill="none"
+                  stroke="url(#lineGradient)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                />
+              )}
 
               {/* Larger data points with pink fill */}
               {currentData.map((point, idx) => {
                 const spacing = 660
                 const offset = 80
-                const x = 60 + offset + (idx * (spacing / (currentData.length - 1)))
+                const divisor = Math.max(1, currentData.length - 1)
+                const x = 60 + offset + (idx * (spacing / divisor))
                 const y = 280 - (point.overall * 2.8)
                 
                 return (
@@ -1134,8 +1208,8 @@ function OverviewTabContent() {
                     <circle
                       cx={x}
                       cy={y}
-                      r={hoveredPoint && hoveredPoint.day === point.day ? "12" : "10"}
-                      fill="#ec4899"
+                      r={hoveredPoint && hoveredPoint.day === point.day ? "8" : "5"}
+                      fill="#EC4899"
                       stroke="white"
                       strokeWidth={hoveredPoint && hoveredPoint.day === point.day ? "3" : "2"}
                       className="cursor-pointer transition-all pointer-events-none"
@@ -1184,8 +1258,8 @@ function OverviewTabContent() {
                     <circle
                       cx={x}
                       cy={y}
-                      r="12"
-                      fill="#ec4899"
+                      r="8"
+                      fill="#EC4899"
                       stroke="#ffffff"
                       strokeWidth="3"
                       opacity="0.9"
@@ -1202,25 +1276,24 @@ function OverviewTabContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 sm:p-6"
-          style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4), 0 0 24px rgba(16, 185, 129, 0.1)' }}
+          className="bg-black/70 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4 sm:p-6"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div>
               <h3 className="text-sm sm:text-base font-bold text-white mb-1 font-space">Earnings Trend</h3>
-              <p className="text-xs sm:text-sm text-white/60">Track your virtual earnings</p>
+              <p className="text-xs sm:text-sm text-slate-400 font-sans">Track your virtual earnings</p>
             </div>
             
             {/* Time Range Selector */}
-            <div className="flex gap-1 sm:gap-2 bg-[#0a0a0a] rounded-lg p-1 border border-[#2a2a2a]">
+            <div className="flex gap-1 bg-black/50 border border-indigo-500/30 rounded-lg p-1">
               {(['day', 'week', 'month'] as const).map((range) => (
                 <button
                   key={range}
                   onClick={() => setEarningsTimeRange(range)}
-                  className={`px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium rounded-md transition-all duration-200 touch-target ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 font-sans ${
                     earningsTimeRange === range
-                      ? 'bg-[#10b981] text-white shadow-lg shadow-green-500/30'
-                      : 'text-[#8a8a8a] hover:text-white active:text-white active:bg-[#10b981]/30'
+                      ? 'bg-indigo-500/30 text-white border border-indigo-500/50'
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -1232,13 +1305,14 @@ function OverviewTabContent() {
           {/* Earnings Chart */}
           <div ref={earningsRef} className="relative h-48 sm:h-64">
             {/* Tooltip overlay - positioned absolutely outside SVG */}
-            {hoveredEarnings && earningsRef.current && (() => {
+            {hoveredEarnings && earningsRef.current && currentEarnings.length > 0 && (() => {
               const rect = earningsRef.current.getBoundingClientRect()
-              const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
+              const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings), 1)
               const idx = currentEarnings.findIndex(p => p.day === hoveredEarnings.day)
               const spacing = 660
               const offset = 80
-              const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
+              const divisor = Math.max(1, currentEarnings.length - 1)
+              const x = 60 + offset + (idx * (spacing / divisor))
               const pixelX = (x / 850) * rect.width
               const pixelY = ((280 - ((hoveredEarnings.value / maxEarnings) * 280)) / 320) * rect.height
               
@@ -1251,14 +1325,12 @@ function OverviewTabContent() {
                     transform: 'translateX(-50%)',
                   }}
                 >
-                  <div className="bg-[#1e1e30]/95 border border-white/20 rounded-lg p-3 shadow-xl backdrop-blur-sm">
-                    <p className="text-white font-semibold mb-2">
+                  <div className="bg-black/95 border border-emerald-500 rounded-lg px-3 py-2 shadow-lg">
+                    <div className="font-bold text-lg text-center leading-tight mb-1 text-emerald-400">
+                      ${hoveredEarnings.value}
+                    </div>
+                    <div className="text-slate-400 text-xs text-center whitespace-nowrap font-sans">
                       {hoveredEarnings.day}
-                    </p>
-                    <div className="space-y-1">
-                      <p className="text-sm text-white">
-                        Earnings: <span className="font-bold text-white">${hoveredEarnings.value}</span>
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -1311,50 +1383,57 @@ function OverviewTabContent() {
               })}
 
               {/* Area under curve */}
-              <motion.path
-                key={`earnings-area-${earningsTimeRange}`}
-                d={`M 80 280 ${currentEarnings.map((point, idx) => {
-                  const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
-                  const spacing = 660
-                  const offset = 80
-                  const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
-                  const y = 280 - ((point.earnings / maxEarnings) * 280)
-                  return `L ${x} ${y}`
-                }).join(' ')} L ${60 + 80 + ((currentEarnings.length - 1) * (660 / (currentEarnings.length - 1)))} 280 Z`}
-                fill="url(#earningsAreaGradient)"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-              />
+              {currentEarnings.length > 0 && (
+                <motion.path
+                  key={`earnings-area-${earningsTimeRange}`}
+                  d={`M 80 280 ${currentEarnings.map((point, idx) => {
+                    const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings), 1)
+                    const spacing = 660
+                    const offset = 80
+                    const divisor = Math.max(1, currentEarnings.length - 1)
+                    const x = 60 + offset + (idx * (spacing / divisor))
+                    const y = 280 - ((point.earnings / maxEarnings) * 280)
+                    return `L ${x} ${y}`
+                  }).join(' ')} L ${60 + 80 + ((Math.max(0, currentEarnings.length - 1)) * (660 / Math.max(1, currentEarnings.length - 1)))} 280 Z`}
+                  fill="url(#earningsAreaGradient)"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.8 }}
+                />
+              )}
 
               {/* Green line with glow */}
-              <motion.path
-                key={`earnings-line-${earningsTimeRange}`}
-                d={currentEarnings.map((point, idx) => {
-                  const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
-                  const spacing = 660
-                  const offset = 80
-                  const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
-                  const y = 280 - ((point.earnings / maxEarnings) * 280)
-                  return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
-                }).join(' ')}
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="drop-shadow(0 0 8px rgba(16, 185, 129, 0.4))"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 0.6, ease: "easeInOut" }}
-              />
+              {currentEarnings.length > 0 && (
+                <motion.path
+                  key={`earnings-line-${earningsTimeRange}`}
+                  d={currentEarnings.map((point, idx) => {
+                    const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings), 1)
+                    const spacing = 660
+                    const offset = 80
+                    const divisor = Math.max(1, currentEarnings.length - 1)
+                    const x = 60 + offset + (idx * (spacing / divisor))
+                    const y = 280 - ((point.earnings / maxEarnings) * 280)
+                    return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`
+                  }).join(' ')}
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="drop-shadow(0 0 8px rgba(16, 185, 129, 0.4))"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                />
+              )}
 
               {/* Data points */}
               {currentEarnings.map((point, idx) => {
-                const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
+                const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings), 1)
                 const spacing = 660
                 const offset = 80
-                const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
+                const divisor = Math.max(1, currentEarnings.length - 1)
+                const x = 60 + offset + (idx * (spacing / divisor))
                 const y = 280 - ((point.earnings / maxEarnings) * 280)
                 
                 return (
@@ -1401,12 +1480,13 @@ function OverviewTabContent() {
               })}
 
               {/* Hover tooltip with vertical line */}
-              {hoveredEarnings && (() => {
-                const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings))
+              {hoveredEarnings && currentEarnings.length > 0 && (() => {
+                const maxEarnings = Math.max(...currentEarnings.map(e => e.earnings), 1)
                 const idx = currentEarnings.findIndex(p => p.day === hoveredEarnings.day)
                 const spacing = 660
                 const offset = 80
-                const x = 60 + offset + (idx * (spacing / (currentEarnings.length - 1)))
+                const divisor = Math.max(1, currentEarnings.length - 1)
+                const x = 60 + offset + (idx * (spacing / divisor))
                 const y = 280 - ((hoveredEarnings.value / maxEarnings) * 280)
                 
                 return (
@@ -1447,22 +1527,20 @@ function OverviewTabContent() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 sm:p-4 min-h-[280px] sm:min-h-[320px]"
-          style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+          className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4 min-h-[280px] sm:min-h-[320px]"
         >
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 className="text-sm sm:text-base font-bold text-white font-space">Recent Sessions</h3>
-            <Link href="/sessions" className="text-xs sm:text-sm text-[#a855f7] hover:text-[#9333ea] transition-colors touch-target flex items-center">
-              <span className="hidden sm:inline">View All →</span>
-              <span className="sm:hidden">All →</span>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-white font-space">Recent Sessions</h3>
+            <Link href="/sessions" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium font-sans">
+              View All →
             </Link>
           </div>
 
           <div className="space-y-1.5 sm:space-y-2">
             {recentSessions.length === 0 ? (
-              <div className="text-center py-8 text-white/60">
-                <p className="text-sm">No recent sessions</p>
-                <p className="text-xs mt-1">Complete a practice session to see it here</p>
+              <div className="text-center py-8 text-slate-400">
+                <p className="text-sm font-sans">No recent sessions</p>
+                <p className="text-xs mt-1 font-sans">Complete a practice session to see it here</p>
               </div>
             ) : recentSessions.slice(0, 3).map((session, idx) => {
               const circumference = 2 * Math.PI * 16
@@ -1478,7 +1556,7 @@ function OverviewTabContent() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: 0.4 + idx * 0.1 }}
-                    className="flex items-center justify-between gap-2 p-2 rounded-lg bg-[#222222] hover:bg-[#2a2a2a] transition-colors border border-white/5 cursor-pointer"
+                    className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/30 hover:bg-black/50 transition-colors border border-indigo-500/20 cursor-pointer"
                   >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <div className="relative flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10">
@@ -1525,26 +1603,25 @@ function OverviewTabContent() {
                       })()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs sm:text-sm font-semibold text-white truncate">{session.name}</div>
-                      <div className="text-[10px] sm:text-xs text-slate-400 truncate">{session.time}</div>
+                      <div className="text-xs font-semibold text-white truncate font-sans">{session.name}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5 font-sans">{session.time}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                    <div className="relative w-7 h-7 sm:w-9 sm:h-9">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="relative w-8 h-8">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                        <circle 
-                          cx="18" 
-                          cy="18" 
-                          r="16" 
-                          stroke="rgba(255,255,255,0.1)" 
-                          strokeWidth="3" 
-                          fill="none" 
-                        />
+                        <circle cx="18" cy="18" r="16" stroke="rgba(99, 102, 241, 0.2)" strokeWidth="3" fill="none" />
                         <motion.circle
                           cx="18"
                           cy="18"
                           r="16"
-                          stroke="#a855f7"
+                          stroke={(() => {
+                            if (session.score >= 90) return '#10b981'
+                            if (session.score >= 80) return '#22c55e'
+                            if (session.score >= 70) return '#eab308'
+                            if (session.score >= 60) return '#f97316'
+                            return '#ef4444'
+                          })()}
                           strokeWidth="3"
                           strokeDasharray={circumference}
                           strokeDashoffset={strokeDashoffset}
@@ -1556,10 +1633,10 @@ function OverviewTabContent() {
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[8px] sm:text-[9px] font-bold text-white">{session.score}%</span>
+                        <span className="text-[9px] font-bold text-white font-space">{session.score}%</span>
                       </div>
                     </div>
-                    <div className="text-[10px] sm:text-xs font-bold text-green-400 tabular-nums">+${session.earned}</div>
+                    <div className="text-xs font-bold text-emerald-400 tabular-nums font-sans">+${session.earned}</div>
                   </div>
                   </motion.div>
                 </Link>
@@ -1573,10 +1650,9 @@ function OverviewTabContent() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 sm:p-4 min-h-[280px] sm:min-h-[320px]"
-          style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+          className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4 min-h-[280px] sm:min-h-[320px]"
         >
-          <h3 className="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3 font-space">Insights</h3>
+          <h3 className="text-sm font-bold text-white mb-2 font-space">Insights</h3>
 
           <div className="space-y-2 sm:space-y-2.5">
             {insightsData.map((insight, idx) => {
@@ -1587,21 +1663,16 @@ function OverviewTabContent() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.5 + idx * 0.1 }}
-                  className="pb-2.5 border-b border-[#2a2a2a] last:border-0 last:pb-0"
+                  className="pb-2.5 border-b border-indigo-500/20 last:border-0 last:pb-0"
                 >
-                  <div className="flex items-start gap-2.5">
-                    <div 
-                      className="flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0"
-                      style={{ 
-                        backgroundColor: insight.iconBgColor
-                      }}
-                    >
-                      <Icon className="w-4 h-4" style={{ color: insight.iconColor }} />
+                  <div className="flex items-start gap-2">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-500/20">
+                      <Icon className="w-3.5 h-3.5 text-indigo-400" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-xs font-bold text-white mb-1 font-space">{insight.title}</h4>
-                      <p className="text-[11px] text-white leading-relaxed">
-                        {insight.percentage && <span className="text-[#a855f7] font-semibold">{insight.percentage}</span>}
+                      <h4 className="text-[11px] font-bold text-white font-space">{insight.title}</h4>
+                      <p className="text-[10px] text-slate-200 leading-relaxed font-sans">
+                        {insight.percentage && <span className="text-indigo-400 font-semibold">{insight.percentage}</span>}
                         {insight.percentage && ' '}
                         {insight.message}
                       </p>
@@ -1618,16 +1689,15 @@ function OverviewTabContent() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
-          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 sm:p-4 min-h-[280px] sm:min-h-[320px]"
-          style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
+          className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4 min-h-[280px] sm:min-h-[320px]"
         >
-          <h3 className="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3 font-space">Notifications</h3>
+          <h3 className="text-sm font-bold text-white mb-2 font-space">Notifications</h3>
 
           <div className="space-y-2 sm:space-y-2.5">
             {notificationsData.length === 0 ? (
-              <div className="text-center py-8 text-white/60">
-                <p className="text-sm">No notifications</p>
-                <p className="text-xs mt-1">You're all caught up!</p>
+              <div className="text-center py-8 text-slate-400">
+                <p className="text-sm font-sans">No notifications</p>
+                <p className="text-xs mt-1 font-sans">You're all caught up!</p>
               </div>
             ) : notificationsData.map((notif, idx) => {
               const getIcon = () => {
@@ -1650,23 +1720,18 @@ function OverviewTabContent() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.6 + idx * 0.1 }}
-                  className="pb-2.5 border-b border-[#2a2a2a] last:border-0 last:pb-0"
+                  className="p-2 rounded-lg border border-indigo-500/20 transition-colors cursor-pointer bg-black/30 hover:bg-black/50"
                 >
-                  <div className="flex items-start gap-2.5">
-                    <div 
-                      className="flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0"
-                      style={{ 
-                        backgroundColor: notif.iconBgColor
-                      }}
-                    >
-                      <Icon className="w-4 h-4" style={{ color: notif.iconColor }} />
+                  <div className="flex items-start gap-2">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-500/20">
+                      <Icon className="w-3.5 h-3.5 text-indigo-400" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <h4 className="text-xs font-bold text-white font-space">{notif.title}</h4>
-                        <span className="text-[10px] text-white/60 font-medium">{notif.time}</span>
+                        <h4 className="text-[11px] font-bold text-white font-space">{notif.title}</h4>
+                        <span className="text-[9px] text-slate-400 font-medium font-sans">{notif.time}</span>
                       </div>
-                      <p className="text-[11px] text-white leading-relaxed">{notif.message}</p>
+                      <p className="text-[10px] text-slate-200 leading-relaxed font-sans">{notif.message}</p>
                     </div>
                   </div>
                 </motion.div>
