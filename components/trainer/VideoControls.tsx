@@ -35,7 +35,7 @@ export function VideoControls({
       {/* Persona Name */}
       {personaName && (
         <div className="mb-3">
-          <span className="text-sm font-semibold text-white">{personaName}</span>
+          <span className="text-sm font-semibold text-white font-space">{personaName}</span>
         </div>
       )}
       
@@ -54,9 +54,9 @@ export function VideoControls({
               ease: 'easeInOut'
             }}
           />
-          <span className="text-xs font-bold text-red-300 uppercase tracking-wider">Live</span>
+          <span className="text-xs font-bold text-red-300 uppercase tracking-wider font-space">Live</span>
         </div>
-        <span className="text-lg font-mono font-bold text-white transition-all duration-200">{formatDuration(duration)}</span>
+        <span className="text-lg font-bold text-white transition-all duration-200 font-space">{formatDuration(duration)}</span>
       </div>
       
       {/* Progress Bar */}
@@ -98,7 +98,7 @@ export function VideoControls({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onEndSession}
-          className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+          className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-space"
           aria-label="End session"
         >
           <PhoneOff className="w-4 h-4" />

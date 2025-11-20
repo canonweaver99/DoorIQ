@@ -89,12 +89,12 @@ function TranscriptMessage({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className={cn(
-            "text-xs font-medium",
-            isUser ? "text-blue-400" : "text-gray-400"
+            "text-xs font-medium font-space text-white",
+            isUser ? "text-blue-300" : "text-white/90"
           )}>
             {isUser ? 'You' : agentName || 'Homeowner'}
           </span>
-          <span className="text-xs text-gray-600">{formatTime(entry.timestamp)}</span>
+          <span className="text-xs text-white/70 font-space">{formatTime(entry.timestamp)}</span>
           <button
             onClick={handleCopy}
             className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-700/50"
@@ -103,11 +103,11 @@ function TranscriptMessage({
             {copied ? (
               <Check className="w-3 h-3 text-green-400" />
             ) : (
-              <Copy className="w-3 h-3 text-gray-500" />
+              <Copy className="w-3 h-3 text-white/60" />
             )}
           </button>
         </div>
-        <p className="text-sm text-gray-300 leading-relaxed break-words">
+        <p className="text-sm text-white leading-relaxed break-words font-space">
           {entry.text}
         </p>
       </div>
@@ -136,7 +136,7 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
       
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2 max-h-[300px]">
         {transcript.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+          <div className="flex items-center justify-center h-full text-white/60 text-sm font-space">
             <div className="text-center">
               <p>Waiting for conversation to begin...</p>
             </div>

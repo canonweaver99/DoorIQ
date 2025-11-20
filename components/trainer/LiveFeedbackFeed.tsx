@@ -153,9 +153,9 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
             >
               {config.badgeText}
             </Badge>
-            <span className="text-[10px] text-gray-400">{formatTime(item.timestamp)}</span>
+            <span className="text-[10px] text-white/80 font-space">{formatTime(item.timestamp)}</span>
           </div>
-          <p className="text-xs text-gray-200 leading-tight">
+          <p className="text-xs text-white leading-tight font-space">
             {item.message}
           </p>
         </div>
@@ -215,7 +215,7 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
       
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 custom-scrollbar space-y-2 min-h-0">
         {deduplicatedItems.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+          <div className="flex items-center justify-center h-full text-white/60 text-sm font-space">
             <div className="text-center">
               <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p>Waiting for feedback...</p>

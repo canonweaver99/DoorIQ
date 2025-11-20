@@ -18,7 +18,7 @@ import { LiveMetricsPanel } from '@/components/trainer/LiveMetricsPanel'
 import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { LiveTranscript } from '@/components/trainer/LiveTranscript'
 import { VideoControls } from '@/components/trainer/VideoControls'
-import { WebcamPIP } from '@/components/trainer/WebcamPIP'
+import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
 
 // Dynamic imports for heavy components - only load when needed
 const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
@@ -118,6 +118,20 @@ function TrainerPageContent() {
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
+  const webcamPIPRef = useRef<WebcamPIPRef | null>(null)
+
+  // Sync camera/mic state with WebcamPIP
+  useEffect(() => {
+    if (webcamPIPRef.current && sessionActive) {
+      const checkInterval = setInterval(() => {
+        if (webcamPIPRef.current) {
+          setIsCameraOff(!webcamPIPRef.current.isCameraOn())
+          setIsMuted(!webcamPIPRef.current.isMicOn())
+        }
+      }, 500)
+      return () => clearInterval(checkInterval)
+    }
+  }, [sessionActive])
   
   // Real-time analysis hook
   const { feedbackItems: transcriptFeedbackItems, metrics: transcriptMetrics } = useLiveSessionAnalysis(transcript)
@@ -1184,13 +1198,27 @@ function TrainerPageContent() {
   }
 
   const handleMuteToggle = () => {
-    setIsMuted(!isMuted)
-    // TODO: Implement actual mute/unmute logic with WebcamRecorder
+    if (webcamPIPRef.current) {
+      webcamPIPRef.current.toggleMic()
+      // Update state after a brief delay to ensure track state has updated
+      setTimeout(() => {
+        if (webcamPIPRef.current) {
+          setIsMuted(!webcamPIPRef.current.isMicOn())
+        }
+      }, 50)
+    }
   }
 
   const handleCameraToggle = () => {
-    setIsCameraOff(!isCameraOff)
-    // TODO: Implement actual camera toggle logic with WebcamRecorder
+    if (webcamPIPRef.current) {
+      webcamPIPRef.current.toggleCamera()
+      // Update state after a brief delay to ensure track state has updated
+      setTimeout(() => {
+        if (webcamPIPRef.current) {
+          setIsCameraOff(!webcamPIPRef.current.isCameraOn())
+        }
+      }, 50)
+    }
   }
 
   return (
@@ -1384,10 +1412,10 @@ function TrainerPageContent() {
                     </div>
                   )}
                   
-                  {/* PIP Webcam Overlay - Bottom Right (above controls) */}
+                  {/* PIP Webcam Overlay - Bottom Right (above controls) - 10% larger */}
                   {sessionActive && (
-                    <div className="absolute bottom-32 right-6 z-20 w-40 h-[120px] lg:w-48 lg:h-[144px] shadow-2xl rounded-lg overflow-hidden">
-                      <WebcamPIP />
+                    <div className="absolute bottom-32 right-6 z-20 w-44 h-[132px] lg:w-[211px] lg:h-[158px] shadow-2xl rounded-lg overflow-hidden">
+                      <WebcamPIP ref={webcamPIPRef} />
                     </div>
                   )}
                   

@@ -66,12 +66,12 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
             </div>
           </div>
           <div>
-            <div className="text-sm font-medium text-white">{label}</div>
-            {subtitle && <div className="text-xs text-white/80">{subtitle}</div>}
+            <div className="text-sm font-medium text-white font-space">{label}</div>
+            {subtitle && <div className="text-xs text-white/80 font-space">{subtitle}</div>}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-white mb-0.5">{value}</div>
+          <div className="text-2xl font-bold text-white mb-0.5 font-space">{value}</div>
           {badge && (
             <Badge variant={badgeVariant} className="text-xs px-1.5 py-0.5">
               {badge}
@@ -94,7 +94,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
             )}
           </div>
           {progressLabel && (
-            <div className="flex justify-between text-xs text-white/80">
+            <div className="flex justify-between text-xs text-white/80 font-space">
               <span>You: {progress}%</span>
               <span>Ideal: 50-60%</span>
               <span>Them: {100 - progress}%</span>

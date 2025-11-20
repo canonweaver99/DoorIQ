@@ -1,12 +1,20 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useImperativeHandle } from 'react'
 import { Loader2, VideoOff, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface WebcamPIPProps {
   className?: string
+  onStreamReady?: (stream: MediaStream) => void
+}
+
+export interface WebcamPIPRef {
+  toggleCamera: () => void
+  toggleMic: () => void
+  isCameraOn: () => boolean
+  isMicOn: () => boolean
 }
 
 enum VideoConnectionState {
@@ -26,12 +34,14 @@ interface VideoError {
   canRetry: boolean
 }
 
-export function WebcamPIP({ className = '' }: WebcamPIPProps) {
+export const WebcamPIP = React.forwardRef<WebcamPIPRef, WebcamPIPProps>(({ className = '', onStreamReady }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [connectionState, setConnectionState] = useState<VideoConnectionState>(VideoConnectionState.IDLE)
   const [error, setError] = useState<VideoError | null>(null)
   const [retryCount, setRetryCount] = useState(0)
   const [isRetrying, setIsRetrying] = useState(false)
+  const [isCameraEnabled, setIsCameraEnabled] = useState(true)
+  const [isMicEnabled, setIsMicEnabled] = useState(true)
   const streamRef = useRef<MediaStream | null>(null)
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -130,14 +140,14 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
 
       setConnectionState(VideoConnectionState.CONNECTING)
 
-      // Request camera with simpler constraints
+      // Request camera and audio
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'user',
           width: { ideal: 640 },
           height: { ideal: 480 }
         },
-        audio: false
+        audio: true
       })
 
       // Clear timeout on success
@@ -147,6 +157,11 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
       }
 
       streamRef.current = stream
+      
+      // Notify parent that stream is ready
+      if (onStreamReady) {
+        onStreamReady(stream)
+      }
       
       // Video element should always be available now (always rendered)
       if (videoRef.current) {
@@ -335,6 +350,60 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
     setConnectionState(VideoConnectionState.IDLE)
   }
 
+  // Toggle camera on/off
+  const toggleCamera = () => {
+    if (streamRef.current) {
+      const videoTracks = streamRef.current.getVideoTracks()
+      if (videoTracks.length > 0) {
+        const newState = !videoTracks[0].enabled
+        videoTracks.forEach(track => {
+          track.enabled = newState
+        })
+        setIsCameraEnabled(newState)
+      }
+    }
+  }
+
+  // Toggle mic on/off
+  const toggleMic = () => {
+    if (streamRef.current) {
+      const audioTracks = streamRef.current.getAudioTracks()
+      if (audioTracks.length > 0) {
+        const newState = !audioTracks[0].enabled
+        audioTracks.forEach(track => {
+          track.enabled = newState
+        })
+        setIsMicEnabled(newState)
+      }
+    }
+  }
+
+  // Get camera state
+  const isCameraOn = () => {
+    if (streamRef.current) {
+      const videoTracks = streamRef.current.getVideoTracks()
+      return videoTracks.length > 0 && videoTracks[0].enabled
+    }
+    return false
+  }
+
+  // Get mic state
+  const isMicOn = () => {
+    if (streamRef.current) {
+      const audioTracks = streamRef.current.getAudioTracks()
+      return audioTracks.length > 0 && audioTracks[0].enabled
+    }
+    return false
+  }
+
+  // Expose methods via ref
+  useImperativeHandle(ref, () => ({
+    toggleCamera,
+    toggleMic,
+    isCameraOn,
+    isMicOn
+  }))
+
   // Always render video element so ref is always available
   const showVideo = connectionState === VideoConnectionState.CONNECTED
   const showLoading = connectionState === VideoConnectionState.CONNECTING || connectionState === VideoConnectionState.REQUESTING_PERMISSION
@@ -364,22 +433,22 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
       {showLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 rounded-xl p-6 min-h-[120px] z-20">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
-          <p className="text-gray-300 text-xs font-medium">Connecting camera...</p>
+          <p className="text-white text-xs font-medium font-space">Connecting camera...</p>
         </div>
       )}
 
       {/* Error overlay */}
       {showError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 rounded-xl p-4 min-h-[120px] z-20">
-          <VideoOff className="w-8 h-8 text-gray-500 mb-2" />
-          <p className="text-xs text-gray-400 text-center mb-3">{error.userMessage}</p>
+          <VideoOff className="w-8 h-8 text-white/60 mb-2" />
+          <p className="text-xs text-white text-center mb-3 font-space">{error.userMessage}</p>
           {error.canRetry && retryCount < maxRetries && (
             <Button 
               onClick={retryConnection} 
               disabled={isRetrying}
               size="sm"
               variant="outline"
-              className="w-full"
+              className="w-full font-space text-white"
             >
               <RefreshCw className={cn("w-3 h-3 mr-2", isRetrying && "animate-spin")} />
               {isRetrying ? 'Retrying...' : 'Try Again'}
@@ -391,8 +460,8 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
       {/* No camera overlay */}
       {showNoCamera && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 rounded-xl p-4 min-h-[120px] z-20">
-          <VideoOff className="w-8 h-8 text-gray-500 mb-2" />
-          <p className="text-xs text-gray-400 text-center">No camera</p>
+          <VideoOff className="w-8 h-8 text-white/60 mb-2" />
+          <p className="text-xs text-white text-center font-space">No camera</p>
         </div>
       )}
 
@@ -402,4 +471,6 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
       )}
     </div>
   )
-}
+})
+
+WebcamPIP.displayName = 'WebcamPIP'
