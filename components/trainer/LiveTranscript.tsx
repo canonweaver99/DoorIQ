@@ -95,7 +95,7 @@ export function LiveTranscript({ transcript, agentName }: LiveTranscriptProps) {
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-700/50 flex-shrink-0">
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-white flex items-center gap-2 font-space">
           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
           Live Transcript
         </h3>

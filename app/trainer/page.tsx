@@ -1171,7 +1171,7 @@ function TrainerPageContent() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
+      className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans"
     >
       <LastCreditWarningModal 
         isOpen={showLastCreditWarning} 
@@ -1194,7 +1194,7 @@ function TrainerPageContent() {
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-4 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-white font-space">
               {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
             </span>
           </div>
@@ -1382,19 +1382,19 @@ function TrainerPageContent() {
           </div>
 
           {/* RIGHT SIDE (50%) - Metrics, Feedback, Transcript */}
-          <div className="w-full lg:w-[50%] flex flex-col gap-6 overflow-hidden h-[40vh] lg:h-auto">
+          <div className="w-full lg:w-[50%] flex flex-col gap-0 overflow-hidden h-[40vh] lg:h-auto">
             {/* Metrics Panel (30% of right side) */}
-            <div className="h-[30%] min-h-[180px] flex-shrink-0">
+            <div className="h-[30%] min-h-[120px] flex-shrink-0 mb-0">
               <LiveMetricsPanel metrics={metrics} />
             </div>
             
             {/* Feedback Feed (40% of right side) */}
-            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0`}>
+            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 -mt-20`}>
               <LiveFeedbackFeed feedbackItems={feedbackItems} />
             </div>
             
-            {/* Transcript (30% of right side) */}
-            <div className={`${sessionActive ? 'h-[30%]' : 'h-[20%]'} min-h-[200px] flex-shrink-0`}>
+            {/* Transcript (40% of right side) */}
+            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 -mt-[104px]`}>
               <LiveTranscript transcript={transcript} agentName={selectedAgent?.name} />
             </div>
           </div>

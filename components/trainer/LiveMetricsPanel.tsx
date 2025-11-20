@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Mic, AlertTriangle, Sparkles } from 'lucide-react'
+import { Mic, AlertTriangle, Book } from 'lucide-react'
 import { LiveSessionMetrics } from '@/lib/trainer/types'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -55,25 +55,25 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group"
+        "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-2 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group"
       )}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={cn("p-3 rounded-xl transition-colors", classes.bg, classes.hover)}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className={cn("p-2 rounded-lg transition-colors", classes.bg, classes.hover)}>
             <div className={classes.icon}>
               {icon}
             </div>
           </div>
           <div>
-            <div className="text-sm font-medium text-gray-400">{label}</div>
-            {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
+            <div className="text-sm font-medium text-white">{label}</div>
+            {subtitle && <div className="text-xs text-white/80">{subtitle}</div>}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-4xl font-bold text-white mb-1">{value}</div>
+          <div className="text-2xl font-bold text-white mb-0.5">{value}</div>
           {badge && (
-            <Badge variant={badgeVariant} className="text-xs">
+            <Badge variant={badgeVariant} className="text-xs px-1.5 py-0.5">
               {badge}
             </Badge>
           )}
@@ -82,7 +82,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       
       {progress !== undefined && (
         <>
-          <div className="relative h-3 bg-slate-700/50 rounded-full overflow-hidden mb-2">
+          <div className="relative h-2 bg-slate-700/50 rounded-full overflow-hidden mb-1.5">
             <motion.div
               className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500", classes.progress)}
               initial={{ width: 0 }}
@@ -94,7 +94,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
             )}
           </div>
           {progressLabel && (
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs text-white/80">
               <span>You: {progress}%</span>
               <span>Ideal: 50-60%</span>
               <span>Them: {100 - progress}%</span>
@@ -125,39 +125,37 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
   const talkTimeStatus = getTalkTimeStatus()
 
   return (
-    <div className="space-y-4 h-full flex flex-col">
-      {/* Talk Time Card - Larger, more prominent */}
-      <div className="flex-1 min-h-0">
-        <MetricCard
-          icon={<Mic className="w-6 h-6" />}
-          label="Talk Time Ratio"
-          subtitle="You vs. Homeowner"
-          value={`${talkTimeRatio}%`}
-          color="blue"
-          badge={talkTimeStatus.badge}
-          badgeVariant={talkTimeStatus.variant}
-          progress={talkTimeRatio}
-          progressLabel="Talk time breakdown"
-        />
-      </div>
+    <div className="grid grid-cols-[2fr_1.5fr_1.5fr] gap-4 h-auto">
+      {/* Talk Time Card - Wider */}
+      <MetricCard
+        icon={<Mic className="w-5 h-5" />}
+        label="Talk Time Ratio"
+        subtitle="You vs. Homeowner"
+        value={`${talkTimeRatio}%`}
+        color="blue"
+        badge={talkTimeStatus.badge}
+        badgeVariant={talkTimeStatus.variant}
+        progress={talkTimeRatio}
+        progressLabel="Talk time breakdown"
+      />
       
-      {/* Objections & Techniques - Smaller cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <MetricCard
-          icon={<AlertTriangle className="w-5 h-5" />}
-          label="Objections"
-          subtitle="Detected"
-          value={objectionCount}
-          color="amber"
-        />
-        <MetricCard
-          icon={<Sparkles className="w-5 h-5" />}
-          label="Techniques"
-          subtitle="Used"
-          value={techniquesUsed.length}
-          color="emerald"
-        />
-      </div>
+      {/* Objections Card */}
+      <MetricCard
+        icon={<AlertTriangle className="w-5 h-5" />}
+        label="Objections"
+        subtitle="Detected"
+        value={objectionCount}
+        color="amber"
+      />
+      
+      {/* Techniques Card */}
+      <MetricCard
+        icon={<Book className="w-5 h-5" />}
+        label="Techniques"
+        subtitle="Used"
+        value={techniquesUsed.length}
+        color="emerald"
+      />
     </div>
   )
 }
