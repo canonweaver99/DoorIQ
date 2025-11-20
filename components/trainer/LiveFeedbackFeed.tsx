@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { FeedbackItem } from '@/lib/trainer/types'
 import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface LiveFeedbackFeedProps {
   feedbackItems: FeedbackItem[]
@@ -15,56 +16,74 @@ const getFeedbackConfig = (item: FeedbackItem) => {
     case 'objection_detected':
       return {
         icon: AlertCircle,
-        badgeVariant: 'secondary' as const,
-        badgeText: 'Objection',
-        bgColor: 'bg-yellow-500/10',
-        borderColor: 'border-l-yellow-500',
-        textColor: 'text-yellow-300'
+        badgeVariant: 'destructive' as const,
+        badgeText: 'OBJECTION',
+        gradientFrom: 'from-amber-500/10',
+        gradientTo: 'to-amber-600/5',
+        borderColor: 'border-amber-500/30',
+        accentGradient: 'from-amber-500 to-amber-600',
+        iconBg: 'bg-amber-500/20',
+        iconColor: 'text-amber-400'
       }
     case 'technique_used':
       return {
         icon: CheckCircle2,
         badgeVariant: 'default' as const,
-        badgeText: 'Technique',
-        bgColor: 'bg-green-500/10',
-        borderColor: 'border-l-green-500',
-        textColor: 'text-green-300'
+        badgeText: 'TECHNIQUE',
+        gradientFrom: 'from-emerald-500/10',
+        gradientTo: 'to-emerald-600/5',
+        borderColor: 'border-emerald-500/30',
+        accentGradient: 'from-emerald-500 to-emerald-600',
+        iconBg: 'bg-emerald-500/20',
+        iconColor: 'text-emerald-400'
       }
     case 'coaching_tip':
       return {
         icon: Lightbulb,
         badgeVariant: 'secondary' as const,
-        badgeText: 'Tip',
-        bgColor: 'bg-blue-500/10',
-        borderColor: 'border-l-blue-500',
-        textColor: 'text-blue-300'
+        badgeText: 'TIP',
+        gradientFrom: 'from-blue-500/10',
+        gradientTo: 'to-blue-600/5',
+        borderColor: 'border-blue-500/30',
+        accentGradient: 'from-blue-500 to-blue-600',
+        iconBg: 'bg-blue-500/20',
+        iconColor: 'text-blue-400'
       }
     case 'warning':
       return {
         icon: AlertTriangle,
         badgeVariant: 'destructive' as const,
-        badgeText: 'Warning',
-        bgColor: 'bg-red-500/10',
-        borderColor: 'border-l-red-500',
-        textColor: 'text-red-300'
+        badgeText: 'WARNING',
+        gradientFrom: 'from-rose-500/10',
+        gradientTo: 'to-rose-600/5',
+        borderColor: 'border-rose-500/30',
+        accentGradient: 'from-rose-500 to-rose-600',
+        iconBg: 'bg-rose-500/20',
+        iconColor: 'text-rose-400'
       }
     case 'voice_coaching':
       return {
         icon: Mic,
         badgeVariant: 'secondary' as const,
-        badgeText: 'Voice',
-        bgColor: 'bg-purple-500/10',
-        borderColor: 'border-l-purple-500',
-        textColor: 'text-purple-300'
+        badgeText: 'VOICE',
+        gradientFrom: 'from-purple-500/10',
+        gradientTo: 'to-purple-600/5',
+        borderColor: 'border-purple-500/30',
+        accentGradient: 'from-purple-500 to-purple-600',
+        iconBg: 'bg-purple-500/20',
+        iconColor: 'text-purple-400'
       }
     default:
       return {
         icon: AlertCircle,
         badgeVariant: 'secondary' as const,
-        badgeText: 'Info',
-        bgColor: 'bg-slate-500/10',
-        borderColor: 'border-l-slate-500',
-        textColor: 'text-slate-300'
+        badgeText: 'INFO',
+        gradientFrom: 'from-slate-500/10',
+        gradientTo: 'to-slate-600/5',
+        borderColor: 'border-slate-500/30',
+        accentGradient: 'from-slate-500 to-slate-600',
+        iconBg: 'bg-slate-500/20',
+        iconColor: 'text-slate-400'
       }
   }
 }
@@ -101,18 +120,44 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95, y: -10 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className={`p-4 rounded-lg border-l-4 ${config.bgColor} ${config.borderColor} mb-3 animate-fade-in`}
+      className={cn(
+        "relative bg-gradient-to-br rounded-xl p-5 border shadow-lg",
+        "transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl",
+        "animate-fade-in-up",
+        config.gradientFrom,
+        config.gradientTo,
+        config.borderColor
+      )}
     >
-      <div className="flex items-start gap-3">
-        <Icon className={`w-5 h-5 mt-0.5 ${config.textColor} flex-shrink-0`} />
+      {/* Accent line */}
+      <div className={cn(
+        "absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-gradient-to-b",
+        config.accentGradient
+      )} />
+      
+      <div className="flex items-start gap-3 ml-1">
+        {/* Icon */}
+        <div className={cn(
+          "p-2 rounded-lg flex-shrink-0",
+          config.iconBg
+        )}>
+          <Icon className={cn("w-5 h-5", config.iconColor)} />
+        </div>
+        
+        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant={config.badgeVariant} className="text-xs font-medium">
+            <Badge 
+              variant={config.badgeVariant}
+              className="text-xs font-medium"
+            >
               {config.badgeText}
             </Badge>
             <span className="text-xs text-gray-500">{formatTime(item.timestamp)}</span>
           </div>
-          <p className="text-sm text-gray-300 leading-relaxed">{item.message}</p>
+          <p className="text-sm text-gray-200 leading-relaxed">
+            {item.message}
+          </p>
         </div>
       </div>
     </motion.div>
@@ -168,7 +213,7 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
         </h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
         {deduplicatedItems.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-500 text-sm">
             <div className="text-center">
@@ -188,4 +233,3 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
     </div>
   )
 }
-

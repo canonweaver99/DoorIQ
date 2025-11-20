@@ -1189,23 +1189,25 @@ function TrainerPageContent() {
       />
 
       {/* Full Screen Session Container */}
-      <div className="relative w-full h-screen flex flex-col bg-black/40 backdrop-blur-sm overflow-hidden">
+      <div className="relative w-full h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-slate-700/50 flex-shrink-0 bg-black/20">
+        <div className="flex items-center justify-between px-8 py-4 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-sm font-semibold text-white">
-              Live Session - {selectedAgent?.name || 'Training'}
-            </span>
+            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
+              <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+              <span className="text-sm font-semibold text-white">
+                Live Session - {selectedAgent?.name || 'Training'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Main Content Area - 60/40 Split */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
+        {/* Main Content Area - 55/45 Split */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-6 p-6 lg:p-8">
           
-          {/* LEFT SIDE (60%) - Agent Video with PIP */}
-          <div className="w-full lg:w-[60%] relative bg-slate-900 overflow-hidden h-[60vh] lg:h-auto rounded-lg shadow-2xl">
+          {/* LEFT SIDE (55%) - Agent Video with PIP */}
+          <div className="w-full lg:w-[55%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl overflow-hidden shadow-2xl">
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -1216,82 +1218,115 @@ function TrainerPageContent() {
                 </div>
               ) : (
                 <div className="relative w-full h-full overflow-hidden">
-                  {(() => {
-                    const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
-                    
-                    if (shouldUseVideo) {
-                      const videoPaths = getAgentVideoPaths(selectedAgent?.name)
-                      if (!videoPaths) return null
+                  {/* Video container */}
+                  <div className="relative w-full h-full">
+                    {(() => {
+                      const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
                       
-                      const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
-                        ? videoPaths.closing
-                        : videoMode === 'opening' && videoPaths.opening
-                        ? videoPaths.opening
-                        : videoMode === 'loop'
-                        ? videoPaths.loop
-                        : videoPaths.closing
+                      if (shouldUseVideo) {
+                        const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                        if (!videoPaths) return null
+                        
+                        const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
+                          ? videoPaths.closing
+                          : videoMode === 'opening' && videoPaths.opening
+                          ? videoPaths.opening
+                          : videoMode === 'loop'
+                          ? videoPaths.loop
+                          : videoPaths.closing
+                        
+                        const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
+                          ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                          : videoSrcRaw
+                        
+                        return (
+                          <video
+                            key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
+                            ref={agentVideoRef}
+                            src={videoSrc}
+                            className="w-full h-full object-cover"
+                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                            autoPlay
+                            muted
+                            loop={videoMode === 'loop'}
+                            playsInline
+                            onLoadedData={() => {
+                              if (agentVideoRef.current) {
+                                console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
+                                agentVideoRef.current.play().catch((err) => {
+                                  console.warn('Video autoplay failed:', err)
+                                })
+                              }
+                            }}
+                            onCanPlay={() => {
+                              if (agentVideoRef.current && (showDoorCloseAnimation || videoMode === 'closing')) {
+                                console.log('🎬 Video can play, forcing play for closing animation')
+                                agentVideoRef.current.play().catch((err) => {
+                                  console.warn('Video force play failed:', err)
+                                })
+                              }
+                            }}
+                            onError={(e) => {
+                              console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
+                              e.stopPropagation()
+                            }}
+                          />
+                        )
+                      }
                       
-                      const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
-                        ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                        : videoSrcRaw
+                      const src = resolveAgentImage(selectedAgent, sessionActive)
+                      const imageSrc = src && (src.includes(' ') || src.includes('&'))
+                        ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                        : src
                       
-                      return (
-                        <video
-                          key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
-                          ref={agentVideoRef}
-                          src={videoSrc}
-                          className="w-full h-full object-cover"
+                      return imageSrc ? (
+                        <Image
+                          src={imageSrc}
+                          alt={selectedAgent?.name || 'Agent'}
+                          fill
+                          sizes="55vw"
+                          className="object-cover"
                           style={{ objectFit: 'cover', objectPosition: 'center center' }}
-                          autoPlay
-                          muted
-                          loop={videoMode === 'loop'}
-                          playsInline
-                          onLoadedData={() => {
-                            if (agentVideoRef.current) {
-                              console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
-                              agentVideoRef.current.play().catch((err) => {
-                                console.warn('Video autoplay failed:', err)
-                              })
-                            }
-                          }}
-                          onCanPlay={() => {
-                            if (agentVideoRef.current && (showDoorCloseAnimation || videoMode === 'closing')) {
-                              console.log('🎬 Video can play, forcing play for closing animation')
-                              agentVideoRef.current.play().catch((err) => {
-                                console.warn('Video force play failed:', err)
-                              })
-                            }
-                          }}
+                          priority
+                          unoptimized={src?.includes(' ') || src?.includes('&')}
                           onError={(e) => {
-                            console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
+                            console.error('❌ Image failed to load:', src, 'Encoded:', imageSrc)
                             e.stopPropagation()
                           }}
                         />
-                      )
-                    }
+                      ) : null
+                    })()}
                     
-                    const src = resolveAgentImage(selectedAgent, sessionActive)
-                    const imageSrc = src && (src.includes(' ') || src.includes('&'))
-                      ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                      : src
+                    {/* Overlay info - Live indicator and timer */}
+                    {sessionActive && (
+                      <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
+                        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
+                          <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+                          <span className="text-white text-sm font-medium">LIVE</span>
+                          <span className="text-gray-300 text-sm">{formatDuration(duration)}</span>
+                        </div>
+                      </div>
+                    )}
                     
-                    return imageSrc ? (
-                      <Image
-                        src={imageSrc}
-                        alt={selectedAgent?.name || 'Agent'}
-                        fill
-                        sizes="60vw"
-                        className="object-cover"
-                        style={{ objectFit: 'cover', objectPosition: 'center center' }}
-                        priority
-                        unoptimized={src?.includes(' ') || src?.includes('&')}
-                        onError={(e) => {
-                          console.error('❌ Image failed to load:', src, 'Encoded:', imageSrc)
-                          e.stopPropagation()
-                        }}
-                      />
-                    ) : null
-                  })()}
+                    {/* Persona badge */}
+                    {sessionActive && selectedAgent && (
+                      <div className="absolute top-6 right-6 z-10">
+                        <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
+                          <span className="text-white text-sm font-medium">{selectedAgent.name}</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Session progress bar */}
+                    {sessionActive && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-10">
+                        <div 
+                          className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000"
+                          style={{ width: `${Math.min((duration / 900) * 100, 100)}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Door Opening Video Overlay */}
                   {showDoorOpeningVideo && (() => {
@@ -1338,7 +1373,7 @@ function TrainerPageContent() {
                   
                   {/* PIP Webcam Overlay - Bottom Right */}
                   {sessionActive && (
-                    <div className="absolute bottom-24 right-4 z-20 w-32 h-24 lg:w-40 lg:h-30 shadow-lg">
+                    <div className="absolute bottom-24 right-6 z-20 w-40 h-30 lg:w-48 lg:h-36 shadow-2xl rounded-lg overflow-hidden">
                       <WebcamPIP />
                     </div>
                   )}
@@ -1360,20 +1395,20 @@ function TrainerPageContent() {
             </div>
           </div>
 
-          {/* RIGHT SIDE (40%) - Metrics, Feedback, Transcript */}
-          <div className="w-full lg:w-[40%] flex flex-col border-t lg:border-t-0 lg:border-l border-slate-700/50 bg-gradient-to-b from-slate-950/50 to-slate-900/50 overflow-hidden h-[40vh] lg:h-auto">
-            {/* Metrics Panel (25% of right side) */}
-            <div className="h-[25%] min-h-[120px] p-6 border-b border-slate-700/50 flex-shrink-0">
+          {/* RIGHT SIDE (45%) - Metrics, Feedback, Transcript */}
+          <div className="w-full lg:w-[45%] flex flex-col gap-6 overflow-hidden h-[40vh] lg:h-auto">
+            {/* Metrics Panel (30% of right side) */}
+            <div className="h-[30%] min-h-[180px] flex-shrink-0">
               <LiveMetricsPanel metrics={metrics} />
             </div>
             
-            {/* Feedback Feed (50% of right side) */}
-            <div className={`${sessionActive ? 'h-[50%]' : 'h-[75%]'} min-h-[250px] p-6 border-b border-slate-700/50 flex-shrink-0`}>
+            {/* Feedback Feed (40% of right side) */}
+            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0`}>
               <LiveFeedbackFeed feedbackItems={feedbackItems} />
             </div>
             
-            {/* Transcript (25% of right side) */}
-            <div className={`${sessionActive ? 'h-[25%]' : 'h-[25%]'} min-h-[120px] p-6 flex-shrink-0`}>
+            {/* Transcript (30% of right side) */}
+            <div className={`${sessionActive ? 'h-[30%]' : 'h-[20%]'} min-h-[200px] flex-shrink-0`}>
               <LiveTranscript transcript={transcript} agentName={selectedAgent?.name} />
             </div>
           </div>
@@ -1411,8 +1446,21 @@ function TrainerPageContent() {
             transform: translateY(0);
           }
         }
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         .animate-fade-in {
           animation: fadeIn 0.3s ease-out;
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.3s ease-out;
         }
         @keyframes shimmer {
           0% {
@@ -1424,6 +1472,20 @@ function TrainerPageContent() {
         }
         .animate-shimmer {
           animation: shimmer 1.5s ease-in-out infinite;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(15, 23, 42, 0.5);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.3);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(148, 163, 184, 0.5);
         }
         * {
           transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { Copy, Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface LiveTranscriptProps {
   transcript: TranscriptEntry[]
@@ -38,35 +39,44 @@ function TranscriptMessage({ entry, agentName }: { entry: TranscriptEntry; agent
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}
+      className={cn(
+        "flex gap-3 p-3 rounded-xl transition-colors group",
+        isUser ? "bg-blue-900/20" : "bg-slate-800/40"
+      )}
     >
-      <div
-        className={`max-w-[85%] rounded-lg px-4 py-2.5 ${
-          isUser
-            ? 'bg-indigo-600 text-white'
-            : 'bg-slate-700/80 text-slate-100'
-        }`}
-      >
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold opacity-80">
-              {isUser ? 'Rep' : agentName || 'Homeowner'}:
-            </span>
-            <span className="text-xs opacity-60">{formatTime(entry.timestamp)}</span>
-          </div>
+      {/* Avatar */}
+      <div className={cn(
+        "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold",
+        isUser ? "bg-blue-600 text-white" : "bg-slate-700 text-gray-300"
+      )}>
+        {isUser ? 'You' : (agentName ? agentName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'AH')}
+      </div>
+      
+      {/* Message */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className={cn(
+            "text-xs font-medium",
+            isUser ? "text-blue-400" : "text-gray-400"
+          )}>
+            {isUser ? 'You' : agentName || 'Homeowner'}
+          </span>
+          <span className="text-xs text-gray-600">{formatTime(entry.timestamp)}</span>
           <button
             onClick={handleCopy}
-            className="opacity-60 hover:opacity-100 transition-opacity p-1 rounded"
+            className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-700/50"
             aria-label="Copy message"
           >
             {copied ? (
-              <Check className="w-3 h-3" />
+              <Check className="w-3 h-3 text-green-400" />
             ) : (
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3 h-3 text-gray-500" />
             )}
           </button>
         </div>
-        <p className="text-sm leading-relaxed break-words">{entry.text}</p>
+        <p className="text-sm text-gray-300 leading-relaxed break-words">
+          {entry.text}
+        </p>
       </div>
     </motion.div>
   )
@@ -91,7 +101,7 @@ export function LiveTranscript({ transcript, agentName }: LiveTranscriptProps) {
         </h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2 max-h-[300px]">
         {transcript.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-500 text-sm">
             <div className="text-center">
@@ -110,4 +120,3 @@ export function LiveTranscript({ transcript, agentName }: LiveTranscriptProps) {
     </div>
   )
 }
-
