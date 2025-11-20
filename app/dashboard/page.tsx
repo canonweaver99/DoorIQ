@@ -28,7 +28,6 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
-import { useSubscription } from '@/hooks/useSubscription'
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
@@ -114,7 +113,6 @@ export default function DashboardPage() {
 
 function DashboardPageContent() {
   const searchParams = useSearchParams()
-  const subscription = useSubscription()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeTab, setActiveTab] = useState('overview')
   const [userName, setUserName] = useState('')
@@ -127,8 +125,6 @@ function DashboardPageContent() {
   })
   const [recentSessions, setRecentSessions] = useState<any[]>([])
   const [hasTeam, setHasTeam] = useState(false)
-  
-  const isPaidUser = subscription.hasActiveSubscription
 
   // Load tab from URL params or localStorage
   useEffect(() => {

@@ -1008,10 +1008,6 @@ function PricingPageContent() {
                           <Shield className="w-4 h-4 text-emerald-500" />
                           <span>Cancel anytime</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-white font-sans">
-                          <span>Secure payment via</span>
-                          <span className="font-semibold text-white">Stripe</span>
-                        </div>
                 </div>
               </div>
             </motion.div>

@@ -136,19 +136,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         .eq('is_active', true)
         .order('created_at', { ascending: true })
       
-      // Check subscription status
-      let hasActiveSubscription = false
-      if (user) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('subscription_status, trial_ends_at')
-          .eq('id', user.id)
-          .single()
-        
-        const status = userData?.subscription_status
-        const isTrialing = status === 'trialing' && userData?.trial_ends_at && new Date(userData.trial_ends_at) > new Date()
-        hasActiveSubscription = status === 'active' || isTrialing
-      }
+      // Stripe/billing removed - no subscription checks needed
       
       // Fetch user's sessions for stats
       let sessions: any[] = []

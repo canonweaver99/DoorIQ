@@ -7,7 +7,7 @@ import Image from 'next/image'
 import dynamicImport from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
-import { useSubscription, useSessionLimit } from '@/hooks/useSubscription'
+import { useSessionLimit } from '@/hooks/useSubscription'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -18,7 +18,6 @@ const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>
 })
 const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
-const PaywallModal = dynamicImport(() => import('@/components/subscription').then(mod => ({ default: mod.PaywallModal })), { ssr: false })
 const LastCreditWarningModal = dynamicImport(() => import('@/components/ui/LastCreditWarningModal').then(mod => ({ default: mod.LastCreditWarningModal })), { ssr: false })
 const OutOfCreditsModal = dynamicImport(() => import('@/components/ui/OutOfCreditsModal').then(mod => ({ default: mod.OutOfCreditsModal })), { ssr: false })
 
@@ -100,7 +99,6 @@ function TrainerPageContent() {
   const [loading, setLoading] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [conversationToken, setConversationToken] = useState<string | null>(null)
-  const [showPaywall, setShowPaywall] = useState(false)
   const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
   const [showOutOfCredits, setShowOutOfCredits] = useState(false)
   const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
@@ -227,7 +225,6 @@ function TrainerPageContent() {
   const signedUrlAbortRef = useRef<AbortController | null>(null)
   const agentVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for Tanya & Tom video element
   
-  const subscription = useSubscription()
   const sessionLimit = useSessionLimit()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -281,38 +278,92 @@ function TrainerPageContent() {
       } else if (videoMode === 'closing' || showDoorCloseAnimation) {
         // Play closing door animation (used when ending session)
         console.log('🎬 Playing closing door animation (triggered by:', showDoorCloseAnimation ? 'showDoorCloseAnimation state' : 'videoMode', ')')
+        console.log('🎬 Video state:', {
+          readyState: video.readyState,
+          paused: video.paused,
+          currentSrc: video.currentSrc,
+          src: video.src
+        })
+        
+        // Force video to load if not already loaded
+        if (video.readyState === 0) {
+          video.load()
+        }
         
         // Ensure video is loaded and ready
         const handleCanPlay = () => {
           console.log('🎬 Closing video can play, starting playback')
-          video.play().catch((err) => {
-            console.error('❌ Failed to play closing door animation:', err)
-          })
+          const playPromise = video.play()
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('✅ Closing video started playing')
+              })
+              .catch((err) => {
+                console.error('❌ Failed to play closing door animation:', err)
+                // Retry after a short delay
+                setTimeout(() => {
+                  video.play().catch((retryErr) => {
+                    console.error('❌ Retry failed:', retryErr)
+                  })
+                }, 500)
+              })
+          }
           video.removeEventListener('canplay', handleCanPlay)
         }
         
         // If video is already ready, play immediately
         if (video.readyState >= 3) { // HAVE_FUTURE_DATA or higher
-          video.play().catch((err) => {
-            console.error('❌ Failed to play closing door animation:', err)
-          })
+          console.log('🎬 Video already ready, playing immediately')
+          const playPromise = video.play()
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('✅ Closing video started playing (immediate)')
+              })
+              .catch((err) => {
+                console.error('❌ Failed to play closing door animation (immediate):', err)
+                // Retry after a short delay
+                setTimeout(() => {
+                  video.play().catch((retryErr) => {
+                    console.error('❌ Retry failed:', retryErr)
+                  })
+                }, 500)
+              })
+          }
         } else {
+          console.log('🎬 Video not ready yet, waiting for canplay event')
           video.addEventListener('canplay', handleCanPlay)
         }
         
         // Also try to play on loadeddata as backup
         const handleLoadedData = () => {
           console.log('🎬 Closing video loaded, ensuring playback')
-          video.play().catch((err) => {
-            console.error('❌ Failed to play closing door animation (loadeddata):', err)
-          })
+          const playPromise = video.play()
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('✅ Closing video started playing (loadeddata)')
+              })
+              .catch((err) => {
+                console.error('❌ Failed to play closing door animation (loadeddata):', err)
+              })
+          }
           video.removeEventListener('loadeddata', handleLoadedData)
         }
         video.addEventListener('loadeddata', handleLoadedData)
         
+        // Also listen for play event to confirm it started
+        const handlePlay = () => {
+          console.log('✅ Closing video is now playing')
+          video.removeEventListener('play', handlePlay)
+        }
+        video.addEventListener('play', handlePlay)
+        
         return () => {
           video.removeEventListener('canplay', handleCanPlay)
           video.removeEventListener('loadeddata', handleLoadedData)
+          video.removeEventListener('play', handlePlay)
         }
       } else if (videoMode === 'loop') {
         // Track when loop video starts and its duration
@@ -478,7 +529,7 @@ function TrainerPageContent() {
           return
         }
 
-      if (!subscription.hasActiveSubscription && !sessionLimit.loading && !skipCreditCheck) {
+      if (!sessionLimit.loading && !skipCreditCheck) {
         if (!sessionLimit.canStartSession) {
           setShowOutOfCredits(true)
           setLoading(false)
@@ -970,8 +1021,9 @@ function TrainerPageContent() {
       sessionId
     })
     
-    // Set session inactive before ending
-    setSessionActive(false)
+    // IMPORTANT: Don't set sessionActive to false until AFTER the closing video has played
+    // This ensures the video element stays mounted and can play the closing animation
+    // The video will be hidden/unmounted when endSession is called
     
     // End the session after door closing sequence completes
     // Pass transcript explicitly to avoid closure issues
@@ -979,6 +1031,12 @@ function TrainerPageContent() {
     endSession(reason).catch((error) => {
       console.error('❌ Error in endSession from handleDoorClosingSequence:', error)
     })
+    
+    // Set session inactive AFTER endSession is called (which will handle cleanup)
+    // This ensures the closing video can finish playing
+    setTimeout(() => {
+      setSessionActive(false)
+    }, 100)
   }, [selectedAgent?.name, videoMode, endSession, sessionId])
   
   // Listen for agent disconnect events to trigger auto end and grade
@@ -1054,11 +1112,6 @@ function TrainerPageContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <PaywallModal
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        reason="session_limit"
-      />
       <LastCreditWarningModal 
         isOpen={showLastCreditWarning} 
         onClose={() => setShowLastCreditWarning(false)}

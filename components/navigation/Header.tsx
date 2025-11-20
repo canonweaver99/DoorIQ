@@ -361,8 +361,7 @@ function HeaderContent() {
           // Archived: { name: 'Documentation', href: '/documentation', icon: BookOpen },
           // Archived: { name: 'Help Center', href: '/support', icon: HelpCircle },
           // Archived: { name: 'Notifications', href: '/notifications', icon: Bell },
-          { name: 'Settings', href: '/billing?tab=settings', icon: SettingsIcon },
-          { name: 'Billing', href: '/billing', icon: CreditCard },
+          { name: 'Settings', href: '/settings', icon: SettingsIcon },
         ],
       },
     ]
@@ -392,8 +391,7 @@ function HeaderContent() {
       // Archived: { name: 'Support', href: '/support', icon: LifeBuoy },
       // Archived: { name: 'Integrations', href: '/integrations', icon: Plug },
       // Archived: { name: 'Notifications', href: '/notifications', icon: Bell },
-      { name: 'Settings', href: '/billing?tab=settings', icon: SettingsIcon },
-      { name: 'Billing', href: '/billing', icon: CreditCard },
+      { name: 'Settings', href: '/settings', icon: SettingsIcon },
       { name: 'User Profile', href: '/profile', icon: UserCircle },
     ]
 
@@ -882,7 +880,7 @@ function HeaderContent() {
                             <p className="mt-[2px] text-base sm:text-lg font-semibold text-foreground font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                           </div>
                           <button
-                            onClick={() => router.push('/billing?tab=settings')}
+                            onClick={() => router.push('/settings')}
                             className="inline-flex items-center gap-[5px] rounded-full border border-border/20 dark:border-white/10 bg-background/50 dark:bg-white/5 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-foreground/80 dark:text-slate-200 hover:bg-background dark:hover:bg-white/10 transition font-space"
                           >
                             Manage Account

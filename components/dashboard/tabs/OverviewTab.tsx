@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { useSessionLimit, useSubscription } from '@/hooks/useSubscription'
+import { useSessionLimit } from '@/hooks/useSubscription'
 
 type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
@@ -29,7 +29,6 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
   const [sessions, setSessions] = useState<LiveSession[]>([])
   const [realMetrics, setRealMetrics] = useState(metrics)
   const sessionLimit = useSessionLimit()
-  const subscription = useSubscription()
 
   useEffect(() => {
     fetchRealData()
@@ -116,8 +115,8 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
       transition={{ duration: 0.3 }}
       className="space-y-6 pb-24"
     >
-      {/* Free User Credits Banner */}
-      {!subscription.hasActiveSubscription && !sessionLimit.loading && (
+      {/* Credits Banner */}
+      {!sessionLimit.loading && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}

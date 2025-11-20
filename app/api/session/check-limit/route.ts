@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { checkSessionLimit, getUserSubscription } from '@/lib/subscription/feature-access'
+import { checkSessionLimit } from '@/lib/subscription/feature-access'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,16 +12,15 @@ export async function GET(request: NextRequest) {
     }
 
     const sessionInfo = await checkSessionLimit(user.id)
-    const subscription = await getUserSubscription(user.id)
 
     return NextResponse.json({
       ...sessionInfo,
       subscription: {
-        status: subscription.status,
-        hasActiveSubscription: subscription.hasActiveSubscription,
-        isTrialing: subscription.isTrialing,
-        daysRemainingInTrial: subscription.daysRemainingInTrial,
-        trialEndsAt: subscription.trialEndsAt
+        status: 'none',
+        hasActiveSubscription: false,
+        isTrialing: false,
+        daysRemainingInTrial: null,
+        trialEndsAt: null
       }
     })
   } catch (error: any) {
