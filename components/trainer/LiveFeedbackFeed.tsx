@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { FeedbackItem } from '@/lib/trainer/types'
 import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp } from 'lucide-react'
@@ -148,7 +148,7 @@ const getFeedbackConfig = (item: FeedbackItem) => {
   }
 }
 
-function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDismiss?: (id: string) => void }) {
+function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
   const config = getFeedbackConfig(item)
   const Icon = config.icon
   
@@ -164,19 +164,15 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
     return `${hours}h ago`
   }
 
-  // Auto-dismiss disabled - cards should persist and scroll
-  // Removed auto-dismiss to allow cards to scroll through like transcript
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95, y: -10 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      exit={{ opacity: 0, scale: 0.9, y: -20 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        "relative bg-gradient-to-br rounded-lg p-3 border shadow-lg",
-        "transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl",
-        "animate-fade-in-up",
+        "relative bg-gradient-to-br rounded-lg p-3 border shadow-xl w-full",
+        "transform transition-all duration-300",
         config.gradientFrom,
         config.gradientTo,
         config.borderColor
@@ -218,20 +214,21 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
 }
 
 export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
-  const feedEndRef = useRef<HTMLDivElement>(null)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const [dismissedItems, setDismissedItems] = useState<Set<string>>(new Set())
   const lastMessageRef = useRef<Map<string, number>>(new Map())
+  const [currentItem, setCurrentItem] = useState<FeedbackItem | null>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Deduplication: prevent same message within 30 seconds
-  const deduplicatedItems = useMemo(() => {
-    const now = Date.now()
-    const filtered: FeedbackItem[] = []
+  // Get the most recent feedback item (one at a time, no scrolling)
+  const latestItem = useMemo(() => {
+    if (feedbackItems.length === 0) return null
     
-    for (const item of feedbackItems) {
-      // Skip dismissed items
-      if (dismissedItems.has(item.id)) continue
-      
+    const now = Date.now()
+    // Get the most recent item that hasn't been shown recently
+    const sortedItems = [...feedbackItems].sort((a, b) => 
+      b.timestamp.getTime() - a.timestamp.getTime()
+    )
+    
+    for (const item of sortedItems) {
       // Check for duplicate messages within 30 seconds
       const messageKey = item.message.toLowerCase().trim()
       const lastTime = lastMessageRef.current.get(messageKey)
@@ -241,32 +238,36 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
       }
       
       lastMessageRef.current.set(messageKey, now)
-      filtered.push(item)
+      return item
     }
     
-    return filtered
-  }, [feedbackItems, dismissedItems])
+    // If all are duplicates, return the most recent one anyway
+    return sortedItems[0] || null
+  }, [feedbackItems])
 
-  const handleDismiss = (id: string) => {
-    setDismissedItems(prev => new Set(prev).add(id))
-  }
-
-  // Auto-scroll to bottom when new items are added - only scroll within container
+  // Update current item when a new one arrives
   useEffect(() => {
-    if (scrollContainerRef.current && feedEndRef.current) {
-      // Only scroll if user hasn't manually scrolled up
-      const container = scrollContainerRef.current
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100
+    if (latestItem && latestItem.id !== currentItem?.id) {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
       
-      if (isNearBottom) {
-        // Use scrollTo instead of scrollIntoView to avoid scrolling the page
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth'
-        })
+      // Set the new item
+      setCurrentItem(latestItem)
+      
+      // Auto-dismiss after 8 seconds (or keep showing until new one arrives)
+      timeoutRef.current = setTimeout(() => {
+        setCurrentItem(null)
+      }, 8000)
+    }
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
       }
     }
-  }, [deduplicatedItems])
+  }, [latestItem, currentItem])
 
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg overflow-hidden">
@@ -277,25 +278,25 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
         </h3>
       </div>
       
-      <div 
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-3 custom-scrollbar space-y-2 min-h-0"
-      >
-        {deduplicatedItems.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-white/60 text-sm font-space">
-            <div className="text-center">
-              <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>Waiting for feedback...</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {deduplicatedItems.map((item) => (
-              <FeedbackItemComponent key={item.id} item={item} onDismiss={handleDismiss} />
-            ))}
-          </>
-        )}
-        <div ref={feedEndRef} />
+      <div className="flex-1 overflow-hidden p-3 flex items-center justify-center min-h-0">
+        <AnimatePresence mode="wait">
+          {currentItem ? (
+            <FeedbackItemComponent key={currentItem.id} item={currentItem} />
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-center h-full text-white/60 text-sm font-space"
+            >
+              <div className="text-center">
+                <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>Waiting for feedback...</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

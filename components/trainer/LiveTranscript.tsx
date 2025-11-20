@@ -119,22 +119,20 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom when new messages arrive - only scroll within container
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollContainerRef.current && transcriptEndRef.current) {
-      // Only scroll if user hasn't manually scrolled up
       const container = scrollContainerRef.current
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100
-      
-      if (isNearBottom) {
-        // Use scrollTop instead of scrollIntoView to avoid scrolling the page
+      // Always scroll to bottom when new transcript entries are added
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
         container.scrollTo({
           top: container.scrollHeight,
           behavior: 'smooth'
         })
-      }
+      })
     }
-  }, [transcript])
+  }, [transcript.length])
 
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg overflow-hidden">
@@ -147,7 +145,8 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
       
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2 max-h-[300px]"
+        className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2"
+        style={{ maxHeight: '300px' }}
       >
         {transcript.length === 0 ? (
           <div className="flex items-center justify-center h-full text-white/60 text-sm font-space">
