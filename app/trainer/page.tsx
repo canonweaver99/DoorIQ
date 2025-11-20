@@ -1194,20 +1194,17 @@ function TrainerPageContent() {
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-4 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
-              <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
-              <span className="text-sm font-semibold text-white">
-                Live Session - {selectedAgent?.name || 'Training'}
-              </span>
-            </div>
+            <span className="text-sm font-semibold text-white">
+              {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
+            </span>
           </div>
         </div>
 
-        {/* Main Content Area - 55/45 Split */}
+        {/* Main Content Area - 50/50 Split */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-6 p-6 lg:p-8">
           
-          {/* LEFT SIDE (55%) - Agent Video with PIP */}
-          <div className="w-full lg:w-[55%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+          {/* LEFT SIDE (50%) - Agent Video with PIP */}
+          <div className="w-full lg:w-[50%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl overflow-hidden shadow-2xl">
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -1284,7 +1281,7 @@ function TrainerPageContent() {
                           src={imageSrc}
                           alt={selectedAgent?.name || 'Agent'}
                           fill
-                          sizes="55vw"
+                          sizes="50vw"
                           className="object-cover"
                           style={{ objectFit: 'cover', objectPosition: 'center center' }}
                           priority
@@ -1297,20 +1294,9 @@ function TrainerPageContent() {
                       ) : null
                     })()}
                     
-                    {/* Overlay info - Live indicator and timer */}
-                    {sessionActive && (
-                      <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
-                        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
-                          <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
-                          <span className="text-white text-sm font-medium">LIVE</span>
-                          <span className="text-gray-300 text-sm">{formatDuration(duration)}</span>
-                        </div>
-                      </div>
-                    )}
-                    
                     {/* Persona badge */}
                     {sessionActive && selectedAgent && (
-                      <div className="absolute top-6 right-6 z-10">
+                      <div className="absolute top-6 left-6 z-10">
                         <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
                           <span className="text-white text-sm font-medium">{selectedAgent.name}</span>
                         </div>
@@ -1371,9 +1357,9 @@ function TrainerPageContent() {
                     </div>
                   )}
                   
-                  {/* PIP Webcam Overlay - Bottom Right */}
+                  {/* PIP Webcam Overlay - Bottom Right (above controls) */}
                   {sessionActive && (
-                    <div className="absolute bottom-24 right-6 z-20 w-40 h-30 lg:w-48 lg:h-36 shadow-2xl rounded-lg overflow-hidden">
+                    <div className="absolute bottom-32 right-6 z-20 w-40 h-30 lg:w-48 lg:h-36 shadow-2xl rounded-lg overflow-hidden">
                       <WebcamPIP />
                     </div>
                   )}
@@ -1395,8 +1381,8 @@ function TrainerPageContent() {
             </div>
           </div>
 
-          {/* RIGHT SIDE (45%) - Metrics, Feedback, Transcript */}
-          <div className="w-full lg:w-[45%] flex flex-col gap-6 overflow-hidden h-[40vh] lg:h-auto">
+          {/* RIGHT SIDE (50%) - Metrics, Feedback, Transcript */}
+          <div className="w-full lg:w-[50%] flex flex-col gap-6 overflow-hidden h-[40vh] lg:h-auto">
             {/* Metrics Panel (30% of right side) */}
             <div className="h-[30%] min-h-[180px] flex-shrink-0">
               <LiveMetricsPanel metrics={metrics} />

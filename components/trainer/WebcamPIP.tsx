@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { CameraOff, Loader2, VideoOff, AlertCircle, RefreshCw, HelpCircle } from 'lucide-react'
+import { Loader2, VideoOff, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -37,60 +37,6 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const maxRetries = 3
 
-  // Check if camera exists before requesting
-  const checkCameraAvailability = async (): Promise<boolean> => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevices = devices.filter(device => device.kind === 'videoinput')
-      return videoDevices.length > 0
-    } catch (err) {
-      console.error('Error checking camera availability:', err)
-      return false
-    }
-  }
-
-  const getDetailedHelpText = (errorType: VideoError['type']): string => {
-    switch (errorType) {
-      case 'permission':
-        return 'Click the camera icon in your browser\'s address bar and allow camera access, then click "Try Again".'
-      case 'not_found':
-        return 'Please connect a camera to your device and refresh the page.'
-      case 'not_readable':
-        return 'Another application is using your camera. Close other apps (Zoom, Teams, etc.) and try again.'
-      case 'overconstrained':
-        return 'Your camera doesn\'t meet the required specifications. Try using a different camera.'
-      default:
-        return 'Please check your camera connection and browser permissions.'
-    }
-  }
-
-  const troubleshootCamera = () => {
-    const helpText = `
-Camera Troubleshooting Guide:
-
-1. Check Browser Permissions:
-   - Look for a camera icon in your browser's address bar
-   - Click it and select "Allow" for camera access
-
-2. Check Other Applications:
-   - Close any video conferencing apps (Zoom, Teams, Skype)
-   - Close any other browser tabs using the camera
-
-3. Check Camera Hardware:
-   - Ensure your camera is connected and powered on
-   - Try unplugging and reconnecting USB cameras
-   - Restart your device if issues persist
-
-4. Browser Settings:
-   - Chrome: Settings > Privacy and security > Site settings > Camera
-   - Firefox: Preferences > Privacy & Security > Permissions > Camera
-   - Safari: Preferences > Websites > Camera
-
-5. Try a Different Browser:
-   - Some browsers handle camera permissions differently
-    `
-    alert(helpText)
-  }
 
   const handleError = (err: any): VideoError => {
     let error: VideoError
@@ -151,22 +97,15 @@ Camera Troubleshooting Guide:
       retryTimeoutRef.current = null
     }
 
+    // Stop any existing stream first
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+
     try {
       setError(null)
       setIsRetrying(false)
-
-      // Check if camera exists first
-      const hasCamera = await checkCameraAvailability()
-      if (!hasCamera) {
-        setConnectionState(VideoConnectionState.NO_CAMERA)
-        setError({
-          type: 'not_found',
-          message: 'No camera devices found',
-          userMessage: 'No camera detected',
-          canRetry: true
-        })
-        return
-      }
 
       setConnectionState(VideoConnectionState.REQUESTING_PERMISSION)
 
@@ -186,16 +125,12 @@ Camera Troubleshooting Guide:
 
       setConnectionState(VideoConnectionState.CONNECTING)
 
-      // Request camera with constraints
+      // Request camera with simpler constraints
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          frameRate: { ideal: 30 },
-          facingMode: 'user',
-          aspectRatio: { ideal: 16/9 }
+          facingMode: 'user'
         },
-        audio: false // No audio needed for PIP
+        audio: false
       })
 
       // Clear timeout on success
@@ -219,18 +154,18 @@ Camera Troubleshooting Guide:
 
           const handleCanPlay = () => {
             video.removeEventListener('canplay', handleCanPlay)
-            video.removeEventListener('error', handleError)
+            video.removeEventListener('error', handleVideoError)
             resolve()
           }
 
-          const handleError = () => {
+          const handleVideoError = () => {
             video.removeEventListener('canplay', handleCanPlay)
-            video.removeEventListener('error', handleError)
+            video.removeEventListener('error', handleVideoError)
             reject(new Error('Video failed to load'))
           }
 
           video.addEventListener('canplay', handleCanPlay)
-          video.addEventListener('error', handleError)
+          video.addEventListener('error', handleVideoError)
           
           video.play().catch(reject)
         })
@@ -275,17 +210,9 @@ Camera Troubleshooting Guide:
     }, 1000)
   }
 
-  const continueWithoutCamera = () => {
-    setConnectionState(VideoConnectionState.NO_CAMERA)
-    setError({
-      type: 'not_found',
-      message: 'Continuing without camera',
-      userMessage: 'Session will continue without video',
-      canRetry: true
-    })
-  }
 
   useEffect(() => {
+    // Start webcam on mount
     startWebcam()
 
     return () => {
@@ -297,6 +224,7 @@ Camera Troubleshooting Guide:
         clearTimeout(retryTimeoutRef.current)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Monitor stream health
@@ -341,55 +269,33 @@ Camera Troubleshooting Guide:
   if (connectionState === VideoConnectionState.CONNECTING || connectionState === VideoConnectionState.REQUESTING_PERMISSION) {
     return (
       <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900", className)}>
-        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-8 min-h-[120px]">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4" />
-          <p className="text-gray-300 text-sm font-medium">Connecting to your camera...</p>
-          <p className="text-xs text-gray-500 mt-2">This usually takes 2-3 seconds</p>
+        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-6 min-h-[120px]">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+          <p className="text-gray-300 text-xs font-medium">Connecting camera...</p>
         </div>
       </div>
     )
   }
 
-  // Error states
+  // Error states - simplified
   if (error && connectionState !== VideoConnectionState.CONNECTED) {
     return (
       <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900", className)}>
-        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-6 min-h-[120px]">
-          <AlertCircle className="w-16 h-16 text-rose-500 mb-4" />
-          <p className="text-lg font-semibold text-white mb-2 text-center">{error.userMessage}</p>
-          <p className="text-sm text-gray-400 text-center mb-6 max-w-md leading-relaxed">
-            {getDetailedHelpText(error.type)}
-          </p>
-          <div className="flex flex-col gap-2 w-full max-w-xs">
-            {error.canRetry && retryCount < maxRetries && (
-              <Button 
-                onClick={retryConnection} 
-                disabled={isRetrying}
-                className="w-full"
-                variant="default"
-              >
-                <RefreshCw className={cn("w-4 h-4 mr-2", isRetrying && "animate-spin")} />
-                {isRetrying ? 'Retrying...' : `Try Again ${retryCount > 0 ? `(${retryCount}/${maxRetries})` : ''}`}
-              </Button>
-            )}
-            {connectionState === VideoConnectionState.NO_CAMERA && (
-              <Button 
-                onClick={continueWithoutCamera} 
-                variant="outline"
-                className="w-full"
-              >
-                Continue Audio Only
-              </Button>
-            )}
+        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-4 min-h-[120px]">
+          <VideoOff className="w-8 h-8 text-gray-500 mb-2" />
+          <p className="text-xs text-gray-400 text-center mb-3">{error.userMessage}</p>
+          {error.canRetry && retryCount < maxRetries && (
             <Button 
-              onClick={troubleshootCamera} 
+              onClick={retryConnection} 
+              disabled={isRetrying}
+              size="sm"
               variant="outline"
               className="w-full"
             >
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Troubleshooting Guide
+              <RefreshCw className={cn("w-3 h-3 mr-2", isRetrying && "animate-spin")} />
+              {isRetrying ? 'Retrying...' : 'Try Again'}
             </Button>
-          </div>
+          )}
         </div>
       </div>
     )
@@ -399,13 +305,9 @@ Camera Troubleshooting Guide:
   if (connectionState === VideoConnectionState.NO_CAMERA && !error) {
     return (
       <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900", className)}>
-        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-6 min-h-[120px]">
-          <VideoOff className="w-16 h-16 text-gray-500 mb-4" />
-          <p className="text-gray-300 text-sm font-medium mb-2">No camera detected</p>
-          <p className="text-xs text-gray-500 mb-4 text-center">You can continue without video</p>
-          <Button onClick={continueWithoutCamera} variant="outline" className="w-full max-w-xs">
-            Continue Audio Only
-          </Button>
+        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-4 min-h-[120px]">
+          <VideoOff className="w-8 h-8 text-gray-500 mb-2" />
+          <p className="text-xs text-gray-400 text-center">No camera</p>
         </div>
       </div>
     )
@@ -414,14 +316,6 @@ Camera Troubleshooting Guide:
   // Connected state
   return (
     <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900", className)}>
-      {/* Connection Status Indicator */}
-      {connectionState === VideoConnectionState.CONNECTED && (
-        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded-full border border-green-500/30 backdrop-blur-sm">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs text-green-400 font-medium">Live</span>
-        </div>
-      )}
-
       <video
         ref={videoRef}
         className="w-full h-full object-cover"
