@@ -121,8 +121,8 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
       exit={{ opacity: 0, scale: 0.95, y: -10 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className={cn(
-        "relative bg-gradient-to-br rounded-xl p-5 border shadow-lg",
-        "transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl",
+        "relative bg-gradient-to-br rounded-lg p-3 border shadow-lg",
+        "transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl",
         "animate-fade-in-up",
         config.gradientFrom,
         config.gradientTo,
@@ -131,31 +131,31 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
     >
       {/* Accent line */}
       <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-gradient-to-b",
+        "absolute left-0 top-0 bottom-0 w-0.5 rounded-l-lg bg-gradient-to-b",
         config.accentGradient
       )} />
       
-      <div className="flex items-start gap-3 ml-1">
+      <div className="flex items-start gap-2 ml-0.5">
         {/* Icon */}
         <div className={cn(
-          "p-2 rounded-lg flex-shrink-0",
+          "p-1.5 rounded-md flex-shrink-0",
           config.iconBg
         )}>
-          <Icon className={cn("w-5 h-5", config.iconColor)} />
+          <Icon className={cn("w-4 h-4", config.iconColor)} />
         </div>
         
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-1.5 mb-1">
             <Badge 
               variant={config.badgeVariant}
-              className="text-xs font-medium"
+              className="text-[10px] font-medium px-1.5 py-0.5"
             >
               {config.badgeText}
             </Badge>
-            <span className="text-xs text-gray-500">{formatTime(item.timestamp)}</span>
+            <span className="text-[10px] text-gray-400">{formatTime(item.timestamp)}</span>
           </div>
-          <p className="text-sm text-gray-200 leading-relaxed">
+          <p className="text-xs text-gray-200 leading-tight">
             {item.message}
           </p>
         </div>
@@ -206,14 +206,14 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
 
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-700/50 flex-shrink-0">
+      <div className="px-4 py-2.5 border-b border-slate-700/50 flex-shrink-0">
         <h3 className="text-sm font-semibold text-white flex items-center gap-2 font-space">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Live Feedback
         </h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 custom-scrollbar space-y-2 min-h-0">
         {deduplicatedItems.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-500 text-sm">
             <div className="text-center">

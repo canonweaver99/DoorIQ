@@ -39,9 +39,14 @@ export default function WebcamRecorder({ sessionActive, duration = 0, onStreamRe
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Request camera permission immediately on component mount
+  // Request camera permission after a short delay to avoid conflicts with WebcamPIP
   useEffect(() => {
-    startWebcam()
+    // Delay initialization slightly to let WebcamPIP initialize first
+    const timer = setTimeout(() => {
+      startWebcam()
+    }, 500)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   // Ensure stream is attached to video element when it changes

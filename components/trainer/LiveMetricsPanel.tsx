@@ -116,7 +116,7 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
     } else if ((talkTimeRatio >= 35 && talkTimeRatio < 40) || (talkTimeRatio > 60 && talkTimeRatio <= 70)) {
       return { badge: 'OK', variant: 'secondary' as const }
     } else if (talkTimeRatio < 35) {
-      return { badge: 'Listen More', variant: 'destructive' as const }
+      return { badge: 'Listen', variant: 'destructive' as const }
     } else {
       return { badge: 'Engage More', variant: 'destructive' as const }
     }

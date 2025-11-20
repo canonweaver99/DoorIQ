@@ -103,6 +103,11 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
       streamRef.current = null
     }
 
+    // Ensure video element is cleared
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+
     try {
       setError(null)
       setIsRetrying(false)
@@ -128,7 +133,9 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
       // Request camera with simpler constraints
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'user'
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
         },
         audio: false
       })
@@ -141,10 +148,12 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
 
       streamRef.current = stream
       
+      // Video element should always be available now (always rendered)
       if (videoRef.current) {
+        // Set the stream
         videoRef.current.srcObject = stream
         
-        // Wait for video to be ready
+        // Wait for video to be ready and play
         await new Promise<void>((resolve, reject) => {
           const video = videoRef.current
           if (!video) {
@@ -152,28 +161,73 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
             return
           }
 
+          let resolved = false
+
           const handleCanPlay = () => {
+            if (resolved) return
+            resolved = true
             video.removeEventListener('canplay', handleCanPlay)
+            video.removeEventListener('loadedmetadata', handleCanPlay)
             video.removeEventListener('error', handleVideoError)
-            resolve()
+            
+            // Try to play the video
+            video.play().then(() => {
+              setConnectionState(VideoConnectionState.CONNECTED)
+              setError(null)
+              setRetryCount(0)
+              console.log('✅ Camera connected successfully')
+              resolve()
+            }).catch((playErr) => {
+              console.warn('⚠️ Video play failed, but stream is attached:', playErr)
+              // Still resolve if stream is attached, even if play fails
+              setConnectionState(VideoConnectionState.CONNECTED)
+              setError(null)
+              setRetryCount(0)
+              resolve()
+            })
           }
 
-          const handleVideoError = () => {
+          const handleVideoError = (e: any) => {
+            if (resolved) return
+            resolved = true
             video.removeEventListener('canplay', handleCanPlay)
+            video.removeEventListener('loadedmetadata', handleCanPlay)
             video.removeEventListener('error', handleVideoError)
-            reject(new Error('Video failed to load'))
+            reject(new Error('Video failed to load: ' + (e?.message || 'Unknown error')))
           }
 
-          video.addEventListener('canplay', handleCanPlay)
-          video.addEventListener('error', handleVideoError)
+          // Listen for multiple events to ensure we catch when video is ready
+          video.addEventListener('canplay', handleCanPlay, { once: true })
+          video.addEventListener('loadedmetadata', handleCanPlay, { once: true })
+          video.addEventListener('error', handleVideoError, { once: true })
           
-          video.play().catch(reject)
-        })
+          // Try to play immediately
+          video.play().catch(() => {
+            // Ignore initial play error, wait for canplay
+          })
 
-        setConnectionState(VideoConnectionState.CONNECTED)
-        setError(null)
-        setRetryCount(0)
-        console.log('✅ Camera connected successfully')
+          // Fallback timeout
+          setTimeout(() => {
+            if (!resolved) {
+              resolved = true
+              video.removeEventListener('canplay', handleCanPlay)
+              video.removeEventListener('loadedmetadata', handleCanPlay)
+              video.removeEventListener('error', handleVideoError)
+              // If stream is attached, consider it successful
+              if (video.srcObject === stream) {
+                setConnectionState(VideoConnectionState.CONNECTED)
+                setError(null)
+                setRetryCount(0)
+                console.log('✅ Camera connected (timeout fallback)')
+                resolve()
+              } else {
+                reject(new Error('Video stream not attached'))
+              }
+            }
+          }, 5000)
+        })
+      } else {
+        throw new Error('Video element not available')
       }
     } catch (err: any) {
       console.error('❌ Error accessing webcam:', err)
@@ -212,10 +266,26 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
 
 
   useEffect(() => {
-    // Start webcam on mount
-    startWebcam()
+    // Start webcam after a brief delay to ensure component is mounted
+    // Video element is always rendered now, so ref should be available
+    const initTimer = setTimeout(() => {
+      if (videoRef.current) {
+        console.log('✅ Starting webcam initialization')
+        startWebcam()
+      } else {
+        console.error('❌ Video element ref not available')
+        setError({
+          type: 'unknown',
+          message: 'Video element not available',
+          userMessage: 'Camera initialization failed - please refresh the page',
+          canRetry: true
+        })
+        setConnectionState(VideoConnectionState.FAILED)
+      }
+    }, 100)
 
     return () => {
+      clearTimeout(initTimer)
       stopWebcam()
       if (connectionTimeoutRef.current) {
         clearTimeout(connectionTimeoutRef.current)
@@ -265,23 +335,42 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
     setConnectionState(VideoConnectionState.IDLE)
   }
 
-  // Loading state
-  if (connectionState === VideoConnectionState.CONNECTING || connectionState === VideoConnectionState.REQUESTING_PERMISSION) {
-    return (
-      <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900", className)}>
-        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-6 min-h-[120px]">
+  // Always render video element so ref is always available
+  const showVideo = connectionState === VideoConnectionState.CONNECTED
+  const showLoading = connectionState === VideoConnectionState.CONNECTING || connectionState === VideoConnectionState.REQUESTING_PERMISSION
+  const showError = error && connectionState !== VideoConnectionState.CONNECTED
+  const showNoCamera = connectionState === VideoConnectionState.NO_CAMERA && !error
+
+  return (
+    <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900 w-full h-full", className)}>
+      {/* Video element - always rendered so ref is available */}
+      <video
+        ref={videoRef}
+        className={cn(
+          "w-full h-full object-cover",
+          !showVideo && "hidden"
+        )}
+        autoPlay
+        playsInline
+        muted
+        style={{ 
+          minWidth: '100%',
+          minHeight: '100%',
+          transform: showVideo ? 'scaleX(-1)' : 'none' // Mirror the video for natural selfie view when connected
+        }}
+      />
+      
+      {/* Loading overlay */}
+      {showLoading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 rounded-xl p-6 min-h-[120px] z-20">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
           <p className="text-gray-300 text-xs font-medium">Connecting camera...</p>
         </div>
-      </div>
-    )
-  }
+      )}
 
-  // Error states - simplified
-  if (error && connectionState !== VideoConnectionState.CONNECTED) {
-    return (
-      <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900", className)}>
-        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-4 min-h-[120px]">
+      {/* Error overlay */}
+      {showError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 rounded-xl p-4 min-h-[120px] z-20">
           <VideoOff className="w-8 h-8 text-gray-500 mb-2" />
           <p className="text-xs text-gray-400 text-center mb-3">{error.userMessage}</p>
           {error.canRetry && retryCount < maxRetries && (
@@ -297,33 +386,20 @@ export function WebcamPIP({ className = '' }: WebcamPIPProps) {
             </Button>
           )}
         </div>
-      </div>
-    )
-  }
+      )}
 
-  // No camera state
-  if (connectionState === VideoConnectionState.NO_CAMERA && !error) {
-    return (
-      <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900", className)}>
-        <div className="flex flex-col items-center justify-center h-full bg-slate-900/50 rounded-xl p-4 min-h-[120px]">
+      {/* No camera overlay */}
+      {showNoCamera && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 rounded-xl p-4 min-h-[120px] z-20">
           <VideoOff className="w-8 h-8 text-gray-500 mb-2" />
           <p className="text-xs text-gray-400 text-center">No camera</p>
         </div>
-      </div>
-    )
-  }
+      )}
 
-  // Connected state
-  return (
-    <div className={cn("relative rounded-lg overflow-hidden border-2 border-white/20 bg-slate-900", className)}>
-      <video
-        ref={videoRef}
-        className="w-full h-full object-cover"
-        autoPlay
-        playsInline
-        muted
-        style={{ aspectRatio: '16/9' }}
-      />
+      {/* Camera active indicator */}
+      {showVideo && streamRef.current && streamRef.current.getVideoTracks().length > 0 && (
+        <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full animate-pulse z-10" title="Camera active" />
+      )}
     </div>
   )
 }

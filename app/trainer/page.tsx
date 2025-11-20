@@ -1359,7 +1359,7 @@ function TrainerPageContent() {
                   
                   {/* PIP Webcam Overlay - Bottom Right (above controls) */}
                   {sessionActive && (
-                    <div className="absolute bottom-32 right-6 z-20 w-40 h-30 lg:w-48 lg:h-36 shadow-2xl rounded-lg overflow-hidden">
+                    <div className="absolute bottom-32 right-6 z-20 w-40 h-[120px] lg:w-48 lg:h-[144px] shadow-2xl rounded-lg overflow-hidden">
                       <WebcamPIP />
                     </div>
                   )}
