@@ -226,7 +226,7 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
                 }}
               />
             </div>
-            <span className="text-xs text-gray-400">Target: >20%</span>
+            <span className="text-xs text-gray-400">Target: {'>'}20%</span>
           </div>
           <div className="text-xs text-gray-400">
             {voiceAnalysis.pitchVariation >= 20 ? (
@@ -298,7 +298,7 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
             {voiceAnalysis.longPausesCount > 0 && (
               <div>
                 <div className="text-lg font-bold text-white">{voiceAnalysis.longPausesCount}</div>
-                <div className="text-xs text-gray-400">long pauses (>2s)</div>
+                <div className="text-xs text-gray-400">long pauses ({'>'}2s)</div>
               </div>
             )}
           </div>
