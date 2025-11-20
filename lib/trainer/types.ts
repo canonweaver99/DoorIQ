@@ -5,7 +5,7 @@ export interface TranscriptEntry {
   timestamp: Date
 }
 
-export type FeedbackType = 'objection_detected' | 'technique_used' | 'coaching_tip' | 'warning'
+export type FeedbackType = 'objection_detected' | 'technique_used' | 'coaching_tip' | 'warning' | 'voice_coaching'
 export type FeedbackSeverity = 'good' | 'neutral' | 'needs_improvement'
 
 export interface FeedbackItem {
@@ -20,10 +20,19 @@ export interface FeedbackItem {
   }
 }
 
+export interface VoiceMetrics {
+  currentPitch: number // Hz
+  averagePitch: number // Hz
+  volume: number // dB
+  speechRate: number // WPM
+  pitchVariation: number // percentage
+}
+
 export interface LiveSessionMetrics {
   talkTimeRatio: number // Percentage (0-100) of rep talking vs homeowner
   objectionCount: number
   techniquesUsed: string[]
+  voiceMetrics?: VoiceMetrics
 }
 
 export interface SessionMetrics {

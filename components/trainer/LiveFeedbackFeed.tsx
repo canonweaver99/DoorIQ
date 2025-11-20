@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { FeedbackItem } from '@/lib/trainer/types'
-import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic } from 'lucide-react'
 
 interface LiveFeedbackFeedProps {
   feedbackItems: FeedbackItem[]
@@ -47,6 +47,15 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         bgColor: 'bg-red-500/10',
         borderColor: 'border-red-500/30',
         textColor: 'text-red-300'
+      }
+    case 'voice_coaching':
+      return {
+        icon: Mic,
+        badgeVariant: 'secondary' as const,
+        badgeText: 'Voice',
+        bgColor: 'bg-purple-500/10',
+        borderColor: 'border-purple-500/30',
+        textColor: 'text-purple-300'
       }
     default:
       return {
