@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -9,9 +10,21 @@ import { cn } from '@/lib/utils'
 interface LiveTranscriptProps {
   transcript: TranscriptEntry[]
   agentName?: string
+  agentImageUrl?: string | null
+  userAvatarUrl?: string | null
 }
 
-function TranscriptMessage({ entry, agentName }: { entry: TranscriptEntry; agentName?: string }) {
+function TranscriptMessage({ 
+  entry, 
+  agentName, 
+  agentImageUrl, 
+  userAvatarUrl 
+}: { 
+  entry: TranscriptEntry
+  agentName?: string
+  agentImageUrl?: string | null
+  userAvatarUrl?: string | null
+}) {
   const [copied, setCopied] = useState(false)
   const isUser = entry.speaker === 'user'
 
@@ -34,6 +47,12 @@ function TranscriptMessage({ entry, agentName }: { entry: TranscriptEntry; agent
     })
   }
 
+  // Get avatar image URL
+  const avatarUrl = isUser ? userAvatarUrl : agentImageUrl
+  const fallbackInitials = isUser 
+    ? 'You' 
+    : (agentName ? agentName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'AH')
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -46,10 +65,24 @@ function TranscriptMessage({ entry, agentName }: { entry: TranscriptEntry; agent
     >
       {/* Avatar */}
       <div className={cn(
-        "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold",
-        isUser ? "bg-blue-600 text-white" : "bg-slate-700 text-gray-300"
+        "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden",
+        isUser ? "bg-blue-600" : "bg-slate-700",
+        !avatarUrl && "text-xs font-semibold",
+        isUser && !avatarUrl && "text-white",
+        !isUser && !avatarUrl && "text-gray-300"
       )}>
-        {isUser ? 'You' : (agentName ? agentName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'AH')}
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt={isUser ? 'You' : agentName || 'Homeowner'}
+            width={32}
+            height={32}
+            className="w-full h-full object-cover"
+            unoptimized={avatarUrl?.startsWith('http')}
+          />
+        ) : (
+          fallbackInitials
+        )}
       </div>
       
       {/* Message */}
@@ -82,7 +115,7 @@ function TranscriptMessage({ entry, agentName }: { entry: TranscriptEntry; agent
   )
 }
 
-export function LiveTranscript({ transcript, agentName }: LiveTranscriptProps) {
+export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvatarUrl }: LiveTranscriptProps) {
   const transcriptEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new messages arrive
@@ -111,7 +144,13 @@ export function LiveTranscript({ transcript, agentName }: LiveTranscriptProps) {
         ) : (
           <>
             {transcript.map((entry) => (
-              <TranscriptMessage key={entry.id} entry={entry} agentName={agentName} />
+              <TranscriptMessage 
+                key={entry.id} 
+                entry={entry} 
+                agentName={agentName}
+                agentImageUrl={agentImageUrl}
+                userAvatarUrl={userAvatarUrl}
+              />
             ))}
             <div ref={transcriptEndRef} />
           </>

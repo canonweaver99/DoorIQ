@@ -117,6 +117,7 @@ function TrainerPageContent() {
   const doorOpeningVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for door opening video
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
   
   // Real-time analysis hook
   const { feedbackItems: transcriptFeedbackItems, metrics: transcriptMetrics } = useLiveSessionAnalysis(transcript)
@@ -273,11 +274,31 @@ function TrainerPageContent() {
 
   useEffect(() => {
     fetchAgents()
+    fetchUserAvatar()
     return () => {
       if (durationInterval.current) clearInterval(durationInterval.current)
       signedUrlAbortRef.current?.abort()
     }
   }, [])
+
+  const fetchUserAvatar = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from('users')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single()
+        
+        if (data?.avatar_url) {
+          setUserAvatarUrl(data.avatar_url)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user avatar:', error)
+    }
+  }
   
   // Handle video mode changes for agents with videos
   useEffect(() => {
@@ -486,6 +507,7 @@ function TrainerPageContent() {
       if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
         console.log('📝 Adding user transcript entry:', e.detail.substring(0, 50))
         pushFinal(e.detail, 'user')
+        console.log('✅ User transcript added. Current transcript length:', transcript.length + 1)
       } else {
         console.warn('⚠️ Invalid user event:', e)
       }
@@ -495,6 +517,7 @@ function TrainerPageContent() {
       if (e?.detail && typeof e.detail === 'string' && e.detail.trim()) {
         console.log('📝 Adding agent transcript entry:', e.detail.substring(0, 50))
         pushFinal(e.detail, 'homeowner')
+        console.log('✅ Agent transcript added. Current transcript length:', transcript.length + 1)
       } else {
         console.warn('⚠️ Invalid agent event:', e)
       }
@@ -654,6 +677,10 @@ function TrainerPageContent() {
         setVideoMode('loop')
       }
       setLoading(false)
+      
+      // Log transcript state for debugging
+      console.log('🎬 Session started. Transcript length:', transcript.length)
+      console.log('🎬 Session ID:', newId)
       
       // Deduct credit for ALL users (free users have 10 credits, paid users have 50 credits/month)
       try {
@@ -1395,7 +1422,12 @@ function TrainerPageContent() {
             
             {/* Transcript (40% of right side) */}
             <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 -mt-[104px]`}>
-              <LiveTranscript transcript={transcript} agentName={selectedAgent?.name} />
+              <LiveTranscript 
+                transcript={transcript} 
+                agentName={selectedAgent?.name}
+                agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                userAvatarUrl={userAvatarUrl}
+              />
             </div>
           </div>
         </div>

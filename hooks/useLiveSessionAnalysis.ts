@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { TranscriptEntry, FeedbackItem, FeedbackType, FeedbackSeverity, LiveSessionMetrics } from '@/lib/trainer/types'
 
 interface UseLiveSessionAnalysisReturn {
@@ -130,7 +130,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
   const lastMonologueSpeakerRef = useRef<'user' | 'homeowner' | null>(null)
   
   // Generate feedback item
-  const addFeedbackItem = (
+  const addFeedbackItem = useCallback((
     type: FeedbackType,
     message: string,
     severity: FeedbackSeverity,
@@ -145,12 +145,15 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       metadata
     }
     
+    console.log('➕ Adding feedback item:', { type, message: message.substring(0, 50), severity })
+    
     setFeedbackItems(prev => {
       const updated = [...prev, newItem]
+      console.log('📋 Total feedback items:', updated.length)
       // Keep max 50 items
       return updated.slice(-50)
     })
-  }
+  }, [])
   
   // Analyze transcript for new entries
   useEffect(() => {
@@ -161,10 +164,14 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     const newEntries = transcript.slice(previousTranscriptLengthRef.current)
     previousTranscriptLengthRef.current = transcript.length
     
+    console.log('🔍 Analyzing new transcript entries:', newEntries.length, 'entries')
+    
     newEntries.forEach(entry => {
+      console.log('📝 Processing entry:', { speaker: entry.speaker, text: entry.text.substring(0, 50) })
       // Objection detection (only for homeowner)
       if (entry.speaker === 'homeowner') {
         const objection = detectObjection(entry.text)
+        console.log('🏠 Homeowner entry - objection check:', objection ? objection.type : 'none')
         if (objection) {
           const objectionKey = `${objection.type}-${entry.id}`
           if (!objectionTimestampsRef.current.has(objectionKey)) {
@@ -213,6 +220,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       // Technique detection (only for user/rep)
       if (entry.speaker === 'user') {
         const technique = detectTechnique(entry.text)
+        console.log('👤 User entry - technique check:', technique || 'none')
         if (technique) {
           addFeedbackItem(
             'technique_used',
@@ -261,34 +269,50 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
         }
       }
     })
-  }, [transcript])
+  }, [transcript, addFeedbackItem])
   
   // Calculate metrics
   const metrics = useMemo((): LiveSessionMetrics => {
     const talkTimeRatio = calculateTalkTimeRatio(transcript)
     
+    console.log('📊 Calculating metrics for transcript length:', transcript.length)
+    
     // Count objections
-    const objectionCount = transcript
-      .filter(entry => entry.speaker === 'homeowner')
-      .filter(entry => detectObjection(entry.text) !== null)
+    const homeownerEntries = transcript.filter(entry => entry.speaker === 'homeowner')
+    console.log('🏠 Homeowner entries:', homeownerEntries.length)
+    
+    const objectionCount = homeownerEntries
+      .filter(entry => {
+        const hasObjection = detectObjection(entry.text) !== null
+        if (hasObjection) {
+          console.log('✅ Objection detected in:', entry.text.substring(0, 50))
+        }
+        return hasObjection
+      })
       .length
     
     // Collect unique techniques used
-    const techniquesSet = new Set<string>()
-    transcript
-      .filter(entry => entry.speaker === 'user')
-      .forEach(entry => {
-        const technique = detectTechnique(entry.text)
-        if (technique) {
-          techniquesSet.add(technique)
-        }
-      })
+    const userEntries = transcript.filter(entry => entry.speaker === 'user')
+    console.log('👤 User entries:', userEntries.length)
     
-    return {
+    const techniquesSet = new Set<string>()
+    userEntries.forEach(entry => {
+      const technique = detectTechnique(entry.text)
+      if (technique) {
+        console.log('✅ Technique detected:', technique, 'in:', entry.text.substring(0, 50))
+        techniquesSet.add(technique)
+      }
+    })
+    
+    const metricsResult = {
       talkTimeRatio,
       objectionCount,
       techniquesUsed: Array.from(techniquesSet)
     }
+    
+    console.log('📊 Final metrics:', metricsResult)
+    
+    return metricsResult
   }, [transcript])
   
   // Check talk time ratio and provide feedback
@@ -331,7 +355,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
         )
       }
     }
-  }, [metrics.talkTimeRatio, transcript.length, feedbackItems])
+  }, [metrics.talkTimeRatio, transcript.length, feedbackItems, addFeedbackItem])
   
   return {
     feedbackItems,
