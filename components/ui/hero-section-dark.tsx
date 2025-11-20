@@ -325,7 +325,13 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   className="inline-block"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.6 }}
+                  transition={{ 
+                    delay: 0.2, 
+                    type: "spring",
+                    stiffness: 60,
+                    damping: 20,
+                    mass: 1.5
+                  }}
                   whileHover={{ scale: 1.05 }}
                 >
                   <h1 className="text-base text-foreground group font-space font-semibold px-6 py-3 bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/10 dark:via-purple-500/10 border-[2px] border-indigo-500/20 dark:border-indigo-500/20 rounded-3xl cursor-pointer hover:border-indigo-400/50 transition-all flex items-center gap-2">
@@ -338,12 +344,24 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                   style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.8 }}
+                  transition={{ delay: 0.5, duration: 0.8 }}
                 >
                   {subtitle.regular}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-flow">
-                    {subtitle.gradient}
-                  </span>
+                  {subtitle.gradient.split(' ').map((word, index) => (
+                    <motion.span
+                      key={index}
+                      className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-flow"
+                      initial={{ opacity: 0, filter: 'blur(10px)' }}
+                      animate={{ opacity: 1, filter: 'blur(0px)' }}
+                      transition={{
+                        delay: 0.6 + index * 0.1,
+                        duration: 0.6,
+                        ease: "easeOut"
+                      }}
+                    >
+                      {index > 0 ? ' ' : ''}{word}
+                    </motion.span>
+                  ))}
                 </motion.h2>
                 {/* Agent Carousel */}
                 <motion.div

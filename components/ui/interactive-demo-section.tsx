@@ -163,7 +163,18 @@ export function InteractiveDemoSection() {
       variants={staggerContainer}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div className="text-center mb-6 sm:mb-8 lg:mb-12" variants={fadeInUp}>
+        <motion.div 
+          className="text-center mb-6 sm:mb-8 lg:mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{
+            type: "spring",
+            stiffness: 60,
+            damping: 20,
+            mass: 1.5
+          }}
+        >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 text-white">
             See <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">DoorIQ</span> in Action
           </h2>

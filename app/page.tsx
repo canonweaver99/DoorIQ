@@ -225,8 +225,15 @@ export default function Home() {
           <motion.div
             className="mb-12 max-w-5xl mx-auto"
             initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ 
+              delay: 0.2,
+              type: "spring",
+              stiffness: 100,
+              damping: 15,
+              mass: 1
+            }}
           >
             <h4 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold text-foreground mb-6 sm:mb-8 lg:mb-12 text-center">
               Frequently Asked Questions
@@ -311,9 +318,20 @@ function ProblemSolutionSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center mb-6 sm:mb-8 lg:mb-12" variants={fadeInUp}>
           <div className="text-center lg:text-left">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 text-foreground">
+            <motion.h2 
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 pb-2 sm:pb-3 px-2 sm:px-0 text-foreground"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 15,
+                mass: 1
+              }}
+            >
               The Reality of Door-to-Door Sales Training
-            </h2>
+            </motion.h2>
             <motion.div 
               className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4"
               variants={staggerContainer}
@@ -406,9 +424,20 @@ function ProblemSolutionSection() {
             />
           </motion.div>
           <div className="text-center lg:text-left lg:order-2">
-            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 text-white">
+            <motion.h3 
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 text-white"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 15,
+                mass: 1
+              }}
+            >
               Practice on AI Homeowners Before Real Doors
-            </h3>
+            </motion.h3>
             <motion.div 
               className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4"
               variants={staggerContainer}
@@ -567,7 +596,15 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
         {/* Compact Header */}
         <motion.div 
           className="text-center mb-6 sm:mb-8"
-          variants={fadeInUp}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{
+            type: "spring",
+            stiffness: 60,
+            damping: 20,
+            mass: 1.5
+          }}
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight tracking-tight font-space font-bold mb-3 sm:mb-4 text-foreground">
             Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Managers</span>
@@ -855,7 +892,15 @@ function DashboardSection() {
       <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto px-4 sm:px-6 lg:px-20 xl:px-24 2xl:px-32">
         <motion.div 
           className="text-center mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0"
-          variants={fadeInUp}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{
+            type: "spring",
+            stiffness: 60,
+            damping: 20,
+            mass: 1.5
+          }}
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-space font-bold text-foreground pb-2">
             Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Analytics</span>
@@ -1125,11 +1170,20 @@ function TestimonialsSection() {
         </motion.div>
       </div>
 
-      <h3 
+      <motion.h3 
         className="text-center text-xl sm:text-2xl lg:text-[56px] leading-[1.2] sm:leading-[1.1] tracking-tight font-space font-bold mt-4 sm:mt-5 lg:mt-6 px-4 sm:px-0 text-foreground break-words"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{
+          type: "spring",
+          stiffness: 100,
+          damping: 15,
+          mass: 1
+        }}
       >
         What Sales Teams Say About <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">DoorIQ</span>
-      </h3>
+      </motion.h3>
 
       <motion.div
         className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden px-2 sm:px-0"
