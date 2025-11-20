@@ -297,35 +297,41 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     
     const ratio = metrics.talkTimeRatio
     
+    // New thresholds:
+    // 40-60%: Ideal (no feedback)
+    // 35-40% or 60-70%: OK (no feedback)
+    // <35%: Warning "Try to listen more and engage"
+    // >70%: Warning "Engage more - ask questions"
+    
     // Only add feedback if ratio is problematic (avoid spam)
-    if (ratio > 60 && feedbackItems.length > 0) {
+    if (ratio > 70 && feedbackItems.length > 0) {
       const lastWarning = feedbackItems
         .slice()
         .reverse()
-        .find(item => item.type === 'warning' && item.message.includes('talking too much'))
+        .find(item => item.type === 'warning' && (item.message.includes('Engage more') || item.message.includes('talking too much')))
       
       if (!lastWarning || Date.now() - lastWarning.timestamp.getTime() > 60000) {
         addFeedbackItem(
           'warning',
-          `You're talking ${ratio}% of the time. Try to listen more and ask questions.`,
+          `You're talking ${ratio}% of the time. Engage more - ask questions to involve the homeowner.`,
           'needs_improvement'
         )
       }
-    } else if (ratio < 40 && feedbackItems.length > 0) {
+    } else if (ratio < 35 && feedbackItems.length > 0) {
       const lastWarning = feedbackItems
         .slice()
         .reverse()
-        .find(item => item.type === 'warning' && item.message.includes('talking too little'))
+        .find(item => item.type === 'warning' && (item.message.includes('Try to listen more') || item.message.includes('talking too little')))
       
       if (!lastWarning || Date.now() - lastWarning.timestamp.getTime() > 60000) {
         addFeedbackItem(
           'warning',
-          `You're only talking ${ratio}% of the time. Consider being more engaging.`,
+          `You're only talking ${ratio}% of the time. Try to listen more and engage in the conversation.`,
           'needs_improvement'
         )
       }
     }
-  }, [metrics.talkTimeRatio, transcript.length])
+  }, [metrics.talkTimeRatio, transcript.length, feedbackItems])
   
   return {
     feedbackItems,

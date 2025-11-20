@@ -19,7 +19,6 @@ import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { LiveTranscript } from '@/components/trainer/LiveTranscript'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP } from '@/components/trainer/WebcamPIP'
-import { VoiceCoachingPanel } from '@/components/trainer/VoiceCoachingPanel'
 
 // Dynamic imports for heavy components - only load when needed
 const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
@@ -1206,8 +1205,8 @@ function TrainerPageContent() {
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
           
           {/* LEFT SIDE (60%) - Agent Video with PIP */}
-          <div className="w-full lg:w-[60%] relative bg-slate-900 overflow-hidden h-[60vh] lg:h-auto">
-            <div className="absolute inset-0">
+          <div className="w-full lg:w-[60%] relative bg-slate-900 overflow-hidden h-[60vh] lg:h-auto rounded-lg shadow-2xl">
+            <div className="absolute inset-0 rounded-lg overflow-hidden">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
                   <div className="text-white text-center pointer-events-none">
@@ -1361,27 +1360,20 @@ function TrainerPageContent() {
             </div>
           </div>
 
-          {/* RIGHT SIDE (40%) - Metrics, Voice Coaching, Feedback, Transcript */}
-          <div className="w-full lg:w-[40%] flex flex-col border-t lg:border-t-0 lg:border-l border-slate-700/50 bg-slate-950/50 overflow-hidden h-[40vh] lg:h-auto">
-            {/* Metrics Panel (20% of right side) */}
-            <div className="h-[20%] min-h-[100px] p-3 lg:p-4 border-b border-slate-700/50 flex-shrink-0">
+          {/* RIGHT SIDE (40%) - Metrics, Feedback, Transcript */}
+          <div className="w-full lg:w-[40%] flex flex-col border-t lg:border-t-0 lg:border-l border-slate-700/50 bg-gradient-to-b from-slate-950/50 to-slate-900/50 overflow-hidden h-[40vh] lg:h-auto">
+            {/* Metrics Panel (25% of right side) */}
+            <div className="h-[25%] min-h-[120px] p-6 border-b border-slate-700/50 flex-shrink-0">
               <LiveMetricsPanel metrics={metrics} />
             </div>
             
-            {/* Voice Coaching Panel (20% of right side) */}
-            {sessionActive && (
-              <div className="h-[20%] min-h-[100px] p-3 lg:p-4 border-b border-slate-700/50 flex-shrink-0">
-                <VoiceCoachingPanel metrics={voiceMetrics} />
-              </div>
-            )}
-            
-            {/* Feedback Feed (40% of right side) */}
-            <div className={`${sessionActive ? 'h-[40%]' : 'h-[60%]'} min-h-[200px] p-3 lg:p-4 border-b border-slate-700/50 flex-shrink-0`}>
+            {/* Feedback Feed (50% of right side) */}
+            <div className={`${sessionActive ? 'h-[50%]' : 'h-[75%]'} min-h-[250px] p-6 border-b border-slate-700/50 flex-shrink-0`}>
               <LiveFeedbackFeed feedbackItems={feedbackItems} />
             </div>
             
-            {/* Transcript (20% of right side) */}
-            <div className={`${sessionActive ? 'h-[20%]' : 'h-[20%]'} min-h-[100px] p-3 lg:p-4 flex-shrink-0`}>
+            {/* Transcript (25% of right side) */}
+            <div className={`${sessionActive ? 'h-[25%]' : 'h-[25%]'} min-h-[120px] p-6 flex-shrink-0`}>
               <LiveTranscript transcript={transcript} agentName={selectedAgent?.name} />
             </div>
           </div>
@@ -1419,7 +1411,7 @@ function TrainerPageContent() {
             transform: translateY(0);
           }
         }
-        .animate-fadeIn {
+        .animate-fade-in {
           animation: fadeIn 0.3s ease-out;
         }
         @keyframes shimmer {
@@ -1432,6 +1424,11 @@ function TrainerPageContent() {
         }
         .animate-shimmer {
           animation: shimmer 1.5s ease-in-out infinite;
+        }
+        * {
+          transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+          transition-duration: 200ms;
         }
       `}</style>
     </motion.div>

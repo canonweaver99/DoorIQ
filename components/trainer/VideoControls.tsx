@@ -40,16 +40,23 @@ export function VideoControls({
       )}
       
       {/* Session Timer with Live Indicator */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 rounded-full border border-red-500/30 backdrop-blur-sm">
           <motion.div
-            className="w-2 h-2 rounded-full bg-red-500"
-            animate={{ opacity: [1, 0.5, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/50"
+            animate={{ 
+              opacity: [1, 0.6, 1],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{ 
+              duration: 1.5, 
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
           />
-          <span className="text-xs font-semibold text-white uppercase tracking-wide">Live</span>
+          <span className="text-xs font-bold text-red-300 uppercase tracking-wider">Live</span>
         </div>
-        <span className="text-lg font-mono font-bold text-white">{formatDuration(duration)}</span>
+        <span className="text-lg font-mono font-bold text-white transition-all duration-200">{formatDuration(duration)}</span>
       </div>
       
       {/* Progress Bar */}
@@ -63,7 +70,7 @@ export function VideoControls({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onMuteToggle}
-          className={`p-2.5 rounded-lg transition-colors ${
+          className={`p-2.5 rounded-lg transition-all duration-200 ${
             isMuted
               ? 'bg-red-600 hover:bg-red-700 text-white'
               : 'bg-slate-700/80 hover:bg-slate-600 text-white'
@@ -77,7 +84,7 @@ export function VideoControls({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onCameraToggle}
-          className={`p-2.5 rounded-lg transition-colors ${
+          className={`p-2.5 rounded-lg transition-all duration-200 ${
             isCameraOff
               ? 'bg-red-600 hover:bg-red-700 text-white'
               : 'bg-slate-700/80 hover:bg-slate-600 text-white'
@@ -91,7 +98,7 @@ export function VideoControls({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onEndSession}
-          className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
           aria-label="End session"
         >
           <PhoneOff className="w-4 h-4" />
