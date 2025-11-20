@@ -413,7 +413,63 @@ function OverviewTabContent() {
   const [hoveredPoint, setHoveredPoint] = useState<{ day: string; value: number; } | null>(null)
   const [hoveredEarnings, setHoveredEarnings] = useState<{ day: string; value: number; } | null>(null)
   const [recentSessions, setRecentSessions] = useState<any[]>([])
-  const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([])
+  const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([
+    {
+      id: 'overall',
+      title: 'Overall Score',
+      value: 0,
+      change: '+0%',
+      feedback: 'Complete your first session to see your scores.',
+      borderColor: '#8b5cf6',
+      textColor: 'text-purple-300',
+      bg: '#4c1d6a',
+      glowColor: 'rgba(139, 92, 246, 0.5)'
+    },
+    {
+      id: 'rapport',
+      title: 'Rapport',
+      value: 0,
+      change: '+0%',
+      feedback: 'Build connection in the first 30 seconds.',
+      borderColor: '#10b981',
+      textColor: 'text-emerald-300',
+      bg: '#065f46',
+      glowColor: 'rgba(16, 185, 129, 0.5)'
+    },
+    {
+      id: 'discovery',
+      title: 'Discovery',
+      value: 0,
+      change: '+0%',
+      feedback: 'Ask questions to uncover pain points.',
+      borderColor: '#3b82f6',
+      textColor: 'text-blue-300',
+      bg: '#1e40af',
+      glowColor: 'rgba(59, 130, 246, 0.5)'
+    },
+    {
+      id: 'objection',
+      title: 'Objection Handling',
+      value: 0,
+      change: '+0%',
+      feedback: 'Turn concerns into opportunities.',
+      borderColor: '#f59e0b',
+      textColor: 'text-amber-300',
+      bg: '#92400e',
+      glowColor: 'rgba(245, 158, 11, 0.5)'
+    },
+    {
+      id: 'closing',
+      title: 'Closing',
+      value: 0,
+      change: '+0%',
+      feedback: 'Use assumptive language to close.',
+      borderColor: '#ec4899',
+      textColor: 'text-pink-300',
+      bg: '#9f1239',
+      glowColor: 'rgba(236, 72, 153, 0.5)'
+    }
+  ])
   const [notifications, setNotifications] = useState<any[]>([])
   const [insightsData, setInsightsData] = useState<any[]>([])
   const [performanceData, setPerformanceData] = useState<{
@@ -513,44 +569,109 @@ function OverviewTabContent() {
   }
   
   const fetchOverviewData = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) return
-    
-    // Get ALL user sessions for calculating averages and trends (with dates and earnings)
-    // Include both graded and ungraded sessions for complete data
-    const { data: allSessionsRaw } = await supabase
-      .from('live_sessions')
-      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, virtual_earnings, analytics')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-    
-    // Filter to only sessions with scores for trend calculations
-    const allSessions = (allSessionsRaw || []).filter((s: any) => s.overall_score !== null && s.overall_score !== undefined)
-    
-    console.log('📊 All sessions fetched:', allSessionsRaw?.length || 0, 'Total')
-    console.log('📊 Sessions with scores:', allSessions.length, 'Graded')
-    
-    // Get recent sessions with agent_name (for display) - fetch all sessions, not just graded ones
-    const { data: recentSessionsData, error: recentSessionsError } = await supabase
-      .from('live_sessions')
-      .select('id, overall_score, created_at, ended_at, homeowner_name, agent_name, agent_persona, virtual_earnings, analytics, duration_seconds')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    
-    console.log('📊 Recent sessions query result:', {
-      count: recentSessionsData?.length || 0,
-      error: recentSessionsError?.message,
-      sample: recentSessionsData?.[0]
-    })
-    
-    if (recentSessionsError) {
-      console.error('❌ Error fetching recent sessions:', recentSessionsError)
-      setRecentSessions([])
-      return
-    }
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        // Still set default metrics even if no user
+        setPerformanceMetrics([
+          {
+            id: 'overall',
+            title: 'Overall Score',
+            value: 0,
+            change: '+0%',
+            feedback: 'Complete your first session to see your scores.',
+            borderColor: '#8b5cf6',
+            textColor: 'text-purple-300',
+            bg: '#4c1d6a',
+            glowColor: 'rgba(139, 92, 246, 0.5)'
+          },
+          {
+            id: 'rapport',
+            title: 'Rapport',
+            value: 0,
+            change: '+0%',
+            feedback: 'Build connection in the first 30 seconds.',
+            borderColor: '#10b981',
+            textColor: 'text-emerald-300',
+            bg: '#065f46',
+            glowColor: 'rgba(16, 185, 129, 0.5)'
+          },
+          {
+            id: 'discovery',
+            title: 'Discovery',
+            value: 0,
+            change: '+0%',
+            feedback: 'Ask questions to uncover pain points.',
+            borderColor: '#3b82f6',
+            textColor: 'text-blue-300',
+            bg: '#1e40af',
+            glowColor: 'rgba(59, 130, 246, 0.5)'
+          },
+          {
+            id: 'objection',
+            title: 'Objection Handling',
+            value: 0,
+            change: '+0%',
+            feedback: 'Turn concerns into opportunities.',
+            borderColor: '#f59e0b',
+            textColor: 'text-amber-300',
+            bg: '#92400e',
+            glowColor: 'rgba(245, 158, 11, 0.5)'
+          },
+          {
+            id: 'closing',
+            title: 'Closing',
+            value: 0,
+            change: '+0%',
+            feedback: 'Use assumptive language to close.',
+            borderColor: '#ec4899',
+            textColor: 'text-pink-300',
+            bg: '#9f1239',
+            glowColor: 'rgba(236, 72, 153, 0.5)'
+          }
+        ])
+        return
+      }
+      
+      // Get ALL user sessions for calculating averages and trends (with dates and earnings)
+      // Include both graded and ungraded sessions for complete data
+      const { data: allSessionsRaw, error: allSessionsError } = await supabase
+        .from('live_sessions')
+        .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, virtual_earnings, analytics')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      
+      if (allSessionsError) {
+        console.error('❌ Error fetching all sessions:', allSessionsError)
+      }
+      
+      // Filter to only sessions with scores for trend calculations
+      const allSessions = (allSessionsRaw || []).filter((s: any) => s.overall_score !== null && s.overall_score !== undefined)
+      
+      console.log('📊 All sessions fetched:', allSessionsRaw?.length || 0, 'Total')
+      console.log('📊 Sessions with scores:', allSessions.length, 'Graded')
+      
+      // Get recent sessions with agent_name (for display) - fetch all sessions, not just graded ones
+      const { data: recentSessionsData, error: recentSessionsError } = await supabase
+        .from('live_sessions')
+        .select('id, overall_score, created_at, ended_at, homeowner_name, agent_name, agent_persona, virtual_earnings, analytics, duration_seconds')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      
+      console.log('📊 Recent sessions query result:', {
+        count: recentSessionsData?.length || 0,
+        error: recentSessionsError?.message,
+        sample: recentSessionsData?.[0]
+      })
+      
+      if (recentSessionsError) {
+        console.error('❌ Error fetching recent sessions:', recentSessionsError)
+        setRecentSessions([])
+        // Don't return - continue to set metrics
+      }
     
     console.log('📊 Raw recent sessions data:', recentSessionsData)
     console.log('📊 Recent sessions count:', recentSessionsData?.length || 0)
@@ -626,12 +747,12 @@ function OverviewTabContent() {
     
     // Calculate average scores from all sessions that have scores
     if (allSessions && allSessions.length > 0) {
-      // Filter sessions with valid scores for each metric
-      const sessionsWithOverall = allSessions.filter((s: any) => s.overall_score !== null && s.overall_score > 0)
-      const sessionsWithRapport = allSessions.filter((s: any) => s.rapport_score !== null && s.rapport_score > 0)
-      const sessionsWithDiscovery = allSessions.filter((s: any) => s.discovery_score !== null && s.discovery_score > 0)
-      const sessionsWithObjection = allSessions.filter((s: any) => s.objection_handling_score !== null && s.objection_handling_score > 0)
-      const sessionsWithClosing = allSessions.filter((s: any) => s.close_score !== null && s.close_score > 0)
+      // Filter sessions with valid scores for each metric (include 0 as valid score)
+      const sessionsWithOverall = allSessions.filter((s: any) => s.overall_score !== null && s.overall_score !== undefined)
+      const sessionsWithRapport = allSessions.filter((s: any) => s.rapport_score !== null && s.rapport_score !== undefined)
+      const sessionsWithDiscovery = allSessions.filter((s: any) => s.discovery_score !== null && s.discovery_score !== undefined)
+      const sessionsWithObjection = allSessions.filter((s: any) => s.objection_handling_score !== null && s.objection_handling_score !== undefined)
+      const sessionsWithClosing = allSessions.filter((s: any) => s.close_score !== null && s.close_score !== undefined)
       
       const avgOverall = sessionsWithOverall.length > 0
         ? Math.round(sessionsWithOverall.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessionsWithOverall.length)
@@ -959,6 +1080,67 @@ function OverviewTabContent() {
         week: defaultWeekDays.map((d: string) => ({ day: d, earnings: 0 })),
         month: [{ day: 'Week 1', earnings: 0 }, { day: 'Week 2', earnings: 0 }, { day: 'Week 3', earnings: 0 }, { day: 'Week 4', earnings: 0 }]
       })
+    }
+    } catch (error) {
+      console.error('❌ Error in fetchOverviewData:', error)
+      // Ensure metrics are set even on error
+      setPerformanceMetrics([
+        {
+          id: 'overall',
+          title: 'Overall Score',
+          value: 0,
+          change: '+0%',
+          feedback: 'Complete your first session to see your scores.',
+          borderColor: '#8b5cf6',
+          textColor: 'text-purple-300',
+          bg: '#4c1d6a',
+          glowColor: 'rgba(139, 92, 246, 0.5)'
+        },
+        {
+          id: 'rapport',
+          title: 'Rapport',
+          value: 0,
+          change: '+0%',
+          feedback: 'Build connection in the first 30 seconds.',
+          borderColor: '#10b981',
+          textColor: 'text-emerald-300',
+          bg: '#065f46',
+          glowColor: 'rgba(16, 185, 129, 0.5)'
+        },
+        {
+          id: 'discovery',
+          title: 'Discovery',
+          value: 0,
+          change: '+0%',
+          feedback: 'Ask questions to uncover pain points.',
+          borderColor: '#3b82f6',
+          textColor: 'text-blue-300',
+          bg: '#1e40af',
+          glowColor: 'rgba(59, 130, 246, 0.5)'
+        },
+        {
+          id: 'objection',
+          title: 'Objection Handling',
+          value: 0,
+          change: '+0%',
+          feedback: 'Turn concerns into opportunities.',
+          borderColor: '#f59e0b',
+          textColor: 'text-amber-300',
+          bg: '#92400e',
+          glowColor: 'rgba(245, 158, 11, 0.5)'
+        },
+        {
+          id: 'closing',
+          title: 'Closing',
+          value: 0,
+          change: '+0%',
+          feedback: 'Use assumptive language to close.',
+          borderColor: '#ec4899',
+          textColor: 'text-pink-300',
+          bg: '#9f1239',
+          glowColor: 'rgba(236, 72, 153, 0.5)'
+        }
+      ])
     }
   }
 
