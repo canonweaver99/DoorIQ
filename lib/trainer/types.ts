@@ -62,3 +62,30 @@ export interface SessionAnalytics {
     objectionCount: number
   }
 }
+
+export interface VoiceAnalysisData {
+  sessionId: string
+  timestamp: Date
+  avgPitch: number
+  minPitch: number
+  maxPitch: number
+  pitchVariation: number // percentage
+  avgVolume: number
+  volumeConsistency: number // coefficient of variation
+  avgWPM: number
+  totalFillerWords: number
+  fillerWordsPerMinute: number
+  longPausesCount: number
+  monotonePeriods: number
+  pitchTimeline: { time: number; value: number }[]
+  volumeTimeline: { time: number; value: number }[]
+  wpmTimeline: { time: number; value: number }[]
+  issues: {
+    tooFast: boolean
+    tooSlow: boolean
+    monotone: boolean
+    lowEnergy: boolean
+    excessiveFillers: boolean
+    poorEndings: boolean
+  }
+}

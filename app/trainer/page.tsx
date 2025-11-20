@@ -122,14 +122,27 @@ function TrainerPageContent() {
   // Real-time analysis hook
   const { feedbackItems: transcriptFeedbackItems, metrics: transcriptMetrics } = useLiveSessionAnalysis(transcript)
   
-  // Voice analysis hook
-  const { metrics: voiceMetrics, feedbackItems: voiceFeedbackItems } = useVoiceAnalysis({
+  // Track session start time for voice analysis
+  const sessionStartTimeRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (sessionActive && !sessionStartTimeRef.current) {
+      sessionStartTimeRef.current = Date.now()
+    } else if (!sessionActive) {
+      sessionStartTimeRef.current = null
+    }
+  }, [sessionActive])
+  
+  // Voice analysis hook - runs silently, no feedback items
+  const { metrics: voiceMetrics, getVoiceAnalysisData } = useVoiceAnalysis({
     enabled: sessionActive,
-    analysisInterval: 100
+    analysisInterval: 100,
+    sessionId,
+    transcript,
+    sessionStartTime: sessionStartTimeRef.current || undefined
   })
   
-  // Merge feedback items
-  const feedbackItems = [...transcriptFeedbackItems, ...voiceFeedbackItems]
+  // Only use transcript feedback items (no voice feedback during live session)
+  const feedbackItems = transcriptFeedbackItems
   
   // Merge metrics
   const metrics = {
@@ -750,6 +763,10 @@ function TrainerPageContent() {
           endReason: endReason || 'manual'
         })
         
+        // Get voice analysis data before saving
+        const voiceAnalysisData = getVoiceAnalysisData()
+        console.log('🎤 Voice analysis data:', voiceAnalysisData ? 'collected' : 'not available')
+        
         const saveResponse = await fetch('/api/session', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -757,7 +774,8 @@ function TrainerPageContent() {
             id: sessionId,
             transcript: transcript.length > 0 ? transcript : undefined, // Optional - already saved incrementally
             duration_seconds: duration,
-            end_reason: endReason || 'manual'
+            end_reason: endReason || 'manual',
+            voice_analysis: voiceAnalysisData || undefined
           }),
         })
         

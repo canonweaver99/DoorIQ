@@ -315,6 +315,7 @@ export default function AnalyticsPage() {
           durationSeconds={session.duration_seconds || 600}
           audioUrl={session.audio_url}
           videoUrl={session.video_url}
+          voiceAnalysis={session.analytics?.voice_analysis || undefined}
         />
         {/* Audio playback archived - focusing on grading consistency */}
       </>

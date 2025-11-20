@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 // UPDATE session (save transcript and scores)
 export async function PATCH(req: Request) {
   try {
-    const { id, transcript, duration_seconds, end_reason, agent_name, homeowner_name, agent_persona } = await req.json()
+    const { id, transcript, duration_seconds, end_reason, agent_name, homeowner_name, agent_persona, voice_analysis } = await req.json()
     
     console.log('🔧 PATCH: Updating session:', id)
     console.log('📝 PATCH: Transcript lines:', transcript?.length || 0)
@@ -71,10 +71,10 @@ export async function PATCH(req: Request) {
     const supabase = await createServiceSupabaseClient()
     
     const now = new Date().toISOString()
-    // Get current transcript from database (it's saved incrementally)
+    // Get current session data from database (transcript saved incrementally, analytics may exist)
     const { data: currentSession, error: fetchError } = await (supabase as any)
       .from('live_sessions')
-      .select('full_transcript')
+      .select('full_transcript, analytics')
       .eq('id', id)
       .single()
     
@@ -106,6 +106,16 @@ export async function PATCH(req: Request) {
       console.warn('⚠️ PATCH: Final transcript is empty!')
     }
 
+    // Handle analytics JSONB - merge voice_analysis if provided
+    let analytics = currentSession?.analytics || {}
+    if (voice_analysis) {
+      console.log('🎤 PATCH: Saving voice analysis data')
+      analytics = {
+        ...analytics,
+        voice_analysis: voice_analysis
+      }
+    }
+    
     // Build update object with all provided fields
     const updateData: any = {
       ended_at: now,
@@ -115,6 +125,11 @@ export async function PATCH(req: Request) {
       sale_closed: false,
       virtual_earnings: 0,
       return_appointment: false
+    }
+    
+    // Add analytics if we have voice_analysis or existing analytics
+    if (voice_analysis || Object.keys(analytics).length > 0) {
+      updateData.analytics = analytics
     }
     
     // Add optional fields if provided
@@ -146,7 +161,7 @@ export async function PATCH(req: Request) {
     if (!savedTranscript || (Array.isArray(savedTranscript) && savedTranscript.length === 0)) {
       console.error('❌ CRITICAL: Transcript was NOT saved to database!', {
         sessionId: id,
-        updateDataTranscriptLength: formattedTranscript.length,
+        updateDataTranscriptLength: finalTranscript.length,
         savedTranscriptLength: Array.isArray(savedTranscript) ? savedTranscript.length : 'N/A'
       })
     }

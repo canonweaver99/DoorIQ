@@ -1,19 +1,23 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { FeedbackItem, FeedbackType, FeedbackSeverity } from '@/lib/trainer/types'
-import { VoiceMetrics } from '@/lib/trainer/types'
+import { VoiceMetrics, VoiceAnalysisData, TranscriptEntry } from '@/lib/trainer/types'
 
 interface UseVoiceAnalysisOptions {
   enabled?: boolean
   analysisInterval?: number // ms
+  sessionId?: string | null
+  transcript?: TranscriptEntry[]
+  sessionStartTime?: number // timestamp when session started
 }
 
 interface UseVoiceAnalysisReturn {
   metrics: VoiceMetrics
-  feedbackItems: FeedbackItem[]
+  feedbackItems: [] // Empty array - no feedback during live session
   isAnalyzing: boolean
   error: string | null
+  voiceAnalysisData: VoiceAnalysisData | null
+  getVoiceAnalysisData: () => VoiceAnalysisData | null
 }
 
 // Pitch detection using autocorrelation
@@ -53,22 +57,6 @@ function calculateVolume(buffer: Float32Array): number {
   return Math.max(-60, Math.min(0, dB))
 }
 
-// Estimate speech rate (simplified - detects speech activity)
-function estimateSpeechRate(
-  volumeHistory: number[],
-  timeWindow: number,
-  volumeThreshold: number = -40
-): number {
-  // Count samples above threshold (speech activity)
-  const activeSamples = volumeHistory.filter(v => v > volumeThreshold).length
-  const activityRatio = activeSamples / volumeHistory.length
-  
-  // Rough estimate: average person speaks ~150 WPM, adjust by activity ratio
-  // This is a simplified estimation - real WPM would require word detection
-  const baseWPM = 150
-  return Math.round(baseWPM * activityRatio * 1.2) // Adjust multiplier based on testing
-}
-
 // Calculate pitch variation percentage
 function calculatePitchVariation(pitchHistory: number[]): number {
   if (pitchHistory.length < 2) return 0
@@ -84,8 +72,87 @@ function calculatePitchVariation(pitchHistory: number[]): number {
   return mean > 0 ? Math.round((stdDev / mean) * 100) : 0
 }
 
+// Calculate volume consistency (coefficient of variation)
+function calculateVolumeConsistency(volumeHistory: number[]): number {
+  if (volumeHistory.length < 2) return 0
+  
+  const mean = volumeHistory.reduce((a, b) => a + b, 0) / volumeHistory.length
+  const variance = volumeHistory.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / volumeHistory.length
+  const stdDev = Math.sqrt(variance)
+  
+  return mean !== 0 ? Math.abs((stdDev / mean) * 100) : 0
+}
+
+// Calculate WPM from transcript entries
+function calculateWPMFromTranscript(
+  transcript: TranscriptEntry[],
+  sessionStartTime: number,
+  currentTime: number
+): number {
+  if (!transcript || transcript.length === 0) return 0
+  
+  // Filter to only user/rep entries
+  const repEntries = transcript.filter(entry => entry.speaker === 'user')
+  if (repEntries.length === 0) return 0
+  
+  // Count total words
+  const totalWords = repEntries.reduce((sum, entry) => {
+    return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
+  }, 0)
+  
+  // Calculate duration in minutes
+  const durationMinutes = Math.max(1, (currentTime - sessionStartTime) / 60000)
+  
+  return Math.round(totalWords / durationMinutes)
+}
+
+// Detect filler words in text
+function detectFillerWords(text: string): number {
+  // Only count: um, uh, uhh, erm, err, hmm (NOT "like")
+  const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm)\b/gi
+  const matches = text.match(fillerPattern)
+  return matches ? matches.length : 0
+}
+
+// Detect pauses >2 seconds between transcript entries
+function detectLongPauses(transcript: TranscriptEntry[]): number {
+  if (transcript.length < 2) return 0
+  
+  let pauseCount = 0
+  for (let i = 1; i < transcript.length; i++) {
+    const prev = transcript[i - 1]
+    const curr = transcript[i]
+    
+    // Only check pauses between user entries (rep speaking)
+    if (prev.speaker === 'user' && curr.speaker === 'user') {
+      try {
+        const prevTime = prev.timestamp instanceof Date 
+          ? prev.timestamp.getTime() 
+          : typeof prev.timestamp === 'string' 
+            ? new Date(prev.timestamp).getTime()
+            : Date.now()
+        const currTime = curr.timestamp instanceof Date 
+          ? curr.timestamp.getTime() 
+          : typeof curr.timestamp === 'string'
+            ? new Date(curr.timestamp).getTime()
+            : Date.now()
+        const pauseDuration = currTime - prevTime
+        
+        if (pauseDuration > 2000) { // >2 seconds
+          pauseCount++
+        }
+      } catch (e) {
+        // Skip if timestamp parsing fails
+        continue
+      }
+    }
+  }
+  
+  return pauseCount
+}
+
 export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoiceAnalysisReturn {
-  const { enabled = false, analysisInterval = 100 } = options
+  const { enabled = false, analysisInterval = 100, sessionId = null, transcript = [], sessionStartTime } = options
   
   const [metrics, setMetrics] = useState<VoiceMetrics>({
     currentPitch: 0,
@@ -95,54 +162,38 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     pitchVariation: 0,
   })
   
-  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
-  const animationFrameRef = useRef<number | null>(null)
   const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   // History buffers for calculations
   const pitchHistoryRef = useRef<number[]>([])
   const volumeHistoryRef = useRef<number[]>([])
-  const speechActivityRef = useRef<{ start: number; end: number }[]>([])
-  const lastFeedbackTimeRef = useRef<Map<string, number>>(new Map())
+  
+  // Timeline data (stored every 500ms)
+  const pitchTimelineRef = useRef<{ time: number; value: number }[]>([])
+  const volumeTimelineRef = useRef<{ time: number; value: number }[]>([])
+  const wpmTimelineRef = useRef<{ time: number; value: number }[]>([])
+  
+  // Session tracking
+  const sessionStartTimeRef = useRef<number>(sessionStartTime || Date.now())
+  const lastTimelineUpdateRef = useRef<number>(0)
+  const TIMELINE_INTERVAL = 500 // Update timeline every 500ms
   
   // Smoothing for pitch
   const pitchSmoothingRef = useRef<number>(0)
   const SMOOTHING_FACTOR = 0.7
   
-  const addFeedbackItem = useCallback((
-    type: FeedbackType,
-    message: string,
-    severity: FeedbackSeverity,
-    cooldownMs: number = 10000
-  ) => {
-    const now = Date.now()
-    const lastTime = lastFeedbackTimeRef.current.get(message) || 0
-    
-    // Cooldown to prevent spam
-    if (now - lastTime < cooldownMs) return
-    
-    lastFeedbackTimeRef.current.set(message, now)
-    
-    const newItem: FeedbackItem = {
-      id: `voice-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      timestamp: new Date(),
-      type,
-      message,
-      severity,
+  // Update session start time if provided
+  useEffect(() => {
+    if (sessionStartTime) {
+      sessionStartTimeRef.current = sessionStartTime
     }
-    
-    setFeedbackItems(prev => {
-      const updated = [...prev, newItem]
-      // Keep max 20 voice feedback items
-      return updated.slice(-20)
-    })
-  }, [])
+  }, [sessionStartTime])
   
   const analyzeAudio = useCallback(() => {
     if (!analyserRef.current) return
@@ -151,6 +202,9 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     const bufferLength = analyser.frequencyBinCount
     const dataArray = new Float32Array(bufferLength)
     analyser.getFloatTimeDomainData(dataArray)
+    
+    const currentTime = Date.now()
+    const sessionElapsed = currentTime - sessionStartTimeRef.current
     
     // Calculate volume
     const volume = calculateVolume(dataArray)
@@ -179,6 +233,22 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
       }
     }
     
+    // Update timeline data every 500ms
+    if (currentTime - lastTimelineUpdateRef.current >= TIMELINE_INTERVAL) {
+      const timeSeconds = sessionElapsed / 1000
+      
+      if (pitch > 0) {
+        pitchTimelineRef.current.push({ time: timeSeconds, value: pitch })
+      }
+      volumeTimelineRef.current.push({ time: timeSeconds, value: volume })
+      
+      // Calculate WPM from transcript
+      const wpm = calculateWPMFromTranscript(transcript, sessionStartTimeRef.current, currentTime)
+      wpmTimelineRef.current.push({ time: timeSeconds, value: wpm })
+      
+      lastTimelineUpdateRef.current = currentTime
+    }
+    
     // Calculate metrics
     const validPitches = pitchHistoryRef.current.filter(p => p > 0)
     const averagePitch = validPitches.length > 0
@@ -187,114 +257,97 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     
     const pitchVariation = calculatePitchVariation(pitchHistoryRef.current)
     
-    // Estimate speech rate over last 5 seconds
-    const speechRate = estimateSpeechRate(
-      volumeHistoryRef.current.slice(-50),
-      5000,
-      -40
-    )
+    // Calculate WPM from transcript
+    const wpm = calculateWPMFromTranscript(transcript, sessionStartTimeRef.current, currentTime)
     
-    // Update metrics
+    // Update metrics (for LiveMetricsPanel display)
     setMetrics({
       currentPitch: Math.round(pitch),
       averagePitch: Math.round(averagePitch),
       volume: Math.round(volume),
-      speechRate,
+      speechRate: wpm,
       pitchVariation,
     })
+  }, [transcript])
+  
+  const getVoiceAnalysisData = useCallback((): VoiceAnalysisData | null => {
+    if (!sessionId || pitchHistoryRef.current.length === 0) return null
     
-    // Generate feedback
-    // Pitch feedback
-    if (pitch > 0 && volume > -50) {
-      // Check if pitch is too monotone
-      if (pitchVariation < 15 && volumeHistoryRef.current.length > 20) {
-        addFeedbackItem(
-          'voice_coaching',
-          'Try varying your pitch more - you\'re sounding a bit monotone',
-          'needs_improvement',
-          15000
-        )
-      }
-      
-      // Check if pitch is too high (nervous indicator)
-      if (pitch > 255) {
-        addFeedbackItem(
-          'voice_coaching',
-          'Your pitch is quite high - try to relax and lower your voice slightly',
-          'needs_improvement',
-          20000
-        )
-      }
-      
-      // Check if pitch is too low
-      if (pitch < 85 && pitch > 0) {
-        addFeedbackItem(
-          'voice_coaching',
-          'Your voice is quite low - try speaking with more energy',
-          'needs_improvement',
-          20000
-        )
-      }
-      
-      // Positive feedback for good pitch variation
-      if (pitchVariation >= 15 && pitchVariation <= 30 && volumeHistoryRef.current.length > 20) {
-        addFeedbackItem(
-          'voice_coaching',
-          'Great pitch variation! Your voice sounds engaging.',
-          'good',
-          30000
-        )
+    const validPitches = pitchHistoryRef.current.filter(p => p > 0)
+    if (validPitches.length === 0) return null
+    
+    // Calculate aggregate metrics
+    const avgPitch = validPitches.reduce((a, b) => a + b, 0) / validPitches.length
+    const minPitch = Math.min(...validPitches)
+    const maxPitch = Math.max(...validPitches)
+    const pitchVariation = calculatePitchVariation(pitchHistoryRef.current)
+    
+    const avgVolume = volumeHistoryRef.current.reduce((a, b) => a + b, 0) / volumeHistoryRef.current.length
+    const volumeConsistency = calculateVolumeConsistency(volumeHistoryRef.current)
+    
+    // Calculate WPM from transcript
+    const currentTime = Date.now()
+    const avgWPM = calculateWPMFromTranscript(transcript, sessionStartTimeRef.current, currentTime)
+    
+    // Count filler words from transcript
+    const repEntries = transcript.filter(entry => entry.speaker === 'user')
+    const totalFillerWords = repEntries.reduce((sum, entry) => {
+      return sum + detectFillerWords(entry.text || '')
+    }, 0)
+    
+    const durationMinutes = Math.max(1, (currentTime - sessionStartTimeRef.current) / 60000)
+    const fillerWordsPerMinute = totalFillerWords / durationMinutes
+    
+    // Detect long pauses
+    const longPausesCount = detectLongPauses(transcript)
+    
+    // Detect monotone periods (low pitch variation for >10 seconds)
+    let monotonePeriods = 0
+    if (pitchTimelineRef.current.length > 20) { // Need at least 10 seconds of data (20 * 500ms)
+      const windowSize = 20 // 10 seconds worth of samples
+      for (let i = windowSize; i < pitchTimelineRef.current.length; i++) {
+        const window = pitchTimelineRef.current.slice(i - windowSize, i)
+        const windowPitches = window.map(p => p.value).filter(p => p > 0)
+        if (windowPitches.length > 10) {
+          const windowVariation = calculatePitchVariation(windowPitches)
+          if (windowVariation < 10) { // Low variation
+            monotonePeriods++
+            i += windowSize // Skip ahead to avoid double counting
+          }
+        }
       }
     }
     
-    // Volume feedback
-    if (volume < -30 && volume > -60) {
-      addFeedbackItem(
-        'voice_coaching',
-        'Speak up! Your volume is too low.',
-        'needs_improvement',
-        15000
-      )
-    } else if (volume > -10) {
-      addFeedbackItem(
-        'voice_coaching',
-        'Your volume is quite loud - consider speaking a bit softer',
-        'needs_improvement',
-        15000
-      )
-    } else if (volume >= -30 && volume <= -10) {
-      addFeedbackItem(
-        'voice_coaching',
-        'Great energy! Your voice sounds confident.',
-        'good',
-        30000
-      )
+    // Detect issues
+    const issues = {
+      tooFast: avgWPM > 180,
+      tooSlow: avgWPM < 120,
+      monotone: pitchVariation < 15,
+      lowEnergy: avgVolume < -35,
+      excessiveFillers: fillerWordsPerMinute > 2,
+      poorEndings: false // Would need more sophisticated analysis
     }
     
-    // Speech rate feedback
-    if (speechRate > 180 && volumeHistoryRef.current.length > 30) {
-      addFeedbackItem(
-        'voice_coaching',
-        `Slow down - you're speaking too fast (${speechRate} WPM)`,
-        'needs_improvement',
-        20000
-      )
-    } else if (speechRate < 120 && speechRate > 0 && volumeHistoryRef.current.length > 30) {
-      addFeedbackItem(
-        'voice_coaching',
-        `Speed up slightly - you're speaking too slowly (${speechRate} WPM)`,
-        'needs_improvement',
-        20000
-      )
-    } else if (speechRate >= 140 && speechRate <= 160 && volumeHistoryRef.current.length > 30) {
-      addFeedbackItem(
-        'voice_coaching',
-        'Perfect pace! Your speech rate is ideal for sales.',
-        'good',
-        30000
-      )
+    return {
+      sessionId,
+      timestamp: new Date(),
+      avgPitch: Math.round(avgPitch),
+      minPitch: Math.round(minPitch),
+      maxPitch: Math.round(maxPitch),
+      pitchVariation,
+      avgVolume: Math.round(avgVolume),
+      volumeConsistency: Math.round(volumeConsistency * 100) / 100,
+      avgWPM,
+      totalFillerWords,
+      fillerWordsPerMinute: Math.round(fillerWordsPerMinute * 10) / 10,
+      longPausesCount,
+      monotonePeriods,
+      pitchTimeline: [...pitchTimelineRef.current],
+      volumeTimeline: [...volumeTimelineRef.current],
+      wpmTimeline: [...wpmTimelineRef.current],
+      issues,
     }
-  }, [addFeedbackItem])
+  }, [sessionId, transcript])
   
   const startAnalysis = useCallback(async () => {
     if (isAnalyzing) return
@@ -321,6 +374,8 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
       source.connect(analyser)
       
       setIsAnalyzing(true)
+      sessionStartTimeRef.current = Date.now()
+      lastTimelineUpdateRef.current = Date.now()
       
       // Start analysis loop
       const runAnalysis = () => {
@@ -340,11 +395,6 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     if (analysisIntervalRef.current) {
       clearTimeout(analysisIntervalRef.current)
       analysisIntervalRef.current = null
-    }
-    
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current)
-      animationFrameRef.current = null
     }
     
     if (mediaStreamRef.current) {
@@ -369,10 +419,7 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
       pitchVariation: 0,
     })
     
-    // Clear history
-    pitchHistoryRef.current = []
-    volumeHistoryRef.current = []
-    speechActivityRef.current = []
+    // Note: Don't clear timeline data - it's needed for final analysis
   }, [])
   
   // Start/stop analysis based on enabled prop
@@ -399,9 +446,10 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
   
   return {
     metrics,
-    feedbackItems,
+    feedbackItems: [], // No feedback during live session
     isAnalyzing,
     error,
+    voiceAnalysisData: getVoiceAnalysisData(),
+    getVoiceAnalysisData,
   }
 }
-

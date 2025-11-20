@@ -5,6 +5,8 @@ import { Users, Target, Shield, HandshakeIcon, DollarSign, Download, Share2, Boo
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import CoachingChat from './CoachingChat'
+import SpeechQualitySection from './SpeechQualitySection'
+import { VoiceAnalysisData } from '@/lib/trainer/types'
 
 interface ScoresViewV2Props {
   sessionId: string
@@ -54,6 +56,7 @@ interface ScoresViewV2Props {
   durationSeconds?: number
   audioUrl?: string
   videoUrl?: string
+  voiceAnalysis?: VoiceAnalysisData
 }
 
 export default function ScoresViewV2({
@@ -73,7 +76,8 @@ export default function ScoresViewV2({
   agentName = 'AI Agent',
   durationSeconds = 600,
   audioUrl,
-  videoUrl
+  videoUrl,
+  voiceAnalysis
 }: ScoresViewV2Props) {
   const [animatedEarnings, setAnimatedEarnings] = useState(0)
   const [showFillerWordsDropdown, setShowFillerWordsDropdown] = useState(false)
@@ -438,6 +442,14 @@ export default function ScoresViewV2({
           </motion.div>
         </div>
       </section>
+
+      {/* Speech Quality Section */}
+      {voiceAnalysis && (
+        <SpeechQualitySection
+          voiceAnalysis={voiceAnalysis}
+          durationSeconds={durationSeconds || 600}
+        />
+      )}
 
       {/* Patterns - "What patterns should I recognize?" */}
       <section>
