@@ -708,14 +708,17 @@ function TrainerPageContent() {
       console.log('🎬 Session ID:', newId)
       
       // Deduct credit for ALL users (free users have 10 credits, paid users have 50 credits/month)
-      try {
-        await fetch('/api/session/increment', { method: 'POST' })
-        await sessionLimit.refresh()
-        // Dispatch event to notify header to refresh credits
-        window.dispatchEvent(new CustomEvent('credits:updated'))
-      } catch (error) {
-        logger.error('Error incrementing session count', error)
-      }
+      // Make this non-blocking so session can start even if API fails
+      fetch('/api/session/increment', { method: 'POST' })
+        .then(() => {
+          sessionLimit.refresh()
+          // Dispatch event to notify header to refresh credits
+          window.dispatchEvent(new CustomEvent('credits:updated'))
+        })
+        .catch((error) => {
+          logger.error('Error incrementing session count (non-blocking)', error)
+          // Don't block session start if this fails
+        })
 
       durationInterval.current = setInterval(() => {
         setDuration(prev => prev + 1)
@@ -758,62 +761,6 @@ function TrainerPageContent() {
     }
   }
 
-  // Handle auto-end when agent ends conversation (shows door closing video)
-  const handleAutoEnd = useCallback(async () => {
-    console.log('🚪 handleAutoEnd called - agent ended conversation')
-    
-    if (!sessionId) {
-      console.log('⚠️ handleAutoEnd called but no sessionId, ignoring')
-      return
-    }
-
-    // Prevent multiple triggers
-    if (sessionState !== 'active') {
-      console.log('⚠️ handleAutoEnd called but sessionState is not active, ignoring')
-      return
-    }
-
-    // Set state to door-closing (conversation will end naturally via ElevenLabs disconnect)
-    setSessionState('door-closing')
-    setSessionActive(false)
-    setConversationToken(null)
-
-    // Stop duration timer
-    if (durationInterval.current) {
-      clearInterval(durationInterval.current)
-      durationInterval.current = null
-    }
-
-    // Background session save (don't await)
-    const saveSessionData = async () => {
-      try {
-        console.log('💾 Background saving session data...')
-        const voiceAnalysisData = getVoiceAnalysisData()
-        
-        await fetch('/api/session', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: sessionId,
-            transcript: transcript.length > 0 ? transcript : undefined,
-            duration_seconds: duration,
-            end_reason: 'agent',
-            voice_analysis: voiceAnalysisData || undefined,
-            agent_name: selectedAgent?.name,
-            agent_id: selectedAgent?.eleven_agent_id,
-          }),
-        })
-        
-        console.log('✅ Background session save completed')
-      } catch (error) {
-        console.error('❌ Error in background session save:', error)
-        // Don't block - continue anyway
-      }
-    }
-    
-    saveSessionData() // Start async, don't wait
-  }, [sessionId, duration, transcript, selectedAgent, getVoiceAnalysisData])
-
   // Handle door closing video completion - redirect to analytics
   const handleDoorVideoComplete = useCallback(() => {
     console.log('🎬 Door closing video completed, redirecting to analytics')
@@ -826,15 +773,6 @@ function TrainerPageContent() {
       router.push('/trainer')
     }
   }, [sessionId, router])
-
-  // Conversation end detection hook (must be after handleAutoEnd is defined)
-  useConversationEndDetection({
-    onConversationEnd: handleAutoEnd,
-    transcript,
-    sessionStartTime: sessionStartTimeRef.current,
-    sessionActive: sessionActive && sessionState === 'active',
-    enabled: sessionActive && sessionState === 'active',
-  })
 
   const endSession = useCallback(async (endReason?: string) => {
     // Session ending (manual end - skip video, go straight to analytics/loading)
@@ -1221,7 +1159,42 @@ function TrainerPageContent() {
     setTimeout(() => {
       setSessionActive(false)
     }, 100)
-  }, [selectedAgent?.name, videoMode, endSession, sessionId])
+  }, [selectedAgent?.name, videoMode, endSession, sessionId, transcript, showDoorCloseAnimation])
+
+  // Handle auto-end when agent ends conversation (shows door closing video)
+  const handleAutoEnd = useCallback(async () => {
+    console.log('🚪 handleAutoEnd called - agent ended conversation')
+    
+    if (!sessionId) {
+      console.log('⚠️ handleAutoEnd called but no sessionId, ignoring')
+      return
+    }
+
+    // Prevent multiple triggers
+    if (sessionState !== 'active') {
+      console.log('⚠️ handleAutoEnd called but sessionState is not active, ignoring')
+      return
+    }
+
+    // Stop duration timer
+    if (durationInterval.current) {
+      clearInterval(durationInterval.current)
+      durationInterval.current = null
+    }
+
+    // Trigger door closing sequence with auto-grading enabled
+    console.log('🎯 Triggering door closing sequence with auto-grading...')
+    await handleDoorClosingSequence('Agent ended conversation', true) // shouldTriggerGrading = true
+  }, [sessionId, sessionState, handleDoorClosingSequence])
+
+  // Conversation end detection hook (must be after handleAutoEnd is defined)
+  useConversationEndDetection({
+    onConversationEnd: handleAutoEnd,
+    transcript,
+    sessionStartTime: sessionStartTimeRef.current,
+    sessionActive: sessionActive && sessionState === 'active',
+    enabled: sessionActive && sessionState === 'active',
+  })
   
   // Listen for agent disconnect events to trigger auto end and grade
   useEffect(() => {

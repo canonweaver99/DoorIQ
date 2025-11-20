@@ -56,7 +56,7 @@ export function useConversationEndDetection({
   // Reset trigger when session becomes inactive or starts
   useEffect(() => {
     if (!sessionActive) {
-      hasTriggeredRef = { current: false }
+      hasTriggeredRef.current = false
     } else {
       hasTriggeredRef.current = false
       lastActivityTimeRef.current = Date.now()
