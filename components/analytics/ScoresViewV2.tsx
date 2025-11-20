@@ -443,14 +443,6 @@ export default function ScoresViewV2({
         </div>
       </section>
 
-      {/* Speech Quality Section */}
-      {voiceAnalysis && (
-        <SpeechQualitySection
-          voiceAnalysis={voiceAnalysis}
-          durationSeconds={durationSeconds || 600}
-        />
-      )}
-
       {/* Patterns - "What patterns should I recognize?" */}
       <section>
         <div className="flex items-center gap-3 mb-6">
@@ -532,6 +524,14 @@ export default function ScoresViewV2({
           </div>
         )}
       </section>
+
+      {/* Speech Quality Section */}
+      {voiceAnalysis && (
+        <SpeechQualitySection
+          voiceAnalysis={voiceAnalysis}
+          durationSeconds={durationSeconds || 600}
+        />
+      )}
 
       {/* AI Coaching Chat - Moved to bottom */}
       <CoachingChat
