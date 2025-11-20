@@ -126,99 +126,114 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
   useEffect(() => {
     const fetchAgents = async () => {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      // Fetch agents
-      const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: true })
-      
-      // Stripe/billing removed - no subscription checks needed
-      
-      // Fetch user's sessions for stats
-      let sessions: any[] = []
-      if (user) {
-        const { data: sessionData } = await supabase
-          .from('live_sessions')
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        // Fetch agents
+        const { data, error } = await supabase
+          .from('agents')
           .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { descending: true })
-        if (sessionData) sessions = sessionData
-      }
-      
-      if (!error && data) {
-        // Normalize agent names for backward compatibility (Austin -> Average Austin)
-        const normalizeAgentName = (name: string): AllowedAgentName | null => {
-          if (name === 'Austin') return 'Average Austin'
-          return ALLOWED_AGENT_SET.has(name as AllowedAgentName) ? (name as AllowedAgentName) : null
+          .eq('is_active', true)
+          .order('created_at', { ascending: true })
+        
+        if (error) {
+          console.error('Error fetching agents:', error)
+          setLoading(false)
+          return
         }
         
-        const filtered = data.filter((agent: AgentRow) => {
-          if (!Boolean(agent.eleven_agent_id)) return false
-          const normalizedName = normalizeAgentName(agent.name)
-          return normalizedName !== null
-        }).map((agent: AgentRow) => {
-          // Normalize the name in the agent object for consistent handling
-          const normalizedName = normalizeAgentName(agent.name)
-          return normalizedName ? { ...agent, name: normalizedName } : agent
-        })
+        // Stripe/billing removed - no subscription checks needed
         
-        const sorted = filtered.sort((a: AgentRow, b: AgentRow) => ALLOWED_AGENT_ORDER.indexOf(a.name as AllowedAgentName) - ALLOWED_AGENT_ORDER.indexOf(b.name as AllowedAgentName))
-
-        const hydrated = sorted.map((agent: AgentRow, index: number) => {
-          // Filter sessions by agent name, handling both "Austin" and "Average Austin" for backward compatibility
-          const agentSessions = sessions.filter((s: any) => {
-            const sessionAgentName = s.agent_name
-            const currentAgentName = agent.name
-            // Match if names are equal, or if one is "Austin" and the other is "Average Austin"
-            return sessionAgentName === currentAgentName || 
-                   (sessionAgentName === 'Austin' && currentAgentName === 'Average Austin') ||
-                   (sessionAgentName === 'Average Austin' && currentAgentName === 'Austin')
-          })
-          const completedSessions = agentSessions.filter(s => s.overall_score !== null && s.overall_score > 0)
-          const bestScore = completedSessions.length > 0 
-            ? Math.max(...completedSessions.map(s => s.overall_score || 0))
-            : null
-          const avgDuration = completedSessions.length > 0
-            ? Math.round(completedSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / completedSessions.length / 60)
-            : null
-          
-          // All agents remain visually available; access is enforced when starting a session
-          const isLocked = false
-          const isMastered = completedSessions.length >= 5 && bestScore && bestScore >= 80
-          
-          return {
-            ...mapAgentToDisplay(agent as AgentRow, index),
-            sessionCount: agentSessions.length,
-            bestScore,
-            avgDuration,
-            isLocked,
-            isMastered
+        // Fetch user's sessions for stats
+        let sessions: any[] = []
+        if (user) {
+          const { data: sessionData, error: sessionError } = await supabase
+            .from('live_sessions')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { descending: true })
+          if (sessionError) {
+            console.error('Error fetching sessions:', sessionError)
+          } else if (sessionData) {
+            sessions = sessionData
           }
-        })
-        setAgents(hydrated)
-        setSortedAgents(hydrated)
-        
-        // Determine suggested agent based on user analytics
-        const unplayedAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.sessionCount || a.sessionCount === 0)
-        const lowScoreAgents = hydrated.filter((a: HomeownerAgentDisplay) => a.bestScore && a.bestScore < 70).sort((a: HomeownerAgentDisplay, b: HomeownerAgentDisplay) => (a.bestScore || 0) - (b.bestScore || 0))
-        const availableAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.isLocked)
-        
-        if (lowScoreAgents.length > 0) {
-          // Suggest the agent with lowest score for improvement
-          setSuggestedAgent(lowScoreAgents[0].name)
-        } else if (unplayedAgents.length > 0) {
-          // Suggest next unplayed agent
-          setSuggestedAgent(unplayedAgents[0].name)
-        } else if (availableAgents.length > 0) {
-          // Suggest random available agent
-          setSuggestedAgent(availableAgents[Math.floor(Math.random() * availableAgents.length)].name)
         }
+        
+        if (data) {
+          // Normalize agent names for backward compatibility (Austin -> Average Austin)
+          const normalizeAgentName = (name: string): AllowedAgentName | null => {
+            if (name === 'Austin') return 'Average Austin'
+            return ALLOWED_AGENT_SET.has(name as AllowedAgentName) ? (name as AllowedAgentName) : null
+          }
+          
+          const filtered = data.filter((agent: AgentRow) => {
+            if (!Boolean(agent.eleven_agent_id)) return false
+            const normalizedName = normalizeAgentName(agent.name)
+            return normalizedName !== null
+          }).map((agent: AgentRow) => {
+            // Normalize the name in the agent object for consistent handling
+            const normalizedName = normalizeAgentName(agent.name)
+            return normalizedName ? { ...agent, name: normalizedName } : agent
+          })
+          
+          const sorted = filtered.sort((a: AgentRow, b: AgentRow) => ALLOWED_AGENT_ORDER.indexOf(a.name as AllowedAgentName) - ALLOWED_AGENT_ORDER.indexOf(b.name as AllowedAgentName))
+
+          const hydrated = sorted.map((agent: AgentRow, index: number) => {
+            // Filter sessions by agent name, handling both "Austin" and "Average Austin" for backward compatibility
+            const agentSessions = sessions.filter((s: any) => {
+              const sessionAgentName = s.agent_name
+              const currentAgentName = agent.name
+              // Match if names are equal, or if one is "Austin" and the other is "Average Austin"
+              return sessionAgentName === currentAgentName || 
+                     (sessionAgentName === 'Austin' && currentAgentName === 'Average Austin') ||
+                     (sessionAgentName === 'Average Austin' && currentAgentName === 'Austin')
+            })
+            const completedSessions = agentSessions.filter(s => s.overall_score !== null && s.overall_score > 0)
+            const bestScore = completedSessions.length > 0 
+              ? Math.max(...completedSessions.map(s => s.overall_score || 0))
+              : null
+            const avgDuration = completedSessions.length > 0
+              ? Math.round(completedSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / completedSessions.length / 60)
+              : null
+            
+            // All agents remain visually available; access is enforced when starting a session
+            const isLocked = false
+            const isMastered = completedSessions.length >= 5 && bestScore && bestScore >= 80
+            
+            return {
+              ...mapAgentToDisplay(agent as AgentRow, index),
+              sessionCount: agentSessions.length,
+              bestScore,
+              avgDuration,
+              isLocked,
+              isMastered
+            }
+          })
+          setAgents(hydrated)
+          setSortedAgents(hydrated)
+          
+          // Determine suggested agent based on user analytics
+          const unplayedAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.sessionCount || a.sessionCount === 0)
+          const lowScoreAgents = hydrated.filter((a: HomeownerAgentDisplay) => a.bestScore && a.bestScore < 70).sort((a: HomeownerAgentDisplay, b: HomeownerAgentDisplay) => (a.bestScore || 0) - (b.bestScore || 0))
+          const availableAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.isLocked)
+          
+          if (lowScoreAgents.length > 0) {
+            // Suggest the agent with lowest score for improvement
+            setSuggestedAgent(lowScoreAgents[0].name)
+          } else if (unplayedAgents.length > 0) {
+            // Suggest next unplayed agent
+            setSuggestedAgent(unplayedAgents[0].name)
+          } else if (availableAgents.length > 0) {
+            // Suggest random available agent
+            setSuggestedAgent(availableAgents[Math.floor(Math.random() * availableAgents.length)].name)
+          }
+        }
+        setLoading(false)
+      } catch (err) {
+        console.error('Error in fetchAgents:', err)
+        setLoading(false)
       }
-      setLoading(false)
     }
     fetchAgents()
   }, [])

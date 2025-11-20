@@ -100,7 +100,241 @@ function detectTechnique(text: string): string | null {
   return null
 }
 
+// Detect objection handling quality
+function detectObjectionHandling(
+  text: string, 
+  objectionTime: Date | null, 
+  currentTime: Date
+): { quality: 'strong' | 'weak' | 'ignored'; message: string } | null {
+  if (!objectionTime) return null
+  
+  const timeSinceObjection = currentTime.getTime() - objectionTime.getTime()
+  const lowerText = text.toLowerCase()
+  
+  // Addressing language patterns
+  const addressingPatterns = [
+    'i understand', 'i hear you', 'that makes sense', 'i can see why',
+    'let me address', 'let me help', 'here\'s how', 'the way we handle',
+    'solution', 'option', 'alternative', 'we can work with'
+  ]
+  
+  const hasAddressing = addressingPatterns.some(pattern => lowerText.includes(pattern))
+  
+  // Solution language patterns
+  const solutionPatterns = [
+    'solution', 'option', 'alternative', 'we can', 'here\'s how',
+    'what we do', 'the way', 'approach', 'method'
+  ]
+  const hasSolution = solutionPatterns.some(pattern => lowerText.includes(pattern))
+  
+  if (timeSinceObjection > 60000) {
+    return { quality: 'ignored', message: 'Objection ignored - 60+ seconds passed without acknowledgment' }
+  }
+  
+  if (timeSinceObjection <= 30000 && hasAddressing && hasSolution) {
+    return { quality: 'strong', message: 'Strong rebuttal! Objection addressed with technique and conversation moved forward.' }
+  }
+  
+  if (timeSinceObjection <= 30000 && hasAddressing && !hasSolution) {
+    return { quality: 'weak', message: 'Weak response - acknowledged objection but offered no solution' }
+  }
+  
+  return null
+}
+
+// Detect closing behaviors
+function detectClosingBehavior(text: string): { type: 'trial_close' | 'direct_close' | 'assumptive'; message: string } | null {
+  const lowerText = text.toLowerCase()
+  
+  // Trial close patterns
+  const trialClosePatterns = [
+    'does that make sense', 'can you see how', 'would that work', 'does that sound',
+    'make sense', 'sound good', 'work for you', 'see how this helps',
+    'does this help', 'would this work', 'can you see', 'does that help'
+  ]
+  
+  // Direct close patterns
+  const directClosePatterns = [
+    'can we schedule', 'let\'s get you started', 'ready to move forward',
+    'let\'s set this up', 'can we get started', 'shall we proceed',
+    'want to get started', 'ready to begin', 'let\'s move forward',
+    'can we book', 'schedule an appointment', 'set up installation'
+  ]
+  
+  // Assumptive language patterns
+  const assumptivePatterns = [
+    'when we install', 'after we get started', 'once you\'re set up',
+    'when we set this up', 'once we install', 'after installation',
+    'when we begin', 'once we start', 'after we get going',
+    'when you\'re set up', 'once it\'s installed'
+  ]
+  
+  if (trialClosePatterns.some(pattern => lowerText.includes(pattern))) {
+    return { type: 'trial_close', message: 'Trial close detected!' }
+  }
+  
+  if (directClosePatterns.some(pattern => lowerText.includes(pattern))) {
+    return { type: 'direct_close', message: 'Going for the close!' }
+  }
+  
+  if (assumptivePatterns.some(pattern => lowerText.includes(pattern))) {
+    return { type: 'assumptive', message: 'Assumptive language!' }
+  }
+  
+  return null
+}
+
+// Detect momentum shifts
+function detectMomentumShift(
+  currentEntry: TranscriptEntry,
+  recentEntries: TranscriptEntry[],
+  objectionHandled: boolean
+): { type: 'building_rapport' | 'interest_growing' | 'losing_engagement' | 'strong_recovery'; message: string } | null {
+  if (currentEntry.speaker !== 'homeowner') return null
+  
+  const recentHomeownerEntries = recentEntries
+    .filter(e => e.speaker === 'homeowner')
+    .slice(-5)
+  
+  if (recentHomeownerEntries.length < 2) return null
+  
+  // Check response length trend
+  const lengths = recentHomeownerEntries.map(e => e.text.length)
+  const avgLength = lengths.reduce((a, b) => a + b, 0) / lengths.length
+  const currentLength = currentEntry.text.length
+  
+  // Check for questions from homeowner (engagement signal)
+  const questionPatterns = ['?', 'what', 'how', 'why', 'when', 'where', 'tell me', 'explain']
+  const hasQuestions = recentHomeownerEntries.some(e => 
+    questionPatterns.some(pattern => e.text.toLowerCase().includes(pattern))
+  )
+  
+  // Strong recovery after objection
+  if (objectionHandled && currentLength > avgLength * 1.3) {
+    return { type: 'strong_recovery', message: 'Strong recovery! Successfully handled objection and regained momentum.' }
+  }
+  
+  // Building rapport - homeowner asking questions or sharing details
+  if (hasQuestions && currentLength > 30) {
+    return { type: 'building_rapport', message: 'Building rapport! Homeowner is asking questions and sharing details.' }
+  }
+  
+  // Interest growing - responses getting longer
+  if (currentLength > avgLength * 1.2 && currentLength > 40) {
+    return { type: 'interest_growing', message: 'Interest growing! Homeowner\'s responses getting longer and more engaged.' }
+  }
+  
+  // Losing engagement - responses getting shorter
+  if (currentLength < avgLength * 0.7 && currentLength < 20 && recentHomeownerEntries.length >= 3) {
+    const dismissivePatterns = ['no', 'not interested', 'maybe later', 'i don\'t think', 'probably not']
+    const isDismissive = dismissivePatterns.some(pattern => currentEntry.text.toLowerCase().includes(pattern))
+    
+    if (isDismissive) {
+      return { type: 'losing_engagement', message: 'Losing engagement - homeowner\'s responses getting shorter or more dismissive.' }
+    }
+  }
+  
+  return null
+}
+
+// Detect question quality
+function detectQuestionQuality(text: string): { type: 'discovery' | 'qualifying' | 'closed'; message: string } | null {
+  if (!text.trim().endsWith('?')) return null
+  
+  const lowerText = text.toLowerCase()
+  
+  // Discovery question patterns (problems/pain points)
+  const discoveryPatterns = [
+    'what\'s your biggest concern', 'how often do you deal with', 'what happens when',
+    'what problems', 'what challenges', 'what issues', 'what\'s frustrating',
+    'what keeps you up', 'what\'s your main', 'what concerns you'
+  ]
+  
+  // Qualifying question patterns (determining fit)
+  const qualifyingPatterns = [
+    'who makes decisions', 'what\'s your timeline', 'have you looked into',
+    'what\'s your budget', 'when are you looking', 'who else is involved',
+    'what\'s important to you', 'what are your priorities'
+  ]
+  
+  // Closed question patterns (yes/no)
+  const closedPatterns = [
+    /^(is|are|do|does|did|can|could|will|would|have|has|had)\s/i,
+    /^(do you|are you|is it|can you|will you|would you)\s/i
+  ]
+  
+  if (discoveryPatterns.some(pattern => lowerText.includes(pattern))) {
+    return { type: 'discovery', message: 'Great discovery question! Asking about problems/pain points.' }
+  }
+  
+  if (qualifyingPatterns.some(pattern => lowerText.includes(pattern))) {
+    return { type: 'qualifying', message: 'Good qualifying question! Determining fit and timeline.' }
+  }
+  
+  if (closedPatterns.some(pattern => pattern.test(text.trim()))) {
+    return { type: 'closed', message: 'Closed question used - consider open-ended for better discovery.' }
+  }
+  
+  return null
+}
+
+// Detect price handling
+function detectPriceHandling(
+  text: string,
+  sessionStartTime: Date | null,
+  valueStatements: number
+): { type: 'too_early' | 'great_framing' | 'breakdown_used' | 'skipped'; message: string } | null {
+  const lowerText = text.toLowerCase()
+  
+  // Price mention patterns
+  const pricePatterns = [
+    'price', 'cost', 'how much', 'dollar', '$', 'expensive', 'afford',
+    'payment', 'pay', 'charge', 'fee', 'rate'
+  ]
+  
+  const hasPriceMention = pricePatterns.some(pattern => lowerText.includes(pattern))
+  if (!hasPriceMention) return null
+  
+  // Check if price was asked but not answered
+  if (text.includes('?')) {
+    // This is a question about price - check if it's being answered
+    return null // Will be handled by checking if rep responds
+  }
+  
+  // Great price framing patterns
+  const framingPatterns = [
+    'for just', 'per day', 'per month', 'compared to', 'investment in',
+    'worth it', 'value', 'saves you', 'costs less than', 'only'
+  ]
+  
+  // Price breakdown patterns
+  const breakdownPatterns = [
+    'per day', 'per month', 'per year', 'daily', 'monthly', 'annually',
+    'breaks down to', 'comes out to', 'works out to', 'that\'s only'
+  ]
+  
+  // Check timing (first 2 minutes = 120000ms)
+  if (sessionStartTime) {
+    const sessionDuration = Date.now() - sessionStartTime.getTime()
+    if (sessionDuration < 120000 && valueStatements === 0) {
+      return { type: 'too_early', message: 'Price mentioned too early! Establish value before discussing price.' }
+    }
+  }
+  
+  if (framingPatterns.some(pattern => lowerText.includes(pattern))) {
+    return { type: 'great_framing', message: 'Great price framing! Positioned price in terms of value.' }
+  }
+  
+  if (breakdownPatterns.some(pattern => lowerText.includes(pattern))) {
+    return { type: 'breakdown_used', message: 'Price breakdown used! Breaking down into smaller amounts helps.' }
+  }
+  
+  return null
+}
+
 // Calculate talk time ratio
+// Returns the percentage of user (sales rep) talk time
+// Higher percentage = user talked more, lower percentage = agent talked more
 function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
   if (transcript.length === 0) return 50 // Default to 50% if no transcript
   
@@ -109,25 +343,46 @@ function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
   
   transcript.forEach(entry => {
     const charCount = entry.text.length
+    // Explicitly check for 'user' speaker (sales rep)
     if (entry.speaker === 'user') {
       userCharCount += charCount
-    } else {
+    } 
+    // Explicitly check for 'homeowner' speaker (AI agent)
+    else if (entry.speaker === 'homeowner') {
       homeownerCharCount += charCount
     }
+    // Ignore any other speaker values to avoid counting errors
   })
   
   const totalChars = userCharCount + homeownerCharCount
   if (totalChars === 0) return 50
   
-  return Math.round((userCharCount / totalChars) * 100)
+  // Calculate user's percentage: (user chars / total chars) * 100
+  // This means: more user talk = higher %, more agent talk = lower %
+  const userPercentage = Math.round((userCharCount / totalChars) * 100)
+  
+  console.log('📊 Talk ratio calculation:', {
+    userChars: userCharCount,
+    homeownerChars: homeownerCharCount,
+    totalChars,
+    userPercentage: `${userPercentage}%`
+  })
+  
+  return userPercentage
 }
 
 export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSessionAnalysisReturn {
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([])
   const previousTranscriptLengthRef = useRef(0)
   const objectionTimestampsRef = useRef<Map<string, Date>>(new Map())
+  const objectionHandledRef = useRef<Map<string, boolean>>(new Map())
   const lastMonologueStartRef = useRef<Date | null>(null)
   const lastMonologueSpeakerRef = useRef<'user' | 'homeowner' | null>(null)
+  const recentEntriesRef = useRef<TranscriptEntry[]>([])
+  const closedQuestionCountRef = useRef(0)
+  const sessionStartTimeRef = useRef<Date | null>(null)
+  const valueStatementsCountRef = useRef(0)
+  const priceQuestionAskedRef = useRef<Date | null>(null)
   
   // Generate feedback item
   const addFeedbackItem = useCallback((
@@ -155,6 +410,13 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     })
   }, [])
   
+  // Initialize session start time
+  useEffect(() => {
+    if (transcript.length > 0 && !sessionStartTimeRef.current) {
+      sessionStartTimeRef.current = transcript[0].timestamp
+    }
+  }, [transcript.length])
+
   // Analyze transcript for new entries
   useEffect(() => {
     if (transcript.length <= previousTranscriptLengthRef.current) {
@@ -164,10 +426,14 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     const newEntries = transcript.slice(previousTranscriptLengthRef.current)
     previousTranscriptLengthRef.current = transcript.length
     
+    // Update recent entries (keep last 10 for momentum tracking)
+    recentEntriesRef.current = [...recentEntriesRef.current, ...newEntries].slice(-10)
+    
     console.log('🔍 Analyzing new transcript entries:', newEntries.length, 'entries')
     
     newEntries.forEach(entry => {
       console.log('📝 Processing entry:', { speaker: entry.speaker, text: entry.text.substring(0, 50) })
+      
       // Objection detection (only for homeowner)
       if (entry.speaker === 'homeowner') {
         const objection = detectObjection(entry.text)
@@ -176,6 +442,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
           const objectionKey = `${objection.type}-${entry.id}`
           if (!objectionTimestampsRef.current.has(objectionKey)) {
             objectionTimestampsRef.current.set(objectionKey, entry.timestamp)
+            objectionHandledRef.current.set(objectionKey, false)
             
             const objectionMessages = {
               price: 'Price objection detected: "I can\'t afford it" or similar',
@@ -191,29 +458,82 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
               { objectionType: objection.type }
             )
             
-            // Set timer to check if objection is handled within 30 seconds
+            // Check for objection handling after 30 seconds
             setTimeout(() => {
               const objectionTime = objectionTimestampsRef.current.get(objectionKey)
               if (objectionTime) {
                 // Check if there's been a user response since objection
-                const hasResponse = transcript.some(
+                const userResponses = transcript.filter(
                   t => t.speaker === 'user' && 
                   t.timestamp > objectionTime &&
                   t.timestamp.getTime() - objectionTime.getTime() < 30000
                 )
                 
-                if (!hasResponse) {
+                if (userResponses.length === 0) {
                   addFeedbackItem(
-                    'coaching_tip',
-                    `Consider addressing the ${objection.type} objection. Try acknowledging their concern and offering a solution.`,
-                    'needs_improvement'
+                    'objection_handling',
+                    'Objection ignored - 60+ seconds passed without acknowledgment',
+                    'needs_improvement',
+                    {}
                   )
+                } else {
+                  // Check handling quality
+                  const lastResponse = userResponses[userResponses.length - 1]
+                  const handling = detectObjectionHandling(lastResponse.text, objectionTime, lastResponse.timestamp)
+                  
+                  if (handling) {
+                    if (handling.quality === 'strong') {
+                      objectionHandledRef.current.set(objectionKey, true)
+                      addFeedbackItem(
+                        'objection_handling',
+                        handling.message,
+                        'good',
+                        {}
+                      )
+                    } else if (handling.quality === 'weak') {
+                      addFeedbackItem(
+                        'objection_handling',
+                        handling.message,
+                        'needs_improvement',
+                        {}
+                      )
+                    }
+                  }
                 }
                 
-                objectionTimestampsRef.current.delete(objectionKey)
+                // Check again after 60 seconds for ignored
+                setTimeout(() => {
+                  if (!objectionHandledRef.current.get(objectionKey)) {
+                    addFeedbackItem(
+                      'objection_handling',
+                      'Objection ignored - 60+ seconds passed without acknowledgment',
+                      'needs_improvement',
+                      {}
+                    )
+                  }
+                  objectionTimestampsRef.current.delete(objectionKey)
+                  objectionHandledRef.current.delete(objectionKey)
+                }, 30000) // Additional 30 seconds = 60 total
               }
             }, 30000)
           }
+        }
+        
+        // Check for price questions
+        const lowerText = entry.text.toLowerCase()
+        if ((lowerText.includes('price') || lowerText.includes('cost') || lowerText.includes('how much')) && entry.text.includes('?')) {
+          priceQuestionAskedRef.current = entry.timestamp
+        }
+        
+        // Detect momentum shifts
+        const momentum = detectMomentumShift(entry, recentEntriesRef.current, false)
+        if (momentum) {
+          addFeedbackItem(
+            'momentum_shift',
+            momentum.message,
+            momentum.type === 'losing_engagement' ? 'needs_improvement' : 'good',
+            { momentumType: momentum.type }
+          )
         }
       }
       
@@ -228,6 +548,72 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             'good',
             { techniqueName: technique }
           )
+        }
+        
+        // Track value statements for price handling
+        const valuePatterns = ['value', 'benefit', 'saves', 'protects', 'helps', 'improves', 'solves']
+        if (valuePatterns.some(pattern => entry.text.toLowerCase().includes(pattern))) {
+          valueStatementsCountRef.current++
+        }
+        
+        // Detect closing behaviors
+        const closing = detectClosingBehavior(entry.text)
+        if (closing) {
+          addFeedbackItem(
+            'closing_behavior',
+            closing.message,
+            'good',
+            { closingType: closing.type }
+          )
+        }
+        
+        // Detect question quality
+        const questionQuality = detectQuestionQuality(entry.text)
+        if (questionQuality) {
+          if (questionQuality.type === 'closed') {
+            closedQuestionCountRef.current++
+            // Only flag if 3+ closed questions in a row
+            if (closedQuestionCountRef.current >= 3) {
+              addFeedbackItem(
+                'question_quality',
+                questionQuality.message,
+                'needs_improvement',
+                { questionType: questionQuality.type }
+              )
+              closedQuestionCountRef.current = 0 // Reset
+            }
+          } else {
+            closedQuestionCountRef.current = 0 // Reset on good question
+            addFeedbackItem(
+              'question_quality',
+              questionQuality.message,
+              'good',
+              { questionType: questionQuality.type }
+            )
+          }
+        }
+        
+        // Detect price handling
+        const priceHandling = detectPriceHandling(
+          entry.text,
+          sessionStartTimeRef.current,
+          valueStatementsCountRef.current
+        )
+        if (priceHandling) {
+          addFeedbackItem(
+            'price_handling',
+            priceHandling.message,
+            priceHandling.type === 'too_early' || priceHandling.type === 'skipped' ? 'needs_improvement' : 'good',
+            { priceHandlingType: priceHandling.type }
+          )
+        }
+        
+        // Check if price question was answered
+        if (priceQuestionAskedRef.current) {
+          const timeSinceQuestion = entry.timestamp.getTime() - priceQuestionAskedRef.current.getTime()
+          if (timeSinceQuestion < 10000) { // Within 10 seconds
+            priceQuestionAskedRef.current = null // Answered
+          }
         }
         
         // Check for long monologues (>45 seconds of continuous talking)
@@ -251,6 +637,9 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
           lastMonologueStartRef.current = null
           lastMonologueSpeakerRef.current = null
         }
+        
+        // Reset closed question count when homeowner responds
+        closedQuestionCountRef.current = 0
       }
       
       // Detect buying signals from homeowner

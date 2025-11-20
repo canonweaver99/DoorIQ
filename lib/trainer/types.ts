@@ -5,7 +5,18 @@ export interface TranscriptEntry {
   timestamp: Date
 }
 
-export type FeedbackType = 'objection_detected' | 'technique_used' | 'coaching_tip' | 'warning' | 'voice_coaching'
+export type FeedbackType = 
+  | 'objection_detected' 
+  | 'technique_used' 
+  | 'coaching_tip' 
+  | 'warning' 
+  | 'voice_coaching'
+  | 'objection_handling'
+  | 'closing_behavior'
+  | 'momentum_shift'
+  | 'question_quality'
+  | 'price_handling'
+
 export type FeedbackSeverity = 'good' | 'neutral' | 'needs_improvement'
 
 export interface FeedbackItem {
@@ -17,6 +28,10 @@ export interface FeedbackItem {
   metadata?: {
     objectionType?: 'price' | 'time' | 'authority' | 'need'
     techniqueName?: string
+    closingType?: 'trial_close' | 'direct_close' | 'assumptive'
+    momentumType?: 'building_rapport' | 'interest_growing' | 'losing_engagement' | 'strong_recovery'
+    questionType?: 'discovery' | 'qualifying' | 'closed'
+    priceHandlingType?: 'too_early' | 'great_framing' | 'breakdown_used' | 'skipped'
   }
 }
 

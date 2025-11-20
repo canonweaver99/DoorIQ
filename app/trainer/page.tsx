@@ -1377,11 +1377,13 @@ function TrainerPageContent() {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
                       <button
                         onClick={() => startSession()}
-                        className="relative px-8 lg:px-10 py-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 active:from-emerald-700 active:via-teal-700 active:to-cyan-700 text-white font-bold text-lg lg:text-xl rounded-2xl transition-all duration-300 active:scale-95 border-2 border-white/20 hover:border-white/30 backdrop-blur-sm min-h-[56px] touch-manipulation z-20 overflow-hidden group"
+                        className="relative px-8 lg:px-10 py-5 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 hover:from-slate-700 hover:via-slate-600 hover:to-slate-700 active:from-slate-900 active:via-slate-800 active:to-slate-900 text-white font-space font-bold text-lg lg:text-xl rounded-2xl transition-all duration-300 active:scale-95 border-2 border-white/30 hover:border-white/40 backdrop-blur-sm min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-2xl"
                       >
                         <span className="relative z-10 flex items-center gap-2">
-                          <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
-                          <span className="sm:hidden">Knock</span>
+                          <span className="hidden sm:inline">
+                            Knock on <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">{selectedAgent.name}'s</span> Door 🚪
+                          </span>
+                          <span className="sm:hidden">Knock 🚪</span>
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
                       </button>
@@ -1413,19 +1415,19 @@ function TrainerPageContent() {
           </div>
 
           {/* RIGHT SIDE (50%) - Metrics, Feedback, Transcript */}
-          <div className="w-full lg:w-[50%] flex flex-col gap-4 overflow-hidden h-[40vh] lg:h-auto">
+          <div className="w-full lg:w-[50%] flex flex-col gap-4 overflow-hidden h-[40vh] lg:h-full">
             {/* Metrics Panel (30% of right side) */}
             <div className="h-[30%] min-h-[120px] flex-shrink-0">
               <LiveMetricsPanel metrics={metrics} />
             </div>
             
-            {/* Feedback Feed (40% of right side) */}
-            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 flex flex-col overflow-hidden`}>
+            {/* Feedback Feed (40% of right side when active, 50% when inactive) */}
+            <div className={`flex-shrink-0 flex flex-col overflow-hidden min-h-[300px] -mt-24 ${sessionActive ? 'h-[40%]' : 'h-[50%]'}`}>
               <LiveFeedbackFeed feedbackItems={feedbackItems} />
             </div>
             
-            {/* Transcript (40% of right side) */}
-            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 flex flex-col overflow-hidden`}>
+            {/* Transcript (40% of right side when active, 50% when inactive) */}
+            <div className={`flex-shrink-0 flex flex-col overflow-hidden min-h-[300px] -mt-24 ${sessionActive ? 'h-[40%]' : 'h-[50%]'}`}>
               <LiveTranscript 
                 transcript={transcript} 
                 agentName={selectedAgent?.name}

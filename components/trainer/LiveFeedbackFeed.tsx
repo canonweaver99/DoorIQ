@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { FeedbackItem } from '@/lib/trainer/types'
-import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface LiveFeedbackFeedProps {
@@ -73,6 +73,66 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         iconBg: 'bg-purple-500/20',
         iconColor: 'text-purple-400'
       }
+    case 'objection_handling':
+      return {
+        icon: AlertCircle,
+        badgeVariant: 'destructive' as const,
+        badgeText: 'OBJECTION HANDLING',
+        gradientFrom: 'from-orange-500/10',
+        gradientTo: 'to-orange-600/5',
+        borderColor: 'border-orange-500/30',
+        accentGradient: 'from-orange-500 to-orange-600',
+        iconBg: 'bg-orange-500/20',
+        iconColor: 'text-orange-400'
+      }
+    case 'closing_behavior':
+      return {
+        icon: CheckCircle2,
+        badgeVariant: 'default' as const,
+        badgeText: 'CLOSING',
+        gradientFrom: 'from-emerald-500/10',
+        gradientTo: 'to-emerald-600/5',
+        borderColor: 'border-emerald-500/30',
+        accentGradient: 'from-emerald-500 to-emerald-600',
+        iconBg: 'bg-emerald-500/20',
+        iconColor: 'text-emerald-400'
+      }
+    case 'momentum_shift':
+      return {
+        icon: TrendingUp,
+        badgeVariant: 'secondary' as const,
+        badgeText: 'MOMENTUM',
+        gradientFrom: 'from-teal-500/10',
+        gradientTo: 'to-teal-600/5',
+        borderColor: 'border-teal-500/30',
+        accentGradient: 'from-teal-500 to-teal-600',
+        iconBg: 'bg-teal-500/20',
+        iconColor: 'text-teal-400'
+      }
+    case 'question_quality':
+      return {
+        icon: Lightbulb,
+        badgeVariant: 'secondary' as const,
+        badgeText: 'QUESTION',
+        gradientFrom: 'from-sky-500/10',
+        gradientTo: 'to-sky-600/5',
+        borderColor: 'border-sky-500/30',
+        accentGradient: 'from-sky-500 to-sky-600',
+        iconBg: 'bg-sky-500/20',
+        iconColor: 'text-sky-400'
+      }
+    case 'price_handling':
+      return {
+        icon: AlertCircle,
+        badgeVariant: 'destructive' as const,
+        badgeText: 'PRICE',
+        gradientFrom: 'from-violet-500/10',
+        gradientTo: 'to-violet-600/5',
+        borderColor: 'border-violet-500/30',
+        accentGradient: 'from-violet-500 to-violet-600',
+        iconBg: 'bg-violet-500/20',
+        iconColor: 'text-violet-400'
+      }
     default:
       return {
         icon: AlertCircle,
@@ -104,15 +164,8 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
     return `${hours}h ago`
   }
 
-  // Auto-dismiss low-priority tips after 15 seconds
-  useEffect(() => {
-    if (item.type === 'coaching_tip' && item.severity !== 'needs_improvement' && onDismiss) {
-      const timer = setTimeout(() => {
-        onDismiss(item.id)
-      }, 15000)
-      return () => clearTimeout(timer)
-    }
-  }, [item.id, item.type, item.severity, onDismiss])
+  // Auto-dismiss disabled - cards should persist and scroll
+  // Removed auto-dismiss to allow cards to scroll through like transcript
 
   return (
     <motion.div
@@ -155,7 +208,7 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
             </Badge>
             <span className="text-[10px] text-white/80 font-space">{formatTime(item.timestamp)}</span>
           </div>
-          <p className="text-xs text-white leading-tight font-space">
+          <p className="text-sm text-white leading-relaxed font-space font-medium">
             {item.message}
           </p>
         </div>
@@ -166,6 +219,7 @@ function FeedbackItemComponent({ item, onDismiss }: { item: FeedbackItem; onDism
 
 export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
   const feedEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [dismissedItems, setDismissedItems] = useState<Set<string>>(new Set())
   const lastMessageRef = useRef<Map<string, number>>(new Map())
 
@@ -197,10 +251,20 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
     setDismissedItems(prev => new Set(prev).add(id))
   }
 
-  // Auto-scroll to bottom when new items are added
+  // Auto-scroll to bottom when new items are added - only scroll within container
   useEffect(() => {
-    if (feedEndRef.current) {
-      feedEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    if (scrollContainerRef.current && feedEndRef.current) {
+      // Only scroll if user hasn't manually scrolled up
+      const container = scrollContainerRef.current
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100
+      
+      if (isNearBottom) {
+        // Use scrollTo instead of scrollIntoView to avoid scrolling the page
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
     }
   }, [deduplicatedItems])
 
@@ -213,7 +277,10 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
         </h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 custom-scrollbar space-y-2 min-h-0">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto overflow-x-hidden p-3 custom-scrollbar space-y-2 min-h-0"
+      >
         {deduplicatedItems.length === 0 ? (
           <div className="flex items-center justify-center h-full text-white/60 text-sm font-space">
             <div className="text-center">
@@ -222,11 +289,11 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
             </div>
           </div>
         ) : (
-          <AnimatePresence mode="popLayout">
+          <>
             {deduplicatedItems.map((item) => (
               <FeedbackItemComponent key={item.id} item={item} onDismiss={handleDismiss} />
             ))}
-          </AnimatePresence>
+          </>
         )}
         <div ref={feedEndRef} />
       </div>

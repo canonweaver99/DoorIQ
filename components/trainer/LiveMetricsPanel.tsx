@@ -20,9 +20,10 @@ interface MetricCardProps {
   badgeVariant?: 'default' | 'secondary' | 'destructive'
   progress?: number
   progressLabel?: string
+  verticalLayout?: boolean
 }
 
-function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant = 'default', progress, progressLabel }: MetricCardProps) {
+function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant = 'default', progress, progressLabel, verticalLayout = false }: MetricCardProps) {
   const colorClasses = {
     blue: {
       icon: 'text-blue-400',
@@ -48,6 +49,32 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
   }
 
   const classes = colorClasses[color]
+
+  if (verticalLayout) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className={cn(
+          "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-4 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group flex flex-col"
+        )}
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <div className={cn("p-2 rounded-lg transition-colors", classes.bg, classes.hover)}>
+            <div className={classes.icon}>
+              {icon}
+            </div>
+          </div>
+          <div>
+            <div className="text-base font-medium text-white font-space">{label}</div>
+            {subtitle && <div className="text-xs text-white/80 font-space">{subtitle}</div>}
+          </div>
+        </div>
+        <div className="text-4xl font-bold text-white font-space">{value}</div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div
@@ -130,7 +157,6 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
       <MetricCard
         icon={<Mic className="w-5 h-5" />}
         label="Talk Time Ratio"
-        subtitle="You vs. Homeowner"
         value={`${talkTimeRatio}%`}
         color="blue"
         badge={talkTimeStatus.badge}
@@ -146,6 +172,7 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
         subtitle="Detected"
         value={objectionCount}
         color="amber"
+        verticalLayout={true}
       />
       
       {/* Techniques Card */}
@@ -155,6 +182,7 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
         subtitle="Used"
         value={techniquesUsed.length}
         color="emerald"
+        verticalLayout={true}
       />
     </div>
   )
