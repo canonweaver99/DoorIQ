@@ -190,7 +190,34 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           
           const hasActiveSession = !!sessionIdRef.current
           
+          // CRITICAL: Always dispatch disconnect status when there's an active session
+          // This ensures the trainer page detects when ElevenLabs hangs up
+          if (hasActiveSession) {
+            console.log('🔌 Active session detected - dispatching disconnect status immediately')
+            console.log('📊 Disconnect reason:', reason, 'Type:', typeof reason)
+            wasConnectedRef.current = false
+            setStatus('disconnected')
+            dispatchStatus('disconnected')
+            
+            // Stop audio recording when conversation ends
+            if (audioRecordingActiveRef.current) {
+              console.log('🛑 Stopping audio recording from onDisconnect (active session)')
+              stopAudioRecording()
+              audioRecordingActiveRef.current = false
+            }
+            
+            // Clean up conversation reference
+            if (conversationRef.current) {
+              console.log('🧹 Cleaning up conversation reference')
+              conversationRef.current = null
+            }
+            
+            // Don't attempt reconnection if we have an active session - the session should end
+            return
+          }
+          
           // Check if this was an unexpected disconnect (for reconnection logic)
+          // Only relevant when there's NO active session
           const reasonStr = String(reason || '').toLowerCase()
           const isUnexpected = wasConnectedRef.current && 
                               !reasonStr.includes('end_call') && 
@@ -200,7 +227,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
                               !reasonStr.includes('call ended')
           
           // Only attempt reconnection if we DON'T have an active session (connection error outside session)
-          if (isUnexpected && !isReconnectingRef.current && !hasActiveSession) {
+          if (isUnexpected && !isReconnectingRef.current) {
             console.warn('⚠️ Unexpected disconnect detected (no active session), attempting reconnection...')
             // Only attempt reconnect if we haven't exceeded max attempts
             if (reconnectAttemptsRef.current < maxReconnectAttempts) {
