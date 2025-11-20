@@ -11,7 +11,6 @@ import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSessionLimit } from '@/hooks/useSubscription'
 import { useLiveSessionAnalysis } from '@/hooks/useLiveSessionAnalysis'
 import { useVoiceAnalysis } from '@/hooks/useVoiceAnalysis'
-import { useConversationEndDetection } from '@/hooks/useConversationEndDetection'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -869,7 +868,7 @@ function TrainerPageContent() {
         }
         
         // Now redirect after save completes
-        // For manual ends, go to loading page. For agent ends, should already be handled by handleAutoEnd
+        // For manual ends, go to loading page
         const redirectUrl = `/trainer/loading/${sessionId}`
         console.log('🚀 Redirecting to loading page:', redirectUrl)
         
@@ -905,7 +904,7 @@ function TrainerPageContent() {
     setVideoMode('closing') // Also set video mode immediately
   }, [])
 
-  const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation', shouldTriggerGrading: boolean = false) => {
+  const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Starting door closing sequence:', reason)
     console.log('🚪 Door closing sequence context:', {
       reason,
@@ -981,20 +980,6 @@ function TrainerPageContent() {
       
       if (!closingVideoPath) {
         console.warn('⚠️ No closing video path found, skipping video animation')
-        // No closing video - trigger grading immediately if requested
-        if (shouldTriggerGrading && sessionId) {
-          console.log('🎯 Triggering grading (no closing video)...')
-          try {
-            await fetch('/api/grade/session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ sessionId })
-            })
-            console.log('✅ Grading triggered successfully')
-          } catch (error) {
-            console.error('❌ Error triggering grading:', error)
-          }
-        }
       } else {
         // Switch to closing door video - React will re-render with new src
         setVideoMode('closing')
@@ -1062,28 +1047,6 @@ function TrainerPageContent() {
             console.log(`🎬 Closing door video finished for ${agentName}`)
             video.removeEventListener('ended', handleVideoEnd)
             video.removeEventListener('error', handleVideoError)
-            
-            // Trigger grading if requested (for auto end and grade feature)
-            if (shouldTriggerGrading && sessionId) {
-              console.log('🎯 Triggering grading after closing video...')
-              try {
-                const gradeResponse = await fetch('/api/grade/session', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ sessionId })
-                })
-                
-                if (gradeResponse.ok) {
-                  console.log('✅ Grading triggered successfully')
-                } else {
-                  console.warn('⚠️ Grading trigger failed, but continuing with session end')
-                }
-              } catch (error) {
-                console.error('❌ Error triggering grading:', error)
-                // Continue anyway - grading can be triggered later
-              }
-            }
-            
             resolve()
           }
           
@@ -1098,15 +1061,6 @@ function TrainerPageContent() {
           // Check if video already ended (edge case)
           if (video.ended) {
             console.log('🎬 Video already ended')
-            // Still trigger grading if needed
-            if (shouldTriggerGrading && sessionId) {
-              console.log('🎯 Triggering grading after closing video (video already ended)...')
-              fetch('/api/grade/session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId })
-              }).catch(err => console.error('Error triggering grading:', err))
-            }
             resolve()
             return
           }
@@ -1119,15 +1073,6 @@ function TrainerPageContent() {
             console.log('⏰ Closing door video timeout, proceeding anyway')
             video.removeEventListener('ended', handleVideoEnd)
             video.removeEventListener('error', handleVideoError)
-            // Still trigger grading if needed
-            if (shouldTriggerGrading && sessionId) {
-              console.log('🎯 Triggering grading after closing video timeout...')
-              fetch('/api/grade/session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId })
-              }).catch(err => console.error('Error triggering grading:', err))
-            }
             resolve()
           }, 10000) // 10 second timeout
         })
@@ -1161,74 +1106,6 @@ function TrainerPageContent() {
     }, 100)
   }, [selectedAgent?.name, videoMode, endSession, sessionId, transcript, showDoorCloseAnimation])
 
-  // Handle auto-end when agent ends conversation (shows door closing video)
-  const handleAutoEnd = useCallback(async () => {
-    console.log('🚪 handleAutoEnd called - agent ended conversation')
-    
-    if (!sessionId) {
-      console.log('⚠️ handleAutoEnd called but no sessionId, ignoring')
-      return
-    }
-
-    // Prevent multiple triggers
-    if (sessionState !== 'active') {
-      console.log('⚠️ handleAutoEnd called but sessionState is not active, ignoring')
-      return
-    }
-
-    // Stop duration timer
-    if (durationInterval.current) {
-      clearInterval(durationInterval.current)
-      durationInterval.current = null
-    }
-
-    // Trigger door closing sequence with auto-grading enabled
-    console.log('🎯 Triggering door closing sequence with auto-grading...')
-    await handleDoorClosingSequence('Agent ended conversation', true) // shouldTriggerGrading = true
-  }, [sessionId, sessionState, handleDoorClosingSequence])
-
-  // Conversation end detection hook (must be after handleAutoEnd is defined)
-  useConversationEndDetection({
-    onConversationEnd: handleAutoEnd,
-    transcript,
-    sessionStartTime: sessionStartTimeRef.current,
-    sessionActive: sessionActive && sessionState === 'active',
-    enabled: sessionActive && sessionState === 'active',
-  })
-  
-  // Listen for agent disconnect events to trigger auto end and grade
-  useEffect(() => {
-    // Guard against SSR - only run on client
-    if (typeof window === 'undefined') return
-    
-    // Only listen if we have an active session
-    if (!sessionActive || !sessionId) return
-
-    // Track if we've already triggered auto end to prevent duplicate triggers
-    let hasTriggeredAutoEnd = false
-
-    const handleConnectionStatusChange = (e: any) => {
-      const status = e?.detail
-      console.log('📊 Connection status changed:', status, 'sessionActive:', sessionActive)
-      
-      // Check if agent disconnected (hangup) and we haven't already triggered auto end
-      // Only trigger if session is still active (not manually ended) and not already handling auto-end
-      // Note: The useConversationEndDetection hook will handle auto-end, so this is a fallback
-      if (status === 'disconnected' && sessionActive && sessionState === 'active' && !hasTriggeredAutoEnd) {
-        console.log('🔌 Agent disconnected - old handler triggered (should be handled by hook)')
-        // Don't trigger handleDoorClosingSequence - let the hook handle it
-        // This is kept as a fallback but should not normally trigger
-      }
-    }
-
-    window.addEventListener('connection:status', handleConnectionStatusChange)
-
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('connection:status', handleConnectionStatusChange)
-      }
-    }
-  }, [sessionActive, sessionId, handleDoorClosingSequence])
   
   // Handle manual end session requests only
   useEffect(() => {
