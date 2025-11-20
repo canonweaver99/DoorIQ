@@ -11,6 +11,7 @@ import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSessionLimit } from '@/hooks/useSubscription'
 import { useLiveSessionAnalysis } from '@/hooks/useLiveSessionAnalysis'
 import { useVoiceAnalysis } from '@/hooks/useVoiceAnalysis'
+import { useConversationEndDetection } from '@/hooks/useConversationEndDetection'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -19,6 +20,7 @@ import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { LiveTranscript } from '@/components/trainer/LiveTranscript'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
+import DoorClosingVideo from '@/components/trainer/DoorClosingVideo'
 
 // Dynamic imports for heavy components - only load when needed
 const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
@@ -101,6 +103,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
 
 function TrainerPageContent() {
   const [sessionActive, setSessionActive] = useState(false)
+  const [sessionState, setSessionState] = useState<'active' | 'ending' | 'door-closing' | 'complete'>('active')
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [duration, setDuration] = useState(0)
@@ -119,6 +122,7 @@ function TrainerPageContent() {
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
   const webcamPIPRef = useRef<WebcamPIPRef | null>(null)
+  const conversationRef = useRef<any>(null) // Ref to ElevenLabs conversation instance
 
   // Sync camera/mic state with WebcamPIP
   useEffect(() => {
@@ -271,6 +275,12 @@ function TrainerPageContent() {
     }
     return null
   }
+
+  // Helper function to get door closing video path for an agent
+  const getAgentDoorVideo = useCallback((agentId: string, agentName: string | null | undefined): string => {
+    const videoPaths = getAgentVideoPaths(agentName)
+    return videoPaths?.closing || '/austin-door-close.mp4' // Fallback to Austin's video
+  }, [])
   
   // Video recording temporarily disabled - archived for future implementation
   // const { isRecording: isVideoRecording, startRecording: startDualCameraRecording, stopRecording: stopDualCameraRecording } = useDualCameraRecording(sessionId)
@@ -678,6 +688,7 @@ function TrainerPageContent() {
       
       setSessionId(newId)
       setSessionActive(true)
+      setSessionState('active')
       // Session started
       // Start with opening animation if available (Jerry), otherwise start with loop
       if (agentHasVideos(selectedAgent?.name)) {
@@ -747,8 +758,86 @@ function TrainerPageContent() {
     }
   }
 
+  // Handle auto-end when agent ends conversation (shows door closing video)
+  const handleAutoEnd = useCallback(async () => {
+    console.log('🚪 handleAutoEnd called - agent ended conversation')
+    
+    if (!sessionId) {
+      console.log('⚠️ handleAutoEnd called but no sessionId, ignoring')
+      return
+    }
+
+    // Prevent multiple triggers
+    if (sessionState !== 'active') {
+      console.log('⚠️ handleAutoEnd called but sessionState is not active, ignoring')
+      return
+    }
+
+    // Set state to door-closing (conversation will end naturally via ElevenLabs disconnect)
+    setSessionState('door-closing')
+    setSessionActive(false)
+    setConversationToken(null)
+
+    // Stop duration timer
+    if (durationInterval.current) {
+      clearInterval(durationInterval.current)
+      durationInterval.current = null
+    }
+
+    // Background session save (don't await)
+    const saveSessionData = async () => {
+      try {
+        console.log('💾 Background saving session data...')
+        const voiceAnalysisData = getVoiceAnalysisData()
+        
+        await fetch('/api/session', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: sessionId,
+            transcript: transcript.length > 0 ? transcript : undefined,
+            duration_seconds: duration,
+            end_reason: 'agent',
+            voice_analysis: voiceAnalysisData || undefined,
+            agent_name: selectedAgent?.name,
+            agent_id: selectedAgent?.eleven_agent_id,
+          }),
+        })
+        
+        console.log('✅ Background session save completed')
+      } catch (error) {
+        console.error('❌ Error in background session save:', error)
+        // Don't block - continue anyway
+      }
+    }
+    
+    saveSessionData() // Start async, don't wait
+  }, [sessionId, duration, transcript, selectedAgent, getVoiceAnalysisData])
+
+  // Handle door closing video completion - redirect to analytics
+  const handleDoorVideoComplete = useCallback(() => {
+    console.log('🎬 Door closing video completed, redirecting to analytics')
+    setSessionState('complete')
+    
+    if (sessionId) {
+      // Redirect directly to analytics (skip loading page)
+      window.location.href = `/analytics/${sessionId}`
+    } else {
+      router.push('/trainer')
+    }
+  }, [sessionId, router])
+
+  // Conversation end detection hook (must be after handleAutoEnd is defined)
+  useConversationEndDetection({
+    onConversationEnd: handleAutoEnd,
+    transcript,
+    sessionStartTime: sessionStartTimeRef.current,
+    sessionActive: sessionActive && sessionState === 'active',
+    enabled: sessionActive && sessionState === 'active',
+  })
+
   const endSession = useCallback(async (endReason?: string) => {
-    // Session ending
+    // Session ending (manual end - skip video, go straight to analytics/loading)
     
     console.log('🔚 endSession called', { 
       sessionId, 
@@ -763,8 +852,15 @@ function TrainerPageContent() {
       return
     }
     
+    // If we're already in door-closing state, don't process manual end
+    if (sessionState === 'door-closing') {
+      console.log('⚠️ Already in door-closing state, ignoring manual end')
+      return
+    }
+    
     setLoading(true)
     setSessionActive(false)
+    // Don't change sessionState for manual end - we're redirecting immediately
     setConversationToken(null)
     // Don't reset videoMode if we're showing closing animation - let it finish
     if (videoMode !== 'closing' && !showDoorCloseAnimation) {
@@ -835,8 +931,9 @@ function TrainerPageContent() {
         }
         
         // Now redirect after save completes
-        console.log('🚀 Redirecting to loading page:', `/trainer/loading/${sessionId}`)
+        // For manual ends, go to loading page. For agent ends, should already be handled by handleAutoEnd
         const redirectUrl = `/trainer/loading/${sessionId}`
+        console.log('🚀 Redirecting to loading page:', redirectUrl)
         
         // Use window.location.href for reliable redirect (blocking)
         window.location.href = redirectUrl
@@ -859,7 +956,7 @@ function TrainerPageContent() {
       router.push('/trainer')
       setLoading(false)
     }
-  }, [sessionId, duration, transcript, router, sessionActive])
+  }, [sessionId, duration, transcript, router, sessionActive, sessionState])
 
   // Shared function to handle door closing sequence and end session
 
@@ -1142,14 +1239,12 @@ function TrainerPageContent() {
       console.log('📊 Connection status changed:', status, 'sessionActive:', sessionActive)
       
       // Check if agent disconnected (hangup) and we haven't already triggered auto end
-      // Only trigger if session is still active (not manually ended)
-      if (status === 'disconnected' && sessionActive && !hasTriggeredAutoEnd) {
-        console.log('🔌 Agent disconnected - triggering auto end and grade...')
-        hasTriggeredAutoEnd = true
-        // Trigger door closing sequence with grading enabled
-        handleDoorClosingSequence('agent_hangup', true).catch((error) => {
-          console.error('❌ Error in handleDoorClosingSequence from agent disconnect:', error)
-        })
+      // Only trigger if session is still active (not manually ended) and not already handling auto-end
+      // Note: The useConversationEndDetection hook will handle auto-end, so this is a fallback
+      if (status === 'disconnected' && sessionActive && sessionState === 'active' && !hasTriggeredAutoEnd) {
+        console.log('🔌 Agent disconnected - old handler triggered (should be handled by hook)')
+        // Don't trigger handleDoorClosingSequence - let the hook handle it
+        // This is kept as a fallback but should not normally trigger
       }
     }
 
@@ -1191,6 +1286,25 @@ function TrainerPageContent() {
     }
   }, [sessionActive, sessionId, endSession, handleCallEnd])
 
+  // Add beforeunload warning during active session
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (sessionState === 'active' && sessionActive) {
+        e.preventDefault()
+        e.returnValue = 'You have an active training session. Are you sure you want to leave?'
+        return e.returnValue
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [sessionState, sessionActive])
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -1219,6 +1333,18 @@ function TrainerPageContent() {
         }
       }, 50)
     }
+  }
+
+  // Show door closing video when in door-closing state
+  if (sessionState === 'door-closing') {
+    return (
+      <DoorClosingVideo
+        agentId={selectedAgent?.eleven_agent_id || ''}
+        agentName={selectedAgent?.name || null}
+        onComplete={handleDoorVideoComplete}
+        getAgentVideoPaths={getAgentVideoPaths}
+      />
+    )
   }
 
   return (
@@ -1437,19 +1563,19 @@ function TrainerPageContent() {
           </div>
 
           {/* RIGHT SIDE (50%) - Metrics, Feedback, Transcript */}
-          <div className="w-full lg:w-[50%] flex flex-col gap-0 overflow-hidden h-[40vh] lg:h-auto">
+          <div className="w-full lg:w-[50%] flex flex-col gap-4 overflow-hidden h-[40vh] lg:h-auto">
             {/* Metrics Panel (30% of right side) */}
-            <div className="h-[30%] min-h-[120px] flex-shrink-0 mb-0">
+            <div className="h-[30%] min-h-[120px] flex-shrink-0">
               <LiveMetricsPanel metrics={metrics} />
             </div>
             
             {/* Feedback Feed (40% of right side) */}
-            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 -mt-20`}>
+            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 flex flex-col overflow-hidden`}>
               <LiveFeedbackFeed feedbackItems={feedbackItems} />
             </div>
             
             {/* Transcript (40% of right side) */}
-            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 -mt-[104px]`}>
+            <div className={`${sessionActive ? 'h-[40%]' : 'h-[50%]'} min-h-[300px] flex-shrink-0 flex flex-col overflow-hidden`}>
               <LiveTranscript 
                 transcript={transcript} 
                 agentName={selectedAgent?.name}
