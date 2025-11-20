@@ -5,12 +5,19 @@ import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import dynamicImport from 'next/dynamic'
+import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSessionLimit } from '@/hooks/useSubscription'
+import { useLiveSessionAnalysis } from '@/hooks/useLiveSessionAnalysis'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { LiveMetricsPanel } from '@/components/trainer/LiveMetricsPanel'
+import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
+import { LiveTranscript } from '@/components/trainer/LiveTranscript'
+import { VideoControls } from '@/components/trainer/VideoControls'
+import { WebcamPIP } from '@/components/trainer/WebcamPIP'
 
 // Dynamic imports for heavy components - only load when needed
 const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
@@ -107,6 +114,11 @@ function TrainerPageContent() {
   const loopVideoDurationRef = useRef<number>(0) // Track loop video duration
   const [showDoorOpeningVideo, setShowDoorOpeningVideo] = useState(false) // Track when to show door opening video
   const doorOpeningVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for door opening video
+  const [isMuted, setIsMuted] = useState(false)
+  const [isCameraOff, setIsCameraOff] = useState(false)
+  
+  // Real-time analysis hook
+  const { feedbackItems, metrics } = useLiveSessionAnalysis(transcript)
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
@@ -1110,14 +1122,28 @@ function TrainerPageContent() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const handleMuteToggle = () => {
+    setIsMuted(!isMuted)
+    // TODO: Implement actual mute/unmute logic with WebcamRecorder
+  }
+
+  const handleCameraToggle = () => {
+    setIsCameraOff(!isCameraOff)
+    // TODO: Implement actual camera toggle logic with WebcamRecorder
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
+    >
       <LastCreditWarningModal 
         isOpen={showLastCreditWarning} 
         onClose={() => setShowLastCreditWarning(false)}
         onContinue={() => {
           setShowLastCreditWarning(false)
-          // Restart session after modal closes, skipping credit check
           setTimeout(() => {
             startSession(true)
           }, 100)
@@ -1131,244 +1157,190 @@ function TrainerPageContent() {
       {/* Full Screen Session Container */}
       <div className="relative w-full h-screen flex flex-col bg-black/40 backdrop-blur-sm overflow-hidden">
         
-        {/* Header with Timer and Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-3 sm:px-6 py-0.5 sm:py-1 border-b border-purple-500/20 flex-shrink-0 bg-black/20">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs sm:text-sm font-semibold text-white truncate">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-slate-700/50 flex-shrink-0 bg-black/20">
+          <div className="flex items-center gap-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-sm font-semibold text-white">
               Live Session - {selectedAgent?.name || 'Training'}
             </span>
           </div>
-          <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
-            <span className="text-xs sm:text-sm text-slate-300 font-mono">
-              {formatDuration(duration)}
-            </span>
-            <button
-              onClick={() => endSession()}
-              disabled={loading || !sessionActive}
-              className="px-4 py-2.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm sm:text-sm font-medium rounded-lg transition-all min-h-[44px] touch-manipulation"
-            >
-              {loading ? 'Ending...' : 'End'}
-            </button>
-          </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+        {/* Main Content Area - 60/40 Split */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
           
-          {/* Top Section: Split View - Agent Left, Webcam Right - Stack on mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-purple-500/20 flex-shrink-0 h-[50vh] sm:h-[45vh] md:h-[50vh] min-h-[300px] md:min-h-0">
-            
-            {/* Left: Agent */}
-            <div className="relative border-r-0 md:border-r border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-transparent overflow-hidden h-[25vh] sm:h-[22.5vh] md:h-full min-h-[150px] md:min-h-0" style={{ 
-              maxHeight: '100%'
-            }}>
-              {/* Full Agent Image - matching hero preview */}
-              <div className="absolute inset-0 overflow-hidden">
-                {loading ? (
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
-                    <div className="text-white text-center pointer-events-none">
-                      <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-white mx-auto mb-4"></div>
-                      <p className="text-sm">Connecting...</p>
-                    </div>
+          {/* LEFT SIDE (60%) - Agent Video with PIP */}
+          <div className="w-full lg:w-[60%] relative bg-slate-900 overflow-hidden h-[60vh] lg:h-auto">
+            <div className="absolute inset-0">
+              {loading ? (
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
+                  <div className="text-white text-center pointer-events-none">
+                    <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-white mx-auto mb-4"></div>
+                    <p className="text-sm">Connecting...</p>
                   </div>
-                ) : (
-                  <div className="relative w-full h-full overflow-hidden">
-                    {(() => {
-                      // CRITICAL: Keep video rendered during closing sequence even when sessionActive is false
-                      // Use state-based trigger (showDoorCloseAnimation) OR videoMode check
-                      const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
+                </div>
+              ) : (
+                <div className="relative w-full h-full overflow-hidden">
+                  {(() => {
+                    const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
+                    
+                    if (shouldUseVideo) {
+                      const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                      if (!videoPaths) return null
                       
-                      // Use video for agents with video animations during active session or closing sequence
-                      if (shouldUseVideo) {
-                        const videoPaths = getAgentVideoPaths(selectedAgent?.name)
-                        if (!videoPaths) return null
-                        
-                        // Prioritize closing video if showDoorCloseAnimation is true
-                        const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
-                          ? videoPaths.closing
-                          : videoMode === 'opening' && videoPaths.opening
-                          ? videoPaths.opening
-                          : videoMode === 'loop'
-                          ? videoPaths.loop
-                          : videoPaths.closing
-                        
-                        // URL encode video path if it contains spaces to ensure proper loading
-                        const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
-                          ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                          : videoSrcRaw
-                        
-                        return (
-                          <video
-                            key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
-                            ref={agentVideoRef}
-                            src={videoSrc}
-                            className="w-full h-full object-cover"
-                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
-                            autoPlay
-                            muted
-                            loop={videoMode === 'loop'}
-                            playsInline
-                            onLoadedData={() => {
-                              // Ensure video plays when loaded, especially for closing video
-                              if (agentVideoRef.current) {
-                                console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
-                                agentVideoRef.current.play().catch((err) => {
-                                  console.warn('Video autoplay failed:', err)
-                                })
-                              }
-                            }}
-                            onCanPlay={() => {
-                              // Force play when video is ready, especially for closing animation
-                              if (agentVideoRef.current && (showDoorCloseAnimation || videoMode === 'closing')) {
-                                console.log('🎬 Video can play, forcing play for closing animation')
-                                agentVideoRef.current.play().catch((err) => {
-                                  console.warn('Video force play failed:', err)
-                                })
-                              }
-                            }}
-                            onError={(e) => {
-                              console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
-                              e.stopPropagation()
-                            }}
-                          />
-                        )
-                      }
+                      const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
+                        ? videoPaths.closing
+                        : videoMode === 'opening' && videoPaths.opening
+                        ? videoPaths.opening
+                        : videoMode === 'loop'
+                        ? videoPaths.loop
+                        : videoPaths.closing
                       
-                      // Use image for all other cases (including agents with videos pre-session)
-                      const src = resolveAgentImage(selectedAgent, sessionActive)
-                      console.log('🖼️ FINAL IMAGE DECISION:', { 
-                        sessionActive, 
-                        agentName: selectedAgent?.name,
-                        imageSrc: src,
-                        timestamp: new Date().toISOString()
-                      })
-                      // URL encode image path if it contains spaces to ensure proper loading
-                      const imageSrc = src && (src.includes(' ') || src.includes('&'))
-                        ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                        : src
+                      const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
+                        ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                        : videoSrcRaw
                       
-                      return imageSrc ? (
+                      return (
+                        <video
+                          key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
+                          ref={agentVideoRef}
+                          src={videoSrc}
+                          className="w-full h-full object-cover"
+                          style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                          autoPlay
+                          muted
+                          loop={videoMode === 'loop'}
+                          playsInline
+                          onLoadedData={() => {
+                            if (agentVideoRef.current) {
+                              console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
+                              agentVideoRef.current.play().catch((err) => {
+                                console.warn('Video autoplay failed:', err)
+                              })
+                            }
+                          }}
+                          onCanPlay={() => {
+                            if (agentVideoRef.current && (showDoorCloseAnimation || videoMode === 'closing')) {
+                              console.log('🎬 Video can play, forcing play for closing animation')
+                              agentVideoRef.current.play().catch((err) => {
+                                console.warn('Video force play failed:', err)
+                              })
+                            }
+                          }}
+                          onError={(e) => {
+                            console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
+                            e.stopPropagation()
+                          }}
+                        />
+                      )
+                    }
+                    
+                    const src = resolveAgentImage(selectedAgent, sessionActive)
+                    const imageSrc = src && (src.includes(' ') || src.includes('&'))
+                      ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                      : src
+                    
+                    return imageSrc ? (
                       <Image
                         src={imageSrc}
                         alt={selectedAgent?.name || 'Agent'}
                         fill
-                        sizes="(min-width: 1024px) 50vw, 100vw"
+                        sizes="60vw"
                         className="object-cover"
                         style={{ objectFit: 'cover', objectPosition: 'center center' }}
                         priority
-                        unoptimized={src?.includes(' ') || src?.includes('&')} // Disable optimization for files with spaces or special chars
+                        unoptimized={src?.includes(' ') || src?.includes('&')}
                         onError={(e) => {
                           console.error('❌ Image failed to load:', src, 'Encoded:', imageSrc)
-                          // Prevent error propagation to avoid console spam
                           e.stopPropagation()
                         }}
                       />
-                      ) : null
-                    })()}
+                    ) : null
+                  })()}
+                  
+                  {/* Door Opening Video Overlay */}
+                  {showDoorOpeningVideo && (() => {
+                    const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                    const videoPathRaw = videoPaths?.opening || '/DIY DAVE OPENIG DOOR.mp4'
+                    const videoPath = videoPathRaw.includes(' ') || videoPathRaw.includes('&')
+                      ? videoPathRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                      : videoPathRaw
                     
-                    {/* Door Opening Video Overlay - plays on initial knock */}
-                    {showDoorOpeningVideo && (() => {
-                      const videoPaths = getAgentVideoPaths(selectedAgent?.name)
-                      const videoPathRaw = videoPaths?.opening || '/DIY DAVE OPENIG DOOR.mp4' // Fallback to default if no opening video
-                      const videoPath = videoPathRaw.includes(' ') || videoPathRaw.includes('&')
-                        ? videoPathRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                        : videoPathRaw
-                      
-                      return (
-                        <div className="absolute inset-0 z-50 bg-black">
-                          <video
-                            ref={doorOpeningVideoRef}
-                            src={videoPath}
-                            className="w-full h-full object-cover"
-                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
-                            autoPlay
-                            muted
-                            playsInline
-                            onError={(e) => {
-                              console.error('❌ Door opening video failed to load:', videoPathRaw, 'Encoded:', videoPath, e)
-                              setShowDoorOpeningVideo(false)
-                            }}
-                          />
-                        </div>
-                      )
-                    })()}
-                    
-                    {/* Knock Button Overlay - centered when not active */}
-                    {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
-                        <button
-                          onClick={() => startSession()}
-                          className="relative px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 active:from-emerald-700 active:via-teal-700 active:to-cyan-700 text-white font-bold text-base sm:text-lg lg:text-xl rounded-xl sm:rounded-2xl transition-all duration-300 active:scale-95 border-2 border-white/20 hover:border-white/30 backdrop-blur-sm min-h-[56px] touch-manipulation z-20 overflow-hidden group"
-                        >
-                          <span className="relative z-10 flex items-center gap-2">
-                            <span className="sm:hidden">Knock</span>
-                            <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
-                          </span>
-                          {/* Shine effect on hover */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
-                        </button>
+                    return (
+                      <div className="absolute inset-0 z-50 bg-black">
+                        <video
+                          ref={doorOpeningVideoRef}
+                          src={videoPath}
+                          className="w-full h-full object-cover"
+                          style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                          autoPlay
+                          muted
+                          playsInline
+                          onError={(e) => {
+                            console.error('❌ Door opening video failed to load:', videoPathRaw, 'Encoded:', videoPath, e)
+                            setShowDoorOpeningVideo(false)
+                          }}
+                        />
                       </div>
-                    )}
-                    
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Right: Webcam */}
-            <div className="relative bg-gradient-to-br from-green-950/20 to-transparent border-t md:border-t-0 border-purple-500/20 overflow-hidden h-[25vh] sm:h-[22.5vh] md:h-full min-h-[150px] md:min-h-0" style={{ 
-              maxHeight: '100%'
-            }}>
-              <WebcamRecorder 
-                sessionActive={sessionActive} 
-                duration={duration}
-              />
+                    )
+                  })()}
+                  
+                  {/* Knock Button Overlay */}
+                  {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+                      <button
+                        onClick={() => startSession()}
+                        className="relative px-8 lg:px-10 py-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 active:from-emerald-700 active:via-teal-700 active:to-cyan-700 text-white font-bold text-lg lg:text-xl rounded-2xl transition-all duration-300 active:scale-95 border-2 border-white/20 hover:border-white/30 backdrop-blur-sm min-h-[56px] touch-manipulation z-20 overflow-hidden group"
+                      >
+                        <span className="relative z-10 flex items-center gap-2">
+                          <span className="hidden sm:inline">Knock on {selectedAgent.name}'s Door</span>
+                          <span className="sm:hidden">Knock</span>
+                        </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* PIP Webcam Overlay - Bottom Right */}
+                  {sessionActive && (
+                    <div className="absolute bottom-24 right-4 z-20 w-32 h-24 lg:w-40 lg:h-30 shadow-lg">
+                      <WebcamPIP />
+                    </div>
+                  )}
+                  
+                  {/* Video Controls Overlay */}
+                  {sessionActive && (
+                    <VideoControls
+                      duration={duration}
+                      onMuteToggle={handleMuteToggle}
+                      onCameraToggle={handleCameraToggle}
+                      onEndSession={() => endSession()}
+                      isMuted={isMuted}
+                      isCameraOff={isCameraOff}
+                      personaName={selectedAgent?.name}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Bottom Section: Live Transcript */}
-          <div className="flex flex-col relative flex-1 min-h-0 px-3 sm:px-6 py-3 sm:py-4 overflow-hidden z-0">
+          {/* RIGHT SIDE (40%) - Metrics, Feedback, Transcript */}
+          <div className="w-full lg:w-[40%] flex flex-col border-t lg:border-t-0 lg:border-l border-slate-700/50 bg-slate-950/50 overflow-hidden h-[40vh] lg:h-auto">
+            {/* Metrics Panel (25% of right side) */}
+            <div className="h-[25%] min-h-[120px] p-3 lg:p-4 border-b border-slate-700/50 flex-shrink-0">
+              <LiveMetricsPanel metrics={metrics} />
+            </div>
             
-            {/* Bottom fade gradient overlay */}
-            <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-10" />
+            {/* Feedback Feed (50% of right side) */}
+            <div className="h-[50%] min-h-[200px] p-3 lg:p-4 border-b border-slate-700/50 flex-shrink-0">
+              <LiveFeedbackFeed feedbackItems={feedbackItems} />
+            </div>
             
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 sm:space-y-4 relative z-0 pb-2">
-              {transcript.length === 0 ? (
-                <div className="text-center text-slate-500 py-8 sm:py-12 px-4">
-                  {sessionActive ? (
-                    <p className="text-sm sm:text-base">Waiting for conversation to begin...</p>
-                  ) : (
-                    <p className="text-xs sm:text-sm">Knock on {selectedAgent?.name || 'the agent'}'s door to start your practice session</p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3 sm:space-y-4 pb-4">
-                  {transcript.map((entry) => {
-                    const isUser = entry.speaker === 'user'
-                    return (
-                      <div
-                        key={entry.id}
-                        className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}
-                      >
-                        <div
-                          className={`max-w-[90%] sm:max-w-[75%] px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-xl ${
-                            isUser
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-slate-700/80 text-slate-100'
-                          }`}
-                        >
-                          <div className="text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 opacity-70 uppercase tracking-wide">
-                            {isUser ? 'You' : selectedAgent?.name || 'Agent'}
-                          </div>
-                          <div className="text-sm sm:text-base leading-relaxed break-words">{entry.text}</div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <div ref={transcriptEndRef} />
-                </div>
-              )}
+            {/* Transcript (25% of right side) */}
+            <div className="h-[25%] min-h-[120px] p-3 lg:p-4 flex-shrink-0">
+              <LiveTranscript transcript={transcript} agentName={selectedAgent?.name} />
             </div>
           </div>
         </div>
@@ -1384,7 +1356,15 @@ function TrainerPageContent() {
         />
       )}
       
-      {/* Video recording happens automatically via WebcamRecorder callbacks */}
+      {/* Hidden WebcamRecorder for recording functionality */}
+      {sessionActive && (
+        <div className="hidden">
+          <WebcamRecorder 
+            sessionActive={sessionActive} 
+            duration={duration}
+          />
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes fadeIn {
@@ -1412,7 +1392,7 @@ function TrainerPageContent() {
           animation: shimmer 1.5s ease-in-out infinite;
         }
       `}</style>
-    </div>
+    </motion.div>
   )
 }
 

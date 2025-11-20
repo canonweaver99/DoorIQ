@@ -5,6 +5,27 @@ export interface TranscriptEntry {
   timestamp: Date
 }
 
+export type FeedbackType = 'objection_detected' | 'technique_used' | 'coaching_tip' | 'warning'
+export type FeedbackSeverity = 'good' | 'neutral' | 'needs_improvement'
+
+export interface FeedbackItem {
+  id: string
+  timestamp: Date
+  type: FeedbackType
+  message: string
+  severity: FeedbackSeverity
+  metadata?: {
+    objectionType?: 'price' | 'time' | 'authority' | 'need'
+    techniqueName?: string
+  }
+}
+
+export interface LiveSessionMetrics {
+  talkTimeRatio: number // Percentage (0-100) of rep talking vs homeowner
+  objectionCount: number
+  techniquesUsed: string[]
+}
+
 export interface SessionMetrics {
   duration: number
   sentimentScore: number
