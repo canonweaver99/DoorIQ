@@ -669,7 +669,18 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           attemptReconnect()
         }
       } else if (timeSinceLastMessage > MESSAGE_TIMEOUT && currentStatus === 'connected') {
-        console.warn('⚠️ No messages received for', Math.round(timeSinceLastMessage / 1000), 'seconds')
+        const secondsSinceMessage = Math.round(timeSinceLastMessage / 1000)
+        console.warn('⚠️ No messages received for', secondsSinceMessage, 'seconds')
+        
+        // Dispatch inactivity event if we have an active session
+        // This helps detect when agent stops responding (even if connection is still active)
+        if (sessionIdRef.current && timeSinceLastMessage > 15000) { // 15 seconds of silence
+          console.log('🔇 Agent inactivity detected - dispatching event')
+          safeDispatchEvent('agent:inactivity', { 
+            secondsSinceLastMessage: secondsSinceMessage,
+            timeSinceLastPing: Math.round(timeSinceLastPing / 1000)
+          })
+        }
         // Don't immediately reconnect on message timeout, but log it
         // Sometimes the agent might just be listening for user input
       }

@@ -289,6 +289,7 @@ function TrainerPageContent() {
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const signedUrlAbortRef = useRef<AbortController | null>(null)
   const agentVideoRef = useRef<HTMLVideoElement | null>(null) // Ref for Tanya & Tom video element
+  const inactivitySoundPlayedRef = useRef(false) // Track if we've played sound for inactivity
   
   const sessionLimit = useSessionLimit()
   const router = useRouter()
@@ -1136,9 +1137,12 @@ function TrainerPageContent() {
     }
   }, [sessionActive, sessionId, endSession, handleCallEnd])
 
-  // Listen for ElevenLabs disconnect and play door closing sound
+  // Listen for ElevenLabs disconnect and inactivity - play door closing sound
   useEffect(() => {
-    if (!sessionActive || typeof window === 'undefined') return
+    if (!sessionActive || typeof window === 'undefined') {
+      inactivitySoundPlayedRef.current = false // Reset when session becomes inactive
+      return
+    }
 
     const handleConnectionStatus = (e: CustomEvent) => {
       const status = e?.detail
@@ -1147,13 +1151,37 @@ function TrainerPageContent() {
       if (status === 'disconnected' && sessionActive) {
         console.log('🔌 ElevenLabs disconnected - playing door closing sound')
         playSound('/sounds/door_close.mp3', 0.9)
+        inactivitySoundPlayedRef.current = true
       }
     }
 
+    const handleInactivity = (e: CustomEvent) => {
+      const data = e?.detail
+      console.log('🔇 Agent inactivity detected:', data)
+      
+      // Only play sound once per inactivity period, and only if it's been 15+ seconds
+      if (sessionActive && data?.secondsSinceLastMessage >= 15 && !inactivitySoundPlayedRef.current) {
+        console.log('🔇 Agent stopped responding - playing door closing sound')
+        playSound('/sounds/door_close.mp3', 0.9)
+        inactivitySoundPlayedRef.current = true
+      }
+    }
+
+    // Reset flag when new messages arrive (agent is responding again)
+    const handleAgentMessage = () => {
+      inactivitySoundPlayedRef.current = false
+    }
+
     window.addEventListener('connection:status', handleConnectionStatus as EventListener)
+    window.addEventListener('agent:inactivity', handleInactivity as EventListener)
+    window.addEventListener('agent:message', handleAgentMessage as EventListener)
+    window.addEventListener('agent:response', handleAgentMessage as EventListener)
     
     return () => {
       window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
+      window.removeEventListener('agent:inactivity', handleInactivity as EventListener)
+      window.removeEventListener('agent:message', handleAgentMessage as EventListener)
+      window.removeEventListener('agent:response', handleAgentMessage as EventListener)
     }
   }, [sessionActive])
 
