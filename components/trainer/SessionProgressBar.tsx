@@ -8,7 +8,7 @@ interface SessionProgressBarProps {
   maxDuration?: number // in seconds, default 15 minutes
 }
 
-export function SessionProgressBar({ duration, maxDuration = 900 }: SessionProgressBarProps) {
+export function SessionProgressBar({ duration, maxDuration = 600 }: SessionProgressBarProps) {
   const progress = Math.min((duration / maxDuration) * 100, 100)
   const minutesRemaining = Math.max(0, Math.floor((maxDuration - duration) / 60))
   const secondsRemaining = Math.max(0, (maxDuration - duration) % 60)
@@ -21,17 +21,17 @@ export function SessionProgressBar({ duration, maxDuration = 900 }: SessionProgr
           {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')} remaining
         </span>
       </div>
-      <div className="relative h-1.5 bg-slate-800 rounded-full overflow-hidden">
+      <div className="relative h-1.5 bg-slate-800/80 rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"
+          className="h-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
         />
         {progress >= 90 && (
           <motion.div
-            className="absolute inset-0 bg-yellow-500/30"
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            className="absolute inset-0 bg-amber-500/40"
+            animate={{ opacity: [0.3, 0.5, 0.3] }}
             transition={{ duration: 1, repeat: Infinity }}
           />
         )}

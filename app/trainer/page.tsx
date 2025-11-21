@@ -1397,7 +1397,7 @@ function TrainerPageContent() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans"
+      className="min-h-screen bg-slate-950 font-sans"
     >
       <LastCreditWarningModal 
         isOpen={showLastCreditWarning} 
@@ -1415,10 +1415,10 @@ function TrainerPageContent() {
       />
 
       {/* Full Screen Session Container */}
-      <div className="relative w-full h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
+      <div className="relative w-full h-screen flex flex-col bg-slate-950 overflow-hidden">
         
         {/* Header */}
-        <div className="hidden sm:flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/50 backdrop-blur-sm">
+        <div className="hidden sm:flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98">
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-xs sm:text-sm font-semibold text-white font-space truncate">
               {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
@@ -1430,7 +1430,7 @@ function TrainerPageContent() {
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-8">
           
           {/* LEFT SIDE (55%) - Agent Video with PIP */}
-          <div className="w-full lg:w-[55%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl h-[50vh] lg:h-auto lg:min-h-0">
+          <div className="w-full lg:w-[55%] relative bg-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[50vh] lg:h-auto lg:min-h-0">
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -1526,7 +1526,7 @@ function TrainerPageContent() {
                     {/* Persona badge */}
                     {sessionActive && selectedAgent && (
                       <div className="hidden sm:block absolute top-6 left-6 z-10">
-                        <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
+                        <div className="bg-slate-900/95 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/80 shadow-lg">
                           <span className="text-white text-sm font-medium">{selectedAgent.name}</span>
                         </div>
                       </div>
@@ -1534,10 +1534,10 @@ function TrainerPageContent() {
                     
                     {/* Session progress bar */}
                     {sessionActive && (
-                      <div className="hidden sm:block absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-10">
+                      <div className="hidden sm:block absolute bottom-0 left-0 right-0 h-1 bg-slate-900/80 z-10">
                         <div 
-                          className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000"
-                          style={{ width: `${Math.min((duration / 900) * 100, 100)}%` }}
+                          className="h-full bg-slate-600 transition-all duration-1000"
+                          style={{ width: `${Math.min((duration / 600) * 100, 100)}%` }}
                         />
                       </div>
                     )}
@@ -1572,18 +1572,18 @@ function TrainerPageContent() {
                   
                   {/* Knock Button Overlay */}
                   {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
                       <button
                         onClick={() => startSession()}
-                        className="relative px-8 lg:px-10 py-5 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 hover:from-slate-700 hover:via-slate-600 hover:to-slate-700 active:from-slate-900 active:via-slate-800 active:to-slate-900 text-white font-space font-bold text-lg lg:text-xl rounded-2xl transition-all duration-300 active:scale-95 border-2 border-white/30 hover:border-white/40 backdrop-blur-sm min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-2xl"
+                        className="relative px-8 lg:px-10 py-5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-space font-bold text-lg lg:text-xl rounded-xl transition-all duration-300 active:scale-95 border border-slate-700/80 hover:border-slate-600 min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
                       >
                         <span className="relative z-10 flex items-center gap-2">
                           <span className="hidden sm:inline">
-                            Knock on <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">{selectedAgent.name}'s</span> Door 🚪
+                            Knock on <span className="text-white">{selectedAgent.name}'s</span> Door
                           </span>
-                          <span className="sm:hidden">Knock 🚪</span>
+                          <span className="sm:hidden">Knock</span>
                         </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
                       </button>
                     </div>
                   )}
@@ -1597,9 +1597,9 @@ function TrainerPageContent() {
                   
                   {/* Reconnection Status Banner */}
                   {sessionActive && reconnectingStatus?.isReconnecting && (
-                    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-amber-500/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-lg border border-amber-400/50">
-                      <div className="flex items-center gap-2 text-white text-sm font-medium">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-slate-800/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-slate-600/80">
+                      <div className="flex items-center gap-2 text-slate-200 text-sm font-medium">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-400 border-t-transparent" />
                         <span>
                           Reconnecting... (Attempt {reconnectingStatus.attempt}/{reconnectingStatus.maxAttempts})
                         </span>
@@ -1625,19 +1625,19 @@ function TrainerPageContent() {
           </div>
 
           {/* RIGHT SIDE (45%) - Metrics, Feedback, Transcript */}
-          <div className="hidden lg:flex w-full lg:w-[45%] flex-col gap-3 sm:gap-4 overflow-hidden lg:h-full">
+          <div className="hidden lg:flex w-full lg:w-[45%] flex-col gap-3 sm:gap-4 lg:gap-6 overflow-hidden lg:h-full">
             {/* Metrics Panel - Mobile optimized */}
             <div className="flex-shrink-0 lg:h-[30%] lg:min-h-[120px]">
               <LiveMetricsPanel metrics={metrics} />
             </div>
             
             {/* Feedback Feed - Mobile optimized */}
-            <div className="hidden sm:flex flex-shrink-0 flex-col overflow-hidden lg:-mt-[92px] lg:h-[32%] lg:min-h-[200px]">
+            <div className="hidden sm:flex flex-shrink-0 flex-col overflow-hidden lg:-mt-[70px] lg:h-[35%] lg:min-h-[220px]">
               <LiveFeedbackFeed feedbackItems={feedbackItems} />
             </div>
             
             {/* Transcript - Mobile optimized */}
-            <div className="flex-1 flex flex-col overflow-hidden lg:-mt-[20px] lg:h-[34%] lg:min-h-[200px]">
+            <div className="flex-1 flex flex-col overflow-hidden lg:mt-2 lg:h-[34%] lg:min-h-[200px]">
               <LiveTranscript 
                 transcript={transcript} 
                 agentName={selectedAgent?.name}

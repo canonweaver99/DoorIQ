@@ -1,14 +1,35 @@
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export async function middleware() {
+export async function middleware(request: NextRequest) {
+  // Force HTTPS redirect in production
+  if (process.env.NODE_ENV === 'production') {
+    const protocol = request.headers.get('x-forwarded-proto') || 
+                     (request.nextUrl.protocol === 'https:' ? 'https' : 'http')
+    
+    if (protocol !== 'https') {
+      const httpsUrl = request.nextUrl.clone()
+      httpsUrl.protocol = 'https:'
+      return NextResponse.redirect(httpsUrl, 301)
+    }
+  }
+
   // Auth temporarily disabled; allow all routes to pass through
   const response = NextResponse.next()
   
-  // Add performance and security headers
+  // Add security headers
   response.headers.set('X-DNS-Prefetch-Control', 'on')
   response.headers.set('X-Frame-Options', 'SAMEORIGIN')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'origin-when-cross-origin')
+  
+  // Add HSTS header to enforce HTTPS (only in production)
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload'
+    )
+  }
   
   // Cache static assets
   if (response.headers.get('content-type')?.includes('image') || 

@@ -128,15 +128,15 @@ function detectObjectionHandling(
   const hasSolution = solutionPatterns.some(pattern => lowerText.includes(pattern))
   
   if (timeSinceObjection > 60000) {
-    return { quality: 'ignored', message: 'Objection ignored - 60+ seconds passed without acknowledgment' }
+    return { quality: 'ignored', message: 'Objection ignored - no response' }
   }
   
   if (timeSinceObjection <= 30000 && hasAddressing && hasSolution) {
-    return { quality: 'strong', message: 'Strong rebuttal! Objection addressed with technique and conversation moved forward.' }
+    return { quality: 'strong', message: 'Strong rebuttal! Objection handled well.' }
   }
   
   if (timeSinceObjection <= 30000 && hasAddressing && !hasSolution) {
-    return { quality: 'weak', message: 'Weak response - acknowledged objection but offered no solution' }
+    return { quality: 'weak', message: 'Acknowledged but no solution offered' }
   }
   
   return null
@@ -170,7 +170,7 @@ function detectClosingBehavior(text: string): { type: 'trial_close' | 'direct_cl
   ]
   
   if (trialClosePatterns.some(pattern => lowerText.includes(pattern))) {
-    return { type: 'trial_close', message: 'Trial close detected!' }
+    return { type: 'trial_close', message: 'Trial close!' }
   }
   
   if (directClosePatterns.some(pattern => lowerText.includes(pattern))) {
@@ -211,17 +211,17 @@ function detectMomentumShift(
   
   // Strong recovery after objection
   if (objectionHandled && currentLength > avgLength * 1.3) {
-    return { type: 'strong_recovery', message: 'Strong recovery! Successfully handled objection and regained momentum.' }
+    return { type: 'strong_recovery', message: 'Strong recovery! Regained momentum.' }
   }
   
   // Building rapport - homeowner asking questions or sharing details
   if (hasQuestions && currentLength > 30) {
-    return { type: 'building_rapport', message: 'Building rapport! Homeowner is asking questions and sharing details.' }
+    return { type: 'building_rapport', message: 'Building rapport! Homeowner engaged.' }
   }
   
   // Interest growing - responses getting longer
   if (currentLength > avgLength * 1.2 && currentLength > 40) {
-    return { type: 'interest_growing', message: 'Interest growing! Homeowner\'s responses getting longer and more engaged.' }
+    return { type: 'interest_growing', message: 'Interest growing! Responses getting longer.' }
   }
   
   // Losing engagement - responses getting shorter
@@ -230,7 +230,7 @@ function detectMomentumShift(
     const isDismissive = dismissivePatterns.some(pattern => currentEntry.text.toLowerCase().includes(pattern))
     
     if (isDismissive) {
-      return { type: 'losing_engagement', message: 'Losing engagement - homeowner\'s responses getting shorter or more dismissive.' }
+      return { type: 'losing_engagement', message: 'Losing engagement - responses getting shorter.' }
     }
   }
   
@@ -264,15 +264,15 @@ function detectQuestionQuality(text: string): { type: 'discovery' | 'qualifying'
   ]
   
   if (discoveryPatterns.some(pattern => lowerText.includes(pattern))) {
-    return { type: 'discovery', message: 'Great discovery question! Asking about problems/pain points.' }
+    return { type: 'discovery', message: 'Great discovery question!' }
   }
   
   if (qualifyingPatterns.some(pattern => lowerText.includes(pattern))) {
-    return { type: 'qualifying', message: 'Good qualifying question! Determining fit and timeline.' }
+    return { type: 'qualifying', message: 'Good qualifying question!' }
   }
   
   if (closedPatterns.some(pattern => pattern.test(text.trim()))) {
-    return { type: 'closed', message: 'Closed question used - consider open-ended for better discovery.' }
+    return { type: 'closed', message: 'Use open-ended questions for better discovery.' }
   }
   
   return null
@@ -317,16 +317,16 @@ function detectPriceHandling(
   if (sessionStartTime) {
     const sessionDuration = Date.now() - sessionStartTime.getTime()
     if (sessionDuration < 120000 && valueStatements === 0) {
-      return { type: 'too_early', message: 'Price mentioned too early! Establish value before discussing price.' }
+      return { type: 'too_early', message: 'Price mentioned too early - establish value first.' }
     }
   }
   
   if (framingPatterns.some(pattern => lowerText.includes(pattern))) {
-    return { type: 'great_framing', message: 'Great price framing! Positioned price in terms of value.' }
+    return { type: 'great_framing', message: 'Great price framing!' }
   }
   
   if (breakdownPatterns.some(pattern => lowerText.includes(pattern))) {
-    return { type: 'breakdown_used', message: 'Price breakdown used! Breaking down into smaller amounts helps.' }
+    return { type: 'breakdown_used', message: 'Price breakdown used!' }
   }
   
   return null
@@ -445,10 +445,10 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             objectionHandledRef.current.set(objectionKey, false)
             
             const objectionMessages = {
-              price: 'Price objection detected: "I can\'t afford it" or similar',
-              time: 'Time objection detected: "Not right now" or similar',
-              authority: 'Authority objection detected: "Need to check with spouse" or similar',
-              need: 'Need objection detected: "Don\'t need it" or similar'
+              price: 'Price objection detected',
+              time: 'Time objection detected',
+              authority: 'Authority objection detected',
+              need: 'Need objection detected'
             }
             
             addFeedbackItem(
@@ -472,7 +472,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
                 if (userResponses.length === 0) {
                   addFeedbackItem(
                     'objection_handling',
-                    'Objection ignored - 60+ seconds passed without acknowledgment',
+                    'Objection ignored - no response',
                     'needs_improvement',
                     {}
                   )
@@ -506,7 +506,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
                   if (!objectionHandledRef.current.get(objectionKey)) {
                     addFeedbackItem(
                       'objection_handling',
-                      'Objection ignored - 60+ seconds passed without acknowledgment',
+                      'Objection ignored - no response',
                       'needs_improvement',
                       {}
                     )
@@ -622,7 +622,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
           if (timeSinceStart > 45000) {
             addFeedbackItem(
               'coaching_tip',
-              'You\'ve been talking for a while. Consider asking an open-ended question to engage the homeowner.',
+              'Talking too long - ask an open-ended question.',
               'needs_improvement'
             )
             lastMonologueStartRef.current = null // Reset to avoid spam
@@ -652,7 +652,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
         if (buyingSignals.some(signal => lowerText.includes(signal))) {
           addFeedbackItem(
             'coaching_tip',
-            'Buying signal detected! The homeowner is showing interest. Consider moving toward closing.',
+            'Buying signal detected! Move toward closing.',
             'good'
           )
         }
@@ -726,7 +726,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       if (!lastWarning || Date.now() - lastWarning.timestamp.getTime() > 60000) {
         addFeedbackItem(
           'warning',
-          `You're talking ${ratio}% of the time. Engage more - ask questions to involve the homeowner.`,
+          `Talking ${ratio}% - ask more questions.`,
           'needs_improvement'
         )
       }
@@ -739,7 +739,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       if (!lastWarning || Date.now() - lastWarning.timestamp.getTime() > 60000) {
         addFeedbackItem(
           'warning',
-          `You're only talking ${ratio}% of the time. Try to listen more and engage in the conversation.`,
+          `Talking ${ratio}% - engage more.`,
           'needs_improvement'
         )
       }

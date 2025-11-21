@@ -47,80 +47,61 @@ function PricingPageContent() {
 
   const tiers: PricingTier[] = [
     {
-      id: 'solo',
-      name: 'SOLO/STARTUP',
-      subtitle: 'Perfect for individual reps or tiny companies',
+      id: 'starter',
+      name: 'STARTER',
+      subtitle: 'Perfect for small teams getting started',
       price: 99,
-      priceLabel: '/month for 1 rep',
-      repRange: '1 rep',
+      priceLabel: '/month per rep',
+      repRange: '1-10 reps',
       icon: Users,
       features: [
         'Unlimited practice sessions',
         'All AI personas',
-        'Basic analytics',
-        'Upload/record pitch feedback',
-        'Practice history tracking'
+        'Team leaderboard',
+        'Basic analytics & reporting',
+        'Manager dashboard'
       ],
-      why: 'Catches individual reps or tiny companies. Low commitment, easy yes. Gets people in the door.',
+      why: 'Perfect for small teams getting started. Low commitment, easy yes. Gets teams in the door and seeing results fast.',
       popular: false,
-      badge: 'Best for Individuals'
+      badge: 'Best for Small Teams'
     },
     {
       id: 'team',
       name: 'TEAM',
-      subtitle: 'Sweet spot for small-to-medium pest control companies',
-      price: 79,
+      subtitle: 'Ideal for scaling sales teams',
+      price: 69,
       priceLabel: '/month per rep',
-      repRange: '5-20 reps',
+      repRange: '20-100 reps',
       icon: TrendingUp,
       features: [
-        'Everything in Solo',
-        'Team leaderboard',
-        'Manager dashboard',
-        'Priority support',
-        'Team performance insights',
-        'Custom practice scenarios'
-      ],
-      why: 'Sweet spot for small-to-medium pest control companies (most of your market). Still affordable, but you\'re making real money.',
-      math: 'Min 5 reps = $395/month starting point. Math: 10 reps = $790/month ($26/day total, $2.60/day per rep)',
-      popular: true,
-      badge: 'Most Popular'
-    },
-    {
-      id: 'growth',
-      name: 'GROWTH',
-      subtitle: 'Regional companies scaling up',
-      price: 59,
-      priceLabel: '/month per rep',
-      repRange: '21-100 reps',
-      icon: BarChart3,
-      features: [
-        'Everything in Team',
-        'Custom AI personas (clone top performer\'s voice/style)',
+        'Everything in Starter',
         'Advanced analytics & reporting',
+        'Team performance insights',
+        'Custom practice scenarios',
         'Custom sales playbook'
       ],
-      why: 'Regional companies scaling up. Custom personas become a moat - they can\'t leave because their top rep is cloned into the system.',
-      math: 'Math: 50 reps = $2,950/month ($98/day total, ~$2/day per rep)',
-      popular: false,
-      badge: 'Best Value'
+      why: 'Sweet spot for scaling sales teams. Custom personas become a competitive moat - your team can practice with your best rep anytime.',
+      math: 'Math: 50 reps = $3,450/month ($115/day total, ~$2.30/day per rep)',
+      popular: true,
+      badge: 'Most Popular'
     },
     {
       id: 'enterprise',
       name: 'ENTERPRISE',
       subtitle: 'Large organizations with custom needs',
-      price: 'Starting at $39',
+      price: 49,
       priceLabel: '/month per rep',
-      repRange: '100+ reps',
+      repRange: '100-500+ reps',
       icon: Building2,
       features: [
-        'Everything in Growth',
-        'API access',
+        'Everything in Team',
+        'Custom AI personas (clone top performer\'s voice/style)',
         'White-label option',
         'Dedicated account team',
-        'Volume discounts (typically $39-49/month per rep)'
+        'Volume discounts'
       ],
-      why: 'Large organizations need custom solutions. Volume discounts make it affordable at scale - typically 40% less than Growth tier.',
+      why: 'Large organizations need custom solutions. Volume discounts make it affordable at scale. Starting at $49/month per rep for 100+ reps.',
+      math: 'Math: 100 reps = $4,900/month ($163/day total, ~$1.63/day per rep)',
       popular: false,
       badge: 'Enterprise Ready'
     }
@@ -130,14 +111,12 @@ function PricingPageContent() {
   const getTierPrice = (tier: PricingTier, reps: number = 10): { monthly: number, annual: number } => {
     let monthlyPrice: number
     
-    if (tier.id === 'solo') {
-      monthlyPrice = 99
+    if (tier.id === 'starter') {
+      monthlyPrice = reps * 89
     } else if (tier.id === 'team') {
-      monthlyPrice = Math.max(5, reps) * 79
-    } else if (tier.id === 'growth') {
-      monthlyPrice = reps * 59
+      monthlyPrice = reps * 69
     } else if (tier.id === 'enterprise') {
-      monthlyPrice = reps * 39 // Starting at $39
+      monthlyPrice = Math.max(100, reps) * 49 // Minimum 100 reps at $49 each
     } else {
       monthlyPrice = 0
     }
@@ -149,18 +128,22 @@ function PricingPageContent() {
 
   // Calculate ROI
   const calculateROI = () => {
-    // Determine tier based on reps
+    // Determine tier based on reps (matching current pricing cards)
     let monthlyCost: number
     if (roiReps === 0) {
       monthlyCost = 0
-    } else if (roiReps === 1) {
-      monthlyCost = 99
-    } else if (roiReps >= 5 && roiReps <= 20) {
-      monthlyCost = Math.max(5, roiReps) * 79
-    } else if (roiReps >= 21 && roiReps <= 100) {
-      monthlyCost = roiReps * 59
+    } else if (roiReps >= 1 && roiReps <= 10) {
+      // Starter tier: 1-10 reps at $99/month per rep
+      monthlyCost = roiReps * 99
+    } else if (roiReps >= 20 && roiReps <= 100) {
+      // Team tier: 20-100 reps at $69/month per rep
+      monthlyCost = roiReps * 69
+    } else if (roiReps >= 100) {
+      // Enterprise tier: 100+ reps at $49/month per rep (minimum)
+      monthlyCost = Math.max(100, roiReps) * 49
     } else {
-      monthlyCost = roiReps * 39
+      // For reps between 11-19, use Team tier pricing ($69/month per rep)
+      monthlyCost = roiReps * 69
     }
 
     const extraRevenue = roiReps * roiDealValue // 1 extra deal per rep per month
@@ -238,7 +221,7 @@ function PricingPageContent() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
-                className="w-full min-h-screen py-6 px-4 sm:px-6 lg:px-8"
+                className="w-full min-h-screen pt-2 pb-6 px-4 sm:px-6 lg:px-8"
               >
                 <div className="max-w-7xl mx-auto">
                 {/* Hero Section */}
@@ -264,51 +247,64 @@ function PricingPageContent() {
                   </p>
                   
                   {/* Billing Period Toggle */}
-                  <div className="relative z-10 flex items-center justify-center gap-3 mb-4 mt-6">
-                    <button
-                      onClick={() => setBillingPeriod('monthly')}
-                      className={cn(
-                        "px-6 py-2 rounded-lg font-semibold transition-all",
-                        billingPeriod === 'monthly'
-                          ? "bg-white text-black"
-                          : "bg-white/10 text-white hover:bg-white/20"
-                      )}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      onClick={() => setBillingPeriod('annual')}
-                      className={cn(
-                        "px-6 py-2 rounded-lg font-semibold transition-all relative",
-                        billingPeriod === 'annual'
-                          ? "bg-white text-black"
-                          : "bg-white/10 text-white hover:bg-white/20"
-                      )}
-                    >
-                      Annual
-                      <span className="ml-2 text-xs bg-emerald-500 text-black px-2 py-0.5 rounded-full font-bold">
-                        2 months free
-                      </span>
-                    </button>
+                  <div className="relative z-10 flex items-center justify-center mb-4 mt-10">
+                    <div className="relative inline-flex items-center p-1 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-sm">
+                      {/* Active indicator */}
+                      <motion.div
+                        className="absolute top-1 bottom-1 rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                        initial={false}
+                        animate={{
+                          left: billingPeriod === 'monthly' ? '4px' : '50%',
+                          width: billingPeriod === 'monthly' ? 'calc(50% - 4px)' : 'calc(50% - 4px)',
+                        }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      />
+                      <button
+                        onClick={() => setBillingPeriod('monthly')}
+                        className={cn(
+                          "relative z-10 px-8 py-2 rounded-xl font-semibold text-sm transition-colors duration-200 whitespace-nowrap min-w-[100px]",
+                          billingPeriod === 'monthly'
+                            ? "text-black"
+                            : "text-white/60 hover:text-white/80"
+                        )}
+                      >
+                        Monthly
+                      </button>
+                      <div className="relative">
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] bg-emerald-500 text-black px-2 py-0.5 rounded-full font-bold flex items-center gap-1 whitespace-nowrap">
+                          <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400 shrink-0" />
+                          2 months free
+                        </span>
+                        <button
+                          onClick={() => setBillingPeriod('annual')}
+                          className={cn(
+                            "relative z-10 px-8 py-2 rounded-xl font-semibold text-sm transition-colors duration-200 whitespace-nowrap min-w-[100px]",
+                            billingPeriod === 'annual'
+                              ? "text-black"
+                              : "text-white/60 hover:text-white/80"
+                          )}
+                        >
+                          Annual
+                        </button>
+                      </div>
+                    </div>
                       </div>
                 </motion.div>
 
                 {/* Pricing Tiers Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 -mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 -mt-4 max-w-6xl mx-auto">
                   {tiers.map((tier, index) => {
                     const Icon = tier.icon
                     const isPopular = tier.popular
                     const isEnterprise = tier.id === 'enterprise'
                     // For display, we show per-rep pricing
                     let displayPrice: number
-                    if (tier.id === 'solo') {
+                    if (tier.id === 'starter') {
                       displayPrice = billingPeriod === 'annual' ? Math.round(99 * 0.85) : 99
                     } else if (tier.id === 'team') {
-                      displayPrice = billingPeriod === 'annual' ? Math.round(79 * 0.85) : 79
-                    } else if (tier.id === 'growth') {
-                      displayPrice = billingPeriod === 'annual' ? Math.round(59 * 0.85) : 59
+                      displayPrice = billingPeriod === 'annual' ? Math.round(69 * 0.85) : 69
                     } else {
-                      displayPrice = billingPeriod === 'annual' ? Math.round(39 * 0.85) : 39
+                      displayPrice = billingPeriod === 'annual' ? Math.round(49 * 0.85) : 49
                     }
                     
                     return (
@@ -318,7 +314,7 @@ function PricingPageContent() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 + index * 0.1 }}
                         className={cn(
-                          "relative rounded-none border-2 p-4 bg-black/60 backdrop-blur-sm cursor-pointer transition-all hover:scale-[1.02] flex flex-col min-h-[470px]",
+                          "relative rounded-none border-2 px-3 pt-3 pb-8 bg-black/60 backdrop-blur-sm cursor-pointer transition-all hover:scale-[1.02] flex flex-col min-h-[430px]",
                           selectedCard === tier.id
                             ? "lg:scale-105 lg:-mt-4 border-2 border-emerald-500/50 shadow-lg shadow-emerald-500/10 bg-gradient-to-br from-black/80 via-black/60 to-black/80"
                             : "border-2 border-white/20 hover:border-white/40"
@@ -362,7 +358,7 @@ function PricingPageContent() {
                         
                         <div className="flex flex-col h-full relative z-10">
                           {/* Icon */}
-                          <div className="mb-2">
+                          <div className="mb-1">
                             <div className={cn(
                               "w-12 h-12 rounded-lg flex items-center justify-center mb-2",
                               selectedCard === tier.id 
@@ -374,32 +370,21 @@ function PricingPageContent() {
                                 selectedCard === tier.id ? "text-emerald-300" : "text-emerald-400"
                               )} />
                               </div>
-                            <h3 className={cn(
-                              "font-bold mb-1 font-space",
-                              selectedCard === tier.id ? "text-2xl text-white" : "text-xl text-white"
-                            )}>{tier.name}</h3>
+                            <div className="flex items-center justify-between w-full">
+                              <h3 className={cn(
+                                "font-bold mb-1 font-space",
+                                selectedCard === tier.id ? "text-2xl text-white" : "text-xl text-white"
+                              )}>{tier.name}</h3>
+                              <p className={cn(
+                                "font-bold font-space mb-1",
+                                selectedCard === tier.id ? "text-xl text-white" : "text-lg text-white"
+                              )}>{tier.repRange}</p>
+                            </div>
                             </div>
 
                           {/* Price */}
-                          <div className="mb-2">
-                            {tier.id === 'enterprise' ? (
-                              <div className="flex items-baseline gap-1">
-                                <span className={cn(
-                                  "font-black text-white font-mono",
-                                  selectedCard === tier.id ? "text-4xl" : "text-3xl"
-                                )}>
-                                  <NumberFlow
-                                    value={displayPrice}
-                                    format={{
-                                      style: "currency",
-                                      currency: "USD",
-                                      minimumFractionDigits: 0,
-                                    }}
-                                  />
-                                </span>
-                                <span className="text-base text-white font-space">/month per rep</span>
-                              </div>
-                            ) : typeof tier.price === 'number' ? (
+                          <div className="mb-4">
+                            {typeof tier.price === 'number' ? (
                               <div className="flex items-baseline gap-1">
                                 <span className={cn(
                                   "font-black text-white font-mono",
@@ -419,18 +404,17 @@ function PricingPageContent() {
                             ) : (
                               <div className="text-2xl font-black text-white font-space">{tier.price}</div>
                             )}
-                            <p className="text-base text-white mt-1 font-space">{tier.repRange}</p>
                               </div>
 
                           {/* Features */}
-                          <ul className="space-y-1 mb-1 flex-1 mt-4">
+                          <ul className="space-y-3 mb-4 flex-1 mt-auto">
                             {tier.features.map((feature, idx) => (
                               <li key={idx} className="flex items-start gap-2">
                                 <CheckCircle2 className={cn(
                                   "w-5 h-5 flex-shrink-0 mt-0.5",
                                   selectedCard === tier.id ? "text-emerald-400" : "text-emerald-500"
                                 )} />
-                                <span className="text-base text-white font-space">{feature}</span>
+                                <span className="text-base text-white font-space font-semibold">{feature}</span>
                               </li>
                             ))}
                           </ul>
@@ -442,7 +426,7 @@ function PricingPageContent() {
                               handleSelectTier(tier.id)
                             }}
                             className={cn(
-                              "w-full mt-1 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2",
+                              "w-full mt-auto py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2",
                               selectedCard === tier.id
                                 ? "bg-emerald-500 text-black hover:bg-emerald-400 shadow-md shadow-emerald-500/20"
                                 : "bg-white text-black hover:bg-gray-100"
@@ -634,7 +618,7 @@ function PricingPageContent() {
                         },
                         {
                         question: "What happens if I need to add or remove reps?",
-                        answer: "You can adjust your team size anytime. We'll prorate your billing based on the changes. For Team tier, minimum is 5 reps. For Growth tier, minimum is 21 reps."
+                        answer: "You can adjust your team size anytime. We'll prorate your billing based on the changes. Starter tier is for 1-10 reps, Team tier is for 20-100 reps, and Enterprise tier requires a minimum of 100 reps."
                       },
                       {
                         question: "Can I upgrade or downgrade between tiers?",
@@ -645,12 +629,12 @@ function PricingPageContent() {
                         answer: "Annual billing gives you 2 months free (15% off) - equivalent to paying for 10 months and getting 12 months of service. You'll be charged upfront for the year, but get significant savings."
                       },
                       {
-                        question: "What's included in Custom AI personas (Growth tier)?",
+                        question: "What's included in Custom AI personas (Team & Enterprise tiers)?",
                         answer: "We'll clone your top performer's voice and style into an AI persona. This creates a unique training asset that becomes a competitive moat - your team can practice with your best rep anytime."
                       },
                       {
-                        question: "What kind of custom integrations are available (Enterprise)?",
-                        answer: "We can integrate with Salesforce, HubSpot, and other CRM systems. We also offer API access for custom workflows and white-label options for large organizations. Starting at $39/month per rep for 100+ reps."
+                        question: "What's included in the Enterprise tier?",
+                        answer: "Enterprise tier includes everything in Team, plus white-label options, dedicated account team, and volume discounts. Enterprise tier starts at $49/month per rep for 100+ reps."
                         }
                       ].map((faq, index) => (
                         <div key={index} className="rounded-lg border border-white/20 bg-black overflow-hidden">

@@ -173,18 +173,18 @@ export default function ScoresViewV2({
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-8">
                 <div>
-                  <div className="text-sm uppercase tracking-[0.25em] text-slate-500 mb-2">AI-Powered Training Results</div>
-                  <h2 className="text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent">
+                  <div className="text-sm uppercase tracking-[0.25em] text-slate-500 mb-2 font-sans">AI-Powered Training Results</div>
+                  <h2 className="text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent font-space">
                     {getScoreMessage(overallScore)}
                   </h2>
                 </div>
                 <div className="text-right">
-                  <div className={`text-6xl font-bold mb-1`} style={{ color: getScoreColor(overallScore) }}>
+                  <div className={`text-6xl font-bold mb-1 font-space`} style={{ color: getScoreColor(overallScore) }}>
                     {overallScore}
                   </div>
-                  <div className="text-sm text-slate-400">Overall Score</div>
+                  <div className="text-sm text-slate-400 font-sans">Overall Score</div>
                   <div 
-                    className="inline-block mt-2 px-4 py-1.5 rounded-full text-lg font-semibold"
+                    className="inline-block mt-2 px-4 py-1.5 rounded-full text-lg font-semibold font-space"
                     style={{ 
                       background: `${getScoreColor(overallScore)}20`,
                       color: getScoreColor(overallScore),
@@ -209,8 +209,8 @@ export default function ScoresViewV2({
                       <Sparkles className="w-5 h-5 text-emerald-400" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-emerald-300">Congrats, you didn't stutter!</div>
-                      <div className="text-xs text-emerald-400/70">Zero filler words detected - crystal clear communication</div>
+                      <div className="text-sm font-semibold text-emerald-300 font-space">Congrats, you didn't stutter!</div>
+                      <div className="text-xs text-emerald-400/70 font-sans">Zero filler words detected - crystal clear communication</div>
                     </div>
                   </div>
                 </motion.div>
@@ -225,7 +225,7 @@ export default function ScoresViewV2({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-sm">
                         <Zap className="w-4 h-4 text-amber-400" />
-                        <span className="text-amber-300">
+                        <span className="text-amber-300 font-sans">
                           {scores.filler_words} filler words detected = <strong>-{scores.filler_words}% penalty</strong> applied
                         </span>
                       </div>
@@ -248,7 +248,7 @@ export default function ScoresViewV2({
                         className="overflow-hidden"
                       >
                         <div className="mt-2 p-4 bg-slate-900/50 border border-amber-500/20 rounded-xl max-h-64 overflow-y-auto">
-                          <h4 className="text-sm font-semibold text-amber-300 mb-3">Filler Word Locations:</h4>
+                          <h4 className="text-sm font-semibold text-amber-300 mb-3 font-space">Filler Word Locations:</h4>
                           <div className="space-y-2">
                             {fillerWordEntries.map((entry, idx) => {
                               // Only highlight: um, uh, uhh, erm, err, hmm (NOT "like")
@@ -320,8 +320,8 @@ export default function ScoresViewV2({
                         }}
                       />
                       <Icon className="w-5 h-5 mb-2" style={{ color: metric.color }} />
-                      <div className="text-2xl font-bold text-white mb-1">{metric.score}%</div>
-                      <div className="text-sm text-slate-200 font-medium">{metric.name}</div>
+                      <div className="text-2xl font-bold text-white mb-1 font-space">{metric.score}%</div>
+                      <div className="text-sm text-slate-200 font-medium font-sans">{metric.name}</div>
                     </motion.div>
                   )
                 })}
@@ -355,22 +355,22 @@ export default function ScoresViewV2({
                 {saleClosed && virtualEarnings > 0 ? (
                   <>
                     <DollarSign className="w-6 h-6 text-emerald-400" />
-                    <span className="text-sm uppercase tracking-[0.25em] text-emerald-400">You Earned</span>
+                    <span className="text-sm uppercase tracking-[0.25em] text-emerald-400 font-space">You Earned</span>
                   </>
                 ) : dealDetails?.next_step ? (
                   <>
                     <Clock className="w-6 h-6 text-amber-400" />
-                    <span className="text-sm uppercase tracking-[0.25em] text-amber-400">Soft Close</span>
+                    <span className="text-sm uppercase tracking-[0.25em] text-amber-400 font-space">Soft Close</span>
                   </>
                 ) : (
                   <>
                     <XCircle className="w-6 h-6 text-red-400" />
-                    <span className="text-sm uppercase tracking-[0.25em] text-red-400">Close Failed</span>
+                    <span className="text-sm uppercase tracking-[0.25em] text-red-400 font-space">Close Failed</span>
                   </>
                 )}
               </div>
               
-              <div className={`text-5xl font-bold text-white mb-6 ${
+              <div className={`text-5xl font-bold text-white mb-6 font-space ${
                 !saleClosed || virtualEarnings === 0 ? 'line-through opacity-50' : ''
               }`}>
                 ${saleClosed && virtualEarnings > 0 ? animatedEarnings.toFixed(2) : '0.00'}
@@ -380,57 +380,57 @@ export default function ScoresViewV2({
                 <>
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Deal Value</span>
-                      <span className="text-white font-medium">${dealDetails?.total_contract_value || dealDetails?.base_price || 0}</span>
+                      <span className="text-slate-400 font-sans">Deal Value</span>
+                      <span className="text-white font-medium font-sans">${dealDetails?.total_contract_value || dealDetails?.base_price || 0}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Commission (30%)</span>
-                      <span className="text-emerald-400 font-medium">${earningsData?.commission_earned?.toFixed(2) || '0.00'}</span>
+                      <span className="text-slate-400 font-sans">Commission (30%)</span>
+                      <span className="text-emerald-400 font-medium font-sans">${earningsData?.commission_earned?.toFixed(2) || '0.00'}</span>
                     </div>
                     {bonusModifierValues.length > 0 && bonusModifierValues.some((value) => value > 0) && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Bonuses</span>
-                        <span className="text-yellow-400 font-medium">${totalBonus.toFixed(2)}</span>
+                        <span className="text-slate-400 font-sans">Bonuses</span>
+                        <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="pt-3 border-t border-emerald-500/20 flex justify-between">
-                      <span className="text-white font-semibold">Total Virtual Earnings</span>
-                      <span className="text-emerald-400 font-bold text-lg">${virtualEarnings.toFixed(2)}</span>
+                      <span className="text-white font-semibold font-space">Total Virtual Earnings</span>
+                      <span className="text-emerald-400 font-bold text-lg font-space">${virtualEarnings.toFixed(2)}</span>
                     </div>
                   </div>
 
                   {dealDetails?.product_sold && (
                     <div className="mt-4 pt-4 border-t border-emerald-500/20">
-                      <div className="text-xs text-slate-400 mb-1">Product Sold</div>
-                      <div className="text-sm text-white">{dealDetails.product_sold}</div>
+                      <div className="text-xs text-slate-400 mb-1 font-sans">Product Sold</div>
+                      <div className="text-sm text-white font-sans">{dealDetails.product_sold}</div>
                     </div>
                   )}
                 </>
               ) : dealDetails?.next_step ? (
                 <div className="space-y-4">
-                  <div className="text-3xl font-bold text-amber-300 mb-2">Next Step Set ✓</div>
+                  <div className="text-3xl font-bold text-amber-300 mb-2 font-space">Next Step Set ✓</div>
                   <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <div className="text-sm text-amber-400/80 mb-2 uppercase tracking-wide font-semibold">
+                    <div className="text-sm text-amber-400/80 mb-2 uppercase tracking-wide font-semibold font-space">
                       {dealDetails.next_step_type?.replace(/_/g, ' ') || 'Follow-up'}
                     </div>
-                    <p className="text-base text-white font-medium leading-relaxed">{dealDetails.next_step}</p>
+                    <p className="text-base text-white font-medium leading-relaxed font-sans">{dealDetails.next_step}</p>
                   </div>
                   <div className="pt-4 border-t border-amber-500/30">
-                    <p className="text-sm text-amber-200/80">No immediate sale, but you kept the door open. Follow through on this commitment to close the deal.</p>
+                    <p className="text-sm text-amber-200/80 font-sans">No immediate sale, but you kept the door open. Follow through on this commitment to close the deal.</p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="flex justify-between text-base">
-                    <span className="text-slate-300 font-medium">Potential Deal Value</span>
-                    <span className="text-white/70 font-semibold line-through">$--</span>
+                    <span className="text-slate-300 font-medium font-sans">Potential Deal Value</span>
+                    <span className="text-white/70 font-semibold line-through font-sans">$--</span>
                   </div>
                   <div className="flex justify-between text-base">
-                    <span className="text-slate-300 font-medium">Missed Commission</span>
-                    <span className="text-red-300 font-semibold">$0.00</span>
+                    <span className="text-slate-300 font-medium font-sans">Missed Commission</span>
+                    <span className="text-red-300 font-semibold font-sans">$0.00</span>
                   </div>
                   <div className="pt-4 border-t border-red-500/30">
-                    <p className="text-base text-red-200 font-medium leading-relaxed">No sale was closed this session. Review the feedback below to improve your approach.</p>
+                    <p className="text-base text-red-200 font-medium leading-relaxed font-sans">No sale was closed this session. Review the feedback below to improve your approach.</p>
                   </div>
                 </div>
               )}
@@ -443,7 +443,7 @@ export default function ScoresViewV2({
       <section>
         <div className="flex items-center gap-3 mb-6">
           <Target className="w-5 h-5 text-blue-400" />
-          <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500">Know Exactly What's Working</h3>
+          <h3 className="text-sm uppercase tracking-[0.25em] text-slate-500 font-space">Know Exactly What's Working</h3>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
@@ -452,7 +452,7 @@ export default function ScoresViewV2({
             <div className="rounded-3xl bg-gradient-to-br from-emerald-900/20 to-green-800/20 backdrop-blur-xl border border-emerald-500/20 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Award className="w-6 h-6 text-emerald-400" />
-                <h4 className="font-bold text-lg text-white">What Worked</h4>
+                <h4 className="font-bold text-lg text-white font-space">What Worked</h4>
               </div>
               <ul className="space-y-3">
                 {feedback.strengths.map((strength, i) => (
@@ -464,7 +464,7 @@ export default function ScoresViewV2({
                     className="flex items-start gap-3"
                   >
                     <CheckCircle2 className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-base font-medium text-white">{strength}</span>
+                    <span className="text-base font-medium text-white font-sans">{strength}</span>
                   </motion.li>
                 ))}
               </ul>
@@ -476,7 +476,7 @@ export default function ScoresViewV2({
             <div className="rounded-3xl bg-gradient-to-br from-amber-900/20 to-orange-800/20 backdrop-blur-xl border border-amber-500/20 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <TrendingUp className="w-6 h-6 text-amber-400" />
-                <h4 className="font-bold text-lg text-white">Areas to Improve</h4>
+                <h4 className="font-bold text-lg text-white font-space">Areas to Improve</h4>
               </div>
               <ul className="space-y-3">
                 {feedback.improvements.map((improvement, i) => (
@@ -488,7 +488,7 @@ export default function ScoresViewV2({
                     className="flex items-start gap-3"
                   >
                     <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-base font-medium text-white">{improvement}</span>
+                    <span className="text-base font-medium text-white font-sans">{improvement}</span>
                   </motion.li>
                 ))}
               </ul>
@@ -501,7 +501,7 @@ export default function ScoresViewV2({
           <div className="mt-6 rounded-3xl bg-gradient-to-br from-blue-900/20 to-indigo-800/20 backdrop-blur-xl border border-blue-500/20 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Sparkles className="w-6 h-6 text-blue-400" />
-                <h4 className="font-bold text-lg text-white">Practice Tips for Your Next Session</h4>
+                <h4 className="font-bold text-lg text-white font-space">Practice Tips for Your Next Session</h4>
               </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {feedback.specific_tips.map((tip, i) => (
@@ -513,7 +513,7 @@ export default function ScoresViewV2({
                   className="flex items-start gap-3 p-4 rounded-xl bg-white/5"
                 >
                   <Zap className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-base font-medium text-white">{tip}</span>
+                  <span className="text-base font-medium text-white font-sans">{tip}</span>
                 </motion.div>
               ))}
             </div>

@@ -263,11 +263,11 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             )}
           </motion.div>
 
-          <h1 className="text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-3 font-space">
             {status}
           </h1>
           
-          <div className="flex items-center justify-center gap-4 text-sm text-slate-400">
+          <div className="flex items-center justify-center gap-4 text-sm text-slate-400 font-sans">
             <span>{formatTime(elapsedTime)} elapsed</span>
             <span>•</span>
             <span>{getSectionProgress()}% complete</span>
@@ -275,12 +275,12 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
           {error && (
             <div className="mt-4 space-y-3">
-              <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+              <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm font-sans">
                 {error}
               </div>
               <button
                 onClick={handleRetry}
-                className="w-full px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors"
+                className="w-full px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors font-space"
               >
                 Retry Connection
               </button>
@@ -343,7 +343,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
                     <div className="flex-1">
                       <div className={`
-                        font-medium
+                        font-medium font-space
                         ${isCompleted 
                           ? 'text-emerald-300' 
                           : isCurrent
@@ -356,7 +356,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                       
                       {/* Show preview data if available */}
                       {isCompleted && sectionData && (
-                        <div className="mt-1 text-xs text-slate-500">
+                        <div className="mt-1 text-xs text-slate-500 font-sans">
                           {key === 'scores' && sectionData.overall && (
                             <span>Overall Score: {sectionData.overall}/100</span>
                           )}
@@ -401,8 +401,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             className="mt-8 text-center"
           >
             <div className="inline-block px-6 py-3 bg-purple-500/10 border border-purple-500/20 rounded-full">
-              <span className="text-sm text-purple-300">
-                💡 Our AI is analyzing {sections.session_summary?.total_lines || 'hundreds of'} lines in real-time
+              <span className="text-sm text-purple-300 font-sans">
+                Our AI is analyzing {sections.session_summary?.total_lines || 'hundreds of'} lines in real-time
               </span>
             </div>
           </motion.div>

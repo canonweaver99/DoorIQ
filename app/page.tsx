@@ -531,37 +531,31 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
     let tierName: string
     let tierRange: string
     
-    // Determine tier and pricing (matching pricing page)
-    if (reps === 1) {
-      // Solo/Startup tier: $99/month for 1 rep
-      monthlyPrice = 99
-      perRepRate = 99
-      tierName = 'SOLO/STARTUP'
-      tierRange = '1 rep'
-    } else if (reps >= 5 && reps <= 20) {
-      // Team tier: $79/month per rep, min 5 reps
-      monthlyPrice = Math.max(5, reps) * 79
-      perRepRate = 79
+    // Determine tier and pricing (matching current pricing cards)
+    if (reps >= 1 && reps <= 10) {
+      // Starter tier: 1-10 reps at $99/month per rep
+      monthlyPrice = reps * 99
+      perRepRate = 89
+      tierName = 'STARTER'
+      tierRange = '1-10 reps'
+    } else if (reps >= 20 && reps <= 100) {
+      // Team tier: 20-100 reps at $69/month per rep
+      monthlyPrice = reps * 69
+      perRepRate = 69
       tierName = 'TEAM'
-      tierRange = '5-20 reps'
-    } else if (reps >= 21 && reps <= 100) {
-      // Growth tier: $59/month per rep
-      monthlyPrice = reps * 59
-      perRepRate = 59
-      tierName = 'GROWTH'
-      tierRange = '21-100 reps'
-    } else if (reps > 100) {
-      // Enterprise tier: $39/month per rep (starting at $39)
-      monthlyPrice = reps * 39
-      perRepRate = 39
+      tierRange = '20-100 reps'
+    } else if (reps >= 100) {
+      // Enterprise tier: 100+ reps at $49/month per rep (minimum)
+      monthlyPrice = Math.max(100, reps) * 49
+      perRepRate = 49
       tierName = 'ENTERPRISE'
-      tierRange = '100+ reps'
+      tierRange = '100-500+ reps'
     } else {
-      // Less than 5 reps (not Team tier yet) - defaults to Solo
-      monthlyPrice = 99
-      perRepRate = 99
-      tierName = 'SOLO/STARTUP'
-      tierRange = '1 rep'
+      // For reps between 11-19, use Team tier pricing ($69/month per rep)
+      monthlyPrice = reps * 69
+      perRepRate = 69
+      tierName = 'TEAM'
+      tierRange = '20-100 reps'
     }
     
     // Calculate annual pricing (15% discount)

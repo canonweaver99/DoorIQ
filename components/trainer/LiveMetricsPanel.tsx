@@ -28,24 +28,27 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
   const colorClasses = {
     blue: {
       icon: 'text-blue-400',
-      bg: 'bg-blue-500/10',
-      hover: 'group-hover:bg-blue-500/20',
+      bg: 'bg-blue-500/20',
+      hover: 'group-hover:bg-blue-500/30',
       progress: 'from-blue-500 to-blue-400',
-      border: 'border-blue-500/30'
+      border: 'border-blue-500/40',
+      accent: 'bg-blue-500/30'
     },
     amber: {
       icon: 'text-amber-400',
-      bg: 'bg-amber-500/10',
-      hover: 'group-hover:bg-amber-500/20',
+      bg: 'bg-amber-500/20',
+      hover: 'group-hover:bg-amber-500/30',
       progress: 'from-amber-500 to-amber-400',
-      border: 'border-amber-500/30'
+      border: 'border-amber-500/40',
+      accent: 'bg-amber-500/30'
     },
     emerald: {
       icon: 'text-emerald-400',
-      bg: 'bg-emerald-500/10',
-      hover: 'group-hover:bg-emerald-500/20',
+      bg: 'bg-emerald-500/20',
+      hover: 'group-hover:bg-emerald-500/30',
       progress: 'from-emerald-500 to-emerald-400',
-      border: 'border-emerald-500/30'
+      border: 'border-emerald-500/40',
+      accent: 'bg-emerald-500/30'
     }
   }
 
@@ -58,19 +61,20 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-4 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group flex flex-col",
+          "bg-slate-900/98 rounded-lg pt-4 px-4 pb-4 border-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] transition-all duration-300 group flex flex-col",
+          classes.border,
           className
         )}
       >
         <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-          <div className={cn("p-1.5 sm:p-2 rounded-lg transition-colors", classes.bg, classes.hover)}>
+          <div className={cn("p-1.5 sm:p-2 rounded-md transition-colors", classes.bg, classes.hover)}>
             <div className={classes.icon}>
               {icon}
             </div>
           </div>
           <div>
-            <div className="text-sm sm:text-base font-medium text-white font-space">{label}</div>
-            {subtitle && <div className="text-[10px] sm:text-xs text-white/80 font-space">{subtitle}</div>}
+            <div className="text-sm sm:text-base font-medium text-slate-200 font-space">{label}</div>
+            {subtitle && <div className="text-[10px] sm:text-xs text-slate-400 font-space">{subtitle}</div>}
           </div>
         </div>
         <div className="text-3xl sm:text-4xl font-bold text-white font-space">{value}</div>
@@ -83,27 +87,28 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={cn(
-        "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-2 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group",
-        className
-      )}
+        className={cn(
+          "bg-slate-900/98 rounded-lg pt-4 px-4 pb-2 border-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] transition-all duration-300 group",
+          classes.border,
+          className
+        )}
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className={cn("p-1.5 sm:p-2 rounded-lg transition-colors", classes.bg, classes.hover)}>
+          <div className={cn("p-1.5 sm:p-2 rounded-md transition-colors", classes.bg, classes.hover)}>
             <div className={classes.icon}>
               {icon}
             </div>
           </div>
           <div>
-            <div className="text-xs sm:text-sm font-medium text-white font-space">{label}</div>
-            {subtitle && <div className="text-[10px] sm:text-xs text-white/80 font-space">{subtitle}</div>}
+            <div className="text-xs sm:text-sm font-medium text-slate-200 font-space">{label}</div>
+            {subtitle && <div className="text-[10px] sm:text-xs text-slate-400 font-space">{subtitle}</div>}
           </div>
         </div>
         <div className="text-right">
           <div className="text-xl sm:text-2xl font-bold text-white mb-0.5 font-space">{value}</div>
           {badge && (
-            <Badge variant={badgeVariant} className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5">
+            <Badge variant={badgeVariant} className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 bg-slate-800 border-slate-600 text-slate-300">
               {badge}
             </Badge>
           )}
@@ -112,7 +117,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       
       {progress !== undefined && (
         <>
-          <div className="relative h-2 bg-slate-700/50 rounded-full overflow-hidden mb-1.5">
+          <div className="relative h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1.5">
             <motion.div
               className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500", classes.progress)}
               initial={{ width: 0 }}
@@ -120,11 +125,11 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
               transition={{ duration: 0.5 }}
             />
             {progress > 0 && progress < 100 && (
-              <div className={cn("absolute left-[50%] top-1/2 -translate-y-1/2 w-0.5 h-6 bg-white/50")} />
+              <div className={cn("absolute left-[50%] top-1/2 -translate-y-1/2 w-0.5 h-6 bg-slate-500/60")} />
             )}
           </div>
           {progressLabel && (
-            <div className="flex justify-between text-[10px] sm:text-xs text-white/80 font-space">
+            <div className="flex justify-between text-[10px] sm:text-xs text-slate-400 font-space">
               <span className="truncate">You: {progress}%</span>
               <span className="hidden sm:inline">Ideal: 50-60%</span>
               <span className="truncate">Them: {100 - progress}%</span>

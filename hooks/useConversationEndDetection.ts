@@ -37,7 +37,7 @@ const GOODBYE_PHRASES = [
   'need to go',
 ]
 
-const MAX_SESSION_DURATION = 15 * 60 * 1000 // 15 minutes
+const MAX_SESSION_DURATION = 10 * 60 * 1000 // 10 minutes
 const INACTIVITY_TIMEOUT = 30 * 1000 // 30 seconds
 
 export function useConversationEndDetection({
