@@ -858,6 +858,19 @@ function TrainerPageContent() {
           console.warn('⚠️ This may indicate microphone access failed or voice analysis hook had an error')
         }
         
+        console.log('💾 === SESSION SAVE DEBUG ===')
+        console.log('💾 Voice analysis data exists:', !!voiceAnalysisData)
+        console.log('💾 Voice analysis keys:', voiceAnalysisData ? Object.keys(voiceAnalysisData) : 'NULL')
+        console.log('💾 Full voice analysis:', JSON.stringify(voiceAnalysisData, null, 2))
+        console.log('💾 Session data to save:', {
+          sessionId,
+          transcriptLength: transcript.length,
+          duration,
+          endReason: endReason || 'manual',
+          hasVoiceAnalysis: !!voiceAnalysisData
+        })
+        console.log('💾 ========================')
+        
         const saveResponse = await fetch('/api/session', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -883,18 +896,48 @@ function TrainerPageContent() {
           console.log('✅ Session data saved successfully', {
             sessionId: savedData?.id || sessionId,
             transcriptLines: transcript.length,
-            voiceAnalysisSaved: !!voiceAnalysisData
+            voiceAnalysisSaved: !!voiceAnalysisData,
+            responseHasAnalytics: !!savedData?.analytics,
+            responseHasVoiceAnalysis: !!savedData?.analytics?.voice_analysis
           })
           
           // Verify voice_analysis was saved by checking response
           if (voiceAnalysisData && savedData?.analytics?.voice_analysis) {
-            console.log('✅ Voice analysis data confirmed saved in database')
+            console.log('✅ Voice analysis data confirmed saved in database', {
+              avgWPM: savedData.analytics.voice_analysis?.avgWPM,
+              totalFillerWords: savedData.analytics.voice_analysis?.totalFillerWords,
+              hasPitchData: savedData.analytics.voice_analysis?.avgPitch > 0
+            })
           } else if (voiceAnalysisData && !savedData?.analytics?.voice_analysis) {
-            console.warn('⚠️ Voice analysis data was sent but may not be in response - check database')
+            console.error('❌ CRITICAL: Voice analysis data was sent but NOT in response!', {
+              sessionId,
+              voiceAnalysisKeys: Object.keys(voiceAnalysisData || {}),
+              responseAnalyticsKeys: savedData?.analytics ? Object.keys(savedData.analytics) : []
+            })
+            // Add extra delay and retry verification if voice_analysis is missing
+            console.log('⏳ Waiting additional time for database write to commit...')
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            
+            // Try to verify by fetching the session
+            try {
+              const verifyResponse = await fetch(`/api/session?id=${sessionId}`)
+              if (verifyResponse.ok) {
+                const verifyData = await verifyResponse.json()
+                if (verifyData?.analytics?.voice_analysis) {
+                  console.log('✅ Voice analysis verified in database after delay')
+                } else {
+                  console.error('❌ Voice analysis still missing after verification fetch')
+                }
+              }
+            } catch (verifyError) {
+              console.error('❌ Error verifying voice analysis:', verifyError)
+            }
           }
           
-          // Small delay to ensure database write is committed
-          await new Promise(resolve => setTimeout(resolve, 500)) // Increased delay to ensure write completes
+          // Delay to ensure database write is committed before redirect
+          // Increased delay to ensure write completes, especially for voice_analysis
+          await new Promise(resolve => setTimeout(resolve, 1000)) // Increased from 500ms to 1000ms
+          console.log('⏳ Database write delay completed, proceeding with redirect')
         }
         
         // Now redirect after save completes

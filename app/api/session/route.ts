@@ -108,6 +108,15 @@ export async function PATCH(req: Request) {
 
     // Handle analytics JSONB - merge voice_analysis if provided
     let analytics = currentSession?.analytics || {}
+    const hadExistingAnalytics = !!currentSession?.analytics && Object.keys(currentSession.analytics).length > 0
+    
+    console.log('🎤 PATCH: Voice analysis check', {
+      hasVoiceAnalysis: !!voice_analysis,
+      hadExistingAnalytics,
+      existingAnalyticsKeys: currentSession?.analytics ? Object.keys(currentSession.analytics) : [],
+      sessionId: id
+    })
+    
     if (voice_analysis) {
       console.log('🎤 PATCH: Saving voice analysis data', {
         hasVoiceAnalysis: !!voice_analysis,
@@ -121,7 +130,10 @@ export async function PATCH(req: Request) {
         ...analytics,
         voice_analysis: voice_analysis
       }
-      console.log('✅ Voice analysis merged into analytics object')
+      console.log('✅ Voice analysis merged into analytics object', {
+        analyticsKeys: Object.keys(analytics),
+        voiceAnalysisIncluded: !!analytics.voice_analysis
+      })
     } else {
       console.log('ℹ️ PATCH: No voice_analysis data provided in request')
     }
@@ -137,9 +149,21 @@ export async function PATCH(req: Request) {
       return_appointment: false
     }
     
-    // Add analytics if we have voice_analysis or existing analytics
-    if (voice_analysis || Object.keys(analytics).length > 0) {
+    // CRITICAL: Always save analytics when voice_analysis is provided, or if we have existing analytics
+    // This ensures voice_analysis is never lost
+    if (voice_analysis) {
+      // If voice_analysis is provided, ALWAYS save analytics (even if empty before)
       updateData.analytics = analytics
+      console.log('✅ PATCH: Analytics will be saved (voice_analysis provided)', {
+        analyticsKeys: Object.keys(analytics),
+        voiceAnalysisIncluded: !!analytics.voice_analysis
+      })
+    } else if (hadExistingAnalytics) {
+      // Preserve existing analytics even if no voice_analysis in this request
+      updateData.analytics = analytics
+      console.log('✅ PATCH: Analytics will be saved (preserving existing analytics)')
+    } else {
+      console.log('ℹ️ PATCH: No analytics to save (no voice_analysis and no existing analytics)')
     }
     
     // Add optional fields if provided
@@ -148,11 +172,19 @@ export async function PATCH(req: Request) {
     if (agent_persona) updateData.agent_persona = agent_persona
     if (end_reason) updateData.end_reason = end_reason
 
+    // Log what we're about to save
+    console.log('💾 PATCH: About to save updateData', {
+      hasAnalytics: !!updateData.analytics,
+      analyticsKeys: updateData.analytics ? Object.keys(updateData.analytics) : [],
+      hasVoiceAnalysis: updateData.analytics?.voice_analysis ? true : false,
+      sessionId: id
+    })
+    
     const { data, error } = await (supabase as any)
       .from('live_sessions')
       .update(updateData)
       .eq('id', id)
-      .select('id, full_transcript')
+      .select('id, full_transcript, analytics')
       .single()
     
     if (error) {
@@ -162,10 +194,15 @@ export async function PATCH(req: Request) {
     
     // Verify the transcript was actually saved
     const savedTranscript = data.full_transcript
+    const savedAnalytics = data.analytics
+    
     console.log('✅ PATCH: Session updated successfully:', {
       id: data.id,
       transcriptSaved: !!savedTranscript,
-      transcriptLength: Array.isArray(savedTranscript) ? savedTranscript.length : 0
+      transcriptLength: Array.isArray(savedTranscript) ? savedTranscript.length : 0,
+      analyticsSaved: !!savedAnalytics,
+      analyticsKeys: savedAnalytics ? Object.keys(savedAnalytics) : [],
+      voiceAnalysisSaved: savedAnalytics?.voice_analysis ? true : false
     })
     
     if (!savedTranscript || (Array.isArray(savedTranscript) && savedTranscript.length === 0)) {
@@ -176,7 +213,25 @@ export async function PATCH(req: Request) {
       })
     }
     
-    return NextResponse.json({ id: data.id })
+    // Verify voice_analysis was saved if it was provided
+    if (voice_analysis && !savedAnalytics?.voice_analysis) {
+      console.error('❌ CRITICAL: voice_analysis was provided but NOT saved to database!', {
+        sessionId: id,
+        voiceAnalysisKeys: Object.keys(voice_analysis || {}),
+        savedAnalyticsKeys: savedAnalytics ? Object.keys(savedAnalytics) : []
+      })
+    } else if (voice_analysis && savedAnalytics?.voice_analysis) {
+      console.log('✅ PATCH: voice_analysis confirmed saved in database', {
+        sessionId: id,
+        avgWPM: savedAnalytics.voice_analysis?.avgWPM,
+        totalFillerWords: savedAnalytics.voice_analysis?.totalFillerWords
+      })
+    }
+    
+    return NextResponse.json({ 
+      id: data.id,
+      analytics: savedAnalytics // Include analytics in response so client can verify
+    })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }

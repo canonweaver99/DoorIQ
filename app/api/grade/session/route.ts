@@ -729,16 +729,66 @@ Return ONLY valid JSON. No commentary.`
     const existingAnalytics = (session as any).analytics || {}
     const existingVoiceAnalysis = existingAnalytics.voice_analysis
     
+    // Check if session was recently ended (within last 5 seconds) - might indicate race condition
+    const sessionEndedAt = (session as any).ended_at ? new Date((session as any).ended_at) : null
+    const currentTime = new Date()
+    const secondsSinceEnd = sessionEndedAt ? (currentTime.getTime() - sessionEndedAt.getTime()) / 1000 : null
+    const recentlyEnded = secondsSinceEnd !== null && secondsSinceEnd < 5
+    
+    logger.info('Voice analysis preservation check', {
+      hasExistingAnalytics: !!existingAnalytics && Object.keys(existingAnalytics).length > 0,
+      existingAnalyticsKeys: existingAnalytics ? Object.keys(existingAnalytics) : [],
+      hasVoiceAnalysis: !!existingVoiceAnalysis,
+      sessionEndedAt: sessionEndedAt?.toISOString(),
+      secondsSinceEnd,
+      recentlyEnded,
+      sessionId
+    })
+    
     if (existingVoiceAnalysis) {
-      logger.info('Preserving existing voice_analysis data', {
+      logger.info('✅ Preserving existing voice_analysis data', {
         hasVoiceAnalysis: !!existingVoiceAnalysis,
         voiceAnalysisKeys: Object.keys(existingVoiceAnalysis || {}),
         avgWPM: existingVoiceAnalysis?.avgWPM,
-        totalFillerWords: existingVoiceAnalysis?.totalFillerWords
+        totalFillerWords: existingVoiceAnalysis?.totalFillerWords,
+        hasPitchData: existingVoiceAnalysis?.avgPitch > 0
       })
     } else {
-      logger.info('No existing voice_analysis found to preserve')
+      if (recentlyEnded) {
+        logger.warn('⚠️ No existing voice_analysis found but session was recently ended - possible race condition', {
+          secondsSinceEnd,
+          sessionId,
+          endedAt: sessionEndedAt?.toISOString()
+        })
+        // Try to fetch fresh session data in case voice_analysis was just saved
+        try {
+          const { data: freshSession } = await supabase
+            .from('live_sessions')
+            .select('analytics')
+            .eq('id', sessionId)
+            .single()
+          
+          if (freshSession?.analytics?.voice_analysis) {
+            logger.info('✅ Found voice_analysis in fresh fetch - race condition detected and resolved', {
+              voiceAnalysisKeys: Object.keys(freshSession.analytics.voice_analysis || {}),
+              avgWPM: freshSession.analytics.voice_analysis?.avgWPM
+            })
+            // Use the fresh voice_analysis
+            const freshVoiceAnalysis = freshSession.analytics.voice_analysis
+            // Update existingAnalytics to include it
+            existingAnalytics.voice_analysis = freshVoiceAnalysis
+            Object.assign(existingAnalytics, { voice_analysis: freshVoiceAnalysis })
+          }
+        } catch (fetchError) {
+          logger.error('Error fetching fresh session data for voice_analysis', fetchError)
+        }
+      } else {
+        logger.info('No existing voice_analysis found to preserve (session ended more than 5 seconds ago)')
+      }
     }
+    
+    // Re-check after potential fresh fetch
+    const finalVoiceAnalysis = existingAnalytics.voice_analysis || existingVoiceAnalysis
     
     const { error: updateError } = await (supabase as any)
       .from('live_sessions')
@@ -785,8 +835,8 @@ Return ONLY valid JSON. No commentary.`
           graded_at: now,
           grading_version: '8.0-ultra-fast',
           scores: gradingResult.scores || {},
-          // Preserve voice_analysis if it exists
-          ...(existingVoiceAnalysis && { voice_analysis: existingVoiceAnalysis })
+          // Preserve voice_analysis if it exists (use finalVoiceAnalysis which may have been refreshed)
+          ...(finalVoiceAnalysis && { voice_analysis: finalVoiceAnalysis })
         }
       } as any)
       .eq('id', sessionId)
@@ -794,6 +844,16 @@ Return ONLY valid JSON. No commentary.`
     if (updateError) {
       logger.error('Failed to update session', updateError)
       throw updateError
+    }
+    
+    // Verify voice_analysis was preserved in the update
+    if (finalVoiceAnalysis) {
+      logger.info('✅ Voice analysis should be preserved in analytics', {
+        voiceAnalysisKeys: Object.keys(finalVoiceAnalysis || {}),
+        avgWPM: finalVoiceAnalysis?.avgWPM
+      })
+    } else {
+      logger.info('ℹ️ No voice_analysis to preserve in this grading update')
     }
 
     const dbUpdateEndTime = Date.now()

@@ -308,16 +308,64 @@ Return ONLY valid JSON. No commentary.`
           const existingAnalytics = (session as any).analytics || {}
           const existingVoiceAnalysis = existingAnalytics.voice_analysis
           
+          // Check if session was recently ended (within last 5 seconds) - might indicate race condition
+          const sessionEndedAt = (session as any).ended_at ? new Date((session as any).ended_at) : null
+          const currentTime = new Date()
+          const secondsSinceEnd = sessionEndedAt ? (currentTime.getTime() - sessionEndedAt.getTime()) / 1000 : null
+          const recentlyEnded = secondsSinceEnd !== null && secondsSinceEnd < 5
+          
+          logger.info('Voice analysis preservation check (streaming)', {
+            hasExistingAnalytics: !!existingAnalytics && Object.keys(existingAnalytics).length > 0,
+            existingAnalyticsKeys: existingAnalytics ? Object.keys(existingAnalytics) : [],
+            hasVoiceAnalysis: !!existingVoiceAnalysis,
+            sessionEndedAt: sessionEndedAt?.toISOString(),
+            secondsSinceEnd,
+            recentlyEnded,
+            sessionId
+          })
+          
           if (existingVoiceAnalysis) {
-            logger.info('Preserving existing voice_analysis data in streaming grade', {
+            logger.info('✅ Preserving existing voice_analysis data in streaming grade', {
               hasVoiceAnalysis: !!existingVoiceAnalysis,
               voiceAnalysisKeys: Object.keys(existingVoiceAnalysis || {}),
               avgWPM: existingVoiceAnalysis?.avgWPM,
-              totalFillerWords: existingVoiceAnalysis?.totalFillerWords
+              totalFillerWords: existingVoiceAnalysis?.totalFillerWords,
+              hasPitchData: existingVoiceAnalysis?.avgPitch > 0
             })
           } else {
-            logger.info('No existing voice_analysis found to preserve in streaming grade')
+            if (recentlyEnded) {
+              logger.warn('⚠️ No existing voice_analysis found but session was recently ended - possible race condition (streaming)', {
+                secondsSinceEnd,
+                sessionId,
+                endedAt: sessionEndedAt?.toISOString()
+              })
+              // Try to fetch fresh session data in case voice_analysis was just saved
+              try {
+                const { data: freshSession } = await supabase
+                  .from('live_sessions')
+                  .select('analytics')
+                  .eq('id', sessionId)
+                  .single()
+                
+                if (freshSession?.analytics?.voice_analysis) {
+                  logger.info('✅ Found voice_analysis in fresh fetch - race condition detected and resolved (streaming)', {
+                    voiceAnalysisKeys: Object.keys(freshSession.analytics.voice_analysis || {}),
+                    avgWPM: freshSession.analytics.voice_analysis?.avgWPM
+                  })
+                  // Update existingAnalytics to include it
+                  existingAnalytics.voice_analysis = freshSession.analytics.voice_analysis
+                  Object.assign(existingAnalytics, { voice_analysis: freshSession.analytics.voice_analysis })
+                }
+              } catch (fetchError) {
+                logger.error('Error fetching fresh session data for voice_analysis (streaming)', fetchError)
+              }
+            } else {
+              logger.info('No existing voice_analysis found to preserve in streaming grade (session ended more than 5 seconds ago)')
+            }
           }
+          
+          // Re-check after potential fresh fetch
+          const finalVoiceAnalysis = existingAnalytics.voice_analysis || existingVoiceAnalysis
           
           // Extract line ratings if present (for future use)
           // const lineRatings = gradingResult.line_ratings || []
@@ -350,8 +398,8 @@ Return ONLY valid JSON. No commentary.`
             analytics: {
               ...gradingResult,
               enhanced_metrics: enhancedMetrics,
-              // Preserve voice_analysis if it exists
-              ...(existingVoiceAnalysis && { voice_analysis: existingVoiceAnalysis })
+              // Preserve voice_analysis if it exists (use finalVoiceAnalysis which may have been refreshed)
+              ...(finalVoiceAnalysis && { voice_analysis: finalVoiceAnalysis })
             }
           }
           
@@ -359,6 +407,16 @@ Return ONLY valid JSON. No commentary.`
             .from('live_sessions')
             .update(updateData)
             .eq('id', sessionId)
+          
+          // Verify voice_analysis was preserved in the update
+          if (finalVoiceAnalysis) {
+            logger.info('✅ Voice analysis should be preserved in analytics (streaming)', {
+              voiceAnalysisKeys: Object.keys(finalVoiceAnalysis || {}),
+              avgWPM: finalVoiceAnalysis?.avgWPM
+            })
+          } else {
+            logger.info('ℹ️ No voice_analysis to preserve in this streaming grading update')
+          }
 
           // Send completion
           const totalTime = Date.now() - startTime
