@@ -24,6 +24,26 @@ const faqs = [
   {
     question: "What if I need to add or remove reps?",
     answer: "You can adjust your team size anytime. We'll prorate your billing based on the changes."
+  },
+  {
+    question: "How secure is my team's training data?",
+    answer: "We take data security seriously. All voice recordings are encrypted in transit and at rest. Audio data is processed securely through our AI partners and automatically deleted after 90 days. We comply with GDPR, CCPA, and other privacy regulations."
+  },
+  {
+    question: "Can DoorIQ integrate with our existing CRM or sales tools?",
+    answer: "Currently, DoorIQ operates as a standalone platform focused on training. We're actively working on integrations with popular CRMs and sales tools. Contact us if you'd like to be notified when integrations become available."
+  },
+  {
+    question: "How accurate is the AI feedback and scoring?",
+    answer: "Our AI uses advanced natural language processing and speech analysis to evaluate sales conversations. The scoring is based on industry best practices and can identify areas like objection handling, rapport building, and closing techniques. However, AI feedback should complement, not replace, human coaching."
+  },
+  {
+    question: "What happens if I cancel my subscription?",
+    answer: "You can cancel anytime from your account settings. Your account will remain active until the end of your current billing period. After cancellation, you'll retain access to your training history and analytics, but new sessions won't be available. You can reactivate your subscription at any time."
+  },
+  {
+    question: "Do you offer customer support if my team needs help?",
+    answer: "Yes! We offer email support for all users and priority support for enterprise customers. You can reach us at contact@dooriq.ai or through the Help section in your account. We typically respond within 24 hours during business days."
   }
 ]
 
