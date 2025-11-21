@@ -291,6 +291,21 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
     
+    // Debug logging for voice_analysis
+    console.log('🔍 GET: Session data retrieved', {
+      sessionId: id,
+      hasAnalytics: !!data.analytics,
+      analyticsType: typeof data.analytics,
+      analyticsKeys: data.analytics ? Object.keys(data.analytics) : [],
+      hasVoiceAnalysis: !!data.analytics?.voice_analysis,
+      voiceAnalysisKeys: data.analytics?.voice_analysis ? Object.keys(data.analytics.voice_analysis) : [],
+      voiceAnalysisSample: data.analytics?.voice_analysis ? {
+        avgWPM: data.analytics.voice_analysis.avgWPM,
+        totalFillerWords: data.analytics.voice_analysis.totalFillerWords,
+        hasPitchData: data.analytics.voice_analysis.avgPitch > 0
+      } : null
+    })
+    
     // Add caching headers for GET requests
     return NextResponse.json(data, {
       headers: {

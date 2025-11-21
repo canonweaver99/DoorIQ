@@ -70,6 +70,32 @@ interface SessionData {
     enhanced_metrics?: Record<string, any>
     earnings_data?: any
     deal_details?: any
+    voice_analysis?: {
+      sessionId?: string
+      timestamp?: Date | string
+      avgPitch?: number
+      minPitch?: number
+      maxPitch?: number
+      pitchVariation?: number
+      avgVolume?: number
+      volumeConsistency?: number
+      avgWPM?: number
+      totalFillerWords?: number
+      fillerWordsPerMinute?: number
+      longPausesCount?: number
+      monotonePeriods?: number
+      pitchTimeline?: Array<{ time: number; value: number }>
+      volumeTimeline?: Array<{ time: number; value: number }>
+      wpmTimeline?: Array<{ time: number; value: number }>
+      issues?: {
+        tooFast?: boolean
+        tooSlow?: boolean
+        monotone?: boolean
+        lowEnergy?: boolean
+        excessiveFillers?: boolean
+        poorEndings?: boolean
+      }
+    }
     objection_analysis?: {
       total_objections?: number
       objections_detail?: Array<{
@@ -156,6 +182,19 @@ export default function AnalyticsPage() {
       fetchSession()
     }
   }, [sessionId])
+  
+  // Debug effect to track session changes
+  useEffect(() => {
+    if (session) {
+      console.log('📊 Session state updated:', {
+        hasAnalytics: !!session.analytics,
+        analyticsKeys: session.analytics ? Object.keys(session.analytics) : [],
+        hasVoiceAnalysis: !!session.analytics?.voice_analysis,
+        voiceAnalysisKeys: session.analytics?.voice_analysis ? Object.keys(session.analytics.voice_analysis) : [],
+        voiceAnalysisData: session.analytics?.voice_analysis
+      })
+    }
+  }, [session])
 
   const fetchSession = async () => {
     try {
@@ -165,6 +204,19 @@ export default function AnalyticsPage() {
       }
       
       const data = await response.json()
+      
+      // === ANALYTICS PAGE DEBUG ===
+      console.log('=== ANALYTICS PAGE DEBUG ===')
+      console.log('Full session data:', data)
+      console.log('Has analytics?', !!data.analytics)
+      console.log('Analytics type:', typeof data.analytics)
+      console.log('Analytics keys:', data.analytics ? Object.keys(data.analytics) : 'none')
+      console.log('Has voice_analysis in analytics?', !!data.analytics?.voice_analysis)
+      console.log('Voice analysis data:', data.analytics?.voice_analysis)
+      console.log('Voice analysis keys:', data.analytics?.voice_analysis ? Object.keys(data.analytics.voice_analysis) : 'none')
+      console.log('Full analytics object:', JSON.stringify(data.analytics, null, 2))
+      console.log('===========================')
+      
       console.log('Session data:', data)
       console.log('Agent name:', data.agent_name)
       console.log('User ID:', data.user_id)
@@ -197,10 +249,22 @@ export default function AnalyticsPage() {
           const pollResponse = await fetch(`/api/session?id=${sessionId}`)
           if (pollResponse.ok) {
             const pollData = await pollResponse.json()
+            
+            // Debug logging for polling
+            console.log('🔄 Poll: Session data retrieved', {
+              hasAnalytics: !!pollData.analytics,
+              hasVoiceAnalysis: !!pollData.analytics?.voice_analysis,
+              analyticsKeys: pollData.analytics ? Object.keys(pollData.analytics) : []
+            })
+            
             // Check if grading is complete by looking for overall_score or analytics.scores
             const isGraded = pollData.overall_score || pollData.analytics?.scores?.overall
             if (isGraded) {
               console.log('✅ Grading completed! Refreshing page...')
+              console.log('🔄 Poll: Final session data before update', {
+                hasVoiceAnalysis: !!pollData.analytics?.voice_analysis,
+                voiceAnalysisKeys: pollData.analytics?.voice_analysis ? Object.keys(pollData.analytics.voice_analysis) : []
+              })
               clearInterval(pollInterval)
               setSession(pollData)
               setGrading(false)
