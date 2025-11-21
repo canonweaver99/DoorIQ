@@ -109,11 +109,21 @@ export async function PATCH(req: Request) {
     // Handle analytics JSONB - merge voice_analysis if provided
     let analytics = currentSession?.analytics || {}
     if (voice_analysis) {
-      console.log('🎤 PATCH: Saving voice analysis data')
+      console.log('🎤 PATCH: Saving voice analysis data', {
+        hasVoiceAnalysis: !!voice_analysis,
+        voiceAnalysisKeys: Object.keys(voice_analysis || {}),
+        avgWPM: voice_analysis?.avgWPM,
+        totalFillerWords: voice_analysis?.totalFillerWords,
+        hasPitchData: voice_analysis?.avgPitch > 0,
+        sessionId: id
+      })
       analytics = {
         ...analytics,
         voice_analysis: voice_analysis
       }
+      console.log('✅ Voice analysis merged into analytics object')
+    } else {
+      console.log('ℹ️ PATCH: No voice_analysis data provided in request')
     }
     
     // Build update object with all provided fields

@@ -337,16 +337,30 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     // Return data even if pitch/volume isn't available - at least show WPM and filler words
     // Only require transcript data (which should always be available)
     if (transcript.length === 0 && !hasValidPitches) {
-      console.log('🎤 getVoiceAnalysisData: No transcript or pitch data available')
+      console.warn('⚠️ getVoiceAnalysisData: No transcript or pitch data available - cannot generate voice analysis')
       return null
     }
     
+    // Always return data if we have transcript (even without pitch/volume from microphone)
+    const hasTranscriptData = transcript.length > 0
+    const hasAudioData = hasValidPitches
+    
     console.log('🎤 getVoiceAnalysisData: Returning data', {
-      hasPitchData: hasValidPitches,
-      hasTranscript: transcript.length > 0,
-      avgWPM,
-      totalFillerWords
+      hasPitchData: hasAudioData,
+      hasTranscript: hasTranscriptData,
+      transcriptLength: transcript.length,
+      avgWPM: avgWPM || 0,
+      totalFillerWords: totalFillerWords || 0,
+      pitchHistoryLength: pitchHistoryRef.current.length,
+      volumeHistoryLength: volumeHistoryRef.current.length,
+      isAnalyzing,
+      error: error || null
     })
+    
+    // Warn if we don't have audio data but should still return transcript-based metrics
+    if (!hasAudioData && hasTranscriptData) {
+      console.log('ℹ️ Voice analysis: Using transcript-only data (WPM, filler words) - microphone data unavailable')
+    }
     
     // Detect issues (use defaults for pitch/volume if not available)
     const issues = {
@@ -384,10 +398,14 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     
     try {
       setError(null)
+      console.log('🎤 Starting voice analysis - requesting microphone access...')
       
       // Request microphone access
+      // Note: This may fail if microphone is already in use by ElevenLabs
+      // That's okay - we'll still calculate WPM and filler words from transcript
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaStreamRef.current = stream
+      console.log('✅ Microphone access granted for voice analysis')
       
       // Create audio context
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -407,6 +425,8 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
       sessionStartTimeRef.current = Date.now()
       lastTimelineUpdateRef.current = Date.now()
       
+      console.log('✅ Voice analysis started successfully - pitch/volume data will be collected')
+      
       // Start analysis loop
       const runAnalysis = () => {
         analyzeAudio()
@@ -415,11 +435,20 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
       runAnalysis()
       
     } catch (err: any) {
-      console.error('Error starting voice analysis:', err)
-      setError(err.message || 'Failed to access microphone')
+      const errorMsg = err.message || 'Failed to access microphone'
+      console.warn('⚠️ Voice analysis microphone access failed:', errorMsg)
+      console.warn('⚠️ This is okay - voice analysis will still calculate WPM and filler words from transcript')
+      console.warn('⚠️ Error details:', {
+        name: err.name,
+        message: err.message,
+        constraint: err.constraint,
+        sessionId
+      })
+      setError(errorMsg)
       setIsAnalyzing(false)
+      // Don't throw - we can still analyze transcript data even without microphone
     }
-  }, [isAnalyzing, analyzeAudio, analysisInterval])
+  }, [isAnalyzing, analyzeAudio, analysisInterval, sessionId])
   
   const stopAnalysis = useCallback(() => {
     if (analysisIntervalRef.current) {

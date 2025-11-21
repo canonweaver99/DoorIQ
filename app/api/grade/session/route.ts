@@ -729,6 +729,17 @@ Return ONLY valid JSON. No commentary.`
     const existingAnalytics = (session as any).analytics || {}
     const existingVoiceAnalysis = existingAnalytics.voice_analysis
     
+    if (existingVoiceAnalysis) {
+      logger.info('Preserving existing voice_analysis data', {
+        hasVoiceAnalysis: !!existingVoiceAnalysis,
+        voiceAnalysisKeys: Object.keys(existingVoiceAnalysis || {}),
+        avgWPM: existingVoiceAnalysis?.avgWPM,
+        totalFillerWords: existingVoiceAnalysis?.totalFillerWords
+      })
+    } else {
+      logger.info('No existing voice_analysis found to preserve')
+    }
+    
     const { error: updateError } = await (supabase as any)
       .from('live_sessions')
       .update({

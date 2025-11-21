@@ -120,6 +120,7 @@ function TrainerPageContent() {
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
+  const [reconnectingStatus, setReconnectingStatus] = useState<{ isReconnecting: boolean; attempt: number; maxAttempts: number } | null>(null)
   const webcamPIPRef = useRef<WebcamPIPRef | null>(null)
   const conversationRef = useRef<any>(null) // Ref to ElevenLabs conversation instance
 
@@ -798,6 +799,7 @@ function TrainerPageContent() {
     
     setLoading(true)
     setSessionActive(false)
+    setReconnectingStatus(null) // Clear reconnection status
     // Don't change sessionState for manual end - we're redirecting immediately
     setConversationToken(null)
     // Don't reset videoMode if we're showing closing animation - let it finish
@@ -846,8 +848,15 @@ function TrainerPageContent() {
           dataKeys: voiceAnalysisData ? Object.keys(voiceAnalysisData) : [],
           avgWPM: voiceAnalysisData?.avgWPM,
           totalFillerWords: voiceAnalysisData?.totalFillerWords,
-          hasPitchData: voiceAnalysisData ? voiceAnalysisData.avgPitch > 0 : false
+          hasPitchData: voiceAnalysisData ? voiceAnalysisData.avgPitch > 0 : false,
+          hasVolumeData: voiceAnalysisData ? voiceAnalysisData.avgVolume > -60 : false
         })
+        
+        // Warn if no voice analysis data but we have transcript
+        if (!voiceAnalysisData && transcript.length > 0) {
+          console.warn('⚠️ No voice analysis data available despite having transcript')
+          console.warn('⚠️ This may indicate microphone access failed or voice analysis hook had an error')
+        }
         
         const saveResponse = await fetch('/api/session', {
           method: 'PATCH',
@@ -864,16 +873,28 @@ function TrainerPageContent() {
         if (!saveResponse.ok) {
           const errorText = await saveResponse.text().catch(() => 'Unknown error')
           console.error('❌ Error saving session:', saveResponse.status, errorText)
+          console.error('❌ Voice analysis data may not have been saved:', {
+            hadVoiceData: !!voiceAnalysisData,
+            sessionId
+          })
           // Still redirect even if save fails - grading endpoint has retry logic
         } else {
           const savedData = await saveResponse.json().catch(() => null)
           console.log('✅ Session data saved successfully', {
             sessionId: savedData?.id || sessionId,
-            transcriptLines: transcript.length
+            transcriptLines: transcript.length,
+            voiceAnalysisSaved: !!voiceAnalysisData
           })
           
+          // Verify voice_analysis was saved by checking response
+          if (voiceAnalysisData && savedData?.analytics?.voice_analysis) {
+            console.log('✅ Voice analysis data confirmed saved in database')
+          } else if (voiceAnalysisData && !savedData?.analytics?.voice_analysis) {
+            console.warn('⚠️ Voice analysis data was sent but may not be in response - check database')
+          }
+          
           // Small delay to ensure database write is committed
-          await new Promise(resolve => setTimeout(resolve, 300))
+          await new Promise(resolve => setTimeout(resolve, 500)) // Increased delay to ensure write completes
         }
         
         // Now redirect after save completes
@@ -1166,30 +1187,104 @@ function TrainerPageContent() {
     const handleInactivity = (e: CustomEvent) => {
       const data = e?.detail
       console.log('🔇 Agent inactivity detected:', data)
+      console.log('🔇 Inactivity details:', {
+        secondsSinceLastMessage: data?.secondsSinceLastMessage,
+        timeSinceLastPing: data?.timeSinceLastPing,
+        sessionActive,
+        sessionId,
+        transcriptLength: transcript.length
+      })
       
       // Only play sound once per inactivity period, and only if it's been 15+ seconds
       if (sessionActive && data?.secondsSinceLastMessage >= 15 && !inactivitySoundPlayedRef.current) {
         console.log('🔇 Agent stopped responding - playing door closing sound')
+        console.warn('⚠️ POSSIBLE ISSUE: Agent stopped responding mid-conversation. Check console for connection errors.')
         playSound('/sounds/door_close.mp3', 0.9)
         inactivitySoundPlayedRef.current = true
       }
+    }
+    
+    const handleAgentError = (e: CustomEvent) => {
+      const errorData = e?.detail
+      console.error('❌ Agent error detected:', errorData)
+      console.error('❌ Error details:', {
+        error: errorData?.error,
+        errorDetails: errorData?.errorDetails,
+        sessionId: errorData?.sessionId,
+        currentSessionId: sessionId,
+        sessionActive
+      })
+    }
+    
+    const handleAgentDisconnect = (e: CustomEvent) => {
+      const disconnectData = e?.detail
+      console.error('🔌 Agent disconnect detected:', disconnectData)
+      console.error('🔌 Disconnect details:', {
+        reason: disconnectData?.reason,
+        wasConnected: disconnectData?.wasConnected,
+        hasSessionId: disconnectData?.hasSessionId,
+        sessionId: disconnectData?.sessionId,
+        currentSessionId: sessionId,
+        sessionActive,
+        timeSinceLastMessage: disconnectData?.timeSinceLastMessage,
+        timeSinceLastPing: disconnectData?.timeSinceLastPing
+      })
+    }
+    
+    const handleReconnecting = (e: CustomEvent) => {
+      const reconnectData = e?.detail
+      console.log('🔄 Reconnection started:', reconnectData)
+      setReconnectingStatus({
+        isReconnecting: true,
+        attempt: reconnectData?.attempt || 1,
+        maxAttempts: reconnectData?.maxAttempts || 3
+      })
+    }
+    
+    const handleReconnected = (e: CustomEvent) => {
+      const reconnectData = e?.detail
+      console.log('✅ Reconnection successful:', reconnectData)
+      setReconnectingStatus(null)
+      inactivitySoundPlayedRef.current = false // Reset inactivity flag
+    }
+    
+    const handleReconnectFailed = (e: CustomEvent) => {
+      const reconnectData = e?.detail
+      console.error('❌ Reconnection failed:', reconnectData)
+      setReconnectingStatus(null)
+      // Show user-friendly message - they may need to manually restart
+      console.warn('⚠️ Automatic reconnection failed. You may need to end this session and start a new one.')
     }
 
     // Reset flag when new messages arrive (agent is responding again)
     const handleAgentMessage = () => {
       inactivitySoundPlayedRef.current = false
+      // Clear reconnecting status if agent starts responding
+      if (reconnectingStatus?.isReconnecting) {
+        setReconnectingStatus(null)
+      }
     }
 
     window.addEventListener('connection:status', handleConnectionStatus as EventListener)
     window.addEventListener('agent:inactivity', handleInactivity as EventListener)
     window.addEventListener('agent:message', handleAgentMessage as EventListener)
     window.addEventListener('agent:response', handleAgentMessage as EventListener)
+    window.addEventListener('agent:error', handleAgentError as EventListener)
+    window.addEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
+    window.addEventListener('agent:reconnecting', handleReconnecting as EventListener)
+    window.addEventListener('agent:reconnected', handleReconnected as EventListener)
+    window.addEventListener('agent:reconnect-failed', handleReconnectFailed as EventListener)
     
     return () => {
       window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
       window.removeEventListener('agent:inactivity', handleInactivity as EventListener)
       window.removeEventListener('agent:message', handleAgentMessage as EventListener)
       window.removeEventListener('agent:response', handleAgentMessage as EventListener)
+      window.removeEventListener('agent:error', handleAgentError as EventListener)
+      window.removeEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
+      window.removeEventListener('agent:reconnecting', handleReconnecting as EventListener)
+      window.removeEventListener('agent:reconnected', handleReconnected as EventListener)
+      window.removeEventListener('agent:reconnect-failed', handleReconnectFailed as EventListener)
     }
   }, [sessionActive])
 
@@ -1454,6 +1549,18 @@ function TrainerPageContent() {
                   {sessionActive && (
                     <div className="absolute bottom-24 sm:bottom-28 lg:bottom-32 right-3 sm:right-4 lg:right-6 z-20 w-32 h-24 sm:w-40 sm:h-[120px] lg:w-[211px] lg:h-[158px] shadow-2xl rounded-lg overflow-hidden">
                       <WebcamPIP ref={webcamPIPRef} />
+                    </div>
+                  )}
+                  
+                  {/* Reconnection Status Banner */}
+                  {sessionActive && reconnectingStatus?.isReconnecting && (
+                    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-amber-500/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-lg border border-amber-400/50">
+                      <div className="flex items-center gap-2 text-white text-sm font-medium">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        <span>
+                          Reconnecting... (Attempt {reconnectingStatus.attempt}/{reconnectingStatus.maxAttempts})
+                        </span>
+                      </div>
                     </div>
                   )}
                   
