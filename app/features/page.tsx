@@ -26,7 +26,8 @@ import {
   Smartphone,
   MessageSquare,
   BookOpen,
-  Download
+  Download,
+  CheckCircle2
 } from 'lucide-react'
 import { PERSONA_METADATA } from '@/components/trainer/personas'
 
