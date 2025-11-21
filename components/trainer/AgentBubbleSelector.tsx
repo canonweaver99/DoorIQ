@@ -392,7 +392,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('difficulty')}
             className={cn(
-              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space",
+              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
               filter === 'difficulty'
                 ? "bg-white/20 text-foreground dark:text-white border border-border/30 dark:border-white/30"
                 : "bg-background/50 dark:bg-white/5 text-foreground/60 dark:text-slate-400 border border-border/20 dark:border-white/10 hover:bg-background dark:hover:bg-white/10"
@@ -403,7 +403,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('unplayed')}
             className={cn(
-              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space",
+              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
               filter === 'unplayed'
                 ? "bg-white/20 text-foreground dark:text-white border border-border/30 dark:border-white/30"
                 : "bg-background/50 dark:bg-white/5 text-foreground/60 dark:text-slate-400 border border-border/20 dark:border-white/10 hover:bg-background dark:hover:bg-white/10"
@@ -414,7 +414,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('struggles')}
             className={cn(
-              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space",
+              "px-3 py-1.5 rounded-full text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
               filter === 'struggles'
                 ? "bg-white/20 text-foreground dark:text-white border border-border/30 dark:border-white/30"
                 : "bg-background/50 dark:bg-white/5 text-foreground/60 dark:text-slate-400 border border-border/20 dark:border-white/10 hover:bg-background dark:hover:bg-white/10"
@@ -422,7 +422,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           >
             Your Struggles
           </button>
-          <div className="w-px h-4 bg-border/20 dark:bg-slate-700" />
+          <div className="w-px h-4 bg-border/20 dark:bg-slate-700 hidden sm:block" />
           <motion.button
             type="button"
             onClick={handleRandomAgent}

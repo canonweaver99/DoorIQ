@@ -1223,7 +1223,7 @@ function TrainerPageContent() {
       <div className="relative w-full h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/50 backdrop-blur-sm">
+        <div className="hidden sm:flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/50 backdrop-blur-sm">
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-xs sm:text-sm font-semibold text-white font-space truncate">
               {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
@@ -1235,7 +1235,7 @@ function TrainerPageContent() {
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-6 lg:p-8">
           
           {/* LEFT SIDE (55%) - Agent Video with PIP */}
-          <div className="w-full lg:w-[55%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl min-h-[200px] sm:min-h-[300px] lg:min-h-0">
+          <div className="w-full lg:w-[55%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl h-[50vh] lg:h-auto lg:min-h-0">
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -1327,7 +1327,7 @@ function TrainerPageContent() {
                     
                     {/* Persona badge */}
                     {sessionActive && selectedAgent && (
-                      <div className="absolute top-6 left-6 z-10">
+                      <div className="hidden sm:block absolute top-6 left-6 z-10">
                         <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
                           <span className="text-white text-sm font-medium">{selectedAgent.name}</span>
                         </div>
@@ -1336,7 +1336,7 @@ function TrainerPageContent() {
                     
                     {/* Session progress bar */}
                     {sessionActive && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-10">
+                      <div className="hidden sm:block absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-10">
                         <div 
                           className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000"
                           style={{ width: `${Math.min((duration / 900) * 100, 100)}%` }}
@@ -1392,7 +1392,7 @@ function TrainerPageContent() {
                   
                   {/* PIP Webcam Overlay - Bottom Right (above controls) - Mobile optimized */}
                   {sessionActive && (
-                    <div className="absolute bottom-24 sm:bottom-28 lg:bottom-32 right-3 sm:right-4 lg:right-6 z-20 w-32 h-[96px] sm:w-40 sm:h-[120px] lg:w-[211px] lg:h-[158px] shadow-2xl rounded-lg overflow-hidden">
+                    <div className="absolute bottom-24 sm:bottom-28 lg:bottom-32 right-3 sm:right-4 lg:right-6 z-20 w-32 h-24 sm:w-40 sm:h-[120px] lg:w-[211px] lg:h-[158px] shadow-2xl rounded-lg overflow-hidden">
                       <WebcamPIP ref={webcamPIPRef} />
                     </div>
                   )}
@@ -1415,14 +1415,14 @@ function TrainerPageContent() {
           </div>
 
           {/* RIGHT SIDE (45%) - Metrics, Feedback, Transcript */}
-          <div className="w-full lg:w-[45%] flex flex-col gap-3 sm:gap-4 overflow-hidden lg:h-full">
+          <div className="hidden lg:flex w-full lg:w-[45%] flex-col gap-3 sm:gap-4 overflow-hidden lg:h-full">
             {/* Metrics Panel - Mobile optimized */}
             <div className="flex-shrink-0 lg:h-[30%] lg:min-h-[120px]">
               <LiveMetricsPanel metrics={metrics} />
             </div>
             
             {/* Feedback Feed - Mobile optimized */}
-            <div className="flex-shrink-0 flex flex-col overflow-hidden lg:-mt-[92px] lg:h-[32%] lg:min-h-[200px]">
+            <div className="hidden sm:flex flex-shrink-0 flex-col overflow-hidden lg:-mt-[92px] lg:h-[32%] lg:min-h-[200px]">
               <LiveFeedbackFeed feedbackItems={feedbackItems} />
             </div>
             

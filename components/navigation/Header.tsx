@@ -306,21 +306,23 @@ function HeaderContent() {
       { name: 'Home', href: '/', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
       { name: 'Sessions', href: '/sessions', icon: FileText },
-      { name: 'Learning', href: '/learning', icon: NotebookPen },
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true },
+      { name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true },
       { name: 'Pricing', href: '/pricing', icon: DollarSign },
     ]
 
-    // Only show Leaderboard for users on a team plan (have a team_id)
+    // Only show Leaderboard for users on a team plan (have a team_id) - desktop only
     if (user?.team_id) {
-      navItems.splice(3, 0, { name: 'Leaderboard', href: '/leaderboard', icon: Trophy })
+      navItems.splice(4, 0, { name: 'Leaderboard', href: '/leaderboard', icon: Trophy, desktopOnly: true })
     }
 
     if (userRole === 'manager' || userRole === 'admin') {
-      const insertIndex = Math.min(4, navItems.length)
+      const insertIndex = Math.min(5, navItems.length)
       navItems.splice(insertIndex, 0, {
         name: 'Manager',
         href: '/manager',
         icon: FileText,
+        desktopOnly: true,
       })
     }
 
@@ -335,25 +337,25 @@ function HeaderContent() {
     
     const sections: Array<{
       title: string
-      items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string; managerOnly?: boolean }>
+      items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string; managerOnly?: boolean; desktopOnly?: boolean }>
     }> = [
       {
         title: 'Workspace',
         items: [
-          { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-          ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 }]),
-          { name: 'Learning', href: '/learning', icon: NotebookPen },
-          { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
-          { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
+          { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true },
+          ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, desktopOnly: true }]),
+          { name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true },
+          { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true, desktopOnly: true },
+          { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true, desktopOnly: true },
         ],
       },
       {
         title: 'Training',
         items: [
           { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
-          { name: 'Upload Sales Call', href: '/dashboard?tab=upload', icon: Upload },
+          { name: 'Upload Sales Call', href: '/dashboard?tab=upload', icon: Upload, desktopOnly: true },
           { name: 'Session History', href: '/sessions', icon: ClipboardList },
-          ...(user?.team_id ? [{ name: 'Leaderboard', href: '/leaderboard', icon: BarChart2 }] : []),
+          ...(user?.team_id ? [{ name: 'Leaderboard', href: '/leaderboard', icon: BarChart2, desktopOnly: true }] : []),
         ],
       },
       {
@@ -516,10 +518,10 @@ function HeaderContent() {
       </div>
 
       {/* Centered oval navigation bar - Desktop */}
-      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-2 md:space-x-3 lg:space-x-4 rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-4 md:pl-5 lg:pl-6 pr-[69px]' : 'pl-4 md:pl-5 lg:pl-6 pr-4 md:pr-5 lg:pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
+      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center gap-1 md:gap-1.5 rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-4 md:pl-5 lg:pl-6 pr-[69px]' : 'pl-4 md:pl-5 lg:pl-6 pr-4 md:pr-5 lg:pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
         isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
-            <Link href="/" className="flex items-center pr-2 mr-2 border-r border-border/20 dark:border-white/10 flex-shrink-0">
+            <Link href="/" className="flex items-center pr-2 md:pr-2.5 mr-1.5 md:mr-2 border-r border-border/20 dark:border-white/10 flex-shrink-0">
               <Image 
                 src="/dooriqlogo.png" 
                 alt="DoorIQ Logo" 
@@ -537,7 +539,7 @@ function HeaderContent() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-2 md:px-3 py-1.5 text-sm md:text-base transition-all flex-shrink-0 font-space
+                  className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-2 md:px-2.5 py-1.5 text-sm md:text-base transition-all flex-shrink-0 font-space
                     ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
                 >
                   <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
@@ -727,7 +729,7 @@ function HeaderContent() {
           {/* Mobile Navigation Panel */}
           <div className="absolute top-0 right-0 bottom-0 w-full max-w-sm bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-l border-border/20 dark:border-white/10 overflow-y-auto">
             <div className="p-6 pt-20 space-y-2">
-            {navigation.map((item) => {
+            {navigation.filter(item => !(item as any).desktopOnly).map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
               return (
@@ -955,6 +957,7 @@ function HeaderContent() {
                           if (item.managerOnly) {
                             return userRole === 'manager' || userRole === 'admin'
                           }
+                          // Desktop-only items are filtered out in the rendering (using hidden md:block)
                           return true
                         })
 
@@ -974,7 +977,7 @@ function HeaderContent() {
                                       router.push(item.href)
                                       setIsSidebarOpen(false)
                                     }}
-                                    className="flex w-full items-center justify-between gap-[9px] rounded-xl border border-border/10 dark:border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-foreground/80 dark:text-slate-200 transition-all hover:border-border/20 dark:hover:border-white/15 hover:bg-background/50 dark:hover:bg-white/5 font-space"
+                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-border/10 dark:border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-foreground/80 dark:text-slate-200 transition-all hover:border-border/20 dark:hover:border-white/15 hover:bg-background/50 dark:hover:bg-white/5 font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
                                   >
                                     <span className="flex items-center gap-[12px]">
                                       <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white shrink-0">

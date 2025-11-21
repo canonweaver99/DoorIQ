@@ -169,107 +169,173 @@ export default function TestimonialsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836]">
       <div className="container mx-auto px-4 py-16 md:py-24">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-space">
-            What Our Customers Say
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.2] tracking-tight font-space font-bold text-foreground mb-4">
+            What Our Customers <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Say</span>
           </h1>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto font-sans">
+          <p className="text-base sm:text-lg lg:text-xl text-foreground/80 max-w-2xl mx-auto font-sans">
             Real feedback from sales teams and reps who are mastering door-to-door sales with DoorIQ
           </p>
         </div>
 
-        {/* Testimonials - 2 per row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto mb-12">
+        {/* Testimonials - Responsive grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-12 justify-items-center">
           {/* Show accepted reviews from database first, then static testimonials */}
           {loading ? (
-            <div className="col-span-2 text-center text-slate-400 py-8">
+            <div className="col-span-full text-center text-foreground/60 py-8 font-sans">
               Loading testimonials...
             </div>
           ) : (
             <>
-              {acceptedTestimonials.map((testimonial) => (
-                <div
-                  key={testimonial.id}
-                  className="group p-4 rounded-xl border border-purple-500/30 bg-slate-800/90 backdrop-blur-sm hover:border-purple-500/50 transition-all duration-300"
-                >
-                  {/* Stars */}
-                  <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3 h-3 ${
-                          i < testimonial.stars
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'fill-none text-slate-500'
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Testimonial Text */}
-                  <p className="text-white font-medium text-sm leading-relaxed mb-4 font-sans">
-                    &ldquo;{testimonial.fullText}&rdquo;
-                  </p>
-
-                  {/* Author */}
-                  <div className="flex items-center gap-2 pt-3 border-t border-slate-700">
-                    {testimonial.profile_image_url && testimonial.profile_image_url.trim() !== "" && !testimonial.profile_image_url.includes("unsplash.com") && (
-                      <img
-                        src={testimonial.profile_image_url}
-                        alt={testimonial.name}
-                        className="w-9 h-9 rounded-full ring-2 ring-purple-500/30"
-                      />
-                    )}
-                    <div>
-                      <p className="font-bold text-white text-sm font-space">{testimonial.name}</p>
-                      <p className="text-xs text-slate-300 font-medium font-sans">{testimonial.location}</p>
+              {acceptedTestimonials.map((testimonial) => {
+                const hasRealProfilePic = testimonial.profile_image_url && testimonial.profile_image_url.trim() !== "" && !testimonial.profile_image_url.includes("unsplash.com")
+                return (
+                  <div
+                    key={testimonial.id}
+                    className="group relative p-8 rounded-3xl border border-white/10 shadow-2xl shadow-black/60 max-w-xs w-full cursor-pointer hover:border-white/20 hover:shadow-black/80 transition-all duration-500 block overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, #000000 0%, #0a0a0a 40%, #1a1a1a 100%)',
+                      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(255, 255, 255, 0.05)'
+                    }}
+                  >
+                    {/* Animated shine effect overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                    
+                    {/* Subtle gradient accent */}
+                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                    
+                    {/* Content */}
+                    <div className="relative z-10">
+                      {/* Quote icon */}
+                      <div className="mb-4 text-white/20 group-hover:text-white/30 transition-colors duration-300">
+                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.996 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.984zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                        </svg>
+                      </div>
+                      
+                      {/* Stars */}
+                      <div className="flex gap-1 mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < testimonial.stars
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'fill-none text-white/30'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Testimonial Text */}
+                      <p className="text-white/90 leading-relaxed text-base mb-6 font-sans group-hover:text-white transition-colors duration-300">
+                        {testimonial.fullText}
+                      </p>
+                      
+                      {/* Author */}
+                      <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+                        {hasRealProfilePic && (
+                          <div className="relative flex-shrink-0">
+                            <img
+                              src={testimonial.profile_image_url}
+                              alt={testimonial.name}
+                              className="h-12 w-12 rounded-full object-cover ring-2 ring-white/20 group-hover:ring-white/30 transition-all duration-300"
+                            />
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </div>
+                        )}
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <div className="font-semibold tracking-tight leading-tight text-white text-base font-space group-hover:text-white transition-colors duration-300">
+                            {testimonial.name}
+                          </div>
+                          <div className="leading-tight text-white/60 text-sm font-sans mt-0.5 group-hover:text-white/70 transition-colors duration-300">
+                            {testimonial.location}
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                    
+                    {/* Hover glow effect */}
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500/0 via-purple-500/0 to-purple-500/0 group-hover:from-purple-500/5 group-hover:via-purple-500/0 group-hover:to-purple-500/5 transition-all duration-500 pointer-events-none"></div>
                   </div>
-                </div>
-              ))}
-              {extendedTestimonials.map((testimonial, index) => (
-            <div
-              key={index}
-              className="group p-4 rounded-xl border border-purple-500/30 bg-slate-800/90 backdrop-blur-sm hover:border-purple-500/50 transition-all duration-300"
-            >
-              {/* Stars */}
-              <div className="flex gap-1 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3 h-3 ${
-                      i < testimonial.stars
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'fill-none text-slate-500'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Testimonial Text */}
-              <p className="text-white font-medium text-sm leading-relaxed mb-4 font-sans">
-                &ldquo;{testimonial.fullText}&rdquo;
-              </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-2 pt-3 border-t border-slate-700">
-                {testimonial.image && testimonial.image.trim() !== "" && !testimonial.image.includes("unsplash.com") && (
-                  <img
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    className="w-9 h-9 rounded-full ring-2 ring-purple-500/30"
-                  />
-                )}
-                <div>
-                  <p className="font-bold text-white text-sm font-space">{testimonial.name}</p>
-                  <p className="text-xs text-slate-300 font-medium font-sans">{testimonial.role}</p>
-                </div>
-              </div>
-            </div>
-              ))}
+                )
+              })}
+              {extendedTestimonials.map((testimonial, index) => {
+                const hasRealProfilePic = testimonial.image && testimonial.image.trim() !== "" && !testimonial.image.includes("unsplash.com")
+                return (
+                  <div
+                    key={index}
+                    className="group relative p-8 rounded-3xl border border-white/10 shadow-2xl shadow-black/60 max-w-xs w-full cursor-pointer hover:border-white/20 hover:shadow-black/80 transition-all duration-500 block overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, #000000 0%, #0a0a0a 40%, #1a1a1a 100%)',
+                      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(255, 255, 255, 0.05)'
+                    }}
+                  >
+                    {/* Animated shine effect overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                    
+                    {/* Subtle gradient accent */}
+                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                    
+                    {/* Content */}
+                    <div className="relative z-10">
+                      {/* Quote icon */}
+                      <div className="mb-4 text-white/20 group-hover:text-white/30 transition-colors duration-300">
+                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.996 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.984zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                        </svg>
+                      </div>
+                      
+                      {/* Stars */}
+                      <div className="flex gap-1 mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < testimonial.stars
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'fill-none text-white/30'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Testimonial Text */}
+                      <p className="text-white/90 leading-relaxed text-base mb-6 font-sans group-hover:text-white transition-colors duration-300">
+                        {testimonial.fullText}
+                      </p>
+                      
+                      {/* Author */}
+                      <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+                        {hasRealProfilePic && (
+                          <div className="relative flex-shrink-0">
+                            <img
+                              src={testimonial.image}
+                              alt={testimonial.name}
+                              className="h-12 w-12 rounded-full object-cover ring-2 ring-white/20 group-hover:ring-white/30 transition-all duration-300"
+                            />
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </div>
+                        )}
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <div className="font-semibold tracking-tight leading-tight text-white text-base font-space group-hover:text-white transition-colors duration-300">
+                            {testimonial.name}
+                          </div>
+                          <div className="leading-tight text-white/60 text-sm font-sans mt-0.5 group-hover:text-white/70 transition-colors duration-300">
+                            {testimonial.role}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Hover glow effect */}
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500/0 via-purple-500/0 to-purple-500/0 group-hover:from-purple-500/5 group-hover:via-purple-500/0 group-hover:to-purple-500/5 transition-all duration-500 pointer-events-none"></div>
+                  </div>
+                )
+              })}
             </>
           )}
         </div>
@@ -396,15 +462,15 @@ export default function TestimonialsPage() {
 
         {/* CTA Section */}
         <div className="mt-20 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4 font-space">
             Ready to Transform Your Sales Team?
           </h2>
-          <p className="text-slate-400 mb-8 max-w-xl mx-auto">
+          <p className="text-base sm:text-lg text-foreground/80 mb-8 max-w-xl mx-auto font-sans">
             Join hundreds of sales reps who are mastering door-to-door sales with AI-powered training
           </p>
           <a
             href="/pricing"
-            className="inline-block px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50 hover:scale-105"
+            className="inline-block px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50 hover:scale-105 font-space"
           >
             Start Now
           </a>

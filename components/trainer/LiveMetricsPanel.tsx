@@ -21,9 +21,10 @@ interface MetricCardProps {
   progress?: number
   progressLabel?: string
   verticalLayout?: boolean
+  className?: string
 }
 
-function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant = 'default', progress, progressLabel, verticalLayout = false }: MetricCardProps) {
+function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant = 'default', progress, progressLabel, verticalLayout = false, className }: MetricCardProps) {
   const colorClasses = {
     blue: {
       icon: 'text-blue-400',
@@ -57,7 +58,8 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-4 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group flex flex-col"
+          "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-4 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group flex flex-col",
+          className
         )}
       >
         <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
@@ -82,7 +84,8 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-2 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group"
+        "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-2 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group",
+        className
       )}
     >
       <div className="flex items-center justify-between mb-2">
@@ -165,7 +168,7 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
         progressLabel="Talk time breakdown"
       />
       
-      {/* Objections Card */}
+      {/* Objections Card - Hidden on mobile */}
       <MetricCard
         icon={<AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />}
         label="Objections"
@@ -173,9 +176,10 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
         value={objectionCount}
         color="amber"
         verticalLayout={true}
+        className="hidden sm:flex"
       />
       
-      {/* Techniques Card */}
+      {/* Techniques Card - Hidden on mobile */}
       <MetricCard
         icon={<Book className="w-4 h-4 sm:w-5 sm:h-5" />}
         label="Techniques"
@@ -183,6 +187,7 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
         value={techniquesUsed.length}
         color="emerald"
         verticalLayout={true}
+        className="hidden sm:flex"
       />
     </div>
   )
