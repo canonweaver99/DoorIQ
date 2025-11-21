@@ -165,41 +165,6 @@ export class ElevenLabsWebRTCAudioHook implements ElevenLabsIntegration {
 }
 
 /**
- * Alternative approach: Use ElevenLabs WebSocket API for more control
- * This gives us direct access to audio data but requires more implementation
- */
-export class ElevenLabsWebSocketIntegration implements ElevenLabsIntegration {
-  private buses: AudioBuses;
-  private websocket: WebSocket | null = null;
-  private connected = false;
-  
-  constructor(buses: AudioBuses) {
-    this.buses = buses;
-  }
-
-  async connect(): Promise<void> {
-    if (this.connected) return;
-
-    // WebSocket integration is not implemented - use WebRTC approach instead
-    // This class exists for type compatibility but should not be instantiated
-    console.warn('⚠️ ElevenLabsWebSocketIntegration: WebSocket approach not implemented. Use ElevenLabsWebRTCAudioHook instead.');
-    throw new Error('WebSocket integration not implemented - use WebRTC approach (ElevenLabsWebRTCAudioHook)');
-  }
-
-  disconnect(): void {
-    if (this.websocket) {
-      this.websocket.close();
-      this.websocket = null;
-    }
-    this.connected = false;
-  }
-
-  get isConnected(): boolean {
-    return this.connected;
-  }
-}
-
-/**
  * Simple approach: Try to hook into existing audio elements
  * This is a fallback if WebRTC interception doesn't work
  */
