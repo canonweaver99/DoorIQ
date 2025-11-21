@@ -724,6 +724,11 @@ Return ONLY valid JSON. No commentary.`
     logger.info('Line-by-line grading disabled for speed')
 
     const dbUpdateStartTime = Date.now()
+    
+    // Preserve existing voice_analysis if it exists
+    const existingAnalytics = (session as any).analytics || {}
+    const existingVoiceAnalysis = existingAnalytics.voice_analysis
+    
     const { error: updateError } = await (supabase as any)
       .from('live_sessions')
       .update({
@@ -768,7 +773,9 @@ Return ONLY valid JSON. No commentary.`
           deal_details: dealDetails,
           graded_at: now,
           grading_version: '8.0-ultra-fast',
-          scores: gradingResult.scores || {}
+          scores: gradingResult.scores || {},
+          // Preserve voice_analysis if it exists
+          ...(existingVoiceAnalysis && { voice_analysis: existingVoiceAnalysis })
         }
       } as any)
       .eq('id', sessionId)

@@ -3,9 +3,14 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
+// Increase timeout for grading (Vercel allows up to 300s on Pro)
+export const maxDuration = 90 // 90 seconds
+export const dynamic = 'force-dynamic'
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 90000,
+  timeout: 60000, // 60 second timeout - faster
+  maxRetries: 1 // Reduced retries for speed
 })
 
 // Helper to extract sections from streaming JSON
@@ -207,8 +212,8 @@ Return ONLY valid JSON. No commentary.`
           model: "gpt-4o",
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 4000,
-          temperature: 0.2,
+          max_tokens: 3000,
+          temperature: 0.1,
           stream: true
           })
 
@@ -299,6 +304,10 @@ Return ONLY valid JSON. No commentary.`
           const dealDetails = gradingResult.deal_details || {}
           const enhancedMetrics = gradingResult.enhanced_metrics || {}
           
+          // Preserve existing voice_analysis if it exists
+          const existingAnalytics = (session as any).analytics || {}
+          const existingVoiceAnalysis = existingAnalytics.voice_analysis
+          
           // Extract line ratings if present (for future use)
           // const lineRatings = gradingResult.line_ratings || []
           
@@ -329,7 +338,9 @@ Return ONLY valid JSON. No commentary.`
             scores: gradingResult.scores || {},
             analytics: {
               ...gradingResult,
-              enhanced_metrics: enhancedMetrics
+              enhanced_metrics: enhancedMetrics,
+              // Preserve voice_analysis if it exists
+              ...(existingVoiceAnalysis && { voice_analysis: existingVoiceAnalysis })
             }
           }
           
