@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'expo-router'
 import { supabase } from '../../lib/supabase/client'
 import { Agent } from '../../lib/types'
+import { MobileNavMenu } from '../../components/navigation/MobileNavMenu'
 
 export default function SelectHomeownerScreen() {
   const router = useRouter()
@@ -86,6 +87,7 @@ export default function SelectHomeownerScreen() {
           ))
         )}
       </ScrollView>
+      <MobileNavMenu />
     </View>
   )
 }

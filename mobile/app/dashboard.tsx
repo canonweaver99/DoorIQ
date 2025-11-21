@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase/client'
 import { formatDate } from '../lib/utils'
 import { TrainingSession } from '../lib/types'
+import { MobileNavMenu } from '../components/navigation/MobileNavMenu'
 
 export default function DashboardScreen() {
   const { userProfile, refreshProfile } = useAuth()
@@ -155,6 +156,7 @@ export default function DashboardScreen() {
           )}
         </View>
       </ScrollView>
+      <MobileNavMenu />
     </View>
   )
 }

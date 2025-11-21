@@ -42,6 +42,7 @@ import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/logger'
 import { Database } from '@/lib/supabase/database.types'
 import { useSubscription } from '@/hooks/useSubscription'
+import { MiniNavMenu } from './MiniNavMenu'
 
 type User = Database['public']['Tables']['users']['Row']
 type UserRole = User['role']
@@ -507,6 +508,13 @@ function HeaderContent() {
 
   return (
     <>
+      {/* Mini Navigation Menu - Mobile & Desktop */}
+      <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
+        isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+      }`}>
+        <MiniNavMenu />
+      </div>
+
       {/* Centered oval navigation bar - Desktop */}
       <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center space-x-2 md:space-x-3 lg:space-x-4 rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-4 md:pl-5 lg:pl-6 pr-[69px]' : 'pl-4 md:pl-5 lg:pl-6 pr-4 md:pr-5 lg:pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
         isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'

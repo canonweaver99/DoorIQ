@@ -19,6 +19,7 @@ export default function RootLayout() {
           <Stack.Screen name="auth/login" />
           <Stack.Screen name="auth/signup" />
           <Stack.Screen name="dashboard" />
+          <Stack.Screen name="pricing" />
           <Stack.Screen name="trainer/select-homeowner" />
           <Stack.Screen name="trainer/[sessionId]" />
         </Stack>

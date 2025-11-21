@@ -1223,19 +1223,19 @@ function TrainerPageContent() {
       <div className="relative w-full h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-4 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/50 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-white font-space">
+        <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/50 backdrop-blur-sm">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-xs sm:text-sm font-semibold text-white font-space truncate">
               {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
             </span>
           </div>
         </div>
 
-        {/* Main Content Area - 50/50 Split */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-6 p-6 lg:p-8">
+        {/* Main Content Area - Stacked on mobile, side-by-side on desktop */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-6 lg:p-8">
           
           {/* LEFT SIDE (55%) - Agent Video with PIP */}
-          <div className="w-full lg:w-[55%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="w-full lg:w-[55%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl min-h-[200px] sm:min-h-[300px] lg:min-h-0">
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -1390,9 +1390,9 @@ function TrainerPageContent() {
                     </div>
                   )}
                   
-                  {/* PIP Webcam Overlay - Bottom Right (above controls) - 10% larger */}
+                  {/* PIP Webcam Overlay - Bottom Right (above controls) - Mobile optimized */}
                   {sessionActive && (
-                    <div className="absolute bottom-32 right-6 z-20 w-44 h-[132px] lg:w-[211px] lg:h-[158px] shadow-2xl rounded-lg overflow-hidden">
+                    <div className="absolute bottom-24 sm:bottom-28 lg:bottom-32 right-3 sm:right-4 lg:right-6 z-20 w-32 h-[96px] sm:w-40 sm:h-[120px] lg:w-[211px] lg:h-[158px] shadow-2xl rounded-lg overflow-hidden">
                       <WebcamPIP ref={webcamPIPRef} />
                     </div>
                   )}
@@ -1415,19 +1415,19 @@ function TrainerPageContent() {
           </div>
 
           {/* RIGHT SIDE (45%) - Metrics, Feedback, Transcript */}
-          <div className="w-full lg:w-[45%] flex flex-col gap-4 overflow-hidden h-[40vh] lg:h-full">
-            {/* Metrics Panel (30% of right side) */}
-            <div className="h-[30%] min-h-[120px] flex-shrink-0">
+          <div className="w-full lg:w-[45%] flex flex-col gap-3 sm:gap-4 overflow-hidden lg:h-full">
+            {/* Metrics Panel - Mobile optimized */}
+            <div className="flex-shrink-0 lg:h-[30%] lg:min-h-[120px]">
               <LiveMetricsPanel metrics={metrics} />
             </div>
             
-            {/* Feedback Feed (32% of right side when active, 38% when inactive) */}
-            <div className={`flex-shrink-0 flex flex-col overflow-hidden -mt-[92px] ${sessionActive ? 'h-[32%]' : 'h-[38%]'}`}>
+            {/* Feedback Feed - Mobile optimized */}
+            <div className="flex-shrink-0 flex flex-col overflow-hidden lg:-mt-[92px] lg:h-[32%] lg:min-h-[200px]">
               <LiveFeedbackFeed feedbackItems={feedbackItems} />
             </div>
             
-            {/* Transcript (34% of right side when active, 39% when inactive) */}
-            <div className={`flex-shrink-0 flex flex-col overflow-hidden -mt-[20px] ${sessionActive ? 'h-[34%]' : 'h-[39%]'}`}>
+            {/* Transcript - Mobile optimized */}
+            <div className="flex-1 flex flex-col overflow-hidden lg:-mt-[20px] lg:h-[34%] lg:min-h-[200px]">
               <LiveTranscript 
                 transcript={transcript} 
                 agentName={selectedAgent?.name}

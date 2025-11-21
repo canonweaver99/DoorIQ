@@ -523,8 +523,173 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           </motion.button>
         </motion.div>
 
-        {/* Agent Bubbles Grid - 4 columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 max-w-7xl mx-auto">
+        {/* Agent Bubbles Grid - Horizontal scroll on mobile, grid on desktop */}
+        <div className="md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 mb-8 max-w-7xl mx-auto">
+          {/* Mobile: Horizontal scrolling container */}
+          <div className="md:hidden overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex gap-4 w-max">
+              {sortedAgents.map((agent, index) => {
+                const variantKey = agent.color as keyof typeof COLOR_VARIANTS
+                const variantStyles = COLOR_VARIANTS[variantKey]
+                const isHovered = hoveredAgent === agent.id
+                const isSelected = selectedAgent === agent.agentId
+                const cardBg = 'bg-card dark:bg-[#1a1a1a] border border-border/20 dark:border-[#2a2a2a]'
+
+                return (
+                  <motion.div
+                    key={agent.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: index * 0.05 }}
+                    className={cn(
+                      "flex flex-col items-center relative rounded-xl p-5 select-none focus:outline-none flex-shrink-0 w-[280px] snap-center",
+                      cardBg,
+                      agent.isLocked ? "opacity-40 grayscale cursor-not-allowed" : "cursor-pointer"
+                    )}
+                    role="button"
+                    tabIndex={agent.isLocked ? -1 : 0}
+                    onClick={() => !agent.isLocked && handleSelectAgent(agent.agentId, agent.name)}
+                    onKeyDown={(e) => {
+                      if (agent.isLocked) return
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSelectAgent(agent.agentId, agent.name)
+                      }
+                    }}
+                    onMouseEnter={() => setHoveredAgent(agent.id)}
+                    onMouseLeave={() => setHoveredAgent(null)}
+                  >
+                    {/* Mobile Agent Card Content - reuse the same structure */}
+                    <motion.button
+                      whileHover={!agent.isLocked ? { scale: 1.05 } : {}}
+                      whileTap={!agent.isLocked ? { scale: 0.95 } : {}}
+                      disabled={agent.isLocked}
+                      tabIndex={-1}
+                      className={cn("relative mb-4 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
+                    >
+                      <div className="relative h-44 w-44 mx-auto">
+                        {/* Concentric circles */}
+                        {[0, 1, 2].map((i) => (
+                          <motion.div
+                            key={i}
+                            className={cn(
+                              "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
+                              variantStyles.border[i],
+                              variantStyles.gradient
+                            )}
+                            animate={isHovered ? {
+                              rotate: 360,
+                              scale: 1,
+                              opacity: 1,
+                            } : {
+                              rotate: 360,
+                              scale: [1, 1.05, 1],
+                              opacity: isSelected ? [1, 1, 1] : [0.7, 0.9, 0.7],
+                            }}
+                            transition={isHovered ? {
+                              rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                              scale: { duration: 0.3 },
+                              opacity: { duration: 0.3 },
+                            } : {
+                              rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                              scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                              opacity: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                            }}
+                          >
+                            <div
+                              className={cn(
+                                "absolute inset-0 rounded-full mix-blend-screen",
+                                `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
+                                  "from-",
+                                  ""
+                                )}/20%,transparent_70%)]`
+                              )}
+                            />
+                          </motion.div>
+                        ))}
+
+                        {/* Profile Image */}
+                        {agent.image && (
+                          <motion.div 
+                            className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
+                            animate={isHovered ? {
+                              scale: 1,
+                            } : {
+                              scale: [1, 1.05, 1],
+                            }}
+                            transition={isHovered ? {
+                              duration: 0.3,
+                            } : {
+                              duration: 4,
+                              repeat: Number.POSITIVE_INFINITY,
+                              ease: "easeInOut",
+                              delay: 0,
+                            }}
+                          >
+                            <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                              {(() => {
+                                const imageStyle = getAgentImageStyle(agent.name)
+                                const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                                let translateY = '0'
+                                const verticalNum = parseFloat(vertical)
+                                if (verticalNum !== 50) {
+                                  const translatePercent = ((verticalNum - 50) / 150) * 100
+                                  translateY = `${translatePercent}%`
+                                }
+                                const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                                
+                                return (
+                                  <Image
+                                    src={agent.image}
+                                    alt={agent.name}
+                                    fill
+                                    className="object-cover"
+                                    style={{
+                                      objectPosition: `${horizontal} ${vertical}`,
+                                      transform: `scale(${scaleValue}) translateY(${translateY})`,
+                                    }}
+                                    sizes="176px"
+                                  />
+                                )
+                              })()}
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.button>
+
+                    {/* Agent Info */}
+                    <div className="text-center w-full">
+                      <h3 className="text-lg font-bold text-foreground dark:text-white mb-1 font-space">
+                        {agent.name}
+                      </h3>
+                      <p className="text-sm text-foreground/60 dark:text-slate-400 mb-2 font-sans">
+                        {agent.subtitle}
+                      </p>
+                      {/* Difficulty Dot */}
+                      <div className="flex items-center justify-center gap-1.5">
+                        <div className={cn(
+                          "w-2.5 h-2.5 rounded-full flex-shrink-0",
+                          agent.difficulty === 'Easy' && "bg-green-400",
+                          agent.difficulty === 'Moderate' && "bg-yellow-400",
+                          agent.difficulty === 'Hard' && "bg-orange-400",
+                          agent.difficulty === 'Very Hard' && "bg-blue-400",
+                          agent.difficulty === 'Expert' && "bg-red-400",
+                          !agent.difficulty && "bg-gray-400"
+                        )} />
+                        <span className="text-xs text-foreground/50 dark:text-slate-500 font-space">
+                          {agent.difficulty || 'Unknown'}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Desktop: Grid layout */}
+          <div className="hidden md:contents">
           {sortedAgents.map((agent, index) => {
             const variantKey = agent.color as keyof typeof COLOR_VARIANTS
             const variantStyles = COLOR_VARIANTS[variantKey]
@@ -760,6 +925,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
               </motion.div>
             )
           })}
+          </div>
         </div>
 
         {/* Footer hint */}

@@ -308,7 +308,7 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
         <div className="absolute top-0 z-[0] h-screen w-screen bg-indigo-950/20 dark:bg-indigo-950/20 bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(99,102,241,0.25),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_20%_80%_at_50%_-20%,rgba(99,102,241,0.35),rgba(255,255,255,0))]" />
         
         {/* Hero Section - Full Viewport Height */}
-        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center justify-center pt-16 sm:pt-0 pb-0">
+        <section className="relative w-full max-w-full mx-auto z-1 min-h-screen flex items-center justify-center pt-4 sm:pt-0 pb-0">
           <RetroGrid {...gridOptions} />
           <div className="max-w-[1400px] xl:max-w-[1800px] 2xl:max-w-[2000px] z-10 mx-auto w-full px-4 sm:px-6 lg:px-20 xl:px-24 2xl:px-32">
             {/* Centered Copy Layout */}

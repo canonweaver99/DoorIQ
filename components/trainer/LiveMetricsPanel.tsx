@@ -60,18 +60,18 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
           "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-xl pt-4 px-4 pb-4 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group flex flex-col"
         )}
       >
-        <div className="flex items-center gap-2 mb-3">
-          <div className={cn("p-2 rounded-lg transition-colors", classes.bg, classes.hover)}>
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+          <div className={cn("p-1.5 sm:p-2 rounded-lg transition-colors", classes.bg, classes.hover)}>
             <div className={classes.icon}>
               {icon}
             </div>
           </div>
           <div>
-            <div className="text-base font-medium text-white font-space">{label}</div>
-            {subtitle && <div className="text-xs text-white/80 font-space">{subtitle}</div>}
+            <div className="text-sm sm:text-base font-medium text-white font-space">{label}</div>
+            {subtitle && <div className="text-[10px] sm:text-xs text-white/80 font-space">{subtitle}</div>}
           </div>
         </div>
-        <div className="text-4xl font-bold text-white font-space">{value}</div>
+        <div className="text-3xl sm:text-4xl font-bold text-white font-space">{value}</div>
       </motion.div>
     )
   }
@@ -86,21 +86,21 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       )}
     >
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className={cn("p-2 rounded-lg transition-colors", classes.bg, classes.hover)}>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className={cn("p-1.5 sm:p-2 rounded-lg transition-colors", classes.bg, classes.hover)}>
             <div className={classes.icon}>
               {icon}
             </div>
           </div>
           <div>
-            <div className="text-sm font-medium text-white font-space">{label}</div>
-            {subtitle && <div className="text-xs text-white/80 font-space">{subtitle}</div>}
+            <div className="text-xs sm:text-sm font-medium text-white font-space">{label}</div>
+            {subtitle && <div className="text-[10px] sm:text-xs text-white/80 font-space">{subtitle}</div>}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-white mb-0.5 font-space">{value}</div>
+          <div className="text-xl sm:text-2xl font-bold text-white mb-0.5 font-space">{value}</div>
           {badge && (
-            <Badge variant={badgeVariant} className="text-xs px-1.5 py-0.5">
+            <Badge variant={badgeVariant} className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5">
               {badge}
             </Badge>
           )}
@@ -121,10 +121,10 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
             )}
           </div>
           {progressLabel && (
-            <div className="flex justify-between text-xs text-white/80 font-space">
-              <span>You: {progress}%</span>
-              <span>Ideal: 50-60%</span>
-              <span>Them: {100 - progress}%</span>
+            <div className="flex justify-between text-[10px] sm:text-xs text-white/80 font-space">
+              <span className="truncate">You: {progress}%</span>
+              <span className="hidden sm:inline">Ideal: 50-60%</span>
+              <span className="truncate">Them: {100 - progress}%</span>
             </div>
           )}
         </>
@@ -152,10 +152,10 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
   const talkTimeStatus = getTalkTimeStatus()
 
   return (
-    <div className="grid grid-cols-[2fr_1.5fr_1.5fr] gap-4 h-auto">
+    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-[2fr_1.5fr_1.5fr] gap-3 sm:gap-4 h-auto">
       {/* Talk Time Card - Wider */}
       <MetricCard
-        icon={<Mic className="w-5 h-5" />}
+        icon={<Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
         label="Talk Time Ratio"
         value={`${talkTimeRatio}%`}
         color="blue"
@@ -167,7 +167,7 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
       
       {/* Objections Card */}
       <MetricCard
-        icon={<AlertTriangle className="w-5 h-5" />}
+        icon={<AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />}
         label="Objections"
         subtitle="Detected"
         value={objectionCount}
@@ -177,7 +177,7 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
       
       {/* Techniques Card */}
       <MetricCard
-        icon={<Book className="w-5 h-5" />}
+        icon={<Book className="w-4 h-4 sm:w-5 sm:h-5" />}
         label="Techniques"
         subtitle="Used"
         value={techniquesUsed.length}

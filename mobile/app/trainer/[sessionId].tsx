@@ -16,6 +16,9 @@ import { formatDuration } from '../../lib/utils'
 import { TranscriptEntry, Agent } from '../../lib/types'
 import { supabase } from '../../lib/supabase/client'
 import { ElevenLabsSession } from '../../components/trainer/ElevenLabsSession'
+import { LiveMetricsPanel } from '../../components/trainer/LiveMetricsPanel'
+import { LiveFeedbackFeed } from '../../components/trainer/LiveFeedbackFeed'
+import { useLiveSessionAnalysis } from '../../hooks/useLiveSessionAnalysis'
 
 export default function TrainingSessionScreen() {
   const params = useLocalSearchParams<{ sessionId: string; agent?: string }>()
@@ -31,6 +34,10 @@ export default function TrainingSessionScreen() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
   const transcriptEndRef = useRef<ScrollView>(null)
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
+  const [activeTab, setActiveTab] = useState<'transcript' | 'feedback'>('transcript')
+
+  // Live session analysis
+  const { feedbackItems, metrics } = useLiveSessionAnalysis(transcript)
 
   useEffect(() => {
     if (params.sessionId === 'new' && params.agent) {
@@ -228,37 +235,75 @@ export default function TrainingSessionScreen() {
         )}
       </View>
 
-      {/* Transcript */}
-      <ScrollView
-        ref={transcriptEndRef}
-        style={styles.transcriptContainer}
-        contentContainerStyle={styles.transcriptContent}
-      >
-        {transcript.length === 0 ? (
-          <View style={styles.emptyTranscript}>
-            <Text style={styles.emptyText}>
-              {sessionActive
-                ? 'Waiting for conversation to begin...'
-                : `Knock on ${selectedAgent.name}'s door to start your practice session`}
+      {/* Live Metrics Panel */}
+      {sessionActive && transcript.length > 0 && (
+        <View style={styles.metricsContainer}>
+          <LiveMetricsPanel metrics={metrics} />
+        </View>
+      )}
+
+      {/* Tab Selector */}
+      {sessionActive && (
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'transcript' && styles.tabActive]}
+            onPress={() => setActiveTab('transcript')}
+          >
+            <Text style={[styles.tabText, activeTab === 'transcript' && styles.tabTextActive]}>
+              Transcript
             </Text>
-          </View>
-        ) : (
-          transcript.map((entry) => {
-            const isUser = entry.speaker === 'user'
-            return (
-              <View
-                key={entry.id}
-                style={[styles.messageBubble, isUser ? styles.userBubble : styles.agentBubble]}
-              >
-                <Text style={styles.speakerLabel}>
-                  {isUser ? 'You' : selectedAgent.name}
-                </Text>
-                <Text style={styles.messageText}>{entry.text}</Text>
-              </View>
-            )
-          })
-        )}
-      </ScrollView>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'feedback' && styles.tabActive]}
+            onPress={() => setActiveTab('feedback')}
+          >
+            <Text style={[styles.tabText, activeTab === 'feedback' && styles.tabTextActive]}>
+              Feedback {feedbackItems.length > 0 && `(${feedbackItems.length})`}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Content Area - Transcript or Feedback */}
+      {activeTab === 'transcript' ? (
+        <ScrollView
+          ref={transcriptEndRef}
+          style={styles.transcriptContainer}
+          contentContainerStyle={styles.transcriptContent}
+          onContentSizeChange={() => {
+            transcriptEndRef.current?.scrollToEnd({ animated: true })
+          }}
+        >
+          {transcript.length === 0 ? (
+            <View style={styles.emptyTranscript}>
+              <Text style={styles.emptyText}>
+                {sessionActive
+                  ? 'Waiting for conversation to begin...'
+                  : `Knock on ${selectedAgent.name}'s door to start your practice session`}
+              </Text>
+            </View>
+          ) : (
+            transcript.map((entry) => {
+              const isUser = entry.speaker === 'user'
+              return (
+                <View
+                  key={entry.id}
+                  style={[styles.messageBubble, isUser ? styles.userBubble : styles.agentBubble]}
+                >
+                  <Text style={styles.speakerLabel}>
+                    {isUser ? 'You' : selectedAgent.name}
+                  </Text>
+                  <Text style={styles.messageText}>{entry.text}</Text>
+                </View>
+              )
+            })
+          )}
+        </ScrollView>
+      ) : (
+        <View style={styles.feedbackContainer}>
+          <LiveFeedbackFeed feedbackItems={feedbackItems} />
+        </View>
+      )}
 
       {/* ElevenLabs Session Component */}
       {sessionActive && conversationToken && selectedAgent && (
@@ -335,12 +380,49 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   agentContainer: {
-    height: 200,
+    height: 180,
     backgroundColor: '#1a1a1a',
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+  },
+  metricsContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: '#6366f1',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748b',
+  },
+  tabTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  feedbackContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   camera: {
     flex: 1,
