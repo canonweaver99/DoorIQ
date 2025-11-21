@@ -1,12 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Target, Shield, HandshakeIcon, DollarSign, Download, Share2, BookOpen, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Zap, Clock, Award, AlertCircle, CheckCircle2, Sparkles, XCircle, Mic } from 'lucide-react'
+import { Users, Target, Shield, HandshakeIcon, DollarSign, Download, Share2, BookOpen, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Zap, Clock, Award, AlertCircle, CheckCircle2, Sparkles, XCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import CoachingChat from './CoachingChat'
-import SpeechQualitySection from './SpeechQualitySection'
-import { VoiceAnalysisData } from '@/lib/trainer/types'
 
 interface ScoresViewV2Props {
   sessionId: string
@@ -56,7 +54,6 @@ interface ScoresViewV2Props {
   durationSeconds?: number
   audioUrl?: string
   videoUrl?: string
-  voiceAnalysis?: VoiceAnalysisData
 }
 
 export default function ScoresViewV2({
@@ -76,8 +73,7 @@ export default function ScoresViewV2({
   agentName = 'AI Agent',
   durationSeconds = 600,
   audioUrl,
-  videoUrl,
-  voiceAnalysis
+  videoUrl
 }: ScoresViewV2Props) {
   const [animatedEarnings, setAnimatedEarnings] = useState(0)
   const [showFillerWordsDropdown, setShowFillerWordsDropdown] = useState(false)
@@ -524,34 +520,6 @@ export default function ScoresViewV2({
           </div>
         )}
       </section>
-
-      {/* Speech Quality Section */}
-      {voiceAnalysis ? (
-        <SpeechQualitySection
-          voiceAnalysis={voiceAnalysis}
-          durationSeconds={durationSeconds || 600}
-        />
-      ) : (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
-              <Mic className="w-6 h-6 text-purple-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">Speech Quality Analysis</h2>
-              <p className="text-sm text-gray-400">Voice analysis data not available for this session</p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500">
-            Voice analysis (pitch, volume, WPM, tone) is collected during live practice sessions. 
-            This session may have been created before voice analysis was enabled, or the data wasn't collected.
-          </p>
-        </motion.section>
-      )}
 
       {/* AI Coaching Chat - Moved to bottom */}
       <CoachingChat

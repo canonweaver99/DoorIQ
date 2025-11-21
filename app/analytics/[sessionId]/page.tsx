@@ -379,27 +379,6 @@ export default function AnalyticsPage() {
           durationSeconds={session.duration_seconds || 600}
           audioUrl={session.audio_url}
           videoUrl={session.video_url}
-          voiceAnalysis={(() => {
-            const voiceData = session.analytics?.voice_analysis
-            console.log('🎤 Voice analysis data check in analytics page:', {
-              hasAnalytics: !!session.analytics,
-              hasVoiceAnalysis: !!voiceData,
-              analyticsKeys: session.analytics ? Object.keys(session.analytics) : [],
-              voiceDataKeys: voiceData ? Object.keys(voiceData) : [],
-              sessionId: session.id,
-              avgWPM: voiceData?.avgWPM,
-              totalFillerWords: voiceData?.totalFillerWords,
-              hasPitchData: voiceData ? voiceData.avgPitch > 0 : false,
-              fullAnalytics: session.analytics ? JSON.stringify(session.analytics).substring(0, 500) : 'none'
-            })
-            
-            if (!voiceData && session.analytics) {
-              console.warn('⚠️ Analytics object exists but voice_analysis is missing')
-              console.warn('⚠️ This may indicate voice_analysis was not saved or was overwritten during grading')
-            }
-            
-            return voiceData || undefined
-          })()}
         />
         {/* Audio playback archived - focusing on grading consistency */}
       </>
