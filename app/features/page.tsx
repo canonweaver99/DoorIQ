@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { Button } from '@/components/ui/button'
@@ -38,6 +38,11 @@ const fadeInUpVariants = {
 
 export default function FeaturesPage() {
   const { ref, controls } = useScrollAnimation(0.2)
+
+  // Ensure animation triggers immediately on mount
+  useEffect(() => {
+    controls.start('visible')
+  }, [controls])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836]">
