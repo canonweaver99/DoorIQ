@@ -223,14 +223,8 @@ interface PricingSectionProps {
   hideToggle?: boolean;
 }
 
-// Context for state management
-const PricingContext = createContext<{
-  isMonthly: boolean;
-  setIsMonthly: (value: boolean) => void;
-}>({
-  isMonthly: false,
-  setIsMonthly: () => {},
-});
+// Context for state management (simplified - no monthly/yearly toggle)
+const PricingContext = createContext<{}>({});
 
 // Main PricingSection Component
 export function PricingSection({
@@ -239,7 +233,6 @@ export function PricingSection({
   description = "Choose the plan that's right for you. All plans include our core features and support.",
   hideToggle = false,
 }: PricingSectionProps) {
-  const [isMonthly, setIsMonthly] = useState(false);
   const [selectedPlanIndex, setSelectedPlanIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null!) as React.RefObject<HTMLDivElement>;
   const [mousePosition, setMousePosition] = useState<{
@@ -257,7 +250,7 @@ export function PricingSection({
   const maxWidth = plans.length === 2 ? 'max-w-4xl' : 'max-w-6xl';
 
   return (
-    <PricingContext.Provider value={{ isMonthly, setIsMonthly }}>
+    <PricingContext.Provider value={{}}>
       <motion.div
         ref={containerRef}
         onMouseMove={handleMouseMove}
@@ -280,7 +273,6 @@ export function PricingSection({
               {description}
             </p>
           </div>
-          {!hideToggle && <PricingToggle />}
           <div className={`mt-6 sm:mt-8 grid grid-cols-1 ${gridCols} items-stretch gap-4 lg:gap-6 justify-center`}>
             {plans.map((plan, index) => (
               <div key={`card-wrapper-${index}`} className={plans.length === 2 ? "origin-top" : "origin-top scale-[0.855]"}>
@@ -301,74 +293,7 @@ export function PricingSection({
   );
 }
 
-// Pricing Toggle Component
-function PricingToggle() {
-  const { isMonthly, setIsMonthly } = useContext(PricingContext);
-  const monthlyBtnRef = useRef<HTMLButtonElement>(null);
-  const annualBtnRef = useRef<HTMLButtonElement>(null);
-
-  const [pillStyle, setPillStyle] = useState({});
-
-  useEffect(() => {
-    const btnRef = isMonthly ? monthlyBtnRef : annualBtnRef;
-    if (btnRef.current) {
-      setPillStyle({
-        width: btnRef.current.offsetWidth,
-        transform: `translateX(${btnRef.current.offsetLeft}px)`,
-      });
-    }
-  }, [isMonthly]);
-
-  const handleToggle = (monthly: boolean) => {
-    if (isMonthly === monthly) return;
-    setIsMonthly(monthly);
-  };
-
-  return (
-    <div className="flex justify-center">
-      <div className="relative flex w-fit items-center rounded-full bg-muted p-0.5">
-        <motion.div
-          className="absolute left-0 top-0 h-full rounded-full bg-primary p-0.5"
-          style={pillStyle}
-          transition={{ type: "spring", stiffness: 500, damping: 40 }}
-        />
-        <button
-          ref={monthlyBtnRef}
-          onClick={() => handleToggle(true)}
-          className={cn(
-            "relative z-10 rounded-full px-3 sm:px-4 py-1.5 text-xs font-medium transition-colors",
-            isMonthly
-              ? "text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Monthly
-        </button>
-        <button
-          ref={annualBtnRef}
-          onClick={() => handleToggle(false)}
-          className={cn(
-            "relative z-10 rounded-full px-3 sm:px-4 py-1.5 text-xs font-medium transition-colors",
-            !isMonthly
-              ? "text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Annual
-          <span
-            className={cn(
-              "hidden sm:inline",
-              !isMonthly ? "text-primary-foreground/80" : "",
-            )}
-          >
-            {" "}
-            (Save 30%)
-          </span>
-        </button>
-      </div>
-    </div>
-  );
-}
+// Pricing Toggle Component - Removed (annual-only pricing)
 
 // Pricing Card Component
 function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: { 
@@ -378,7 +303,6 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
   onSelect: () => void;
   isCenterCard?: boolean;
 }) {
-  const { isMonthly } = useContext(PricingContext);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const minReps = plan.minReps || 0;
   const [repCount, setRepCount] = useState(minReps);
@@ -389,10 +313,10 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
     // Confetti is triggered on successful return, not here
   };
 
-  // Calculate total price for Manager plan with reps
+  // Calculate total price for Manager plan with reps (annual-only)
   const calculateTotalPrice = () => {
     // Check if price is a string (e.g., "Contact Sales")
-    const priceValue = isMonthly ? plan.price : plan.yearlyPrice;
+    const priceValue = plan.yearlyPrice || plan.price;
     if (isNaN(Number(priceValue))) {
       return priceValue;
     }
@@ -400,8 +324,8 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
     if (!plan.hasRepSelector) {
       return Number(priceValue);
     }
-    const base = isMonthly ? (plan.basePrice || 0) : (plan.yearlyBasePrice || 0);
-    const perRep = isMonthly ? (plan.repPrice || 0) : (plan.yearlyRepPrice || 0);
+    const base = plan.yearlyBasePrice || plan.basePrice || 0;
+    const perRep = plan.yearlyRepPrice || plan.repPrice || 0;
     return base + (repCount * perRep);
   };
 
@@ -417,11 +341,8 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
       const hasDualHandlers = plan.onClickMonthly || plan.onClickYearly;
       if (hasDualHandlers) {
         handleCtaClick();
-        if (isMonthly) {
-          (plan.onClickMonthly || plan.onClick || (() => {}))();
-        } else {
-          (plan.onClickYearly || plan.onClick || (() => {}))();
-        }
+        // Always use yearly handler (or fallback to onClick)
+        (plan.onClickYearly || plan.onClick || (() => {}))();
       } else if (plan.onClick) {
         handleCtaClick();
         plan.onClick();
@@ -505,20 +426,11 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
                   / {plan.period}
                 </span>
               </div>
-              <AnimatePresence mode="wait">
-                {!isMonthly && plan.yearlyTotal && (
-                  <motion.p 
-                    key="yearly-total"
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-xs sm:text-sm font-medium text-slate-500 mt-1"
-                  >
-                    ${plan.yearlyTotal} / year
-                  </motion.p>
-                )}
-              </AnimatePresence>
+              {plan.yearlyTotal && (
+                <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+                  ${plan.yearlyTotal} / year
+                </p>
+              )}
             </>
           ) : (
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
@@ -528,18 +440,9 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
         </div>
         
         {typeof calculateTotalPrice() === 'number' && (
-          <AnimatePresence mode="wait">
-            <motion.p 
-              key={isMonthly ? 'monthly' : 'annual'}
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.3 }}
-              className="text-sm font-medium text-slate-400 mt-2"
-            >
-              {isMonthly ? "Billed Monthly" : "Billed Annually"}
-            </motion.p>
-          </AnimatePresence>
+          <p className="text-sm font-medium text-slate-400 mt-2">
+            Billed Annually
+          </p>
         )}
 
         {/* Rep Selector for Manager Plan */}
@@ -577,7 +480,7 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
             <p className="text-xs text-muted-foreground mt-1.5">
               {repCount > minReps ? (
                 <>
-                  Base: ${isMonthly ? plan.basePrice : plan.yearlyBasePrice} + {repCount} rep{repCount !== 1 ? 's' : ''} × ${isMonthly ? plan.repPrice : plan.yearlyRepPrice}
+                  Base: ${plan.yearlyBasePrice || plan.basePrice || 0} + {repCount} rep{repCount !== 1 ? 's' : ''} × ${plan.yearlyRepPrice || plan.repPrice || 0}
                 </>
               ) : (
                 <>
@@ -610,11 +513,8 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
                 e.stopPropagation();
                 handleCtaClick();
                 if (plan.onClickMonthly || plan.onClickYearly) {
-                  if (isMonthly) {
-                    plan.onClickMonthly?.();
-                  } else {
-                    plan.onClickYearly?.();
-                  }
+                  // Always use yearly handler (or fallback to onClick)
+                  plan.onClickYearly?.() || plan.onClick?.();
                 } else {
                   plan.onClick?.();
                 }

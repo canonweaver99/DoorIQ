@@ -499,6 +499,7 @@ function ProblemSolutionSection() {
 function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
   const { ref, controls } = useScrollAnimation(0.2)
   const [numReps, setNumReps] = useState(15)
+  const [roiDealValue, setRoiDealValue] = useState(300)
   
   const benefits = [
     {
@@ -523,66 +524,80 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
     }
   ]
 
-  // Calculate pricing based on number of reps - matching pricing page logic
+  // Calculate pricing based on number of reps - Monthly pricing by tier (matching pricing page)
   const calculatePricing = (reps: number) => {
-    if (reps < 5) return { monthlyPrice: 0, annualPrice: 0, perRepRate: 0, annualPerRepRate: 0 }
+    let monthlyPrice: number
+    let perRepRate: number
+    let tierName: string
+    let tierRange: string
     
-    // Determine per-rep daily rate based on tier (matching pricing page)
-    let perRepDailyRate: number
-    if (reps >= 100) {
-      perRepDailyRate = 1.25
-    } else if (reps >= 51) {
-      perRepDailyRate = 1.50
-    } else if (reps >= 21) {
-      perRepDailyRate = 1.75
+    // Determine tier and pricing (matching pricing page)
+    if (reps === 1) {
+      // Solo/Startup tier: $99/month for 1 rep
+      monthlyPrice = 99
+      perRepRate = 99
+      tierName = 'SOLO/STARTUP'
+      tierRange = '1 rep'
+    } else if (reps >= 5 && reps <= 20) {
+      // Team tier: $79/month per rep, min 5 reps
+      monthlyPrice = Math.max(5, reps) * 79
+      perRepRate = 79
+      tierName = 'TEAM'
+      tierRange = '5-20 reps'
+    } else if (reps >= 21 && reps <= 100) {
+      // Growth tier: $59/month per rep
+      monthlyPrice = reps * 59
+      perRepRate = 59
+      tierName = 'GROWTH'
+      tierRange = '21-100 reps'
+    } else if (reps > 100) {
+      // Enterprise tier: $39/month per rep (starting at $39)
+      monthlyPrice = reps * 39
+      perRepRate = 39
+      tierName = 'ENTERPRISE'
+      tierRange = '100+ reps'
     } else {
-      perRepDailyRate = 2.00 // 5-20 reps
+      // Less than 5 reps (not Team tier yet) - defaults to Solo
+      monthlyPrice = 99
+      perRepRate = 99
+      tierName = 'SOLO/STARTUP'
+      tierRange = '1 rep'
     }
     
-    // Monthly billing: daily rate * 30 days
-    const monthlyPrice = reps * perRepDailyRate * 30
+    // Calculate annual pricing (15% discount)
+    const annualTotalPrice = Math.round(monthlyPrice * 12 * 0.85)
+    const annualPerRepRate = Math.round(perRepRate * 0.85)
     
-    // Annual: 20% savings on the per-rep rate
-    const annualPerRepDailyRate = perRepDailyRate * 0.80
-    const annualMonthlyPrice = reps * annualPerRepDailyRate * 30
-    const annualPrice = annualMonthlyPrice * 12
-    
-    // Per rep rates for display (monthly and annual)
-    const perRepRate = perRepDailyRate * 30 // monthly per rep rate
-    const annualPerRepRate = annualPerRepDailyRate * 30 // annual monthly per rep rate
-    
-    return { monthlyPrice, annualPrice, perRepRate, annualPerRepRate }
+    return { 
+      monthlyPrice,
+      perRepRate,
+      annualTotalPrice,
+      annualPerRepRate,
+      tierName,
+      tierRange
+    }
   }
 
-  // Calculate Monthly ROI
-  const calculateMonthlyROI = (reps: number, monthlyCost: number) => {
-    const averageCommissionPerDeal = 500 // $500 per deal (realistic)
-    const extraDealsPerRepPerMonth = 1 // 1 extra deal per month per rep (base)
-    
-    // Base monthly value: reps × 1 extra deal/month × $500
-    const baseMonthlyValue = reps * extraDealsPerRepPerMonth * averageCommissionPerDeal
-    
-    // Exponential multiplier - larger teams create compounding value
-    const exponentialMultiplier = Math.pow(1.05, reps / 10) // Exponential growth
-    
-    // Total monthly value with exponential scaling
-    const monthlyValue = baseMonthlyValue * exponentialMultiplier
-    
-    const monthlyROI = monthlyValue - monthlyCost
-    const roiPercentage = monthlyCost > 0 ? ((monthlyValue - monthlyCost) / monthlyCost) * 100 : 0
+  // Calculate Monthly ROI (matching pricing page calculation)
+  const calculateMonthlyROI = (reps: number, monthlyCost: number, dealValue: number) => {
+    // Simple calculation: reps × dealValue (1 extra deal per rep per month)
+    const extraRevenue = reps * dealValue
+    const netProfit = extraRevenue - monthlyCost
+    const roi = monthlyCost > 0 ? (netProfit / monthlyCost) * 100 : 0
+    const roiMultiplier = monthlyCost > 0 ? extraRevenue / monthlyCost : 0
     
     return {
-      monthlyValue,
+      extraRevenue,
       monthlyCost,
-      monthlyROI,
-      roiPercentage,
-      averageCommission: averageCommissionPerDeal,
-      dealsPerRep: extraDealsPerRepPerMonth
+      netProfit,
+      roi,
+      roiMultiplier
     }
   }
 
   const pricing = calculatePricing(numReps)
-  const monthlyROI = calculateMonthlyROI(numReps, pricing.monthlyPrice)
+  // Use monthly pricing for ROI calculation
+  const roiData = calculateMonthlyROI(numReps, pricing.monthlyPrice, roiDealValue)
 
   return (
     <motion.section 
@@ -680,51 +695,53 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                 </h3>
               </div>
 
-              {/* Team Size Input */}
+              {/* Inputs Side by Side */}
               <div className="mb-6">
-                <label className="block text-sm sm:text-base font-bold text-foreground mb-3 text-center tracking-wide font-space">
-                  Number of Sales Reps:
-                </label>
-                <div className="max-w-full mx-auto">
-                  {/* Rep Count Input */}
-                  <div className="text-center mb-3">
-                    <input
-                      type="number"
-                      min="5"
-                      max="500"
-                      value={numReps}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 5
-                        setNumReps(Math.max(5, Math.min(500, value)))
-                      }}
-                      className="inline-block px-4 py-2 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-xl font-bold font-space text-center w-24 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
-                    />
-                    <span className="text-foreground text-base ml-2 font-sans">reps</span>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Number of Sales Reps */}
+                  <div>
+                    <label className="block text-sm sm:text-base font-bold text-foreground mb-3 text-center tracking-wide font-space">
+                      Number of Sales Reps:
+                    </label>
+                    <div className="text-center">
+                      <input
+                        type="number"
+                        min="5"
+                        max="500"
+                        value={numReps}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 5
+                          setNumReps(Math.max(5, Math.min(500, value)))
+                        }}
+                        className="inline-block px-4 py-2 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-xl font-bold font-space text-center w-24 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
+                      />
+                      <span className="text-foreground text-base ml-2 font-sans">reps</span>
+                    </div>
                   </div>
-                  
-                  {/* Slider */}
-                  <div className="relative mb-4">
-                    <input
-                      type="range"
-                      min="5"
-                      max="500"
-                      value={numReps}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 5
-                        setNumReps(Math.max(5, Math.min(500, value)))
-                      }}
-                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer pricing-slider"
-                      style={{
-                        background: (() => {
-                          const percentage = ((numReps - 5) / 495) * 100
-                          return `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, rgba(255,255,255,0.1) ${percentage}%, rgba(255,255,255,0.1) 100%)`
-                        })()
-                      }}
-                    />
-                    {/* Slider labels */}
-                    <div className="flex justify-between mt-2 text-xs font-semibold text-foreground font-sans">
-                      <span>5</span>
-                      <span>500</span>
+
+                  {/* Value per Extra Deal */}
+                  <div>
+                    <label className="block text-sm sm:text-base font-bold text-foreground mb-3 text-center tracking-wide font-space">
+                      Value per Extra Deal ($):
+                    </label>
+                    <div className="text-center">
+                      <input
+                        type="number"
+                        min="0"
+                        max="1000"
+                        step="50"
+                        value={roiDealValue || ''}
+                        onChange={(e) => {
+                          const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0
+                          setRoiDealValue(Math.max(0, Math.min(1000, value)))
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value === '') {
+                            setRoiDealValue(300)
+                          }
+                        }}
+                        className="inline-block px-4 py-2 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-xl font-bold font-space text-center w-32 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
+                      />
                     </div>
                   </div>
                 </div>
@@ -738,18 +755,18 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                   <div className="text-foreground flex items-end gap-0.5">
                     <span className="text-sm">$</span>
                     <motion.span 
-                      key={pricing.monthlyPrice}
+                      key={pricing.perRepRate}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 0.3 }}
                       className="text-foreground -mb-0.5 text-xl sm:text-2xl font-extrabold tracking-tighter font-space"
                     >
-                      {pricing.monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      {pricing.perRepRate.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </motion.span>
-                    <span className="text-xs">/mo</span>
+                    <span className="text-xs">/rep</span>
                   </div>
                   <div className="text-[10px] sm:text-xs text-foreground/70 font-semibold font-sans mt-1">
-                    ${(pricing.monthlyPrice * 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/yr
+                    ${pricing.monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month total
                   </div>
                 </div>
 
@@ -759,23 +776,23 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                   <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[28px] border-l-transparent border-t-[28px] border-t-emerald-500"></div>
                   <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-2 font-space flex items-center gap-1">
                     Annual
-                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-black font-bold rounded">Best</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-black font-bold rounded">Save 15%</span>
                   </h3>
-                  <div className="text-foreground flex items-end">
+                  <div className="text-foreground flex items-end gap-0.5">
                     <span className="text-sm">$</span>
                     <motion.span 
-                      key={Math.round(pricing.annualPrice / 12)}
+                      key={pricing.annualPerRepRate}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 0.3 }}
                       className="text-foreground -mb-0.5 text-xl sm:text-2xl font-extrabold tracking-tighter font-space"
                     >
-                      {Math.round(pricing.annualPrice / 12).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      {pricing.annualPerRepRate.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </motion.span>
-                    <span className="text-xs">/mo</span>
+                    <span className="text-xs">/rep</span>
                   </div>
                   <div className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-300 font-semibold font-sans mt-1">
-                    ${pricing.annualPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/yr
+                    ${pricing.annualTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year total
                   </div>
                 </div>
               </div>
@@ -783,16 +800,16 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
               {/* ROI Results - Enhanced (Monthly) */}
               <div className="space-y-3 border-t-2 border-border/30 dark:border-white/30 pt-5 pb-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-foreground text-sm font-medium font-sans">Revenue:</span>
+                  <span className="text-foreground text-sm font-medium font-sans">Extra Revenue:</span>
                   <div className="flex items-center gap-2">
                     <motion.span 
-                      key={Math.round(monthlyROI.monthlyValue)}
+                      key={Math.round(roiData.extraRevenue)}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 0.3 }}
                       className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-300 text-lg sm:text-xl font-bold font-space"
                     >
-                      +${Math.round(monthlyROI.monthlyValue).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
+                      +${Math.round(roiData.extraRevenue).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                     </motion.span>
                   </div>
                 </div>
@@ -805,28 +822,31 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                   </Link>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-foreground text-sm font-medium font-sans">Investment:</span>
+                  <span className="text-foreground text-sm font-medium font-sans">DoorIQ Cost:</span>
                   <span className="text-red-500 dark:text-red-400 text-lg sm:text-xl font-bold font-space">
-                    -${pricing.monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
+                    -${roiData.monthlyCost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                   </span>
                 </div>
                 <div className="border-t-2 border-emerald-500/40 pt-3 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg px-3 py-2 -mx-3 sm:-mx-4">
                   <span className="text-foreground text-base font-semibold font-sans">Net Profit:</span>
                   <motion.div
-                    key={Math.round(monthlyROI.monthlyROI)}
+                    key={Math.round(roiData.netProfit)}
                     initial={{ scale: 1 }}
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 0.3 }}
-                    className="flex items-center gap-2"
+                    className="flex flex-col items-end gap-1"
                   >
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400 text-2xl sm:text-3xl md:text-4xl font-black font-space">
-                      ${Math.round(monthlyROI.monthlyROI).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      ${Math.round(roiData.netProfit).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                     </span>
-                    <span className="text-emerald-400 text-lg sm:text-xl font-bold font-space">
-                      ({Math.round(monthlyROI.roiPercentage)}%)
+                    <span className="text-emerald-400 text-sm font-semibold font-sans">
+                      {roiData.roiMultiplier.toFixed(1)}x ROI ({Math.round(roiData.roi)}%)
                     </span>
                   </motion.div>
                 </div>
+                <p className="text-xs text-foreground/60 italic font-sans pt-2 border-t border-border/20">
+                  *Assumes each rep closes just 1 extra deal per month
+                </p>
               </div>
               </div>
             </div>
