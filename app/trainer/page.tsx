@@ -1136,6 +1136,27 @@ function TrainerPageContent() {
     }
   }, [sessionActive, sessionId, endSession, handleCallEnd])
 
+  // Listen for ElevenLabs disconnect and play door closing sound
+  useEffect(() => {
+    if (!sessionActive || typeof window === 'undefined') return
+
+    const handleConnectionStatus = (e: CustomEvent) => {
+      const status = e?.detail
+      console.log('📊 Connection status received:', status)
+      
+      if (status === 'disconnected' && sessionActive) {
+        console.log('🔌 ElevenLabs disconnected - playing door closing sound')
+        playSound('/sounds/door_close.mp3', 0.9)
+      }
+    }
+
+    window.addEventListener('connection:status', handleConnectionStatus as EventListener)
+    
+    return () => {
+      window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
+    }
+  }, [sessionActive])
+
   // Add beforeunload warning during active session
   useEffect(() => {
     if (typeof window === 'undefined') return
