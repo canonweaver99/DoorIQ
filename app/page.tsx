@@ -904,7 +904,7 @@ function DashboardSection() {
   return (
     <motion.section 
       ref={ref}
-      className="relative w-full max-w-full mx-auto z-1 py-12 sm:py-14 lg:py-16"
+      className="hidden lg:block relative w-full max-w-full mx-auto z-1 py-12 sm:py-14 lg:py-16"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
