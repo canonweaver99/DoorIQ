@@ -383,6 +383,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
   const sessionStartTimeRef = useRef<Date | null>(null)
   const valueStatementsCountRef = useRef(0)
   const priceQuestionAskedRef = useRef<Date | null>(null)
+  const lastTalkTimeWarningRef = useRef<{ threshold: 'high' | 'low' | null; timestamp: Date | null }>({ threshold: null, timestamp: null })
   
   // Generate feedback item
   const addFeedbackItem = useCallback((
@@ -709,6 +710,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     if (transcript.length < 3) return // Need at least a few exchanges
     
     const ratio = metrics.talkTimeRatio
+    const now = new Date()
     
     // New thresholds:
     // 40-60%: Ideal (no feedback)
@@ -716,35 +718,74 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     // <35%: Warning "Try to listen more and engage"
     // >70%: Warning "Engage more - ask questions"
     
-    // Only add feedback if ratio is problematic (avoid spam)
-    if (ratio > 70 && feedbackItems.length > 0) {
-      const lastWarning = feedbackItems
-        .slice()
-        .reverse()
-        .find(item => item.type === 'warning' && (item.message.includes('Engage more') || item.message.includes('talking too much')))
+    // Only show one warning at a time - check if we need to show a new one
+    if (ratio > 70) {
+      // High ratio warning
+      const timeSinceLastWarning = lastTalkTimeWarningRef.current.timestamp 
+        ? now.getTime() - lastTalkTimeWarningRef.current.timestamp.getTime()
+        : Infinity
       
-      if (!lastWarning || Date.now() - lastWarning.timestamp.getTime() > 60000) {
-        addFeedbackItem(
-          'warning',
-          `Talking ${ratio}% - ask more questions.`,
-          'needs_improvement'
-        )
+      // Only show if:
+      // 1. We haven't shown a high warning yet, OR
+      // 2. We showed a low warning before (threshold changed), OR
+      // 3. It's been more than 2 minutes since the last warning
+      if (lastTalkTimeWarningRef.current.threshold !== 'high' || timeSinceLastWarning > 120000) {
+        // Remove any existing talk time warnings and add new one in one operation
+        setFeedbackItems(prev => {
+          const filtered = prev.filter(item => 
+            !(item.type === 'warning' && (item.message.includes('Talking') && item.message.includes('%')))
+          )
+          
+          const newItem: FeedbackItem = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            timestamp: now,
+            type: 'warning',
+            message: `Talking ${ratio}% - ask more questions.`,
+            severity: 'needs_improvement'
+          }
+          
+          const updated = [...filtered, newItem]
+          return updated.slice(-50) // Keep max 50 items
+        })
+        
+        lastTalkTimeWarningRef.current = { threshold: 'high', timestamp: now }
       }
-    } else if (ratio < 35 && feedbackItems.length > 0) {
-      const lastWarning = feedbackItems
-        .slice()
-        .reverse()
-        .find(item => item.type === 'warning' && (item.message.includes('Try to listen more') || item.message.includes('talking too little')))
+    } else if (ratio < 35) {
+      // Low ratio warning
+      const timeSinceLastWarning = lastTalkTimeWarningRef.current.timestamp 
+        ? now.getTime() - lastTalkTimeWarningRef.current.timestamp.getTime()
+        : Infinity
       
-      if (!lastWarning || Date.now() - lastWarning.timestamp.getTime() > 60000) {
-        addFeedbackItem(
-          'warning',
-          `Talking ${ratio}% - engage more.`,
-          'needs_improvement'
-        )
+      // Only show if:
+      // 1. We haven't shown a low warning yet, OR
+      // 2. We showed a high warning before (threshold changed), OR
+      // 3. It's been more than 2 minutes since the last warning
+      if (lastTalkTimeWarningRef.current.threshold !== 'low' || timeSinceLastWarning > 120000) {
+        // Remove any existing talk time warnings and add new one in one operation
+        setFeedbackItems(prev => {
+          const filtered = prev.filter(item => 
+            !(item.type === 'warning' && (item.message.includes('Talking') && item.message.includes('%')))
+          )
+          
+          const newItem: FeedbackItem = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            timestamp: now,
+            type: 'warning',
+            message: `Talking ${ratio}% - engage more.`,
+            severity: 'needs_improvement'
+          }
+          
+          const updated = [...filtered, newItem]
+          return updated.slice(-50) // Keep max 50 items
+        })
+        
+        lastTalkTimeWarningRef.current = { threshold: 'low', timestamp: now }
       }
+    } else {
+      // Ratio is in acceptable range - reset the warning ref
+      lastTalkTimeWarningRef.current = { threshold: null, timestamp: null }
     }
-  }, [metrics.talkTimeRatio, transcript.length, feedbackItems, addFeedbackItem])
+  }, [metrics.talkTimeRatio, transcript.length, setFeedbackItems])
   
   return {
     feedbackItems,
