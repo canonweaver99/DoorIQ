@@ -3,12 +3,21 @@
 import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import dynamic from "next/dynamic"
 import { Loader2, ChevronRight, CheckCircle2, X, Shield, Star, Award, ShieldCheck, Users, TrendingUp, Zap, BarChart3, Headphones, UserCog, Building2, Code, Globe, Calculator, Plus } from "lucide-react"
-import Cal, { getCalApi } from "@calcom/embed-react"
 import { Badge } from "@/components/ui/badge"
 import { BorderTrail } from "@/components/ui/border-trail"
-import NumberFlow from "@number-flow/react"
 import { cn } from "@/lib/utils"
+
+// Lazy load heavy components
+const Cal = dynamic(() => import("@calcom/embed-react").then(mod => ({ default: mod.default, getCalApi: mod.getCalApi })), { 
+  ssr: false,
+  loading: () => <div className="h-[600px] animate-pulse bg-black/20 rounded-lg" />
+})
+const NumberFlow = dynamic(() => import("@number-flow/react").then(mod => mod.default), { 
+  ssr: false,
+  loading: () => <span>0</span>
+})
 
 interface PricingTier {
   id: string
@@ -176,6 +185,7 @@ function PricingPageContent() {
       setCalLoaded(false)
       ;(async function () {
         try {
+          const { getCalApi } = await import("@calcom/embed-react")
           const cal = await getCalApi({"namespace":"dooriq"});
           
           const tier = tiers.find(t => t.id === selectedTier)

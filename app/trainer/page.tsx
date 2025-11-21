@@ -1232,7 +1232,7 @@ function TrainerPageContent() {
         </div>
 
         {/* Main Content Area - Stacked on mobile, side-by-side on desktop */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-6 lg:p-8">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-8">
           
           {/* LEFT SIDE (55%) - Agent Video with PIP */}
           <div className="w-full lg:w-[55%] relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl h-[50vh] lg:h-auto lg:min-h-0">
@@ -1312,7 +1312,7 @@ function TrainerPageContent() {
                           src={imageSrc}
                           alt={selectedAgent?.name || 'Agent'}
                           fill
-                          sizes="50vw"
+                          sizes="(max-width: 768px) 100vw, 50vw"
                           className="object-cover"
                           style={{ objectFit: 'cover', objectPosition: 'center center' }}
                           priority
@@ -1321,6 +1321,9 @@ function TrainerPageContent() {
                             console.error('❌ Image failed to load:', src, 'Encoded:', imageSrc)
                             e.stopPropagation()
                           }}
+                          // Prevent layout shift with aspect ratio placeholder
+                          placeholder="blur"
+                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                         />
                       ) : null
                     })()}

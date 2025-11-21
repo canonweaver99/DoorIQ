@@ -3,6 +3,21 @@
 import { useState, useEffect, Suspense, useRef } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useSearchParams, useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
+
+// Lazy load heavy dashboard components
+const OverviewTabContent = dynamic(() => import('./OverviewTab'), {
+  loading: () => <div className="min-h-[400px] animate-pulse bg-black/20 rounded-lg" />,
+  ssr: false
+})
+const UploadTabContent = dynamic(() => import('./UploadTab'), {
+  loading: () => <div className="min-h-[400px] animate-pulse bg-black/20 rounded-lg" />,
+  ssr: false
+})
+const TeamTabContent = dynamic(() => import('./TeamTab'), {
+  loading: () => <div className="min-h-[400px] animate-pulse bg-black/20 rounded-lg" />,
+  ssr: false
+})
 import { 
   Home, 
   TrendingUp, 
