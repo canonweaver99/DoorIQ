@@ -315,7 +315,16 @@ export default function AnalyticsPage() {
           durationSeconds={session.duration_seconds || 600}
           audioUrl={session.audio_url}
           videoUrl={session.video_url}
-          voiceAnalysis={session.analytics?.voice_analysis || undefined}
+          voiceAnalysis={(() => {
+            const voiceData = session.analytics?.voice_analysis
+            console.log('🎤 Voice analysis data check:', {
+              hasAnalytics: !!session.analytics,
+              hasVoiceAnalysis: !!voiceData,
+              analyticsKeys: session.analytics ? Object.keys(session.analytics) : [],
+              voiceDataKeys: voiceData ? Object.keys(voiceData) : []
+            })
+            return voiceData || undefined
+          })()}
         />
         {/* Audio playback archived - focusing on grading consistency */}
       </>
