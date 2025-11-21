@@ -142,7 +142,7 @@ function PricingPageContent() {
       monthlyPrice = 0
     }
     
-    const annualPrice = Math.round(monthlyPrice * 12 * 0.85) // 15% discount
+    const annualPrice = Math.round(monthlyPrice * 12 * 0.85) // 2 months free (15% off)
     
     return { monthly: monthlyPrice, annual: annualPrice }
   }
@@ -287,7 +287,7 @@ function PricingPageContent() {
                     >
                       Annual
                       <span className="ml-2 text-xs bg-emerald-500 text-black px-2 py-0.5 rounded-full font-bold">
-                        Save 15%
+                        2 months free
                       </span>
                     </button>
                       </div>
@@ -642,7 +642,7 @@ function PricingPageContent() {
                       },
                       {
                         question: "What's the difference between monthly and annual billing?",
-                        answer: "Annual billing saves you 15% compared to monthly billing. You'll be charged upfront for the year, but get significant savings."
+                        answer: "Annual billing gives you 2 months free (15% off) - equivalent to paying for 10 months and getting 12 months of service. You'll be charged upfront for the year, but get significant savings."
                       },
                       {
                         question: "What's included in Custom AI personas (Growth tier)?",

@@ -776,7 +776,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                   <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[28px] border-l-transparent border-t-[28px] border-t-emerald-500"></div>
                   <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-2 font-space flex items-center gap-1">
                     Annual
-                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-black font-bold rounded">Save 15%</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-black font-bold rounded">2 months free</span>
                   </h3>
                   <div className="text-foreground flex items-end gap-0.5">
                     <span className="text-sm">$</span>
