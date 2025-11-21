@@ -231,7 +231,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           
           // Check if this was an unexpected disconnect (for reconnection logic)
           // Only relevant when there's NO active session
-          const reasonStr = String(reason || '').toLowerCase()
+          // reasonStr already declared above, reuse it
           const isUnexpected = wasConnectedRef.current && 
                               !reasonStr.includes('end_call') && 
                               !reasonStr.includes('completed') &&
