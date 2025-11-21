@@ -166,45 +166,45 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95, y: -10 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className={cn(
-        "relative bg-gradient-to-br rounded-lg p-3 border shadow-lg",
-        "transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl",
+        "relative rounded-xl p-2.5 transition-colors group",
+        "w-full h-[70px] flex-shrink-0", // Fixed height and width, no shrinking
         config.gradientFrom,
         config.gradientTo,
-        config.borderColor
+        config.borderColor,
+        "border"
       )}
     >
       {/* Accent line */}
       <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-0.5 rounded-l-lg bg-gradient-to-b",
+        "absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl bg-gradient-to-b",
         config.accentGradient
       )} />
       
       <div className="flex items-start gap-2 ml-0.5">
         {/* Icon */}
         <div className={cn(
-          "p-1.5 rounded-md flex-shrink-0",
+          "p-1 rounded-md flex-shrink-0",
           config.iconBg
         )}>
-          <Icon className={cn("w-4 h-4", config.iconColor)} />
+          <Icon className={cn("w-3.5 h-3.5", config.iconColor)} />
         </div>
         
         {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
+        <div className="flex-1 min-w-0 h-full flex flex-col">
+          <div className="flex items-center gap-1.5 mb-0.5 flex-shrink-0">
             <Badge 
               variant={config.badgeVariant}
-              className="text-[10px] font-medium px-1.5 py-0.5"
+              className="text-[9px] font-medium px-1 py-0.5"
             >
               {config.badgeText}
             </Badge>
-            <span className="text-[10px] text-white/80 font-space">{formatTime(item.timestamp)}</span>
+            <span className="text-xs text-white/70 font-space">{formatTime(item.timestamp)}</span>
           </div>
-          <p className="text-sm text-white leading-relaxed font-space font-medium">
+          <p className="text-sm text-white leading-relaxed break-words font-space line-clamp-2 overflow-hidden">
             {item.message}
           </p>
         </div>
@@ -217,77 +217,12 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
   const feedEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [dismissedItems, setDismissedItems] = useState<Set<string>>(new Set())
-  const lastMessageRef = useRef<Map<string, number>>(new Map())
-  const processedIdsRef = useRef<Set<string>>(new Set())
 
-  // Deduplication: prevent same message within 30 seconds
-  // Also prevent rapid-fire multiple items
+  // Simple deduplication: only filter out dismissed items
+  // Items stay visible and scroll up like transcript (no disappearing)
   const deduplicatedItems = useMemo(() => {
-    const now = Date.now()
-    const filtered: FeedbackItem[] = []
-    
-    // Sort by timestamp to process oldest first
-    const sortedItems = [...feedbackItems].sort((a, b) => 
-      a.timestamp.getTime() - b.timestamp.getTime()
-    )
-    
-    // Track recent items to prevent bursts (within last 3 seconds)
-    const recentItemTimestamps: number[] = []
-    
-    for (const item of sortedItems) {
-      // Skip dismissed items
-      if (dismissedItems.has(item.id)) continue
-      
-      // Skip already processed items
-      if (processedIdsRef.current.has(item.id)) continue
-      
-      // Check for duplicate messages within 30 seconds
-      const messageKey = item.message.toLowerCase().trim()
-      const lastTime = lastMessageRef.current.get(messageKey)
-      
-      if (lastTime && now - lastTime < 30000) {
-        continue // Skip duplicate message
-      }
-      
-      // Check for same type within 5 seconds (prevent rapid-fire same type)
-      const typeKey = `${item.type}-${messageKey}`
-      const lastTypeTime = lastMessageRef.current.get(typeKey)
-      
-      if (lastTypeTime && now - lastTypeTime < 5000) {
-        continue // Skip same type too quickly
-      }
-      
-      // Prevent too many items within 3 seconds (burst protection)
-      // Remove timestamps older than 3 seconds
-      const recentCount = recentItemTimestamps.filter(ts => now - ts < 3000).length
-      if (recentCount >= 3) {
-        continue // Skip if already 3+ items in last 3 seconds
-      }
-      
-      // Mark as processed and update timestamps
-      processedIdsRef.current.add(item.id)
-      lastMessageRef.current.set(messageKey, now)
-      lastMessageRef.current.set(typeKey, now)
-      recentItemTimestamps.push(now)
-      
-      filtered.push(item)
-    }
-    
-    // Clean up old processed IDs (keep last 100)
-    if (processedIdsRef.current.size > 100) {
-      const idsArray = Array.from(processedIdsRef.current)
-      const recentIds = new Set(idsArray.slice(-100))
-      processedIdsRef.current = recentIds
-    }
-    
-    // Clean up old message timestamps (older than 60 seconds)
-    for (const [key, time] of lastMessageRef.current.entries()) {
-      if (now - time > 60000) {
-        lastMessageRef.current.delete(key)
-      }
-    }
-    
-    return filtered
+    // Just filter out dismissed items - all others stay visible
+    return feedbackItems.filter(item => !dismissedItems.has(item.id))
   }, [feedbackItems, dismissedItems])
 
   const handleDismiss = (id: string) => {
@@ -319,7 +254,7 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
       
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-3 custom-scrollbar space-y-2 min-h-0 max-h-full"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-3 pt-3 pb-0 custom-scrollbar space-y-2 min-h-0 max-h-full"
         style={{ maxHeight: '100%' }}
       >
         {deduplicatedItems.length === 0 ? (

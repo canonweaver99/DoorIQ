@@ -145,14 +145,11 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
       
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2"
-        style={{ maxHeight: '300px' }}
+        className="flex-1 overflow-y-auto px-4 pt-4 pb-1 custom-scrollbar space-y-2 min-h-0"
       >
         {transcript.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-white/60 text-sm font-space">
-            <div className="text-center">
-              <p>Waiting for conversation to begin...</p>
-            </div>
+          <div className="flex items-center justify-center h-full w-full text-white/60 text-sm font-space">
+            <p className="text-center">Waiting for conversation to begin...</p>
           </div>
         ) : (
           <>
