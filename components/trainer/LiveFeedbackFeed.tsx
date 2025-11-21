@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { FeedbackItem } from '@/lib/trainer/types'
 import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp } from 'lucide-react'
@@ -166,13 +166,13 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9, y: -20 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       className={cn(
-        "relative bg-gradient-to-br rounded-lg p-3 border shadow-xl w-full",
-        "transform transition-all duration-300",
+        "relative bg-gradient-to-br rounded-lg p-3 border shadow-lg",
+        "transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl",
         config.gradientFrom,
         config.gradientTo,
         config.borderColor
@@ -214,60 +214,99 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
 }
 
 export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
+  const feedEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [dismissedItems, setDismissedItems] = useState<Set<string>>(new Set())
   const lastMessageRef = useRef<Map<string, number>>(new Map())
-  const [currentItem, setCurrentItem] = useState<FeedbackItem | null>(null)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const processedIdsRef = useRef<Set<string>>(new Set())
 
-  // Get the most recent feedback item (one at a time, no scrolling)
-  const latestItem = useMemo(() => {
-    if (feedbackItems.length === 0) return null
-    
+  // Deduplication: prevent same message within 30 seconds
+  // Also prevent rapid-fire multiple items
+  const deduplicatedItems = useMemo(() => {
     const now = Date.now()
-    // Get the most recent item that hasn't been shown recently
+    const filtered: FeedbackItem[] = []
+    
+    // Sort by timestamp to process oldest first
     const sortedItems = [...feedbackItems].sort((a, b) => 
-      b.timestamp.getTime() - a.timestamp.getTime()
+      a.timestamp.getTime() - b.timestamp.getTime()
     )
     
+    // Track recent items to prevent bursts (within last 3 seconds)
+    const recentItemTimestamps: number[] = []
+    
     for (const item of sortedItems) {
+      // Skip dismissed items
+      if (dismissedItems.has(item.id)) continue
+      
+      // Skip already processed items
+      if (processedIdsRef.current.has(item.id)) continue
+      
       // Check for duplicate messages within 30 seconds
       const messageKey = item.message.toLowerCase().trim()
       const lastTime = lastMessageRef.current.get(messageKey)
       
       if (lastTime && now - lastTime < 30000) {
-        continue // Skip duplicate
+        continue // Skip duplicate message
       }
       
+      // Check for same type within 5 seconds (prevent rapid-fire same type)
+      const typeKey = `${item.type}-${messageKey}`
+      const lastTypeTime = lastMessageRef.current.get(typeKey)
+      
+      if (lastTypeTime && now - lastTypeTime < 5000) {
+        continue // Skip same type too quickly
+      }
+      
+      // Prevent too many items within 3 seconds (burst protection)
+      // Remove timestamps older than 3 seconds
+      const recentCount = recentItemTimestamps.filter(ts => now - ts < 3000).length
+      if (recentCount >= 3) {
+        continue // Skip if already 3+ items in last 3 seconds
+      }
+      
+      // Mark as processed and update timestamps
+      processedIdsRef.current.add(item.id)
       lastMessageRef.current.set(messageKey, now)
-      return item
+      lastMessageRef.current.set(typeKey, now)
+      recentItemTimestamps.push(now)
+      
+      filtered.push(item)
     }
     
-    // If all are duplicates, return the most recent one anyway
-    return sortedItems[0] || null
-  }, [feedbackItems])
+    // Clean up old processed IDs (keep last 100)
+    if (processedIdsRef.current.size > 100) {
+      const idsArray = Array.from(processedIdsRef.current)
+      const recentIds = new Set(idsArray.slice(-100))
+      processedIdsRef.current = recentIds
+    }
+    
+    // Clean up old message timestamps (older than 60 seconds)
+    for (const [key, time] of lastMessageRef.current.entries()) {
+      if (now - time > 60000) {
+        lastMessageRef.current.delete(key)
+      }
+    }
+    
+    return filtered
+  }, [feedbackItems, dismissedItems])
 
-  // Update current item when a new one arrives
+  const handleDismiss = (id: string) => {
+    setDismissedItems(prev => new Set(prev).add(id))
+  }
+
+  // Auto-scroll to bottom when new items are added
   useEffect(() => {
-    if (latestItem && latestItem.id !== currentItem?.id) {
-      // Clear any existing timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-      
-      // Set the new item
-      setCurrentItem(latestItem)
-      
-      // Auto-dismiss after 8 seconds (or keep showing until new one arrives)
-      timeoutRef.current = setTimeout(() => {
-        setCurrentItem(null)
-      }, 8000)
+    if (scrollContainerRef.current && feedEndRef.current) {
+      const container = scrollContainerRef.current
+      // Always scroll to bottom when new feedback items are added
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        })
+      })
     }
-    
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [latestItem, currentItem])
+  }, [deduplicatedItems.length])
 
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg overflow-hidden">
@@ -278,25 +317,26 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
         </h3>
       </div>
       
-      <div className="flex-1 overflow-hidden p-3 flex items-center justify-center min-h-0">
-        <AnimatePresence mode="wait">
-          {currentItem ? (
-            <FeedbackItemComponent key={currentItem.id} item={currentItem} />
-          ) : (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center justify-center h-full text-white/60 text-sm font-space"
-            >
-              <div className="text-center">
-                <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Waiting for feedback...</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto overflow-x-hidden p-3 custom-scrollbar space-y-2 min-h-0 max-h-full"
+        style={{ maxHeight: '100%' }}
+      >
+        {deduplicatedItems.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-white/60 text-sm font-space">
+            <div className="text-center">
+              <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p>Waiting for feedback...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {deduplicatedItems.map((item) => (
+              <FeedbackItemComponent key={item.id} item={item} />
+            ))}
+          </>
+        )}
+        <div ref={feedEndRef} />
       </div>
     </div>
   )

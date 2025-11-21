@@ -87,27 +87,27 @@ function TranscriptMessage({
       
       {/* Message */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1.5">
           <span className={cn(
-            "text-xs font-medium font-space text-white",
+            "text-sm font-medium font-space text-white",
             isUser ? "text-blue-300" : "text-white/90"
           )}>
             {isUser ? 'You' : agentName || 'Homeowner'}
           </span>
-          <span className="text-xs text-white/70 font-space">{formatTime(entry.timestamp)}</span>
+          <span className="text-sm text-white/70 font-space">{formatTime(entry.timestamp)}</span>
           <button
             onClick={handleCopy}
             className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-700/50"
             aria-label="Copy message"
           >
             {copied ? (
-              <Check className="w-3 h-3 text-green-400" />
+              <Check className="w-4 h-4 text-green-400" />
             ) : (
-              <Copy className="w-3 h-3 text-white/60" />
+              <Copy className="w-4 h-4 text-white/60" />
             )}
           </button>
         </div>
-        <p className="text-sm text-white leading-relaxed break-words font-space">
+        <p className="text-base text-white leading-relaxed break-words font-space">
           {entry.text}
         </p>
       </div>
