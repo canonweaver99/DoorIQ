@@ -110,32 +110,65 @@ export async function PATCH(req: Request) {
     let analytics = currentSession?.analytics || {}
     const hadExistingAnalytics = !!currentSession?.analytics && Object.keys(currentSession.analytics).length > 0
     
+    // Preserve existing voice_analysis if it exists
+    const existingVoiceAnalysis = analytics.voice_analysis
+    
     console.log('🎤 PATCH: Voice analysis check', {
       hasVoiceAnalysis: !!voice_analysis,
+      hasExistingVoiceAnalysis: !!existingVoiceAnalysis,
       hadExistingAnalytics,
       existingAnalyticsKeys: currentSession?.analytics ? Object.keys(currentSession.analytics) : [],
       sessionId: id
     })
     
     if (voice_analysis) {
+      // Validate voice_analysis has actual data (not just empty object)
+      const hasValidVoiceData = voice_analysis && (
+        typeof voice_analysis.avgWPM === 'number' ||
+        typeof voice_analysis.totalFillerWords === 'number' ||
+        typeof voice_analysis.avgPitch === 'number'
+      )
+      
       console.log('🎤 PATCH: Saving voice analysis data', {
         hasVoiceAnalysis: !!voice_analysis,
+        hasValidVoiceData,
         voiceAnalysisKeys: Object.keys(voice_analysis || {}),
         avgWPM: voice_analysis?.avgWPM,
         totalFillerWords: voice_analysis?.totalFillerWords,
         hasPitchData: voice_analysis?.avgPitch > 0,
         sessionId: id
       })
-      analytics = {
-        ...analytics,
-        voice_analysis: voice_analysis
+      
+      if (hasValidVoiceData) {
+        analytics = {
+          ...analytics,
+          voice_analysis: voice_analysis
+        }
+        console.log('✅ Voice analysis merged into analytics object', {
+          analyticsKeys: Object.keys(analytics),
+          voiceAnalysisIncluded: !!analytics.voice_analysis
+        })
+      } else {
+        console.warn('⚠️ PATCH: voice_analysis provided but appears to be empty/invalid, preserving existing if any')
+        // Keep existing voice_analysis if we have one
+        if (existingVoiceAnalysis) {
+          analytics = {
+            ...analytics,
+            voice_analysis: existingVoiceAnalysis
+          }
+          console.log('✅ Preserved existing voice_analysis')
+        }
       }
-      console.log('✅ Voice analysis merged into analytics object', {
-        analyticsKeys: Object.keys(analytics),
-        voiceAnalysisIncluded: !!analytics.voice_analysis
-      })
     } else {
       console.log('ℹ️ PATCH: No voice_analysis data provided in request')
+      // Preserve existing voice_analysis if no new one provided
+      if (existingVoiceAnalysis) {
+        analytics = {
+          ...analytics,
+          voice_analysis: existingVoiceAnalysis
+        }
+        console.log('✅ Preserved existing voice_analysis (no new data provided)')
+      }
     }
     
     // Build update object with all provided fields

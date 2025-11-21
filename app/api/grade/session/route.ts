@@ -790,6 +790,14 @@ Return ONLY valid JSON. No commentary.`
     // Re-check after potential fresh fetch
     const finalVoiceAnalysis = existingAnalytics.voice_analysis || existingVoiceAnalysis
     
+    // Log analytics merge details
+    logger.info('Analytics merge check', {
+      existingAnalyticsKeys: Object.keys(existingAnalytics),
+      hasFinalVoiceAnalysis: !!finalVoiceAnalysis,
+      finalVoiceAnalysisKeys: finalVoiceAnalysis ? Object.keys(finalVoiceAnalysis) : [],
+      sessionId
+    })
+    
     const { error: updateError } = await (supabase as any)
       .from('live_sessions')
       .update({
@@ -821,23 +829,49 @@ Return ONLY valid JSON. No commentary.`
         sale_closed: saleClosed,
         return_appointment: returnAppointment,
         
-        analytics: {
-          line_ratings: normalizedLineRatings,
-          feedback: gradingResult.feedback || { strengths: [], improvements: [], specific_tips: [] },
-          enhanced_metrics: enhancedMetrics,
-          objection_analysis: objectionAnalysis,
-          coaching_plan: coachingPlan,
-          conversation_dynamics: conversationDynamics,
-          failure_analysis: failureAnalysis,
-          timeline_key_moments: gradingResult.timeline_key_moments || [],
-          earnings_data: earningsData,
-          deal_details: dealDetails,
-          graded_at: now,
-          grading_version: '8.0-ultra-fast',
-          scores: gradingResult.scores || {},
-          // Preserve voice_analysis if it exists (use finalVoiceAnalysis which may have been refreshed)
-          ...(finalVoiceAnalysis && { voice_analysis: finalVoiceAnalysis })
-        }
+        analytics: (() => {
+          // Build analytics object ensuring voice_analysis is preserved
+          // Start with existing analytics to preserve voice_analysis and any other existing data
+          const baseAnalytics = { ...existingAnalytics }
+          
+          // Remove voice_analysis from base if it exists (we'll add it back at the end)
+          const preservedVoiceAnalysis = baseAnalytics.voice_analysis || finalVoiceAnalysis
+          delete baseAnalytics.voice_analysis
+          
+          // Build the analytics object
+          const builtAnalytics = {
+            ...baseAnalytics,
+            // Then add grading-specific fields
+            line_ratings: normalizedLineRatings,
+            feedback: gradingResult.feedback || { strengths: [], improvements: [], specific_tips: [] },
+            enhanced_metrics: enhancedMetrics,
+            objection_analysis: objectionAnalysis,
+            coaching_plan: coachingPlan,
+            conversation_dynamics: conversationDynamics,
+            failure_analysis: failureAnalysis,
+            timeline_key_moments: gradingResult.timeline_key_moments || [],
+            earnings_data: earningsData,
+            deal_details: dealDetails,
+            graded_at: now,
+            grading_version: '8.0-ultra-fast',
+            scores: gradingResult.scores || {},
+            // CRITICAL: Always preserve voice_analysis if it exists (must come last to ensure it's not overwritten)
+            ...(preservedVoiceAnalysis && { voice_analysis: preservedVoiceAnalysis })
+          }
+          
+          // Verify voice_analysis is in the final object
+          if (preservedVoiceAnalysis && !builtAnalytics.voice_analysis) {
+            logger.error('CRITICAL: voice_analysis was lost during analytics merge!', {
+              sessionId,
+              hadPreservedVoiceAnalysis: !!preservedVoiceAnalysis,
+              builtAnalyticsKeys: Object.keys(builtAnalytics)
+            })
+            // Force add it back
+            builtAnalytics.voice_analysis = preservedVoiceAnalysis
+          }
+          
+          return builtAnalytics
+        })()
       } as any)
       .eq('id', sessionId)
 

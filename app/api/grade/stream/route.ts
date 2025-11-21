@@ -370,6 +370,50 @@ Return ONLY valid JSON. No commentary.`
           // Extract line ratings if present (for future use)
           // const lineRatings = gradingResult.line_ratings || []
           
+          // Build analytics object - CRITICAL: preserve existing analytics first, then merge grading result
+          // This ensures voice_analysis and any other existing data is preserved
+          const mergedAnalytics = (() => {
+            // Start with existing analytics to preserve voice_analysis and any other existing data
+            const baseAnalytics = { ...existingAnalytics }
+            
+            // Extract and preserve voice_analysis separately
+            const preservedVoiceAnalysis = baseAnalytics.voice_analysis || finalVoiceAnalysis
+            delete baseAnalytics.voice_analysis
+            
+            // Build merged analytics
+            const merged = {
+              ...baseAnalytics,
+              // Then merge grading result (this will overwrite existing fields but NOT voice_analysis)
+              ...gradingResult,
+              // Explicitly set enhanced_metrics
+              enhanced_metrics: enhancedMetrics,
+              // CRITICAL: Always preserve voice_analysis if it exists (must come last to ensure it's not overwritten)
+              ...(preservedVoiceAnalysis && { voice_analysis: preservedVoiceAnalysis })
+            }
+            
+            // Verify voice_analysis is in the final object
+            if (preservedVoiceAnalysis && !merged.voice_analysis) {
+              logger.error('CRITICAL: voice_analysis was lost during analytics merge (streaming)!', {
+                sessionId,
+                hadPreservedVoiceAnalysis: !!preservedVoiceAnalysis,
+                mergedKeys: Object.keys(merged)
+              })
+              // Force add it back
+              merged.voice_analysis = preservedVoiceAnalysis
+            }
+            
+            return merged
+          })()
+          
+          logger.info('Analytics merge check (streaming)', {
+            existingAnalyticsKeys: Object.keys(existingAnalytics),
+            gradingResultKeys: Object.keys(gradingResult || {}),
+            hasFinalVoiceAnalysis: !!finalVoiceAnalysis,
+            mergedAnalyticsKeys: Object.keys(mergedAnalytics),
+            voiceAnalysisInMerged: !!mergedAnalytics.voice_analysis,
+            sessionId
+          })
+          
           // Update database
           const updateData: any = {
             graded: true,
@@ -395,12 +439,7 @@ Return ONLY valid JSON. No commentary.`
             earnings_data: earningsData,
             deal_details: dealDetails,
             scores: gradingResult.scores || {},
-            analytics: {
-              ...gradingResult,
-              enhanced_metrics: enhancedMetrics,
-              // Preserve voice_analysis if it exists (use finalVoiceAnalysis which may have been refreshed)
-              ...(finalVoiceAnalysis && { voice_analysis: finalVoiceAnalysis })
-            }
+            analytics: mergedAnalytics
           }
           
           await (supabase as any)
