@@ -839,7 +839,15 @@ function TrainerPageContent() {
         
         // Get voice analysis data before saving
         const voiceAnalysisData = getVoiceAnalysisData()
-        console.log('🎤 Voice analysis data:', voiceAnalysisData ? 'collected' : 'not available')
+        console.log('🎤 Voice analysis data check:', {
+          hasData: !!voiceAnalysisData,
+          sessionId,
+          transcriptLength: transcript.length,
+          dataKeys: voiceAnalysisData ? Object.keys(voiceAnalysisData) : [],
+          avgWPM: voiceAnalysisData?.avgWPM,
+          totalFillerWords: voiceAnalysisData?.totalFillerWords,
+          hasPitchData: voiceAnalysisData ? voiceAnalysisData.avgPitch > 0 : false
+        })
         
         const saveResponse = await fetch('/api/session', {
           method: 'PATCH',

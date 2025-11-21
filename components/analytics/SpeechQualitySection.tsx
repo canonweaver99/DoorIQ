@@ -100,7 +100,31 @@ function MetricCard({
 }
 
 export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }: SpeechQualitySectionProps) {
-  const overallScore = useMemo(() => calculateSpeechScore(voiceAnalysis), [voiceAnalysis])
+  // Check if we have pitch/volume data (audio analysis) or just transcript-based data
+  const hasPitchData = voiceAnalysis.avgPitch > 0 && voiceAnalysis.pitchVariation > 0
+  const hasVolumeData = voiceAnalysis.avgVolume > -50 // -60 is default/empty
+  
+  const overallScore = useMemo(() => {
+    // Only calculate full score if we have pitch/volume data
+    if (hasPitchData && hasVolumeData) {
+      return calculateSpeechScore(voiceAnalysis)
+    }
+    // Otherwise calculate simplified score based on WPM and fillers only
+    let paceScore = 100
+    if (voiceAnalysis.avgWPM < 140) {
+      paceScore = Math.max(0, 100 - (140 - voiceAnalysis.avgWPM) * 2)
+    } else if (voiceAnalysis.avgWPM > 160) {
+      paceScore = Math.max(0, 100 - (voiceAnalysis.avgWPM - 160) * 2)
+    }
+    
+    let clarityScore = 100
+    clarityScore -= voiceAnalysis.fillerWordsPerMinute * 5
+    clarityScore = Math.max(0, clarityScore)
+    
+    // Weighted average (pace 50%, clarity 50% since we don't have variety/energy)
+    return Math.round((paceScore * 0.5) + (clarityScore * 0.5))
+  }, [voiceAnalysis, hasPitchData, hasVolumeData])
+  
   const scoreColorHex = useMemo(() => getScoreColorHex(overallScore), [overallScore])
   
   return (
@@ -116,7 +140,11 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
         </div>
         <div>
           <h2 className="text-xl font-semibold text-white">Speech Quality Analysis</h2>
-          <p className="text-sm text-gray-400">How you sounded during this pitch</p>
+          <p className="text-sm text-gray-400">
+            {hasPitchData && hasVolumeData 
+              ? 'How you sounded during this pitch' 
+              : 'Analysis based on transcript (audio analysis not available)'}
+          </p>
         </div>
       </div>
 
@@ -148,7 +176,9 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
           </div>
           <p className="text-sm text-gray-300 mb-4">{getScoreMessage(overallScore)}</p>
           <div className="text-sm text-gray-400">
-            Based on Pace • Variety • Energy • Clarity
+            {hasPitchData && hasVolumeData 
+              ? 'Based on Pace • Variety • Energy • Clarity'
+              : 'Based on Pace • Clarity (limited data)'}
           </div>
         </motion.div>
 
@@ -171,37 +201,61 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
             delay={0.2}
           />
 
-          {/* Vocal Variety */}
-          <MetricCard
-            icon={Waves}
-            title="Vocal Variety"
-            value={`${voiceAnalysis.pitchVariation}%`}
-            description={`Range: ${voiceAnalysis.minPitch}-${voiceAnalysis.maxPitch} Hz`}
-            feedback={
-              voiceAnalysis.pitchVariation >= 20
-                ? 'Great pitch variation'
-                : 'Increase pitch variation to sound more engaging'
-            }
-            colorHex="#8b5cf6"
-            delay={0.3}
-          />
+          {/* Vocal Variety - only show if we have pitch data */}
+          {hasPitchData ? (
+            <MetricCard
+              icon={Waves}
+              title="Vocal Variety"
+              value={`${voiceAnalysis.pitchVariation.toFixed(1)}%`}
+              description={`Range: ${voiceAnalysis.minPitch}-${voiceAnalysis.maxPitch} Hz`}
+              feedback={
+                voiceAnalysis.pitchVariation >= 20
+                  ? 'Great pitch variation'
+                  : 'Increase pitch variation to sound more engaging'
+              }
+              colorHex="#8b5cf6"
+              delay={0.3}
+            />
+          ) : (
+            <MetricCard
+              icon={Waves}
+              title="Vocal Variety"
+              value="N/A"
+              description="Audio analysis not available"
+              feedback="Enable microphone access for pitch analysis"
+              colorHex="#6b7280"
+              delay={0.3}
+            />
+          )}
 
-          {/* Energy & Volume */}
-          <MetricCard
-            icon={Volume2}
-            title="Energy & Volume"
-            value={`${voiceAnalysis.avgVolume} dB`}
-            description={`Consistency: ${voiceAnalysis.volumeConsistency.toFixed(1)}% variation`}
-            feedback={
-              voiceAnalysis.avgVolume >= -30 && voiceAnalysis.avgVolume <= -10
-                ? 'Great energy throughout'
-                : voiceAnalysis.avgVolume < -30
-                ? 'Speak up for better presence'
-                : 'Consider speaking slightly softer'
-            }
-            colorHex="#10b981"
-            delay={0.4}
-          />
+          {/* Energy & Volume - only show if we have volume data */}
+          {hasVolumeData ? (
+            <MetricCard
+              icon={Volume2}
+              title="Energy & Volume"
+              value={`${voiceAnalysis.avgVolume} dB`}
+              description={`Consistency: ${voiceAnalysis.volumeConsistency.toFixed(1)}% variation`}
+              feedback={
+                voiceAnalysis.avgVolume >= -30 && voiceAnalysis.avgVolume <= -10
+                  ? 'Great energy throughout'
+                  : voiceAnalysis.avgVolume < -30
+                  ? 'Speak up for better presence'
+                  : 'Consider speaking slightly softer'
+              }
+              colorHex="#10b981"
+              delay={0.4}
+            />
+          ) : (
+            <MetricCard
+              icon={Volume2}
+              title="Energy & Volume"
+              value="N/A"
+              description="Audio analysis not available"
+              feedback="Enable microphone access for volume analysis"
+              colorHex="#6b7280"
+              delay={0.4}
+            />
+          )}
 
           {/* Clarity & Confidence */}
           <MetricCard

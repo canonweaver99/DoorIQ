@@ -271,21 +271,12 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
   }, [transcript])
   
   const getVoiceAnalysisData = useCallback((): VoiceAnalysisData | null => {
-    if (!sessionId || pitchHistoryRef.current.length === 0) return null
+    if (!sessionId) {
+      console.log('🎤 getVoiceAnalysisData: No sessionId')
+      return null
+    }
     
-    const validPitches = pitchHistoryRef.current.filter(p => p > 0)
-    if (validPitches.length === 0) return null
-    
-    // Calculate aggregate metrics
-    const avgPitch = validPitches.reduce((a, b) => a + b, 0) / validPitches.length
-    const minPitch = Math.min(...validPitches)
-    const maxPitch = Math.max(...validPitches)
-    const pitchVariation = calculatePitchVariation(pitchHistoryRef.current)
-    
-    const avgVolume = volumeHistoryRef.current.reduce((a, b) => a + b, 0) / volumeHistoryRef.current.length
-    const volumeConsistency = calculateVolumeConsistency(volumeHistoryRef.current)
-    
-    // Calculate WPM from transcript
+    // Calculate WPM from transcript (always available if we have transcript)
     const currentTime = Date.now()
     const avgWPM = calculateWPMFromTranscript(transcript, sessionStartTimeRef.current, currentTime)
     
@@ -301,29 +292,68 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     // Detect long pauses
     const longPausesCount = detectLongPauses(transcript)
     
-    // Detect monotone periods (low pitch variation for >10 seconds)
+    // Check if we have pitch/volume data from audio analysis
+    const hasPitchData = pitchHistoryRef.current.length > 0
+    const validPitches = hasPitchData ? pitchHistoryRef.current.filter(p => p > 0) : []
+    const hasValidPitches = validPitches.length > 0
+    
+    // Calculate pitch metrics if available
+    let avgPitch = 0
+    let minPitch = 0
+    let maxPitch = 0
+    let pitchVariation = 0
+    let avgVolume = -60
+    let volumeConsistency = 0
     let monotonePeriods = 0
-    if (pitchTimelineRef.current.length > 20) { // Need at least 10 seconds of data (20 * 500ms)
-      const windowSize = 20 // 10 seconds worth of samples
-      for (let i = windowSize; i < pitchTimelineRef.current.length; i++) {
-        const window = pitchTimelineRef.current.slice(i - windowSize, i)
-        const windowPitches = window.map(p => p.value).filter(p => p > 0)
-        if (windowPitches.length > 10) {
-          const windowVariation = calculatePitchVariation(windowPitches)
-          if (windowVariation < 10) { // Low variation
-            monotonePeriods++
-            i += windowSize // Skip ahead to avoid double counting
+    
+    if (hasValidPitches) {
+      avgPitch = validPitches.reduce((a, b) => a + b, 0) / validPitches.length
+      minPitch = Math.min(...validPitches)
+      maxPitch = Math.max(...validPitches)
+      pitchVariation = calculatePitchVariation(pitchHistoryRef.current)
+      
+      if (volumeHistoryRef.current.length > 0) {
+        avgVolume = volumeHistoryRef.current.reduce((a, b) => a + b, 0) / volumeHistoryRef.current.length
+        volumeConsistency = calculateVolumeConsistency(volumeHistoryRef.current)
+      }
+      
+      // Detect monotone periods (low pitch variation for >10 seconds)
+      if (pitchTimelineRef.current.length > 20) { // Need at least 10 seconds of data (20 * 500ms)
+        const windowSize = 20 // 10 seconds worth of samples
+        for (let i = windowSize; i < pitchTimelineRef.current.length; i++) {
+          const window = pitchTimelineRef.current.slice(i - windowSize, i)
+          const windowPitches = window.map(p => p.value).filter(p => p > 0)
+          if (windowPitches.length > 10) {
+            const windowVariation = calculatePitchVariation(windowPitches)
+            if (windowVariation < 10) { // Low variation
+              monotonePeriods++
+              i += windowSize // Skip ahead to avoid double counting
+            }
           }
         }
       }
     }
     
-    // Detect issues
+    // Return data even if pitch/volume isn't available - at least show WPM and filler words
+    // Only require transcript data (which should always be available)
+    if (transcript.length === 0 && !hasValidPitches) {
+      console.log('🎤 getVoiceAnalysisData: No transcript or pitch data available')
+      return null
+    }
+    
+    console.log('🎤 getVoiceAnalysisData: Returning data', {
+      hasPitchData: hasValidPitches,
+      hasTranscript: transcript.length > 0,
+      avgWPM,
+      totalFillerWords
+    })
+    
+    // Detect issues (use defaults for pitch/volume if not available)
     const issues = {
       tooFast: avgWPM > 180,
       tooSlow: avgWPM < 120,
-      monotone: pitchVariation < 15,
-      lowEnergy: avgVolume < -35,
+      monotone: hasValidPitches ? pitchVariation < 15 : false,
+      lowEnergy: hasValidPitches ? avgVolume < -35 : false,
       excessiveFillers: fillerWordsPerMinute > 2,
       poorEndings: false // Would need more sophisticated analysis
     }
