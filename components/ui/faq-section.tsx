@@ -48,7 +48,7 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">{title}</span>
             </h2>
             {description ? (
-              <p className="text-base sm:text-lg lg:text-xl text-slate-100 font-sans leading-relaxed">{description}</p>
+              <p className="text-base sm:text-lg lg:text-xl text-white font-sans leading-relaxed">{description}</p>
             ) : null}
           </motion.div>
 
@@ -80,7 +80,7 @@ const FaqSection = React.forwardRef<HTMLElement, FaqSectionProps>(
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 sm:mb-3 font-space">
                       {contactInfo.title}
                     </h3>
-                    <p className="text-base sm:text-lg md:text-xl text-slate-100 max-w-2xl font-sans leading-relaxed">
+                    <p className="text-base sm:text-lg md:text-xl text-white max-w-2xl font-sans leading-relaxed">
                       {contactInfo.description}
                     </p>
                   </div>
@@ -195,7 +195,7 @@ const FaqItem = React.forwardRef<
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -10, opacity: 0 }}
-                className="text-base sm:text-lg md:text-xl text-slate-100 leading-relaxed font-sans"
+                className="text-base sm:text-lg md:text-xl text-white leading-relaxed font-sans"
               >
                 {answer}
               </motion.p>

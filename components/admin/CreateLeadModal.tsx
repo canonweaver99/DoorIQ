@@ -63,29 +63,31 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
       if (error) {
         console.error('Error creating lead:', error)
         alert('Failed to create lead: ' + error.message)
-      } else {
-        // Reset form
-        setFormData({
-          full_name: '',
-          work_email: '',
-          phone_number: '',
-          job_title: '',
-          company_name: '',
-          industry: '',
-          number_of_reps: '',
-          primary_use_case: '',
-          how_did_you_hear: '',
-          preferred_contact_method: 'email',
-          best_time_to_reach: '',
-          timezone: 'America/New_York',
-          additional_comments: '',
-          estimated_value: '',
-          probability: '',
-          expected_close_date: ''
-        })
-        onSuccess()
-        onClose()
+        setLoading(false)
+        return
       }
+      
+      // Reset form
+      setFormData({
+        full_name: '',
+        work_email: '',
+        phone_number: '',
+        job_title: '',
+        company_name: '',
+        industry: '',
+        number_of_reps: '',
+        primary_use_case: '',
+        how_did_you_hear: '',
+        preferred_contact_method: 'email',
+        best_time_to_reach: '',
+        timezone: 'America/New_York',
+        additional_comments: '',
+        estimated_value: '',
+        probability: '',
+        expected_close_date: ''
+      })
+      onSuccess()
+      onClose()
     } catch (error: any) {
       console.error('Error:', error)
       alert('Failed to create lead: ' + error.message)
@@ -123,7 +125,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   required
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -135,7 +137,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   required
                   value={formData.work_email}
                   onChange={(e) => setFormData({ ...formData, work_email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -146,7 +148,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   type="tel"
                   value={formData.phone_number}
                   onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -158,7 +160,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   required
                   value={formData.job_title}
                   onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
             </div>
@@ -177,7 +179,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   required
                   value={formData.company_name}
                   onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -189,7 +191,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   required
                   value={formData.industry}
                   onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -202,7 +204,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   min="1"
                   value={formData.number_of_reps}
                   onChange={(e) => setFormData({ ...formData, number_of_reps: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -213,7 +215,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   type="text"
                   value={formData.primary_use_case}
                   onChange={(e) => setFormData({ ...formData, primary_use_case: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
             </div>
@@ -233,7 +235,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   min="0"
                   value={formData.estimated_value}
                   onChange={(e) => setFormData({ ...formData, estimated_value: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -246,7 +248,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   max="100"
                   value={formData.probability}
                   onChange={(e) => setFormData({ ...formData, probability: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -257,7 +259,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   type="date"
                   value={formData.expected_close_date}
                   onChange={(e) => setFormData({ ...formData, expected_close_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
             </div>
@@ -275,7 +277,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                   type="text"
                   value={formData.how_did_you_hear}
                   onChange={(e) => setFormData({ ...formData, how_did_you_hear: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 />
               </div>
               <div>
@@ -285,7 +287,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                 <select
                   value={formData.preferred_contact_method}
                   onChange={(e) => setFormData({ ...formData, preferred_contact_method: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
                 >
                   <option value="email">Email</option>
                   <option value="phone">Phone</option>
@@ -301,7 +303,7 @@ export function CreateLeadModal({ isOpen, onClose, onSuccess }: CreateLeadModalP
                 value={formData.additional_comments}
                 onChange={(e) => setFormData({ ...formData, additional_comments: e.target.value })}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
               />
             </div>
           </div>

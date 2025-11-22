@@ -125,14 +125,18 @@ function HeaderContent() {
     setIsAuthPage(onAuthPage)
   }, [pathname])
 
-  // Hide menu on all pages except home page - show on hover
-  // Menu should always be visible on home page (/)
+  // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing - show on hover
+  // Menu should always be visible on home page (/), practice pages (/trainer), sessions page (/sessions), learning center (/learning), and pricing (/pricing)
   useEffect(() => {
     const isHomePage = pathname === '/'
+    const isPracticePage = pathname?.startsWith('/trainer')
+    const isSessionsPage = pathname?.startsWith('/sessions')
+    const isLearningPage = pathname?.startsWith('/learning')
+    const isPricingPage = pathname?.startsWith('/pricing')
     const isLiveSessionPage = pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner'
     
-    // Hide menu on all pages except home page
-    const hideMenu = !isHomePage
+    // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing
+    const hideMenu = !isHomePage && !isPracticePage && !isSessionsPage && !isLearningPage && !isPricingPage
     setShouldHideMenu(hideMenu)
     
     // Set isLiveSession for backward compatibility
@@ -142,9 +146,13 @@ function HeaderContent() {
   // Handle mouse position to show menu at top when hovering on pages where it's hidden
   useEffect(() => {
     const isHomePage = pathname === '/'
+    const isPracticePage = pathname?.startsWith('/trainer')
+    const isSessionsPage = pathname?.startsWith('/sessions')
+    const isLearningPage = pathname?.startsWith('/learning')
+    const isPricingPage = pathname?.startsWith('/pricing')
     
-    // Always show menu on home page
-    if (isHomePage) {
+    // Always show menu on home page, practice page, sessions page, learning center, and pricing
+    if (isHomePage || isPracticePage || isSessionsPage || isLearningPage || isPricingPage) {
       setShowMenuOnHover(true)
       return
     }
@@ -489,6 +497,17 @@ function HeaderContent() {
 
   return (
     <>
+      {/* Home Button - Show when menu is hidden and not on home page or admin pages */}
+      {shouldHideMenu && pathname !== '/' && !pathname?.startsWith('/admin') && (
+        <Link
+          href="/"
+          className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-background/80 dark:bg-black/80 backdrop-blur-xl border border-border/20 dark:border-white/10 rounded-full shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all font-space font-medium"
+        >
+          <Home className="w-4 h-4" />
+          <span className="hidden sm:inline">Home</span>
+        </Link>
+      )}
+
       {/* Mini Navigation Menu - Mobile & Desktop */}
       <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
         isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'

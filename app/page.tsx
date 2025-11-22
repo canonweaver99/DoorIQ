@@ -259,7 +259,7 @@ export default function Home() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="overflow-hidden"
                       >
-                        <p className="text-base sm:text-lg lg:text-xl text-foreground/80 font-sans leading-relaxed px-5 pb-5 pt-0">{faq.answer}</p>
+                        <p className="text-base sm:text-lg lg:text-xl text-white font-sans leading-relaxed px-5 pb-5 pt-0">{faq.answer}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -347,7 +347,7 @@ function ProblemSolutionSection() {
                     <p className="text-lg sm:text-xl lg:text-3xl font-semibold mb-1 sm:mb-2 font-space">
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-400 to-pink-500">{problem.title}</span>
                     </p>
-                    <p className="text-base sm:text-lg lg:text-xl text-foreground/80 font-sans leading-relaxed">
+                    <p className="text-base sm:text-lg lg:text-xl text-white font-sans leading-relaxed">
                       {problem.description}
                     </p>
                   </div>
@@ -612,7 +612,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight tracking-tight font-space font-bold mb-3 sm:mb-4 text-foreground">
             Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Managers</span>
           </h2>
-          <p className="text-sm sm:text-base lg:text-lg text-foreground/70 max-w-2xl mx-auto font-sans">
+          <p className="text-sm sm:text-base lg:text-lg text-white max-w-2xl mx-auto font-sans">
             Scale your team's performance with AI-powered training that delivers measurable results
           </p>
         </motion.div>
@@ -647,10 +647,10 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                             <Icon className="w-[20px] h-[20px] text-purple-400" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-[3.61px] sm:mb-[5.415px] font-space">
+                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground mb-[3.61px] sm:mb-[5.415px] font-space">
                               {benefit.title}
                             </h3>
-                            <p className="text-sm sm:text-base text-foreground/80 leading-[1.35375] font-sans">
+                            <p className="text-sm sm:text-base text-white leading-[1.35375] font-sans">
                               {benefit.description}
                             </p>
                           </div>
@@ -913,7 +913,7 @@ function DashboardSection() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-space font-bold text-foreground pb-2">
             Live <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Dashboards</span> and <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Analytics</span>
           </h2>
-          <p className="text-base sm:text-lg lg:text-xl text-foreground/80 max-w-3xl mx-auto mt-3 sm:mt-4 lg:mt-6 font-sans leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-white max-w-3xl mx-auto mt-3 sm:mt-4 lg:mt-6 font-sans leading-relaxed">
             Track every rep's performance in real-time with detailed analytics and insights
           </p>
         </motion.div>
@@ -1026,7 +1026,7 @@ function ResultsSection() {
               Results That Move the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-purple-300 dark:via-pink-300 dark:to-purple-300">Needle</span>
             </motion.h2>
             <motion.p 
-              className="text-lg sm:text-xl text-slate-200 mt-4 text-center lg:text-left max-w-xl"
+              className="text-lg sm:text-xl text-white mt-4 text-center lg:text-left max-w-xl"
               variants={fadeInUp}
             >
               See measurable improvements in close rates, ramp time, and team performance

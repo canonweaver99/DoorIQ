@@ -399,7 +399,10 @@ export default function SalesLeadsPage() {
       <CreateLeadModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSuccess={fetchLeads}
+        onSuccess={() => {
+          fetchLeads()
+          setShowCreateModal(false)
+        }}
       />
     </div>
   )

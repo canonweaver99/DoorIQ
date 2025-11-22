@@ -61,7 +61,7 @@ export default function FeaturesPage() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.2] tracking-tight font-space font-bold text-foreground mb-4 sm:mb-6">
             All DoorIQ <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Features</span>
           </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-foreground/80 max-w-3xl mx-auto font-sans">
+          <p className="text-base sm:text-lg lg:text-xl text-white max-w-3xl mx-auto font-sans">
             Everything you need to master door-to-door sales with AI-powered training
           </p>
         </motion.div>
@@ -75,7 +75,7 @@ export default function FeaturesPage() {
                 AI Training Agents
               </h2>
             </div>
-            <p className="text-base sm:text-lg text-foreground/80 font-sans max-w-3xl">
+            <p className="text-base sm:text-lg text-white font-sans max-w-3xl">
               Practice with 14+ unique AI homeowner personas, each designed to challenge different aspects of your sales skills
             </p>
           </div>
@@ -136,7 +136,7 @@ export default function FeaturesPage() {
                 Real-Time Performance Metrics
               </h2>
             </div>
-            <p className="text-base sm:text-lg text-foreground/80 font-sans max-w-3xl">
+            <p className="text-base sm:text-lg text-white font-sans max-w-3xl">
               Get instant feedback during every practice session with live metrics and analysis
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function FeaturesPage() {
                         <h3 className="text-lg font-semibold text-foreground mb-2 font-space">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-foreground/80 leading-relaxed font-sans">
+                        <p className="text-sm text-white leading-relaxed font-sans">
                           {feature.description}
                         </p>
                       </div>
@@ -216,7 +216,7 @@ export default function FeaturesPage() {
                 Analytics & Insights
               </h2>
             </div>
-            <p className="text-base sm:text-lg text-foreground/80 font-sans max-w-3xl">
+            <p className="text-base sm:text-lg text-white font-sans max-w-3xl">
               Comprehensive post-session analysis to understand what's working and where to improve
             </p>
           </div>
@@ -275,7 +275,7 @@ export default function FeaturesPage() {
                         <h3 className="text-lg font-semibold text-foreground mb-2 font-space">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-foreground/80 leading-relaxed font-sans">
+                        <p className="text-sm text-white leading-relaxed font-sans">
                           {feature.description}
                         </p>
                       </div>
@@ -296,7 +296,7 @@ export default function FeaturesPage() {
                 Team Management
               </h2>
             </div>
-            <p className="text-base sm:text-lg text-foreground/80 font-sans max-w-3xl">
+            <p className="text-base sm:text-lg text-white font-sans max-w-3xl">
               Powerful tools for managers to track team performance and drive results
             </p>
           </div>
@@ -355,7 +355,7 @@ export default function FeaturesPage() {
                         <h3 className="text-lg font-semibold text-foreground mb-2 font-space">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-foreground/80 leading-relaxed font-sans">
+                        <p className="text-sm text-white leading-relaxed font-sans">
                           {feature.description}
                         </p>
                       </div>
@@ -376,7 +376,7 @@ export default function FeaturesPage() {
                 Practice Features
               </h2>
             </div>
-            <p className="text-base sm:text-lg text-foreground/80 font-sans max-w-3xl">
+            <p className="text-base sm:text-lg text-white font-sans max-w-3xl">
               Flexible training options to practice whenever and however works best for you
             </p>
           </div>
@@ -435,7 +435,7 @@ export default function FeaturesPage() {
                         <h3 className="text-lg font-semibold text-foreground mb-2 font-space">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-foreground/80 leading-relaxed font-sans">
+                        <p className="text-sm text-white leading-relaxed font-sans">
                           {feature.description}
                         </p>
                       </div>
@@ -456,7 +456,7 @@ export default function FeaturesPage() {
                 Gamification
               </h2>
             </div>
-            <p className="text-base sm:text-lg text-foreground/80 font-sans max-w-3xl">
+            <p className="text-base sm:text-lg text-white font-sans max-w-3xl">
               Stay motivated and engaged with achievements, challenges, and friendly competition
             </p>
           </div>
@@ -503,7 +503,7 @@ export default function FeaturesPage() {
                         <h3 className="text-lg font-semibold text-foreground mb-2 font-space">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-foreground/80 leading-relaxed font-sans">
+                        <p className="text-sm text-white leading-relaxed font-sans">
                           {feature.description}
                         </p>
                       </div>

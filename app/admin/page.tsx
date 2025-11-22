@@ -256,13 +256,16 @@ function StatCard({
   size?: "normal" | "small"
 }) {
   const formatChange = (change: number | undefined) => {
-    if (change === undefined || change === 0) return null
+    if (change === undefined || change === null || isNaN(change) || change === 0) return null
     const isPositive = change > 0
     const sign = isPositive ? '+' : ''
     return { value: `${sign}${change}`, isPositive }
   }
   
   const change = formatChange(dailyChange)
+  
+  // Ensure value is always a valid string or number
+  const displayValue = value ?? 0
   
   return (
     <div className={`${bgColor} rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow`}>
@@ -273,7 +276,7 @@ function StatCard({
         </div>
       </div>
       <div className="flex items-baseline gap-2 mb-1">
-        <p className={`${size === "normal" ? "text-3xl" : "text-2xl"} font-space font-bold tracking-tight text-gray-900`}>{value}</p>
+        <p className={`${size === "normal" ? "text-3xl" : "text-2xl"} font-space font-bold tracking-tight text-gray-900`}>{displayValue}</p>
         {change && (
           <span className={`text-sm font-space font-semibold ${
             change.isPositive ? 'text-green-600' : 'text-red-600'

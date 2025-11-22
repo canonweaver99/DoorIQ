@@ -37,10 +37,7 @@ export async function GET(request: NextRequest) {
     // Build query
     let query = supabase
       .from('organizations')
-      .select(`
-        *,
-        users:users!users_organization_id_fkey(count)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
     
     // Apply filters

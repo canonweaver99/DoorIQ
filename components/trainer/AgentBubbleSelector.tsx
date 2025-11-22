@@ -346,7 +346,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center">
       <AnimatedGrid />
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-12 sm:pt-16 md:pt-20">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-16 sm:pt-20 md:pt-24">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -579,7 +579,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   >
                     <div
                       className={cn(
-                        "h-full flex flex-col items-center p-6 relative rounded-xl border-2",
+                        "h-full flex flex-col items-center p-5 relative rounded-xl border-2",
                         cardStyle.border,
                         cardStyle.bg,
                         agent.isLocked && "opacity-50"
@@ -591,9 +591,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       whileTap={!agent.isLocked ? { scale: 0.95 } : {}}
                       disabled={agent.isLocked}
                       tabIndex={-1}
-                      className={cn("relative mb-4 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
+                      className={cn("relative mb-3 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
                     >
-                      <div className="relative h-44 w-44 mx-auto">
+                      <div className="relative h-40 w-40 mx-auto">
                         {/* Concentric circles */}
                         {[0, 1, 2].map((i) => (
                           <motion.div
@@ -674,7 +674,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                                       objectPosition: `${horizontal} ${vertical}`,
                                       transform: `scale(${scaleValue}) translateY(${translateY})`,
                                     }}
-                                    sizes="176px"
+                                    sizes="160px"
                                   />
                                 )
                               })()}
@@ -769,7 +769,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
               >
                 <div
                   className={cn(
-                    "h-full flex flex-col items-center p-6 relative rounded-xl border-2",
+                    "h-full flex flex-col items-center p-5 relative rounded-xl border-2",
                     cardStyle.border,
                     cardStyle.bg,
                     agent.isLocked && "opacity-50"
@@ -781,9 +781,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   whileTap={!agent.isLocked ? { scale: 0.95 } : {}}
                   disabled={agent.isLocked}
                   tabIndex={-1}
-                  className={cn("relative mb-4 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
+                  className={cn("relative mb-3 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
                 >
-                  <div className="relative h-44 w-44 mx-auto">
+                  <div className="relative h-40 w-40 mx-auto">
                     {/* Concentric circles */}
                     {[0, 1, 2].map((i) => (
                       <motion.div
@@ -897,7 +897,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                                 alt={agent.name}
                                 fill
                                 style={finalStyle}
-                                sizes="352px"
+                                sizes="320px"
                                 quality={95}
                                 priority={index < 6}
                                 unoptimized={agent.image.includes(' ') || agent.image.includes('&')}

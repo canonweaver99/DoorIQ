@@ -43,7 +43,7 @@ export default function AboutPage() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.2] tracking-tight font-space font-bold text-foreground mb-4 sm:mb-6">
             About <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">DoorIQ</span>
           </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-foreground/80 max-w-3xl mx-auto font-sans">
+          <p className="text-base sm:text-lg lg:text-xl text-white max-w-3xl mx-auto font-sans">
             We help door-to-door teams practice the hard conversations before they knock. Our AI homeowners push back, hesitate, and ask real questions so reps can build confidence and close more deals.
           </p>
         </motion.div>
@@ -63,7 +63,7 @@ export default function AboutPage() {
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-space font-bold text-foreground mb-4">
                   Our Mission
                 </h2>
-                <p className="text-base sm:text-lg text-foreground/80 leading-relaxed font-sans">
+                <p className="text-base sm:text-lg text-white leading-relaxed font-sans">
                   Deliver realistic training reps love, and analytics managers trust. We're building tools that give sales teams unfair leverage—the kind that comes from practicing with AI that doesn't hold back.
                 </p>
               </div>
@@ -80,7 +80,7 @@ export default function AboutPage() {
                 What We're Building
               </h2>
             </div>
-            <p className="text-base sm:text-lg text-foreground/80 font-sans max-w-3xl">
+            <p className="text-base sm:text-lg text-white font-sans max-w-3xl">
               Tools that actually help people get better at what they do
             </p>
           </div>
@@ -175,7 +175,7 @@ export default function AboutPage() {
                   </p>
                 </div>
                 
-                <div className="space-y-4 text-base sm:text-lg text-foreground/80 leading-relaxed font-sans">
+                <div className="space-y-4 text-base sm:text-lg text-white leading-relaxed font-sans">
                   <p>
                     Hey, I am Canon. I was studying economics in college and doing everything the "right" way, but it never felt right to me. I kept learning more from building projects on my own than I ever did sitting through lectures. Eventually I realized I was trying to force myself into a path that just wasn't mine, so I dropped out and committed fully to entrepreneurship and AI development.
                   </p>
@@ -193,15 +193,15 @@ export default function AboutPage() {
                 <div className="mt-8 flex flex-wrap gap-3">
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/30">
                     <Code className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm text-foreground/80 font-sans">AI Development</span>
+                    <span className="text-sm text-white font-sans">AI Development</span>
                   </div>
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/30">
                     <Dumbbell className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm text-foreground/80 font-sans">Fitness</span>
+                    <span className="text-sm text-white font-sans">Fitness</span>
                   </div>
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/30">
                     <Rocket className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm text-foreground/80 font-sans">Entrepreneurship</span>
+                    <span className="text-sm text-white font-sans">Entrepreneurship</span>
                   </div>
                 </div>
               </div>

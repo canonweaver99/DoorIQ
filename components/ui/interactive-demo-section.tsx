@@ -178,7 +178,7 @@ export function InteractiveDemoSection() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.1] tracking-tight font-space font-bold mb-3 sm:mb-4 lg:mb-6 px-2 sm:px-0 text-white">
             See <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">DoorIQ</span> in Action
           </h2>
-          <p className="text-base sm:text-lg lg:text-xl text-slate-100 max-w-3xl mx-auto px-2 sm:px-0 font-sans leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-white max-w-3xl mx-auto px-2 sm:px-0 font-sans leading-relaxed">
             Watch how a sales rep trains with an AI homeowner in under 2 minutes. 
             No scripts. No staged demos. Just real practice.
           </p>
@@ -192,7 +192,7 @@ export function InteractiveDemoSection() {
           >
             <motion.div 
               ref={videoContainerRef}
-              className="relative aspect-video rounded-xl sm:rounded-2xl overflow-hidden bg-black/50 backdrop-blur-sm border border-indigo-500/30 shadow-lg shadow-indigo-500/10"
+              className="relative aspect-video rounded-xl sm:rounded-2xl overflow-hidden bg-black/50 backdrop-blur-sm border border-purple-500/30"
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.3 }}
             >
@@ -226,7 +226,7 @@ export function InteractiveDemoSection() {
               
               {/* Step indicator */}
               <motion.div 
-                className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 z-10 border border-indigo-500/30"
+                className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 z-10 border border-purple-500/30"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.8 }}
@@ -284,8 +284,8 @@ export function InteractiveDemoSection() {
                   onClick={() => handleStepClick(index)}
                   className={`cursor-pointer rounded-lg sm:rounded-xl border transition-all duration-300 ${
                     activeStep === index 
-                      ? 'border-indigo-500/50 bg-black/70 backdrop-blur-sm p-4 sm:p-5 lg:p-6 scale-[1.02] shadow-lg shadow-indigo-500/20' 
-                      : 'border-indigo-500/30 bg-black/50 backdrop-blur-sm p-3 sm:p-4 hover:border-indigo-400/40 hover:bg-black/60 opacity-80 hover:opacity-90'
+                      ? 'border-purple-500/50 bg-black/70 backdrop-blur-sm p-4 sm:p-5 lg:p-6 scale-[1.02]' 
+                      : 'border-purple-500/30 bg-black/50 backdrop-blur-sm p-3 sm:p-4 hover:border-purple-400/40 hover:bg-black/60 opacity-80 hover:opacity-90'
                   }`}
                   whileHover={{ scale: activeStep === index ? 1.02 : 1.01 }}
                   whileTap={{ scale: 0.98 }}
@@ -295,21 +295,21 @@ export function InteractiveDemoSection() {
                       activeStep === index ? 'w-10 h-10 sm:w-12 sm:h-12' : 'w-8 h-8 sm:w-10 sm:h-10'
                     } ${
                       activeStep === index 
-                        ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30' 
-                        : 'bg-indigo-500/20'
+                        ? 'bg-purple-500/30' 
+                        : 'bg-purple-500/20'
                     }`}>
                       {step.icon === 'play' && <Play className={`transition-all duration-300 ${
                         activeStep === index ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-4 h-4'
-                      } text-indigo-400`} />}
+                      } text-purple-400`} />}
                       {step.icon === 'check' && <CheckCircle2 className={`transition-all duration-300 ${
                         activeStep === index ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-4 h-4'
                       } text-purple-400`} />}
                       {step.icon === 'trend' && <TrendingUp className={`transition-all duration-300 ${
                         activeStep === index ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-4 h-4'
-                      } text-pink-400`} />}
+                      } text-purple-400`} />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className={`text-xs sm:text-sm font-semibold text-indigo-400 mb-1 transition-all duration-300 font-space ${activeStep === index ? 'opacity-100' : 'opacity-70'}`}>
+                      <div className={`text-xs sm:text-sm font-semibold text-purple-400 mb-1 transition-all duration-300 font-space ${activeStep === index ? 'opacity-100' : 'opacity-70'}`}>
                         Step {step.id}
                       </div>
                       <h3 className={`font-semibold text-white mb-1 transition-all duration-300 font-space ${

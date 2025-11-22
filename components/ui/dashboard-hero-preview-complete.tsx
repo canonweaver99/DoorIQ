@@ -83,10 +83,10 @@ export function DashboardHeroPreview() {
               </div>
 
               {/* Discovery */}
-              <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 rounded-xl p-5 border border-blue-500/20">
+              <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 rounded-xl p-5 border border-purple-500/20">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-blue-300">Discovery</h3>
-                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <h3 className="text-sm font-semibold text-purple-300">Discovery</h3>
+                  <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -179,7 +179,7 @@ export function DashboardHeroPreview() {
                   {[
                     { name: 'Skeptical Sam', earned: '93', percent: 87, avatar: '/agents/sam.png', color: 'from-purple-500/30' },
                     { name: 'Busy Beth', earned: '78', percent: 73, avatar: '/agents/beth.png', color: 'from-red-500/30' },
-                    { name: 'Too Expensive Tim', earned: '89', percent: 84, avatar: '/agents/tim.png', color: 'from-blue-500/30' },
+                    { name: 'Too Expensive Tim', earned: '89', percent: 84, avatar: '/agents/tim.png', color: 'from-purple-500/30' },
                     { name: 'Think About It Tina', earned: '85', percent: 81, avatar: '/agents/tina.png', color: 'from-purple-500/30' },
                     { name: 'Not Interested Nick', earned: '82', percent: 76, avatar: '/agents/nick.png', color: 'from-purple-500/30' }
                   ].map((session, index) => {
@@ -240,12 +240,12 @@ export function DashboardHeroPreview() {
 
         {/* Performance Tab */}
         {activeTab === 'performance' && (
-          <div className="min-h-[400px] bg-gradient-to-br from-blue-900/5 to-transparent rounded-xl p-8 border border-blue-500/10">
+          <div className="min-h-[400px] bg-gradient-to-br from-purple-900/5 to-transparent rounded-xl p-8 border border-purple-500/10">
             <h3 className="text-2xl font-bold text-white mb-6">Detailed Performance Metrics</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
                 { label: 'Overall Average', value: '83%', color: 'text-green-400' },
-                { label: 'Sessions Completed', value: '47', color: 'text-blue-400' },
+                { label: 'Sessions Completed', value: '47', color: 'text-purple-400' },
                 { label: 'Improvement Rate', value: '+12%', color: 'text-purple-400' },
                 { label: 'Consistency Score', value: '91%', color: 'text-emerald-400' },
               ].map((metric, i) => (
@@ -282,7 +282,7 @@ export function DashboardHeroPreview() {
 
         {/* Upload Tab */}
         {activeTab === 'upload' && (
-          <div className="min-h-[400px] bg-gradient-to-br from-indigo-900/5 to-transparent rounded-xl p-8 border border-indigo-500/10 flex flex-col items-center justify-center">
+          <div className="min-h-[400px] bg-gradient-to-br from-purple-900/5 to-transparent rounded-xl p-8 border border-purple-500/10 flex flex-col items-center justify-center">
             <svg className="w-16 h-16 text-purple-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
