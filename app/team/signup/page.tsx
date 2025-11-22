@@ -3,7 +3,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Building2, Users, ArrowRight, CheckCircle2, Loader2, TrendingUp, LogIn, DollarSign, TrendingDown, Clock } from 'lucide-react'
+import { Building2, Users, ArrowRight, CheckCircle2, Loader2, TrendingUp, LogIn } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +14,7 @@ function TeamSignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const planType = searchParams.get('plan') || 'team' // 'starter' or 'team'
+  const billingParam = searchParams.get('billing') // 'annual' or null
   
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -23,7 +26,7 @@ function TeamSignupContent() {
   const [seatCount, setSeatCount] = useState(planType === 'starter' ? 5 : 25)
   const [userEmail, setUserEmail] = useState('')
   const [userName, setUserName] = useState('')
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(billingParam === 'annual' ? 'annual' : 'monthly')
   
   // ROI Calculator state
   const [roiDealValue, setRoiDealValue] = useState(500)
@@ -51,40 +54,38 @@ function TeamSignupContent() {
   const annualSavings = monthlyCost * 12 - annualCost
   const trialDays = 14
 
-  // ROI Calculator
+  // ROI Calculator - matching home page format
   const calculateROI = () => {
     if (seatCount === 0 || roiDealValue === 0) {
       return {
         monthlyCost: 0,
-        extraDealsPerMonth: 0,
-        revenueIncrease: 0,
+        extraRevenue: 0,
+        netProfit: 0,
         roi: 0,
-        paybackWeeks: 0
+        roiMultiplier: 0
       }
     }
 
     const monthlyCostCalc = seatCount * planConfig.pricePerSeat
     
     // Each rep closes 1 extra deal per month
-    const extraDealsPerMonth = seatCount * 1
+    const extraRevenue = seatCount * roiDealValue
     
-    // Revenue increase from extra deals
-    const revenueIncrease = extraDealsPerMonth * roiDealValue
+    // Net profit
+    const netProfit = extraRevenue - monthlyCostCalc
     
-    // ROI calculation: (Revenue Increase - Cost) / Cost * 100
-    const roi = monthlyCostCalc > 0 ? ((revenueIncrease - monthlyCostCalc) / monthlyCostCalc) * 100 : 0
+    // ROI calculation: (Net Profit / Cost) * 100
+    const roi = monthlyCostCalc > 0 ? (netProfit / monthlyCostCalc) * 100 : 0
     
-    // Payback period (weeks to recover cost)
-    // Convert monthly revenue to weekly: monthlyRevenue / 4.33 (average weeks per month)
-    const weeklyRevenue = revenueIncrease / 4.33
-    const paybackWeeks = weeklyRevenue > 0 ? monthlyCostCalc / weeklyRevenue : 0
+    // ROI multiplier
+    const roiMultiplier = monthlyCostCalc > 0 ? extraRevenue / monthlyCostCalc : 0
     
     return {
       monthlyCost: monthlyCostCalc,
-      extraDealsPerMonth: extraDealsPerMonth,
-      revenueIncrease: Math.round(revenueIncrease),
-      roi: Math.round(roi * 10) / 10,
-      paybackWeeks: Math.round(paybackWeeks * 10) / 10
+      extraRevenue: Math.round(extraRevenue),
+      netProfit: Math.round(netProfit),
+      roi: Math.round(roi),
+      roiMultiplier: Math.round(roiMultiplier * 10) / 10
     }
   }
 
@@ -362,85 +363,101 @@ function TeamSignupContent() {
                 </p>
               </div>
 
-              {/* ROI Calculator */}
-              <div className="bg-gradient-to-br from-purple-950/40 via-purple-900/30 to-blue-950/40 border border-purple-700/30 rounded-xl p-6 mt-6 shadow-lg shadow-purple-900/20 backdrop-blur-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-purple-500/20 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-space font-bold text-white">ROI Calculator</h3>
-                    <p className="text-xs text-gray-400 font-sans mt-0.5">
-                      See how DoorIQ impacts your team's performance
-                    </p>
-                  </div>
-                </div>
+              {/* ROI Calculator - Matching Home Page */}
+              <div className="relative mt-6">
+                {/* Grid Background */}
+                <div
+                  className={cn(
+                    'z-[-10] pointer-events-none absolute -inset-8',
+                    'bg-[linear-gradient(to_right,theme(colors.white/.06)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.white/.06)_1px,transparent_1px)]',
+                    'bg-[size:24px_24px]',
+                    '[mask-image:radial-gradient(ellipse_100%_100%_at_50%_50%,var(--background)_20%,transparent_70%)]',
+                  )}
+                />
                 
-                <div className="space-y-4 mt-6">
-                  <div>
-                    <Label htmlFor="dealValue" className="text-gray-200 text-sm font-medium font-sans mb-2 block">
-                      Average Deal Value ($)
-                    </Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <Input
-                        id="dealValue"
-                        type="number"
-                        value={roiDealValue}
-                        onChange={(e) => setRoiDealValue(parseFloat(e.target.value) || 0)}
-                        className="pl-10 mt-1 bg-gray-800/50 border-gray-600/50 text-white font-sans text-base h-12 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                        placeholder="500"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2 font-sans">
-                      Enter your average deal value to calculate ROI
-                    </p>
+                {/* ROI Calculator Card */}
+                <div className="bg-gradient-to-br from-card via-card/95 to-card dark:from-black dark:via-slate-950 dark:to-black border-2 border-border/40 dark:border-white/40 rounded-2xl p-5 sm:p-6 md:p-8 relative z-10 shadow-2xl shadow-purple-500/10">
+                  {/* ROI Header */}
+                  <div className="text-center mb-6">
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground mb-2 tracking-tight font-space" style={{ letterSpacing: '-0.02em' }}>
+                      Calculate Your ROI
+                    </h3>
                   </div>
-                </div>
 
-                {/* ROI Results */}
-                {roiData.monthlyCost > 0 && roiDealValue > 0 && (
-                  <div className="mt-6 pt-6 border-t border-purple-700/30">
-                    <div className="grid grid-cols-2 gap-4 mb-5">
-                      <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/30 hover:border-gray-600/50 transition-colors">
-                        <p className="text-xs text-gray-400 font-sans mb-1.5">Monthly Cost</p>
-                        <div className="flex items-center gap-2">
-                          <TrendingDown className="w-4 h-4 text-gray-400" />
-                          <p className="text-xl font-space font-bold text-white">${roiData.monthlyCost.toLocaleString()}</p>
-                        </div>
-                      </div>
-                      <div className="bg-purple-900/20 rounded-lg p-4 border border-purple-700/30 hover:border-purple-600/50 transition-colors">
-                        <p className="text-xs text-gray-400 font-sans mb-1.5">Extra Deals/Month</p>
-                        <p className="text-xl font-space font-bold text-purple-400">{roiData.extraDealsPerMonth}</p>
-                      </div>
-                      <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30 hover:border-green-600/50 transition-colors">
-                        <p className="text-xs text-gray-400 font-sans mb-1.5">Revenue Increase</p>
-                        <p className="text-xl font-space font-bold text-green-400">+${roiData.revenueIncrease.toLocaleString()}/mo</p>
-                      </div>
-                      <div className="bg-purple-900/30 rounded-lg p-4 border border-purple-600/40 hover:border-purple-500/60 transition-colors relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-transparent"></div>
-                        <p className="text-xs text-gray-300 font-sans mb-1.5 relative z-10">ROI</p>
-                        <p className="text-2xl font-space font-bold text-purple-300 relative z-10">{roiData.roi > 0 ? '+' : ''}{roiData.roi.toFixed(1)}%</p>
+                  {/* Input for Deal Value */}
+                  <div className="mb-6">
+                    <div>
+                      <label className="block text-sm sm:text-base font-bold text-foreground mb-3 text-center tracking-wide font-space">
+                        Value per Extra Deal ($):
+                      </label>
+                      <div className="text-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="1000"
+                          step="50"
+                          value={roiDealValue || ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0
+                            setRoiDealValue(Math.max(0, Math.min(1000, value)))
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') {
+                              setRoiDealValue(500)
+                            }
+                          }}
+                          className="inline-block px-4 py-2 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-xl font-bold font-space text-center w-32 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
+                        />
                       </div>
                     </div>
-                    
-                    <div className="mt-5 pt-5 border-t border-purple-700/20">
-                      <div className="flex items-center justify-between bg-blue-900/20 rounded-lg p-4 border border-blue-700/30">
+                  </div>
+
+                  {/* ROI Results - Enhanced (Monthly) */}
+                  {roiData.monthlyCost > 0 && roiDealValue > 0 && (
+                    <div className="space-y-3 border-t-2 border-border/30 dark:border-white/30 pt-5 pb-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-foreground text-sm font-medium font-sans">Extra Revenue:</span>
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-blue-400" />
-                          <span className="text-sm text-gray-300 font-sans font-medium">Payback Period</span>
+                          <motion.span 
+                            key={Math.round(roiData.extraRevenue)}
+                            initial={{ scale: 1 }}
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ duration: 0.3 }}
+                            className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-300 text-lg sm:text-xl font-bold font-space"
+                          >
+                            +${Math.round(roiData.extraRevenue).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
+                          </motion.span>
                         </div>
-                        <span className="text-xl font-space font-bold text-blue-400">
-                          {roiData.paybackWeeks < 0.1 ? '<0.1' : roiData.paybackWeeks.toFixed(1)} week{roiData.paybackWeeks !== 1 ? 's' : ''}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-foreground text-sm font-medium font-sans">DoorIQ Cost:</span>
+                        <span className="text-red-500 dark:text-red-400 text-lg sm:text-xl font-bold font-space">
+                          -${roiData.monthlyCost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                         </span>
                       </div>
+                      <div className="border-t-2 border-emerald-500/40 pt-3 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg px-3 py-2 -mx-3 sm:-mx-4">
+                        <span className="text-foreground text-base font-semibold font-sans">Net Profit:</span>
+                        <motion.div
+                          key={Math.round(roiData.netProfit)}
+                          initial={{ scale: 1 }}
+                          animate={{ scale: [1, 1.05, 1] }}
+                          transition={{ duration: 0.3 }}
+                          className="flex flex-col items-end gap-1"
+                        >
+                          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400 text-2xl sm:text-3xl md:text-4xl font-black font-space">
+                            ${Math.round(roiData.netProfit).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
+                          </span>
+                          <span className="text-emerald-400 text-sm font-semibold font-sans">
+                            {roiData.roiMultiplier.toFixed(1)}x ROI ({Math.round(roiData.roi)}%)
+                          </span>
+                        </motion.div>
+                      </div>
+                      <p className="text-xs text-foreground/60 italic font-sans pt-2 border-t border-border/20">
+                        *Assumes each rep closes just 1 extra deal per month
+                      </p>
                     </div>
-                    
-                    <p className="text-xs text-gray-500 mt-4 text-center font-sans italic">
-                      *Based on each rep closing 1 extra deal per month. Results may vary.
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-4">

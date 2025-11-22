@@ -210,18 +210,21 @@ function PricingPageContent() {
   }
 
   const handleStarterPlanClick = () => {
-    // Redirect to signup page for starter plan
-    window.location.href = '/team/signup?plan=starter'
+    // Redirect to signup page for starter plan with billing period
+    const billingParam = billingPeriod === 'annual' ? '&billing=annual' : ''
+    window.location.href = `/team/signup?plan=starter${billingParam}`
   }
 
   const handleTeamPlanClick = () => {
-    // Redirect to team signup page for custom seat selection
-    window.location.href = '/team/signup?plan=team'
+    // Redirect to team signup page for custom seat selection with billing period
+    const billingParam = billingPeriod === 'annual' ? '&billing=annual' : ''
+    window.location.href = `/team/signup?plan=team${billingParam}`
   }
 
   const handleEnterprisePlanClick = () => {
-    // Redirect to enterprise signup page
-    window.location.href = '/enterprise/signup'
+    // Redirect to enterprise signup page with billing period
+    const billingParam = billingPeriod === 'annual' ? '?billing=annual' : ''
+    window.location.href = `/enterprise/signup${billingParam}`
   }
 
   return (
