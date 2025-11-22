@@ -108,7 +108,7 @@ export default function AdminLayout({
       </div>
 
       {/* Main Content */}
-      <div className="ml-64">
+      <div className="ml-64 pt-6">
         {children}
       </div>
     </div>
