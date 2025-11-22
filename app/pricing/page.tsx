@@ -53,7 +53,7 @@ function PricingPageContent() {
       subtitle: 'Perfect for small teams getting started',
       price: 99,
       priceLabel: '/month per rep',
-      repRange: '1-10 reps',
+      repRange: '1-20 reps',
       icon: Users,
       features: [
         'Unlimited practice sessions',
@@ -72,7 +72,7 @@ function PricingPageContent() {
       subtitle: 'Ideal for scaling sales teams',
       price: 69,
       priceLabel: '/month per rep',
-      repRange: '20-100 reps',
+      repRange: '21-100 reps',
       icon: TrendingUp,
       features: [
         'Everything in Starter',
@@ -130,21 +130,18 @@ function PricingPageContent() {
   // Calculate ROI
   const calculateROI = () => {
     // Determine tier based on reps (matching current pricing cards)
-    let monthlyCost: number
+    let monthlyCost: number = 0
     if (roiReps === 0) {
       monthlyCost = 0
-    } else if (roiReps >= 1 && roiReps <= 10) {
-      // Starter tier: 1-10 reps at $99/month per rep
+    } else if (roiReps >= 1 && roiReps <= 20) {
+      // Starter tier: 1-20 reps at $99/month per rep
       monthlyCost = roiReps * 99
-    } else if (roiReps >= 20 && roiReps <= 100) {
-      // Team tier: 20-100 reps at $69/month per rep
+    } else if (roiReps >= 21 && roiReps < 100) {
+      // Team tier: 21-99 reps at $69/month per rep
       monthlyCost = roiReps * 69
     } else if (roiReps >= 100) {
       // Enterprise tier: 100+ reps at $49/month per rep (minimum)
       monthlyCost = Math.max(100, roiReps) * 49
-    } else {
-      // For reps between 11-19, use Team tier pricing ($69/month per rep)
-      monthlyCost = roiReps * 69
     }
 
     const extraRevenue = roiReps * roiDealValue // 1 extra deal per rep per month
@@ -638,7 +635,7 @@ function PricingPageContent() {
                         },
                         {
                         question: "What happens if I need to add or remove reps?",
-                        answer: "You can adjust your team size anytime. We'll prorate your billing based on the changes. Starter tier is for 1-10 reps, Team tier is for 20-100 reps, and Enterprise tier requires a minimum of 100 reps."
+                        answer: "You can adjust your team size anytime. We'll prorate your billing based on the changes. Starter tier is for 1-20 reps, Team tier is for 21-100 reps, and Enterprise tier requires a minimum of 100 reps."
                       },
                       {
                         question: "Can I upgrade or downgrade between tiers?",

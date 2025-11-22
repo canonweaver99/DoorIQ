@@ -526,36 +526,30 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
 
   // Calculate pricing based on number of reps - Monthly pricing by tier (matching pricing page)
   const calculatePricing = (reps: number) => {
-    let monthlyPrice: number
-    let perRepRate: number
-    let tierName: string
-    let tierRange: string
+    let monthlyPrice: number = 0
+    let perRepRate: number = 99
+    let tierName: string = 'STARTER'
+    let tierRange: string = '1-20 reps'
     
     // Determine tier and pricing (matching current pricing cards)
-    if (reps >= 1 && reps <= 10) {
-      // Starter tier: 1-10 reps at $99/month per rep
+    if (reps >= 1 && reps <= 20) {
+      // Starter tier: 1-20 reps at $99/month per rep
       monthlyPrice = reps * 99
       perRepRate = 89
       tierName = 'STARTER'
-      tierRange = '1-10 reps'
-    } else if (reps >= 20 && reps <= 100) {
-      // Team tier: 20-100 reps at $69/month per rep
+      tierRange = '1-20 reps'
+    } else if (reps >= 21 && reps < 100) {
+      // Team tier: 21-99 reps at $69/month per rep
       monthlyPrice = reps * 69
       perRepRate = 69
       tierName = 'TEAM'
-      tierRange = '20-100 reps'
+      tierRange = '21-100 reps'
     } else if (reps >= 100) {
       // Enterprise tier: 100+ reps at $49/month per rep (minimum)
       monthlyPrice = Math.max(100, reps) * 49
       perRepRate = 49
       tierName = 'ENTERPRISE'
       tierRange = '100-500+ reps'
-    } else {
-      // For reps between 11-19, use Team tier pricing ($69/month per rep)
-      monthlyPrice = reps * 69
-      perRepRate = 69
-      tierName = 'TEAM'
-      tierRange = '20-100 reps'
     }
     
     // Calculate annual pricing (15% discount)
