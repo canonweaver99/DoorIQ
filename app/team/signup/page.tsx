@@ -164,6 +164,24 @@ function TeamSignupContent() {
     setError(null)
 
     try {
+      // Send notification email first (don't wait for it)
+      fetch('/api/team/signup-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          organizationName: organizationName.trim(),
+          seatCount,
+          planType: planConfig.planId,
+          billingPeriod,
+          monthlyCost,
+          annualCost: billingPeriod === 'annual' ? annualCost : undefined,
+          userEmail: userEmail.trim() || undefined,
+          userName: userName.trim() || undefined,
+        }),
+      }).catch(err => console.error('Failed to send notification email:', err))
+
       const response = await fetch('/api/team/signup', {
         method: 'POST',
         headers: {
