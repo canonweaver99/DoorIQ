@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Building2, Users, ArrowRight, CheckCircle2, Loader2, TrendingUp, LogIn, Calendar } from 'lucide-react'
+import { Building2, Users, ArrowRight, CheckCircle2, Loader2, TrendingUp, LogIn, Calendar, DollarSign, TrendingDown, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -339,29 +339,36 @@ function EnterpriseSignupContent() {
                 </div>
 
                 {/* ROI Calculator */}
-                <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-700/50 rounded-lg p-6 mt-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-5 h-5 text-purple-400" />
-                    <h3 className="text-lg font-space font-semibold text-white">ROI Calculator</h3>
-                  </div>
-                  <p className="text-sm text-gray-300 mb-4 font-sans">
-                    See how DoorIQ impacts your team's performance
-                  </p>
-                  
-                  <div className="space-y-4">
+                <div className="bg-gradient-to-br from-purple-950/40 via-purple-900/30 to-blue-950/40 border border-purple-700/30 rounded-xl p-6 mt-6 shadow-lg shadow-purple-900/20 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-purple-500/20 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-purple-400" />
+                    </div>
                     <div>
-                      <Label htmlFor="dealValue" className="text-gray-300 text-sm font-sans">
+                      <h3 className="text-xl font-space font-bold text-white">ROI Calculator</h3>
+                      <p className="text-xs text-gray-400 font-sans mt-0.5">
+                        See how DoorIQ impacts your team's performance
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4 mt-6">
+                    <div>
+                      <Label htmlFor="dealValue" className="text-gray-200 text-sm font-medium font-sans mb-2 block">
                         Average Deal Value ($)
                       </Label>
-                      <Input
-                        id="dealValue"
-                        type="number"
-                        value={roiDealValue}
-                        onChange={(e) => setRoiDealValue(parseFloat(e.target.value) || 0)}
-                        className="mt-1 bg-gray-700 border-gray-600 text-white font-sans"
-                        placeholder="5000"
-                      />
-                      <p className="text-xs text-gray-400 mt-1 font-sans">
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Input
+                          id="dealValue"
+                          type="number"
+                          value={roiDealValue}
+                          onChange={(e) => setRoiDealValue(parseFloat(e.target.value) || 0)}
+                          className="pl-10 mt-1 bg-gray-800/50 border-gray-600/50 text-white font-sans text-base h-12 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          placeholder="500"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2 font-sans">
                         Enter your average deal value to calculate ROI
                       </p>
                     </div>
@@ -369,34 +376,43 @@ function EnterpriseSignupContent() {
 
                   {/* ROI Results */}
                   {roiData.monthlyCost > 0 && roiDealValue > 0 && (
-                    <div className="mt-6 pt-4 border-t border-purple-700/50">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs text-gray-400 font-sans">Monthly Cost</p>
-                          <p className="text-lg font-space font-bold text-white">${roiData.monthlyCost.toLocaleString()}</p>
+                    <div className="mt-6 pt-6 border-t border-purple-700/30">
+                      <div className="grid grid-cols-2 gap-4 mb-5">
+                        <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/30 hover:border-gray-600/50 transition-colors">
+                          <p className="text-xs text-gray-400 font-sans mb-1.5">Monthly Cost</p>
+                          <div className="flex items-center gap-2">
+                            <TrendingDown className="w-4 h-4 text-gray-400" />
+                            <p className="text-xl font-space font-bold text-white">${roiData.monthlyCost.toLocaleString()}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-400 font-sans">Extra Deals/Month</p>
-                          <p className="text-lg font-space font-bold text-purple-400">{roiData.extraDealsPerMonth}</p>
+                        <div className="bg-purple-900/20 rounded-lg p-4 border border-purple-700/30 hover:border-purple-600/50 transition-colors">
+                          <p className="text-xs text-gray-400 font-sans mb-1.5">Extra Deals/Month</p>
+                          <p className="text-xl font-space font-bold text-purple-400">{roiData.extraDealsPerMonth}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-400 font-sans">Revenue Increase</p>
-                          <p className="text-lg font-space font-bold text-green-400">+${roiData.revenueIncrease.toLocaleString()}/mo</p>
+                        <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30 hover:border-green-600/50 transition-colors">
+                          <p className="text-xs text-gray-400 font-sans mb-1.5">Revenue Increase</p>
+                          <p className="text-xl font-space font-bold text-green-400">+${roiData.revenueIncrease.toLocaleString()}/mo</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-400 font-sans">ROI</p>
-                          <p className="text-lg font-space font-bold text-purple-400">{roiData.roi > 0 ? '+' : ''}{roiData.roi}%</p>
+                        <div className="bg-purple-900/30 rounded-lg p-4 border border-purple-600/40 hover:border-purple-500/60 transition-colors relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-transparent"></div>
+                          <p className="text-xs text-gray-300 font-sans mb-1.5 relative z-10">ROI</p>
+                          <p className="text-2xl font-space font-bold text-purple-300 relative z-10">{roiData.roi > 0 ? '+' : ''}{roiData.roi.toFixed(1)}%</p>
                         </div>
                       </div>
-                      <div className="mt-4 pt-3 border-t border-purple-700/30">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-400 font-sans">Payback Period</span>
-                          <span className="text-lg font-space font-bold text-blue-400">
+                      
+                      <div className="mt-5 pt-5 border-t border-purple-700/20">
+                        <div className="flex items-center justify-between bg-blue-900/20 rounded-lg p-4 border border-blue-700/30">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-blue-400" />
+                            <span className="text-sm text-gray-300 font-sans font-medium">Payback Period</span>
+                          </div>
+                          <span className="text-xl font-space font-bold text-blue-400">
                             {roiData.paybackWeeks < 0.1 ? '<0.1' : roiData.paybackWeeks.toFixed(1)} week{roiData.paybackWeeks !== 1 ? 's' : ''}
                           </span>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 mt-3 text-center font-sans">
+                      
+                      <p className="text-xs text-gray-500 mt-4 text-center font-sans italic">
                         *Based on each rep closing 1 extra deal per month. Results may vary.
                       </p>
                     </div>

@@ -301,7 +301,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
   if (loading) {
     return (
-      <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
+      <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] flex items-center justify-center">
         <AnimatedGrid />
         <div className="relative z-10 text-foreground font-space text-lg sm:text-xl">Loading homeowners…</div>
       </div>
@@ -310,7 +310,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
   if (!loading && agents.length === 0) {
     return (
-      <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
+      <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] flex items-center justify-center">
         <AnimatedGrid />
         <div className="relative z-10 text-center text-foreground/80 space-y-3">
           <p className="text-xl sm:text-2xl font-semibold font-space">No homeowner agents found</p>
@@ -343,7 +343,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center">
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] flex flex-col items-center justify-center">
       <AnimatedGrid />
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-16 sm:pt-20 md:pt-24">

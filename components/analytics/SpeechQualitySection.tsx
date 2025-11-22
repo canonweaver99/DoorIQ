@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { VoiceAnalysisData } from '@/lib/trainer/types'
 import { motion } from 'framer-motion'
-import { Mic, Volume2, Sparkles, Clock, Waves } from 'lucide-react'
+import { Mic, Zap, Sparkles, Clock, Waves } from 'lucide-react'
 
 interface SpeechQualitySectionProps {
   voiceAnalysis: VoiceAnalysisData
@@ -23,22 +23,38 @@ function calculateSpeechScore(data: VoiceAnalysisData): number {
   // Variety (25%): 100 if >20% pitch variation, scale down linearly
   const varietyScore = Math.min(100, (data.pitchVariation / 20) * 100)
   
-  // Energy (25%): Based on avg volume (-30 to -10 dB ideal) and consistency
+  // Energy (25%): Based on pace, pitch variation, filler words, and pauses
+  // Higher energy = faster pace (but not too fast), more pitch variation, fewer fillers, fewer pauses
   let energyScore = 100
-  if (data.avgVolume < -35) {
-    energyScore = Math.max(0, 100 + (data.avgVolume + 35) * 2) // Too quiet
-  } else if (data.avgVolume > -10) {
-    energyScore = Math.max(0, 100 - (data.avgVolume + 10) * 2) // Too loud
+  
+  // Pace contribution (40% of energy score)
+  let paceEnergy = 100
+  if (data.avgWPM < 120) {
+    paceEnergy = Math.max(40, 100 - (120 - data.avgWPM) * 1.5) // Too slow = low energy
+  } else if (data.avgWPM >= 140 && data.avgWPM <= 160) {
+    paceEnergy = 100 // Ideal pace = high energy
+  } else if (data.avgWPM > 180) {
+    paceEnergy = Math.max(60, 100 - (data.avgWPM - 180) * 1) // Too fast = slightly lower energy
   }
-  // Deduct for inconsistency
-  const consistencyPenalty = Math.min(30, data.volumeConsistency / 2)
-  energyScore = Math.max(0, energyScore - consistencyPenalty)
+  
+  // Pitch variation contribution (30% of energy score)
+  const pitchEnergy = Math.min(100, (data.pitchVariation / 20) * 100) // More variation = more energy
+  
+  // Filler words penalty (20% of energy score)
+  const fillerPenalty = Math.min(30, data.fillerWordsPerMinute * 10) // More fillers = less energy
+  
+  // Pause penalty (10% of energy score)
+  const pausePenalty = Math.min(20, data.longPausesCount * 4) // More pauses = less energy
+  
+  // Combine all factors
+  energyScore = (paceEnergy * 0.4) + (pitchEnergy * 0.3) + (100 - fillerPenalty) * 0.2 + (100 - pausePenalty) * 0.1
+  energyScore = Math.max(0, Math.min(100, energyScore))
   
   // Clarity (25%): Deduct 5 points per filler word per minute, 3 points per long pause
   let clarityScore = 100
   clarityScore -= data.fillerWordsPerMinute * 5
-  const pausePenalty = data.longPausesCount * 3
-  clarityScore -= pausePenalty
+  const clarityPausePenalty = data.longPausesCount * 3
+  clarityScore -= clarityPausePenalty
   clarityScore = Math.max(0, clarityScore)
   
   // Weighted average
@@ -99,17 +115,55 @@ function MetricCard({
   )
 }
 
+// Calculate energy rating based on speech metrics
+function calculateEnergyRating(data: VoiceAnalysisData): { score: number; label: string; description: string } {
+  // Pace contribution
+  let paceEnergy = 100
+  if (data.avgWPM < 120) {
+    paceEnergy = Math.max(40, 100 - (120 - data.avgWPM) * 1.5)
+  } else if (data.avgWPM >= 140 && data.avgWPM <= 160) {
+    paceEnergy = 100
+  } else if (data.avgWPM > 180) {
+    paceEnergy = Math.max(60, 100 - (data.avgWPM - 180) * 1)
+  }
+  
+  // Pitch variation contribution
+  const pitchEnergy = Math.min(100, (data.pitchVariation / 20) * 100)
+  
+  // Filler words penalty
+  const fillerPenalty = Math.min(30, data.fillerWordsPerMinute * 10)
+  
+  // Pause penalty
+  const pausePenalty = Math.min(20, data.longPausesCount * 4)
+  
+  // Combine all factors
+  const energyScore = Math.max(0, Math.min(100, 
+    (paceEnergy * 0.4) + (pitchEnergy * 0.3) + (100 - fillerPenalty) * 0.2 + (100 - pausePenalty) * 0.1
+  ))
+  
+  let label = 'High'
+  let description = 'Excellent energy and enthusiasm'
+  if (energyScore < 60) {
+    label = 'Low'
+    description = 'Needs more energy and enthusiasm'
+  } else if (energyScore < 80) {
+    label = 'Medium'
+    description = 'Good energy with room for improvement'
+  }
+  
+  return { score: Math.round(energyScore), label, description }
+}
+
 export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }: SpeechQualitySectionProps) {
-  // Check if we have pitch/volume data (audio analysis) or just transcript-based data
+  // Check if we have pitch data (audio analysis) or just transcript-based data
   const hasPitchData = voiceAnalysis.avgPitch > 0 && voiceAnalysis.pitchVariation > 0
-  const hasVolumeData = voiceAnalysis.avgVolume > -50 // -60 is default/empty
   
   const overallScore = useMemo(() => {
-    // Only calculate full score if we have pitch/volume data
-    if (hasPitchData && hasVolumeData) {
+    // Calculate score with or without pitch data (energy doesn't require volume anymore)
+    if (hasPitchData) {
       return calculateSpeechScore(voiceAnalysis)
     }
-    // Otherwise calculate simplified score based on WPM and fillers only
+    // Simplified score based on WPM, fillers, and pauses (energy can be calculated from these)
     let paceScore = 100
     if (voiceAnalysis.avgWPM < 140) {
       paceScore = Math.max(0, 100 - (140 - voiceAnalysis.avgWPM) * 2)
@@ -121,9 +175,14 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
     clarityScore -= voiceAnalysis.fillerWordsPerMinute * 5
     clarityScore = Math.max(0, clarityScore)
     
-    // Weighted average (pace 50%, clarity 50% since we don't have variety/energy)
-    return Math.round((paceScore * 0.5) + (clarityScore * 0.5))
-  }, [voiceAnalysis, hasPitchData, hasVolumeData])
+    // Calculate energy from available metrics
+    const energyRating = calculateEnergyRating(voiceAnalysis)
+    
+    // Weighted average (pace 33%, clarity 33%, energy 34%)
+    return Math.round((paceScore * 0.33) + (clarityScore * 0.33) + (energyRating.score * 0.34))
+  }, [voiceAnalysis, hasPitchData])
+  
+  const energyRating = useMemo(() => calculateEnergyRating(voiceAnalysis), [voiceAnalysis])
   
   const scoreColorHex = useMemo(() => getScoreColorHex(overallScore), [overallScore])
   
@@ -141,7 +200,7 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
         <div>
           <h2 className="text-xl font-semibold text-white">Speech Quality Analysis</h2>
           <p className="text-sm text-gray-400">
-            {hasPitchData && hasVolumeData 
+            {hasPitchData 
               ? 'How you sounded during this pitch' 
               : 'Analysis based on transcript (audio analysis not available)'}
           </p>
@@ -176,9 +235,9 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
           </div>
           <p className="text-sm text-gray-300 mb-4">{getScoreMessage(overallScore)}</p>
           <div className="text-sm text-gray-400">
-            {hasPitchData && hasVolumeData 
+            {hasPitchData 
               ? 'Based on Pace • Variety • Energy • Clarity'
-              : 'Based on Pace • Clarity (limited data)'}
+              : 'Based on Pace • Energy • Clarity'}
           </div>
         </motion.div>
 
@@ -228,34 +287,22 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
             />
           )}
 
-          {/* Energy & Volume - only show if we have volume data */}
-          {hasVolumeData ? (
-            <MetricCard
-              icon={Volume2}
-              title="Energy & Volume"
-              value={`${voiceAnalysis.avgVolume} dB`}
-              description={`Consistency: ${voiceAnalysis.volumeConsistency.toFixed(1)}% variation`}
-              feedback={
-                voiceAnalysis.avgVolume >= -30 && voiceAnalysis.avgVolume <= -10
-                  ? 'Great energy throughout'
-                  : voiceAnalysis.avgVolume < -30
-                  ? 'Speak up for better presence'
-                  : 'Consider speaking slightly softer'
-              }
-              colorHex="#10b981"
-              delay={0.4}
-            />
-          ) : (
-            <MetricCard
-              icon={Volume2}
-              title="Energy & Volume"
-              value="N/A"
-              description="Audio analysis not available"
-              feedback="Enable microphone access for volume analysis"
-              colorHex="#6b7280"
-              delay={0.4}
-            />
-          )}
+          {/* Energy Rating */}
+          <MetricCard
+            icon={Zap}
+            title="Energy"
+            value={energyRating.label}
+            description={`${energyRating.score}/100 • ${energyRating.description}`}
+            feedback={
+              energyRating.score >= 80
+                ? 'Excellent energy and enthusiasm throughout'
+                : energyRating.score >= 60
+                ? 'Good energy, try to maintain enthusiasm'
+                : 'Increase your energy level to sound more engaging'
+            }
+            colorHex="#10b981"
+            delay={0.4}
+          />
 
           {/* Clarity & Confidence */}
           <MetricCard

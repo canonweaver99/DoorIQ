@@ -12,6 +12,7 @@ const ScoresViewV2 = dynamic(() => import('@/components/analytics/ScoresViewV2')
 const TranscriptView = dynamic(() => import('@/components/analytics/TranscriptView'), { ssr: false })
 const TranscriptViewV2 = dynamic(() => import('@/components/analytics/TranscriptViewV2'), { ssr: false })
 const AudioPlayer = dynamic(() => import('@/components/analytics/AudioPlayer'), { ssr: false })
+const SpeechQualitySection = dynamic(() => import('@/components/analytics/SpeechQualitySection'), { ssr: false })
 
 interface SessionData {
   id: string
@@ -141,7 +142,7 @@ export default function AnalyticsPage() {
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [grading, setGrading] = useState(false)
-  const [activeView, setActiveView] = useState<'scores' | 'transcript'>('scores')
+  const [activeView, setActiveView] = useState<'scores' | 'transcript' | 'speech'>('scores')
 
   const insightsByCategory = useMemo(() => {
     if (!session?.analytics?.line_ratings || !session.full_transcript) return {}
@@ -342,6 +343,178 @@ export default function AnalyticsPage() {
       )
     }
 
+    if (activeView === 'speech') {
+      // Convert voice_analysis data to VoiceAnalysisData format
+      const voiceAnalysis = session.analytics?.voice_analysis
+      
+      if (!voiceAnalysis) {
+        return (
+          <div className="bg-[#101010] border border-gray-800 rounded-3xl p-12 text-center">
+            <p className="text-gray-400 mb-4">Speech analysis data not available for this session</p>
+            <p className="text-gray-500 text-sm">
+              Speech metrics are collected during live sessions with microphone access enabled.
+            </p>
+          </div>
+        )
+      }
+
+      // Convert to VoiceAnalysisData format
+      const voiceData = {
+        sessionId: session.id,
+        timestamp: new Date(session.created_at),
+        avgPitch: voiceAnalysis.avgPitch || 0,
+        minPitch: voiceAnalysis.minPitch || 0,
+        maxPitch: voiceAnalysis.maxPitch || 0,
+        pitchVariation: voiceAnalysis.pitchVariation || 0,
+        avgVolume: voiceAnalysis.avgVolume || -60,
+        volumeConsistency: voiceAnalysis.volumeConsistency || 0,
+        avgWPM: voiceAnalysis.avgWPM || 0,
+        totalFillerWords: voiceAnalysis.totalFillerWords || 0,
+        fillerWordsPerMinute: voiceAnalysis.fillerWordsPerMinute || 0,
+        longPausesCount: voiceAnalysis.longPausesCount || 0,
+        monotonePeriods: voiceAnalysis.monotonePeriods || 0,
+        pitchTimeline: voiceAnalysis.pitchTimeline || [],
+        volumeTimeline: voiceAnalysis.volumeTimeline || [],
+        wpmTimeline: voiceAnalysis.wpmTimeline || [],
+        issues: {
+          tooFast: voiceAnalysis.issues?.tooFast || false,
+          tooSlow: voiceAnalysis.issues?.tooSlow || false,
+          monotone: voiceAnalysis.issues?.monotone || false,
+          lowEnergy: voiceAnalysis.issues?.lowEnergy || false,
+          excessiveFillers: voiceAnalysis.issues?.excessiveFillers || false,
+          poorEndings: voiceAnalysis.issues?.poorEndings || false,
+        }
+      }
+
+      return (
+        <div className="space-y-6">
+          <SpeechQualitySection 
+            voiceAnalysis={voiceData}
+            durationSeconds={session.duration_seconds || 600}
+          />
+          
+          {/* Improvement Suggestions Section */}
+          {voiceData.issues && (
+            <div className="rounded-3xl bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl border border-slate-700/50 p-8">
+              <h3 className="text-xl font-semibold text-white mb-6">What Could Be Improved</h3>
+              <div className="space-y-4">
+                {voiceData.issues.tooFast && (
+                  <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                    <div className="text-amber-400 font-bold">⚡</div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">Speaking Too Fast</h4>
+                      <p className="text-gray-300 text-sm">
+                        Your average pace of {voiceData.avgWPM} WPM is above the ideal range (140-160 WPM). 
+                        Slow down slightly to improve clarity and give customers time to process your message.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {voiceData.issues.tooSlow && (
+                  <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                    <div className="text-blue-400 font-bold">🐌</div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">Speaking Too Slow</h4>
+                      <p className="text-gray-300 text-sm">
+                        Your average pace of {voiceData.avgWPM} WPM is below the ideal range (140-160 WPM). 
+                        Pick up the pace slightly to maintain energy and engagement throughout the conversation.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {voiceData.issues.monotone && (
+                  <div className="flex items-start gap-3 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                    <div className="text-purple-400 font-bold">📊</div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">Limited Vocal Variety</h4>
+                      <p className="text-gray-300 text-sm">
+                        Your pitch variation of {voiceData.pitchVariation.toFixed(1)}% is below the ideal 20%. 
+                        Vary your pitch more to sound more engaging and dynamic. Emphasize key points with 
+                        pitch changes to maintain customer interest.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {voiceData.issues.lowEnergy && (
+                  <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <div className="text-red-400 font-bold">🔋</div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">Low Energy</h4>
+                      <p className="text-gray-300 text-sm">
+                        Your energy level could be improved. Speak with more enthusiasm and confidence. 
+                        Increase your pace slightly, vary your pitch more, and reduce filler words to boost 
+                        your energy. Your energy directly impacts customer engagement and trust.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {voiceData.issues.excessiveFillers && (
+                  <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                    <div className="text-yellow-400 font-bold">💬</div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">Excessive Filler Words</h4>
+                      <p className="text-gray-300 text-sm">
+                        You used {voiceData.fillerWordsPerMinute.toFixed(1)} filler words per minute. 
+                        Practice pausing instead of using "um," "uh," or "like." Pauses show confidence 
+                        and give you time to think clearly.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {voiceData.issues.poorEndings && (
+                  <div className="flex items-start gap-3 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl">
+                    <div className="text-orange-400 font-bold">🎯</div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">Weak Sentence Endings</h4>
+                      <p className="text-gray-300 text-sm">
+                        Some sentences trail off or end with uncertainty. End statements with confidence 
+                        and conviction. Practice finishing sentences strongly to sound more authoritative.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {voiceData.longPausesCount > 0 && (
+                  <div className="flex items-start gap-3 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
+                    <div className="text-indigo-400 font-bold">⏸️</div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">Long Pauses Detected</h4>
+                      <p className="text-gray-300 text-sm">
+                        You had {voiceData.longPausesCount} long pause{voiceData.longPausesCount !== 1 ? 's' : ''} 
+                        (over 3 seconds). While pauses can be powerful, too many long pauses can make you 
+                        seem unprepared. Practice smoother transitions between thoughts.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {!voiceData.issues.tooFast && !voiceData.issues.tooSlow && !voiceData.issues.monotone && 
+                 !voiceData.issues.lowEnergy && !voiceData.issues.excessiveFillers && !voiceData.issues.poorEndings &&
+                 voiceData.longPausesCount === 0 && (
+                  <div className="flex items-start gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                    <div className="text-green-400 font-bold">✅</div>
+                    <div>
+                      <h4 className="text-white font-medium mb-1">Excellent Speech Delivery</h4>
+                      <p className="text-gray-300 text-sm">
+                        Your speech metrics are all within ideal ranges! Keep up the great work with your 
+                        pace, variety, energy, and clarity. Continue practicing to maintain this level of 
+                        vocal excellence.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    }
+
     return (
       <>
         <ScoresViewV2
@@ -415,7 +588,7 @@ export default function AnalyticsPage() {
 
         {!loading && session && (
           <div className="inline-flex items-center rounded-full bg-white/5 border border-white/10 p-1 text-sm text-gray-300">
-            {(['scores', 'transcript'] as const).map((view) => (
+            {(['scores', 'transcript', 'speech'] as const).map((view) => (
               <button
                 key={view}
                 onClick={() => setActiveView(view)}
@@ -425,7 +598,7 @@ export default function AnalyticsPage() {
                     : 'hover:text-white'
                 }`}
               >
-                {view === 'scores' ? 'Scores & Feedback' : 'Transcript'}
+                {view === 'scores' ? 'Scores & Feedback' : view === 'transcript' ? 'Transcript' : 'Speech Analysis'}
               </button>
             ))}
           </div>

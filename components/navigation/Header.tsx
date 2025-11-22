@@ -129,6 +129,7 @@ function HeaderContent() {
   // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing - show on hover
   // Menu should always be visible on home page (/), practice pages (/trainer), sessions page (/sessions), learning center (/learning), and pricing (/pricing)
   // Admin pages and Dashboard: completely hide menu (no hover)
+  // Live session pages and grading/feedback pages: completely hide menu (no hover) - only show home button
   useEffect(() => {
     const isHomePage = pathname === '/'
     const isPracticePage = pathname?.startsWith('/trainer')
@@ -138,12 +139,18 @@ function HeaderContent() {
     const isSignupPage = pathname?.startsWith('/team/signup')
     const isAdminPage = pathname?.startsWith('/admin')
     const isDashboardPage = pathname?.startsWith('/dashboard')
-    const isLiveSessionPage = pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner'
     
-    // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing
-    // Admin pages, Dashboard, and Signup pages get special treatment - menu is completely hidden
-    const hideMenu = !isHomePage && !isPracticePage && !isSessionsPage && !isLearningPage && !isPricingPage
-    setShouldHideMenu(hideMenu || isAdminPage || isDashboardPage || isSignupPage) // Force hide on admin, dashboard, and signup pages
+    // Live session page: /trainer but NOT /trainer/select-homeowner
+    const isLiveSessionPage = pathname === '/trainer' || (pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner' && !pathname?.startsWith('/trainer/upload'))
+    
+    // Grading/feedback pages
+    const isGradingPage = pathname?.startsWith('/trainer/loading/')
+    const isAnalyticsPage = pathname?.startsWith('/analytics/') && pathname !== '/analytics'
+    
+    // Hide menu on all pages except home page, select-homeowner page, sessions page, learning center, and pricing
+    // Admin pages, Dashboard, Signup pages, Live sessions, and Grading/Analytics pages get special treatment - menu is completely hidden
+    const hideMenu = !isHomePage && !isSessionsPage && !isLearningPage && !isPricingPage && pathname !== '/trainer/select-homeowner'
+    setShouldHideMenu(hideMenu || isAdminPage || isDashboardPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage) // Force hide on admin, dashboard, signup, live sessions, and grading pages
     
     // Set isLiveSession for backward compatibility
     setIsLiveSession(isLiveSessionPage)
@@ -160,14 +167,21 @@ function HeaderContent() {
     const isAdminPage = pathname?.startsWith('/admin')
     const isDashboardPage = pathname?.startsWith('/dashboard')
     
-    // Admin pages, Dashboard, and Signup pages: completely hide menu (no hover)
-    if (isAdminPage || isDashboardPage || isSignupPage) {
+    // Live session page: /trainer but NOT /trainer/select-homeowner
+    const isLiveSessionPage = pathname === '/trainer' || (pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner' && !pathname?.startsWith('/trainer/upload'))
+    
+    // Grading/feedback pages
+    const isGradingPage = pathname?.startsWith('/trainer/loading/')
+    const isAnalyticsPage = pathname?.startsWith('/analytics/') && pathname !== '/analytics'
+    
+    // Admin pages, Dashboard, Signup pages, Live sessions, and Grading/Analytics pages: completely hide menu (no hover)
+    if (isAdminPage || isDashboardPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage) {
       setShowMenuOnHover(false)
       return
     }
     
-    // Always show menu on home page, practice page, sessions page, learning center, and pricing
-    if (isHomePage || isPracticePage || isSessionsPage || isLearningPage || isPricingPage) {
+    // Always show menu on home page, select-homeowner page, sessions page, learning center, and pricing
+    if (isHomePage || pathname === '/trainer/select-homeowner' || isSessionsPage || isLearningPage || isPricingPage) {
       setShowMenuOnHover(true)
       return
     }
@@ -516,7 +530,7 @@ function HeaderContent() {
       {shouldHideMenu && pathname !== '/' && !pathname?.startsWith('/admin') && (
         <Link
           href="/"
-          className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-background/80 dark:bg-black/80 backdrop-blur-xl border border-border/20 dark:border-white/10 rounded-full shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all font-space font-medium"
+          className="fixed top-4 left-4 z-[9999] flex items-center gap-2 px-4 py-2 bg-background/80 dark:bg-black/80 backdrop-blur-xl border border-border/20 dark:border-white/10 rounded-full shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all font-space font-medium"
         >
           <Home className="w-4 h-4" />
           <span className="hidden sm:inline">Home</span>
