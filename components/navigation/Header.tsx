@@ -127,17 +127,21 @@ function HeaderContent() {
 
   // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing - show on hover
   // Menu should always be visible on home page (/), practice pages (/trainer), sessions page (/sessions), learning center (/learning), and pricing (/pricing)
+  // Admin pages and Dashboard: completely hide menu (no hover)
   useEffect(() => {
     const isHomePage = pathname === '/'
     const isPracticePage = pathname?.startsWith('/trainer')
     const isSessionsPage = pathname?.startsWith('/sessions')
     const isLearningPage = pathname?.startsWith('/learning')
     const isPricingPage = pathname?.startsWith('/pricing')
+    const isAdminPage = pathname?.startsWith('/admin')
+    const isDashboardPage = pathname?.startsWith('/dashboard')
     const isLiveSessionPage = pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner'
     
     // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing
+    // Admin pages and Dashboard get special treatment - menu is completely hidden
     const hideMenu = !isHomePage && !isPracticePage && !isSessionsPage && !isLearningPage && !isPricingPage
-    setShouldHideMenu(hideMenu)
+    setShouldHideMenu(hideMenu || isAdminPage || isDashboardPage) // Force hide on admin and dashboard pages
     
     // Set isLiveSession for backward compatibility
     setIsLiveSession(isLiveSessionPage)
@@ -150,6 +154,14 @@ function HeaderContent() {
     const isSessionsPage = pathname?.startsWith('/sessions')
     const isLearningPage = pathname?.startsWith('/learning')
     const isPricingPage = pathname?.startsWith('/pricing')
+    const isAdminPage = pathname?.startsWith('/admin')
+    const isDashboardPage = pathname?.startsWith('/dashboard')
+    
+    // Admin pages and Dashboard: completely hide menu (no hover)
+    if (isAdminPage || isDashboardPage) {
+      setShowMenuOnHover(false)
+      return
+    }
     
     // Always show menu on home page, practice page, sessions page, learning center, and pricing
     if (isHomePage || isPracticePage || isSessionsPage || isLearningPage || isPricingPage) {

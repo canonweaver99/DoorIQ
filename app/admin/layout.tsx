@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import Header from '@/components/navigation/Header'
 
 export default function AdminLayout({
   children,
@@ -72,6 +73,9 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header with Sidebar */}
+      <Header />
+      
       {/* Back Button */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
         <Link
