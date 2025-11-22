@@ -38,14 +38,14 @@ export default function AdminLayout({
         .single()
 
       if (userData?.role !== 'admin') {
-        router.push('/dashboard')
+        router.push('/')
         return
       }
 
       setIsAdmin(true)
     } catch (error) {
       console.error('Error checking admin access:', error)
-      router.push('/dashboard')
+      router.push('/')
     } finally {
       setLoading(false)
     }
