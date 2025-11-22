@@ -17,8 +17,8 @@ const navItems = [
     icon: CreditCard,
   },
   {
-    name: 'Team',
-    href: '/settings/team',
+    name: 'Organization',
+    href: '/settings/organization',
     icon: Users,
   },
   {

@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Users, UserPlus, Mail, Trash2, Shield, User, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Users, UserPlus, Mail, Trash2, Shield, User, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GlowCard } from '@/components/ui/spotlight-card'
+import { useToast } from '@/components/ui/toast'
 
 interface TeamMember {
   id: string
@@ -17,11 +16,10 @@ interface TeamMember {
   joined_at: string
 }
 
-export default function TeamSettingsPage() {
+export default function OrganizationSettingsPage() {
   const supabase = createClient()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
   
   const [members, setMembers] = useState<TeamMember[]>([])
   const [inviteEmail, setInviteEmail] = useState('')
@@ -65,14 +63,13 @@ export default function TeamSettingsPage() {
         .single()
 
       if (!userData?.organization_id) {
-        setError('You are not part of an organization')
+        showToast({ type: 'error', title: 'You are not part of an organization' })
         return
       }
 
       setUserRole(userData.role)
       setOrganizationId(userData.organization_id)
 
-      // Get organization seat info
       const { data: org } = await supabase
         .from('organizations')
         .select('seat_limit, seats_used')
@@ -83,7 +80,6 @@ export default function TeamSettingsPage() {
         setSeatUsage({ used: org.seats_used, limit: org.seat_limit })
       }
 
-      // Get team members
       const { data: teamMembers } = await supabase
         .from('users')
         .select('id, email, full_name, role, created_at')
@@ -98,7 +94,7 @@ export default function TeamSettingsPage() {
       }
     } catch (err: any) {
       console.error('Error fetching team data:', err)
-      setError(err.message || 'Failed to load team data')
+      showToast({ type: 'error', title: 'Failed to load organization data', message: err.message })
     } finally {
       setLoading(false)
     }
@@ -106,13 +102,11 @@ export default function TeamSettingsPage() {
 
   const handleInvite = async () => {
     if (!inviteEmail.trim() || !inviteEmail.includes('@')) {
-      setError('Please enter a valid email address')
+      showToast({ type: 'error', title: 'Please enter a valid email address' })
       return
     }
 
     setInviting(true)
-    setError(null)
-
     try {
       const response = await fetch('/api/settings/team/invite', {
         method: 'POST',
@@ -126,19 +120,18 @@ export default function TeamSettingsPage() {
         throw new Error(data.error || 'Failed to send invite')
       }
 
-      setSuccess(`Invitation sent to ${inviteEmail}`)
+      showToast({ type: 'success', title: `Invitation sent to ${inviteEmail}` })
       setInviteEmail('')
-      setTimeout(() => setSuccess(null), 3000)
       await fetchPendingInvites()
     } catch (err: any) {
-      setError(err.message || 'Failed to send invitation')
+      showToast({ type: 'error', title: 'Failed to send invitation', message: err.message })
     } finally {
       setInviting(false)
     }
   }
 
   const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!confirm(`Are you sure you want to remove ${memberName} from the team?`)) {
+    if (!confirm(`Are you sure you want to remove ${memberName} from the organization?`)) {
       return
     }
 
@@ -153,11 +146,10 @@ export default function TeamSettingsPage() {
         throw new Error(data.error || 'Failed to remove member')
       }
 
-      setSuccess(`${memberName} has been removed from the team`)
-      setTimeout(() => setSuccess(null), 3000)
+      showToast({ type: 'success', title: `${memberName} has been removed from the organization` })
       await fetchTeamData()
     } catch (err: any) {
-      setError(err.message || 'Failed to remove member')
+      showToast({ type: 'error', title: 'Failed to remove member', message: err.message })
     }
   }
 
@@ -175,11 +167,10 @@ export default function TeamSettingsPage() {
         throw new Error(data.error || 'Failed to update role')
       }
 
-      setSuccess('Role updated successfully')
-      setTimeout(() => setSuccess(null), 3000)
+      showToast({ type: 'success', title: 'Role updated successfully' })
       await fetchTeamData()
     } catch (err: any) {
-      setError(err.message || 'Failed to update role')
+      showToast({ type: 'error', title: 'Failed to update role', message: err.message })
     }
   }
 
@@ -188,76 +179,53 @@ export default function TeamSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#00d4aa]" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Success/Error Messages */}
-      {success && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 flex items-start gap-3"
-        >
-          <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-green-400">{success}</p>
-        </motion.div>
-      )}
-
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start gap-3"
-        >
-          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-400">{error}</p>
-        </motion.div>
-      )}
-
       {/* Seat Usage */}
-      <GlowCard glowColor="purple" customSize className="p-6 bg-card/60 dark:bg-black/60">
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-space font-bold text-foreground mb-2">Team Overview</h2>
-            <p className="text-sm text-foreground/60 font-sans">
-              Manage your team members and seats
+            <h2 className="text-xl font-semibold text-white mb-2 font-space">Organization Overview</h2>
+            <p className="text-sm text-[#a0a0a0] font-sans">
+              Manage your organization members and seats
             </p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold text-foreground font-space">
+            <p className="text-3xl font-bold text-white font-space">
               {seatUsage.used} / {seatUsage.limit}
             </p>
-            <p className="text-sm text-foreground/60 font-sans">Seats Used</p>
+            <p className="text-sm text-[#a0a0a0] font-sans">Seats Used</p>
           </div>
         </div>
-      </GlowCard>
+      </div>
 
       {/* Invite Member */}
       {isManager && (
-        <GlowCard glowColor="emerald" customSize className="p-6 bg-card/60 dark:bg-black/60">
+        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
           <div className="space-y-4">
             <div>
-              <h2 className="text-2xl font-space font-bold text-foreground mb-2">Invite Team Member</h2>
-              <p className="text-sm text-foreground/60 font-sans">
-                Send an invitation to join your team
+              <h2 className="text-xl font-semibold text-white mb-2 font-space">Invite Team Member</h2>
+              <p className="text-sm text-[#a0a0a0] font-sans">
+                Send an invitation to join your organization
               </p>
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
                 <Label htmlFor="inviteEmail" className="sr-only">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666]" />
                   <Input
                     id="inviteEmail"
                     type="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className="pl-10 bg-background/50 border-border/40"
+                    className="pl-10 bg-[#0a0a0a] border-[#2a2a2a] text-white focus:border-[#00d4aa] focus:ring-[#00d4aa]/20"
                     onKeyPress={(e) => e.key === 'Enter' && handleInvite()}
                   />
                 </div>
@@ -265,7 +233,7 @@ export default function TeamSettingsPage() {
               <Button
                 onClick={handleInvite}
                 disabled={inviting || !inviteEmail.trim()}
-                className="bg-emerald-500 hover:bg-emerald-600"
+                className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium font-sans"
               >
                 {inviting ? (
                   <>
@@ -281,16 +249,16 @@ export default function TeamSettingsPage() {
               </Button>
             </div>
           </div>
-        </GlowCard>
+        </div>
       )}
 
       {/* Pending Invites */}
       {isManager && pendingInvites.length > 0 && (
-        <GlowCard glowColor="yellow" customSize className="p-6 bg-card/60 dark:bg-black/60">
+        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
           <div className="space-y-4">
             <div>
-              <h2 className="text-2xl font-space font-bold text-foreground mb-2">Pending Invites</h2>
-              <p className="text-sm text-foreground/60 font-sans">
+              <h2 className="text-xl font-semibold text-white mb-2 font-space">Pending Invites</h2>
+              <p className="text-sm text-[#a0a0a0] font-sans">
                 {pendingInvites.length} invite{pendingInvites.length !== 1 ? 's' : ''} pending
               </p>
             </div>
@@ -298,11 +266,11 @@ export default function TeamSettingsPage() {
               {pendingInvites.map((invite) => (
                 <div
                   key={invite.id}
-                  className="p-3 rounded-lg bg-background/30 border border-border/40 flex items-center justify-between"
+                  className="p-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-between"
                 >
                   <div>
-                    <p className="font-medium text-foreground">{invite.email}</p>
-                    <p className="text-xs text-foreground/50 font-sans capitalize">
+                    <p className="font-medium text-white font-sans">{invite.email}</p>
+                    <p className="text-xs text-[#a0a0a0] font-sans capitalize">
                       {invite.role} • Expires {new Date(invite.expires_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -310,41 +278,41 @@ export default function TeamSettingsPage() {
               ))}
             </div>
           </div>
-        </GlowCard>
+        </div>
       )}
 
       {/* Team Members */}
-      <GlowCard glowColor="blue" customSize className="p-6 bg-card/60 dark:bg-black/60">
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
         <div className="space-y-4">
           <div>
-            <h2 className="text-2xl font-space font-bold text-foreground mb-2">Team Members</h2>
-            <p className="text-sm text-foreground/60 font-sans">
+            <h2 className="text-xl font-semibold text-white mb-2 font-space">Team Members</h2>
+            <p className="text-sm text-[#a0a0a0] font-sans">
               {members.length} member{members.length !== 1 ? 's' : ''}
             </p>
           </div>
 
           {members.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="w-12 h-12 text-foreground/30 mx-auto mb-4" />
-              <p className="text-foreground/60 font-sans">No team members yet</p>
+              <Users className="w-12 h-12 text-[#666] mx-auto mb-4" />
+              <p className="text-[#a0a0a0] font-sans">No team members yet</p>
             </div>
           ) : (
             <div className="space-y-3">
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="p-4 rounded-lg bg-background/30 border border-border/40 hover:bg-background/40 transition-colors"
+                  className="p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] hover:border-[#2a2a2a] transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                        <User className="w-5 h-5 text-purple-400" />
+                      <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                        <User className="w-5 h-5 text-[#a0a0a0]" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">
+                        <p className="font-medium text-white font-sans">
                           {member.full_name || 'No name'}
                         </p>
-                        <p className="text-sm text-foreground/60 font-sans">{member.email}</p>
+                        <p className="text-sm text-[#a0a0a0] font-sans">{member.email}</p>
                       </div>
                     </div>
 
@@ -353,7 +321,7 @@ export default function TeamSettingsPage() {
                         <select
                           value={member.role}
                           onChange={(e) => handleUpdateRole(member.id, e.target.value)}
-                          className="px-3 py-1.5 rounded-lg border border-border/40 bg-background/50 text-foreground text-sm"
+                          className="px-3 py-1.5 rounded-lg border border-[#2a2a2a] bg-[#0a0a0a] text-white text-sm font-sans"
                         >
                           <option value="rep">Rep</option>
                           <option value="manager">Manager</option>
@@ -370,13 +338,13 @@ export default function TeamSettingsPage() {
                         </Button>
                       )}
                       {!isManager && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2a2a2a] border border-[#2a2a2a]">
                           {member.role === 'manager' || member.role === 'admin' ? (
-                            <Shield className="w-4 h-4 text-purple-400" />
+                            <Shield className="w-4 h-4 text-[#00d4aa]" />
                           ) : (
-                            <User className="w-4 h-4 text-purple-400" />
+                            <User className="w-4 h-4 text-[#00d4aa]" />
                           )}
-                          <span className="text-sm font-medium text-purple-400 capitalize">
+                          <span className="text-sm font-medium text-[#00d4aa] capitalize font-sans">
                             {member.role}
                           </span>
                         </div>
@@ -388,8 +356,7 @@ export default function TeamSettingsPage() {
             </div>
           )}
         </div>
-      </GlowCard>
+      </div>
     </div>
   )
 }
-

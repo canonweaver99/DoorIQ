@@ -42,27 +42,25 @@ export function AccountPreferences({ userId }: AccountPreferencesProps) {
     }
   }
 
-  const handleSave = async () => {
+  const handleLanguageChange = async (newLanguage: string) => {
+    setLanguage(newLanguage)
     setSaving(true)
     try {
       const { error } = await supabase
         .from('users')
         .update({
           preferences: {
-            language,
+            language: newLanguage,
             usage,
           },
         })
         .eq('id', userId)
 
       if (error) throw error
-
-      showToast({ 
-        type: 'success', 
-        title: 'Preferences updated' 
-      })
+      showToast({ type: 'success', title: 'Language preference updated' })
     } catch (err: any) {
       console.error('Error updating preferences:', err)
+      setLanguage(language) // Revert on error
       showToast({ 
         type: 'error', 
         title: 'Update failed',
@@ -73,7 +71,34 @@ export function AccountPreferences({ userId }: AccountPreferencesProps) {
     }
   }
 
-  const hasChanges = language !== 'en' || usage !== ''
+  const handleUsageChange = async (newUsage: string) => {
+    setUsage(newUsage)
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          preferences: {
+            language,
+            usage: newUsage,
+          },
+        })
+        .eq('id', userId)
+
+      if (error) throw error
+      showToast({ type: 'success', title: 'Usage preference updated' })
+    } catch (err: any) {
+      console.error('Error updating preferences:', err)
+      setUsage(usage) // Revert on error
+      showToast({ 
+        type: 'error', 
+        title: 'Update failed',
+        message: err.message || 'Failed to update preferences'
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -87,42 +112,16 @@ export function AccountPreferences({ userId }: AccountPreferencesProps) {
 
   return (
     <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-white mb-2 font-space">Account Preferences</h2>
-        <p className="text-sm text-[#a0a0a0] font-sans">Customize your account settings</p>
-      </div>
-
       <div className="space-y-6">
         <div>
-          <Label className="text-sm font-medium text-[#a0a0a0] mb-2 flex items-center gap-2 font-sans">
-            <Globe className="w-4 h-4" />
-            Language
-          </Label>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-md text-white text-sm focus:outline-none focus:border-[#00d4aa] focus:ring-1 focus:ring-[#00d4aa]/20 font-sans"
-          >
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="it">Italian</option>
-            <option value="pt">Portuguese</option>
-            <option value="zh">Chinese</option>
-            <option value="ja">Japanese</option>
-          </select>
-        </div>
-
-        <div>
-          <Label className="text-sm font-medium text-[#a0a0a0] mb-2 flex items-center gap-2 font-sans">
-            <Target className="w-4 h-4" />
+          <Label className="text-sm font-semibold text-white mb-2 block font-space">
             What will you be using DoorIQ for?
           </Label>
           <select
             value={usage}
-            onChange={(e) => setUsage(e.target.value)}
-            className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-md text-white text-sm focus:outline-none focus:border-[#00d4aa] focus:ring-1 focus:ring-[#00d4aa]/20 font-sans"
+            onChange={(e) => handleUsageChange(e.target.value)}
+            disabled={saving}
+            className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-md text-white text-sm focus:outline-none focus:border-[#00d4aa] focus:ring-1 focus:ring-[#00d4aa]/20 font-sans mt-2"
           >
             <option value="">Select an option</option>
             <option value="sales-training">Sales Training</option>
@@ -134,26 +133,28 @@ export function AccountPreferences({ userId }: AccountPreferencesProps) {
           </select>
         </div>
 
-        {hasChanges && (
-          <div className="pt-4 border-t border-[#2a2a2a]">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium px-6 py-2 rounded-md text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Preferences'
-              )}
-            </button>
-          </div>
-        )}
+        <div>
+          <Label className="text-sm font-semibold text-white mb-2 block font-space">
+            Language
+          </Label>
+          <select
+            value={language}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            disabled={saving}
+            className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-md text-white text-sm focus:outline-none focus:border-[#00d4aa] focus:ring-1 focus:ring-[#00d4aa]/20 font-sans mt-2"
+          >
+            <option value="en">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+          </select>
+        </div>
       </div>
     </div>
   )
 }
-

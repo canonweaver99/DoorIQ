@@ -38,7 +38,6 @@ export function ProfileInformation({
   const [hasChanges, setHasChanges] = useState(false)
 
   useEffect(() => {
-    // Check if there are unsaved changes (either in editing state or in saved state)
     const hasNameChange = editingField === 'fullName' 
       ? tempValue !== initialFullName 
       : fullName !== initialFullName
@@ -94,7 +93,6 @@ export function ProfileInformation({
     setSaving(true)
     try {
       const updates: any = {}
-      // Use tempValue if currently editing, otherwise use saved value
       const currentFullName = editingField === 'fullName' ? tempValue.trim() : fullName.trim()
       const currentEmail = editingField === 'email' ? tempValue.trim() : email.trim()
       
@@ -153,108 +151,104 @@ export function ProfileInformation({
     
     return (
       <div className="py-4 border-b border-[#2a2a2a] last:border-0">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <Label className="text-sm font-medium text-[#a0a0a0] mb-2 block font-sans">
-              {label}
-            </Label>
-            {isEditing ? (
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
-                  <Input
-                    type={type}
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white focus:border-[#00d4aa] focus:ring-[#00d4aa]/20"
-                    autoFocus
-                  />
-                </div>
-                <button
-                  onClick={() => saveField(field)}
-                  disabled={saving}
-                  className="p-2 text-[#00d4aa] hover:bg-[#1a1a1a] rounded transition-colors disabled:opacity-50"
-                >
-                  {saving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Check className="w-4 h-4" />
-                  )}
-                </button>
-                <button
-                  onClick={cancelEditing}
-                  disabled={saving}
-                  className="p-2 text-[#a0a0a0] hover:text-white hover:bg-[#1a1a1a] rounded transition-colors disabled:opacity-50"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <p className="text-white text-sm font-sans">{value || 'Not set'}</p>
-                {!disabled && (
-                  <button
-                    onClick={() => startEditing(field, value)}
-                    className="p-1.5 text-[#a0a0a0] hover:text-white hover:bg-[#1a1a1a] rounded transition-colors"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+        <Label className="text-sm font-semibold text-white mb-2 block font-space">
+          {label}
+        </Label>
+        {isEditing ? (
+          <div className="flex items-center gap-2 mt-2">
+            <div className="relative flex-1">
+              <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
+              <Input
+                type={type}
+                value={tempValue}
+                onChange={(e) => setTempValue(e.target.value)}
+                className="pl-10 bg-[#0a0a0a] border-[#2a2a2a] text-white focus:border-[#00d4aa] focus:ring-[#00d4aa]/20"
+                autoFocus
+              />
+            </div>
+            <button
+              onClick={() => saveField(field)}
+              disabled={saving}
+              className="px-4 py-2 text-sm text-[#00d4aa] hover:bg-[#1a1a1a] rounded transition-colors disabled:opacity-50 font-sans"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'Save'
+              )}
+            </button>
+            <button
+              onClick={cancelEditing}
+              disabled={saving}
+              className="px-4 py-2 text-sm text-[#a0a0a0] hover:text-white hover:bg-[#1a1a1a] rounded transition-colors disabled:opacity-50 font-sans"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-white text-sm font-sans">{value || 'Not set'}</p>
+            {!disabled && (
+              <button
+                onClick={() => startEditing(field, value)}
+                className="px-4 py-1.5 text-sm text-[#a0a0a0] hover:text-white border border-[#2a2a2a] hover:border-[#2a2a2a] rounded transition-colors font-sans"
+              >
+                Edit
+              </button>
             )}
           </div>
-        </div>
+        )}
       </div>
     )
   }
 
   return (
     <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-2 font-space">Profile Information</h2>
-        <p className="text-sm text-[#a0a0a0] font-sans">Update your personal information</p>
-      </div>
-
-      {/* Profile Photo */}
-      <div className="flex items-center gap-6 mb-8 pb-8 border-b border-[#2a2a2a]">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-[#2a2a2a] border border-[#2a2a2a]">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Profile"
-                className="w-full h-full object-cover"
+      {/* Profile Photo Section */}
+      <div className="mb-8 pb-8 border-b border-[#2a2a2a]">
+        <Label className="text-sm font-semibold text-white mb-4 block font-space">
+          Profile Photo
+        </Label>
+        <div className="flex items-center gap-6">
+          <div className="relative flex-shrink-0">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#2a2a2a] border border-[#2a2a2a]">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <User className="w-10 h-10 text-[#666]" />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            {userId && (
+              <SimpleAvatarUpload
+                currentAvatarUrl={avatarUrl}
+                userId={userId}
+                onUploadComplete={(url) => {
+                  setAvatarUrl(url || null)
+                }}
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <User className="w-10 h-10 text-[#666]" />
-              </div>
             )}
           </div>
-        </div>
-        <div className="flex-1">
-          {userId && (
-            <SimpleAvatarUpload
-              currentAvatarUrl={avatarUrl}
-              userId={userId}
-              onUploadComplete={(url) => {
-                setAvatarUrl(url || null)
-              }}
-            />
-          )}
         </div>
       </div>
 
       {/* Fields */}
       <div className="space-y-0">
         <FieldRow
-          label="Full Name"
+          label="Name"
           value={fullName}
           field="fullName"
           icon={User}
         />
         <FieldRow
-          label="Email"
+          label="Email address"
           value={email}
           field="email"
           icon={Mail}
@@ -275,7 +269,7 @@ export function ProfileInformation({
           <Button
             onClick={handleSaveAll}
             disabled={saving}
-            className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium px-6"
+            className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium px-6 font-sans"
           >
             {saving ? (
               <>
@@ -291,4 +285,3 @@ export function ProfileInformation({
     </div>
   )
 }
-

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { User, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/ui/toast'
 
@@ -124,9 +124,18 @@ export function SimpleAvatarUpload({ currentAvatarUrl, userId, onUploadComplete 
 
   return (
     <div className="flex flex-col gap-2">
+      {avatarUrl && (
+        <button
+          onClick={handleRemovePhoto}
+          disabled={uploading}
+          className="text-sm text-[#a0a0a0] hover:text-white transition-colors text-left disabled:opacity-50 font-sans"
+        >
+          Remove photo
+        </button>
+      )}
       <label
         htmlFor="avatar-upload"
-        className="text-sm text-[#a0a0a0] hover:text-white cursor-pointer transition-colors inline-flex items-center gap-2 font-sans"
+        className="text-sm text-[#a0a0a0] hover:text-white cursor-pointer transition-colors inline-flex items-center gap-2 font-sans border border-[#2a2a2a] hover:border-[#2a2a2a] rounded px-4 py-1.5 w-fit"
       >
         {uploading ? (
           <>
@@ -137,15 +146,6 @@ export function SimpleAvatarUpload({ currentAvatarUrl, userId, onUploadComplete 
           'Change photo'
         )}
       </label>
-      {avatarUrl && (
-        <button
-          onClick={handleRemovePhoto}
-          disabled={uploading}
-          className="text-sm text-[#a0a0a0] hover:text-white transition-colors text-left disabled:opacity-50 font-sans"
-        >
-          Remove photo
-        </button>
-      )}
       <input
         id="avatar-upload"
         type="file"
@@ -158,4 +158,3 @@ export function SimpleAvatarUpload({ currentAvatarUrl, userId, onUploadComplete 
     </div>
   )
 }
-

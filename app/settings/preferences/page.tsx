@@ -1,20 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Bell, Clock, Save, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Bell, Clock, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { GlowCard } from '@/components/ui/spotlight-card'
+import { useToast } from '@/components/ui/toast'
 
 export default function PreferencesPage() {
   const supabase = createClient()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
 
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [inAppNotifications, setInAppNotifications] = useState(true)
@@ -46,44 +43,139 @@ export default function PreferencesPage() {
       }
     } catch (err: any) {
       console.error('Error fetching preferences:', err)
-      setError('Failed to load preferences')
+      showToast({ type: 'error', title: 'Failed to load preferences' })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSave = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
+  const handleToggleEmailNotifications = async (checked: boolean) => {
+    setEmailNotifications(checked)
     setSaving(true)
-    setError(null)
-    setSuccess(null)
-
     try {
-      const preferences = {
-        notifications: {
-          email: emailNotifications,
-          inApp: inAppNotifications,
-        },
-        sessionDefaults: {
-          duration: sessionDuration,
-        },
-        autoSaveTranscripts,
-      }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('users')
-        .update({ preferences })
+        .update({
+          preferences: {
+            notifications: {
+              email: checked,
+              inApp: inAppNotifications,
+            },
+            sessionDefaults: {
+              duration: sessionDuration,
+            },
+            autoSaveTranscripts,
+          },
+        })
         .eq('id', user.id)
 
-      if (updateError) throw updateError
-
-      setSuccess('Preferences saved successfully')
-      setTimeout(() => setSuccess(null), 3000)
+      if (error) throw error
+      showToast({ type: 'success', title: 'Email notifications updated' })
     } catch (err: any) {
-      console.error('Error saving preferences:', err)
-      setError(err.message || 'Failed to save preferences')
+      setEmailNotifications(!checked)
+      showToast({ type: 'error', title: 'Update failed', message: err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleToggleInAppNotifications = async (checked: boolean) => {
+    setInAppNotifications(checked)
+    setSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('users')
+        .update({
+          preferences: {
+            notifications: {
+              email: emailNotifications,
+              inApp: checked,
+            },
+            sessionDefaults: {
+              duration: sessionDuration,
+            },
+            autoSaveTranscripts,
+          },
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+      showToast({ type: 'success', title: 'In-app notifications updated' })
+    } catch (err: any) {
+      setInAppNotifications(!checked)
+      showToast({ type: 'error', title: 'Update failed', message: err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSessionDurationChange = async (duration: number) => {
+    setSessionDuration(duration)
+    setSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('users')
+        .update({
+          preferences: {
+            notifications: {
+              email: emailNotifications,
+              inApp: inAppNotifications,
+            },
+            sessionDefaults: {
+              duration,
+            },
+            autoSaveTranscripts,
+          },
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+      showToast({ type: 'success', title: 'Session duration updated' })
+    } catch (err: any) {
+      setSessionDuration(sessionDuration)
+      showToast({ type: 'error', title: 'Update failed', message: err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleToggleAutoSave = async (checked: boolean) => {
+    setAutoSaveTranscripts(checked)
+    setSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('users')
+        .update({
+          preferences: {
+            notifications: {
+              email: emailNotifications,
+              inApp: inAppNotifications,
+            },
+            sessionDefaults: {
+              duration: sessionDuration,
+            },
+            autoSaveTranscripts: checked,
+          },
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+      showToast({ type: 'success', title: 'Auto-save preference updated' })
+    } catch (err: any) {
+      setAutoSaveTranscripts(!checked)
+      showToast({ type: 'error', title: 'Update failed', message: err.message })
     } finally {
       setSaving(false)
     }
@@ -92,110 +184,85 @@ export default function PreferencesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#00d4aa]" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Success/Error Messages */}
-      {success && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 flex items-start gap-3"
-        >
-          <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-green-400">{success}</p>
-        </motion.div>
-      )}
-
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start gap-3"
-        >
-          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-400">{error}</p>
-        </motion.div>
-      )}
-
       {/* Notification Settings */}
-      <GlowCard glowColor="purple" customSize className="p-6 bg-card/60 dark:bg-black/60">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-space font-bold text-foreground mb-2">Notifications</h2>
-            <p className="text-sm text-foreground/60 font-sans">
-              Choose how you want to receive notifications
-            </p>
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-white mb-2 font-space">Notifications</h2>
+          <p className="text-sm text-[#a0a0a0] font-sans">
+            Choose how you want to receive notifications
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
+            <div className="flex items-center gap-3">
+              <Bell className="w-5 h-5 text-[#a0a0a0]" />
+              <div>
+                <p className="font-medium text-white text-sm font-sans">Email Notifications</p>
+                <p className="text-xs text-[#a0a0a0] font-sans mt-0.5">
+                  Receive email updates about your account and sessions
+                </p>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={emailNotifications}
+                onChange={(e) => handleToggleEmailNotifications(e.target.checked)}
+                disabled={saving}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-[#2a2a2a] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#00d4aa]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00d4aa] disabled:opacity-50"></div>
+            </label>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-background/30 border border-border/40">
-              <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-purple-400" />
-                <div>
-                  <p className="font-medium text-foreground">Email Notifications</p>
-                  <p className="text-sm text-foreground/60 font-sans">
-                    Receive email updates about your account and sessions
-                  </p>
-                </div>
+          <div className="flex items-center justify-between p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
+            <div className="flex items-center gap-3">
+              <Bell className="w-5 h-5 text-[#a0a0a0]" />
+              <div>
+                <p className="font-medium text-white text-sm font-sans">In-App Notifications</p>
+                <p className="text-xs text-[#a0a0a0] font-sans mt-0.5">
+                  Show notifications within the application
+                </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={emailNotifications}
-                  onChange={(e) => setEmailNotifications(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
-              </label>
             </div>
-
-            <div className="flex items-center justify-between p-4 rounded-lg bg-background/30 border border-border/40">
-              <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-blue-400" />
-                <div>
-                  <p className="font-medium text-foreground">In-App Notifications</p>
-                  <p className="text-sm text-foreground/60 font-sans">
-                    Show notifications within the application
-                  </p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={inAppNotifications}
-                  onChange={(e) => setInAppNotifications(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
-              </label>
-            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={inAppNotifications}
+                onChange={(e) => handleToggleInAppNotifications(e.target.checked)}
+                disabled={saving}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-[#2a2a2a] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#00d4aa]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00d4aa] disabled:opacity-50"></div>
+            </label>
           </div>
         </div>
-      </GlowCard>
+      </div>
 
       {/* Session Defaults */}
-      <GlowCard glowColor="emerald" customSize className="p-6 bg-card/60 dark:bg-black/60">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-space font-bold text-foreground mb-2">Session Defaults</h2>
-            <p className="text-sm text-foreground/60 font-sans">
-              Configure default settings for your training sessions
-            </p>
-          </div>
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-white mb-2 font-space">Session Defaults</h2>
+          <p className="text-sm text-[#a0a0a0] font-sans">
+            Configure default settings for your training sessions
+          </p>
+        </div>
 
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="w-5 h-5 text-emerald-400" />
-                <Label htmlFor="sessionDuration" className="font-medium text-foreground">
-                  Default Session Duration (minutes)
-                </Label>
-              </div>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="sessionDuration" className="text-sm font-semibold text-white mb-2 block font-space">
+              Default Session Duration (minutes)
+            </Label>
+            <div className="flex items-center gap-2 mt-2">
+              <Clock className="w-4 h-4 text-[#666]" />
               <Input
                 id="sessionDuration"
                 type="number"
@@ -203,56 +270,36 @@ export default function PreferencesPage() {
                 max="120"
                 step="5"
                 value={sessionDuration}
-                onChange={(e) => setSessionDuration(Math.max(5, Math.min(120, parseInt(e.target.value) || 30)))}
-                className="w-32 bg-background/50 border-border/40"
+                onChange={(e) => handleSessionDurationChange(Math.max(5, Math.min(120, parseInt(e.target.value) || 30)))}
+                disabled={saving}
+                className="w-32 bg-[#0a0a0a] border-[#2a2a2a] text-white focus:border-[#00d4aa] focus:ring-[#00d4aa]/20 font-sans"
               />
-              <p className="text-xs text-foreground/50 mt-1 font-sans">
-                Recommended: 15-30 minutes for optimal practice sessions
+            </div>
+            <p className="text-xs text-[#a0a0a0] mt-1 font-sans">
+              Recommended: 15-30 minutes for optimal practice sessions
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
+            <div>
+              <p className="font-medium text-white text-sm font-sans">Auto-Save Transcripts</p>
+              <p className="text-xs text-[#a0a0a0] font-sans mt-0.5">
+                Automatically save session transcripts for later review
               </p>
             </div>
-
-            <div className="flex items-center justify-between p-4 rounded-lg bg-background/30 border border-border/40">
-              <div>
-                <p className="font-medium text-foreground">Auto-Save Transcripts</p>
-                <p className="text-sm text-foreground/60 font-sans">
-                  Automatically save session transcripts for later review
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={autoSaveTranscripts}
-                  onChange={(e) => setAutoSaveTranscripts(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-              </label>
-            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoSaveTranscripts}
+                onChange={(e) => handleToggleAutoSave(e.target.checked)}
+                disabled={saving}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-[#2a2a2a] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#00d4aa]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00d4aa] disabled:opacity-50"></div>
+            </label>
           </div>
         </div>
-      </GlowCard>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Save Preferences
-            </>
-          )}
-        </Button>
       </div>
     </div>
   )
 }
-
