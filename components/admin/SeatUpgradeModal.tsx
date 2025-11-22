@@ -57,17 +57,19 @@ export function SeatUpgradeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="batcave-bg-secondary neon-border-glow">
         <DialogHeader>
-          <DialogTitle>Update Seat Limit</DialogTitle>
-          <DialogDescription>
-            Change the number of seats for this organization. This will update your Stripe subscription.
+          <DialogTitle className="text-cyan-neon neon-text font-mono uppercase tracking-wider">
+            UPDATE SEAT LIMIT
+          </DialogTitle>
+          <DialogDescription className="text-gray-500 font-mono">
+            CHANGE THE NUMBER OF SEATS FOR THIS ORGANIZATION. THIS WILL UPDATE YOUR STRIPE SUBSCRIPTION.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="seats">Number of Seats</Label>
+            <Label htmlFor="seats" className="text-gray-400 font-mono uppercase text-sm">NUMBER OF SEATS</Label>
             <Input
               id="seats"
               type="number"
@@ -75,35 +77,35 @@ export function SeatUpgradeModal({
               max={1000}
               value={newSeats}
               onChange={(e) => setNewSeats(parseInt(e.target.value) || 0)}
-              className="mt-1"
+              className="mt-1 batcave-bg-tertiary neon-border text-white font-mono focus:neon-border-glow"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Minimum: {organization.seats_used} seats (current usage)
+            <p className="text-xs text-gray-500 mt-1 font-mono">
+              MINIMUM: {organization.seats_used} SEATS (CURRENT USAGE)
             </p>
           </div>
 
-          <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Current monthly cost:</span>
-              <span className="font-medium">${(organization.seat_limit * 69).toLocaleString()}/month</span>
+          <div className="batcave-bg-tertiary neon-border rounded-lg p-4 space-y-2">
+            <div className="flex justify-between text-sm font-mono">
+              <span className="text-gray-500">CURRENT MONTHLY COST:</span>
+              <span className="font-medium text-white data-display">${(organization.seat_limit * 69).toLocaleString()}/MONTH</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">New monthly cost:</span>
-              <span className="font-medium">${newMonthlyCost.toLocaleString()}/month</span>
+            <div className="flex justify-between text-sm font-mono">
+              <span className="text-gray-500">NEW MONTHLY COST:</span>
+              <span className="font-medium text-cyan-neon neon-text data-display">${newMonthlyCost.toLocaleString()}/MONTH</span>
             </div>
             {priceDiff !== 0 && (
-              <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-slate-700">
-                <span className="text-gray-600 dark:text-gray-400">Change:</span>
-                <span className={`font-medium ${priceDiff > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                  {priceDiff > 0 ? '+' : ''}${priceDiff.toLocaleString()}/month
+              <div className="flex justify-between text-sm pt-2 border-t neon-border">
+                <span className="text-gray-500 font-mono">CHANGE:</span>
+                <span className={`font-medium font-mono data-display ${priceDiff > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  {priceDiff > 0 ? '+' : ''}${priceDiff.toLocaleString()}/MONTH
                 </span>
               </div>
             )}
           </div>
 
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3">
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            <div className="bg-red-500/20 border border-red-500/50 neon-border rounded p-3">
+              <p className="text-sm text-red-400 font-mono">{error}</p>
             </div>
           )}
 
@@ -112,15 +114,17 @@ export function SeatUpgradeModal({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={loading}
+              className="neon-border bg-black text-gray-400 hover:text-cyan-neon hover:border-cyan-500 font-mono uppercase tracking-wider"
             >
-              Cancel
+              CANCEL
             </Button>
             <Button
               onClick={handleUpdate}
               disabled={loading || newSeats === organization.seat_limit}
+              className="neon-border-glow bg-black text-cyan-neon border-cyan-500 hover:neon-glow font-mono uppercase tracking-wider"
             >
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Update Seats
+              UPDATE SEATS
             </Button>
           </div>
         </div>

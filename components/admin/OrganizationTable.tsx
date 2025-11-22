@@ -21,35 +21,35 @@ interface OrganizationTableProps {
 
 export function OrganizationTable({ organizations }: OrganizationTableProps) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
+    <div className="holographic-card neon-border rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
+          <thead className="border-b neon-border">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-mono">
                 Organization
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-mono">
                 Plan
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-mono">
                 Members
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-mono">
                 Seats Used
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-mono">
                 Monthly Billing
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-mono">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-mono">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+          <tbody className="divide-y divide-gray-800">
             {organizations.map((org) => {
               const utilizationPct = org.seat_limit > 0 
                 ? (org.seats_used / org.seat_limit) * 100 
@@ -57,59 +57,59 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
               const monthlyCost = org.seat_limit * 69
 
               return (
-                <tr key={org.id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                <tr key={org.id} className="hover:bg-black/30 transition-colors border-b neon-border">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
-                        <Building2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <div className="p-2 bg-cyan-500/20 neon-border rounded-lg mr-3">
+                        <Building2 className="w-4 h-4 text-cyan-neon neon-text" />
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <div className="text-sm font-medium text-white font-mono">
                           {org.name}
                         </div>
                         {org.stripe_subscription_id && (
-                          <span className="text-xs text-green-600 dark:text-green-400">
-                            Active Subscription
+                          <span className="text-xs text-green-400 font-mono">
+                            ACTIVE SUBSCRIPTION
                           </span>
                         )}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 capitalize">
-                      {org.plan_tier || 'None'}
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-cyan-500/20 text-cyan-neon border border-cyan-500/50 font-mono uppercase neon-border">
+                      {(org.plan_tier || 'None').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900 dark:text-white">
-                      <Users className="w-4 h-4 mr-1 text-gray-400" />
+                    <div className="flex items-center text-sm text-white font-mono">
+                      <Users className="w-4 h-4 mr-1 text-gray-500" />
                       {org.member_count || org.seats_used}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div className="w-24 bg-gray-800 neon-border rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full ${
-                            utilizationPct > 90 ? 'bg-red-500' : 
+                            utilizationPct > 90 ? 'bg-red-500 neon-glow' : 
                             utilizationPct > 80 ? 'bg-yellow-500' : 
-                            'bg-green-500'
+                            'bg-cyan-500 neon-glow'
                           }`}
                           style={{ width: `${Math.min(utilizationPct, 100)}%` }}
                         />
                       </div>
-                      <span className="text-sm text-gray-900 dark:text-white">
+                      <span className="text-sm text-white font-mono">
                         {org.seats_used}/{org.seat_limit}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900 dark:text-white">
-                      <CreditCard className="w-4 h-4 mr-1 text-gray-400" />
+                    <div className="flex items-center text-sm text-white font-mono">
+                      <CreditCard className="w-4 h-4 mr-1 text-gray-500" />
                       ${monthlyCost.toLocaleString()}/mo
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1" />
                       {format(new Date(org.created_at), 'MMM d, yyyy')}
@@ -118,9 +118,9 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <Link
                       href={`/admin/organizations/${org.id}`}
-                      className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 flex items-center gap-1"
+                      className="text-cyan-neon hover:text-cyan-400 flex items-center gap-1 font-mono transition-colors"
                     >
-                      View Details
+                      VIEW DETAILS
                       <ChevronRight className="w-4 h-4" />
                     </Link>
                   </td>
@@ -132,8 +132,8 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
         
         {organizations.length === 0 && (
           <div className="p-12 text-center">
-            <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No organizations found</p>
+            <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 font-mono">NO ORGANIZATIONS FOUND</p>
           </div>
         )}
       </div>
