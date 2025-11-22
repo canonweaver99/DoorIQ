@@ -62,13 +62,13 @@ export default function AdminLayout({
   // Determine back button destination
   const getBackDestination = () => {
     if (pathname === '/admin') {
-      return '/dashboard'
+      return '/'
     }
     // For nested admin pages, go back to admin dashboard
     if (pathname?.startsWith('/admin/')) {
       return '/admin'
     }
-    return '/dashboard'
+    return '/'
   }
 
   return (
