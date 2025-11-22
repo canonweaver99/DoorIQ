@@ -78,117 +78,101 @@ export default function AdminSessionsPage() {
   }
 
   return (
-    <div className="min-h-screen batcave-bg p-6 relative scanlines">
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-cyan-neon mb-2 font-mono tracking-wider">
-            TRAINING SESSIONS
-          </h1>
-          <p className="text-gray-500 font-mono text-sm">VIEW ALL LIVE SESSIONS</p>
-          <div className="mt-4 h-px w-32 bg-gradient-to-r from-cyan-500 to-transparent" />
-        </div>
-        
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-2xl font-bold text-slate-900">All Live Sessions</h1>
+          <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search name, email, or conversation id"
-                className="pl-9 pr-3 py-2 batcave-bg-tertiary neon-border rounded-lg text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:neon-border-glow transition-all"
+                className="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
               />
             </div>
             <select
               value={range}
               onChange={(e) => setRange(e.target.value as any)}
-              className="py-2 px-3 batcave-bg-tertiary neon-border text-white rounded-lg text-sm font-mono focus:outline-none focus:neon-border-glow transition-all"
+              className="py-2 px-3 border border-slate-300 rounded-lg text-sm"
             >
-              <option value="week">LAST 7 DAYS</option>
-              <option value="month">LAST 30 DAYS</option>
-              <option value="all">ALL TIME</option>
+              <option value="week">Last 7 days</option>
+              <option value="month">Last 30 days</option>
+              <option value="all">All time</option>
             </select>
             <select
               value={outcome}
               onChange={(e) => setOutcome(e.target.value as any)}
-              className="py-2 px-3 batcave-bg-tertiary neon-border text-white rounded-lg text-sm font-mono focus:outline-none focus:neon-border-glow transition-all"
+              className="py-2 px-3 border border-slate-300 rounded-lg text-sm"
             >
-              <option value="any">ANY OUTCOME</option>
-              <option value="SUCCESS">SUCCESS</option>
-              <option value="FAILURE">FAILURE</option>
-              <option value="PARTIAL">PARTIAL</option>
+              <option value="any">Any outcome</option>
+              <option value="SUCCESS">Success</option>
+              <option value="FAILURE">Failure</option>
+              <option value="PARTIAL">Partial</option>
             </select>
-            <button 
-              onClick={fetchSessions} 
-              className="inline-flex items-center px-3 py-2 text-sm neon-border bg-black text-gray-400 hover:text-cyan-neon hover:border-cyan-500 rounded-lg font-mono transition-all"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" /> REFRESH
+            <button onClick={fetchSessions} className="inline-flex items-center px-3 py-2 text-sm border border-slate-300 rounded-lg">
+              <RefreshCw className="w-4 h-4 mr-2" /> Refresh
             </button>
           </div>
         </div>
 
-        <div className="holographic-card neon-border rounded-lg overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b neon-border">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">When</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">Rep</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">Score</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">Outcome</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">Duration</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">When</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Rep</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Score</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Outcome</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Duration</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-slate-200">
                 {loading ? (
-                  <tr><td className="p-8 text-center text-gray-500 font-mono" colSpan={6}>LOADING…</td></tr>
+                  <tr><td className="p-8 text-center text-slate-400" colSpan={6}>Loading…</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td className="p-8 text-center text-gray-500 font-mono" colSpan={6}>NO SESSIONS FOUND</td></tr>
+                  <tr><td className="p-8 text-center text-slate-400" colSpan={6}>No sessions found</td></tr>
                 ) : (
                   filtered.map((s) => (
-                    <tr key={s.id} className="hover:bg-black/30 transition-colors border-b neon-border">
-                      <td className="px-4 py-3 text-sm text-gray-300 font-mono">
+                    <tr key={s.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-700">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-500" />
+                          <Calendar className="w-4 h-4 text-slate-400" />
                           {format(new Date(s.created_at), 'MMM d, yyyy h:mm a')}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-300">
+                      <td className="px-4 py-3 text-sm text-slate-700">
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-gray-500" />
+                          <User className="w-4 h-4 text-slate-400" />
                           <div>
-                            <div className="font-medium font-mono">{s.users?.full_name || '—'}</div>
-                            <div className="text-gray-500 text-xs font-mono">{s.users?.email || '—'}</div>
+                            <div className="font-medium">{s.users?.full_name || '—'}</div>
+                            <div className="text-slate-500 text-xs">{s.users?.email || '—'}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <div className="font-semibold text-cyan-neon data-display">
+                        <div className="font-semibold">
                           {s.overall_score ?? '—'}
                         </div>
-                        <div className="text-xs text-gray-500 font-mono">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>
+                        <div className="text-xs text-slate-500">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 rounded text-xs font-mono uppercase border ${
-                          s.outcome === 'SUCCESS' 
-                            ? 'bg-green-500/20 text-green-400 border-green-500/50 neon-border' 
-                            : s.outcome === 'FAILURE' 
-                            ? 'bg-red-500/20 text-red-400 border-red-500/50 neon-border' 
-                            : 'bg-amber-500/20 text-amber-400 border-amber-500/50 neon-border'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs ${s.outcome === 'SUCCESS' ? 'bg-green-100 text-green-700' : s.outcome === 'FAILURE' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                           {s.outcome || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-300 font-mono">
+                      <td className="px-4 py-3 text-sm text-slate-700">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-500" />
+                          <Clock className="w-4 h-4 text-slate-400" />
                           {formatDuration(s.duration_seconds)}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-cyan-neon hover:text-cyan-400 font-mono transition-colors">
-                          VIEW <ChevronRight className="w-4 h-4 ml-1" />
+                        <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-blue-600 hover:text-blue-500">
+                          View <ChevronRight className="w-4 h-4 ml-1" />
                         </Link>
                       </td>
                     </tr>

@@ -27,11 +27,11 @@ interface SalesLead {
 }
 
 const statusColors = {
-  new: 'bg-blue-500/20 text-blue-neon border-blue-500/50 neon-border',
-  contacted: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50 neon-border',
-  qualified: 'bg-cyan-500/20 text-cyan-neon border-cyan-500/50 neon-border-glow',
-  converted: 'bg-green-500/20 text-green-400 border-green-500/50 neon-border',
-  lost: 'bg-red-500/20 text-red-400 border-red-500/50 neon-border'
+  new: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  contacted: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+  qualified: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  converted: 'bg-green-500/10 text-green-400 border-green-500/20',
+  lost: 'bg-red-500/10 text-red-400 border-red-500/20'
 }
 
 const contactIcons = {
@@ -127,28 +127,25 @@ export default function SalesLeadsPage() {
   }
 
   return (
-    <div className="min-h-screen batcave-bg p-6 relative scanlines">
-      <div className="max-w-7xl mx-auto relative z-10">
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-cyan-neon mb-2 font-mono tracking-wider">
-            SALES LEADS
-          </h1>
-          <p className="text-gray-500 font-mono text-sm">MANAGE AND TRACK YOUR SALES INQUIRIES</p>
-          <div className="mt-4 h-px w-32 bg-gradient-to-r from-cyan-500 to-transparent" />
+          <h1 className="text-3xl font-bold text-white mb-2">Sales Leads</h1>
+          <p className="text-slate-400">Manage and track your sales inquiries</p>
         </div>
 
         {/* Filters and Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
           {/* Stats Cards */}
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
-            <p className="text-gray-500 text-xs font-mono uppercase tracking-wider mb-1">Total Leads</p>
-            <p className="text-3xl font-bold text-cyan-neon data-display">{leads.length}</p>
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
+            <p className="text-slate-400 text-sm mb-1">Total Leads</p>
+            <p className="text-3xl font-bold text-white">{leads.length}</p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
-            <p className="text-gray-500 text-xs font-mono uppercase tracking-wider mb-1">New This Week</p>
-            <p className="text-3xl font-bold text-blue-neon data-display">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
+            <p className="text-slate-400 text-sm mb-1">New This Week</p>
+            <p className="text-3xl font-bold text-white">
               {leads.filter(l => {
                 const weekAgo = new Date()
                 weekAgo.setDate(weekAgo.getDate() - 7)
@@ -157,16 +154,16 @@ export default function SalesLeadsPage() {
             </p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
-            <p className="text-gray-500 text-xs font-mono uppercase tracking-wider mb-1">Qualified Leads</p>
-            <p className="text-3xl font-bold text-cyan-neon data-display">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
+            <p className="text-slate-400 text-sm mb-1">Qualified Leads</p>
+            <p className="text-3xl font-bold text-white">
               {leads.filter(l => l.status === 'qualified').length}
             </p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
-            <p className="text-gray-500 text-xs font-mono uppercase tracking-wider mb-1">Total Reps</p>
-            <p className="text-3xl font-bold text-cyan-neon data-display">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
+            <p className="text-slate-400 text-sm mb-1">Total Reps</p>
+            <p className="text-3xl font-bold text-white">
               {leads.reduce((sum, lead) => sum + lead.number_of_reps, 0)}
             </p>
           </div>
@@ -175,8 +172,8 @@ export default function SalesLeadsPage() {
         {/* Filter Controls */}
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-500" />
-            <span className="text-gray-500 font-mono text-sm">FILTER BY STATUS:</span>
+            <Filter className="w-5 h-5 text-slate-400" />
+            <span className="text-slate-400">Filter by status:</span>
           </div>
           
           <div className="flex gap-2">
@@ -185,13 +182,13 @@ export default function SalesLeadsPage() {
                 key={status}
                 onClick={() => setFilter(status)}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-xs font-medium transition-all font-mono uppercase tracking-wider",
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                   filter === status
-                    ? "neon-border-glow bg-black text-cyan-neon border-cyan-500"
-                    : "neon-border bg-black text-gray-500 border-gray-700 hover:text-cyan-neon hover:border-cyan-500"
+                    ? "bg-primary text-white"
+                    : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                 )}
               >
-                {status}
+                {status.charAt(0).toUpperCase() + status.slice(1)}
                 {status !== 'all' && (
                   <span className="ml-2 text-xs opacity-70">
                     ({leads.filter(l => l.status === status).length})
@@ -202,32 +199,32 @@ export default function SalesLeadsPage() {
           </div>
           
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-gray-500 text-sm font-mono">SORT BY:</span>
+            <span className="text-slate-400 text-sm">Sort by:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="batcave-bg-tertiary neon-border text-white rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:neon-border-glow transition-all"
+              className="bg-slate-800 text-white rounded-lg px-3 py-2 text-sm"
             >
-              <option value="newest">NEWEST FIRST</option>
-              <option value="oldest">OLDEST FIRST</option>
-              <option value="company">COMPANY NAME</option>
-              <option value="reps">NUMBER OF REPS</option>
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="company">Company Name</option>
+              <option value="reps">Number of Reps</option>
             </select>
           </div>
         </div>
 
         {/* Leads Table */}
-        <div className="holographic-card neon-border rounded-lg overflow-hidden">
+        <div className="bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b neon-border">
-                  <th className="text-left p-4 text-gray-500 font-medium font-mono text-xs uppercase tracking-wider">Contact</th>
-                  <th className="text-left p-4 text-gray-500 font-medium font-mono text-xs uppercase tracking-wider">Company</th>
-                  <th className="text-left p-4 text-gray-500 font-medium font-mono text-xs uppercase tracking-wider">Details</th>
-                  <th className="text-left p-4 text-gray-500 font-medium font-mono text-xs uppercase tracking-wider">Status</th>
-                  <th className="text-left p-4 text-gray-500 font-medium font-mono text-xs uppercase tracking-wider">Submitted</th>
-                  <th className="text-left p-4 text-gray-500 font-medium font-mono text-xs uppercase tracking-wider">Actions</th>
+                <tr className="border-b border-slate-800">
+                  <th className="text-left p-4 text-slate-400 font-medium">Contact</th>
+                  <th className="text-left p-4 text-slate-400 font-medium">Company</th>
+                  <th className="text-left p-4 text-slate-400 font-medium">Details</th>
+                  <th className="text-left p-4 text-slate-400 font-medium">Status</th>
+                  <th className="text-left p-4 text-slate-400 font-medium">Submitted</th>
+                  <th className="text-left p-4 text-slate-400 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -235,17 +232,17 @@ export default function SalesLeadsPage() {
                   const ContactIcon = contactIcons[lead.preferred_contact_method]
                   
                   return (
-                    <tr key={lead.id} className="border-b neon-border hover:bg-black/30 transition-colors">
+                    <tr key={lead.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
                       <td className="p-4">
                         <div>
-                          <p className="font-medium text-white font-mono">{lead.full_name}</p>
-                          <p className="text-sm text-gray-500 font-mono">{lead.job_title}</p>
+                          <p className="font-medium text-white">{lead.full_name}</p>
+                          <p className="text-sm text-slate-400">{lead.job_title}</p>
                           <div className="flex items-center gap-3 mt-1">
-                            <a href={`mailto:${lead.work_email}`} className="text-sm text-cyan-neon hover:text-cyan-400 font-mono transition-colors">
+                            <a href={`mailto:${lead.work_email}`} className="text-sm text-primary hover:underline">
                               {lead.work_email}
                             </a>
                             {lead.phone_number && (
-                              <a href={`tel:${lead.phone_number}`} className="text-sm text-gray-500 hover:text-gray-400 font-mono transition-colors">
+                              <a href={`tel:${lead.phone_number}`} className="text-sm text-slate-400 hover:text-white">
                                 {lead.phone_number}
                               </a>
                             )}
@@ -255,25 +252,25 @@ export default function SalesLeadsPage() {
                       
                       <td className="p-4">
                         <div>
-                          <p className="font-medium text-white font-mono">{lead.company_name}</p>
-                          <p className="text-sm text-gray-500 font-mono">{lead.industry}</p>
-                          <p className="text-sm text-gray-500 font-mono">{lead.number_of_reps} reps</p>
+                          <p className="font-medium text-white">{lead.company_name}</p>
+                          <p className="text-sm text-slate-400">{lead.industry}</p>
+                          <p className="text-sm text-slate-400">{lead.number_of_reps} reps</p>
                         </div>
                       </td>
                       
                       <td className="p-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <ContactIcon className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-gray-500 font-mono">Prefers {lead.preferred_contact_method}</span>
+                            <ContactIcon className="w-4 h-4 text-slate-400" />
+                            <span className="text-sm text-slate-400">Prefers {lead.preferred_contact_method}</span>
                           </div>
                           {lead.best_time_to_reach && (
                             <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-gray-500" />
-                              <span className="text-sm text-gray-500 font-mono">{lead.best_time_to_reach} {lead.timezone}</span>
+                              <Clock className="w-4 h-4 text-slate-400" />
+                              <span className="text-sm text-slate-400">{lead.best_time_to_reach} {lead.timezone}</span>
                             </div>
                           )}
-                          <p className="text-sm text-gray-500 font-mono">Source: {lead.how_did_you_hear}</p>
+                          <p className="text-sm text-slate-400">Source: {lead.how_did_you_hear}</p>
                         </div>
                       </td>
                       
@@ -282,7 +279,7 @@ export default function SalesLeadsPage() {
                           value={lead.status}
                           onChange={(e) => updateLeadStatus(lead.id, e.target.value as any)}
                           className={cn(
-                            "px-3 py-1 rounded-full text-xs font-medium border font-mono uppercase tracking-wider bg-black",
+                            "px-3 py-1 rounded-full text-xs font-medium border",
                             statusColors[lead.status]
                           )}
                         >
@@ -295,7 +292,7 @@ export default function SalesLeadsPage() {
                       </td>
                       
                       <td className="p-4">
-                        <div className="text-sm text-gray-500 font-mono">
+                        <div className="text-sm text-slate-400">
                           <p>{getTimeSinceSubmission(lead.created_at)}</p>
                           <p className="text-xs">{new Date(lead.created_at).toLocaleDateString()}</p>
                         </div>
@@ -304,9 +301,9 @@ export default function SalesLeadsPage() {
                       <td className="p-4">
                         <Link
                           href={`/admin/sales-leads/${lead.id}`}
-                          className="text-cyan-neon hover:text-cyan-400 flex items-center gap-1 text-sm font-medium font-mono transition-colors"
+                          className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm font-medium"
                         >
-                          VIEW DETAILS
+                          View Details
                           <ChevronRight className="w-4 h-4" />
                         </Link>
                       </td>
@@ -318,7 +315,7 @@ export default function SalesLeadsPage() {
             
             {filteredLeads.length === 0 && (
               <div className="p-12 text-center">
-                <p className="text-gray-500 font-mono">NO LEADS FOUND MATCHING YOUR FILTERS.</p>
+                <p className="text-slate-400">No leads found matching your filters.</p>
               </div>
             )}
           </div>

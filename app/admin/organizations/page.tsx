@@ -77,49 +77,46 @@ export default function AdminOrganizationsPage() {
   const activeSubscriptions = organizations.filter(org => org.stripe_subscription_id).length
 
   return (
-    <div className="min-h-screen batcave-bg p-6 relative scanlines">
-      <div className="max-w-7xl mx-auto relative z-10">
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-cyan-neon mb-2 font-mono tracking-wider">
-            ORGANIZATIONS
-          </h1>
-          <p className="text-gray-500 font-mono text-sm">MANAGE ALL ORGANIZATIONS USING DOORIQ</p>
-          <div className="mt-4 h-px w-32 bg-gradient-to-r from-cyan-500 to-transparent" />
+          <h1 className="text-3xl font-bold text-white mb-2">Organizations</h1>
+          <p className="text-slate-400">Manage all organizations using DoorIQ</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">Total Organizations</p>
-              <Building2 className="w-5 h-5 text-cyan-neon" />
+              <p className="text-slate-400 text-sm">Total Organizations</p>
+              <Building2 className="w-5 h-5 text-purple-400" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon data-display">{organizations.length}</p>
+            <p className="text-3xl font-bold text-white">{organizations.length}</p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">Total Members</p>
-              <Users className="w-5 h-5 text-blue-neon" />
+              <p className="text-slate-400 text-sm">Total Members</p>
+              <Users className="w-5 h-5 text-blue-400" />
             </div>
-            <p className="text-3xl font-bold text-blue-neon data-display">{totalMembers}</p>
+            <p className="text-3xl font-bold text-white">{totalMembers}</p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">Active Subscriptions</p>
-              <CreditCard className="w-5 h-5 text-cyan-neon" />
+              <p className="text-slate-400 text-sm">Active Subscriptions</p>
+              <CreditCard className="w-5 h-5 text-green-400" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon data-display">{activeSubscriptions}</p>
+            <p className="text-3xl font-bold text-white">{activeSubscriptions}</p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">Monthly Revenue</p>
-              <CreditCard className="w-5 h-5 text-cyan-neon" />
+              <p className="text-slate-400 text-sm">Monthly Revenue</p>
+              <CreditCard className="w-5 h-5 text-yellow-400" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon data-display">${totalMonthlyRevenue.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-white">${totalMonthlyRevenue.toLocaleString()}</p>
           </div>
         </div>
 
@@ -127,28 +124,28 @@ export default function AdminOrganizationsPage() {
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search organizations..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 batcave-bg-tertiary neon-border rounded-lg text-white placeholder-gray-600 font-mono text-sm focus:outline-none focus:neon-border-glow transition-all"
+                className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-800 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-500" />
+            <Filter className="w-5 h-5 text-slate-400" />
             <select
               value={planFilter}
               onChange={(e) => setPlanFilter(e.target.value)}
-              className="batcave-bg-tertiary neon-border text-white rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:neon-border-glow transition-all"
+              className="bg-slate-900/50 border border-slate-800 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
-              <option value="all">ALL PLANS</option>
-              <option value="starter">STARTER</option>
-              <option value="team">TEAM</option>
-              <option value="enterprise">ENTERPRISE</option>
+              <option value="all">All Plans</option>
+              <option value="starter">Starter</option>
+              <option value="team">Team</option>
+              <option value="enterprise">Enterprise</option>
             </select>
           </div>
 
@@ -157,17 +154,15 @@ export default function AdminOrganizationsPage() {
               variant={viewMode === 'table' ? 'default' : 'outline'}
               onClick={() => setViewMode('table')}
               size="sm"
-              className={viewMode === 'table' ? 'neon-border-glow bg-black text-cyan-neon border-cyan-500' : 'neon-border bg-black text-gray-400 border-gray-700 hover:text-cyan-neon hover:border-cyan-500'}
             >
-              TABLE
+              Table
             </Button>
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               onClick={() => setViewMode('grid')}
               size="sm"
-              className={viewMode === 'grid' ? 'neon-border-glow bg-black text-cyan-neon border-cyan-500' : 'neon-border bg-black text-gray-400 border-gray-700 hover:text-cyan-neon hover:border-cyan-500'}
             >
-              GRID
+              Grid
             </Button>
           </div>
         </div>
@@ -175,7 +170,7 @@ export default function AdminOrganizationsPage() {
         {/* Organizations List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500/50"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
           </div>
         ) : viewMode === 'table' ? (
           <OrganizationTable organizations={filteredOrganizations} />
@@ -186,8 +181,8 @@ export default function AdminOrganizationsPage() {
             ))}
             {filteredOrganizations.length === 0 && (
               <div className="col-span-full text-center py-12">
-                <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 font-mono">NO ORGANIZATIONS FOUND</p>
+                <Building2 className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-400">No organizations found</p>
               </div>
             )}
           </div>

@@ -95,22 +95,19 @@ export default function OrganizationDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen batcave-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500/50"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
 
   if (!organization) {
     return (
-      <div className="min-h-screen batcave-bg flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4 font-mono">ORGANIZATION NOT FOUND</p>
-          <Button 
-            onClick={() => router.push('/admin/organizations')}
-            className="neon-border bg-black text-cyan-neon hover:neon-border-glow border-cyan-500 font-mono uppercase"
-          >
-            BACK TO ORGANIZATIONS
+          <p className="text-slate-400 mb-4">Organization not found</p>
+          <Button onClick={() => router.push('/admin/organizations')}>
+            Back to Organizations
           </Button>
         </div>
       </div>
@@ -120,30 +117,28 @@ export default function OrganizationDetailPage() {
   const monthlyCost = organization.seat_limit * 69
 
   return (
-    <div className="min-h-screen batcave-bg p-6 relative scanlines">
-      <div className="max-w-7xl mx-auto relative z-10">
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Button
             variant="ghost"
             onClick={() => router.push('/admin/organizations')}
-            className="mb-4 neon-border bg-black text-gray-400 hover:text-cyan-neon hover:border-cyan-500 font-mono uppercase tracking-wider"
+            className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            BACK TO ORGANIZATIONS
+            Back to Organizations
           </Button>
           
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-3 bg-cyan-500/20 neon-border rounded-lg">
-                  <Building2 className="w-6 h-6 text-cyan-neon" />
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <Building2 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-cyan-neon font-mono tracking-wider">
-                    {organization.name.toUpperCase()}
-                  </h1>
-                  <p className="text-gray-500 font-mono uppercase">{organization.plan_tier || 'No plan'} PLAN</p>
+                  <h1 className="text-3xl font-bold text-white">{organization.name}</h1>
+                  <p className="text-slate-400 capitalize">{organization.plan_tier || 'No plan'} Plan</p>
                 </div>
               </div>
             </div>
@@ -153,18 +148,14 @@ export default function OrganizationDetailPage() {
                 <Button
                   variant="outline"
                   onClick={() => window.open(`https://dashboard.stripe.com/customers/${organization.stripe_customer_id}`, '_blank')}
-                  className="neon-border bg-black text-gray-400 hover:text-cyan-neon hover:border-cyan-500 font-mono uppercase tracking-wider"
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  VIEW IN STRIPE
+                  View in Stripe
                 </Button>
               )}
-              <Button 
-                onClick={() => setSeatModalOpen(true)}
-                className="neon-border-glow bg-black text-cyan-neon border-cyan-500 font-mono uppercase tracking-wider"
-              >
+              <Button onClick={() => setSeatModalOpen(true)}>
                 <Settings className="w-4 h-4 mr-2" />
-                MANAGE SEATS
+                Manage Seats
               </Button>
             </div>
           </div>
@@ -172,39 +163,39 @@ export default function OrganizationDetailPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">MEMBERS</p>
-              <Users className="w-5 h-5 text-blue-neon" />
+              <p className="text-slate-400 text-sm">Members</p>
+              <Users className="w-5 h-5 text-blue-400" />
             </div>
-            <p className="text-3xl font-bold text-blue-neon data-display">{members.length}</p>
+            <p className="text-3xl font-bold text-white">{members.length}</p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">SEATS USED</p>
-              <Users className="w-5 h-5 text-cyan-neon" />
+              <p className="text-slate-400 text-sm">Seats Used</p>
+              <Users className="w-5 h-5 text-green-400" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon data-display">
+            <p className="text-3xl font-bold text-white">
               {organization.seats_used}/{organization.seat_limit}
             </p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">MONTHLY BILLING</p>
-              <CreditCard className="w-5 h-5 text-cyan-neon" />
+              <p className="text-slate-400 text-sm">Monthly Billing</p>
+              <CreditCard className="w-5 h-5 text-yellow-400" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon data-display">${monthlyCost.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-white">${monthlyCost.toLocaleString()}</p>
           </div>
           
-          <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
+          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">CREATED</p>
-              <Calendar className="w-5 h-5 text-cyan-neon" />
+              <p className="text-slate-400 text-sm">Created</p>
+              <Calendar className="w-5 h-5 text-purple-400" />
             </div>
-            <p className="text-lg font-bold text-white font-mono">
-              {format(new Date(organization.created_at), 'MMM d, yyyy').toUpperCase()}
+            <p className="text-lg font-bold text-white">
+              {format(new Date(organization.created_at), 'MMM d, yyyy')}
             </p>
           </div>
         </div>
@@ -215,41 +206,39 @@ export default function OrganizationDetailPage() {
         </div>
 
         {/* Members Section */}
-        <div className="holographic-card neon-border rounded-lg mb-8">
-          <div className="p-6 border-b neon-border">
-            <h2 className="text-xl font-semibold text-cyan-neon font-mono uppercase tracking-wider">
-              MEMBERS ({members.length})
-            </h2>
+        <div className="bg-slate-900/50 rounded-xl border border-slate-800 mb-8">
+          <div className="p-6 border-b border-slate-800">
+            <h2 className="text-xl font-semibold text-white">Members ({members.length})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b neon-border">
+              <thead className="bg-slate-800/50 border-b border-slate-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">NAME</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">EMAIL</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">ROLE</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono tracking-wider">JOINED</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Joined</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-slate-800">
                 {members.map((member) => (
-                  <tr key={member.id} className="hover:bg-black/30 transition-colors border-b neon-border">
-                    <td className="px-6 py-4 text-sm text-white font-mono">{member.full_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-400 font-mono">{member.email}</td>
+                  <tr key={member.id} className="hover:bg-slate-800/30">
+                    <td className="px-6 py-4 text-sm text-white">{member.full_name}</td>
+                    <td className="px-6 py-4 text-sm text-slate-400">{member.email}</td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-cyan-500/20 text-cyan-neon border border-cyan-500/50 uppercase font-mono neon-border">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 capitalize">
                         {member.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-400 font-mono">
-                      {format(new Date(member.created_at), 'MMM d, yyyy').toUpperCase()}
+                    <td className="px-6 py-4 text-sm text-slate-400">
+                      {format(new Date(member.created_at), 'MMM d, yyyy')}
                     </td>
                   </tr>
                 ))}
                 {members.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500 font-mono">
-                      NO MEMBERS FOUND
+                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
+                      No members found
                     </td>
                   </tr>
                 )}
@@ -260,26 +249,24 @@ export default function OrganizationDetailPage() {
 
         {/* Pending Invitations */}
         {invitations.length > 0 && (
-          <div className="holographic-card neon-border rounded-lg">
-            <div className="p-6 border-b neon-border">
-              <h2 className="text-xl font-semibold text-cyan-neon font-mono uppercase tracking-wider">
-                PENDING INVITATIONS ({invitations.length})
-              </h2>
+          <div className="bg-slate-900/50 rounded-xl border border-slate-800">
+            <div className="p-6 border-b border-slate-800">
+              <h2 className="text-xl font-semibold text-white">Pending Invitations ({invitations.length})</h2>
             </div>
             <div className="p-6">
               <div className="space-y-3">
                 {invitations.map((invite) => (
-                  <div key={invite.id} className="flex items-center justify-between p-4 batcave-bg-tertiary neon-border rounded-lg hover:neon-border-glow transition-all">
+                  <div key={invite.id} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg">
                     <div>
                       <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-gray-500" />
-                        <span className="text-white font-mono">{invite.email}</span>
-                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 uppercase font-mono neon-border">
+                        <Mail className="w-4 h-4 text-slate-400" />
+                        <span className="text-white">{invite.email}</span>
+                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 capitalize">
                           {invite.role}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1 font-mono">
-                        EXPIRES {format(new Date(invite.expires_at), 'MMM d, yyyy').toUpperCase()}
+                      <p className="text-sm text-slate-400 mt-1">
+                        Expires {format(new Date(invite.expires_at), 'MMM d, yyyy')}
                       </p>
                     </div>
                   </div>

@@ -70,19 +70,15 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen batcave-bg relative">
-      {/* Grid overlay */}
-      <div className="fixed inset-0 batcave-grid pointer-events-none opacity-30" />
-      
+    <div className="min-h-screen bg-background">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 batcave-bg-secondary border-r neon-border z-10 p-6">
-        <div className="mb-8 relative">
+      <div className="fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-6">
+        <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-6 h-6 text-cyan-neon" />
-            <h1 className="text-xl font-bold text-cyan-neon">ADMIN</h1>
+            <Shield className="w-6 h-6 text-purple-400" />
+            <h1 className="text-xl font-bold text-white">Admin Panel</h1>
           </div>
-          <p className="text-sm text-gray-300 font-mono">SYSTEM CONTROL</p>
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+          <p className="text-sm text-slate-400">DoorIQ Management</p>
         </div>
 
         <nav className="space-y-2">
@@ -96,26 +92,15 @@ export default function AdminLayout({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 transition-all relative group',
+                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                   isActive
-                    ? 'neon-border-glow bg-black/50 text-cyan-neon'
-                    : 'text-gray-400 hover:text-cyan-400 hover:bg-black/30 border border-transparent hover:neon-border'
+                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 )}
               >
-                <Icon className={cn(
-                  'w-5 h-5 transition-all',
-                  isActive && 'text-cyan-neon'
-                )} />
-                <span className={cn(
-                  'font-medium font-mono text-sm tracking-wider',
-                  isActive && 'text-cyan-neon'
-                )}>{item.label.toUpperCase()}</span>
-                {isActive && (
-                  <ChevronRight className="w-4 h-4 ml-auto text-cyan-neon" />
-                )}
-                {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500/50" />
-                )}
+                <Icon className="w-5 h-5" />
+                <span className="font-medium">{item.label}</span>
+                {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
               </Link>
             )
           })}
@@ -123,7 +108,7 @@ export default function AdminLayout({
       </div>
 
       {/* Main Content */}
-      <div className="ml-64 pt-6 relative z-0">
+      <div className="ml-64 pt-6">
         {children}
       </div>
     </div>
