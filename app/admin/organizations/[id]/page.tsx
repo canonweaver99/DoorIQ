@@ -96,7 +96,7 @@ export default function OrganizationDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen batcave-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 neon-glow"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500/50"></div>
       </div>
     )
   }
@@ -137,10 +137,10 @@ export default function OrganizationDetailPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-3 bg-cyan-500/20 neon-border rounded-lg">
-                  <Building2 className="w-6 h-6 text-cyan-neon neon-text" />
+                  <Building2 className="w-6 h-6 text-cyan-neon" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-cyan-neon neon-text font-mono tracking-wider">
+                  <h1 className="text-3xl font-bold text-cyan-neon font-mono tracking-wider">
                     {organization.name.toUpperCase()}
                   </h1>
                   <p className="text-gray-500 font-mono uppercase">{organization.plan_tier || 'No plan'} PLAN</p>
@@ -161,7 +161,7 @@ export default function OrganizationDetailPage() {
               )}
               <Button 
                 onClick={() => setSeatModalOpen(true)}
-                className="neon-border-glow bg-black text-cyan-neon border-cyan-500 hover:neon-glow font-mono uppercase tracking-wider"
+                className="neon-border-glow bg-black text-cyan-neon border-cyan-500 font-mono uppercase tracking-wider"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 MANAGE SEATS
@@ -175,17 +175,17 @@ export default function OrganizationDetailPage() {
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">MEMBERS</p>
-              <Users className="w-5 h-5 text-blue-neon neon-text" />
+              <Users className="w-5 h-5 text-blue-neon" />
             </div>
-            <p className="text-3xl font-bold text-blue-neon neon-text data-display">{members.length}</p>
+            <p className="text-3xl font-bold text-blue-neon data-display">{members.length}</p>
           </div>
           
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">SEATS USED</p>
-              <Users className="w-5 h-5 text-cyan-neon neon-text" />
+              <Users className="w-5 h-5 text-cyan-neon" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon neon-text data-display">
+            <p className="text-3xl font-bold text-cyan-neon data-display">
               {organization.seats_used}/{organization.seat_limit}
             </p>
           </div>
@@ -193,15 +193,15 @@ export default function OrganizationDetailPage() {
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">MONTHLY BILLING</p>
-              <CreditCard className="w-5 h-5 text-cyan-neon neon-text" />
+              <CreditCard className="w-5 h-5 text-cyan-neon" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon neon-text data-display">${monthlyCost.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-cyan-neon data-display">${monthlyCost.toLocaleString()}</p>
           </div>
           
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">CREATED</p>
-              <Calendar className="w-5 h-5 text-cyan-neon neon-text" />
+              <Calendar className="w-5 h-5 text-cyan-neon" />
             </div>
             <p className="text-lg font-bold text-white font-mono">
               {format(new Date(organization.created_at), 'MMM d, yyyy').toUpperCase()}
@@ -217,7 +217,7 @@ export default function OrganizationDetailPage() {
         {/* Members Section */}
         <div className="holographic-card neon-border rounded-lg mb-8">
           <div className="p-6 border-b neon-border">
-            <h2 className="text-xl font-semibold text-cyan-neon neon-text font-mono uppercase tracking-wider">
+            <h2 className="text-xl font-semibold text-cyan-neon font-mono uppercase tracking-wider">
               MEMBERS ({members.length})
             </h2>
           </div>
@@ -262,7 +262,7 @@ export default function OrganizationDetailPage() {
         {invitations.length > 0 && (
           <div className="holographic-card neon-border rounded-lg">
             <div className="p-6 border-b neon-border">
-              <h2 className="text-xl font-semibold text-cyan-neon neon-text font-mono uppercase tracking-wider">
+              <h2 className="text-xl font-semibold text-cyan-neon font-mono uppercase tracking-wider">
                 PENDING INVITATIONS ({invitations.length})
               </h2>
             </div>

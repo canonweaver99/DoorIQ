@@ -65,15 +65,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen batcave-bg p-6 relative scanlines">
+    <div className="min-h-screen batcave-bg p-6 relative">
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-cyan-neon neon-text mb-2 font-mono tracking-wider">
+          <h1 className="text-4xl font-bold text-cyan-neon mb-2 font-mono tracking-wider">
             SYSTEM DASHBOARD
           </h1>
-          <p className="text-gray-500 font-mono text-sm">OVERVIEW OF ALL ORGANIZATIONS AND SYSTEM METRICS</p>
-          <div className="mt-4 h-px w-32 bg-gradient-to-r from-cyan-500 to-transparent" />
+          <p className="text-gray-300 font-mono text-sm">OVERVIEW OF ALL ORGANIZATIONS AND SYSTEM METRICS</p>
+          <div className="mt-4 h-px w-32 bg-gradient-to-r from-cyan-500/50 to-transparent" />
         </div>
 
         {/* Stats Cards */}
@@ -81,32 +81,32 @@ export default function AdminDashboard() {
           <StatCard
             title="Total Organizations"
             value={stats.total_organizations}
-            icon={<Building2 className="w-6 h-6 text-cyan-neon neon-text" />}
+            icon={<Building2 className="w-6 h-6 text-cyan-neon" />}
             trend="Active organizations"
           />
           <StatCard
             title="Total Members"
             value={stats.total_members}
-            icon={<Users className="w-6 h-6 text-blue-neon neon-text" />}
+            icon={<Users className="w-6 h-6 text-blue-neon" />}
             trend="Across all organizations"
           />
           <StatCard
             title="Active Subscriptions"
             value={stats.active_subscriptions}
-            icon={<CreditCard className="w-6 h-6 text-cyan-neon neon-text" />}
+            icon={<CreditCard className="w-6 h-6 text-cyan-neon" />}
             trend="With Stripe billing"
           />
           <StatCard
             title="Monthly Revenue"
             value={`$${stats.monthly_revenue.toLocaleString()}`}
-            icon={<Activity className="w-6 h-6 text-cyan-neon neon-text" />}
+            icon={<Activity className="w-6 h-6 text-cyan-neon" />}
             trend="Recurring revenue"
           />
         </div>
 
         {/* Quick Actions */}
-        <div className="holographic-card neon-border-glow rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-cyan-neon neon-text mb-4 font-mono tracking-wider">
+        <div className="holographic-card neon-border rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold text-cyan-neon mb-4 font-mono tracking-wider">
             QUICK ACTIONS
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
                     </h3>
                     <p className="text-xs text-gray-500 font-mono">Manage all organizations</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-cyan-neon group-hover:neon-text transition-all" />
+                  <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-cyan-neon transition-all" />
                 </div>
               </div>
             </Link>
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
                     </h3>
                     <p className="text-xs text-gray-500 font-mono">View and manage leads</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-cyan-neon group-hover:neon-text transition-all" />
+                  <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-cyan-neon transition-all" />
                 </div>
               </div>
             </Link>
@@ -147,7 +147,7 @@ export default function AdminDashboard() {
                     </h3>
                     <p className="text-xs text-gray-500 font-mono">View all sessions</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-cyan-neon group-hover:neon-text transition-all" />
+                  <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-cyan-neon transition-all" />
                 </div>
               </div>
             </Link>
@@ -156,7 +156,7 @@ export default function AdminDashboard() {
 
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 neon-glow"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500/50"></div>
           </div>
         )}
       </div>
@@ -178,16 +178,16 @@ function StatCard({
   return (
     <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all group">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-gray-500 text-xs font-mono uppercase tracking-wider">{title}</span>
-        <div className="group-hover:scale-110 transition-transform">
+        <span className="text-gray-400 text-xs font-mono uppercase tracking-wider">{title}</span>
+        <div className="transition-transform">
           {icon}
         </div>
       </div>
-      <p className="text-4xl font-bold text-cyan-neon neon-text data-display mb-2">{value}</p>
-      <p className="text-xs mt-1 text-gray-500 font-mono">
+      <p className="text-4xl font-bold text-cyan-neon data-display mb-2">{value}</p>
+      <p className="text-xs mt-1 text-gray-400 font-mono">
         {trend}
       </p>
-      <div className="mt-3 h-px w-full bg-gradient-to-r from-cyan-500/50 via-transparent to-transparent" />
+      <div className="mt-3 h-px w-full bg-gradient-to-r from-cyan-500/30 via-transparent to-transparent" />
     </div>
   )
 }

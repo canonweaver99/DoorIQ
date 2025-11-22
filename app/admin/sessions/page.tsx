@@ -81,7 +81,7 @@ export default function AdminSessionsPage() {
     <div className="min-h-screen batcave-bg p-6 relative scanlines">
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-cyan-neon neon-text mb-2 font-mono tracking-wider">
+          <h1 className="text-4xl font-bold text-cyan-neon mb-2 font-mono tracking-wider">
             TRAINING SESSIONS
           </h1>
           <p className="text-gray-500 font-mono text-sm">VIEW ALL LIVE SESSIONS</p>
@@ -164,7 +164,7 @@ export default function AdminSessionsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <div className="font-semibold text-cyan-neon neon-text data-display">
+                        <div className="font-semibold text-cyan-neon data-display">
                           {s.overall_score ?? '—'}
                         </div>
                         <div className="text-xs text-gray-500 font-mono">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>

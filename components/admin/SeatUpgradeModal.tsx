@@ -59,7 +59,7 @@ export function SeatUpgradeModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="batcave-bg-secondary neon-border-glow">
         <DialogHeader>
-          <DialogTitle className="text-cyan-neon neon-text font-mono uppercase tracking-wider">
+          <DialogTitle className="text-cyan-neon font-mono uppercase tracking-wider">
             UPDATE SEAT LIMIT
           </DialogTitle>
           <DialogDescription className="text-gray-500 font-mono">
@@ -91,7 +91,7 @@ export function SeatUpgradeModal({
             </div>
             <div className="flex justify-between text-sm font-mono">
               <span className="text-gray-500">NEW MONTHLY COST:</span>
-              <span className="font-medium text-cyan-neon neon-text data-display">${newMonthlyCost.toLocaleString()}/MONTH</span>
+              <span className="font-medium text-cyan-neon data-display">${newMonthlyCost.toLocaleString()}/MONTH</span>
             </div>
             {priceDiff !== 0 && (
               <div className="flex justify-between text-sm pt-2 border-t neon-border">
@@ -121,7 +121,7 @@ export function SeatUpgradeModal({
             <Button
               onClick={handleUpdate}
               disabled={loading || newSeats === organization.seat_limit}
-              className="neon-border-glow bg-black text-cyan-neon border-cyan-500 hover:neon-glow font-mono uppercase tracking-wider"
+              className="neon-border-glow bg-black text-cyan-neon border-cyan-500 font-mono uppercase tracking-wider"
             >
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               UPDATE SEATS

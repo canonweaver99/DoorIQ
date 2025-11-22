@@ -30,7 +30,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-cyan-500/20 neon-border rounded-lg group-hover:neon-border-glow transition-all">
-              <Building2 className="w-5 h-5 text-cyan-neon neon-text" />
+              <Building2 className="w-5 h-5 text-cyan-neon" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white font-mono group-hover:text-cyan-neon transition-colors">
@@ -54,7 +54,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
               <Users className="w-4 h-4" />
               <span>MEMBERS</span>
             </div>
-            <p className="text-lg font-semibold text-cyan-neon neon-text data-display">
+            <p className="text-lg font-semibold text-cyan-neon data-display">
               {organization.member_count || organization.seats_used}
             </p>
           </div>
@@ -63,7 +63,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
               <CreditCard className="w-4 h-4" />
               <span>MONTHLY</span>
             </div>
-            <p className="text-lg font-semibold text-cyan-neon neon-text data-display">
+            <p className="text-lg font-semibold text-cyan-neon data-display">
               ${monthlyCost.toLocaleString()}
             </p>
           </div>
@@ -79,9 +79,9 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
           <div className="w-full bg-gray-800 neon-border rounded-full h-2">
             <div 
               className={`h-2 rounded-full transition-all ${
-                utilizationPct > 90 ? 'bg-red-500 neon-glow' : 
+                utilizationPct > 90 ? 'bg-red-500' : 
                 utilizationPct > 80 ? 'bg-yellow-500' : 
-                'bg-cyan-500 neon-glow'
+                'bg-cyan-500'
               }`}
               style={{ width: `${Math.min(utilizationPct, 100)}%` }}
             />

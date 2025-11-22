@@ -27,7 +27,7 @@ export function SeatManager({ organization, onInviteClick }: SeatManagerProps) {
     <div className="p-6 neon-border rounded-lg holographic-card">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h3 className="text-xl font-bold text-cyan-neon neon-text font-mono">TEAM SEATS</h3>
+          <h3 className="text-xl font-bold text-cyan-neon font-mono">TEAM SEATS</h3>
           <p className="text-gray-500 font-mono text-sm">
             {organization.seats_used} OF {organization.seat_limit} SEATS USED
           </p>
@@ -53,9 +53,9 @@ export function SeatManager({ organization, onInviteClick }: SeatManagerProps) {
       <div className="w-full bg-gray-800 neon-border rounded-full h-2 mb-4">
         <div 
           className={`h-2 rounded-full transition-all ${
-            utilizationPct > 90 ? 'bg-red-500 neon-glow' : 
+            utilizationPct > 90 ? 'bg-red-500' : 
             utilizationPct > 80 ? 'bg-yellow-500' : 
-            'bg-cyan-500 neon-glow'
+            'bg-cyan-500'
           }`}
           style={{ width: `${Math.min(utilizationPct, 100)}%` }}
         />

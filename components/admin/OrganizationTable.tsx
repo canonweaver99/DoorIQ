@@ -61,7 +61,7 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="p-2 bg-cyan-500/20 neon-border rounded-lg mr-3">
-                        <Building2 className="w-4 h-4 text-cyan-neon neon-text" />
+                        <Building2 className="w-4 h-4 text-cyan-neon" />
                       </div>
                       <div>
                         <div className="text-sm font-medium text-white font-mono">
@@ -91,9 +91,9 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                       <div className="w-24 bg-gray-800 neon-border rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full ${
-                            utilizationPct > 90 ? 'bg-red-500 neon-glow' : 
+                            utilizationPct > 90 ? 'bg-red-500' : 
                             utilizationPct > 80 ? 'bg-yellow-500' : 
-                            'bg-cyan-500 neon-glow'
+                            'bg-cyan-500'
                           }`}
                           style={{ width: `${Math.min(utilizationPct, 100)}%` }}
                         />

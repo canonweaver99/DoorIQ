@@ -131,7 +131,7 @@ export default function SalesLeadsPage() {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-cyan-neon neon-text mb-2 font-mono tracking-wider">
+          <h1 className="text-4xl font-bold text-cyan-neon mb-2 font-mono tracking-wider">
             SALES LEADS
           </h1>
           <p className="text-gray-500 font-mono text-sm">MANAGE AND TRACK YOUR SALES INQUIRIES</p>
@@ -143,12 +143,12 @@ export default function SalesLeadsPage() {
           {/* Stats Cards */}
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <p className="text-gray-500 text-xs font-mono uppercase tracking-wider mb-1">Total Leads</p>
-            <p className="text-3xl font-bold text-cyan-neon neon-text data-display">{leads.length}</p>
+            <p className="text-3xl font-bold text-cyan-neon data-display">{leads.length}</p>
           </div>
           
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <p className="text-gray-500 text-xs font-mono uppercase tracking-wider mb-1">New This Week</p>
-            <p className="text-3xl font-bold text-blue-neon neon-text data-display">
+            <p className="text-3xl font-bold text-blue-neon data-display">
               {leads.filter(l => {
                 const weekAgo = new Date()
                 weekAgo.setDate(weekAgo.getDate() - 7)
@@ -159,14 +159,14 @@ export default function SalesLeadsPage() {
           
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <p className="text-gray-500 text-xs font-mono uppercase tracking-wider mb-1">Qualified Leads</p>
-            <p className="text-3xl font-bold text-cyan-neon neon-text data-display">
+            <p className="text-3xl font-bold text-cyan-neon data-display">
               {leads.filter(l => l.status === 'qualified').length}
             </p>
           </div>
           
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <p className="text-gray-500 text-xs font-mono uppercase tracking-wider mb-1">Total Reps</p>
-            <p className="text-3xl font-bold text-cyan-neon neon-text data-display">
+            <p className="text-3xl font-bold text-cyan-neon data-display">
               {leads.reduce((sum, lead) => sum + lead.number_of_reps, 0)}
             </p>
           </div>

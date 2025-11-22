@@ -78,11 +78,11 @@ export default function AdminLayout({
       <div className="fixed left-0 top-0 h-full w-64 batcave-bg-secondary border-r neon-border z-10 p-6">
         <div className="mb-8 relative">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-6 h-6 text-cyan-neon neon-text" />
-            <h1 className="text-xl font-bold text-cyan-neon neon-text">ADMIN</h1>
+            <Shield className="w-6 h-6 text-cyan-neon" />
+            <h1 className="text-xl font-bold text-cyan-neon">ADMIN</h1>
           </div>
-          <p className="text-sm text-gray-500 font-mono">SYSTEM CONTROL</p>
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50" />
+          <p className="text-sm text-gray-300 font-mono">SYSTEM CONTROL</p>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
         </div>
 
         <nav className="space-y-2">
@@ -99,22 +99,22 @@ export default function AdminLayout({
                   'flex items-center gap-3 px-4 py-3 transition-all relative group',
                   isActive
                     ? 'neon-border-glow bg-black/50 text-cyan-neon'
-                    : 'text-gray-500 hover:text-cyan-400 hover:bg-black/30 border border-transparent hover:neon-border'
+                    : 'text-gray-400 hover:text-cyan-400 hover:bg-black/30 border border-transparent hover:neon-border'
                 )}
               >
                 <Icon className={cn(
                   'w-5 h-5 transition-all',
-                  isActive && 'neon-text'
+                  isActive && 'text-cyan-neon'
                 )} />
                 <span className={cn(
                   'font-medium font-mono text-sm tracking-wider',
-                  isActive && 'neon-text'
+                  isActive && 'text-cyan-neon'
                 )}>{item.label.toUpperCase()}</span>
                 {isActive && (
-                  <ChevronRight className="w-4 h-4 ml-auto text-cyan-neon neon-text" />
+                  <ChevronRight className="w-4 h-4 ml-auto text-cyan-neon" />
                 )}
                 {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500 shadow-[0_0_10px_rgba(0,255,255,0.8)]" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500/50" />
                 )}
               </Link>
             )

@@ -81,7 +81,7 @@ export default function AdminOrganizationsPage() {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-cyan-neon neon-text mb-2 font-mono tracking-wider">
+          <h1 className="text-4xl font-bold text-cyan-neon mb-2 font-mono tracking-wider">
             ORGANIZATIONS
           </h1>
           <p className="text-gray-500 font-mono text-sm">MANAGE ALL ORGANIZATIONS USING DOORIQ</p>
@@ -93,33 +93,33 @@ export default function AdminOrganizationsPage() {
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">Total Organizations</p>
-              <Building2 className="w-5 h-5 text-cyan-neon neon-text" />
+              <Building2 className="w-5 h-5 text-cyan-neon" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon neon-text data-display">{organizations.length}</p>
+            <p className="text-3xl font-bold text-cyan-neon data-display">{organizations.length}</p>
           </div>
           
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">Total Members</p>
-              <Users className="w-5 h-5 text-blue-neon neon-text" />
+              <Users className="w-5 h-5 text-blue-neon" />
             </div>
-            <p className="text-3xl font-bold text-blue-neon neon-text data-display">{totalMembers}</p>
+            <p className="text-3xl font-bold text-blue-neon data-display">{totalMembers}</p>
           </div>
           
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">Active Subscriptions</p>
-              <CreditCard className="w-5 h-5 text-cyan-neon neon-text" />
+              <CreditCard className="w-5 h-5 text-cyan-neon" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon neon-text data-display">{activeSubscriptions}</p>
+            <p className="text-3xl font-bold text-cyan-neon data-display">{activeSubscriptions}</p>
           </div>
           
           <div className="holographic-card neon-border rounded-lg p-6 hover:neon-border-glow transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-gray-500 text-xs font-mono uppercase tracking-wider">Monthly Revenue</p>
-              <CreditCard className="w-5 h-5 text-cyan-neon neon-text" />
+              <CreditCard className="w-5 h-5 text-cyan-neon" />
             </div>
-            <p className="text-3xl font-bold text-cyan-neon neon-text data-display">${totalMonthlyRevenue.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-cyan-neon data-display">${totalMonthlyRevenue.toLocaleString()}</p>
           </div>
         </div>
 
@@ -175,7 +175,7 @@ export default function AdminOrganizationsPage() {
         {/* Organizations List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 neon-glow"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500/50"></div>
           </div>
         ) : viewMode === 'table' ? (
           <OrganizationTable organizations={filteredOrganizations} />
