@@ -250,7 +250,8 @@ function HeaderContent() {
       { name: 'Home', href: '/', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
       { name: 'Sessions', href: '/sessions', icon: FileText },
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true },
+      // Dashboard only shows for reps, NOT for managers or admins
+      ...(userRole === 'rep' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
       { name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true },
       { name: 'Pricing', href: '/pricing', icon: DollarSign },
     ]
@@ -260,11 +261,21 @@ function HeaderContent() {
       navItems.splice(4, 0, { name: 'Leaderboard', href: '/leaderboard', icon: Trophy, desktopOnly: true })
     }
 
-    if (userRole === 'manager' || userRole === 'admin') {
+    if (userRole === 'manager') {
       const insertIndex = Math.min(5, navItems.length)
       navItems.splice(insertIndex, 0, {
         name: 'Manager',
         href: '/manager',
+        icon: FileText,
+        desktopOnly: true,
+      })
+    }
+    
+    if (userRole === 'admin') {
+      const insertIndex = Math.min(5, navItems.length)
+      navItems.splice(insertIndex, 0, {
+        name: 'Admin',
+        href: '/admin',
         icon: FileText,
         desktopOnly: true,
       })
@@ -281,15 +292,16 @@ function HeaderContent() {
     
     const sections: Array<{
       title: string
-      items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string; managerOnly?: boolean; desktopOnly?: boolean }>
+      items: Array<{ name: string; href: string; icon: LucideIcon; badge?: string; managerOnly?: boolean; adminOnly?: boolean; repOnly?: boolean; desktopOnly?: boolean }>
     }> = [
       {
         title: 'Workspace',
         items: [
-          { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true },
-          ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, desktopOnly: true }]),
+          { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, repOnly: true, desktopOnly: true },
+          ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, repOnly: true, desktopOnly: true }]),
           { name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true },
           { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true, desktopOnly: true },
+          { name: 'Admin Panel', href: '/admin', icon: Users, adminOnly: true, desktopOnly: true },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true, desktopOnly: true },
         ],
       },
@@ -328,10 +340,12 @@ function HeaderContent() {
     const subscriptionPlan = (user as any)?.subscription_plan
     const isIndividualPlan = subscriptionPlan === 'individual' || (!subscriptionPlan && !user?.team_id)
     
-    const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }> = [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3 }]),
+    const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; adminOnly?: boolean; repOnly?: boolean; badge?: number }> = [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, repOnly: true },
+      ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, repOnly: true }]),
       { name: 'Learning', href: '/learning', icon: NotebookPen },
+      { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
+      { name: 'Admin Panel', href: '/admin', icon: Users, adminOnly: true },
       { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
       // Archived: { name: 'Documentation', href: '/documentation', icon: BookOpen },
@@ -344,7 +358,7 @@ function HeaderContent() {
 
     // AI Insights removed per user request
 
-    return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; badge?: number }>
+    return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; adminOnly?: boolean; repOnly?: boolean; badge?: number }>
   }, [isManagerLike, (user as any)?.subscription_plan, user?.team_id])
 
   const handleSignOut = async () => {
@@ -610,8 +624,15 @@ function HeaderContent() {
                 <p className="px-4 text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Account</p>
                 <div className="mt-2 space-y-2">
                   {profileNavigation.filter(item => {
+                    if (item.adminOnly) {
+                      return userRole === 'admin'
+                    }
                     if (item.managerOnly) {
                       return userRole === 'manager' || userRole === 'admin'
+                    }
+                    if (item.repOnly) {
+                      // Dashboard shows ONLY for reps, NOT for managers or admins
+                      return userRole === 'rep'
                     }
                     return true
                   }).map((item) => {
@@ -814,8 +835,15 @@ function HeaderContent() {
                       {sidebarSections.map((section) => {
                         // Filter items based on user role
                         const visibleItems = section.items.filter(item => {
+                          if (item.adminOnly) {
+                            return userRole === 'admin'
+                          }
                           if (item.managerOnly) {
                             return userRole === 'manager' || userRole === 'admin'
+                          }
+                          if (item.repOnly) {
+                            // Dashboard shows ONLY for reps, NOT for managers or admins
+                            return userRole === 'rep'
                           }
                           // Desktop-only items are filtered out in the rendering (using hidden md:block)
                           return true

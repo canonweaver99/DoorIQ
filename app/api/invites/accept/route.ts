@@ -40,11 +40,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'This invite has expired' }, { status: 400 })
     }
 
-    // Update the user's team_id and role
+    // Get organization_id from invite (prefer organization_id over team_id)
+    const orgId = invite.organization_id || invite.team_id
+
+    // Update the user's team_id, organization_id and role
     const { error: updateError } = await supabase
       .from('users')
       .update({ 
         team_id: invite.team_id,
+        organization_id: orgId,
         role: invite.role 
       })
       .eq('id', user.id)
@@ -52,6 +56,30 @@ export async function POST(request: Request) {
     if (updateError) {
       console.error('Error updating user:', updateError)
       return NextResponse.json({ error: 'Failed to join team' }, { status: 500 })
+    }
+
+    // Increment seats_used if organization exists
+    if (orgId) {
+      // Try RPC first, fallback to direct update
+      const { error: seatError } = await supabase.rpc('increment_organization_seats', {
+        org_id: orgId
+      })
+      
+      // If RPC doesn't exist or fails, use direct update
+      if (seatError) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('seats_used')
+          .eq('id', orgId)
+          .single()
+        
+        if (org) {
+          await supabase
+            .from('organizations')
+            .update({ seats_used: (org.seats_used || 0) + 1 })
+            .eq('id', orgId)
+        }
+      }
     }
 
     // Mark the invite as accepted

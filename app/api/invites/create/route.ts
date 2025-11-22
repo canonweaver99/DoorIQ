@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     // Get the user's profile to check their team and role
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
-      .select('team_id, role, full_name, referral_code')
+      .select('team_id, organization_id, role, full_name, referral_code')
       .eq('id', user.id)
       .single()
 
@@ -36,9 +36,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Only managers and admins can invite teammates' }, { status: 403 })
     }
 
-    // Check if user has a team
-    if (!userProfile.team_id) {
+    // Check if user has a team or organization
+    const orgId = userProfile.organization_id || userProfile.team_id
+    if (!orgId) {
       return NextResponse.json({ error: 'You must be part of a team to invite teammates' }, { status: 400 })
+    }
+
+    // Check seat availability if organization exists
+    if (userProfile.organization_id) {
+      const { data: organization, error: orgError } = await supabase
+        .from('organizations')
+        .select('seat_limit, seats_used')
+        .eq('id', userProfile.organization_id)
+        .single()
+
+      if (!orgError && organization) {
+        if (organization.seats_used >= organization.seat_limit) {
+          return NextResponse.json(
+            { error: `No seats available. You have ${organization.seats_used}/${organization.seat_limit} seats used. Please upgrade your plan or contact support.` },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // Generate a unique token
@@ -53,6 +72,7 @@ export async function POST(request: Request) {
       .from('team_invites')
       .insert({
         team_id: userProfile.team_id,
+        organization_id: userProfile.organization_id || userProfile.team_id,
         invited_by: user.id,
         email,
         token,
