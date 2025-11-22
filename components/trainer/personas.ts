@@ -23,7 +23,7 @@ export const ORDER_LOOKUP = new Map<AllowedAgentName, number>(
   ALLOWED_AGENT_ORDER.map((name, index) => [name, index])
 )
 
-type BubbleDifficulty = 'Easy' | 'Moderate' | 'Hard' | 'Very Hard'
+type BubbleDifficulty = 'Easy' | 'Moderate' | 'Hard' | 'Expert'
 type BubbleColorVariant =
   | 'primary'
   | 'secondary'
@@ -37,7 +37,7 @@ type BubbleColorVariant =
   | 'denary'
   | 'duodenary'
   | 'undenary'
-type CardDifficultyKey = 'easy' | 'moderate' | 'hard' | 'veryHard'
+type CardDifficultyKey = 'easy' | 'moderate' | 'hard' | 'expert'
 
 interface PersonaBubbleDetail {
   subtitle: string
@@ -176,7 +176,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
     bubble: {
       subtitle: 'Quick Dismissal',
       description: 'Immediately wants to end conversation. Practice pattern interrupts.',
-      difficulty: 'Very Hard',
+      difficulty: 'Expert',
       color: 'quaternary',
       image: '/Not Intersted Nick no backround 2.png',
       liveSessionImage: '/Not Interested Nick.png',
@@ -186,9 +186,9 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       occupation: 'Software Engineer',
       location: 'Urban townhome',
       personality: 'Dismissive, busy, low patience for sales',
-      challengeLevel: 4,
-      challengeLabel: 'Very Hard',
-      difficultyKey: 'veryHard',
+      challengeLevel: 5,
+      challengeLabel: 'Expert',
+      difficultyKey: 'expert',
       traits: [
         'Says "not interested" within first 10 seconds',
         'Tries to close door quickly',
