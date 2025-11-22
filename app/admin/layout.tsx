@@ -63,25 +63,27 @@ export default function AdminLayout({
 
   if (loading || !isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 p-6">
+      <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-sm p-6">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-6 h-6 text-purple-400" />
-            <h1 className="text-xl font-bold text-white">Admin Panel</h1>
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Shield className="w-5 h-5 text-purple-600" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
           </div>
-          <p className="text-sm text-slate-400">DoorIQ Management</p>
+          <p className="text-sm text-gray-600">DoorIQ Management</p>
         </div>
 
-        <nav className="space-y-2">
+        <nav className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href || 
@@ -94,13 +96,13 @@ export default function AdminLayout({
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                   isActive
-                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 )}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
-                {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                {isActive && <ChevronRight className="w-4 h-4 ml-auto text-purple-600" />}
               </Link>
             )
           })}
@@ -108,7 +110,7 @@ export default function AdminLayout({
       </div>
 
       {/* Main Content */}
-      <div className="ml-64 pt-6">
+      <div className="ml-64">
         {children}
       </div>
     </div>

@@ -78,24 +78,28 @@ export default function AdminSessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <h1 className="text-2xl font-bold text-slate-900">All Live Sessions</h1>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search name, email, or conversation id"
-                className="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
-              />
-            </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Training Sessions</h1>
+          <p className="text-gray-600">View and manage all training sessions</p>
+        </div>
+        
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search name, email, or conversation id"
+              className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
             <select
               value={range}
               onChange={(e) => setRange(e.target.value as any)}
-              className="py-2 px-3 border border-slate-300 rounded-lg text-sm"
+              className="py-2 px-3 bg-white border border-gray-300 text-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="week">Last 7 days</option>
               <option value="month">Last 30 days</option>
@@ -104,74 +108,77 @@ export default function AdminSessionsPage() {
             <select
               value={outcome}
               onChange={(e) => setOutcome(e.target.value as any)}
-              className="py-2 px-3 border border-slate-300 rounded-lg text-sm"
+              className="py-2 px-3 bg-white border border-gray-300 text-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="any">Any outcome</option>
               <option value="SUCCESS">Success</option>
               <option value="FAILURE">Failure</option>
               <option value="PARTIAL">Partial</option>
             </select>
-            <button onClick={fetchSessions} className="inline-flex items-center px-3 py-2 text-sm border border-slate-300 rounded-lg">
+            <button 
+              onClick={fetchSessions} 
+              className="inline-flex items-center px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
               <RefreshCw className="w-4 h-4 mr-2" /> Refresh
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">When</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Rep</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Score</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Outcome</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Duration</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">When</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Rep</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Score</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Outcome</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Duration</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-gray-200">
                 {loading ? (
-                  <tr><td className="p-8 text-center text-slate-400" colSpan={6}>Loading…</td></tr>
+                  <tr><td className="p-8 text-center text-gray-600" colSpan={6}>Loading…</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td className="p-8 text-center text-slate-400" colSpan={6}>No sessions found</td></tr>
+                  <tr><td className="p-8 text-center text-gray-600" colSpan={6}>No sessions found</td></tr>
                 ) : (
                   filtered.map((s) => (
-                    <tr key={s.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 text-sm text-slate-700">
+                    <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-slate-400" />
+                          <Calendar className="w-4 h-4 text-gray-400" />
                           {format(new Date(s.created_at), 'MMM d, yyyy h:mm a')}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700">
+                      <td className="px-4 py-3 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-slate-400" />
+                          <User className="w-4 h-4 text-gray-400" />
                           <div>
                             <div className="font-medium">{s.users?.full_name || '—'}</div>
-                            <div className="text-slate-500 text-xs">{s.users?.email || '—'}</div>
+                            <div className="text-gray-600 text-xs">{s.users?.email || '—'}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <div className="font-semibold">
+                        <div className="font-semibold text-gray-900">
                           {s.overall_score ?? '—'}
                         </div>
-                        <div className="text-xs text-slate-500">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>
+                        <div className="text-xs text-gray-600">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 rounded text-xs ${s.outcome === 'SUCCESS' ? 'bg-green-100 text-green-700' : s.outcome === 'FAILURE' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${s.outcome === 'SUCCESS' ? 'bg-green-100 text-green-700' : s.outcome === 'FAILURE' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                           {s.outcome || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700">
+                      <td className="px-4 py-3 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-slate-400" />
+                          <Clock className="w-4 h-4 text-gray-400" />
                           {formatDuration(s.duration_seconds)}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-blue-600 hover:text-blue-500">
+                        <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium">
                           View <ChevronRight className="w-4 h-4 ml-1" />
                         </Link>
                       </td>
