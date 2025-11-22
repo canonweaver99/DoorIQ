@@ -2,7 +2,7 @@
 
 ## ✅ What's Been Built
 
-I've built a complete **7-day free trial subscription system** with feature gating, notifications, and paywall functionality for your DoorIQ application.
+I've built a complete **14-day free trial subscription system** with feature gating, notifications, and paywall functionality for your DoorIQ application.
 
 ---
 
@@ -53,10 +53,10 @@ I've built a complete **7-day free trial subscription system** with feature gati
 
 ## 🎯 Key Features
 
-### 1. 7-Day Free Trial
+### 1. 14-Day Free Trial
 - ✅ Automatically applied to all subscriptions
 - ✅ No charges during trial
-- ✅ Full access to premium features
+- ✅ Full access to premium features (based on plan tier)
 - ✅ Email notifications for trial events
 
 ### 2. Feature Gating
@@ -130,12 +130,12 @@ In [Stripe Dashboard](https://dashboard.stripe.com/test/products):
 
 **Individual Monthly**
 - Price: $20/month
-- Trial: 7 days
+- Trial: 14 days
 - Copy Price ID → Add to env as `NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_MONTHLY`
 
 **Individual Yearly**
 - Price: $192/year ($16/month)
-- Trial: 7 days
+- Trial: 14 days
 - Copy Price ID → Add to env as `NEXT_PUBLIC_STRIPE_PRICE_INDIVIDUAL_YEARLY`
 
 ### 3. Run Database Migrations
@@ -226,7 +226,7 @@ Clicks "Start Free Trial"
     ↓
 /api/stripe/create-checkout-session
     ↓
-Stripe Checkout (with 7-day trial)
+Stripe Checkout (with 14-day trial)
     ↓
 Webhook: customer.subscription.created
     ↓
@@ -234,13 +234,13 @@ Database: Update subscription_status = "trialing"
     ↓
 Send welcome email
     ↓
-User has FULL ACCESS for 7 days
+User has FULL ACCESS for 14 days (based on plan tier)
     ↓
-Day 4: Webhook trial_will_end
+Day 11: Webhook trial_will_end
     ↓
 Send "trial ending" email
     ↓
-Day 7: Trial ends, card charged
+Day 14: Trial ends, card charged
     ↓
 Webhook: invoice.payment_succeeded
     ↓
@@ -259,17 +259,26 @@ User continues with full access
 - Basic performance analytics
 - Email support
 
-### Premium Tier ($20/month or $16/month annual)
-- **7-day FREE trial** (no card charge)
+### Starter Plan (1-20 reps)
+- **14-day FREE trial** (no card charge)
 - All 12 AI training agents
-- **Unlimited** practice sessions
-- Advanced analytics & detailed scoring
-- Real-time feedback & coaching
-- Custom sales scenarios
-- Call recording & playback
-- Performance tracking dashboard
-- Priority email & chat support
-- Export reports (CSV/PDF)
+- Dashboard & analytics for reps
+- Manager panel for managers
+- **NO Learning page** (Custom Sales Playbook)
+
+### Team Plan (21-100 reps)
+- **14-day FREE trial** (no card charge)
+- All 12 AI training agents
+- Dashboard & analytics for reps
+- Manager panel for managers
+- **Learning page** (Custom Sales Playbook)
+
+### Enterprise Plan (100+ reps)
+- **14-day FREE trial** (no card charge)
+- All features from Team plan
+- Custom AI personas
+- White-label options
+- Dedicated account support
 
 ---
 

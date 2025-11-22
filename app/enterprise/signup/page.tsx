@@ -8,6 +8,8 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { CalendarModal } from '@/components/ui/calendar-modal'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 function EnterpriseSignupContent() {
   const router = useRouter()

@@ -37,6 +37,8 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useFeatureAccess } from '@/hooks/useSubscription'
+import { FEATURES } from '@/lib/subscription/feature-access'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
@@ -115,6 +117,7 @@ function HeaderContent() {
   const userId = user?.id || authMeta?.id || null
   const subscription = useSubscription()
   const hasActiveSubscription = subscription.hasActiveSubscription
+  const { hasAccess: hasLearningPageAccess } = useFeatureAccess(FEATURES.LEARNING_PAGE)
 
   useEffect(() => {
     setPortalReady(true)
@@ -310,7 +313,7 @@ function HeaderContent() {
       { name: 'Sessions', href: '/sessions', icon: FileText },
       // Dashboard only shows for reps, NOT for managers or admins
       ...(userRole === 'rep' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
-      { name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true },
+      ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),
       { name: 'Pricing', href: '/pricing', icon: DollarSign },
     ]
 
@@ -340,7 +343,7 @@ function HeaderContent() {
     }
 
     return navItems
-  }, [userRole, user?.team_id])
+  }, [userRole, user?.team_id, hasLearningPageAccess])
 
   const isManagerLike = userRole === 'manager' || userRole === 'admin'
 
@@ -357,7 +360,7 @@ function HeaderContent() {
         items: [
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, repOnly: true, desktopOnly: true },
           ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, repOnly: true, desktopOnly: true }]),
-          { name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true },
+          ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),
           { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true, desktopOnly: true },
           { name: 'Admin Panel', href: '/admin', icon: Users, adminOnly: true, desktopOnly: true },
           { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true, desktopOnly: true },
@@ -386,7 +389,7 @@ function HeaderContent() {
     // AI Insights removed per user request
 
     return sections
-  }, [isManagerLike, hasActiveSubscription, user?.team_id, (user as any)?.subscription_plan])
+  }, [isManagerLike, hasActiveSubscription, user?.team_id, (user as any)?.subscription_plan, hasLearningPageAccess])
 
   const quickActions = [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
@@ -401,7 +404,7 @@ function HeaderContent() {
     const items: Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; adminOnly?: boolean; repOnly?: boolean; badge?: number }> = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, repOnly: true },
       ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, repOnly: true }]),
-      { name: 'Learning', href: '/learning', icon: NotebookPen },
+      ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen }] : []),
       { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
       { name: 'Admin Panel', href: '/admin', icon: Users, adminOnly: true },
       { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
@@ -417,7 +420,7 @@ function HeaderContent() {
     // AI Insights removed per user request
 
     return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; adminOnly?: boolean; repOnly?: boolean; badge?: number }>
-  }, [isManagerLike, (user as any)?.subscription_plan, user?.team_id])
+  }, [isManagerLike, (user as any)?.subscription_plan, user?.team_id, hasLearningPageAccess])
 
   const handleSignOut = async () => {
     try {

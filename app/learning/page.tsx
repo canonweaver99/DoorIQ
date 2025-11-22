@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Video, Play, Trash2, Sparkles } from 'lucide-react'
+import { Video, Play, Trash2, Sparkles, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useFeatureAccess } from '@/hooks/useSubscription'
+import { FEATURES } from '@/lib/subscription/feature-access'
+import { useRouter } from 'next/navigation'
 
 interface InstructionalVideo {
   id: string
@@ -32,6 +35,8 @@ interface TeamVideo {
 
 export default function LearningPage() {
   const supabase = createClient()
+  const router = useRouter()
+  const { hasAccess, loading: accessLoading } = useFeatureAccess(FEATURES.LEARNING_PAGE)
   const [instructionalVideos, setInstructionalVideos] = useState<InstructionalVideo[]>([])
   const [teamVideos, setTeamVideos] = useState<TeamVideo[]>([])
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set())
@@ -400,12 +405,36 @@ export default function LearningPage() {
     }
   }
 
-  if (loading) {
+  if (loading || accessLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] py-8 px-4 sm:px-6 lg:px-8 pt-32">
         <div className="max-w-[1800px] mx-auto">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if user has access to Learning page
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] py-8 px-4 sm:px-6 lg:px-8 pt-32">
+        <div className="max-w-[1800px] mx-auto">
+          <div className="flex flex-col items-center justify-center py-20">
+            <Lock className="w-16 h-16 text-purple-400 mb-6" />
+            <h2 className="text-3xl font-bold text-white mb-4 font-space">Custom Sales Playbook Unavailable</h2>
+            <p className="text-slate-400 text-center max-w-md mb-8 font-sans">
+              The Learning page with Custom Sales Playbook is only available for Team and Enterprise plans. 
+              Upgrade to Team plan to access this feature.
+            </p>
+            <button
+              onClick={() => router.push('/pricing')}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors font-sans"
+            >
+              View Plans
+            </button>
           </div>
         </div>
       </div>

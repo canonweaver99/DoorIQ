@@ -25,10 +25,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's Stripe customer ID
+    // Get user's Stripe customer ID (check organization first, then individual)
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, organization_id')
       .eq('id', user.id)
       .single()
 
@@ -37,7 +37,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const customerId = userData.stripe_customer_id
+    let customerId = userData.stripe_customer_id
+
+    // If user belongs to organization, get organization's customer ID
+    if (!customerId && userData.organization_id) {
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('stripe_customer_id')
+        .eq('id', userData.organization_id)
+        .single()
+
+      if (org?.stripe_customer_id) {
+        customerId = org.stripe_customer_id
+      }
+    }
 
     if (!customerId) {
       return NextResponse.json(
@@ -61,7 +74,7 @@ export async function POST(request: NextRequest) {
     // If not set, Stripe will use the default configuration
     const portalConfig: any = {
       customer: customerId,
-      return_url: `${origin}/billing`,
+      return_url: `${origin}/settings/billing`,
     }
     
     // Use specific configuration ID if provided (optional)

@@ -160,7 +160,12 @@ async function handleTeamPlanCheckout(
     throw orgError
   }
 
-  // Link user to organization as manager/admin
+  // Get trial end date from subscription
+  const trialEndsAt = subscription.trial_end 
+    ? new Date(subscription.trial_end * 1000).toISOString()
+    : null
+
+  // Link user to organization as manager/admin and set subscription status
   const { error: userError } = await supabase
     .from('users')
     .update({
@@ -168,6 +173,8 @@ async function handleTeamPlanCheckout(
       role: 'manager',
       is_active: true,
       stripe_customer_id: customerId,
+      subscription_status: subscription.status === 'trialing' ? 'trialing' : 'active',
+      trial_ends_at: trialEndsAt,
     })
     .eq('id', userId)
 
@@ -176,7 +183,7 @@ async function handleTeamPlanCheckout(
     throw userError
   }
 
-  console.log(`✅ Team plan checkout completed: Organization ${organization.id} created with ${actualQuantity} seats`)
+  console.log(`✅ Team plan checkout completed: Organization ${organization.id} created with ${actualQuantity} seats, subscription_status: ${subscription.status}`)
 }
 
 /**
@@ -237,7 +244,27 @@ async function handleSubscriptionCreated(
   const planType = subscription.metadata?.plan_type
 
   if (planType === 'team' || planType === 'starter') {
-    // Organization subscription - already handled in checkout.session.completed
+    // Organization subscription - ensure subscription status and trial_ends_at are set
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('stripe_customer_id', customerId)
+      .single()
+
+    if (org) {
+      const trialEndsAt = subscription.trial_end 
+        ? new Date(subscription.trial_end * 1000).toISOString()
+        : null
+
+      // Update all users in the organization with subscription status
+      await supabase
+        .from('users')
+        .update({
+          subscription_status: subscription.status === 'trialing' ? 'trialing' : 'active',
+          trial_ends_at: trialEndsAt,
+        })
+        .eq('organization_id', org.id)
+    }
     return
   }
 
@@ -259,6 +286,7 @@ async function handleSubscriptionCreated(
 
 /**
  * Handle subscription updated event
+ * Updates seat counts, billing intervals, and plan tiers
  */
 async function handleSubscriptionUpdated(
   subscription: Stripe.Subscription,
@@ -284,12 +312,16 @@ async function handleSubscriptionUpdated(
       const subscriptionItem = subscription.items.data[0]
       const quantity = subscriptionItem?.quantity || 0
 
+      // Determine billing interval from subscription
+      const billingInterval = subscription.interval === 'year' ? 'annual' : 'monthly'
+
       await supabase
         .from('organizations')
         .update({
           stripe_subscription_id: subscription.id,
           stripe_subscription_item_id: subscriptionItem?.id,
           seat_limit: quantity,
+          billing_interval: billingInterval,
         })
         .eq('id', org.id)
     }
@@ -369,22 +401,72 @@ async function handleInvoicePaymentSucceeded(
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
   const planType = subscription.metadata?.plan_type
 
-  if (planType === 'team' || planType === 'starter') {
-    // Organization payment - no action needed
-    return
-  }
+  // Store invoice in database
+  try {
+    let organizationId: string | null = null
+    let userId: string | null = null
 
-  // Individual payment - update subscription status
-  const customer = await stripe.customers.retrieve(customerId)
-  const userId = (customer as Stripe.Customer).metadata?.supabase_user_id
+    if (planType === 'team' || planType === 'starter') {
+      // Organization payment - update subscription status for all users in organization
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('stripe_customer_id', customerId)
+        .single()
 
-  if (userId) {
-    await supabase
-      .from('users')
-      .update({
-        subscription_status: 'active',
+      if (org) {
+        organizationId = org.id
+        await supabase
+          .from('users')
+          .update({
+            subscription_status: 'active',
+          })
+          .eq('organization_id', org.id)
+      }
+    } else {
+      // Individual payment - update subscription status
+      const customer = await stripe.customers.retrieve(customerId)
+      userId = (customer as Stripe.Customer).metadata?.supabase_user_id
+
+      if (userId) {
+        await supabase
+          .from('users')
+          .update({
+            subscription_status: 'active',
+          })
+          .eq('id', userId)
+      }
+    }
+
+    // Store invoice in invoices table
+    const { error: invoiceError } = await supabase
+      .from('invoices')
+      .upsert({
+        stripe_invoice_id: invoice.id,
+        stripe_customer_id: customerId,
+        organization_id: organizationId,
+        user_id: userId,
+        amount_paid: invoice.amount_paid,
+        currency: invoice.currency || 'usd',
+        status: invoice.status || 'paid',
+        invoice_pdf_url: invoice.invoice_pdf,
+        hosted_invoice_url: invoice.hosted_invoice_url,
+        invoice_date: new Date(invoice.created * 1000).toISOString(),
+        period_start: invoice.period_start
+          ? new Date(invoice.period_start * 1000).toISOString()
+          : null,
+        period_end: invoice.period_end
+          ? new Date(invoice.period_end * 1000).toISOString()
+          : null,
+      }, {
+        onConflict: 'stripe_invoice_id',
       })
-      .eq('id', userId)
+
+    if (invoiceError) {
+      console.error('Error storing invoice:', invoiceError)
+    }
+  } catch (error) {
+    console.error('Error in handleInvoicePaymentSucceeded:', error)
   }
 }
 

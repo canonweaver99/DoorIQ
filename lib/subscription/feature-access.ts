@@ -12,6 +12,7 @@ export const FEATURES = {
   PRIORITY_SUPPORT: 'priority_support',
   BASIC_AGENTS: 'basic_agents',
   BASIC_SESSIONS: 'basic_sessions',
+  LEARNING_PAGE: 'learning_page',
 } as const
 
 export type FeatureKey = typeof FEATURES[keyof typeof FEATURES]
