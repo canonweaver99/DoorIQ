@@ -23,10 +23,13 @@ export async function GET() {
       return NextResponse.json({ error: 'Not part of a team' }, { status: 404 })
     }
 
-    // Get team info
+    // Get team info with organization details
     const { data: team, error: teamError } = await (supabase as any)
       .from('teams')
-      .select('*')
+      .select(`
+        *,
+        organization:organizations(id, name, plan_tier)
+      `)
       .eq('id', userData.team_id)
       .single()
 
