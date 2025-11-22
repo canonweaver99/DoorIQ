@@ -217,6 +217,11 @@ function PricingPageContent() {
     window.location.href = STRIPE_CONFIG.starter.paymentLink
   }
 
+  const handleTeamPlanClick = () => {
+    // Redirect to Stripe payment link for team plan
+    window.location.href = STRIPE_CONFIG.team.paymentLink
+  }
+
   return (
     <div className="min-h-screen bg-black relative overflow-hidden pt-20">
       <div className="w-full relative z-10">
@@ -430,10 +435,13 @@ function PricingPageContent() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              // Starter plan goes directly to Stripe payment link
+                              // Starter and Team plans go directly to Stripe payment links
                               if (tier.id === 'starter') {
                                 handleStarterPlanClick()
+                              } else if (tier.id === 'team') {
+                                handleTeamPlanClick()
                               } else {
+                                // Enterprise still uses Cal.com for demos
                                 handleSelectTier(tier.id)
                               }
                             }}

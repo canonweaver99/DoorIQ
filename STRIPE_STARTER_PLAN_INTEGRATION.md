@@ -1,13 +1,17 @@
-# Stripe Starter Plan Integration
+# Stripe Plans Integration
 
 ## Overview
-The Stripe starter plan has been integrated into the DoorIQ pricing page.
+Stripe payment links have been integrated into the DoorIQ pricing page for Starter and Team plans.
 
 ## Configuration
 
 ### Starter Plan Details
 - **Price ID**: `price_1SW61m1fQ6MPQdN0K9cEgwzk`
 - **Payment Link**: `https://buy.stripe.com/8x228j5cC2UWaqVe0L2go01`
+
+### Team Plan Details
+- **Price ID**: `price_1SW66b1fQ6MPQdN0SJ1r5Kbj`
+- **Payment Link**: `https://buy.stripe.com/00w6oz9sSgLM42x2i32go02`
 
 ### Files Modified
 
@@ -17,14 +21,22 @@ The Stripe starter plan has been integrated into the DoorIQ pricing page.
    - Easy to extend for future plans (team, enterprise)
 
 2. **`app/pricing/page.tsx`**
-   - Updated CTA button for starter plan to redirect to Stripe payment link
-   - Starter plan now bypasses Cal.com calendar and goes directly to checkout
-   - Other plans (team, enterprise) still use Cal.com for demos
+   - Updated CTA buttons for starter and team plans to redirect to Stripe payment links
+   - Starter and Team plans now bypass Cal.com calendar and go directly to checkout
+   - Enterprise plan still uses Cal.com for demos
 
 ## How It Works
 
+### Starter Plan
 1. User clicks "Start Free Trial" on the Starter plan card
 2. User is redirected to: `https://buy.stripe.com/8x228j5cC2UWaqVe0L2go01`
+3. User completes checkout on Stripe
+4. Stripe webhook fires `checkout.session.completed` event
+5. Webhook handler (`/api/stripe/webhook/route.ts`) processes the subscription
+
+### Team Plan
+1. User clicks "Start Free Trial" on the Team plan card
+2. User is redirected to: `https://buy.stripe.com/00w6oz9sSgLM42x2i32go02`
 3. User completes checkout on Stripe
 4. Stripe webhook fires `checkout.session.completed` event
 5. Webhook handler (`/api/stripe/webhook/route.ts`) processes the subscription
@@ -41,8 +53,16 @@ Ensure your Stripe webhook is configured to handle the starter plan:
   - `customer.subscription.deleted`
 
 ### 2. Test the Flow
+**Starter Plan:**
 1. Go to `/pricing` page
 2. Click "Start Free Trial" on Starter plan
+3. Complete checkout with test card: `4242 4242 4242 4242`
+4. Verify webhook receives events
+5. Verify user subscription status updates in database
+
+**Team Plan:**
+1. Go to `/pricing` page
+2. Click "Start Free Trial" on Team plan
 3. Complete checkout with test card: `4242 4242 4242 4242`
 4. Verify webhook receives events
 5. Verify user subscription status updates in database
@@ -71,8 +91,8 @@ export const STRIPE_CONFIG = {
     paymentLink: 'https://buy.stripe.com/8x228j5cC2UWaqVe0L2go01',
   },
   team: {
-    priceId: 'price_...',
-    paymentLink: 'https://buy.stripe.com/...',
+    priceId: 'price_1SW66b1fQ6MPQdN0SJ1r5Kbj',
+    paymentLink: 'https://buy.stripe.com/00w6oz9sSgLM42x2i32go02',
   },
   enterprise: {
     priceId: 'price_...',
@@ -81,5 +101,5 @@ export const STRIPE_CONFIG = {
 }
 ```
 
-Then update the pricing page CTA logic to handle these plans similarly.
+Then update the pricing page CTA logic to handle the enterprise plan similarly.
 

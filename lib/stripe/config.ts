@@ -9,11 +9,11 @@ export const STRIPE_CONFIG = {
     priceId: 'price_1SW61m1fQ6MPQdN0K9cEgwzk',
     paymentLink: 'https://buy.stripe.com/8x228j5cC2UWaqVe0L2go01',
   },
-  // Add other plans here as they're configured
-  // team: {
-  //   priceId: 'price_...',
-  //   paymentLink: 'https://buy.stripe.com/...',
-  // },
+  team: {
+    priceId: 'price_1SW66b1fQ6MPQdN0SJ1r5Kbj',
+    paymentLink: 'https://buy.stripe.com/00w6oz9sSgLM42x2i32go02',
+  },
+  // Add enterprise plan here when configured
   // enterprise: {
   //   priceId: 'price_...',
   //   paymentLink: 'https://buy.stripe.com/...',
