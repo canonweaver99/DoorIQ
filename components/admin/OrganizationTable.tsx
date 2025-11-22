@@ -26,25 +26,25 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">
                 Organization
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">
                 Plan
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">
                 Members
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">
                 Seats Used
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">
                 Monthly Billing
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -64,11 +64,11 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                         <Building2 className="w-4 h-4 text-purple-600" />
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-space font-medium text-gray-900">
                           {org.name}
                         </div>
                         {org.stripe_subscription_id && (
-                          <span className="text-xs text-green-600 font-medium">
+                          <span className="text-xs text-green-600 font-space font-medium">
                             Active Subscription
                           </span>
                         )}
@@ -76,12 +76,12 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 capitalize">
+                    <span className="px-2 py-1 text-xs font-space font-medium rounded-full bg-blue-100 text-blue-800 capitalize">
                       {org.plan_tier || 'None'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900">
+                    <div className="flex items-center text-sm text-gray-900 font-sans">
                       <Users className="w-4 h-4 mr-1 text-gray-400" />
                       {org.member_count || org.seats_used}
                     </div>
@@ -98,19 +98,19 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                           style={{ width: `${Math.min(utilizationPct, 100)}%` }}
                         />
                       </div>
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-gray-900 font-sans">
                         {org.seats_used}/{org.seat_limit}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900">
+                    <div className="flex items-center text-sm text-gray-900 font-sans">
                       <CreditCard className="w-4 h-4 mr-1 text-gray-400" />
                       ${monthlyCost.toLocaleString()}/mo
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    <div className="flex items-center">
+                    <div className="flex items-center font-sans">
                       <Calendar className="w-4 h-4 mr-1 text-gray-400" />
                       {format(new Date(org.created_at), 'MMM d, yyyy')}
                     </div>
@@ -118,7 +118,7 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <Link
                       href={`/admin/organizations/${org.id}`}
-                      className="text-purple-600 hover:text-purple-700 flex items-center gap-1 font-medium"
+                      className="text-purple-600 hover:text-purple-700 flex items-center gap-1 font-space font-medium"
                     >
                       View Details
                       <ChevronRight className="w-4 h-4" />
@@ -133,7 +133,7 @@ export function OrganizationTable({ organizations }: OrganizationTableProps) {
         {organizations.length === 0 && (
           <div className="p-12 text-center">
             <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No organizations found</p>
+            <p className="text-gray-600 font-sans">No organizations found</p>
           </div>
         )}
       </div>

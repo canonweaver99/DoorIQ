@@ -78,11 +78,11 @@ export default function AdminSessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 px-6 pb-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Training Sessions</h1>
-          <p className="text-gray-600">View and manage all training sessions</p>
+          <h1 className="text-3xl font-space font-bold tracking-tight text-gray-900 mb-2">Training Sessions</h1>
+          <p className="text-gray-600 font-sans leading-relaxed">View and manage all training sessions</p>
         </div>
         
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -129,12 +129,12 @@ export default function AdminSessionsPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">When</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Rep</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Score</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Outcome</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Duration</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">When</th>
+                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">Rep</th>
+                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">Score</th>
+                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">Outcome</th>
+                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">Duration</th>
+                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -155,16 +155,16 @@ export default function AdminSessionsPage() {
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-gray-400" />
                           <div>
-                            <div className="font-medium">{s.users?.full_name || '—'}</div>
-                            <div className="text-gray-600 text-xs">{s.users?.email || '—'}</div>
+                            <div className="font-space font-medium">{s.users?.full_name || '—'}</div>
+                            <div className="text-gray-600 text-xs font-sans">{s.users?.email || '—'}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <div className="font-semibold text-gray-900">
+                        <div className="font-space font-semibold text-gray-900">
                           {s.overall_score ?? '—'}
                         </div>
-                        <div className="text-xs text-gray-600">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>
+                        <div className="text-xs text-gray-600 font-sans">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${s.outcome === 'SUCCESS' ? 'bg-green-100 text-green-700' : s.outcome === 'FAILURE' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
@@ -178,7 +178,7 @@ export default function AdminSessionsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium">
+                        <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-purple-600 hover:text-purple-700 font-space font-medium">
                           View <ChevronRight className="w-4 h-4 ml-1" />
                         </Link>
                       </td>

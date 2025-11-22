@@ -78,9 +78,9 @@ export default function AdminLayout({
             <div className="p-2 bg-purple-100 rounded-lg">
               <Shield className="w-5 h-5 text-purple-600" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+            <h1 className="text-xl font-space font-bold tracking-tight text-gray-900">Admin Panel</h1>
           </div>
-          <p className="text-sm text-gray-600">DoorIQ Management</p>
+          <p className="text-sm text-gray-600 font-sans">DoorIQ Management</p>
         </div>
 
         <nav className="space-y-1">
@@ -101,7 +101,7 @@ export default function AdminLayout({
                 )}
               >
                 <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
+                <span className="font-space font-medium">{item.label}</span>
                 {isActive && <ChevronRight className="w-4 h-4 ml-auto text-purple-600" />}
               </Link>
             )
@@ -110,7 +110,7 @@ export default function AdminLayout({
       </div>
 
       {/* Main Content */}
-      <div className="ml-64">
+      <div className="ml-64 pt-8">
         {children}
       </div>
     </div>
