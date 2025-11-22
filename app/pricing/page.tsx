@@ -210,13 +210,13 @@ function PricingPageContent() {
   }
 
   const handleStarterPlanClick = () => {
-    // Redirect to Stripe payment link for starter plan
-    window.location.href = STRIPE_CONFIG.starter.paymentLink
+    // Redirect to signup page for starter plan
+    window.location.href = '/team/signup?plan=starter'
   }
 
   const handleTeamPlanClick = () => {
     // Redirect to team signup page for custom seat selection
-    window.location.href = '/team/signup'
+    window.location.href = '/team/signup?plan=team'
   }
 
   return (

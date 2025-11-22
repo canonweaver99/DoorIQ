@@ -42,13 +42,13 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
 
-        // Check if this is a team plan signup
+        // Check if this is a team or starter plan signup
         const planType = session.metadata?.plan_type || session.subscription_data?.metadata?.plan_type
 
-        if (planType === 'team') {
-          await handleTeamPlanCheckout(session, supabase)
+        if (planType === 'team' || planType === 'starter') {
+          await handleTeamPlanCheckout(session, supabase, planType)
         } else {
-          // Handle individual/starter plan checkout
+          // Handle individual plan checkout
           await handleIndividualPlanCheckout(session, supabase)
         }
         break
@@ -99,11 +99,12 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Handle team plan checkout completion
+ * Handle team or starter plan checkout completion
  */
 async function handleTeamPlanCheckout(
   session: Stripe.Checkout.Session,
-  supabase: any
+  supabase: any,
+  planType: string = 'team'
 ) {
   const metadata = session.metadata || session.subscription_data?.metadata || {}
   const organizationName = metadata.organization_name
@@ -147,7 +148,7 @@ async function handleTeamPlanCheckout(
       stripe_customer_id: customerId,
       stripe_subscription_id: subscriptionId,
       stripe_subscription_item_id: subscriptionItem?.id,
-      plan_tier: 'team',
+      plan_tier: planType === 'starter' ? 'starter' : 'team',
       seat_limit: actualQuantity,
       seats_used: 1, // Manager counts as first seat
     })
@@ -232,10 +233,10 @@ async function handleSubscriptionCreated(
 
   if (!customerId) return
 
-  // Check if this is for an organization (team plan)
+  // Check if this is for an organization (team or starter plan)
   const planType = subscription.metadata?.plan_type
 
-  if (planType === 'team') {
+  if (planType === 'team' || planType === 'starter') {
     // Organization subscription - already handled in checkout.session.completed
     return
   }
@@ -271,7 +272,7 @@ async function handleSubscriptionUpdated(
 
   const planType = subscription.metadata?.plan_type
 
-  if (planType === 'team') {
+  if (planType === 'team' || planType === 'starter') {
     // Update organization subscription
     const { data: org } = await supabase
       .from('organizations')
@@ -324,7 +325,7 @@ async function handleSubscriptionDeleted(
 
   const planType = subscription.metadata?.plan_type
 
-  if (planType === 'team') {
+  if (planType === 'team' || planType === 'starter') {
     // Update organization subscription status
     await supabase
       .from('organizations')
@@ -368,7 +369,7 @@ async function handleInvoicePaymentSucceeded(
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
   const planType = subscription.metadata?.plan_type
 
-  if (planType === 'team') {
+  if (planType === 'team' || planType === 'starter') {
     // Organization payment - no action needed
     return
   }
@@ -406,7 +407,7 @@ async function handleInvoicePaymentFailed(
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
   const planType = subscription.metadata?.plan_type
 
-  if (planType === 'team') {
+  if (planType === 'team' || planType === 'starter') {
     // Organization payment failed - could send notification
     return
   }

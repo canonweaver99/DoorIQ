@@ -134,14 +134,15 @@ function HeaderContent() {
     const isSessionsPage = pathname?.startsWith('/sessions')
     const isLearningPage = pathname?.startsWith('/learning')
     const isPricingPage = pathname?.startsWith('/pricing')
+    const isSignupPage = pathname?.startsWith('/team/signup')
     const isAdminPage = pathname?.startsWith('/admin')
     const isDashboardPage = pathname?.startsWith('/dashboard')
     const isLiveSessionPage = pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner'
     
     // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing
-    // Admin pages and Dashboard get special treatment - menu is completely hidden
+    // Admin pages, Dashboard, and Signup pages get special treatment - menu is completely hidden
     const hideMenu = !isHomePage && !isPracticePage && !isSessionsPage && !isLearningPage && !isPricingPage
-    setShouldHideMenu(hideMenu || isAdminPage || isDashboardPage) // Force hide on admin and dashboard pages
+    setShouldHideMenu(hideMenu || isAdminPage || isDashboardPage || isSignupPage) // Force hide on admin, dashboard, and signup pages
     
     // Set isLiveSession for backward compatibility
     setIsLiveSession(isLiveSessionPage)
@@ -154,11 +155,12 @@ function HeaderContent() {
     const isSessionsPage = pathname?.startsWith('/sessions')
     const isLearningPage = pathname?.startsWith('/learning')
     const isPricingPage = pathname?.startsWith('/pricing')
+    const isSignupPage = pathname?.startsWith('/team/signup')
     const isAdminPage = pathname?.startsWith('/admin')
     const isDashboardPage = pathname?.startsWith('/dashboard')
     
-    // Admin pages and Dashboard: completely hide menu (no hover)
-    if (isAdminPage || isDashboardPage) {
+    // Admin pages, Dashboard, and Signup pages: completely hide menu (no hover)
+    if (isAdminPage || isDashboardPage || isSignupPage) {
       setShowMenuOnHover(false)
       return
     }
@@ -570,6 +572,18 @@ function HeaderContent() {
               )
             })}
 
+            {!isSignedIn && (
+              <Link
+                href="/auth/login"
+                className="ml-2 md:ml-3 pl-2 md:pl-3 border-l border-border/20 dark:border-white/10 flex-shrink-0"
+              >
+                <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-semibold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105 active:scale-95">
+                  <LogIn className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                  <span className="tracking-tight whitespace-nowrap">Sign In</span>
+                </button>
+              </Link>
+            )}
+
             {isSignedIn && (
               <div className="flex items-center gap-2 md:gap-3 pl-2 border-l border-border/20 dark:border-white/10 flex-shrink-0 min-w-0">
                 <div className="relative min-w-0 max-w-[120px] md:max-w-[150px]">
@@ -689,6 +703,18 @@ function HeaderContent() {
                 </Link>
               )
             })}
+            {!isSignedIn && (
+              <Link
+                href="/auth/login"
+                onClick={() => setIsMenuOpen(false)}
+                className="mt-4"
+              >
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-full text-base sm:text-lg font-space font-semibold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105 active:scale-95">
+                  <LogIn className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="tracking-tight">Sign In</span>
+                </button>
+              </Link>
+            )}
             {isSignedIn ? (
               <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4">
                 <p className="px-4 text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Account</p>

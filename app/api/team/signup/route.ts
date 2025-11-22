@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { organizationName, seatCount, userEmail, userName } = body
+    const { organizationName, seatCount, planType = 'team', billingPeriod = 'monthly', userEmail, userName } = body
 
     // Validation
     if (!organizationName || typeof organizationName !== 'string' || organizationName.trim().length === 0) {
@@ -33,11 +33,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!seatCount || typeof seatCount !== 'number' || seatCount < 1 || seatCount > 100) {
-      return NextResponse.json(
-        { error: 'Seat count must be between 1 and 100' },
-        { status: 400 }
-      )
+    // Validate seat count based on plan type
+    if (planType === 'starter') {
+      if (!seatCount || typeof seatCount !== 'number' || seatCount < 1 || seatCount > 20) {
+        return NextResponse.json(
+          { error: 'Seat count must be between 1 and 20 for Starter plan' },
+          { status: 400 }
+        )
+      }
+    } else {
+      if (!seatCount || typeof seatCount !== 'number' || seatCount < 21 || seatCount > 100) {
+        return NextResponse.json(
+          { error: 'Seat count must be between 21 and 100 for Team plan' },
+          { status: 400 }
+        )
+      }
     }
 
     // Get user profile
@@ -78,35 +88,85 @@ export async function POST(request: NextRequest) {
     // Get the origin for return URL
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
+    // Determine price ID based on plan type
+    const priceId = planType === 'starter' 
+      ? STRIPE_CONFIG.starter.perSeatPriceId 
+      : STRIPE_CONFIG.team.perSeatPriceId
+
+    // Calculate annual discount (2 months free = 16.67% discount)
+    // For annual billing, we'll apply a discount coupon
+    const isAnnual = billingPeriod === 'annual'
+    const discountPercent = isAnnual ? 16.67 : 0 // 2 months free out of 12 = 16.67%
+
+    // Create discount coupon for annual billing if needed
+    let discountId: string | undefined
+    if (isAnnual && discountPercent > 0) {
+      try {
+        // Try to find existing annual discount coupon
+        const coupons = await stripe.coupons.list({ limit: 100 })
+        const existingCoupon = coupons.data.find(
+          c => c.percent_off === discountPercent && c.name === 'Annual Billing - 2 Months Free'
+        )
+        
+        if (existingCoupon) {
+          discountId = existingCoupon.id
+        } else {
+          // Create new coupon for annual billing
+          const coupon = await stripe.coupons.create({
+            name: 'Annual Billing - 2 Months Free',
+            percent_off: discountPercent,
+            duration: 'forever', // Can be reused
+            metadata: {
+              type: 'annual_billing',
+              description: '2 months free with annual billing',
+            },
+          })
+          discountId = coupon.id
+        }
+      } catch (error) {
+        console.error('Error creating discount coupon:', error)
+        // Continue without discount if coupon creation fails
+      }
+    }
+
     // Create checkout session with quantity-based pricing
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: 'subscription',
       line_items: [
         {
-          price: STRIPE_CONFIG.team.perSeatPriceId,
+          price: priceId,
           quantity: seatCount,
         },
       ],
       subscription_data: {
         trial_period_days: 14,
         metadata: {
-          plan_type: 'team',
+          plan_type: planType,
+          billing_period: billingPeriod,
           organization_name: organizationName.trim(),
           seat_count: seatCount.toString(),
           supabase_user_id: user.id,
         },
       },
       metadata: {
-        plan_type: 'team',
+        plan_type: planType,
+        billing_period: billingPeriod,
         organization_name: organizationName.trim(),
         seat_count: seatCount.toString(),
         supabase_user_id: user.id,
       },
       success_url: `${origin}/team?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/team/signup?canceled=true`,
+      cancel_url: `${origin}/team/signup?plan=${planType}&canceled=true`,
       allow_promotion_codes: true,
-    })
+    }
+
+    // Add discount if annual billing
+    if (discountId) {
+      sessionConfig.discounts = [{ coupon: discountId }]
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     return NextResponse.json({ 
       url: session.url,
