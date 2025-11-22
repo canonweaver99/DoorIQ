@@ -219,6 +219,11 @@ function PricingPageContent() {
     window.location.href = '/team/signup?plan=team'
   }
 
+  const handleEnterprisePlanClick = () => {
+    // Redirect to enterprise signup page
+    window.location.href = '/enterprise/signup'
+  }
+
   return (
     <div className="min-h-screen bg-black relative overflow-hidden pt-20">
       <div className="w-full relative z-10">
@@ -432,13 +437,16 @@ function PricingPageContent() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              // Starter and Team plans go directly to Stripe payment links
+                              // Starter and Team plans go to signup forms
                               if (tier.id === 'starter') {
                                 handleStarterPlanClick()
                               } else if (tier.id === 'team') {
                                 handleTeamPlanClick()
+                              } else if (tier.id === 'enterprise') {
+                                // Enterprise goes to signup form that ends with demo booking
+                                handleEnterprisePlanClick()
                               } else {
-                                // Enterprise still uses Cal.com for demos
+                                // Fallback to Cal.com for demos
                                 handleSelectTier(tier.id)
                               }
                             }}
