@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense, useRef } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useSearchParams, useRouter } from 'next/navigation'
-
 import { 
   Home, 
   TrendingUp, 
@@ -1706,7 +1705,7 @@ function OverviewTabContent() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4 min-h-[280px] sm:min-h-[320px]"
+          className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl px-4 pt-2 pb-4 min-h-[280px] sm:min-h-[320px]"
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-white font-space">Recent Sessions</h3>

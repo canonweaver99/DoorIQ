@@ -338,7 +338,7 @@ export default function SessionsPage() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-4 pt-3">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold bg-gradient-to-b from-foreground to-foreground/70 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-2 pb-0.5">Your Training Sessions</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold text-white mb-2 pb-0.5">Your Training Sessions</h1>
           <p className="text-base sm:text-lg text-foreground/70 dark:text-slate-400 font-sans">Review your past sessions and track your improvement</p>
         </div>
 
