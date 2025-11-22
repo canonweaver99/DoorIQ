@@ -1,21 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { FEATURES, type FeatureKey } from './feature-keys'
 
-// Feature keys matching the database feature_flags table
-export const FEATURES = {
-  ALL_AGENTS: 'all_agents',
-  UNLIMITED_SESSIONS: 'unlimited_sessions',
-  ADVANCED_ANALYTICS: 'advanced_analytics',
-  CALL_RECORDING: 'call_recording',
-  EXPORT_REPORTS: 'export_reports',
-  CUSTOM_SCENARIOS: 'custom_scenarios',
-  TEAM_FEATURES: 'team_features',
-  PRIORITY_SUPPORT: 'priority_support',
-  BASIC_AGENTS: 'basic_agents',
-  BASIC_SESSIONS: 'basic_sessions',
-  LEARNING_PAGE: 'learning_page',
-} as const
-
-export type FeatureKey = typeof FEATURES[keyof typeof FEATURES]
+// Re-export for backward compatibility
+export { FEATURES, type FeatureKey }
 
 /**
  * Server-side function to check if a user has access to a feature
@@ -169,7 +156,7 @@ export async function getUserSubscription(userId: string): Promise<{
  */
 export async function incrementSessionCount(userId: string): Promise<void> {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerSupabaseClient()
 
     await supabase.rpc('increment_user_session_count', {
       p_user_id: userId,

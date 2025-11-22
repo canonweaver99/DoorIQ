@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Video, Play, Trash2, Sparkles, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useFeatureAccess } from '@/hooks/useSubscription'
-import { FEATURES } from '@/lib/subscription/feature-access'
+import { FEATURES } from '@/lib/subscription/feature-keys'
 import { useRouter } from 'next/navigation'
 
 interface InstructionalVideo {

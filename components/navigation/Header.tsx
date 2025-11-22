@@ -38,7 +38,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useFeatureAccess } from '@/hooks/useSubscription'
-import { FEATURES } from '@/lib/subscription/feature-access'
+import { FEATURES } from '@/lib/subscription/feature-keys'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'

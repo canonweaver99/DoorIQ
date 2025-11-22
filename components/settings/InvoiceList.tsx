@@ -42,7 +42,7 @@ export function InvoiceList({ invoices, loading }: InvoiceListProps) {
       default:
         return `${baseClasses} bg-red-500/20 text-red-400 border border-red-500/30`
     }
-  })
+  }
 
   if (loading) {
     return (
