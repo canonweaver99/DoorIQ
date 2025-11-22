@@ -150,10 +150,13 @@ function HeaderContent() {
     const isGradingPage = pathname?.startsWith('/trainer/loading/')
     const isAnalyticsPage = pathname?.startsWith('/analytics/') && pathname !== '/analytics'
     
+    // Settings pages
+    const isSettingsPage = pathname?.startsWith('/settings')
+    
     // Hide menu on all pages except home page, select-homeowner page, sessions page, learning center, and pricing
-    // Admin pages, Dashboard, Signup pages, Live sessions, and Grading/Analytics pages get special treatment - menu is completely hidden
+    // Admin pages, Dashboard, Signup pages, Live sessions, Grading/Analytics pages, and Settings pages get special treatment - menu is completely hidden
     const hideMenu = !isHomePage && !isSessionsPage && !isLearningPage && !isPricingPage && pathname !== '/trainer/select-homeowner'
-    setShouldHideMenu(hideMenu || isAdminPage || isDashboardPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage) // Force hide on admin, dashboard, signup, live sessions, and grading pages
+    setShouldHideMenu(hideMenu || isAdminPage || isDashboardPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage || isSettingsPage) // Force hide on admin, dashboard, signup, live sessions, grading, and settings pages
     
     // Set isLiveSession for backward compatibility
     setIsLiveSession(isLiveSessionPage)
@@ -177,8 +180,11 @@ function HeaderContent() {
     const isGradingPage = pathname?.startsWith('/trainer/loading/')
     const isAnalyticsPage = pathname?.startsWith('/analytics/') && pathname !== '/analytics'
     
-    // Admin pages, Dashboard, Signup pages, Live sessions, and Grading/Analytics pages: completely hide menu (no hover)
-    if (isAdminPage || isDashboardPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage) {
+    // Settings pages: completely hide menu (no hover)
+    const isSettingsPage = pathname?.startsWith('/settings')
+    
+    // Admin pages, Dashboard, Signup pages, Live sessions, Grading/Analytics pages, and Settings pages: completely hide menu (no hover)
+    if (isAdminPage || isDashboardPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage || isSettingsPage) {
       setShowMenuOnHover(false)
       return
     }
