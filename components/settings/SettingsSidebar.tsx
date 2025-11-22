@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, CreditCard, Users, Settings as SettingsIcon, Lock } from 'lucide-react'
+import { User, CreditCard, Users, Settings as SettingsIcon, Lock, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -30,6 +30,11 @@ const navItems = [
     name: 'Preferences',
     href: '/settings/preferences',
     icon: SettingsIcon,
+  },
+  {
+    name: 'Reports',
+    href: '/settings/reports',
+    icon: Download,
   },
 ]
 
