@@ -8,6 +8,7 @@ import { Loader2, ChevronRight, CheckCircle2, X, Shield, Star, Award, ShieldChec
 import { Badge } from "@/components/ui/badge"
 import { BorderTrail } from "@/components/ui/border-trail"
 import { cn } from "@/lib/utils"
+import { STRIPE_CONFIG } from "@/lib/stripe/config"
 
 // Lazy load heavy components
 const Cal = dynamic(() => import("@calcom/embed-react").then(mod => ({ default: mod.default, getCalApi: mod.getCalApi })), { 
@@ -207,7 +208,13 @@ function PricingPageContent() {
 
   const getCTA = (tierId: string) => {
     if (tierId === 'enterprise') return 'Book a Demo'
+    if (tierId === 'starter') return 'Start Free Trial'
     return 'Start Free Trial'
+  }
+
+  const handleStarterPlanClick = () => {
+    // Redirect to Stripe payment link for starter plan
+    window.location.href = STRIPE_CONFIG.starter.paymentLink
   }
 
   return (
@@ -423,7 +430,12 @@ function PricingPageContent() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleSelectTier(tier.id)
+                              // Starter plan goes directly to Stripe payment link
+                              if (tier.id === 'starter') {
+                                handleStarterPlanClick()
+                              } else {
+                                handleSelectTier(tier.id)
+                              }
                             }}
                             className={cn(
                               "w-full mt-auto py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2",
