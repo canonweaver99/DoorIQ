@@ -125,18 +125,14 @@ function HeaderContent() {
     setIsAuthPage(onAuthPage)
   }, [pathname])
 
-  // Check if we're on pages where menu should be hidden (dashboard, live sessions, feedback/grading, sessions, admin)
+  // Hide menu on all pages except home page - show on hover
   // Menu should always be visible on home page (/)
   useEffect(() => {
     const isHomePage = pathname === '/'
-    const isDashboardPage = pathname?.startsWith('/dashboard')
     const isLiveSessionPage = pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner'
-    const isGradingPage = pathname?.startsWith('/analytics')
-    const isSessionsPage = pathname?.startsWith('/sessions')
-    const isAdminPage = pathname?.startsWith('/admin')
     
-    // Set shouldHideMenu flag
-    const hideMenu = !isHomePage && (isDashboardPage || isLiveSessionPage || isGradingPage || isSessionsPage || isAdminPage)
+    // Hide menu on all pages except home page
+    const hideMenu = !isHomePage
     setShouldHideMenu(hideMenu)
     
     // Set isLiveSession for backward compatibility
