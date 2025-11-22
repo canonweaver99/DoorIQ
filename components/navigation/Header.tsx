@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   LifeBuoy,
   LogOut,
+  LogIn,
   PieChart,
   NotebookPen,
   Users,
