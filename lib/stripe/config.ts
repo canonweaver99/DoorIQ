@@ -14,7 +14,7 @@ export const STRIPE_CONFIG = {
     paymentLink: 'https://buy.stripe.com/00w6oz9sSgLM42x2i32go02',
     // Per-seat price ID for team plan ($69/seat/month)
     // This should be created in Stripe as a recurring monthly price with quantity-based billing
-    perSeatPriceId: 'price_1SW66b1fQ6MPQdN0SJ1r5Kbj', // Update this with actual per-seat price ID
+    perSeatPriceId: 'price_1SW66b1fQ6MPQdN0SJ1r5Kbj', // Per-seat price ID for quantity-based billing
   },
   // Add enterprise plan here when configured
   // enterprise: {

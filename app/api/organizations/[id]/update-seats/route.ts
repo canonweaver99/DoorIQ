@@ -69,10 +69,11 @@ export async function PATCH(
       )
     }
     
-    // Validate can't reduce below current usage
+    // Validate can't reduce below current active usage
+    // seats_used should reflect active reps count (updated by trigger)
     if (seat_limit < organization.seats_used) {
       return NextResponse.json(
-        { error: `Cannot set seat_limit below current usage (${organization.seats_used} seats). Deactivate some members first.` },
+        { error: `Cannot set seat_limit below current active usage (${organization.seats_used} active seats). Deactivate some members first.` },
         { status: 400 }
       )
     }

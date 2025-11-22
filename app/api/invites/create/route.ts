@@ -43,6 +43,7 @@ export async function POST(request: Request) {
     }
 
     // Check seat availability if organization exists
+    // seats_used should reflect active reps count (updated by trigger)
     if (userProfile.organization_id) {
       const { data: organization, error: orgError } = await supabase
         .from('organizations')
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
         .single()
 
       if (!orgError && organization) {
+        // Check if seats are full (seats_used should only count active reps)
         if (organization.seats_used >= organization.seat_limit) {
           return NextResponse.json(
             { error: `No seats available. You have ${organization.seats_used}/${organization.seat_limit} seats used. Please upgrade your plan or contact support.` },

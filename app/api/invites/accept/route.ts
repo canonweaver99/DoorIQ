@@ -43,43 +43,40 @@ export async function POST(request: Request) {
     // Get organization_id from invite (prefer organization_id over team_id)
     const orgId = invite.organization_id || invite.team_id
 
-    // Update the user's team_id, organization_id and role
+    // Check seat availability before accepting (for organizations)
+    if (orgId) {
+      const { data: organization, error: orgError } = await supabase
+        .from('organizations')
+        .select('seat_limit, seats_used')
+        .eq('id', orgId)
+        .single()
+
+      if (!orgError && organization) {
+        // Check if seats are full
+        if (organization.seats_used >= organization.seat_limit) {
+          return NextResponse.json(
+            { error: `No seats available. This organization has ${organization.seats_used}/${organization.seat_limit} seats used. Please contact the organization admin.` },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
+    // Update the user's team_id, organization_id, role, and set is_active = true
+    // The trigger will automatically increment seats_used when is_active is set to true
     const { error: updateError } = await supabase
       .from('users')
       .update({ 
         team_id: invite.team_id,
         organization_id: orgId,
-        role: invite.role 
+        role: invite.role,
+        is_active: true // Set as active - trigger will handle seats_used increment
       })
       .eq('id', user.id)
 
     if (updateError) {
       console.error('Error updating user:', updateError)
       return NextResponse.json({ error: 'Failed to join team' }, { status: 500 })
-    }
-
-    // Increment seats_used if organization exists
-    if (orgId) {
-      // Try RPC first, fallback to direct update
-      const { error: seatError } = await supabase.rpc('increment_organization_seats', {
-        org_id: orgId
-      })
-      
-      // If RPC doesn't exist or fails, use direct update
-      if (seatError) {
-        const { data: org } = await supabase
-          .from('organizations')
-          .select('seats_used')
-          .eq('id', orgId)
-          .single()
-        
-        if (org) {
-          await supabase
-            .from('organizations')
-            .update({ seats_used: (org.seats_used || 0) + 1 })
-            .eq('id', orgId)
-        }
-      }
     }
 
     // Mark the invite as accepted

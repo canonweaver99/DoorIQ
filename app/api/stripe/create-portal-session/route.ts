@@ -57,11 +57,21 @@ export async function POST(request: NextRequest) {
     // Get the origin for the return URL
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    // Create billing portal session
-    const portalSession = await stripe.billingPortal.sessions.create({
+    // Optional: Use specific billing portal configuration if set
+    // If not set, Stripe will use the default configuration
+    const portalConfig: any = {
       customer: customerId,
       return_url: `${origin}/billing`,
-    })
+    }
+    
+    // Use specific configuration ID if provided (optional)
+    const billingPortalConfigId = process.env.STRIPE_BILLING_PORTAL_CONFIG_ID
+    if (billingPortalConfigId) {
+      portalConfig.configuration = billingPortalConfigId
+    }
+
+    // Create billing portal session
+    const portalSession = await stripe.billingPortal.sessions.create(portalConfig)
 
     return NextResponse.json({ url: portalSession.url })
   } catch (error: any) {

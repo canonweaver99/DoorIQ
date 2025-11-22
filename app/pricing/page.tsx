@@ -215,8 +215,8 @@ function PricingPageContent() {
   }
 
   const handleTeamPlanClick = () => {
-    // Redirect to Stripe payment link for team plan
-    window.location.href = STRIPE_CONFIG.team.paymentLink
+    // Redirect to team signup page for custom seat selection
+    window.location.href = '/team/signup'
   }
 
   return (
