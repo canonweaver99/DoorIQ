@@ -130,9 +130,9 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
           </div>
           {progressLabel && (
             <div className="flex justify-between text-[10px] sm:text-xs text-slate-400 font-space">
-              <span className="truncate">You: {progress}%</span>
+              <span className="truncate">Them: {progress}%</span>
               <span className="hidden sm:inline">Ideal: 50-60%</span>
-              <span className="truncate">Them: {100 - progress}%</span>
+              <span className="truncate">You: {100 - progress}%</span>
             </div>
           )}
         </>

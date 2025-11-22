@@ -81,43 +81,16 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
   })
 
   const fetchSessionLimit = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      setData(prev => ({ ...prev, loading: false }))
-      return
-    }
-
-    try {
-      // Stripe/billing removed - use default free tier limits
-      // Get session limit data
-      const { data: limitData } = await supabase
-        .from('user_session_limits')
-        .select('sessions_this_month, sessions_limit, monthly_credits, purchased_credits')
-        .eq('user_id', user.id)
-        .single()
-
-      // Calculate total available credits (free tier only)
-      const monthlyCredits = limitData?.monthly_credits || null
-      const purchasedCredits = limitData?.purchased_credits || 0
-      const totalLimit = limitData?.sessions_limit || 5
-      const sessionsUsed = limitData?.sessions_this_month || 0
-      const sessionsRemaining = Math.max(0, totalLimit - sessionsUsed)
-      const canStartSession = sessionsUsed < totalLimit
-
-      setData({
-        canStartSession,
-        sessionsRemaining,
-        sessionsUsed,
-        sessionsLimit: totalLimit,
-        isUnlimited: false, // No longer unlimited for paid users
-        loading: false
-      })
-    } catch (error) {
-      console.error('Error fetching session limit:', error)
-      setData(prev => ({ ...prev, loading: false }))
-    }
+    // Credit system removed - always allow sessions
+    // User will integrate free trial and Stripe paywall separately
+    setData({
+      canStartSession: true,
+      sessionsRemaining: 999, // Show high number for UI purposes
+      sessionsUsed: 0,
+      sessionsLimit: 999,
+      isUnlimited: true,
+      loading: false
+    })
   }
 
   useEffect(() => {

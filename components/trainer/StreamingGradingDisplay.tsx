@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Loader2, TrendingUp, MessageSquare, Target, Lightbulb, Zap } from 'lucide-react'
 
@@ -44,6 +44,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   const [isComplete, setIsComplete] = useState(false)
   const [startTime] = useState(Date.now())
   const [elapsedTime, setElapsedTime] = useState(0)
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     // Update elapsed time every second
@@ -115,9 +117,33 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   }, [sessionId])
 
   const connectToStream = useCallback(async () => {
+    // Store current sessionId to validate against
+    const currentSessionId = sessionId
+    
+    // Cleanup previous stream if exists
+    if (readerRef.current) {
+      try {
+        await readerRef.current.cancel()
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+      readerRef.current = null
+    }
+    
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    
+    // Reset state for new session
+    setSections({})
+    setCompletedSections(new Set())
+    setCurrentSection('')
+    setError(null)
+    setIsComplete(false)
+    
     try {
       setStatus('Preparing AI analysis...')
-      setError(null)
       
       // Wait for transcript to be available before starting grading
       const transcriptReady = await waitForTranscript()
@@ -125,12 +151,23 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         throw new Error('Transcript not available. The session may not have been saved properly.')
       }
       
+      // Validate sessionId hasn't changed
+      if (currentSessionId !== sessionId) {
+        console.log('⚠️ SessionId changed during transcript wait, aborting')
+        return
+      }
+      
       setStatus('AI is analyzing your conversation...')
+      
+      // Create abort controller for this request
+      const abortController = new AbortController()
+      abortControllerRef.current = abortController
       
       const response = await fetch('/api/grade/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
+        body: JSON.stringify({ sessionId: currentSessionId }),
+        signal: abortController.signal
       })
 
       if (!response.ok) {
@@ -144,10 +181,20 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         if (!reader) {
           throw new Error('No reader available - response body is null')
         }
+        
+        // Store reader reference for cleanup
+        readerRef.current = reader
 
         setStatus('AI is analyzing your conversation...')
 
         while (true) {
+          // Check if sessionId changed during processing
+          if (currentSessionId !== sessionId) {
+            console.log('⚠️ SessionId changed during stream processing, aborting')
+            await reader.cancel()
+            break
+          }
+          
           const { done, value } = await reader.read()
           
           if (done) break
@@ -156,6 +203,11 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           const lines = chunk.split('\n')
 
           for (const line of lines) {
+            // Skip if sessionId changed
+            if (currentSessionId !== sessionId) {
+              break
+            }
+            
             if (line.startsWith('data: ')) {
               const jsonStr = line.substring(6)
               try {
@@ -163,37 +215,47 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
                 switch (data.type) {
                   case 'status':
-                    setStatus(data.message)
+                    if (currentSessionId === sessionId) {
+                      setStatus(data.message)
+                    }
                     break
 
                   case 'section':
-                    setCurrentSection(data.section)
-                    setSections(prev => ({
-                      ...prev,
-                      [data.section]: data.data
-                    }))
-                    setCompletedSections(prev => new Set(prev).add(data.section))
-                    // Convert underscore-separated strings to readable text
-                    const readableSection = SECTION_LABELS[data.section] || 
-                      data.section
-                        .replace(/_/g, ' ')
-                        .split(' ')
-                        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                        .join(' ')
-                    setStatus(`Analyzing: ${readableSection}`)
+                    if (currentSessionId === sessionId) {
+                      setCurrentSection(data.section)
+                      setSections(prev => ({
+                        ...prev,
+                        [data.section]: data.data
+                      }))
+                      setCompletedSections(prev => new Set(prev).add(data.section))
+                      // Convert underscore-separated strings to readable text
+                      const readableSection = SECTION_LABELS[data.section] || 
+                        data.section
+                          .replace(/_/g, ' ')
+                          .split(' ')
+                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                          .join(' ')
+                      setStatus(`Analyzing: ${readableSection}`)
+                    }
                     break
 
                   case 'complete':
-                    setIsComplete(true)
-                    setStatus('Grading complete!')
-                    setTimeout(() => {
-                      onComplete()
-                    }, 1500)
+                    if (currentSessionId === sessionId) {
+                      setIsComplete(true)
+                      setStatus('Grading complete!')
+                      setTimeout(() => {
+                        if (currentSessionId === sessionId) {
+                          onComplete()
+                        }
+                      }, 1500)
+                    }
                     break
 
                   case 'error':
-                    setError(data.message)
-                    setStatus('Error occurred')
+                    if (currentSessionId === sessionId) {
+                      setError(data.message)
+                      setStatus('Error occurred')
+                    }
                     break
                 }
               } catch (e) {
@@ -202,23 +264,55 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             }
           }
         }
+        
+        // Clear reader reference
+        readerRef.current = null
 
       } catch (err: any) {
+        // Ignore abort errors
+        if (err.name === 'AbortError' || currentSessionId !== sessionId) {
+          console.log('Stream aborted due to session change')
+          return
+        }
+        
         console.error('Streaming error:', err)
         const errorMessage = err?.message || 'Unknown error occurred'
         
-        // Check if it's a "No transcript" error - provide helpful retry
-        if (errorMessage.includes('No transcript to grade')) {
-          setError('Transcript not ready yet. This usually means the session is still being saved. Click retry to check again.')
-        } else {
-          setError(errorMessage)
+        // Only set error if sessionId hasn't changed
+        if (currentSessionId === sessionId) {
+          // Check if it's a "No transcript" error - provide helpful retry
+          if (errorMessage.includes('No transcript to grade')) {
+            setError('Transcript not ready yet. This usually means the session is still being saved. Click retry to check again.')
+          } else {
+            setError(errorMessage)
+          }
+          setStatus('Error connecting to AI')
         }
-        setStatus('Error connecting to AI')
+      } finally {
+        // Cleanup
+        if (readerRef.current) {
+          readerRef.current = null
+        }
+        if (abortControllerRef.current && abortControllerRef.current.signal.aborted === false) {
+          abortControllerRef.current = null
+        }
       }
   }, [sessionId, waitForTranscript, onComplete])
 
   useEffect(() => {
     connectToStream()
+    
+    // Cleanup on unmount or sessionId change
+    return () => {
+      if (readerRef.current) {
+        readerRef.current.cancel().catch(() => {})
+        readerRef.current = null
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+        abortControllerRef.current = null
+      }
+    }
   }, [connectToStream])
   
   const handleRetry = useCallback(() => {

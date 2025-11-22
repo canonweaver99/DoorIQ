@@ -93,9 +93,7 @@ function HeaderContent() {
   const sidebarRef = useRef<HTMLDivElement | null>(null)
   const sidebarButtonRef = useRef<HTMLButtonElement | null>(null)
   const [portalReady, setPortalReady] = useState(false)
-  const [userCredits, setUserCredits] = useState<number>(0)
-  const [showCreditsTooltip, setShowCreditsTooltip] = useState(false)
-  const creditsTooltipRef = useRef<HTMLDivElement | null>(null)
+  // Credit system removed - no credit display needed
   const [showMenuOnHover, setShowMenuOnHover] = useState(false)
   const [isLiveSession, setIsLiveSession] = useState(false)
   const [isAuthPage, setIsAuthPage] = useState(false)
@@ -204,39 +202,7 @@ function HeaderContent() {
         setAuthMeta(null)
         setAvatarError(false) // Reset avatar error when user data changes
         
-        // Fetch user credits
-        const { data: limitData } = await supabase
-          .from('user_session_limits')
-          .select('sessions_limit, sessions_this_month')
-          .eq('user_id', authUser.id)
-          .single()
-        
-        if (limitData) {
-          const creditsRemaining = Math.max(0, (limitData.sessions_limit || 0) - (limitData.sessions_this_month || 0))
-          setUserCredits(creditsRemaining)
-        } else {
-          // Default to 5 credits if no limit record exists yet
-          setUserCredits(5)
-        }
-
-        // Check if user is a first-time signup (created within last 5 minutes) and show credits tooltip
-        if (userData.created_at) {
-          const createdAt = new Date(userData.created_at)
-          const now = new Date()
-          const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60)
-          const isFirstTimeSignup = minutesSinceCreation < 5 // Only show for users who just signed up
-          const tooltipDismissed = typeof window !== 'undefined' 
-            ? localStorage.getItem('first-signup-credits-tooltip-dismissed') === 'true'
-            : false
-          
-          // Show only for first-time signup users who haven't dismissed it
-          if (isFirstTimeSignup && !tooltipDismissed) {
-            // Small delay to ensure DOM is ready
-            setTimeout(() => {
-              setShowCreditsTooltip(true)
-            }, 1500)
-          }
-        }
+        // Credit system removed - no credit fetching needed
       } else {
         logger.warn('Header - No user data found, using auth metadata')
         setAuthMeta({
@@ -246,8 +212,7 @@ function HeaderContent() {
           role: metaRole,
           virtual_earnings: null,
         })
-        // Default credits for auth-only users
-        setUserCredits(5)
+        // Credit system removed - no credit setting needed
       }
     }
 
@@ -261,28 +226,7 @@ function HeaderContent() {
     }
     window.addEventListener('avatar:updated', handleAvatarUpdate)
 
-    // Listen for credit updates
-    const handleCreditsUpdate = () => {
-      logger.info('Credits updated, refreshing user credits')
-      // Refresh only credits, not full user data
-      const refreshCredits = async () => {
-        const { data: { user: authUser } } = await supabase.auth.getUser()
-        if (authUser) {
-          const { data: limitData } = await supabase
-            .from('user_session_limits')
-            .select('sessions_limit, sessions_this_month')
-            .eq('user_id', authUser.id)
-            .single()
-          
-          if (limitData) {
-            const creditsRemaining = Math.max(0, (limitData.sessions_limit || 0) - (limitData.sessions_this_month || 0))
-            setUserCredits(creditsRemaining)
-          }
-        }
-      }
-      refreshCredits()
-    }
-    window.addEventListener('credits:updated', handleCreditsUpdate)
+    // Credit system removed - no credit update listener needed
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
@@ -297,7 +241,7 @@ function HeaderContent() {
     return () => {
       subscription.unsubscribe()
       window.removeEventListener('avatar:updated', handleAvatarUpdate)
-      window.removeEventListener('credits:updated', handleCreditsUpdate)
+      // Credit system removed - no cleanup needed
     }
   }, [])
 
@@ -552,91 +496,7 @@ function HeaderContent() {
               <div className="flex items-center gap-2 md:gap-3 pl-2 border-l border-border/20 dark:border-white/10 flex-shrink-0 min-w-0">
                 <div className="relative min-w-0 max-w-[120px] md:max-w-[150px]">
                   <p className="text-sm md:text-base text-foreground/80 leading-4 truncate font-space font-medium">{user?.full_name ?? profileName}</p>
-                  <p 
-                    ref={creditsTooltipRef}
-                    className="text-[11px] text-purple-400 font-semibold relative truncate"
-                  >
-                    {userCredits} credits
-                  </p>
-                  
-                  {/* Credits Tooltip for First-Time Signup Users */}
-                  <AnimatePresence>
-                    {showCreditsTooltip && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: -10 }}
-                        transition={{ duration: 0.4, type: "spring", stiffness: 400, damping: 25 }}
-                        className="absolute left-0 top-full mt-3 z-50 w-72 sm:w-80"
-                        style={{
-                          transformOrigin: 'top left',
-                        }}
-                      >
-                        {/* Glowing background effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl blur-xl -z-10" />
-                        
-                        {/* Main card */}
-                        <div className="relative bg-gradient-to-br from-slate-900/95 via-purple-900/30 to-slate-900/95 backdrop-blur-xl rounded-2xl border border-purple-500/20 shadow-2xl overflow-hidden">
-                          {/* Animated gradient border */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/50 via-purple-500/50 to-pink-500/50 opacity-50 blur-sm" />
-                          <div className="absolute inset-[1px] bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 rounded-2xl" />
-                          
-                          {/* Content */}
-                          <div className="relative p-5">
-                            {/* Close button */}
-                            <button
-                              onClick={() => {
-                                setShowCreditsTooltip(false)
-                                if (typeof window !== 'undefined') {
-                                  localStorage.setItem('first-signup-credits-tooltip-dismissed', 'true')
-                                }
-                              }}
-                              className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all group"
-                              aria-label="Dismiss tooltip"
-                            >
-                              <X className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
-                            </button>
-                            
-                            {/* Icon */}
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="relative">
-                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl blur-md opacity-50" />
-                                <div className="relative w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                                  <span className="text-xl">🎁</span>
-                                </div>
-                              </div>
-                              <h3 className="text-lg font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-                                Welcome to DoorIQ!
-                              </h3>
-                            </div>
-                            
-                            {/* Content text */}
-                            <div className="space-y-3">
-                              <p className="text-sm text-slate-300 leading-relaxed">
-                                You get <span className="font-bold text-purple-300">5 free credits</span> to practice your sales skills with AI homeowners.
-                              </p>
-                              <div className="flex items-start gap-2 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-                                <span className="text-lg mt-0.5">🔄</span>
-                                <p className="text-sm text-slate-300 leading-relaxed">
-                                  Your credits <span className="font-semibold text-purple-300">refill each day</span> - so you can keep practicing!
-                                </p>
-                              </div>
-                              <p className="text-xs text-slate-400 leading-relaxed">
-                                Each training session uses 1 credit. Upgrade anytime for unlimited sessions!
-                              </p>
-                            </div>
-                            
-                            {/* Decorative elements */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-2xl -z-10" />
-                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-500/10 to-transparent rounded-full blur-xl -z-10" />
-                          </div>
-                        </div>
-                        
-                        {/* Arrow pointer */}
-                        <div className="absolute -top-2 left-6 w-4 h-4 bg-gradient-to-br from-slate-900 via-purple-900/30 to-slate-900 border-l border-t border-purple-500/20 rotate-45" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* Credit display removed */}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -794,7 +654,7 @@ function HeaderContent() {
                 {user && (
                   <div className="px-4 py-3 border-t border-border/20 dark:border-white/10 mt-4">
                     <p className="text-base sm:text-lg font-medium text-foreground font-space">{profileName}</p>
-                    <p className="text-sm text-purple-400 font-semibold mt-1 font-space">{userCredits} credits</p>
+                    {/* Credit display removed */}
                   </div>
                 )}
               </div>

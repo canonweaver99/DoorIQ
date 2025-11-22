@@ -3,13 +3,13 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
-// Increase timeout for grading (Vercel allows up to 300s on Pro)
-export const maxDuration = 90 // 90 seconds
+// Optimized timeout for sub-20 second grading
+export const maxDuration = 20 // 20 seconds - target sub-20s grading
 export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 60000, // 60 second timeout - faster
+  timeout: 15000, // 15 second timeout - optimized for speed
   maxRetries: 1 // Reduced retries for speed
 })
 
@@ -209,10 +209,10 @@ Return ONLY valid JSON. No commentary.`
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', message: 'Starting AI analysis...' })}\n\n`))
           
           const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
+          model: "gpt-4o-mini", // Faster model for sub-20s grading
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 3000,
+          max_tokens: 2000, // Reduced for faster processing
           temperature: 0.1,
           stream: true
           })

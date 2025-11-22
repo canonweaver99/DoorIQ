@@ -27,8 +27,7 @@ const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>
 })
 const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
-const LastCreditWarningModal = dynamicImport(() => import('@/components/ui/LastCreditWarningModal').then(mod => ({ default: mod.LastCreditWarningModal })), { ssr: false })
-const OutOfCreditsModal = dynamicImport(() => import('@/components/ui/OutOfCreditsModal').then(mod => ({ default: mod.OutOfCreditsModal })), { ssr: false })
+// Credit modals removed - credit system no longer used
 
 interface Agent {
   id: string
@@ -109,8 +108,7 @@ function TrainerPageContent() {
   const [loading, setLoading] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [conversationToken, setConversationToken] = useState<string | null>(null)
-  const [showLastCreditWarning, setShowLastCreditWarning] = useState(false)
-  const [showOutOfCredits, setShowOutOfCredits] = useState(false)
+  // Credit modals removed - credit system no longer used
   const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
   const [showDoorCloseAnimation, setShowDoorCloseAnimation] = useState(false) // Direct state trigger for door closing animation
   const loopVideoStartTimeRef = useRef<number>(0) // Track when loop video started playing
@@ -608,8 +606,12 @@ function TrainerPageContent() {
 
     try {
       setLoading(true)
+      // Clear previous session state to prevent glitches
+      setSessionId(null)
       setTranscript([])
       setDuration(0)
+      setSessionActive(false)
+      setSessionState('active')
 
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
@@ -618,20 +620,8 @@ function TrainerPageContent() {
           return
         }
 
-      if (!sessionLimit.loading && !skipCreditCheck) {
-        if (!sessionLimit.canStartSession) {
-          setShowOutOfCredits(true)
-          setLoading(false)
-          return
-        }
-        
-        // Check if this is their last credit
-        if (sessionLimit.sessionsRemaining === 1) {
-          setShowLastCreditWarning(true)
-          setLoading(false)
-          return
-        }
-      }
+      // Credit system removed - no credit checks needed
+      // User will integrate free trial and Stripe paywall separately
 
       const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id)
 
@@ -708,13 +698,11 @@ function TrainerPageContent() {
       console.log('🎬 Session started. Transcript length:', transcript.length)
       console.log('🎬 Session ID:', newId)
       
-      // Deduct credit for ALL users (free users have 10 credits, paid users have 50 credits/month)
+      // Credit system removed - just track session count for analytics
       // Make this non-blocking so session can start even if API fails
       fetch('/api/session/increment', { method: 'POST' })
         .then(() => {
           sessionLimit.refresh()
-          // Dispatch event to notify header to refresh credits
-          window.dispatchEvent(new CustomEvent('credits:updated'))
         })
         .catch((error) => {
           logger.error('Error incrementing session count (non-blocking)', error)
@@ -1399,20 +1387,7 @@ function TrainerPageContent() {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-slate-950 font-sans"
     >
-      <LastCreditWarningModal 
-        isOpen={showLastCreditWarning} 
-        onClose={() => setShowLastCreditWarning(false)}
-        onContinue={() => {
-          setShowLastCreditWarning(false)
-          setTimeout(() => {
-            startSession(true)
-          }, 100)
-        }}
-      />
-      <OutOfCreditsModal 
-        isOpen={showOutOfCredits} 
-        onClose={() => setShowOutOfCredits(false)}
-      />
+      {/* Credit modals removed - credit system no longer used */}
 
       {/* Full Screen Session Container */}
       <div className="relative w-full h-screen flex flex-col bg-slate-950 overflow-hidden">

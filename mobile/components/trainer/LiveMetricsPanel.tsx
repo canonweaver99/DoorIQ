@@ -78,9 +78,9 @@ function MetricCard({
             )}
           </View>
           <View style={localStyles.progressLabels}>
-            <Text style={localStyles.progressLabel}>You: {progress}%</Text>
+            <Text style={localStyles.progressLabel}>Them: {progress}%</Text>
             <Text style={localStyles.progressLabel}>Ideal: 50-60%</Text>
-            <Text style={localStyles.progressLabel}>Them: {100 - progress}%</Text>
+            <Text style={localStyles.progressLabel}>You: {100 - progress}%</Text>
           </View>
         </View>
       )}

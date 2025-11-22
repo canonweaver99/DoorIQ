@@ -3,13 +3,13 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
-// Increase timeout for grading (Vercel allows up to 300s on Pro)
-export const maxDuration = 90 // 90 seconds - faster timeout
+// Optimized timeout for sub-20 second grading
+export const maxDuration = 20 // 20 seconds - target sub-20s grading
 export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 60000, // 60 second timeout - faster
+  timeout: 15000, // 15 second timeout - optimized for speed
   maxRetries: 1 // Reduced retries for speed
 })
 
@@ -374,15 +374,15 @@ export async function POST(request: NextRequest) {
       logger.warn('Large transcript detected - grading may take longer', { lines: transcriptLength })
     }
     
-    // For extremely long transcripts (>1000 lines), sample key portions
+    // For long transcripts (>500 lines), sample key portions for faster processing
     let transcriptToGrade = (session as any).full_transcript
-    if (transcriptLength > 1000) {
-      logger.warn('Very large transcript - sampling key sections', { lines: transcriptLength })
-      // Take first 300, middle 400, last 300 lines
+    if (transcriptLength > 500) {
+      logger.warn('Large transcript - sampling key sections for speed', { lines: transcriptLength })
+      // Take first 200, middle 200, last 200 lines (reduced from 300/400/300)
       transcriptToGrade = [
-        ...(session as any).full_transcript.slice(0, 300),
-        ...(session as any).full_transcript.slice(Math.floor(transcriptLength / 2) - 200, Math.floor(transcriptLength / 2) + 200),
-        ...(session as any).full_transcript.slice(-300)
+        ...(session as any).full_transcript.slice(0, 200),
+        ...(session as any).full_transcript.slice(Math.floor(transcriptLength / 2) - 100, Math.floor(transcriptLength / 2) + 100),
+        ...(session as any).full_transcript.slice(-200)
       ]
       logger.info('Sampled transcript', { sampledLines: transcriptToGrade.length })
     }
@@ -554,10 +554,10 @@ Return ONLY valid JSON. No commentary.`
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         completion = await openai.chat.completions.create({
-          model: "gpt-4o",
+          model: "gpt-4o-mini", // Faster model for sub-20s grading
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 1500, // Increased from 1000 to avoid truncation
+          max_tokens: 1200, // Reduced for faster processing
           temperature: 0.1,
           stream: false
         })

@@ -11,19 +11,17 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Increment session count for ALL users (free users have 10 credits, paid users have 50 credits/month)
-    // The increment_user_session_count function handles both cases based on subscription status
+    // Credit system removed - no credit decrement needed
+    // User will integrate free trial and Stripe paywall separately
+    // Just track session count for analytics purposes
     const { error: incrementError } = await supabase.rpc(
       'increment_user_session_count',
       { p_user_id: user.id }
     )
 
+    // Don't fail if increment fails - it's just for tracking
     if (incrementError) {
-      console.error('Error incrementing session count:', incrementError)
-      return NextResponse.json(
-        { error: 'Failed to increment session count' },
-        { status: 500 }
-      )
+      console.warn('Session count increment failed (non-critical):', incrementError)
     }
 
     return NextResponse.json({ success: true })
