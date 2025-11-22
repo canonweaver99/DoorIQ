@@ -578,7 +578,7 @@ function HeaderContent() {
                 href="/auth/login"
                 className="ml-2 md:ml-3 pl-2 md:pl-3 border-l border-border/20 dark:border-white/10 flex-shrink-0"
               >
-                <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-medium bg-gradient-to-r from-purple-500/80 to-indigo-500/80 text-white shadow-md shadow-purple-500/20">
+                <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-medium bg-white dark:bg-white text-gray-900 border border-gray-200 dark:border-gray-300 shadow-sm">
                   <LogIn className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
                   <span className="tracking-tight whitespace-nowrap">Sign In</span>
                 </button>
@@ -710,7 +710,7 @@ function HeaderContent() {
                 onClick={() => setIsMenuOpen(false)}
                 className="mt-4"
               >
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-full text-base sm:text-lg font-space font-medium bg-gradient-to-r from-purple-500/80 to-indigo-500/80 text-white shadow-md shadow-purple-500/20">
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-full text-base sm:text-lg font-space font-medium bg-white dark:bg-white text-gray-900 border border-gray-200 dark:border-gray-300 shadow-sm">
                   <LogIn className="w-5 h-5 sm:w-6 sm:h-6" />
                   <span className="tracking-tight">Sign In</span>
                 </button>
