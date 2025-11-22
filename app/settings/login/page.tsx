@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Lock, Key, LogOut, Trash2, Loader2 } from 'lucide-react'
+import { Lock, LogOut, Trash2, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
@@ -158,24 +158,6 @@ export default function LoginSettingsPage() {
             </div>
           </div>
 
-          {/* Passkey */}
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 mt-1">
-              <Key className="w-5 h-5 text-[#a0a0a0]" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-white mb-1 font-space">Passkey</h3>
-              <p className="text-sm text-[#a0a0a0] font-sans mb-3">
-                Use your fingerprint, face, or screen lock to log in without needing to ever remember, reset, or use a password. Passkeys are encrypted and stored on your device and are not visible to anyone, including DoorIQ.
-              </p>
-              <button
-                disabled
-                className="px-4 py-2 text-sm text-[#a0a0a0] border border-[#2a2a2a] rounded-md hover:border-[#2a2a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-sans"
-              >
-                + Add
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 

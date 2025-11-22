@@ -36,6 +36,7 @@ export default function BillingPage() {
 
   useEffect(() => {
     fetchSubscriptionData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchSubscriptionData = async () => {
@@ -45,6 +46,7 @@ export default function BillingPage() {
       
       if (!user) {
         router.push('/auth/login')
+        setLoading(false)
         return
       }
 
@@ -61,8 +63,14 @@ export default function BillingPage() {
         return
       }
 
-      const status = userData?.subscription_status || null
-      const trialEndsAt = userData?.trial_ends_at || null
+      if (!userData) {
+        setError('User data not found')
+        setLoading(false)
+        return
+      }
+
+      const status = userData.subscription_status || null
+      const trialEndsAt = userData.trial_ends_at || null
       const now = Date.now()
       const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
       const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
@@ -70,9 +78,9 @@ export default function BillingPage() {
 
       setSubscription({
         status,
-        plan: userData?.subscription_plan || null,
-        currentPeriodEnd: userData?.subscription_current_period_end || null,
-        cancelAtPeriodEnd: userData?.subscription_cancel_at_period_end || false,
+        plan: userData.subscription_plan || null,
+        currentPeriodEnd: userData.subscription_current_period_end || null,
+        cancelAtPeriodEnd: userData.subscription_cancel_at_period_end || false,
         trialEndsAt,
         hasActiveSubscription,
         isTrialing,
