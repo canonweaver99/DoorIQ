@@ -62,15 +62,8 @@ export function PlanCard({
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >
-      {popular && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500/90 text-black border-0">
-          <Star className="w-3 h-3 inline-block mr-1 fill-current" />
-          {badge || 'Most Popular'}
-        </Badge>
-      )}
-
       {isCurrent && (
-        <Badge className="absolute -top-3 right-4 bg-purple-500/90 text-white border-0">
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500/90 text-white border-0">
           Current Plan
         </Badge>
       )}
@@ -133,11 +126,7 @@ export function PlanCard({
               'w-full',
               isCurrent
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
-                : config.color === 'purple'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white'
-                  : config.color === 'emerald'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white'
-                    : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white'
+                : 'bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a]'
             )}
           >
             {isCurrent ? 'Current Plan' : tier === 'enterprise' ? 'Contact Sales' : 'Upgrade'}

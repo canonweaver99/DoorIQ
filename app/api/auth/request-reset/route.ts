@@ -28,9 +28,12 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
 
 async function sendPasswordResetEmail(email: string, resetLink: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('⚠️ RESEND_API_KEY not configured - cannot send password reset email')
+    console.error('❌ RESEND_API_KEY not configured - cannot send password reset email')
     return false
   }
+
+  console.log('📧 Attempting to send password reset email to:', email)
+  console.log('📧 Resend API key configured:', !!process.env.RESEND_API_KEY)
 
   try {
     const { Resend } = await import('resend')
@@ -101,7 +104,9 @@ async function sendPasswordResetEmail(email: string, resetLink: string): Promise
       </html>
     `
     
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'DoorIQ <noreply@dooriq.ai>'
+    // Use a verified email address - prefer notifications@dooriq.ai which is used elsewhere
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'DoorIQ <notifications@dooriq.ai>'
+    console.log('📧 Sending email from:', fromEmail)
     
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: fromEmail,
@@ -112,14 +117,21 @@ async function sendPasswordResetEmail(email: string, resetLink: string): Promise
     })
 
     if (emailError) {
-      console.error('❌ Error sending password reset email via Resend:', emailError)
+      console.error('❌ Error sending password reset email via Resend:', JSON.stringify(emailError, null, 2))
+      console.error('❌ Email details:', { from: fromEmail, to: email.toLowerCase(), subject: 'Reset your DoorIQ password' })
       return false
     }
 
-    console.log(`✅ Password reset email sent via Resend to ${email} (ID: ${emailData?.id})`)
+    if (!emailData?.id) {
+      console.error('❌ No email ID returned from Resend:', emailData)
+      return false
+    }
+
+    console.log(`✅ Password reset email sent via Resend to ${email} (ID: ${emailData.id})`)
     return true
   } catch (error: any) {
-    console.error('❌ Error sending password reset email via Resend:', error)
+    console.error('❌ Exception sending password reset email via Resend:', error)
+    console.error('❌ Error stack:', error?.stack)
     return false
   }
 }
@@ -202,8 +214,9 @@ export async function POST(request: Request) {
     const emailSent = await sendPasswordResetEmail(email, resetLink)
 
     if (!emailSent) {
+      console.error(`❌ Failed to send password reset email to ${email}. Check logs above for details.`)
       return NextResponse.json({
-        error: 'Failed to send password reset email. Please try again later.',
+        error: 'Failed to send password reset email. Please check your email service configuration or try again later.',
       }, { status: 500 })
     }
 

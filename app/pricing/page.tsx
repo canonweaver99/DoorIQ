@@ -378,13 +378,18 @@ function PricingPageContent() {
                           <div className="mb-1">
                             <div className={cn(
                               "w-12 h-12 rounded-lg flex items-center justify-center mb-2",
-                              selectedCard === tier.id 
-                                ? "bg-gradient-to-br from-emerald-500/30 to-emerald-400/20" 
-                                : "bg-gradient-to-br from-emerald-500/20 to-purple-500/20"
+                              tier.id === 'starter' && "bg-purple-500/20",
+                              tier.id === 'team' && "bg-emerald-500/20",
+                              tier.id === 'enterprise' && "bg-blue-500/20",
+                              selectedCard === tier.id && tier.id === 'starter' && "bg-purple-500/30",
+                              selectedCard === tier.id && tier.id === 'team' && "bg-emerald-500/30",
+                              selectedCard === tier.id && tier.id === 'enterprise' && "bg-blue-500/30"
                             )}>
                               <Icon className={cn(
                                 "w-6 h-6",
-                                selectedCard === tier.id ? "text-emerald-300" : "text-emerald-400"
+                                tier.id === 'starter' && "text-purple-400",
+                                tier.id === 'team' && "text-emerald-400",
+                                tier.id === 'enterprise' && "text-blue-400"
                               )} />
                               </div>
                             <div className="flex items-center justify-between w-full">
@@ -429,7 +434,9 @@ function PricingPageContent() {
                               <li key={idx} className="flex items-start gap-2">
                                 <CheckCircle2 className={cn(
                                   "w-5 h-5 flex-shrink-0 mt-0.5",
-                                  selectedCard === tier.id ? "text-emerald-400" : "text-emerald-500"
+                                  tier.id === 'starter' && "text-purple-400",
+                                  tier.id === 'team' && "text-emerald-400",
+                                  tier.id === 'enterprise' && "text-blue-400"
                                 )} />
                                 <span className="text-base text-white font-space font-semibold">{feature}</span>
                               </li>

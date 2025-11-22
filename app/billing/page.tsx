@@ -289,7 +289,7 @@ export default function BillingPage() {
                 <Button
                   onClick={handleManageSubscription}
                   disabled={portalLoading}
-                  className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium"
+                  className="w-full sm:w-auto bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a] font-medium"
                 >
                   {portalLoading ? (
                     <>

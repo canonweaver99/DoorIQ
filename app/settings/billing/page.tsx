@@ -394,7 +394,7 @@ export default function BillingSettingsPage() {
             <Button
               onClick={handleManageSubscription}
               disabled={portalLoading}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              className="bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a]"
             >
               {portalLoading ? (
                 <>
@@ -474,7 +474,6 @@ export default function BillingSettingsPage() {
                 'Basic analytics & reporting',
                 'Manager dashboard',
               ]}
-              badge="Best for Small Teams"
               onSelect={() => router.push('/pricing')}
             />
             <PlanCard
@@ -490,8 +489,6 @@ export default function BillingSettingsPage() {
                 'Custom practice scenarios',
                 'Custom sales playbook',
               ]}
-              badge="Most Popular"
-              popular
               onSelect={() => router.push('/pricing')}
             />
             <PlanCard
@@ -507,7 +504,6 @@ export default function BillingSettingsPage() {
                 'Dedicated account team',
                 'Volume discounts',
               ]}
-              badge="Enterprise Ready"
               onSelect={() => router.push('/enterprise/signup')}
             />
           </div>
