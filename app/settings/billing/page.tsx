@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import { CreditCard, Users, Calendar, Download, AlertCircle, Loader2, Sparkles, ExternalLink, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { GlowCard } from '@/components/ui/spotlight-card'
 import { SeatCounter } from '@/components/settings/SeatCounter'
 import { InvoiceList } from '@/components/settings/InvoiceList'
 import { PlanCard } from '@/components/settings/PlanCard'
@@ -315,7 +314,7 @@ export default function BillingSettingsPage() {
       )}
 
       {/* Current Plan */}
-      <GlowCard glowColor="purple" customSize className="p-6 bg-card/60 dark:bg-black/60">
+      <div className="p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -428,11 +427,11 @@ export default function BillingSettingsPage() {
             )}
           </div>
         </div>
-      </GlowCard>
+      </div>
 
       {/* Seat Management */}
       {isManager && plan && (
-        <GlowCard glowColor="emerald" customSize className="p-6 bg-card/60 dark:bg-black/60">
+        <div className="p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
           <div className="space-y-4">
             <div>
               <h2 className="text-2xl font-space font-bold text-foreground mb-2">Seat Management</h2>
@@ -449,11 +448,11 @@ export default function BillingSettingsPage() {
               onRemoveSeats={handleRemoveSeats}
             />
           </div>
-        </GlowCard>
+        </div>
       )}
 
       {/* Upgrade Plans */}
-      <GlowCard glowColor="blue" customSize className="p-6 bg-card/60 dark:bg-black/60">
+      <div className="p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
         <div className="space-y-4">
           <div>
             <h2 className="text-2xl font-space font-bold text-foreground mb-2">Available Plans</h2>
@@ -513,10 +512,10 @@ export default function BillingSettingsPage() {
             />
           </div>
         </div>
-      </GlowCard>
+      </div>
 
       {/* Invoice History */}
-      <GlowCard glowColor="purple" customSize className="p-6 bg-card/60 dark:bg-black/60">
+      <div className="p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
         <div className="space-y-4">
           <div>
             <h2 className="text-2xl font-space font-bold text-foreground mb-2">Billing History</h2>
@@ -526,7 +525,7 @@ export default function BillingSettingsPage() {
           </div>
           <InvoiceList invoices={invoices} loading={invoicesLoading} />
         </div>
-      </GlowCard>
+      </div>
 
       {/* Modals */}
       <CancelSubscriptionModal
