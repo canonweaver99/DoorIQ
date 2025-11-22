@@ -46,7 +46,7 @@ export function BillingIntervalToggle({
             'px-4 py-2 rounded-md text-sm font-medium transition-all',
             currentInterval === 'monthly'
               ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-              : 'text-foreground/60 hover:text-foreground',
+              : 'text-white hover:text-white/80',
             (disabled || switching) && 'opacity-50 cursor-not-allowed'
           )}
         >
@@ -59,7 +59,7 @@ export function BillingIntervalToggle({
             'px-4 py-2 rounded-md text-sm font-medium transition-all relative',
             currentInterval === 'annual'
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'text-foreground/60 hover:text-foreground',
+              : 'text-white hover:text-white/80',
             (disabled || switching) && 'opacity-50 cursor-not-allowed'
           )}
         >

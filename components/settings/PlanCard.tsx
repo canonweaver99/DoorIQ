@@ -15,6 +15,7 @@ interface PlanCardProps {
   badge?: string
   popular?: boolean
   onSelect?: () => void
+  onContactSales?: () => void
   disabled?: boolean
 }
 
@@ -46,11 +47,16 @@ export function PlanCard({
   badge,
   popular,
   onSelect,
+  onContactSales,
   disabled = false,
 }: PlanCardProps) {
   const config = tierConfig[tier]
   const Icon = config.icon
   const isCurrent = currentTier === tier
+  
+  // Check if starter plan is unavailable (user is on higher tier)
+  const isStarterUnavailable = tier === 'starter' && currentTier && 
+    (currentTier === 'team' || currentTier === 'enterprise')
 
   return (
     <div
@@ -118,18 +124,26 @@ export function PlanCard({
         </ul>
 
         {/* CTA */}
-        {onSelect && (
+        {(onSelect || onContactSales) && (
           <Button
-            onClick={onSelect}
-            disabled={disabled || isCurrent}
+            onClick={tier === 'enterprise' && onContactSales ? onContactSales : onSelect}
+            disabled={disabled || isCurrent || isStarterUnavailable}
             className={cn(
               'w-full',
               isCurrent
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
-                : 'bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a]'
+                : isStarterUnavailable
+                  ? 'bg-[#1a1a1a] border border-[#2a2a2a] text-[#666] cursor-not-allowed opacity-50'
+                  : 'bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a]'
             )}
           >
-            {isCurrent ? 'Current Plan' : tier === 'enterprise' ? 'Contact Sales' : 'Upgrade'}
+            {isCurrent 
+              ? 'Current Plan' 
+              : isStarterUnavailable 
+                ? 'Unavailable due to excess in seats'
+                : tier === 'enterprise' 
+                  ? 'Contact Sales' 
+                  : 'Upgrade'}
           </Button>
         )}
       </div>

@@ -77,54 +77,54 @@ export default function AdminOrganizationsPage() {
   const activeSubscriptions = organizations.filter(org => org.stripe_subscription_id).length
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 pb-6">
+    <div className="min-h-screen bg-[#0a0a0a] px-6 pb-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-space font-bold tracking-tight text-gray-900 mb-2">Organizations</h1>
-          <p className="text-gray-600 font-sans leading-relaxed">Manage all organizations using DoorIQ</p>
+          <h1 className="text-3xl font-space font-bold tracking-tight text-white mb-2">Organizations</h1>
+          <p className="text-[#a0a0a0] font-sans leading-relaxed">Manage all organizations using DoorIQ</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-600 text-sm font-space font-medium">Total Organizations</p>
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Building2 className="w-5 h-5 text-purple-600" />
+              <p className="text-[#a0a0a0] text-sm font-space font-medium">Total Organizations</p>
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <Building2 className="w-5 h-5 text-purple-400" />
               </div>
             </div>
-            <p className="text-3xl font-space font-bold tracking-tight text-gray-900">{organizations.length}</p>
+            <p className="text-3xl font-space font-bold tracking-tight text-white">{organizations.length}</p>
           </div>
           
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-600 text-sm font-medium">Total Members</p>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="w-5 h-5 text-blue-600" />
+              <p className="text-[#a0a0a0] text-sm font-medium">Total Members</p>
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Users className="w-5 h-5 text-blue-400" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{totalMembers}</p>
+            <p className="text-3xl font-bold text-white">{totalMembers}</p>
           </div>
           
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-600 text-sm font-medium">Active Subscriptions</p>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CreditCard className="w-5 h-5 text-green-600" />
+              <p className="text-[#a0a0a0] text-sm font-medium">Active Subscriptions</p>
+              <div className="p-2 bg-green-500/20 rounded-lg">
+                <CreditCard className="w-5 h-5 text-green-400" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{activeSubscriptions}</p>
+            <p className="text-3xl font-bold text-white">{activeSubscriptions}</p>
           </div>
           
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-600 text-sm font-medium">Monthly Revenue</p>
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <CreditCard className="w-5 h-5 text-yellow-600" />
+              <p className="text-[#a0a0a0] text-sm font-medium">Monthly Revenue</p>
+              <div className="p-2 bg-yellow-500/20 rounded-lg">
+                <CreditCard className="w-5 h-5 text-yellow-400" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-gray-900">${totalMonthlyRevenue.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-white">${totalMonthlyRevenue.toLocaleString()}</p>
           </div>
         </div>
 
@@ -132,23 +132,23 @@ export default function AdminOrganizationsPage() {
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666] w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search organizations..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-600" />
+            <Filter className="w-5 h-5 text-[#a0a0a0]" />
             <select
               value={planFilter}
               onChange={(e) => setPlanFilter(e.target.value)}
-              className="bg-white border border-gray-300 text-gray-900 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="all">All Plans</option>
               <option value="starter">Starter</option>
@@ -178,7 +178,7 @@ export default function AdminOrganizationsPage() {
         {/* Organizations List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
           </div>
         ) : viewMode === 'table' ? (
           <OrganizationTable organizations={filteredOrganizations} />
@@ -188,9 +188,9 @@ export default function AdminOrganizationsPage() {
               <OrganizationCard key={org.id} organization={org} />
             ))}
             {filteredOrganizations.length === 0 && (
-              <div className="col-span-full text-center py-12 bg-white rounded-xl border border-gray-200">
-                <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No organizations found</p>
+              <div className="col-span-full text-center py-12 bg-[#1a1a1a] rounded-xl border border-[#2a2a2a]">
+                <Building2 className="w-12 h-12 text-[#666] mx-auto mb-4" />
+                <p className="text-[#a0a0a0]">No organizations found</p>
               </div>
             )}
           </div>

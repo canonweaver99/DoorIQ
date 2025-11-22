@@ -53,8 +53,8 @@ export default function AdminLayout({
 
   if (loading || !isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
       </div>
     )
   }
@@ -72,15 +72,15 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header with Sidebar */}
       <Header />
       
       {/* Back Button */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
+      <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#2a2a2a] px-6 py-4">
         <Link
           href={getBackDestination()}
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-sans"
+          className="inline-flex items-center gap-2 text-[#a0a0a0] hover:text-white transition-colors font-sans"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="font-medium">Back</span>

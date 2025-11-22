@@ -11,6 +11,7 @@ import { PlanCard } from '@/components/settings/PlanCard'
 import { CancelSubscriptionModal } from '@/components/settings/CancelSubscriptionModal'
 import { UpgradePrompt } from '@/components/settings/UpgradePrompt'
 import { BillingIntervalToggle } from '@/components/settings/BillingIntervalToggle'
+import { CalendarModal } from '@/components/ui/calendar-modal'
 import { useRouter } from 'next/navigation'
 
 interface PlanData {
@@ -57,6 +58,7 @@ export default function BillingSettingsPage() {
     message?: string
   } | null>(null)
   const [switchingBillingInterval, setSwitchingBillingInterval] = useState(false)
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
 
   useEffect(() => {
     fetchBillingData()
@@ -280,6 +282,19 @@ export default function BillingSettingsPage() {
     )
   }
 
+  // Restrict access to managers only
+  if (!isManager) {
+    return (
+      <div className="text-center py-12">
+        <AlertCircle className="w-12 h-12 text-foreground/30 mx-auto mb-4" />
+        <h2 className="text-xl font-space font-bold text-foreground mb-2">Access Restricted</h2>
+        <p className="text-foreground/60 font-sans">
+          Billing settings are only available to managers. Please contact your manager for billing inquiries.
+        </p>
+      </div>
+    )
+  }
+
   if (!plan) {
     return (
       <div className="text-center py-12">
@@ -291,6 +306,11 @@ export default function BillingSettingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Calendar Modal */}
+      <CalendarModal 
+        isOpen={isCalendarModalOpen} 
+        onClose={() => setIsCalendarModalOpen(false)} 
+      />
       {/* Success/Error Messages */}
       {success && (
         <motion.div
@@ -504,7 +524,7 @@ export default function BillingSettingsPage() {
                 'Dedicated account team',
                 'Volume discounts',
               ]}
-              onSelect={() => router.push('/enterprise/signup')}
+              onContactSales={() => setIsCalendarModalOpen(true)}
             />
           </div>
         </div>

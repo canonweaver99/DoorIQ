@@ -86,20 +86,20 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
       </div>
     )
   }
 
   if (!stats) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4 font-sans">Failed to load dashboard statistics</p>
+          <p className="text-[#a0a0a0] mb-4 font-sans">Failed to load dashboard statistics</p>
           <button
             onClick={fetchStats}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-sans font-medium"
+            className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg hover:bg-[#2a2a2a] transition-colors font-sans font-medium"
           >
             Retry
           </button>
@@ -109,12 +109,12 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 pb-6">
+    <div className="min-h-screen bg-[#0a0a0a] px-6 pb-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-space font-bold tracking-tight text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600 font-sans leading-relaxed">Overview of all organizations and system metrics</p>
+          <h1 className="text-3xl font-space font-bold tracking-tight text-white mb-2">Admin Dashboard</h1>
+          <p className="text-[#a0a0a0] font-sans leading-relaxed">Overview of all organizations and system metrics</p>
         </div>
 
         {/* Main Stats Cards */}
@@ -122,7 +122,7 @@ export default function AdminDashboard() {
           <StatCard
             title="Total Users"
             value={stats.users.total}
-            icon={<Users className="w-6 h-6 text-blue-600" />}
+            icon={<Users className="w-6 h-6 text-blue-400" />}
             trend={`${stats.users.active} active users`}
             dailyChange={stats.users.dailyChange}
             bgColor="bg-blue-50"
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
           <StatCard
             title="Organizations"
             value={stats.organizations.total}
-            icon={<Building2 className="w-6 h-6 text-purple-600" />}
+            icon={<Building2 className="w-6 h-6 text-purple-400" />}
             trend={`${stats.organizations.activeSubscriptions} active subscriptions`}
             dailyChange={stats.organizations.dailyChange}
             bgColor="bg-purple-50"
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
           <StatCard
             title="Monthly Revenue"
             value={`$${stats.revenue.monthly.toLocaleString()}`}
-            icon={<DollarSign className="w-6 h-6 text-green-600" />}
+            icon={<DollarSign className="w-6 h-6 text-green-400" />}
             trend={`$${stats.revenue.annual.toLocaleString()} annually`}
             dailyChange={stats.revenue.dailyChange}
             bgColor="bg-green-50"
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
           <StatCard
             title="Total Sessions"
             value={stats.sessions.total}
-            icon={<Activity className="w-6 h-6 text-orange-600" />}
+            icon={<Activity className="w-6 h-6 text-orange-400" />}
             trend={`${stats.sessions.successRate}% success rate`}
             dailyChange={stats.sessions.dailyChange}
             bgColor="bg-orange-50"
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
           <StatCard
             title="Website Views"
             value={stats.websiteViews?.total || 0}
-            icon={<Eye className="w-5 h-5 text-blue-600" />}
+            icon={<Eye className="w-5 h-5 text-blue-400" />}
             trend={`${stats.websiteViews?.thisMonth || 0} this month`}
             bgColor="bg-white"
             iconBg="bg-blue-100"
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
           <StatCard
             title="Avg Session Score"
             value={stats.sessions.avgOverallScore}
-            icon={<Target className="w-5 h-5 text-indigo-600" />}
+            icon={<Target className="w-5 h-5 text-indigo-400" />}
             trend={`${stats.sessions.avgRapportScore} rapport avg`}
             dailyChange={stats.sessions.successRateDailyChange ? Math.round(stats.sessions.successRateDailyChange) : undefined}
             bgColor="bg-white"
@@ -181,7 +181,7 @@ export default function AdminDashboard() {
           <StatCard
             title="Sales Closed"
             value={stats.sessions.salesClosed}
-            icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
+            icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
             trend={`${stats.sessions.closeRate}% close rate`}
             dailyChange={stats.sessions.salesClosedDailyChange}
             bgColor="bg-white"
@@ -191,41 +191,41 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-space font-semibold tracking-tight text-gray-900 mb-4">Quick Actions</h2>
+        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] shadow-sm p-6 mb-8">
+          <h2 className="text-xl font-space font-semibold tracking-tight text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/admin/organizations">
-              <div className="p-5 bg-gray-50 rounded-lg border border-gray-200 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+              <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-gray-900 font-space font-medium mb-1 group-hover:text-purple-600 transition-colors">View Organizations</h3>
-                    <p className="text-sm text-gray-600 font-sans">Manage all organizations</p>
+                    <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">View Organizations</h3>
+                    <p className="text-sm text-[#a0a0a0] font-sans">Manage all organizations</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
                 </div>
               </div>
             </Link>
             
             <Link href="/admin/sales-leads">
-              <div className="p-5 bg-gray-50 rounded-lg border border-gray-200 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+              <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-gray-900 font-space font-medium mb-1 group-hover:text-purple-600 transition-colors">Sales Leads</h3>
-                    <p className="text-sm text-gray-600 font-sans">View and manage leads</p>
+                    <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Sales Leads</h3>
+                    <p className="text-sm text-[#a0a0a0] font-sans">View and manage leads</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
                 </div>
               </div>
             </Link>
             
             <Link href="/admin/sessions">
-              <div className="p-5 bg-gray-50 rounded-lg border border-gray-200 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+              <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-gray-900 font-space font-medium mb-1 group-hover:text-purple-600 transition-colors">Training Sessions</h3>
-                    <p className="text-sm text-gray-600 font-sans">View all sessions</p>
+                    <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Training Sessions</h3>
+                    <p className="text-sm text-[#a0a0a0] font-sans">View all sessions</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
                 </div>
               </div>
             </Link>
@@ -267,25 +267,52 @@ function StatCard({
   // Ensure value is always a valid string or number
   const displayValue = value ?? 0
   
+  // Map light colors to dark theme equivalents
+  const darkBgColor = bgColor.includes('white') || bgColor.includes('gray-50') 
+    ? 'bg-[#1a1a1a]' 
+    : bgColor.includes('blue') 
+      ? 'bg-blue-500/10' 
+      : bgColor.includes('purple')
+        ? 'bg-purple-500/10'
+        : bgColor.includes('green')
+          ? 'bg-green-500/10'
+          : bgColor.includes('orange')
+            ? 'bg-orange-500/10'
+            : 'bg-[#1a1a1a]'
+  
+  const darkIconBg = iconBg.includes('blue')
+    ? 'bg-blue-500/20'
+    : iconBg.includes('purple')
+      ? 'bg-purple-500/20'
+      : iconBg.includes('green')
+        ? 'bg-green-500/20'
+        : iconBg.includes('orange')
+          ? 'bg-orange-500/20'
+          : iconBg.includes('indigo')
+            ? 'bg-indigo-500/20'
+            : iconBg.includes('emerald')
+              ? 'bg-emerald-500/20'
+              : 'bg-[#2a2a2a]'
+
   return (
-    <div className={`${bgColor} rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow`}>
+    <div className={`${darkBgColor} rounded-xl p-6 border border-[#2a2a2a] shadow-sm hover:shadow-md transition-shadow`}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-gray-600 text-sm font-space font-medium">{title}</span>
-        <div className={`${iconBg} p-2 rounded-lg`}>
+        <span className="text-[#a0a0a0] text-sm font-space font-medium">{title}</span>
+        <div className={`${darkIconBg} p-2 rounded-lg`}>
           {icon}
         </div>
       </div>
       <div className="flex items-baseline gap-2 mb-1">
-        <p className={`${size === "normal" ? "text-3xl" : "text-2xl"} font-space font-bold tracking-tight text-gray-900`}>{displayValue}</p>
+        <p className={`${size === "normal" ? "text-3xl" : "text-2xl"} font-space font-bold tracking-tight text-white`}>{displayValue}</p>
         {change && (
           <span className={`text-sm font-space font-semibold ${
-            change.isPositive ? 'text-green-600' : 'text-red-600'
+            change.isPositive ? 'text-green-400' : 'text-red-400'
           }`}>
             {change.value}
           </span>
         )}
       </div>
-      <p className="text-sm text-gray-500 font-sans">
+      <p className="text-sm text-[#a0a0a0] font-sans">
         {trend}
       </p>
     </div>

@@ -323,11 +323,6 @@ function HeaderContent() {
       { name: 'Pricing', href: '/pricing', icon: DollarSign },
     ]
 
-    // Only show Leaderboard for users on a team plan (have a team_id) - desktop only
-    if (user?.team_id) {
-      navItems.splice(4, 0, { name: 'Leaderboard', href: '/leaderboard', icon: Trophy, desktopOnly: true })
-    }
-
     if (userRole === 'manager') {
       const insertIndex = Math.min(5, navItems.length)
       navItems.splice(insertIndex, 0, {
