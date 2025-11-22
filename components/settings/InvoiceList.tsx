@@ -115,7 +115,7 @@ export function InvoiceList({ invoices, loading }: InvoiceListProps) {
                     const downloadUrl = `/api/billing/invoices/${invoice.id}/download`
                     window.open(downloadUrl, '_blank')
                   }}
-                  className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+                  className="border-white/30 text-white hover:bg-white/10"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   PDF
@@ -126,7 +126,7 @@ export function InvoiceList({ invoices, loading }: InvoiceListProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => window.open(invoice.hostedInvoiceUrl!, '_blank')}
-                  className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+                  className="border-white/30 text-white hover:bg-white/10"
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   View

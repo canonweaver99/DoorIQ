@@ -104,6 +104,7 @@ function HeaderContent() {
   const [isScrolledDown, setIsScrolledDown] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [avatarError, setAvatarError] = useState(false)
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -116,7 +117,6 @@ function HeaderContent() {
   const profileAvatar = (user as any)?.avatar_url || authMeta?.avatar_url || null
   const userId = user?.id || authMeta?.id || null
   const subscription = useSubscription()
-  const hasActiveSubscription = subscription.hasActiveSubscription
   const { hasAccess: hasLearningPageAccess } = useFeatureAccess(FEATURES.LEARNING_PAGE)
 
   useEffect(() => {
@@ -269,6 +269,23 @@ function HeaderContent() {
         setAuthMeta(null)
         setAvatarError(false) // Reset avatar error when user data changes
         
+        // Check if user has an active subscription via organization
+        if ((userData as any).organization_id) {
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('plan_tier, stripe_subscription_id')
+            .eq('id', (userData as any).organization_id)
+            .single()
+          
+          if (orgData && (orgData.plan_tier || orgData.stripe_subscription_id)) {
+            setHasActiveSubscription(true)
+          } else {
+            setHasActiveSubscription(false)
+          }
+        } else {
+          setHasActiveSubscription(false)
+        }
+        
         // Credit system removed - no credit fetching needed
       } else {
         logger.warn('Header - No user data found, using auth metadata')
@@ -302,6 +319,7 @@ function HeaderContent() {
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setAuthMeta(null)
+        setHasActiveSubscription(false)
       }
     })
 
@@ -320,7 +338,8 @@ function HeaderContent() {
       // Dashboard only shows for reps, NOT for managers or admins
       ...(userRole === 'rep' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
       ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),
-      { name: 'Pricing', href: '/pricing', icon: DollarSign },
+      // Only show Pricing if user doesn't have an active subscription
+      ...(!hasActiveSubscription ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
     ]
 
     if (userRole === 'manager') {
@@ -344,7 +363,7 @@ function HeaderContent() {
     }
 
     return navItems
-  }, [userRole, user?.team_id, hasLearningPageAccess])
+  }, [userRole, user?.team_id, hasLearningPageAccess, hasActiveSubscription])
 
   const isManagerLike = userRole === 'manager' || userRole === 'admin'
 

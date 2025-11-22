@@ -2,16 +2,55 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { Home, Target, DollarSign } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 export function MiniNavMenu() {
   const pathname = usePathname()
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        setHasActiveSubscription(false)
+        return
+      }
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+      if (userData?.organization_id) {
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('plan_tier, stripe_subscription_id')
+          .eq('id', userData.organization_id)
+          .single()
+        
+        if (orgData && (orgData.plan_tier || orgData.stripe_subscription_id)) {
+          setHasActiveSubscription(true)
+        } else {
+          setHasActiveSubscription(false)
+        }
+      } else {
+        setHasActiveSubscription(false)
+      }
+    }
+
+    checkSubscription()
+  }, [])
 
   const menuItems = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'Practice', href: '/trainer/select-homeowner', icon: Target },
-    { label: 'Pricing', href: '/pricing', icon: DollarSign },
+    ...(!hasActiveSubscription ? [{ label: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
   ]
 
   const isActive = (href: string) => {

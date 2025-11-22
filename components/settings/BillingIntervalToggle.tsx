@@ -64,11 +64,14 @@ export function BillingIntervalToggle({
           )}
         >
           Annual
-          {currentInterval === 'annual' && (
-            <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs font-bold bg-emerald-500 text-black rounded-full">
-              2M FREE
-            </span>
-          )}
+          <span className={cn(
+            "absolute -top-1 -right-1 px-1.5 py-0.5 text-xs font-bold rounded-full whitespace-nowrap",
+            currentInterval === 'annual'
+              ? "bg-emerald-500 text-black"
+              : "bg-emerald-500/30 text-emerald-400 border border-emerald-500/50"
+          )}>
+            Save 15%
+          </span>
         </button>
       </div>
 
