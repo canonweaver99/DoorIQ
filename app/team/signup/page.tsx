@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Building2, Users, ArrowRight, CheckCircle2, Loader2, TrendingUp, LogIn } from 'lucide-react'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export default function TeamSignupPage() {
+function TeamSignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const planType = searchParams.get('plan') || 'team' // 'starter' or 'team'
@@ -555,6 +555,21 @@ export default function TeamSignupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TeamSignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 pt-32 pb-16 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto mb-4" />
+          <p className="text-gray-400 font-sans">Loading...</p>
+        </div>
+      </div>
+    }>
+      <TeamSignupContent />
+    </Suspense>
   )
 }
 
