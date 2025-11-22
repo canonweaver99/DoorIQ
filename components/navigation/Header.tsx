@@ -96,6 +96,7 @@ function HeaderContent() {
   // Credit system removed - no credit display needed
   const [showMenuOnHover, setShowMenuOnHover] = useState(false)
   const [isLiveSession, setIsLiveSession] = useState(false)
+  const [shouldHideMenu, setShouldHideMenu] = useState(false)
   const [isAuthPage, setIsAuthPage] = useState(false)
   const [isScrolledDown, setIsScrolledDown] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -124,18 +125,41 @@ function HeaderContent() {
     setIsAuthPage(onAuthPage)
   }, [pathname])
 
-  // Check if we're on a live session page (trainer pages except select-homeowner)
+  // Check if we're on pages where menu should be hidden (dashboard, live sessions, feedback/grading, sessions)
+  // Menu should always be visible on home page (/)
   useEffect(() => {
+    const isHomePage = pathname === '/'
+    const isDashboardPage = pathname?.startsWith('/dashboard')
     const isLiveSessionPage = pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner'
+    const isGradingPage = pathname?.startsWith('/analytics')
+    const isSessionsPage = pathname?.startsWith('/sessions')
+    
+    // Set shouldHideMenu flag
+    const hideMenu = !isHomePage && (isDashboardPage || isLiveSessionPage || isGradingPage || isSessionsPage)
+    setShouldHideMenu(hideMenu)
+    
+    // Set isLiveSession for backward compatibility
     setIsLiveSession(isLiveSessionPage)
   }, [pathname])
 
-  // Handle mouse position to show menu at top during live sessions
+  // Handle mouse position to show menu at top when hovering on pages where it's hidden
   useEffect(() => {
-    if (!isLiveSession) {
-      setShowMenuOnHover(false)
+    const isHomePage = pathname === '/'
+    
+    // Always show menu on home page
+    if (isHomePage) {
+      setShowMenuOnHover(true)
       return
     }
+
+    // Hide menu by default on pages that should hide it
+    if (!shouldHideMenu) {
+      setShowMenuOnHover(true) // Show menu normally on other pages
+      return
+    }
+
+    // On pages where menu should be hidden, show it only on hover
+    setShowMenuOnHover(false)
 
     const handleMouseMove = (e: MouseEvent) => {
       // Show menu when cursor is within top 100px of screen
@@ -148,7 +172,7 @@ function HeaderContent() {
 
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [isLiveSession])
+  }, [shouldHideMenu, pathname])
 
   useEffect(() => {
     const supabase = createClient()
@@ -470,15 +494,27 @@ function HeaderContent() {
     <>
       {/* Mini Navigation Menu - Mobile & Desktop */}
       <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
-        isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}>
         <MiniNavMenu />
       </div>
 
       {/* Centered oval navigation bar - Desktop */}
       <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center gap-1 md:gap-1.5 rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-4 md:pl-5 lg:pl-6 pr-[69px]' : 'pl-4 md:pl-5 lg:pl-6 pr-4 md:pr-5 lg:pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
-        isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-      }`}>
+        isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+      }`}
+      onMouseEnter={() => {
+        // Show menu when hovering over it, even if it's hidden
+        if (shouldHideMenu) {
+          setShowMenuOnHover(true)
+        }
+      }}
+      onMouseLeave={() => {
+        // Hide menu when leaving hover area
+        if (shouldHideMenu) {
+          setShowMenuOnHover(false)
+        }
+      }}>
             <Link href="/" className="flex items-center pr-2 md:pr-2.5 mr-1.5 md:mr-2 border-r border-border/20 dark:border-white/10 flex-shrink-0">
               <Image 
                 src="/dooriqlogo.png" 
@@ -582,8 +618,14 @@ function HeaderContent() {
 
       {/* Mobile header */}
       <div className={`fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden transition-opacity duration-300 ${
-        isAuthPage || (isLiveSession && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-      }`}>
+        isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+      }`}
+      onMouseEnter={() => {
+        // Show menu when hovering over mobile menu button
+        if (shouldHideMenu) {
+          setShowMenuOnHover(true)
+        }
+      }}>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all touch-target"
