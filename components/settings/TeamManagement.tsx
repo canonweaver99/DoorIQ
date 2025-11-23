@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Users, UserPlus, Loader2, CheckSquare, Square, ArrowRight, Building2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -33,12 +32,14 @@ interface Rep {
   team_name?: string | null
 }
 
-export default function TeamManagementPage() {
-  const router = useRouter()
+interface TeamManagementProps {
+  organizationId: string
+}
+
+export function TeamManagement({ organizationId }: TeamManagementProps) {
   const supabase = createClient()
   const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [userRole, setUserRole] = useState<string | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
   const [reps, setReps] = useState<Rep[]>([])
   const [selectedReps, setSelectedReps] = useState<Set<string>>(new Set())
@@ -48,50 +49,8 @@ export default function TeamManagementPage() {
   const [movingReps, setMovingReps] = useState(false)
 
   useEffect(() => {
-    checkAccess()
-  }, [])
-
-  const checkAccess = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/auth/login')
-        return
-      }
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role, organization_id')
-        .eq('id', user.id)
-        .single()
-
-      if (!userData) {
-        router.push('/settings/organization')
-        return
-      }
-
-      if (userData.role !== 'manager' && userData.role !== 'admin') {
-        showToast({ type: 'error', title: 'Access denied', message: 'Only managers can access team management' })
-        router.push('/settings/organization')
-        return
-      }
-
-      if (!userData.organization_id) {
-        showToast({ type: 'error', title: 'No organization', message: 'You are not part of an organization' })
-        router.push('/settings/organization')
-        return
-      }
-
-      setUserRole(userData.role)
-      await fetchData()
-    } catch (err: any) {
-      console.error('Error checking access:', err)
-      showToast({ type: 'error', title: 'Error', message: err.message })
-      router.push('/settings/organization')
-    } finally {
-      setLoading(false)
-    }
-  }
+    fetchData()
+  }, [organizationId])
 
   const fetchData = async () => {
     try {
@@ -109,19 +68,11 @@ export default function TeamManagementPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single()
-
-      if (!userData?.organization_id) return
-
       // Fetch all users in organization with their team info
       const { data: members, error: membersError } = await supabase
         .from('users')
         .select('id, email, full_name, role, team_id')
-        .eq('organization_id', userData.organization_id)
+        .eq('organization_id', organizationId)
         .eq('role', 'rep')
         .order('full_name', { ascending: true })
 

@@ -81,6 +81,23 @@ function BillingSettingsPage() {
         router.replace('/settings/billing')
       }, 5000)
     }
+
+    // Check for billing interval switch success/cancel
+    const billingInterval = searchParams.get('billing_interval')
+    if (billingInterval === 'annual' && searchParams.get('success') === 'true') {
+      setSuccess('Successfully switched to annual billing! Your subscription has been updated.')
+      setTimeout(() => {
+        setSuccess(null)
+        router.replace('/settings/billing')
+      }, 5000)
+      fetchBillingData() // Refresh data
+    } else if (billingInterval === 'canceled') {
+      setError('Billing interval switch was canceled.')
+      setTimeout(() => {
+        setError(null)
+        router.replace('/settings/billing')
+      }, 5000)
+    }
   }, [searchParams, router])
 
   const fetchBillingData = async () => {
@@ -142,15 +159,15 @@ function BillingSettingsPage() {
         throw new Error(data.error || 'Failed to add seats')
       }
 
-      // If checkout URL is returned, redirect to Stripe checkout
+      // If checkout URL is returned, redirect to Stripe checkout (active subscription)
       if (data.url) {
         window.location.href = data.url
         return
       }
 
-      // If no URL, seats were added directly (shouldn't happen with new flow)
-      setSuccess(`Successfully added ${seats} seat${seats !== 1 ? 's' : ''}`)
-      setTimeout(() => setSuccess(null), 3000)
+      // If no URL, seats were added directly (trial period - no charge)
+      setSuccess(data.message || `Successfully added ${seats} seat${seats !== 1 ? 's' : ''}. No charge during trial period.`)
+      setTimeout(() => setSuccess(null), 5000)
       await fetchBillingData()
     } catch (err: any) {
       setError(err.message || 'Failed to add seats')
@@ -222,6 +239,12 @@ function BillingSettingsPage() {
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to switch billing interval')
+      }
+
+      // If checkout URL is returned, redirect to Stripe checkout
+      if (data.url) {
+        window.location.href = data.url
+        return
       }
 
       setSuccess(data.message || `Billing interval switched to ${interval}`)

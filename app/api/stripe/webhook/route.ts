@@ -49,6 +49,12 @@ export async function POST(request: NextRequest) {
           break
         }
 
+        // Check if this is for switching billing interval
+        if (action === 'switch_billing_interval') {
+          await handleSwitchBillingIntervalCheckout(session, supabase)
+          break
+        }
+
         // Check if this is a team or starter plan signup
         const planType = session.metadata?.plan_type || session.subscription_data?.metadata?.plan_type
 
@@ -281,6 +287,62 @@ async function handleAddSeatsCheckout(
     console.log(`Successfully added ${seatsToAdd} seats to organization ${organizationId}. New quantity: ${newQuantity}`)
   } catch (error: any) {
     console.error('Error handling add seats checkout:', error)
+    throw error
+  }
+}
+
+/**
+ * Handle checkout session completion for switching billing interval
+ */
+async function handleSwitchBillingIntervalCheckout(
+  session: Stripe.Checkout.Session,
+  supabase: any
+) {
+  const metadata = session.metadata || session.subscription_data?.metadata || {}
+  const organizationId = metadata.organization_id
+  const currentSubscriptionId = metadata.current_subscription_id
+  const billingInterval = metadata.billing_interval
+  const newSubscriptionId = session.subscription as string
+
+  if (!organizationId || !currentSubscriptionId || !newSubscriptionId || !billingInterval) {
+    console.error('Missing required metadata for switching billing interval:', {
+      organizationId,
+      currentSubscriptionId,
+      newSubscriptionId,
+      billingInterval,
+    })
+    return
+  }
+
+  try {
+    // Get the new subscription to get subscription item ID
+    const newSubscription = await stripe.subscriptions.retrieve(newSubscriptionId, {
+      expand: ['items.data.price'],
+    })
+
+    const subscriptionItem = newSubscription.items.data[0]
+
+    // Cancel the old subscription
+    await stripe.subscriptions.cancel(currentSubscriptionId)
+
+    // Update organization with new subscription details and billing interval
+    const { error: updateError } = await supabase
+      .from('organizations')
+      .update({
+        stripe_subscription_id: newSubscriptionId,
+        stripe_subscription_item_id: subscriptionItem?.id,
+        billing_interval: billingInterval,
+      })
+      .eq('id', organizationId)
+
+    if (updateError) {
+      console.error('Error updating organization billing interval:', updateError)
+      throw updateError
+    }
+
+    console.log(`Successfully switched organization ${organizationId} to ${billingInterval} billing. New subscription: ${newSubscriptionId}`)
+  } catch (error: any) {
+    console.error('Error handling switch billing interval checkout:', error)
     throw error
   }
 }

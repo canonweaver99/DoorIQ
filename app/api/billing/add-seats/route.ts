@@ -104,6 +104,45 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if subscription is on trial
+    const isTrialing = subscription.status === 'trialing' || subscription.status === 'active' && subscription.trial_end && subscription.trial_end > Math.floor(Date.now() / 1000)
+
+    // If on trial, update subscription quantity directly without charging
+    // Billing will happen when trial ends
+    if (isTrialing) {
+      try {
+        // Update subscription quantity directly
+        await stripe.subscriptionItems.update(subscriptionItem.id, {
+          quantity: newQuantity,
+        })
+
+        // Update organization seat_limit in database
+        const { error: updateError } = await supabase
+          .from('organizations')
+          .update({ seat_limit: newQuantity })
+          .eq('id', org.id)
+
+        if (updateError) {
+          console.error('Error updating organization seat limit:', updateError)
+          throw updateError
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: `${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} added. No charge during trial period.`,
+          seatsAdded: seatsToAdd,
+          newQuantity,
+        })
+      } catch (error: any) {
+        console.error('Error updating subscription quantity:', error)
+        return NextResponse.json(
+          { error: error.message || 'Failed to add seats' },
+          { status: 500 }
+        )
+      }
+    }
+
+    // Not on trial - proceed with checkout for immediate payment
     // Get the price ID for the current plan and billing interval
     const planConfig = STRIPE_CONFIG[org.plan_tier as keyof typeof STRIPE_CONFIG]
     if (!planConfig) {
