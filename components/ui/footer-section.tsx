@@ -1,5 +1,6 @@
 'use client';
 
+// Footer component with social media links
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
