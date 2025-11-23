@@ -365,7 +365,7 @@ function ProblemSolutionSection() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
-              priority={false}
+              loading="lazy"
               quality={90}
             />
           </motion.div>
@@ -419,7 +419,7 @@ function ProblemSolutionSection() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
-              priority={false}
+              loading="lazy"
               quality={90}
             />
           </motion.div>

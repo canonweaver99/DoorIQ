@@ -30,12 +30,31 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Get organization details
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', userData.organization_id)
-      .single()
+    // Prepare date calculation for sessions query
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    // Fetch organization and usage metrics in parallel
+    const [orgResult, activeRepsResult, sessionsResult] = await Promise.all([
+      supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', userData.organization_id)
+        .single(),
+      supabase
+        .from('users')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', userData.organization_id)
+        .eq('is_active', true),
+      supabase
+        .from('live_sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', startOfMonth.toISOString())
+    ])
+
+    const { data: org, error: orgError } = orgResult
 
     if (orgError || !org) {
       return NextResponse.json(
@@ -65,23 +84,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Calculate usage metrics
-    const { count: activeRepsCount } = await supabase
-      .from('users')
-      .select('id', { count: 'exact', head: true })
-      .eq('organization_id', org.id)
-      .eq('is_active', true)
-
-    // Get sessions this month
-    const startOfMonth = new Date()
-    startOfMonth.setDate(1)
-    startOfMonth.setHours(0, 0, 0, 0)
-
-    const { count: sessionsCount } = await supabase
-      .from('live_sessions')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', startOfMonth.toISOString())
+    const activeRepsCount = activeRepsResult.count || 0
+    const sessionsCount = sessionsResult.count || 0
 
     return NextResponse.json({
       plan: {
@@ -97,6 +101,10 @@ export async function GET(request: NextRequest) {
         sessionsThisMonth: sessionsCount || 0,
       },
       isManager: userData.role === 'manager' || userData.role === 'admin',
+    }, {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=120',
+      },
     })
   } catch (error: any) {
     console.error('Error fetching current plan:', error)

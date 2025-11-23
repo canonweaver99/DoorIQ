@@ -43,7 +43,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ organization })
+    return NextResponse.json({ organization }, {
+      headers: {
+        'Cache-Control': 'private, s-maxage=120, stale-while-revalidate=300',
+      },
+    })
   } catch (error: any) {
     console.error('Unexpected error:', error)
     return NextResponse.json(

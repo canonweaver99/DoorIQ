@@ -33,7 +33,11 @@ const nextConfig: NextConfig = {
   // Experimental features for performance
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-dialog'],
+    // Enable partial prerendering for better performance
+    ppr: false, // Can enable when stable
   },
+  // Output configuration
+  output: 'standalone', // Optimize for production deployments
 };
 
 export default nextConfig;

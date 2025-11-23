@@ -244,6 +244,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Resource hints for performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://r.wdfl.co" />
+        <link rel="preconnect" href="https://r.wdfl.co" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

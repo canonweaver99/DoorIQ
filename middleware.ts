@@ -39,6 +39,12 @@ export async function middleware(request: NextRequest) {
     response.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
   }
   
+  // Add preconnect hints for external resources
+  const pathname = request.nextUrl.pathname
+  if (pathname === '/' || pathname.startsWith('/pricing')) {
+    response.headers.set('Link', '</fonts.googleapis.com>; rel=preconnect, </fonts.gstatic.com>; rel=preconnect; crossorigin, </r.wdfl.co>; rel=dns-prefetch')
+  }
+  
   return response
 }
 

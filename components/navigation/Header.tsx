@@ -36,7 +36,7 @@ import {
   DollarSign,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useFeatureAccess } from '@/hooks/useSubscription'
 import { FEATURES } from '@/lib/subscription/feature-keys'
 import { createPortal } from 'react-dom'
@@ -417,11 +417,11 @@ function HeaderContent() {
     return sections
   }, [isManagerLike, hasActiveSubscription, user?.team_id, (user as any)?.subscription_plan, hasLearningPageAccess])
 
-  const quickActions = [
+  const quickActions = useMemo(() => [
     { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
     { label: 'Review Sessions', href: '/sessions', icon: ClipboardList },
     { label: 'Invite a Sales Rep', href: '/settings/organization', icon: Users },
-  ]
+  ], [])
 
   const profileNavigation = useMemo(() => {
     const subscriptionPlan = (user as any)?.subscription_plan
@@ -448,7 +448,7 @@ function HeaderContent() {
     return items satisfies Array<{ name: string; href: string; icon: LucideIcon; managerOnly?: boolean; adminOnly?: boolean; repOnly?: boolean; badge?: number }>
   }, [isManagerLike, (user as any)?.subscription_plan, user?.team_id, hasLearningPageAccess])
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       setSigningOut(true)
       const supabase = createClient()
@@ -460,9 +460,9 @@ function HeaderContent() {
     } finally {
       setSigningOut(false)
     }
-  }
+  }, [router])
 
-  const isActive = (href: string) => {
+  const isActive = useCallback((href: string) => {
     if (href === '/') return pathname === '/'
 
     if (href.startsWith('/manager?tab=')) {
@@ -472,7 +472,7 @@ function HeaderContent() {
 
     const [basePath] = href.split('?')
     return pathname.startsWith(basePath)
-  }
+  }, [pathname, searchParams])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

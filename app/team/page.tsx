@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Users, Plus, Settings, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,7 @@ interface Organization {
   plan_tier?: string
 }
 
-export default function TeamPage() {
+function TeamPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
@@ -55,7 +55,7 @@ export default function TeamPage() {
       }, 2000)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [router, searchParams])
 
   const fetchTeamData = async () => {
     try {
@@ -354,5 +354,17 @@ export default function TeamPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function TeamPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-32 pb-16 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+      </div>
+    }>
+      <TeamPageContent />
+    </Suspense>
   )
 }
