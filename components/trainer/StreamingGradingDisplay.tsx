@@ -280,13 +280,53 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         
         // Only set error if sessionId hasn't changed
         if (currentSessionId === sessionId) {
-          // Check if it's a "No transcript" error - provide helpful retry
-          if (errorMessage.includes('No transcript to grade')) {
+          // Check if it's a timeout or network error - fallback to non-streaming
+          const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout') || 
+                           errorMessage.includes('network') || errorMessage.includes('Network')
+          
+          if (isTimeout) {
+            console.log('⏱️ Streaming timed out, falling back to non-streaming grading...')
+            setStatus('Switching to standard grading mode...')
+            
+            // Fallback to non-streaming grading
+            try {
+              const fallbackResponse = await fetch('/api/grade/session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: currentSessionId }),
+                signal: abortController.signal
+              })
+              
+              if (fallbackResponse.ok) {
+                const result = await fallbackResponse.json()
+                console.log('✅ Fallback grading completed')
+                setIsComplete(true)
+                setStatus('Grading complete!')
+                setTimeout(() => {
+                  if (currentSessionId === sessionId) {
+                    onComplete()
+                  }
+                }, 1500)
+                return
+              } else {
+                throw new Error(`Fallback grading failed: ${fallbackResponse.statusText}`)
+              }
+            } catch (fallbackError: any) {
+              if (fallbackError.name === 'AbortError') {
+                return
+              }
+              setError('Grading timed out. Please try again or check back later.')
+              setStatus('Grading timeout')
+            }
+          } else if (errorMessage.includes('No transcript to grade')) {
             setError('Transcript not ready yet. This usually means the session is still being saved. Click retry to check again.')
           } else {
             setError(errorMessage)
           }
-          setStatus('Error connecting to AI')
+          
+          if (!isTimeout) {
+            setStatus('Error connecting to AI')
+          }
         }
       } finally {
         // Cleanup

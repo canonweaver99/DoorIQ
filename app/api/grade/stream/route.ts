@@ -3,14 +3,14 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
-// Optimized timeout for sub-20 second grading
-export const maxDuration = 20 // 20 seconds - target sub-20s grading
+// Increased timeout for reliable grading (Vercel Pro allows up to 300s)
+export const maxDuration = 60 // 60 seconds - allows for longer sessions
 export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 15000, // 15 second timeout - optimized for speed
-  maxRetries: 1 // Reduced retries for speed
+  timeout: 50000, // 50 second timeout - allows for longer sessions
+  maxRetries: 2 // Increased retries for reliability
 })
 
 // Helper to extract sections from streaming JSON
@@ -208,14 +208,21 @@ Return ONLY valid JSON. No commentary.`
           // Send initial status
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', message: 'Starting AI analysis...' })}\n\n`))
           
-          const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini", // Faster model for sub-20s grading
-          messages: messages as any,
-          response_format: { type: "json_object" },
-          max_tokens: 2000, // Reduced for faster processing
-          temperature: 0.1,
-          stream: true
+          // Add timeout wrapper for streaming (must be longer than OpenAI client timeout)
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('OpenAI streaming timeout after 50 seconds')), 50000)
           })
+          
+          const apiPromise = openai.chat.completions.create({
+            model: "gpt-4o-mini", // Faster model for reliable grading
+            messages: messages as any,
+            response_format: { type: "json_object" },
+            max_tokens: 2000, // Reduced for faster processing
+            temperature: 0.1,
+            stream: true
+          })
+          
+          const completion = await Promise.race([apiPromise, timeoutPromise]) as any
 
           for await (const chunk of completion) {
             const content = chunk.choices[0]?.delta?.content || ''

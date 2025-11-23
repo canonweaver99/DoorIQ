@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 45000, // 45 second timeout - allows for longer sessions
+  timeout: 50000, // 50 second timeout - allows for longer sessions
   maxRetries: 2 // Increased retries for reliability
 })
 
@@ -554,9 +554,9 @@ Return ONLY valid JSON. No commentary.`
     const maxAttempts = 3
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        // Add timeout wrapper to catch timeout errors
+        // Add timeout wrapper to catch timeout errors (must be longer than OpenAI client timeout)
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('OpenAI request timeout after 40 seconds')), 40000)
+          setTimeout(() => reject(new Error('OpenAI request timeout after 50 seconds')), 50000)
         })
         
         const apiPromise = openai.chat.completions.create({
