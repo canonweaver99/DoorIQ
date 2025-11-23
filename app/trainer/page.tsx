@@ -769,22 +769,39 @@ function TrainerPageContent() {
     }
   }
 
-  // Handle door closing video completion - redirect to analytics
+  // Handle door closing video completion - redirect to loading page to wait for grading
   const handleDoorVideoComplete = useCallback(() => {
-    console.log('🎬 Door closing video completed, redirecting to analytics')
+    console.log('🎬 Door closing video completed, redirecting to loading page')
     setSessionState('complete')
     
     if (sessionId) {
-      // Redirect directly to analytics (skip loading page)
-      window.location.href = `/analytics/${sessionId}`
+      // Redirect to loading page - it will wait for grading to complete
+      window.location.href = `/trainer/loading/${sessionId}`
     } else {
       router.push('/trainer')
     }
   }, [sessionId, router])
 
-  // SIMPLIFIED: Trigger grading non-blocking - just fire and forget, redirect immediately
+  // Trigger grading after ensuring transcript is saved
   const triggerGradingAfterDoorClose = useCallback(async (sessionId: string) => {
     console.log('🎯 Triggering automatic grading for session:', sessionId)
+    
+    // Wait a moment for transcript to be saved to database
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // Verify transcript exists before grading
+    try {
+      const sessionCheck = await fetch(`/api/session?id=${sessionId}`)
+      if (sessionCheck.ok) {
+        const sessionData = await sessionCheck.json()
+        if (!sessionData.full_transcript || sessionData.full_transcript.length === 0) {
+          console.warn('⚠️ No transcript found yet, waiting longer...')
+          await new Promise(resolve => setTimeout(resolve, 2000))
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Error checking session:', error)
+    }
     
     // Fire grading request in background - don't wait for it
     fetch('/api/grade/session', {
@@ -792,20 +809,21 @@ function TrainerPageContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId }),
     })
-      .then(response => {
+      .then(async response => {
         if (response.ok) {
           console.log('✅ Grading request sent successfully')
         } else {
-          console.warn('⚠️ Grading request failed:', response.status, 'Analytics page will retry')
+          const errorData = await response.json().catch(() => ({}))
+          console.warn('⚠️ Grading request failed:', response.status, errorData, 'Analytics page will retry')
         }
       })
       .catch(error => {
         console.warn('⚠️ Error sending grading request:', error, 'Analytics page will handle it')
       })
     
-    // Redirect immediately - analytics page will poll for grading completion
-    console.log('🚀 Redirecting to analytics page (grading will complete in background)')
-    window.location.href = `/analytics/${sessionId}`
+    // Redirect to loading page - it will wait for grading to complete before showing analytics
+    console.log('🚀 Redirecting to loading page (will wait for grading to complete)')
+    window.location.href = `/trainer/loading/${sessionId}`
   }, [])
 
   const endSession = useCallback(async (endReason?: string, skipRedirect: boolean = false) => {
@@ -1226,24 +1244,57 @@ function TrainerPageContent() {
     handleDoorClosingSequence(reason)
   }, [handleDoorClosingSequence])
 
-  // SIMPLIFIED: Direct event listener for ElevenLabs disconnect
+  // Listen for agent disconnect (NOT user mic issues)
+  // This triggers when ElevenLabs agent disconnects, not when user stops speaking
   useEffect(() => {
     if (!sessionActive || typeof window === 'undefined') return
 
-    const handleDisconnect = (e: CustomEvent) => {
-      const status = e?.detail
-      console.log('🔌 Connection status received:', status)
+    const handleAgentDisconnect = (e: CustomEvent) => {
+      const disconnectData = e?.detail
+      console.log('🔌 Agent disconnect event received:', disconnectData)
       
-      if (status === 'disconnected' && sessionActive && sessionId) {
-        console.log('🚪 ElevenLabs disconnected - triggering door closing sequence')
-        handleDoorClosingSequence('ElevenLabs disconnected')
+      // Only trigger if we have an active session and this is a real agent disconnect
+      if (sessionActive && sessionId && disconnectData?.hasSessionId) {
+        console.log('🚪 ElevenLabs agent disconnected - triggering door closing sequence')
+        handleDoorClosingSequence('Agent disconnected')
       }
     }
 
-    window.addEventListener('connection:status', handleDisconnect as EventListener)
+    const handleConnectionStatus = (e: CustomEvent) => {
+      const status = e?.detail
+      console.log('🔌 Connection status received:', status)
+      
+      // Only trigger on disconnect if we have an active session
+      // This is specifically for ElevenLabs agent disconnecting, not user mic issues
+      if (status === 'disconnected' && sessionActive && sessionId) {
+        console.log('🚪 ElevenLabs connection disconnected - triggering door closing sequence')
+        handleDoorClosingSequence('Connection disconnected')
+      }
+    }
+
+    // Handle agent inactivity - if agent stops responding for 60+ seconds, end session
+    const handleAgentInactivity = (e: CustomEvent) => {
+      const data = e?.detail
+      console.log('🔇 Agent inactivity detected:', data)
+      
+      // If agent stopped responding for 60+ seconds during active session, end it
+      if (sessionActive && sessionId && data?.secondsSinceLastMessage >= 60 && data?.agentStoppedResponding) {
+        console.log('🚪 Agent stopped responding for 60+ seconds - triggering door closing sequence')
+        handleDoorClosingSequence('Agent stopped responding')
+      }
+    }
+
+    // Listen for explicit agent disconnect event (most reliable)
+    window.addEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
+    // Also listen for connection status as backup
+    window.addEventListener('connection:status', handleConnectionStatus as EventListener)
+    // Listen for agent inactivity (agent stopped responding but connection still alive)
+    window.addEventListener('agent:inactivity', handleAgentInactivity as EventListener)
     
     return () => {
-      window.removeEventListener('connection:status', handleDisconnect as EventListener)
+      window.removeEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
+      window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
+      window.removeEventListener('agent:inactivity', handleAgentInactivity as EventListener)
     }
   }, [sessionActive, sessionId, handleDoorClosingSequence])
   

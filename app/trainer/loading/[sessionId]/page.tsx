@@ -27,7 +27,7 @@ export default function LoadingPage() {
   const sessionId = params.sessionId as string
   
   const handleSkip = () => {
-    console.log('⏭️ User skipped waiting, redirecting to analytics...')
+    console.warn('⏭️ User skipped waiting - grading may not be complete')
     router.push(`/analytics/${sessionId}`)
   }
 
@@ -52,10 +52,10 @@ export default function LoadingPage() {
       setCurrentTip((prev) => (prev + 1) % TIPS.length)
     }, 3000)
     
-    // Show skip button after 10 seconds
+    // Show skip button after 5 minutes (only if grading is taking very long)
     const skipTimeout = setTimeout(() => {
       setShowSkip(true)
-    }, 10000)
+    }, 300000) // 5 minutes
     
     // Set grading status to in-progress immediately (backend already started it)
     setGradingStatus('in-progress')
@@ -77,14 +77,20 @@ export default function LoadingPage() {
             overall_score: session.overall_score
           })
           
-          // Check if grading is complete (line_ratings are disabled for performance)
-          const graded = Boolean(
-            session.overall_score ||
-            session.analytics?.scores?.overall ||
-            session.analytics?.graded_at
+          // Check if grading is 100% complete - verify all sections are populated
+          const hasOverallScore = session.overall_score || session.analytics?.scores?.overall
+          const hasAnalytics = session.analytics && (
+            session.analytics.scores ||
+            session.analytics.feedback ||
+            session.analytics.session_summary ||
+            session.analytics.graded_at
           )
-          if (graded) {
-            console.log('✅ Grading complete! Redirecting to analytics...')
+          
+          // Only redirect if grading is truly complete
+          const gradingComplete = Boolean(hasOverallScore && hasAnalytics)
+          
+          if (gradingComplete) {
+            console.log('✅ Grading 100% complete! Redirecting to analytics...')
             setGradingStatus('completed')
             setStatus('Analysis complete! Loading your performance insights...')
             
@@ -124,18 +130,12 @@ export default function LoadingPage() {
       }
     }, 2000)
 
-    // Timeout after 30 seconds - redirect anyway (grading continues in background)
-    const timeout = setTimeout(() => {
-      console.warn('⚠️ Grading taking longer than expected, redirecting to analytics...')
-      console.warn('⚠️ Results will appear when grading completes')
-      setStatus('Taking longer than expected... Showing results')
-      router.push(`/analytics/${params.sessionId}`)
-    }, 30000) // Reduced from 2 minutes to 30 seconds
+    // No timeout - wait for grading to complete (but show skip button after 5 minutes)
+    // This ensures users always see complete data
 
     return () => {
       clearInterval(tipInterval)
       clearInterval(pollInterval)
-      clearTimeout(timeout)
       clearTimeout(skipTimeout)
     }
   }, [params.sessionId, router, gradingStatus])
@@ -196,15 +196,15 @@ export default function LoadingPage() {
             </div>
           </motion.div>
 
-          {/* Skip Button */}
-          {showSkip && (
+          {/* Skip Button - Only shown if grading is taking very long */}
+          {showSkip && gradingStatus !== 'completed' && (
             <motion.button
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               onClick={handleSkip}
-              className="mt-6 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-xl text-slate-300 hover:text-white transition-all text-sm font-medium"
+              className="mt-6 px-6 py-3 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded-xl text-yellow-300 hover:text-yellow-200 transition-all text-sm font-medium"
             >
-              View Results Now
+              View Results Now (Grading may still be in progress)
             </motion.button>
           )}
         </div>

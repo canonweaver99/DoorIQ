@@ -431,22 +431,53 @@ export async function POST(request: NextRequest) {
       session.analytics.voice_analysis = freshAnalytics.analytics.voice_analysis
     }
     
+    // Wait for transcript if session was recently ended (up to 5 seconds)
     if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
-      logger.error('No transcript found for session', undefined, {
-        sessionId,
-        id: (session as any).id,
-        created_at: (session as any).created_at,
-        ended_at: (session as any).ended_at,
-        transcript_exists: !!(session as any).full_transcript,
-        transcript_length: (session as any).full_transcript?.length || 0
-      })
-      return NextResponse.json({ 
-        error: 'No transcript to grade',
-        details: {
+      const sessionEndedAt = (session as any).ended_at
+      if (sessionEndedAt) {
+        const endedAtTime = new Date(sessionEndedAt).getTime()
+        const secondsSinceEnd = (Date.now() - endedAtTime) / 1000
+        
+        // If session ended less than 5 seconds ago, wait a bit for transcript to be saved
+        if (secondsSinceEnd < 5) {
+          logger.info('No transcript yet, waiting for it to be saved...', {
+            secondsSinceEnd,
+            waitTime: Math.min(3000, (5 - secondsSinceEnd) * 1000)
+          })
+          await new Promise(resolve => setTimeout(resolve, Math.min(3000, (5 - secondsSinceEnd) * 1000)))
+          
+          // Re-fetch session to get transcript
+          const { data: refreshedSession } = await supabase
+            .from('live_sessions')
+            .select('full_transcript')
+            .eq('id', sessionId)
+            .single()
+          
+          if (refreshedSession?.full_transcript && refreshedSession.full_transcript.length > 0) {
+            session.full_transcript = refreshedSession.full_transcript
+            logger.info('✅ Transcript found after waiting', { length: refreshedSession.full_transcript.length })
+          }
+        }
+      }
+      
+      // Final check - if still no transcript, return error
+      if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
+        logger.error('No transcript found for session after waiting', undefined, {
+          sessionId,
+          id: (session as any).id,
+          created_at: (session as any).created_at,
+          ended_at: (session as any).ended_at,
           transcript_exists: !!(session as any).full_transcript,
           transcript_length: (session as any).full_transcript?.length || 0
-        }
-      }, { status: 400 })
+        })
+        return NextResponse.json({ 
+          error: 'No transcript to grade',
+          details: {
+            transcript_exists: !!(session as any).full_transcript,
+            transcript_length: (session as any).full_transcript?.length || 0
+          }
+        }, { status: 400 })
+      }
     }
     
     const transcriptLength = (session as any).full_transcript.length

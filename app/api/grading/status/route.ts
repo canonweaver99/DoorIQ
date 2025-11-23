@@ -22,12 +22,17 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (error) {
-      logger.error('Error fetching grading status', { error, sessionId })
+      logger.error('Error fetching grading status', { error, sessionId, errorCode: error.code })
       // Return 404 only if it's a "not found" error, otherwise return 500
-      if (error.code === 'PGRST116') {
+      if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
         return NextResponse.json({ error: 'Session not found' }, { status: 404 })
       }
-      return NextResponse.json({ error: 'Failed to fetch session' }, { status: 500 })
+      // Log full error for debugging but return generic message
+      logger.error('Database error fetching grading status', error)
+      return NextResponse.json({ 
+        error: 'Failed to fetch session',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }, { status: 500 })
     }
 
     if (!session) {
