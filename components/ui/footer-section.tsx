@@ -49,7 +49,7 @@ const footerLinks: FooterSectionType[] = [
     label: 'Follow Us',
     links: [
       { title: 'Instagram', href: 'https://www.instagram.com/dooriq.ai/', icon: Instagram },
-      { title: 'Facebook', href: 'https://www.facebook.com/dooriq.ai/', icon: Facebook },
+      { title: 'Facebook', href: 'https://www.facebook.com/dooriq.ai', icon: Facebook },
     ],
   },
 ];
