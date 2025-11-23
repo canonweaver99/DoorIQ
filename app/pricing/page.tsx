@@ -211,14 +211,16 @@ function PricingPageContent() {
 
   const handleStarterPlanClick = () => {
     // Redirect to signup page for starter plan with billing period
+    const redirectParam = searchParams.get('redirect') ? `&redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : ''
     const billingParam = billingPeriod === 'annual' ? '&billing=annual' : ''
-    window.location.href = `/team/signup?plan=starter${billingParam}`
+    window.location.href = `/team/signup?plan=starter${billingParam}${redirectParam}`
   }
 
   const handleTeamPlanClick = () => {
     // Redirect to team signup page for custom seat selection with billing period
+    const redirectParam = searchParams.get('redirect') ? `&redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : ''
     const billingParam = billingPeriod === 'annual' ? '&billing=annual' : ''
-    window.location.href = `/team/signup?plan=team${billingParam}`
+    window.location.href = `/team/signup?plan=team${billingParam}${redirectParam}`
   }
 
   const handleEnterprisePlanClick = () => {

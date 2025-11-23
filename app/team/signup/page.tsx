@@ -15,6 +15,7 @@ function TeamSignupContent() {
   const searchParams = useSearchParams()
   const planType = searchParams.get('plan') || 'team' // 'starter' or 'team'
   const billingParam = searchParams.get('billing') // 'annual' or null
+  const redirectParam = searchParams.get('redirect') // Where to redirect after trial starts
   const isUpgrade = searchParams.get('upgrade') === 'true' // Upgrade flow - skip org name
   
   const [step, setStep] = useState(isUpgrade ? 2 : 1)
@@ -217,6 +218,7 @@ function TeamSignupContent() {
           billingPeriod,
           userEmail: userEmail.trim() || undefined,
           userName: userName.trim() || undefined,
+          redirect: redirectParam || undefined,
         }),
       })
 

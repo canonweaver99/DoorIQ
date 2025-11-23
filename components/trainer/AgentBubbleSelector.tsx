@@ -278,6 +278,26 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
       router.push(`/auth/login?next=/trainer?agent=${agentId}&name=${encodeURIComponent(agentName)}`)
       return
     }
+
+    // Check if user has active trial or subscription
+    const { data: userData } = await supabase
+      .from('users')
+      .select('subscription_status, trial_ends_at')
+      .eq('id', user.id)
+      .single()
+
+    const status = userData?.subscription_status || null
+    const trialEndsAt = userData?.trial_ends_at || null
+    const now = Date.now()
+    const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
+    const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
+    const hasActiveSubscription = status === 'active' || isTrialing
+
+    if (!hasActiveSubscription) {
+      // Redirect to pricing page to start free trial
+      router.push(`/pricing?redirect=/trainer?agent=${agentId}&name=${encodeURIComponent(agentName)}`)
+      return
+    }
     
     setSelectedAgent(agentId)
 

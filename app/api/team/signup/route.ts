@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { organizationName, seatCount, planType = 'team', billingPeriod = 'monthly', userEmail, userName } = body
+    const { organizationName, seatCount, planType = 'team', billingPeriod = 'monthly', userEmail, userName, redirect } = body
 
     // Validation
     if (!organizationName || typeof organizationName !== 'string' || organizationName.trim().length === 0) {
@@ -155,9 +155,10 @@ export async function POST(request: NextRequest) {
         organization_name: organizationName.trim(),
         seat_count: seatCount.toString(),
         supabase_user_id: user.id,
+        redirect: redirect || '',
       },
-      success_url: `${origin}/team?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/team/signup?plan=${planType}&canceled=true`,
+      success_url: `${origin}/team?session_id={CHECKOUT_SESSION_ID}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`,
+      cancel_url: `${origin}/team/signup?plan=${planType}&canceled=true${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`,
       allow_promotion_codes: true,
     }
 

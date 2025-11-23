@@ -15,6 +15,42 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if user has active trial or subscription
+    const { createServerSupabaseClient } = await import('@/lib/supabase/server')
+    const supabase = await createServerSupabaseClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { data: userData } = await supabase
+      .from('users')
+      .select('subscription_status, trial_ends_at')
+      .eq('id', user.id)
+      .single()
+
+    const status = userData?.subscription_status || null
+    const trialEndsAt = userData?.trial_ends_at || null
+    const now = Date.now()
+    const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
+    const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
+    const hasActiveSubscription = status === 'active' || isTrialing
+
+    if (!hasActiveSubscription) {
+      return NextResponse.json(
+        { 
+          error: 'Free trial required',
+          details: 'Please start a free trial to use agents. Visit /pricing to get started.',
+          requiresTrial: true
+        },
+        { status: 403 }
+      );
+    }
+
     const apiKey = process.env.ELEVEN_LABS_API_KEY;
     console.log('🔑 API Key exists:', !!apiKey);
     console.log('🔑 API Key first 10 chars:', apiKey?.substring(0, 10) + '...');

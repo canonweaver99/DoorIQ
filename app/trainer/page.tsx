@@ -620,8 +620,26 @@ function TrainerPageContent() {
           return
         }
 
-      // Credit system removed - no credit checks needed
-      // User will integrate free trial and Stripe paywall separately
+      // Check if user has active trial or subscription
+      const { data: userData } = await supabase
+        .from('users')
+        .select('subscription_status, trial_ends_at')
+        .eq('id', user.id)
+        .single()
+
+      const status = userData?.subscription_status || null
+      const trialEndsAt = userData?.trial_ends_at || null
+      const now = Date.now()
+      const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
+      const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
+      const hasActiveSubscription = status === 'active' || isTrialing
+
+      if (!hasActiveSubscription) {
+        // Redirect to pricing page to start free trial
+        router.push(`/pricing?redirect=/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`)
+        setLoading(false)
+        return
+      }
 
       const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id)
 

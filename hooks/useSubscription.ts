@@ -43,18 +43,81 @@ export function useSubscription(): SubscriptionData & { refetch: () => Promise<v
   })
 
   const fetchSubscription = async () => {
-    // Stripe/billing removed - always return no subscription
-    setData({
-      status: 'none',
-      trialEndsAt: null,
-      currentPeriodEnd: null,
-      cancelAtPeriodEnd: false,
-      hasActiveSubscription: false,
-      isTrialing: false,
-      isPastDue: false,
-      daysRemainingInTrial: null,
-      loading: false
-    })
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        setData({
+          status: 'none',
+          trialEndsAt: null,
+          currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+          hasActiveSubscription: false,
+          isTrialing: false,
+          isPastDue: false,
+          daysRemainingInTrial: null,
+          loading: false
+        })
+        return
+      }
+
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('subscription_status, trial_ends_at, subscription_current_period_end, subscription_cancel_at_period_end')
+        .eq('id', user.id)
+        .single()
+
+      if (error || !userData) {
+        setData({
+          status: 'none',
+          trialEndsAt: null,
+          currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+          hasActiveSubscription: false,
+          isTrialing: false,
+          isPastDue: false,
+          daysRemainingInTrial: null,
+          loading: false
+        })
+        return
+      }
+
+      const status = (userData.subscription_status || 'none') as SubscriptionStatus
+      const trialEndsAt = userData.trial_ends_at || null
+      const now = Date.now()
+      const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
+      const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
+      const hasActiveSubscription = status === 'active' || isTrialing
+      const daysRemainingInTrial = isTrialing && trialEndMs
+        ? Math.max(0, Math.ceil((trialEndMs - now) / (1000 * 60 * 60 * 24)))
+        : null
+
+      setData({
+        status,
+        trialEndsAt,
+        currentPeriodEnd: userData.subscription_current_period_end || null,
+        cancelAtPeriodEnd: userData.subscription_cancel_at_period_end || false,
+        hasActiveSubscription,
+        isTrialing,
+        isPastDue: status === 'past_due',
+        daysRemainingInTrial,
+        loading: false
+      })
+    } catch (error) {
+      console.error('Error fetching subscription:', error)
+      setData({
+        status: 'none',
+        trialEndsAt: null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        hasActiveSubscription: false,
+        isTrialing: false,
+        isPastDue: false,
+        daysRemainingInTrial: null,
+        loading: false
+      })
+    }
   }
 
   useEffect(() => {

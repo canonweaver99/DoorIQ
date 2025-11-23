@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Users, Plus, Settings, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SeatManager } from '@/components/team/SeatManager'
@@ -27,6 +27,7 @@ interface Organization {
 
 export default function TeamPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [members, setMembers] = useState<Member[]>([])
   const [pendingInvites, setPendingInvites] = useState<any[]>([])
@@ -42,6 +43,18 @@ export default function TeamPage() {
 
   useEffect(() => {
     fetchTeamData()
+    
+    // Handle redirect after successful checkout
+    const sessionId = searchParams.get('session_id')
+    const redirect = searchParams.get('redirect')
+    
+    if (sessionId && redirect) {
+      // Wait a moment for subscription to be processed, then redirect
+      setTimeout(() => {
+        router.push(decodeURIComponent(redirect))
+      }, 2000)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchTeamData = async () => {
