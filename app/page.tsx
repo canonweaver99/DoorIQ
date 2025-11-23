@@ -499,7 +499,7 @@ function ProblemSolutionSection() {
 function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
   const { ref, controls } = useScrollAnimation(0.2)
   const [numReps, setNumReps] = useState(15)
-  const [roiDealValue, setRoiDealValue] = useState(300)
+  const [roiDealValue, setRoiDealValue] = useState(500)
   
   const benefits = [
     {
@@ -535,7 +535,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
     if (reps >= 1 && reps <= 20) {
       // Starter tier: 1-20 reps at $99/month per rep
       monthlyPrice = reps * 99
-      perRepRate = 89
+      perRepRate = 99
       tierName = 'STARTER'
       tierRange = '1-20 reps'
     } else if (reps >= 21 && reps < 100) {
@@ -725,7 +725,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                         }}
                         onBlur={(e) => {
                           if (e.target.value === '') {
-                            setRoiDealValue(300)
+                            setRoiDealValue(500)
                           }
                         }}
                         className="inline-block px-4 py-2 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-xl font-bold font-space text-center w-32 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
