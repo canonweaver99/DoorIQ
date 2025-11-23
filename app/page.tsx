@@ -590,7 +590,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
   return (
     <motion.section 
       ref={ref}
-      className="pt-4 sm:pt-6 md:pt-8 pb-6 sm:pb-8 md:pb-10 relative min-h-[70vh] flex items-center"
+      className="pt-6 sm:pt-8 md:pt-10 pb-8 sm:pb-10 md:pb-12 relative min-h-[85vh] flex items-center"
       initial="hidden"
       animate={controls}
       variants={staggerContainer}
@@ -598,7 +598,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {/* Compact Header */}
         <motion.div 
-          className="text-center mb-4 sm:mb-6"
+          className="text-center mb-6 sm:mb-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
@@ -609,10 +609,10 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
             mass: 1.5
           }}
         >
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl leading-tight tracking-tight font-space font-bold mb-2 sm:mb-3 text-foreground">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight tracking-tight font-space font-bold mb-3 sm:mb-4 text-foreground">
             Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Managers</span>
           </h2>
-          <p className="text-xs sm:text-sm lg:text-base text-white max-w-2xl mx-auto font-sans">
+          <p className="text-sm sm:text-base lg:text-lg text-white max-w-2xl mx-auto font-sans">
             Scale your team's performance with AI-powered training that delivers measurable results
           </p>
         </motion.div>
@@ -840,7 +840,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
 
         {/* Prominent Book Demo CTA */}
         <motion.div 
-          className="flex flex-col items-center justify-center gap-2 sm:gap-3 mt-4"
+          className="flex flex-col items-center justify-center gap-3 sm:gap-4"
           variants={fadeInUp}
         >
           <motion.span 
