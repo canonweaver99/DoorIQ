@@ -199,8 +199,8 @@ export default function Home() {
       {/* 3) Meet Our Homeowners - ARCHIVED */}
       {/* <MeetHomeownersSection /> */}
 
-      {/* 4) Dashboard Section */}
-      <DashboardSection />
+      {/* 4) Dashboard Section - ARCHIVED */}
+      {/* <DashboardSection /> */}
 
       {/* 5) Problem/Solution Section */}
       <ProblemSolutionSection />
