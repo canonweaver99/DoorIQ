@@ -9,11 +9,52 @@ export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 50000, // 50 second timeout - allows for longer sessions
+  timeout: 30000, // 30 second timeout - faster failure detection
   maxRetries: 2 // Increased retries for reliability
 })
 
 type JsonSchema = Record<string, any>
+
+// Helper functions to pre-compute objective metrics
+function detectFillerWords(text: string): number {
+  // Only count: um, uh, uhh, erm, err, hmm (NOT "like")
+  const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm)\b/gi
+  const matches = text.match(fillerPattern)
+  return matches ? matches.length : 0
+}
+
+function calculateWPM(transcript: any[], durationSeconds: number): number {
+  if (!transcript || transcript.length === 0 || durationSeconds <= 0) return 0
+  
+  const repEntries = transcript.filter((entry: any) => 
+    entry.speaker === 'rep' || entry.speaker === 'user'
+  )
+  
+  const totalWords = repEntries.reduce((sum: number, entry: any) => {
+    const text = entry.text || entry.message || ''
+    return sum + text.split(/\s+/).filter((word: string) => word.length > 0).length
+  }, 0)
+  
+  const durationMinutes = durationSeconds / 60
+  return Math.round(totalWords / durationMinutes)
+}
+
+function calculateQuestionRatio(transcript: any[]): number {
+  if (!transcript || transcript.length === 0) return 0
+  
+  const repEntries = transcript.filter((entry: any) => 
+    entry.speaker === 'rep' || entry.speaker === 'user'
+  )
+  
+  if (repEntries.length === 0) return 0
+  
+  const questions = repEntries.filter((entry: any) => {
+    const text = entry.text || entry.message || ''
+    return text.trim().endsWith('?')
+  }).length
+  
+  return Math.round((questions / repEntries.length) * 100)
+}
 
 const gradingResponseSchema: JsonSchema = {
   type: 'object',
@@ -328,7 +369,33 @@ export async function POST(request: NextRequest) {
     const supabase = await createServiceSupabaseClient()
     
     // Fetch session data WITH user profile in a single query (optimization)
-    const { data: session, error: sessionError } = await supabase
+    // Also check for voice_analysis - wait up to 2 seconds if session was recently ended
+    let session: any = null
+    let sessionError: any = null
+    const sessionEndedAt = await (async () => {
+      const { data, error } = await supabase
+        .from('live_sessions')
+        .select('ended_at')
+        .eq('id', sessionId)
+        .single()
+      return { endedAt: data?.ended_at, error }
+    })()
+    
+    // If session was recently ended (< 3 seconds ago), wait briefly for voice_analysis to be saved
+    if (sessionEndedAt.endedAt) {
+      const endedAtTime = new Date(sessionEndedAt.endedAt).getTime()
+      const secondsSinceEnd = (Date.now() - endedAtTime) / 1000
+      if (secondsSinceEnd < 3) {
+        logger.info('Session recently ended - waiting briefly for voice_analysis to be saved', {
+          secondsSinceEnd,
+          waitTime: Math.min(2000, (3 - secondsSinceEnd) * 1000)
+        })
+        await new Promise(resolve => setTimeout(resolve, Math.min(2000, (3 - secondsSinceEnd) * 1000)))
+      }
+    }
+    
+    // Now fetch full session data
+    const { data: sessionData, error: sessionErr } = await supabase
       .from('live_sessions')
       .select(`
         *,
@@ -340,9 +407,28 @@ export async function POST(request: NextRequest) {
       .eq('id', sessionId)
       .single()
     
+    session = sessionData
+    sessionError = sessionErr
+    
     if (sessionError || !session) {
       logger.error('Session not found', sessionError)
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    }
+    
+    // Fetch fresh analytics right before grading to ensure voice_analysis exists
+    const { data: freshAnalytics } = await supabase
+      .from('live_sessions')
+      .select('analytics')
+      .eq('id', sessionId)
+      .single()
+    
+    // Merge fresh analytics if it has voice_analysis that we don't have
+    if (freshAnalytics?.analytics?.voice_analysis && !session.analytics?.voice_analysis) {
+      logger.info('✅ Found voice_analysis in fresh fetch - merging into session data', {
+        voiceAnalysisKeys: Object.keys(freshAnalytics.analytics.voice_analysis || {})
+      })
+      session.analytics = session.analytics || {}
+      session.analytics.voice_analysis = freshAnalytics.analytics.voice_analysis
     }
     
     if (!(session as any).full_transcript || (session as any).full_transcript.length === 0) {
@@ -369,22 +455,28 @@ export async function POST(request: NextRequest) {
       firstLine: (session as any).full_transcript[0]
     })
     
-    // Warn if transcript is very long (may take longer to process)
-    if (transcriptLength > 500) {
-      logger.warn('Large transcript detected - grading may take longer', { lines: transcriptLength })
-    }
-    
-    // For long transcripts (>500 lines), sample key portions for faster processing
+    // More aggressive sampling for long transcripts to reduce token count
     let transcriptToGrade = (session as any).full_transcript
-    if (transcriptLength > 500) {
+    if (transcriptLength > 300) {
       logger.warn('Large transcript - sampling key sections for speed', { lines: transcriptLength })
-      // Take first 200, middle 200, last 200 lines (reduced from 300/400/300)
-      transcriptToGrade = [
-        ...(session as any).full_transcript.slice(0, 200),
-        ...(session as any).full_transcript.slice(Math.floor(transcriptLength / 2) - 100, Math.floor(transcriptLength / 2) + 100),
-        ...(session as any).full_transcript.slice(-200)
-      ]
-      logger.info('Sampled transcript', { sampledLines: transcriptToGrade.length })
+      
+      if (transcriptLength > 800) {
+        // Very long transcripts: sample first 100, middle 100, last 100
+        transcriptToGrade = [
+          ...(session as any).full_transcript.slice(0, 100),
+          ...(session as any).full_transcript.slice(Math.floor(transcriptLength / 2) - 50, Math.floor(transcriptLength / 2) + 50),
+          ...(session as any).full_transcript.slice(-100)
+        ]
+        logger.info('Sampled very long transcript', { sampledLines: transcriptToGrade.length, originalLines: transcriptLength })
+      } else {
+        // Medium-long transcripts (>300 lines): sample first 150, middle 150, last 150
+        transcriptToGrade = [
+          ...(session as any).full_transcript.slice(0, 150),
+          ...(session as any).full_transcript.slice(Math.floor(transcriptLength / 2) - 75, Math.floor(transcriptLength / 2) + 75),
+          ...(session as any).full_transcript.slice(-150)
+        ]
+        logger.info('Sampled transcript', { sampledLines: transcriptToGrade.length, originalLines: transcriptLength })
+      }
     }
 
     // Extract user profile from joined query (already fetched above)
@@ -392,7 +484,8 @@ export async function POST(request: NextRequest) {
     const salesRepName = 'You' // Use "you" for personalized feedback
     const customerName = (session as any).agent_name || 'the homeowner'
 
-    // Simplified team config - no caching complexity
+    // Parallelize team config fetch (if needed) - already have user profile from joined query
+    // Team config fetch is already optimized since we have team_id from joined query
     let teamGradingConfig: any = null
     if (userProfile?.team_id) {
       const { data } = await supabase
@@ -445,17 +538,48 @@ export async function POST(request: NextRequest) {
       })
       .join('\n')
 
+    // Pre-compute objective metrics before LLM call (faster than asking LLM to calculate)
+    const durationSeconds = (session as any).duration_seconds || 0
+    const precomputedFillerCount = transcriptToGrade.reduce((sum: number, entry: any) => {
+      const text = entry.text || entry.message || ''
+      if (entry.speaker === 'rep' || entry.speaker === 'user') {
+        return sum + detectFillerWords(text)
+      }
+      return sum
+    }, 0)
+    
+    const precomputedWPM = calculateWPM(transcriptToGrade, durationSeconds)
+    const precomputedQuestionRatio = calculateQuestionRatio(transcriptToGrade)
+    
+    logger.info('Pre-computed metrics', {
+      fillerWords: precomputedFillerCount,
+      wpm: precomputedWPM,
+      questionRatio: precomputedQuestionRatio,
+      durationSeconds
+    })
+
     logger.api('Calling OpenAI for grading', {
       transcriptChars: formattedTranscript.length,
       transcriptLines: (session as any).full_transcript.length,
-      preview: formattedTranscript.substring(0, 300) + '...'
+      preview: formattedTranscript.substring(0, 300) + '...',
+      precomputedMetrics: {
+        fillerWords: precomputedFillerCount,
+        wpm: precomputedWPM,
+        questionRatio: precomputedQuestionRatio
+      }
     })
 
     const openaiStartTime = Date.now()
     logger.perf('Database queries completed', Date.now() - startTime)
 
-    // Simplified prompt - much more concise
-    const systemPrompt = `You are an expert door-to-door sales coach.${companyContext} Analyze this conversation and return ONLY valid JSON with these exact fields:`
+    // Simplified prompt - optimized for speed
+    // Include pre-computed metrics so LLM doesn't need to calculate them
+    const systemPrompt = `You are an expert door-to-door sales coach.${companyContext} Analyze this conversation and return ONLY valid JSON.
+
+PRE-COMPUTED METRICS (use these values, don't recalculate):
+- Filler words: ${precomputedFillerCount} total
+- Speaking pace: ${precomputedWPM} WPM
+- Question ratio: ${precomputedQuestionRatio}%`
 
     const messages: Array<{ role: string; content: string }> = [
         {
@@ -467,23 +591,22 @@ export async function POST(request: NextRequest) {
   "scores": { "overall": int, "rapport": int, "discovery": int, "objection_handling": int, "closing": int, "safety": int, "introduction": int, "listening": int, "speaking_pace": int, "question_ratio": int, "active_listening": int, "assumptive_language": int },
   "filler_word_count": int,
   "feedback": { 
-    "strengths": ["SPECIFIC examples with exact details from conversation"], 
-    "improvements": ["SPECIFIC issues with concrete examples"], 
-    "specific_tips": ["ACTIONABLE tips with context"] 
+    "strengths": ["2-3 specific examples"], 
+    "improvements": ["2-3 specific issues"], 
+    "specific_tips": ["2-3 actionable tips"] 
   },
   "objection_analysis": { 
     "total_objections": int,
-    "objections": [{"objection": "EXACT customer quote", "response": "How rep responded", "effectiveness": "good/poor"}]
+    "objections": [{"objection": "customer quote", "response": "rep response", "effectiveness": "good/poor"}]
   },
   "coaching_plan": { 
-    "immediate_fixes": [{"issue": "SPECIFIC issue with example", "practice_scenario": "Concrete scenario", "resource": ""}], 
+    "immediate_fixes": [{"issue": "issue", "practice_scenario": "scenario", "resource": ""}], 
     "skill_development": [], 
-    "role_play_scenarios": ["SPECIFIC scenario based on actual conversation topics"] 
+    "role_play_scenarios": ["scenario"] 
   },
   "timeline_key_moments": [
-    { "position": 33, "line_number": int, "timestamp": "0:00", "moment_type": "Opening", "quote": "actual customer or rep quote", "is_positive": bool, "key_takeaway": "Specific actionable tip based on what happened here" },
-    { "position": 66, "line_number": int, "timestamp": "0:00", "moment_type": "Key Moment", "quote": "actual customer or rep quote", "is_positive": bool, "key_takeaway": "Specific actionable tip based on what happened here" },
-    { "position": 90, "line_number": int, "timestamp": "0:00", "moment_type": "Close Attempt", "quote": "actual customer or rep quote", "is_positive": bool, "key_takeaway": "Specific actionable tip based on what happened here" }
+    { "position": 50, "line_number": int, "timestamp": "0:00", "moment_type": "Key Moment", "quote": "quote", "is_positive": bool, "key_takeaway": "tip" },
+    { "position": 90, "line_number": int, "timestamp": "0:00", "moment_type": "Close Attempt", "quote": "quote", "is_positive": bool, "key_takeaway": "tip" }
   ],
   "sale_closed": bool,
   "return_appointment": bool,
@@ -494,53 +617,20 @@ export async function POST(request: NextRequest) {
     "filler_words": {
       "total_count": int,
       "per_minute": number,
-      "common_fillers": { "um": int, "uh": int, "uhh": int, "like": int, "erm": int, "err": int, "hmm": int },
-      "locations": [{ "line_number": int, "timestamp": "M:SS", "text": "quote with filler word" }]
+      "common_fillers": { "um": int, "uh": int, "uhh": int, "erm": int, "err": int, "hmm": int }
     }
   }
 }
 
-SCORING (0-100 each):
-- Overall: Average of all scores
-- Rapport: Connection, warmth, trust
-- Discovery: Questions, needs assessment
-- Objection Handling: Addressing concerns
-- Closing: Commitment attempts (90-100=sale, 75-89=appointment, 60-74=trial close, 40-59=weak ask, 0-39=no close)
-- Safety: Pet/child safety mentions
-- Introduction: Opening strength
-- Listening: Acknowledgment, paraphrasing
-- Speaking Pace: Appropriate speed
-- Question Ratio: Questions vs statements (30-40% ideal)
-- Active Listening: Reflects understanding
-- Assumptive Language: "When" not "if"
+SCORING (0-100): Overall=avg, Rapport=connection, Discovery=questions, Objection Handling=addressing concerns, Closing=commitment (90-100=sale, 75-89=appointment, 60-74=trial, 40-59=weak, 0-39=none), Safety=pet/child mentions, Introduction=opening, Listening=acknowledgment, Speaking Pace=speed, Question Ratio=questions vs statements (30-40% ideal), Active Listening=understanding, Assumptive Language="when" not "if".
 
-TIMELINE: Pick 3 key moments at 33%, 66%, 90% of conversation. Use EXACT timestamps from transcript. Include a specific "key_takeaway" for each moment based on what actually happened (e.g., "You built great rapport when mentioning their dog Max" or "Ask follow-up about pest sightings instead of jumping to pitch").
+TIMELINE: Pick 2 moments at 50% and 90% of conversation. Use timestamps from transcript.
 
-EARNINGS:
-- sale_closed: true ONLY if customer committed to PAID service
-- return_appointment: true if appointment/inspection scheduled
-- Inspections are NOT sales (sale_closed=false, return_appointment=true)
-- Commission rate always 0.30 (30%)
-- virtual_earnings = total_contract_value × 0.30
+EARNINGS: sale_closed=true ONLY if PAID service committed. return_appointment=true if scheduled. Commission=0.30. virtual_earnings=total_contract_value×0.30.
 
-NEXT STEPS (in deal_details):
-- If no sale closed but customer agreed to next step, capture it in "next_step" field
-- Examples: "Return appointment scheduled for Friday", "Will call back after talking to spouse", "Free inspection booked for next week"
-- Set "next_step_type" to one of: "return_appointment", "callback", "inspection", "think_it_over", "spouse_discussion"
-- If sale closed OR no next step agreed, leave both fields empty
+FILLER WORDS: Use pre-computed count (${precomputedFillerCount}). Count only "um", "uh", "uhh", "erm", "err", "hmm". Never count "like".
 
-FILLER WORDS:
-- Count ONLY: "um", "uh", "uhh", "erm", "err", "hmm"
-- NEVER count "like" as a filler word (it's almost always used correctly in conversation)
-- Examples of normal speech (NOT fillers): "sounds like magic", "service like this", "looks like", "feels like"
-
-FEEDBACK - BE SPECIFIC:
-- Reference actual names, topics, details from THIS conversation
-- Quote exact phrases
-- Avoid generic advice
-- Make it personal to THIS call
-
-Return ONLY valid JSON. No commentary.`
+Return ONLY valid JSON.`
         },
         {
           role: "user",
@@ -556,14 +646,14 @@ Return ONLY valid JSON. No commentary.`
       try {
         // Add timeout wrapper to catch timeout errors (must be longer than OpenAI client timeout)
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('OpenAI request timeout after 50 seconds')), 50000)
+          setTimeout(() => reject(new Error('OpenAI request timeout after 30 seconds')), 30000)
         })
         
         const apiPromise = openai.chat.completions.create({
-          model: "gpt-4o-mini", // Faster model for reliable grading
+          model: "gpt-4o", // Faster model for JSON mode - 2-3x faster than gpt-4o-mini
           messages: messages as any,
           response_format: { type: "json_object" },
-          max_tokens: 1200, // Reduced for faster processing
+          max_tokens: 800, // Reduced for faster processing
           temperature: 0.1,
           stream: false
         })
@@ -635,8 +725,8 @@ Return ONLY valid JSON. No commentary.`
     const activeListeningScore = typeof gradingResult.scores?.active_listening === 'number' ? gradingResult.scores.active_listening : null
     const assumptiveLanguageScore = typeof gradingResult.scores?.assumptive_language === 'number' ? gradingResult.scores.assumptive_language : null
     
-    // Get filler word count from the grading result
-    const fillerWordCount = typeof gradingResult.filler_word_count === 'number' ? gradingResult.filler_word_count : 0
+    // Use pre-computed filler word count (more accurate than LLM calculation)
+    const fillerWordCount = precomputedFillerCount
     
     const returnAppointment = typeof gradingResult.return_appointment === 'boolean' ? gradingResult.return_appointment : false
 
@@ -737,69 +827,22 @@ Return ONLY valid JSON. No commentary.`
     const dbUpdateStartTime = Date.now()
     
     // Preserve existing voice_analysis if it exists
+    // CRITICAL: Extract voice_analysis FIRST before any merging
     const existingAnalytics = (session as any).analytics || {}
     const existingVoiceAnalysis = existingAnalytics.voice_analysis
-    
-    // Check if session was recently ended (within last 5 seconds) - might indicate race condition
-    const sessionEndedAt = (session as any).ended_at ? new Date((session as any).ended_at) : null
-    const currentTime = new Date()
-    const secondsSinceEnd = sessionEndedAt ? (currentTime.getTime() - sessionEndedAt.getTime()) / 1000 : null
-    const recentlyEnded = secondsSinceEnd !== null && secondsSinceEnd < 5
     
     logger.info('Voice analysis preservation check', {
       hasExistingAnalytics: !!existingAnalytics && Object.keys(existingAnalytics).length > 0,
       existingAnalyticsKeys: existingAnalytics ? Object.keys(existingAnalytics) : [],
       hasVoiceAnalysis: !!existingVoiceAnalysis,
-      sessionEndedAt: sessionEndedAt?.toISOString(),
-      secondsSinceEnd,
-      recentlyEnded,
+      voiceAnalysisKeys: existingVoiceAnalysis ? Object.keys(existingVoiceAnalysis) : [],
+      avgWPM: existingVoiceAnalysis?.avgWPM,
+      totalFillerWords: existingVoiceAnalysis?.totalFillerWords,
       sessionId
     })
     
-    if (existingVoiceAnalysis) {
-      logger.info('✅ Preserving existing voice_analysis data', {
-        hasVoiceAnalysis: !!existingVoiceAnalysis,
-        voiceAnalysisKeys: Object.keys(existingVoiceAnalysis || {}),
-        avgWPM: existingVoiceAnalysis?.avgWPM,
-        totalFillerWords: existingVoiceAnalysis?.totalFillerWords,
-        hasPitchData: existingVoiceAnalysis?.avgPitch > 0
-      })
-    } else {
-      if (recentlyEnded) {
-        logger.warn('⚠️ No existing voice_analysis found but session was recently ended - possible race condition', {
-          secondsSinceEnd,
-          sessionId,
-          endedAt: sessionEndedAt?.toISOString()
-        })
-        // Try to fetch fresh session data in case voice_analysis was just saved
-        try {
-          const { data: freshSession } = await supabase
-            .from('live_sessions')
-            .select('analytics')
-            .eq('id', sessionId)
-            .single()
-          
-          if (freshSession?.analytics?.voice_analysis) {
-            logger.info('✅ Found voice_analysis in fresh fetch - race condition detected and resolved', {
-              voiceAnalysisKeys: Object.keys(freshSession.analytics.voice_analysis || {}),
-              avgWPM: freshSession.analytics.voice_analysis?.avgWPM
-            })
-            // Use the fresh voice_analysis
-            const freshVoiceAnalysis = freshSession.analytics.voice_analysis
-            // Update existingAnalytics to include it
-            existingAnalytics.voice_analysis = freshVoiceAnalysis
-            Object.assign(existingAnalytics, { voice_analysis: freshVoiceAnalysis })
-          }
-        } catch (fetchError) {
-          logger.error('Error fetching fresh session data for voice_analysis', fetchError)
-        }
-      } else {
-        logger.info('No existing voice_analysis found to preserve (session ended more than 5 seconds ago)')
-      }
-    }
-    
-    // Re-check after potential fresh fetch
-    const finalVoiceAnalysis = existingAnalytics.voice_analysis || existingVoiceAnalysis
+    // Final voice_analysis to preserve (already fetched fresh above if needed)
+    const finalVoiceAnalysis = existingVoiceAnalysis
     
     // Log analytics merge details
     logger.info('Analytics merge check', {
@@ -842,17 +885,17 @@ Return ONLY valid JSON. No commentary.`
         
         analytics: (() => {
           // Build analytics object ensuring voice_analysis is preserved
-          // Start with existing analytics to preserve voice_analysis and any other existing data
+          // CRITICAL: Start with existing analytics but remove voice_analysis to add it back last
           const baseAnalytics = { ...existingAnalytics }
+          const preservedVoiceAnalysis = finalVoiceAnalysis
           
-          // Remove voice_analysis from base if it exists (we'll add it back at the end)
-          const preservedVoiceAnalysis = baseAnalytics.voice_analysis || finalVoiceAnalysis
+          // Remove voice_analysis from base (we'll add it back at the very end)
           delete baseAnalytics.voice_analysis
           
-          // Build the analytics object
-          const builtAnalytics = {
+          // Build the analytics object - voice_analysis MUST be added last
+          const builtAnalytics: any = {
             ...baseAnalytics,
-            // Then add grading-specific fields
+            // Add grading-specific fields
             line_ratings: normalizedLineRatings,
             feedback: gradingResult.feedback || { strengths: [], improvements: [], specific_tips: [] },
             enhanced_metrics: enhancedMetrics,
@@ -864,10 +907,17 @@ Return ONLY valid JSON. No commentary.`
             earnings_data: earningsData,
             deal_details: dealDetails,
             graded_at: now,
-            grading_version: '8.0-ultra-fast',
-            scores: gradingResult.scores || {},
-            // CRITICAL: Always preserve voice_analysis if it exists (must come last to ensure it's not overwritten)
-            ...(preservedVoiceAnalysis && { voice_analysis: preservedVoiceAnalysis })
+            grading_version: '9.0-optimized',
+            scores: gradingResult.scores || {}
+          }
+          
+          // CRITICAL: Always preserve voice_analysis if it exists (MUST be last to ensure it's not overwritten)
+          if (preservedVoiceAnalysis) {
+            builtAnalytics.voice_analysis = preservedVoiceAnalysis
+            logger.info('✅ Voice analysis preserved in analytics object', {
+              voiceAnalysisKeys: Object.keys(preservedVoiceAnalysis),
+              avgWPM: preservedVoiceAnalysis?.avgWPM
+            })
           }
           
           // Verify voice_analysis is in the final object
