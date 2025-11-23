@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, Users, Calendar, Download, AlertCircle, Loader2, Sparkles, ExternalLink, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -12,7 +12,7 @@ import { CancelSubscriptionModal } from '@/components/settings/CancelSubscriptio
 import { UpgradePrompt } from '@/components/settings/UpgradePrompt'
 import { BillingIntervalToggle } from '@/components/settings/BillingIntervalToggle'
 import { CalendarModal } from '@/components/ui/calendar-modal'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface PlanData {
   tier: string
@@ -35,8 +35,9 @@ interface UsageData {
   sessionsThisMonth: number
 }
 
-export default function BillingSettingsPage() {
+function BillingSettingsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -63,7 +64,24 @@ export default function BillingSettingsPage() {
   useEffect(() => {
     fetchBillingData()
     fetchInvoices()
-  }, [])
+
+    // Check for success/cancel parameters from checkout redirect
+    const seatsAdded = searchParams.get('seats_added')
+    if (seatsAdded === 'success') {
+      setSuccess('Seats added successfully! Your subscription has been updated.')
+      setTimeout(() => {
+        setSuccess(null)
+        router.replace('/settings/billing')
+      }, 5000)
+      fetchBillingData() // Refresh data
+    } else if (seatsAdded === 'canceled') {
+      setError('Seat addition was canceled.')
+      setTimeout(() => {
+        setError(null)
+        router.replace('/settings/billing')
+      }, 5000)
+    }
+  }, [searchParams, router])
 
   const fetchBillingData = async () => {
     try {
@@ -124,6 +142,13 @@ export default function BillingSettingsPage() {
         throw new Error(data.error || 'Failed to add seats')
       }
 
+      // If checkout URL is returned, redirect to Stripe checkout
+      if (data.url) {
+        window.location.href = data.url
+        return
+      }
+
+      // If no URL, seats were added directly (shouldn't happen with new flow)
       setSuccess(`Successfully added ${seats} seat${seats !== 1 ? 's' : ''}`)
       setTimeout(() => setSuccess(null), 3000)
       await fetchBillingData()
@@ -352,7 +377,7 @@ export default function BillingSettingsPage() {
               <BillingIntervalToggle
                 currentInterval={plan.billingInterval as 'monthly' | 'annual'}
                 onSwitch={handleSwitchBillingInterval}
-                disabled={switchingBillingInterval || !subscription || subscription.status !== 'active'}
+                disabled={switchingBillingInterval || !subscription || !['active', 'trialing'].includes(subscription.status)}
               />
             </div>
           )}
@@ -567,4 +592,18 @@ export default function BillingSettingsPage() {
     </div>
   )
 }
+
+function BillingSettingsPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+      </div>
+    }>
+      <BillingSettingsPage />
+    </Suspense>
+  )
+}
+
+export default BillingSettingsPageWrapper
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
+import { STRIPE_CONFIG } from '@/lib/stripe/config'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-11-20.acacia',
@@ -103,20 +104,88 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update subscription quantity
-    await stripe.subscriptionItems.update(subscriptionItem.id, {
-      quantity: newQuantity,
-    })
+    // Get the price ID for the current plan and billing interval
+    const planConfig = STRIPE_CONFIG[org.plan_tier as keyof typeof STRIPE_CONFIG]
+    if (!planConfig) {
+      return NextResponse.json(
+        { error: 'Invalid plan tier' },
+        { status: 400 }
+      )
+    }
 
-    // Update organization seat_limit
-    await supabase
-      .from('organizations')
-      .update({ seat_limit: newQuantity })
-      .eq('id', org.id)
+    const priceId = planConfig.perSeatPriceId
+
+    // Calculate prorated amount for the additional seats
+    // We'll create an upcoming invoice to see what the prorated cost would be
+    let proratedAmount = 0
+    try {
+      const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+        customer: org.stripe_customer_id,
+        subscription: org.stripe_subscription_id,
+        subscription_items: [{
+          id: subscriptionItem.id,
+          quantity: newQuantity,
+        }],
+      })
+      proratedAmount = upcomingInvoice.amount_due
+    } catch (invoiceError) {
+      // If we can't calculate prorated amount, estimate it
+      // Get the price to calculate estimated cost
+      const price = await stripe.prices.retrieve(priceId)
+      const priceAmount = (price.unit_amount || 0) / 100 // Convert from cents to dollars
+      
+      // Estimate prorated cost (rough calculation)
+      // This is a simplified estimate - Stripe will handle actual proration
+      const daysRemaining = Math.ceil(
+        (subscription.current_period_end * 1000 - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+      const daysInPeriod = Math.ceil(
+        (subscription.current_period_end - subscription.current_period_start) / (60 * 60 * 24)
+      )
+      const prorationRatio = daysRemaining / daysInPeriod
+      proratedAmount = Math.round(priceAmount * seatsToAdd * prorationRatio * 100) // Convert back to cents
+    }
+    
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+    // Create a checkout session for a one-time payment for the prorated amount
+    // After payment succeeds, we'll update the subscription via webhook
+    const session = await stripe.checkout.sessions.create({
+      customer: org.stripe_customer_id,
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Add ${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} to ${org.plan_tier} plan`,
+              description: `Prorated charge for ${seatsToAdd} additional seat${seatsToAdd !== 1 ? 's' : ''}`,
+            },
+            unit_amount: proratedAmount, // Amount in cents
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        action: 'add_seats',
+        organization_id: org.id,
+        seats_to_add: seatsToAdd.toString(),
+        current_quantity: (subscriptionItem.quantity || 0).toString(),
+        new_quantity: newQuantity.toString(),
+        subscription_id: org.stripe_subscription_id,
+        subscription_item_id: subscriptionItem.id,
+        price_id: priceId,
+        supabase_user_id: user.id,
+      },
+      success_url: `${origin}/settings/billing?seats_added=success`,
+      cancel_url: `${origin}/settings/billing?seats_added=canceled`,
+      allow_promotion_codes: true,
+    })
 
     return NextResponse.json({
       success: true,
-      newSeatCount: newQuantity,
+      url: session.url,
+      sessionId: session.id,
     })
   } catch (error: any) {
     console.error('Error adding seats:', error)

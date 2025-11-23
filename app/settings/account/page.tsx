@@ -53,6 +53,7 @@ export default function AccountSettingsPage() {
         setAvatarUrl(userData.avatar_url)
         setRole(userData.role || 'rep')
         
+        // Fetch organization name for company field
         if (userData.organization_id) {
           const { data: orgData } = await supabase
             .from('organizations')
@@ -62,10 +63,11 @@ export default function AccountSettingsPage() {
           
           if (orgData) {
             setCompany(orgData.name)
-            setTeamName(orgData.name) // Use organization name as team name
           }
-        } else if (userData.team_id) {
-          // Fallback to team name if no organization
+        }
+        
+        // Always prioritize team name over organization name
+        if (userData.team_id) {
           const { data: teamData } = await supabase
             .from('teams')
             .select('name')
@@ -74,6 +76,17 @@ export default function AccountSettingsPage() {
           
           if (teamData) {
             setTeamName(teamData.name)
+          }
+        } else if (userData.organization_id) {
+          // Fallback to organization name only if no team exists
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('name')
+            .eq('id', userData.organization_id)
+            .single()
+          
+          if (orgData) {
+            setTeamName(orgData.name)
           }
         }
       }

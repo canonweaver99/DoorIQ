@@ -42,6 +42,13 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
 
+        // Check if this is for adding seats to an existing subscription
+        const action = session.metadata?.action
+        if (action === 'add_seats') {
+          await handleAddSeatsCheckout(session, supabase)
+          break
+        }
+
         // Check if this is a team or starter plan signup
         const planType = session.metadata?.plan_type || session.subscription_data?.metadata?.plan_type
 
@@ -224,6 +231,57 @@ async function handleIndividualPlanCheckout(
 
   if (error) {
     console.error('Error updating user subscription:', error)
+  }
+}
+
+/**
+ * Handle checkout session completion for adding seats
+ */
+async function handleAddSeatsCheckout(
+  session: Stripe.Checkout.Session,
+  supabase: any
+) {
+  const metadata = session.metadata || {}
+  const organizationId = metadata.organization_id
+  const seatsToAdd = parseInt(metadata.seats_to_add || '0', 10)
+  const newQuantity = parseInt(metadata.new_quantity || '0', 10)
+  const subscriptionId = metadata.subscription_id
+  const subscriptionItemId = metadata.subscription_item_id
+  const priceId = metadata.price_id
+
+  if (!organizationId || !subscriptionId || !subscriptionItemId || !priceId || seatsToAdd <= 0) {
+    console.error('Missing required metadata for adding seats:', {
+      organizationId,
+      subscriptionId,
+      subscriptionItemId,
+      priceId,
+      seatsToAdd,
+    })
+    return
+  }
+
+  try {
+    // Update the subscription quantity in Stripe
+    await stripe.subscriptionItems.update(subscriptionItemId, {
+      quantity: newQuantity,
+      proration_behavior: 'always_invoice',
+    })
+
+    // Update organization seat_limit in database
+    const { error: updateError } = await supabase
+      .from('organizations')
+      .update({ seat_limit: newQuantity })
+      .eq('id', organizationId)
+
+    if (updateError) {
+      console.error('Error updating organization seat limit:', updateError)
+      throw updateError
+    }
+
+    console.log(`Successfully added ${seatsToAdd} seats to organization ${organizationId}. New quantity: ${newQuantity}`)
+  } catch (error: any) {
+    console.error('Error handling add seats checkout:', error)
+    throw error
   }
 }
 
