@@ -3,14 +3,14 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
-// Optimized timeout for sub-20 second grading
-export const maxDuration = 20 // 20 seconds - target sub-20s grading
+// Increased timeout for reliable grading (Vercel Pro allows up to 300s)
+export const maxDuration = 60 // 60 seconds - allows for longer sessions
 export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 15000, // 15 second timeout - optimized for speed
-  maxRetries: 1 // Reduced retries for speed
+  timeout: 45000, // 45 second timeout - allows for longer sessions
+  maxRetries: 2 // Increased retries for reliability
 })
 
 type JsonSchema = Record<string, any>
@@ -551,31 +551,42 @@ Return ONLY valid JSON. No commentary.`
     // Retry with backoff for reliability
     let completion
     let lastError
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    const maxAttempts = 3
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini", // Faster model for sub-20s grading
+        // Add timeout wrapper to catch timeout errors
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('OpenAI request timeout after 40 seconds')), 40000)
+        })
+        
+        const apiPromise = openai.chat.completions.create({
+          model: "gpt-4o-mini", // Faster model for reliable grading
           messages: messages as any,
           response_format: { type: "json_object" },
           max_tokens: 1200, // Reduced for faster processing
           temperature: 0.1,
           stream: false
         })
+        
+        completion = await Promise.race([apiPromise, timeoutPromise]) as any
         break // Success
       } catch (apiError: any) {
         lastError = apiError
-        const errorType = apiError.status === 429 ? 'rate_limit' : apiError.status >= 500 ? 'server_error' : 'api_error'
-        logger.error(`OpenAI API error (attempt ${attempt}/2)`, apiError, { errorType, status: apiError.status })
+        const errorType = apiError.status === 429 ? 'rate_limit' : apiError.status >= 500 ? 'server_error' : apiError.message?.includes('timeout') ? 'timeout' : 'api_error'
+        logger.error(`OpenAI API error (attempt ${attempt}/${maxAttempts})`, apiError, { errorType, status: apiError.status })
         
-        if (attempt < 2) {
-          // Wait 2 seconds before retry
-          await new Promise(resolve => setTimeout(resolve, 2000))
+        if (attempt < maxAttempts) {
+          // Exponential backoff: 2s, 4s
+          const waitTime = Math.pow(2, attempt) * 1000
+          logger.info(`Retrying after ${waitTime}ms...`)
+          await new Promise(resolve => setTimeout(resolve, waitTime))
         }
       }
     }
     
     if (!completion) {
-      throw new Error(`OpenAI grading failed after 2 attempts: ${lastError?.message || 'Unknown error'}`)
+      const timeoutError = lastError?.message?.includes('timeout') || lastError?.code === 'ETIMEDOUT'
+      throw new Error(`OpenAI grading failed after ${maxAttempts} attempts: ${lastError?.message || 'Unknown error'}${timeoutError ? ' - Request timed out' : ''}`)
     }
 
     const responseContent = completion.choices[0].message.content || '{}'
