@@ -5,7 +5,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Instagram } from 'lucide-react';
+import { Instagram, Facebook } from 'lucide-react';
 
 interface FooterLink {
   title: string;
@@ -49,6 +49,7 @@ const footerLinks: FooterSectionType[] = [
     label: 'Follow Us',
     links: [
       { title: 'Instagram', href: 'https://www.instagram.com/dooriq.ai/', icon: Instagram },
+      { title: 'Facebook', href: 'https://www.facebook.com/dooriq.ai/', icon: Facebook },
     ],
   },
 ];
