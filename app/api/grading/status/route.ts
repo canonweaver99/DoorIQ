@@ -21,7 +21,16 @@ export async function GET(request: NextRequest) {
       .eq('id', sessionId)
       .single()
 
-    if (error || !session) {
+    if (error) {
+      logger.error('Error fetching grading status', { error, sessionId })
+      // Return 404 only if it's a "not found" error, otherwise return 500
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+      }
+      return NextResponse.json({ error: 'Failed to fetch session' }, { status: 500 })
+    }
+
+    if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 

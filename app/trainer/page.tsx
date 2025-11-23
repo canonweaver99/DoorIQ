@@ -11,6 +11,7 @@ import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSessionLimit } from '@/hooks/useSubscription'
 import { useLiveSessionAnalysis } from '@/hooks/useLiveSessionAnalysis'
 import { useVoiceAnalysis } from '@/hooks/useVoiceAnalysis'
+import { useConversationEndDetection } from '@/hooks/useConversationEndDetection'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -1067,14 +1068,6 @@ function TrainerPageContent() {
   }, [sessionId, duration, transcript, router, sessionActive, sessionState])
 
   // Shared function to handle door closing sequence and end session
-
-  // Direct state-based call end handler - triggers animation immediately
-  const handleCallEnd = useCallback((reason: string) => {
-    console.log('🚪 handleCallEnd called - setting showDoorCloseAnimation state', { reason })
-    setShowDoorCloseAnimation(true) // This triggers the animation via state change
-    setVideoMode('closing') // Also set video mode immediately
-  }, [])
-
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Starting door closing sequence:', reason)
     console.log('🚪 Door closing sequence context:', {
@@ -1287,6 +1280,23 @@ function TrainerPageContent() {
     }, 100)
   }, [selectedAgent?.name, videoMode, endSession, sessionId, transcript, showDoorCloseAnimation])
 
+  // Direct state-based call end handler - triggers door closing sequence
+  const handleCallEnd = useCallback((reason: string) => {
+    console.log('🚪 handleCallEnd called - triggering door closing sequence', { reason })
+    handleDoorClosingSequence(reason)
+  }, [handleDoorClosingSequence])
+
+  // Auto-end detection hook - triggers door closing sequence when conversation ends
+  useConversationEndDetection({
+    onConversationEnd: useCallback(() => {
+      console.log('🚪 Auto-end detected, triggering door closing sequence...')
+      handleDoorClosingSequence('Auto-end detected')
+    }, [handleDoorClosingSequence]),
+    transcript,
+    sessionStartTime: sessionStartTimeRef.current,
+    sessionActive,
+    enabled: sessionActive
+  })
   
   // Handle manual end session requests only
   useEffect(() => {

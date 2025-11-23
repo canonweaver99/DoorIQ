@@ -97,6 +97,11 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
             }
           }
           setIsPolling(status.lineRatingsStatus === 'processing' || status.lineRatingsStatus === 'queued')
+        } else if (response.status === 404) {
+          // Session not found yet or grading hasn't started - this is OK, just continue polling
+          console.log('Grading status not available yet, continuing to poll...')
+        } else {
+          console.warn(`Failed to fetch grading status: ${response.status}`)
         }
       } catch (error) {
         console.error('Failed to poll rating updates', error)

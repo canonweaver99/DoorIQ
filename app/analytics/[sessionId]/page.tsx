@@ -239,7 +239,11 @@ export default function AnalyticsPage() {
       
       if (needsGrading) {
         console.log('🎯 No grading found, triggering grading and setting up polling...')
-        triggerGrading()
+        const gradingStarted = await triggerGrading()
+        
+        if (!gradingStarted) {
+          console.warn('⚠️ Failed to start grading after retries, will continue polling anyway')
+        }
         
         // Poll every 3 seconds for grading completion (up to 2 minutes)
         let pollCount = 0
@@ -247,29 +251,35 @@ export default function AnalyticsPage() {
           pollCount++
           console.log(`🔄 Polling for grading completion (${pollCount * 3}s)...`)
           
-          const pollResponse = await fetch(`/api/session?id=${sessionId}`)
-          if (pollResponse.ok) {
-            const pollData = await pollResponse.json()
-            
-            // Debug logging for polling
-            console.log('🔄 Poll: Session data retrieved', {
-              hasAnalytics: !!pollData.analytics,
-              hasVoiceAnalysis: !!pollData.analytics?.voice_analysis,
-              analyticsKeys: pollData.analytics ? Object.keys(pollData.analytics) : []
-            })
-            
-            // Check if grading is complete by looking for overall_score or analytics.scores
-            const isGraded = pollData.overall_score || pollData.analytics?.scores?.overall
-            if (isGraded) {
-              console.log('✅ Grading completed! Refreshing page...')
-              console.log('🔄 Poll: Final session data before update', {
+          try {
+            const pollResponse = await fetch(`/api/session?id=${sessionId}`)
+            if (pollResponse.ok) {
+              const pollData = await pollResponse.json()
+              
+              // Debug logging for polling
+              console.log('🔄 Poll: Session data retrieved', {
+                hasAnalytics: !!pollData.analytics,
                 hasVoiceAnalysis: !!pollData.analytics?.voice_analysis,
-                voiceAnalysisKeys: pollData.analytics?.voice_analysis ? Object.keys(pollData.analytics.voice_analysis) : []
+                analyticsKeys: pollData.analytics ? Object.keys(pollData.analytics) : []
               })
-              clearInterval(pollInterval)
-              setSession(pollData)
-              setGrading(false)
+              
+              // Check if grading is complete by looking for overall_score or analytics.scores
+              const isGraded = pollData.overall_score || pollData.analytics?.scores?.overall
+              if (isGraded) {
+                console.log('✅ Grading completed! Refreshing page...')
+                console.log('🔄 Poll: Final session data before update', {
+                  hasVoiceAnalysis: !!pollData.analytics?.voice_analysis,
+                  voiceAnalysisKeys: pollData.analytics?.voice_analysis ? Object.keys(pollData.analytics.voice_analysis) : []
+                })
+                clearInterval(pollInterval)
+                setSession(pollData)
+                setGrading(false)
+              }
+            } else {
+              console.warn(`⚠️ Failed to fetch session during polling: ${pollResponse.status}`)
             }
+          } catch (error) {
+            console.error('Error polling for grading:', error)
           }
           
           // Stop polling after 40 attempts (2 minutes)
@@ -287,8 +297,9 @@ export default function AnalyticsPage() {
     }
   }
 
-  const triggerGrading = async () => {
-    console.log('🎯 Triggering grading for session:', sessionId)
+  const triggerGrading = async (retryCount = 0): Promise<boolean> => {
+    const maxRetries = 3
+    console.log('🎯 Triggering grading for session:', sessionId, retryCount > 0 ? `(retry ${retryCount}/${maxRetries})` : '')
     setGrading(true)
     try {
       const response = await fetch('/api/grade/session', {
@@ -302,10 +313,25 @@ export default function AnalyticsPage() {
       console.log('📊 Grading result:', result)
       
       if (!response.ok) {
+        // Retry on 503 (service unavailable) or 504 (timeout) errors
+        if ((response.status === 503 || response.status === 504) && retryCount < maxRetries) {
+          console.log(`⏳ Grading service unavailable, retrying in ${(retryCount + 1) * 2}s...`)
+          await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000))
+          return triggerGrading(retryCount + 1)
+        }
         console.error('❌ Grading failed:', result)
+        return false
       }
+      return true
     } catch (error) {
       console.error('Error grading session:', error)
+      // Retry on network errors
+      if (retryCount < maxRetries) {
+        console.log(`⏳ Network error, retrying in ${(retryCount + 1) * 2}s...`)
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000))
+        return triggerGrading(retryCount + 1)
+      }
+      return false
     } finally {
       setGrading(false)
     }
