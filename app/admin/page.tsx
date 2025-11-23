@@ -193,7 +193,7 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] shadow-sm p-6 mb-8">
           <h2 className="text-xl font-space font-semibold tracking-tight text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/admin/organizations">
               <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
                 <div className="flex items-center justify-between">
@@ -224,6 +224,18 @@ export default function AdminDashboard() {
                   <div>
                     <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Training Sessions</h3>
                     <p className="text-sm text-[#a0a0a0] font-sans">View all sessions</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
+                </div>
+              </div>
+            </Link>
+
+            <Link href="/pricing">
+              <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Pricing</h3>
+                    <p className="text-sm text-[#a0a0a0] font-sans">View pricing plans</p>
                   </div>
                   <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
                 </div>

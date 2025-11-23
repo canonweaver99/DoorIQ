@@ -360,6 +360,12 @@ function HeaderContent() {
         icon: FileText,
         desktopOnly: true,
       })
+      // Add Pricing link for admins (always visible regardless of subscription)
+      navItems.push({
+        name: 'Pricing',
+        href: '/pricing',
+        icon: DollarSign,
+      })
     }
 
     return navItems
