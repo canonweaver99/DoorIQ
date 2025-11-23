@@ -509,7 +509,7 @@ export default function BillingSettingsPage() {
                 'Custom practice scenarios',
                 'Custom sales playbook',
               ]}
-              onSelect={() => router.push('/pricing')}
+              onSelect={() => router.push('/team/signup?plan=team&upgrade=true')}
             />
             <PlanCard
               tier="enterprise"

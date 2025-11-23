@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
+import { OnboardingBanner } from '@/components/dashboard/OnboardingBanner'
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
@@ -318,6 +319,9 @@ function DashboardPageContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] pt-16 pb-2 sm:pb-4 lg:pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[1800px] mx-auto">
+        {/* Onboarding Banner */}
+        <OnboardingBanner />
+        
         {/* Minimalist Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

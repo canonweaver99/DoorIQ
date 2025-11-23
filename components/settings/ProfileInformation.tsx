@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, Mail, Building2, Edit2, X, Check, Loader2 } from 'lucide-react'
+import { User, Mail, Building2, Edit2, X, Check, Loader2, Shield, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,8 @@ interface ProfileInformationProps {
   initialFullName: string
   initialEmail: string
   initialCompany: string
+  initialRole: string
+  initialTeamName: string
   initialAvatarUrl: string | null
 }
 
@@ -22,6 +24,8 @@ export function ProfileInformation({
   initialFullName,
   initialEmail,
   initialCompany,
+  initialRole,
+  initialTeamName,
   initialAvatarUrl,
 }: ProfileInformationProps) {
   const supabase = createClient()
@@ -259,6 +263,20 @@ export function ProfileInformation({
           value={company}
           field="company"
           icon={Building2}
+          disabled
+        />
+        <FieldRow
+          label="Role"
+          value={initialRole.charAt(0).toUpperCase() + initialRole.slice(1)}
+          field="role"
+          icon={Shield}
+          disabled
+        />
+        <FieldRow
+          label="Team"
+          value={initialTeamName}
+          field="team"
+          icon={Users}
           disabled
         />
       </div>

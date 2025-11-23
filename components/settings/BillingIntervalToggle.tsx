@@ -56,7 +56,7 @@ export function BillingIntervalToggle({
           onClick={() => handleSwitch('annual')}
           disabled={disabled || switching}
           className={cn(
-            'px-4 py-2 rounded-md text-sm font-medium transition-all relative',
+            'px-4 py-2 rounded-md text-sm font-medium transition-all',
             currentInterval === 'annual'
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
               : 'text-white hover:text-white/80',
@@ -64,16 +64,18 @@ export function BillingIntervalToggle({
           )}
         >
           Annual
-          <span className={cn(
-            "absolute -top-1 -right-1 px-1.5 py-0.5 text-xs font-bold rounded-full whitespace-nowrap",
-            currentInterval === 'annual'
-              ? "bg-emerald-500 text-black"
-              : "bg-emerald-500/30 text-emerald-400 border border-emerald-500/50"
-          )}>
-            Save 15%
-          </span>
         </button>
       </div>
+
+      {currentInterval === 'monthly' && (
+        <Button
+          onClick={() => handleSwitch('annual')}
+          disabled={disabled || switching}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 h-auto"
+        >
+          Save 15% switching to an annual plan
+        </Button>
+      )}
 
       {switching && (
         <Loader2 className="w-4 h-4 animate-spin text-purple-400" />

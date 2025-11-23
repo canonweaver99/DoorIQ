@@ -15,8 +15,9 @@ function TeamSignupContent() {
   const searchParams = useSearchParams()
   const planType = searchParams.get('plan') || 'team' // 'starter' or 'team'
   const billingParam = searchParams.get('billing') // 'annual' or null
+  const isUpgrade = searchParams.get('upgrade') === 'true' // Upgrade flow - skip org name
   
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(isUpgrade ? 2 : 1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
@@ -91,7 +92,7 @@ function TeamSignupContent() {
 
   const roiData = calculateROI()
 
-  // Check authentication on mount
+  // Check authentication on mount and fetch organization name if upgrading
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -102,24 +103,45 @@ function TeamSignupContent() {
           setIsAuthenticated(false)
           setCheckingAuth(false)
           // Redirect to login with return URL
-          const returnUrl = encodeURIComponent(`/team/signup?plan=${planType}`)
+          const returnUrl = encodeURIComponent(`/team/signup?plan=${planType}${isUpgrade ? '&upgrade=true' : ''}`)
           router.push(`/auth/login?next=${returnUrl}`)
           return
         }
         
         setIsAuthenticated(true)
         setCheckingAuth(false)
+
+        // If upgrading, fetch existing organization name
+        if (isUpgrade) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('organization_id')
+            .eq('id', user.id)
+            .single()
+
+          if (userData?.organization_id) {
+            const { data: orgData } = await supabase
+              .from('organizations')
+              .select('name')
+              .eq('id', userData.organization_id)
+              .single()
+
+            if (orgData?.name) {
+              setOrganizationName(orgData.name)
+            }
+          }
+        }
       } catch (err) {
         console.error('Error checking authentication:', err)
         setIsAuthenticated(false)
         setCheckingAuth(false)
-        const returnUrl = encodeURIComponent(`/team/signup?plan=${planType}`)
+        const returnUrl = encodeURIComponent(`/team/signup?plan=${planType}${isUpgrade ? '&upgrade=true' : ''}`)
         router.push(`/auth/login?next=${returnUrl}`)
       }
     }
 
     checkAuth()
-  }, [planType, router])
+  }, [planType, router, isUpgrade])
 
   // Update seat count when plan type changes
   useEffect(() => {
@@ -148,7 +170,7 @@ function TeamSignupContent() {
   }
 
   const handleBack = () => {
-    if (step > 1) {
+    if (step > 1 && !(isUpgrade && step === 2)) {
       setStep(step - 1)
     }
   }
@@ -270,28 +292,30 @@ function TeamSignupContent() {
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
-          {[1, 2, 3].map((s) => (
-            <div key={s} className="flex items-center">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                  step >= s
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-700 text-gray-400'
-                }`}
-              >
-                {step > s ? <CheckCircle2 className="w-6 h-6" /> : s}
-              </div>
-              {s < 3 && (
+        {!isUpgrade && (
+          <div className="flex items-center justify-center mb-8">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className="flex items-center">
                 <div
-                  className={`w-16 h-1 mx-2 ${
-                    step > s ? 'bg-purple-600' : 'bg-gray-700'
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                    step >= s
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-700 text-gray-400'
                   }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+                >
+                  {step > s ? <CheckCircle2 className="w-6 h-6" /> : s}
+                </div>
+                {s < 3 && (
+                  <div
+                    className={`w-16 h-1 mx-2 ${
+                      step > s ? 'bg-purple-600' : 'bg-gray-700'
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Form Steps */}
         <div className="bg-gray-800 rounded-lg p-8 shadow-xl">
@@ -335,13 +359,24 @@ function TeamSignupContent() {
           {/* Step 2: Number of Seats */}
           {step === 2 && (
             <div className="space-y-6">
+              {isUpgrade && organizationName && (
+                <div className="mb-4 p-4 bg-purple-900/30 border border-purple-700 rounded-lg">
+                  <p className="text-sm text-purple-200 font-sans">
+                    <span className="font-semibold">Organization:</span> {organizationName}
+                  </p>
+                </div>
+              )}
               <div className="flex items-center gap-3 mb-4">
                 <Users className="w-8 h-8 text-purple-500" />
-                <h2 className="text-2xl font-space font-bold text-white">Team Size</h2>
+                <h2 className="text-2xl font-space font-bold text-white">
+                  {isUpgrade ? 'Add More Seats' : 'Team Size'}
+                </h2>
               </div>
               <div>
                 <Label htmlFor="seats" className="text-gray-300 font-sans">
-                  How many sales reps will be using DoorIQ?
+                  {isUpgrade 
+                    ? 'How many total seats do you need?'
+                    : 'How many sales reps will be using DoorIQ?'}
                 </Label>
                 <div className="mt-4">
                   <input
@@ -361,6 +396,35 @@ function TeamSignupContent() {
                 <p className="mt-4 text-sm text-gray-400 font-sans">
                   You can always add or remove seats later
                 </p>
+              </div>
+
+              {/* Pricing Display */}
+              <div className="mt-6 p-5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
+                <h3 className="text-lg font-space font-bold text-white mb-4 text-center">Pricing</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a]">
+                    <span className="text-sm text-gray-400 font-sans">Monthly</span>
+                    <span className="text-xl font-space font-bold text-white">
+                      ${monthlyCost.toLocaleString()}/mo
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-[#0a0a0a] rounded-lg border border-emerald-500/30">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-400 font-sans">Annual</span>
+                      <span className="px-2 py-0.5 text-xs font-bold bg-emerald-500/20 text-emerald-400 rounded-full">
+                        Save 15%
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xl font-space font-bold text-white block">
+                        ${Math.round(annualCost / 12).toLocaleString()}/mo
+                      </span>
+                      <span className="text-xs text-gray-500 font-sans">
+                        ${annualCost.toLocaleString()}/year
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* ROI Calculator - Matching Home Page */}
@@ -461,13 +525,15 @@ function TeamSignupContent() {
               </div>
 
               <div className="flex gap-4">
-                <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
-                >
-                  Back
-                </Button>
+                {!isUpgrade && (
+                  <Button
+                    onClick={handleBack}
+                    variant="outline"
+                    className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    Back
+                  </Button>
+                )}
                 <Button
                   onClick={handleNext}
                   className="flex-1 bg-purple-600 hover:bg-purple-700"
@@ -495,7 +561,18 @@ function TeamSignupContent() {
                 
                 {/* Billing Period Toggle */}
                 <div className="border-t border-gray-600 pt-4">
-                  <Label className="text-gray-300 mb-3 block font-sans">Billing Period</Label>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-gray-300 block font-sans">Billing Period</Label>
+                    {billingPeriod === 'monthly' && (
+                      <Button
+                        type="button"
+                        onClick={() => setBillingPeriod('annual')}
+                        className="bg-green-600 hover:bg-green-700 text-white text-sm font-sans font-medium px-4 py-1.5 h-auto"
+                      >
+                        Save 15% switching to an annual plan
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex gap-2 bg-gray-800 rounded-lg p-1">
                     <button
                       type="button"
@@ -517,7 +594,7 @@ function TeamSignupContent() {
                           : 'text-gray-400 hover:text-white'
                       }`}
                     >
-                      Annual <span className="text-xs text-green-400">(Save ${annualSavings.toLocaleString()})</span>
+                      Annual
                     </button>
                   </div>
                 </div>
@@ -568,14 +645,16 @@ function TeamSignupContent() {
               </div>
 
               <div className="flex gap-4">
-                <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
-                  disabled={loading}
-                >
-                  Back
-                </Button>
+                {!isUpgrade && (
+                  <Button
+                    onClick={handleBack}
+                    variant="outline"
+                    className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                    disabled={loading}
+                  >
+                    Back
+                  </Button>
+                )}
                 <Button
                   onClick={handleSubmit}
                   disabled={loading || !isAuthenticated}

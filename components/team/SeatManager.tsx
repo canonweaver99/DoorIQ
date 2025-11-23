@@ -7,6 +7,7 @@ interface SeatManagerProps {
   seatsUsed: number
   seatLimit: number
   monthlyCost: number
+  pricePerSeat: number
   onInviteClick: () => void
   onUpgradeClick?: () => void
 }
@@ -15,6 +16,7 @@ export function SeatManager({
   seatsUsed,
   seatLimit,
   monthlyCost,
+  pricePerSeat,
   onInviteClick,
   onUpgradeClick,
 }: SeatManagerProps) {
@@ -82,7 +84,7 @@ export function SeatManager({
       {/* Billing info */}
       <div className="text-sm text-gray-400">
         Current billing: <span className="text-white font-semibold">${monthlyCost.toLocaleString()}/month</span>
-        <span className="text-gray-500 ml-1">($69 × {seatLimit} seats)</span>
+        <span className="text-gray-500 ml-1">(${pricePerSeat} × {seatLimit} seats)</span>
       </div>
     </div>
   )

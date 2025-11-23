@@ -22,6 +22,7 @@ interface Member {
 interface Organization {
   seat_limit: number
   seats_used: number
+  plan_tier?: string
 }
 
 export default function TeamPage() {
@@ -169,7 +170,17 @@ export default function TeamPage() {
     }
   }
 
-  const monthlyCost = organization ? organization.seat_limit * 69 : 0
+  // Calculate monthly cost based on plan tier
+  const getPricePerSeat = (planTier?: string) => {
+    if (planTier === 'starter') return 99
+    if (planTier === 'team') return 69
+    if (planTier === 'enterprise') return 49
+    // Default to starter pricing if unknown
+    return 99
+  }
+  
+  const pricePerSeat = organization ? getPricePerSeat(organization.plan_tier) : 99
+  const monthlyCost = organization ? organization.seat_limit * pricePerSeat : 0
 
   if (loading) {
     return (
@@ -235,6 +246,7 @@ export default function TeamPage() {
               seatsUsed={organization.seats_used}
               seatLimit={organization.seat_limit}
               monthlyCost={monthlyCost}
+              pricePerSeat={pricePerSeat}
               onInviteClick={() => setShowInviteModal(true)}
               onUpgradeClick={() => router.push('/pricing')}
             />

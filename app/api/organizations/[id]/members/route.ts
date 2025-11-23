@@ -70,7 +70,7 @@ export async function GET(
     // Get organization details
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
-      .select('seat_limit, seats_used')
+      .select('seat_limit, seats_used, plan_tier')
       .eq('id', id)
       .single()
 

@@ -16,6 +16,8 @@ export default function AccountSettingsPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [company, setCompany] = useState('')
+  const [role, setRole] = useState('')
+  const [teamName, setTeamName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function AccountSettingsPage() {
 
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('full_name, avatar_url, organization_id')
+        .select('full_name, avatar_url, organization_id, role, team_id')
         .eq('id', user.id)
         .single()
 
@@ -49,6 +51,7 @@ export default function AccountSettingsPage() {
       if (userData) {
         setFullName(userData.full_name || '')
         setAvatarUrl(userData.avatar_url)
+        setRole(userData.role || 'rep')
         
         if (userData.organization_id) {
           const { data: orgData } = await supabase
@@ -59,6 +62,18 @@ export default function AccountSettingsPage() {
           
           if (orgData) {
             setCompany(orgData.name)
+            setTeamName(orgData.name) // Use organization name as team name
+          }
+        } else if (userData.team_id) {
+          // Fallback to team name if no organization
+          const { data: teamData } = await supabase
+            .from('teams')
+            .select('name')
+            .eq('id', userData.team_id)
+            .single()
+          
+          if (teamData) {
+            setTeamName(teamData.name)
           }
         }
       }
@@ -95,6 +110,8 @@ export default function AccountSettingsPage() {
         initialFullName={fullName}
         initialEmail={email}
         initialCompany={company}
+        initialRole={role}
+        initialTeamName={teamName}
         initialAvatarUrl={avatarUrl}
       />
 

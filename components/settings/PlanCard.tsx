@@ -61,7 +61,7 @@ export function PlanCard({
   return (
     <div
       className={cn(
-        'relative rounded-xl border-2 p-6 bg-card/60 dark:bg-black/60 transition-all',
+        'relative rounded-xl border-2 p-6 bg-card/60 dark:bg-black/60 transition-all flex flex-col',
         isCurrent
           ? 'border-emerald-500/50 shadow-lg shadow-emerald-500/10'
           : 'border-border/40 hover:border-border/60',
@@ -74,7 +74,7 @@ export function PlanCard({
         </Badge>
       )}
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 flex flex-col">
           {/* Header */}
           <div className="flex items-center gap-3">
             <div className={cn(
@@ -125,7 +125,7 @@ export function PlanCard({
 
         {/* CTA */}
         {(onSelect || onContactSales) && (
-          <div className="space-y-2">
+          <div className="space-y-2 mt-auto pt-4">
             <Button
               onClick={tier === 'enterprise' && onContactSales ? onContactSales : onSelect}
               disabled={disabled || isCurrent || isStarterUnavailable}

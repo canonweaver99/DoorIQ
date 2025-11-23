@@ -91,14 +91,39 @@ export default function KnowledgeBase() {
     try {
       // Load grading config
       const configRes = await fetch('/api/team/grading-config')
+      let loadedConfig: TeamGradingConfig | null = null
       if (configRes.ok) {
         const data = await configRes.json()
         if (data.config) {
-          setConfig({
-            ...config,
-            ...data.config
-          })
+          loadedConfig = data.config
         }
+      }
+
+      // Fetch organization name to prefill company name if not set
+      if (!loadedConfig?.company_name) {
+        try {
+          const orgRes = await fetch('/api/organizations/current')
+          if (orgRes.ok) {
+            const orgData = await orgRes.json()
+            if (orgData.organization?.name) {
+              // Prefill company_name with organization name if not already set
+              loadedConfig = {
+                ...loadedConfig,
+                company_name: orgData.organization.name
+              }
+            }
+          }
+        } catch (orgError) {
+          console.error('Error fetching organization:', orgError)
+        }
+      }
+
+      // Set config (either with existing company_name or prefilled from organization)
+      if (loadedConfig) {
+        setConfig({
+          ...config,
+          ...loadedConfig
+        })
       }
 
       // Load documents
