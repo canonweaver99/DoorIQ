@@ -665,6 +665,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           </motion.div>
         )}
       </div>
+      </div>
     </ErrorBoundary>
   )
 }

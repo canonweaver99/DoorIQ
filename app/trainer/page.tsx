@@ -781,14 +781,102 @@ function TrainerPageContent() {
     }
   }, [sessionId, router])
 
-  const endSession = useCallback(async (endReason?: string) => {
+  // Trigger grading automatically after door close video finishes
+  const triggerGradingAfterDoorClose = useCallback(async (sessionId: string) => {
+    console.log('🎯 Triggering automatic grading for session:', sessionId)
+    
+    try {
+      // Wait a moment for session data to be fully saved
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Check if transcript exists before grading
+      const sessionCheck = await fetch(`/api/session?id=${sessionId}`)
+      if (!sessionCheck.ok) {
+        throw new Error('Failed to fetch session')
+      }
+      
+      const sessionData = await sessionCheck.json()
+      if (!sessionData.full_transcript || sessionData.full_transcript.length === 0) {
+        console.warn('⚠️ No transcript found, waiting a bit longer...')
+        await new Promise(resolve => setTimeout(resolve, 2000))
+      }
+      
+      // Trigger grading (non-streaming endpoint)
+      console.log('🎯 Starting grading...')
+      const gradeResponse = await fetch('/api/grade/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      })
+      
+      if (!gradeResponse.ok) {
+        const errorText = await gradeResponse.text().catch(() => 'Unknown error')
+        throw new Error(`Grading failed: ${gradeResponse.status} - ${errorText}`)
+      }
+      
+      // Grading endpoint processes synchronously, but we'll poll to be safe
+      console.log('🎯 Grading request sent, polling for completion...')
+      let pollCount = 0
+      const maxPolls = 60 // 2 minutes max (poll every 2 seconds)
+      
+      const pollInterval = setInterval(async () => {
+        pollCount++
+        
+        try {
+          const checkResponse = await fetch(`/api/session?id=${sessionId}`)
+          if (checkResponse.ok) {
+            const session = await checkResponse.json()
+            const graded = Boolean(
+              session.overall_score ||
+              session.analytics?.scores?.overall ||
+              session.analytics?.graded_at
+            )
+            
+            if (graded) {
+              console.log('✅ Grading complete! Redirecting to analytics...')
+              clearInterval(pollInterval)
+              // Redirect to analytics page
+              window.location.href = `/analytics/${sessionId}`
+            } else if (pollCount >= maxPolls) {
+              console.warn('⚠️ Grading taking longer than expected, redirecting anyway...')
+              clearInterval(pollInterval)
+              // Redirect to analytics page (grading will continue in background)
+              window.location.href = `/analytics/${sessionId}`
+            }
+          }
+        } catch (error) {
+          console.error('Error polling for grading:', error)
+          if (pollCount >= maxPolls) {
+            clearInterval(pollInterval)
+            window.location.href = `/analytics/${sessionId}`
+          }
+        }
+      }, 2000) // Poll every 2 seconds
+      
+      // Fallback timeout
+      setTimeout(() => {
+        clearInterval(pollInterval)
+        console.log('⏰ Grading timeout reached, redirecting to analytics...')
+        window.location.href = `/analytics/${sessionId}`
+      }, 120000) // 2 minute timeout
+      
+    } catch (error) {
+      console.error('❌ Error triggering automatic grading:', error)
+      // Fallback: redirect to loading page which will handle grading
+      window.location.href = `/trainer/loading/${sessionId}`
+    }
+  }, [])
+
+  const endSession = useCallback(async (endReason?: string, skipRedirect: boolean = false) => {
     // Session ending (manual end - skip video, go straight to analytics/loading)
+    // skipRedirect: if true, don't redirect (used when auto-grading after door close)
     
     console.log('🔚 endSession called', { 
       sessionId, 
       duration, 
       transcriptLength: transcript.length,
-      endReason: endReason || 'manual'
+      endReason: endReason || 'manual',
+      skipRedirect
     })
     
     // Prevent multiple calls - but allow if we have sessionId even if sessionActive is false
@@ -798,7 +886,7 @@ function TrainerPageContent() {
     }
     
     // If we're already in door-closing state, don't process manual end
-    if (sessionState === 'door-closing') {
+    if (sessionState === 'door-closing' && !skipRedirect) {
       console.log('⚠️ Already in door-closing state, ignoring manual end')
       return
     }
@@ -946,21 +1034,25 @@ function TrainerPageContent() {
           console.log('⏳ Database write delay completed, proceeding with redirect')
         }
         
-        // Now redirect after save completes
-        // For manual ends, go to loading page
-        const redirectUrl = `/trainer/loading/${sessionId}`
-        console.log('🚀 Redirecting to loading page:', redirectUrl)
-        
-        // Use window.location.href for reliable redirect (blocking)
-        window.location.href = redirectUrl
-        
-        // Fallback redirect if window.location fails
-        setTimeout(() => {
-          if (window.location.pathname !== redirectUrl) {
-            console.log('⚠️ Primary redirect failed, trying router.push')
-            router.push(redirectUrl)
-          }
-        }, 100)
+        // Now redirect after save completes (unless skipRedirect is true)
+        if (!skipRedirect) {
+          // For manual ends, go to loading page
+          const redirectUrl = `/trainer/loading/${sessionId}`
+          console.log('🚀 Redirecting to loading page:', redirectUrl)
+          
+          // Use window.location.href for reliable redirect (blocking)
+          window.location.href = redirectUrl
+          
+          // Fallback redirect if window.location fails
+          setTimeout(() => {
+            if (window.location.pathname !== redirectUrl) {
+              console.log('⚠️ Primary redirect failed, trying router.push')
+              router.push(redirectUrl)
+            }
+          }, 100)
+        } else {
+          console.log('⏸️ Skipping redirect (will be handled by grading trigger)')
+        }
       } catch (error) {
         logger.error('Error ending session', error)
         console.error('❌ Error in endSession, attempting redirect anyway:', error)
@@ -1161,7 +1253,7 @@ function TrainerPageContent() {
     // CRITICAL: Capture transcript state BEFORE setting session inactive
     // This ensures we have the transcript even if state gets cleared
     const currentTranscript = transcript
-    console.log('🔚 Door closing sequence complete, preparing to end session...', {
+    console.log('🔚 Door closing sequence complete, preparing to end session and start grading...', {
       transcriptLength: currentTranscript.length,
       reason,
       sessionId
@@ -1171,12 +1263,22 @@ function TrainerPageContent() {
     // This ensures the video element stays mounted and can play the closing animation
     // The video will be hidden/unmounted when endSession is called
     
-    // End the session after door closing sequence completes
-    // Pass transcript explicitly to avoid closure issues
+    // End the session first (saves transcript and voice analysis)
+    // Pass skipRedirect=true so we can trigger grading before redirecting
     console.log('🔚 Calling endSession after door closing sequence...')
-    endSession(reason).catch((error) => {
-      console.error('❌ Error in endSession from handleDoorClosingSequence:', error)
-    })
+    try {
+      await endSession(reason, true) // skipRedirect = true
+      
+      // After session is saved, trigger grading automatically
+      console.log('🎯 Starting automatic grading after door close video...')
+      await triggerGradingAfterDoorClose(sessionId!)
+    } catch (error) {
+      console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
+      // Fallback: redirect to loading page which will trigger grading
+      if (sessionId) {
+        window.location.href = `/trainer/loading/${sessionId}`
+      }
+    }
     
     // Set session inactive AFTER endSession is called (which will handle cleanup)
     // This ensures the closing video can finish playing
