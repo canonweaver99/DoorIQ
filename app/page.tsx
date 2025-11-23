@@ -675,20 +675,20 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
               />
               
               {/* ROI Calculator Card */}
-              <div className="bg-gradient-to-br from-card via-card/95 to-card dark:from-black dark:via-slate-950 dark:to-black border-2 border-border/40 dark:border-white/40 rounded-xl p-4 sm:p-5 md:p-6 relative z-10 shadow-2xl shadow-purple-500/10">
+              <div className="bg-gradient-to-br from-card via-card/95 to-card dark:from-black dark:via-slate-950 dark:to-black border-2 border-border/40 dark:border-white/40 rounded-xl p-5 sm:p-6 md:p-7 relative z-10 shadow-2xl shadow-purple-500/10">
               {/* ROI Header */}
-              <div className="text-center mb-4">
-                <h3 className="text-base sm:text-lg md:text-xl font-black text-foreground mb-1.5 tracking-tight font-space" style={{ letterSpacing: '-0.02em' }}>
+              <div className="text-center mb-5">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-black text-foreground mb- mb-2 tracking-tight font-space" style={{ letterSpacing: '-0.02em' }}>
                   Calculate Your ROI — When each rep closes just 1 extra deal per month
                 </h3>
               </div>
 
               {/* Inputs Side by Side */}
-              <div className="mb-4">
+              <div className="mb-5">
                 <div className="grid grid-cols-2 gap-4">
                   {/* Number of Sales Reps */}
                   <div>
-                    <label className="block text-xs sm:text-sm font-bold text-foreground mb-2 text-center tracking-wide font-space">
+                    <label className="block text-sm font-bold text-foreground mb-2.5 text-center tracking-wide font-space">
                       Number of Sales Reps:
                     </label>
                     <div className="text-center">
@@ -701,15 +701,15 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                           const value = parseInt(e.target.value) || 5
                           setNumReps(Math.max(5, Math.min(500, value)))
                         }}
-                        className="inline-block px-3 py-1.5 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-base sm:text-lg font-bold font-space text-center w-20 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
+                        className="inline-block px-3.5 py-2 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-lg sm:text-xl font-bold font-space text-center w-24 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
                       />
-                      <span className="text-foreground text-sm ml-1.5 font-sans">reps</span>
+                      <span className="text-foreground text-sm sm:text-base ml-2 font-sans">reps</span>
                     </div>
                   </div>
 
                   {/* Value per Extra Deal */}
                   <div>
-                    <label className="block text-xs sm:text-sm font-bold text-foreground mb-2 text-center tracking-wide font-space">
+                    <label className="block text-sm font-bold text-foreground mb-2.5 text-center tracking-wide font-space">
                       Value per Extra Deal ($):
                     </label>
                     <div className="text-center">
@@ -728,7 +728,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                             setRoiDealValue(500)
                           }
                         }}
-                        className="inline-block px-3 py-1.5 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-base sm:text-lg font-bold font-space text-center w-28 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
+                        className="inline-block px-3.5 py-2 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-lg sm:text-xl font-bold font-space text-center w-32 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
                       />
                     </div>
                   </div>
@@ -736,98 +736,98 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
               </div>
 
               {/* Pricing Cards - Monthly and Annual */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-5">
                 {/* Monthly Card */}
-                <div className="relative w-full rounded-lg border border-border/30 dark:border-white/30 px-2.5 sm:px-3 pt-2 pb-2 bg-card/60 dark:bg-black/60">
-                  <h3 className="text-[10px] sm:text-xs font-semibold text-foreground mb-1.5 font-space">Monthly</h3>
+                <div className="relative w-full rounded-lg border border-border/30 dark:border-white/30 px-3 sm:px-4 pt-2.5 pb-2.5 bg-card/60 dark:bg-black/60">
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-2 font-space">Monthly</h3>
                   <div className="text-foreground flex items-end gap-0.5">
-                    <span className="text-xs">$</span>
+                    <span className="text-xs sm:text-sm">$</span>
                     <motion.span 
                       key={pricing.perRepRate}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 0.3 }}
-                      className="text-foreground -mb-0.5 text-base sm:text-lg font-extrabold tracking-tighter font-space"
+                      className="text-foreground -mb-0.5 text-lg sm:text-xl font-extrabold tracking-tighter font-space"
                     >
                       {pricing.perRepRate.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </motion.span>
-                    <span className="text-[10px]">/rep</span>
+                    <span className="text-[10px] sm:text-xs">/rep</span>
                   </div>
-                  <div className="text-[9px] sm:text-[10px] text-foreground/70 font-semibold font-sans mt-0.5">
+                  <div className="text-[10px] sm:text-xs text-foreground/70 font-semibold font-sans mt-1">
                     ${pricing.monthlyPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month total
                   </div>
                 </div>
 
                 {/* Annual Card */}
-                <div className="relative w-full rounded-lg border-2 border-emerald-500/50 px-2.5 sm:px-3 pt-2 pb-2 overflow-hidden bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
+                <div className="relative w-full rounded-lg border-2 border-emerald-500/50 px-3 sm:px-4 pt-2.5 pb-2.5 overflow-hidden bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
                   {/* Green Triangle Corner */}
-                  <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[20px] border-l-transparent border-t-[20px] border-t-emerald-500"></div>
-                  <h3 className="text-[10px] sm:text-xs font-semibold text-foreground mb-1.5 font-space flex items-center gap-1">
+                  <div className="absolute top-0 right-0 z-20 w-0 h-0 border-l-[24px] border-l-transparent border-t-[24px] border-t-emerald-500"></div>
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-2 font-space flex items-center gap-1">
                     Annual
-                    <span className="text-[8px] px-1 py-0.5 bg-emerald-500 text-black font-bold rounded">2 months free</span>
+                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 bg-emerald-500 text-black font-bold rounded">2 months free</span>
                   </h3>
                   <div className="text-foreground flex items-end gap-0.5">
-                    <span className="text-xs">$</span>
+                    <span className="text-xs sm:text-sm">$</span>
                     <motion.span 
                       key={pricing.annualPerRepRate}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 0.3 }}
-                      className="text-foreground -mb-0.5 text-base sm:text-lg font-extrabold tracking-tighter font-space"
+                      className="text-foreground -mb-0.5 text-lg sm:text-xl font-extrabold tracking-tighter font-space"
                     >
                       {pricing.annualPerRepRate.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </motion.span>
-                    <span className="text-[10px]">/rep</span>
+                    <span className="text-[10px] sm:text-xs">/rep</span>
                   </div>
-                  <div className="text-[9px] sm:text-[10px] text-emerald-600 dark:text-emerald-300 font-semibold font-sans mt-0.5">
+                  <div className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-300 font-semibold font-sans mt-1">
                     ${pricing.annualTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/year total
                   </div>
                 </div>
               </div>
 
               {/* ROI Results - Enhanced (Monthly) */}
-              <div className="space-y-2 border-t-2 border-border/30 dark:border-white/30 pt-3 pb-1">
+              <div className="space-y-2.5 border-t-2 border-border/30 dark:border-white/30 pt-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-foreground text-xs sm:text-sm font-medium font-sans">Extra Revenue:</span>
+                  <span className="text-foreground text-sm font-medium font-sans">Extra Revenue:</span>
                   <div className="flex items-center gap-2">
                     <motion.span 
                       key={Math.round(roiData.extraRevenue)}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 0.3 }}
-                      className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-300 text-sm sm:text-base font-bold font-space"
+                      className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-300 text-base sm:text-lg font-bold font-space"
                     >
                       +${Math.round(roiData.extraRevenue).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                     </motion.span>
                   </div>
                 </div>
-                <div className="flex justify-end -mt-1">
+                <div className="flex justify-end -mt-1.5">
                   <Link
                     href={`/pricing?reps=${numReps}`}
-                    className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium font-sans transition-colors underline decoration-emerald-400/50 hover:decoration-emerald-300"
+                    className="text-xs text-emerald-400 hover:text-emerald-300 font-medium font-sans transition-colors underline decoration-emerald-400/50 hover:decoration-emerald-300"
                   >
                     See calc
                   </Link>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-foreground text-xs sm:text-sm font-medium font-sans">DoorIQ Cost:</span>
-                  <span className="text-red-500 dark:text-red-400 text-sm sm:text-base font-bold font-space">
+                  <span className="text-foreground text-sm font-medium font-sans">DoorIQ Cost:</span>
+                  <span className="text-red-500 dark:text-red-400 text-base sm:text-lg font-bold font-space">
                     -${roiData.monthlyCost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                   </span>
                 </div>
-                <div className="border-t-2 border-emerald-500/40 pt-2 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg px-2.5 py-1.5 -mx-2.5 sm:-mx-3">
-                  <span className="text-foreground text-sm font-semibold font-sans">Net Profit:</span>
+                <div className="border-t-2 border-emerald-500/40 pt-3 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg px-3 py-2 -mx-3 sm:-mx-4">
+                  <span className="text-foreground text-sm sm:text-base font-semibold font-sans">Net Profit:</span>
                   <motion.div
                     key={Math.round(roiData.netProfit)}
                     initial={{ scale: 1 }}
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 0.3 }}
-                    className="flex flex-col items-end gap-0.5"
+                    className="flex flex-col items-end gap-1"
                   >
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400 text-lg sm:text-xl md:text-2xl font-black font-space">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400 text-xl sm:text-2xl md:text-3xl font-black font-space">
                       ${Math.round(roiData.netProfit).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month
                     </span>
-                    <span className="text-emerald-400 text-xs font-semibold font-sans">
+                    <span className="text-emerald-400 text-xs sm:text-sm font-semibold font-sans">
                       {roiData.roiMultiplier.toFixed(1)}x ROI ({Math.round(roiData.roi)}%)
                     </span>
                   </motion.div>
