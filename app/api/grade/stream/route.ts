@@ -103,29 +103,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServiceSupabaseClient()
     
-    // Check if session was recently ended - wait briefly for voice_analysis to be saved
-    const sessionEndedAt = await (async () => {
-      const { data, error } = await supabase
-        .from('live_sessions')
-        .select('ended_at')
-        .eq('id', sessionId)
-        .single()
-      return { endedAt: data?.ended_at, error }
-    })()
-    
-    // If session was recently ended (< 3 seconds ago), wait briefly for voice_analysis to be saved
-    if (sessionEndedAt.endedAt) {
-      const endedAtTime = new Date(sessionEndedAt.endedAt).getTime()
-      const secondsSinceEnd = (Date.now() - endedAtTime) / 1000
-      if (secondsSinceEnd < 3) {
-        logger.info('Session recently ended - waiting briefly for voice_analysis to be saved (streaming)', {
-          secondsSinceEnd,
-          waitTime: Math.min(2000, (3 - secondsSinceEnd) * 1000)
-        })
-        await new Promise(resolve => setTimeout(resolve, Math.min(2000, (3 - secondsSinceEnd) * 1000)))
-      }
-    }
-    
     // Get session and transcript - simple and direct
     const { data: session, error: sessionError } = await supabase
       .from('live_sessions')
@@ -137,6 +114,21 @@ export async function POST(request: NextRequest) {
       return new Response('Session not found', { status: 404 })
     }
     
+    const sessionData = session as any
+    
+    // Check if session was recently ended - wait briefly for voice_analysis to be saved
+    if (sessionData.ended_at) {
+      const endedAtTime = new Date(sessionData.ended_at).getTime()
+      const secondsSinceEnd = (Date.now() - endedAtTime) / 1000
+      if (secondsSinceEnd < 3) {
+        logger.info('Session recently ended - waiting briefly for voice_analysis to be saved (streaming)', {
+          secondsSinceEnd,
+          waitTime: Math.min(2000, (3 - secondsSinceEnd) * 1000)
+        })
+        await new Promise(resolve => setTimeout(resolve, Math.min(2000, (3 - secondsSinceEnd) * 1000)))
+      }
+    }
+    
     // Fetch fresh analytics right before grading to ensure voice_analysis exists
     const { data: freshAnalytics } = await supabase
       .from('live_sessions')
@@ -145,15 +137,16 @@ export async function POST(request: NextRequest) {
       .single()
     
     // Merge fresh analytics if it has voice_analysis that we don't have
-    if (freshAnalytics?.analytics?.voice_analysis && !session.analytics?.voice_analysis) {
+    const freshAnalyticsData = freshAnalytics as any
+    if (freshAnalyticsData?.analytics?.voice_analysis && !sessionData.analytics?.voice_analysis) {
       logger.info('✅ Found voice_analysis in fresh fetch - merging into session data (streaming)', {
-        voiceAnalysisKeys: Object.keys(freshAnalytics.analytics.voice_analysis || {})
+        voiceAnalysisKeys: Object.keys(freshAnalyticsData.analytics.voice_analysis || {})
       })
-      session.analytics = session.analytics || {}
-      session.analytics.voice_analysis = freshAnalytics.analytics.voice_analysis
+      sessionData.analytics = sessionData.analytics || {}
+      sessionData.analytics.voice_analysis = freshAnalyticsData.analytics.voice_analysis
     }
     
-    let transcript = (session as any).full_transcript
+    let transcript = sessionData.full_transcript
     const transcriptLength = Array.isArray(transcript) ? transcript.length : 0
     
     // More aggressive sampling for long transcripts to reduce token count
@@ -185,8 +178,8 @@ export async function POST(request: NextRequest) {
       hasTranscript: !!transcript,
       transcriptType: Array.isArray(transcript) ? 'array' : typeof transcript,
       transcriptLength: Array.isArray(transcript) ? transcript.length : 'N/A',
-      sessionEndedAt: (session as any).ended_at,
-      sessionDuration: (session as any).duration_seconds
+      sessionEndedAt: sessionData.ended_at,
+      sessionDuration: sessionData.duration_seconds
     })
     
     if (!transcript || !Array.isArray(transcript) || transcript.length === 0) {
@@ -206,14 +199,14 @@ export async function POST(request: NextRequest) {
     const { data: userProfile } = await supabase
       .from('users')
       .select('full_name')
-      .eq('id', (session as any).user_id)
+      .eq('id', sessionData.user_id)
       .single()
     
     const salesRepName = (userProfile as any)?.full_name || 'Sales Rep'
-    const customerName = (session as any).agent_name || 'Homeowner'
+    const customerName = sessionData.agent_name || 'Homeowner'
 
     // Pre-compute objective metrics before LLM call (faster than asking LLM to calculate)
-    const durationSeconds = (session as any).duration_seconds || 0
+    const durationSeconds = sessionData.duration_seconds || 0
     const precomputedFillerCount = transcript.reduce((sum: number, entry: any) => {
       const text = entry.text || entry.message || ''
       if (entry.speaker === 'rep' || entry.speaker === 'user') {
@@ -305,12 +298,32 @@ Return ONLY valid JSON.` },
     // Create streaming response
     const stream = new ReadableStream({
       async start(controller) {
+        let heartbeatInterval: NodeJS.Timeout | null = null
+        let lastChunkTime = Date.now()
+        
         try {
           let accumulatedContent = ''
           let lastSentSections: any = {}
           
           // Send initial status
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', message: 'Starting AI analysis...' })}\n\n`))
+          
+          // Start heartbeat to keep connection alive (every 15 seconds)
+          heartbeatInterval = setInterval(() => {
+            try {
+              const now = Date.now()
+              // Only send heartbeat if we haven't received data in the last 10 seconds
+              if (now - lastChunkTime > 10000) {
+                controller.enqueue(encoder.encode(`: heartbeat\n\n`))
+              }
+            } catch (e) {
+              // Connection closed, clear interval
+              if (heartbeatInterval) {
+                clearInterval(heartbeatInterval)
+                heartbeatInterval = null
+              }
+            }
+          }, 15000)
           
           const completion = await openai.chat.completions.create({
             model: "gpt-4o", // Faster model for JSON mode - 2-3x faster than gpt-4o-mini
@@ -330,6 +343,8 @@ Return ONLY valid JSON.` },
             if (Date.now() - streamStartTime > STREAM_TIMEOUT) {
               throw new Error('OpenAI streaming timeout after 30 seconds')
             }
+            
+            lastChunkTime = Date.now()
             const content = chunk.choices[0]?.delta?.content || ''
             accumulatedContent += content
             
@@ -347,6 +362,12 @@ Return ONLY valid JSON.` },
                 lastSentSections[key] = value
               }
             }
+          }
+          
+          // Clear heartbeat interval when streaming completes
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval)
+            heartbeatInterval = null
           }
           
           // Parse final complete response
@@ -419,7 +440,7 @@ Return ONLY valid JSON.` },
           
           // Preserve existing voice_analysis if it exists
           // CRITICAL: Extract voice_analysis FIRST before any merging
-          const existingAnalytics = (session as any).analytics || {}
+          const existingAnalytics = sessionData.analytics || {}
           const existingVoiceAnalysis = existingAnalytics.voice_analysis
           
           logger.info('Voice analysis preservation check (streaming)', {
@@ -529,6 +550,37 @@ Return ONLY valid JSON.` },
             logger.info('ℹ️ No voice_analysis to preserve in this streaming grading update')
           }
 
+          // Queue line-by-line grading in background using Supabase (don't wait for it)
+          try {
+            const { addLineRatingJob } = await import('@/lib/queue/supabase-queue')
+            const { splitTranscriptIntoBatches } = await import('@/lib/queue/supabase-worker')
+            
+            const batches = splitTranscriptIntoBatches(transcript, 5)
+            const totalBatches = batches.length
+            
+            if (totalBatches > 0) {
+              // Queue batches asynchronously
+              batches.forEach((batch, batchIndex) => {
+                addLineRatingJob({
+                  sessionId,
+                  transcript: batch,
+                  batchIndex,
+                  batchSize: batch.length,
+                  salesRepName,
+                  customerName,
+                  totalBatches,
+                }).catch((err) => {
+                  logger.error('Failed to queue line rating batch', err, { sessionId, batchIndex })
+                })
+              })
+              
+              logger.info('Line-by-line grading queued in Supabase', { sessionId, totalBatches })
+            }
+          } catch (queueError) {
+            // Don't fail the main grading if queue fails
+            logger.error('Failed to queue line-by-line grading', queueError, { sessionId })
+          }
+
           // Send completion
           const totalTime = Date.now() - startTime
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
@@ -540,21 +592,53 @@ Return ONLY valid JSON.` },
           controller.close()
           
         } catch (error: any) {
+          // Clear heartbeat interval on error
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval)
+            heartbeatInterval = null
+          }
+          
           logger.error('Streaming grading error', error, {
             errorMessage: error?.message,
             errorStack: error?.stack,
+            errorType: error?.name,
             sessionId
           })
           
+          // Determine error type for better handling
+          let errorType = 'unknown'
+          let userMessage = error?.message || 'Unknown error occurred during streaming'
+          
+          if (error?.message?.includes('timeout') || error?.message?.includes('Timeout')) {
+            errorType = 'timeout'
+            userMessage = 'Request timed out. Please try again.'
+          } else if (error?.message?.includes('network') || error?.code === 'ECONNRESET' || error?.code === 'ETIMEDOUT') {
+            errorType = 'network'
+            userMessage = 'Network error. Please check your connection and try again.'
+          } else if (error?.message?.includes('parse') || error?.name === 'SyntaxError') {
+            errorType = 'parse'
+            userMessage = 'Failed to parse response. Please try again.'
+          } else if (error?.status || error?.response) {
+            errorType = 'server'
+            userMessage = 'Server error occurred. Please try again later.'
+          }
+          
           // Send detailed error information
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-            type: 'error', 
-            message: error?.message || 'Unknown error occurred during streaming',
-            details: {
-              errorType: error?.name || 'Unknown',
-              sessionId
-            }
-          })}\n\n`))
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+              type: 'error', 
+              message: userMessage,
+              errorType,
+              details: {
+                errorType: error?.name || 'Unknown',
+                sessionId,
+                timestamp: new Date().toISOString()
+              }
+            })}\n\n`))
+          } catch (enqueueError) {
+            // Stream may already be closed
+            logger.error('Failed to enqueue error message', enqueueError)
+          }
           
           // Ensure stream is closed
           try {
@@ -566,20 +650,52 @@ Return ONLY valid JSON.` },
       }
     })
 
+    // Get origin from request for CORS
+    const origin = request.headers.get('origin') || request.headers.get('referer') || '*'
+    
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
+        'Access-Control-Allow-Origin': origin === '*' ? '*' : origin,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     })
 
   } catch (error: any) {
     logger.error('Stream setup error', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    const origin = request.headers.get('origin') || request.headers.get('referer') || '*'
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      errorType: error?.name || 'Unknown',
+      timestamp: new Date().toISOString()
+    }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': origin === '*' ? '*' : origin,
+        'Access-Control-Allow-Credentials': 'true',
+      }
     })
   }
+}
+
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || request.headers.get('referer') || '*'
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin === '*' ? '*' : origin,
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    },
+  })
 }
 

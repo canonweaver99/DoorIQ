@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Loader2, TrendingUp, MessageSquare, Target, Lightbulb, Zap } from 'lucide-react'
+import { CheckCircle2, Loader2, TrendingUp, MessageSquare, Target, Lightbulb, Zap, Wifi, WifiOff } from 'lucide-react'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 interface StreamingSection {
   session_summary?: any
@@ -17,6 +18,9 @@ interface StreamingGradingDisplayProps {
   sessionId: string
   onComplete: () => void
 }
+
+type ConnectionState = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'retrying' | 'failed'
+type ErrorType = 'network' | 'timeout' | 'parse' | 'server' | 'unknown'
 
 const SECTION_ICONS: { [key: string]: any } = {
   session_summary: TrendingUp,
@@ -41,11 +45,17 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   const [currentSection, setCurrentSection] = useState<string>('')
   const [status, setStatus] = useState('AI is analyzing your conversation...')
   const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<ErrorType | null>(null)
   const [isComplete, setIsComplete] = useState(false)
+  const [connectionState, setConnectionState] = useState<ConnectionState>('idle')
+  const [retryCount, setRetryCount] = useState(0)
   const [startTime] = useState(Date.now())
   const [elapsedTime, setElapsedTime] = useState(0)
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const MAX_RETRIES = 3
+  const INITIAL_RETRY_DELAY = 1000 // 1 second
 
   useEffect(() => {
     // Update elapsed time every second
@@ -116,7 +126,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
     return false
   }, [sessionId])
 
-  const connectToStream = useCallback(async () => {
+  const connectToStream = useCallback(async (isRetry = false) => {
     // Store current sessionId to validate against
     const currentSessionId = sessionId
     
@@ -135,15 +145,32 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       abortControllerRef.current = null
     }
     
-    // Reset state for new session
-    setSections({})
-    setCompletedSections(new Set())
-    setCurrentSection('')
+    // Clear any pending retry timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+      retryTimeoutRef.current = null
+    }
+    
+    // Reset state for new session (but preserve retry count on retry)
+    if (!isRetry) {
+      setSections({})
+      setCompletedSections(new Set())
+      setCurrentSection('')
+      setRetryCount(0)
+    }
+    
     setError(null)
+    setErrorType(null)
     setIsComplete(false)
     
     try {
-      setStatus('Preparing AI analysis...')
+      if (isRetry) {
+        setConnectionState('retrying')
+        setStatus(`Reconnecting... (Attempt ${retryCount + 1}/${MAX_RETRIES})`)
+      } else {
+        setConnectionState('connecting')
+        setStatus('Preparing AI analysis...')
+      }
       
       // Wait for transcript to be available before starting grading
       const transcriptReady = await waitForTranscript()
@@ -157,6 +184,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         return
       }
       
+      setConnectionState('connecting')
       setStatus('AI is analyzing your conversation...')
       
       // Create abort controller for this request
@@ -172,8 +200,18 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error')
-        throw new Error(`Failed to start streaming: ${response.status} ${response.statusText} - ${errorText}`)
+        let errorType: ErrorType = 'server'
+        if (response.status >= 500) {
+          errorType = 'server'
+        } else if (response.status === 408 || response.status === 504) {
+          errorType = 'timeout'
+        } else if (response.status >= 400 && response.status < 500) {
+          errorType = 'server'
+        }
+        throw { message: `Failed to start streaming: ${response.status} ${response.statusText} - ${errorText}`, errorType }
       }
+      
+      setConnectionState('connected')
 
         const reader = response.body?.getReader()
         const decoder = new TextDecoder()
@@ -253,8 +291,23 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
                   case 'error':
                     if (currentSessionId === sessionId) {
-                      setError(data.message)
+                      const errorType = (data.errorType || 'unknown') as ErrorType
+                      setError(data.message || 'An error occurred')
+                      setErrorType(errorType)
+                      setConnectionState('disconnected')
                       setStatus('Error occurred')
+                      
+                      // Auto-retry on network/timeout errors if under max retries
+                      if ((errorType === 'network' || errorType === 'timeout') && retryCount < MAX_RETRIES) {
+                        const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount) // Exponential backoff
+                        setStatus(`Retrying in ${delay / 1000}s...`)
+                        retryTimeoutRef.current = setTimeout(() => {
+                          setRetryCount(prev => prev + 1)
+                          connectToStream(true)
+                        }, delay)
+                      } else {
+                        setConnectionState('failed')
+                      }
                     }
                     break
                 }
@@ -277,15 +330,33 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         
         console.error('Streaming error:', err)
         const errorMessage = err?.message || 'Unknown error occurred'
+        const detectedErrorType: ErrorType = err?.errorType || 
+          (errorMessage.includes('timeout') || errorMessage.includes('Timeout') ? 'timeout' :
+          errorMessage.includes('network') || errorMessage.includes('Network') || err?.code === 'ECONNRESET' ? 'network' :
+          errorMessage.includes('parse') || err?.name === 'SyntaxError' ? 'parse' :
+          err?.status || err?.response ? 'server' : 'unknown')
+        
+        setErrorType(detectedErrorType)
+        setConnectionState('disconnected')
         
         // Only set error if sessionId hasn't changed
         if (currentSessionId === sessionId) {
-          // Check if it's a timeout or network error - fallback to non-streaming
-          const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout') || 
-                           errorMessage.includes('network') || errorMessage.includes('Network')
+          // Auto-retry logic with exponential backoff
+          if ((detectedErrorType === 'network' || detectedErrorType === 'timeout') && retryCount < MAX_RETRIES) {
+            const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount)
+            setStatus(`Connection error. Retrying in ${delay / 1000}s... (${retryCount + 1}/${MAX_RETRIES})`)
+            setConnectionState('retrying')
+            
+            retryTimeoutRef.current = setTimeout(() => {
+              setRetryCount(prev => prev + 1)
+              connectToStream(true)
+            }, delay)
+            return
+          }
           
-          if (isTimeout) {
-            console.log('⏱️ Streaming timed out, falling back to non-streaming grading...')
+          // If retries exhausted or non-retryable error, try fallback or show error
+          if (detectedErrorType === 'timeout' && retryCount >= MAX_RETRIES) {
+            console.log('⏱️ Streaming timed out after retries, falling back to non-streaming grading...')
             setStatus('Switching to standard grading mode...')
             
             // Fallback to non-streaming grading
@@ -316,16 +387,17 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                 return
               }
               setError('Grading timed out. Please try again or check back later.')
+              setErrorType('timeout')
               setStatus('Grading timeout')
+              setConnectionState('failed')
             }
           } else if (errorMessage.includes('No transcript to grade')) {
             setError('Transcript not ready yet. This usually means the session is still being saved. Click retry to check again.')
+            setErrorType('server')
+            setConnectionState('failed')
           } else {
             setError(errorMessage)
-          }
-          
-          if (!isTimeout) {
-            setStatus('Error connecting to AI')
+            setConnectionState('failed')
           }
         }
       } finally {
@@ -337,13 +409,17 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           abortControllerRef.current = null
         }
       }
-  }, [sessionId, waitForTranscript, onComplete])
+  }, [sessionId, waitForTranscript, onComplete, retryCount])
 
   useEffect(() => {
     connectToStream()
     
     // Cleanup on unmount or sessionId change
     return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
       if (readerRef.current) {
         readerRef.current.cancel().catch(() => {})
         readerRef.current = null
@@ -357,11 +433,14 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   
   const handleRetry = useCallback(() => {
     setError(null)
+    setErrorType(null)
     setSections({})
     setCompletedSections(new Set())
     setCurrentSection('')
     setIsComplete(false)
-    connectToStream()
+    setRetryCount(0)
+    setConnectionState('idle')
+    connectToStream(false)
   }, [connectToStream])
 
   const formatTime = (ms: number) => {
@@ -381,7 +460,12 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-6">
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('StreamingGradingDisplay error:', error, errorInfo)
+      }}
+    >
+      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
           {/* Main Status */}
@@ -405,19 +489,58 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             <span>{formatTime(elapsedTime)} elapsed</span>
             <span>•</span>
             <span>{getSectionProgress()}% complete</span>
+            <span>•</span>
+            <div className="flex items-center gap-1">
+              {connectionState === 'connected' ? (
+                <>
+                  <Wifi className="w-3 h-3 text-emerald-400" />
+                  <span className="text-emerald-400">Connected</span>
+                </>
+              ) : connectionState === 'connecting' || connectionState === 'retrying' ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin text-purple-400" />
+                  <span className="text-purple-400">
+                    {connectionState === 'retrying' ? 'Retrying...' : 'Connecting...'}
+                  </span>
+                </>
+              ) : connectionState === 'disconnected' ? (
+                <>
+                  <WifiOff className="w-3 h-3 text-yellow-400" />
+                  <span className="text-yellow-400">Disconnected</span>
+                </>
+              ) : null}
+            </div>
           </div>
 
           {error && (
             <div className="mt-4 space-y-3">
-              <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm font-sans">
-                {error}
+              <div className={`px-4 py-3 rounded-xl text-sm font-sans border ${
+                errorType === 'timeout' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
+                errorType === 'network' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' :
+                'bg-red-500/10 border-red-500/20 text-red-400'
+              }`}>
+                <div className="font-medium mb-1">
+                  {errorType === 'timeout' ? '⏱️ Connection Timeout' :
+                   errorType === 'network' ? '🌐 Network Error' :
+                   errorType === 'parse' ? '📄 Parse Error' :
+                   errorType === 'server' ? '🔧 Server Error' :
+                   '❌ Error'}
+                </div>
+                <div>{error}</div>
+                {retryCount > 0 && (
+                  <div className="mt-2 text-xs opacity-75">
+                    Retry attempts: {retryCount}/{MAX_RETRIES}
+                  </div>
+                )}
               </div>
-              <button
-                onClick={handleRetry}
-                className="w-full px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors font-space"
-              >
-                Retry Connection
-              </button>
+              {connectionState === 'failed' && (
+                <button
+                  onClick={handleRetry}
+                  className="w-full px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors font-space"
+                >
+                  Retry Connection
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -542,7 +665,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           </motion.div>
         )}
       </div>
-    </div>
+    </ErrorBoundary>
   )
 }
 

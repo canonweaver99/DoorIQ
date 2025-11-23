@@ -1,59 +1,85 @@
-# Pre-Push to GitHub Checklist ✅
+# Pre-Push Checklist: Improved Grading System
 
-## Security Check
+## ✅ Code Implementation Complete
 
-### ✅ Sensitive Files Protected
-- ✅ `STRIPE_LIVE_KEYS.md` - Added to `.gitignore`
-- ✅ `PRODUCTION_ENV_VARS.md` - Added to `.gitignore`
-- ✅ `STRIPE_COMPLETE_CONFIG.md` - Added to `.gitignore`
-- ✅ `.env*` files - Already in `.gitignore`
-- ✅ No hardcoded API keys in code files (all use environment variables)
+### Part 1: Streaming Grading Display Fixes
+- [x] SSE endpoint with CORS headers and heartbeat
+- [x] Exponential backoff retry logic
+- [x] Error boundaries and improved error handling
+- [x] Connection state management
+- [x] Test script (`scripts/test-sse-endpoint.sh`)
 
-### ✅ Code Changes
-All code changes are safe to commit:
-- ✅ Email reply-to forwarding added
-- ✅ Stripe payment link updated (no keys in code)
-- ✅ All sensitive data uses environment variables
+### Part 2: Line-by-Line Grading Performance (Supabase-Based)
+- [x] Supabase queue infrastructure (`lib/queue/supabase-queue.ts`)
+- [x] Worker processing (`lib/queue/supabase-worker.ts`)
+- [x] Batch processing (5 lines per batch)
+- [x] Phrase caching (Supabase-based)
+- [x] Database migrations (081, 082, 083)
+- [x] Partial rendering in TranscriptViewV2
+- [x] Processing endpoint (`/api/grading/process`)
 
-## Files Changed (Safe to Commit)
+## ⚠️ Required After Push
 
-### Modified Files:
-- `.gitignore` - Added sensitive file protection
-- `app/pricing/page.tsx` - Updated payment link (no keys)
-- Email sending files - Added reply-to header
-- Documentation files (safe - no keys in production docs)
+### 1. Run Database Migrations
+Run these migrations in order:
+- `081_add_grading_status.sql` - Adds grading_status column
+- `082_create_grading_jobs_table.sql` - Creates job queue table
+- `083_create_phrase_cache_table.sql` - Creates cache table
 
-### New Documentation Files (Safe):
-- `EMAIL_REPLY_FORWARDING_SETUP.md`
-- `FINAL_PRODUCTION_READINESS.md`
-- `NEXT_STEPS_PRODUCTION.md`
-- `POST_LAUNCH_MONITORING.md`
-- `PRODUCTION_LAUNCH_CHECKLIST.md` (contains keys but is safe as reference)
-- `PRODUCTION_SECURITY_AUDIT.md`
-- `PRODUCTION_IMPLEMENTATION_SUMMARY.md`
-- `STRIPE_BILLING_PORTAL_CLARIFICATION.md`
-- `STRIPE_WEBHOOK_EVENTS.md`
-- `HOW_TO_FIND_STRIPE_PRICE_IDS.md`
+### 2. Set Up Job Processing
 
-## ⚠️ Important: Files NOT Committed
+**✅ Vercel Cron Configured**
 
-These files contain live API keys and are protected by `.gitignore`:
-- `STRIPE_LIVE_KEYS.md` ❌ DO NOT COMMIT
-- `PRODUCTION_ENV_VARS.md` ❌ DO NOT COMMIT  
-- `STRIPE_COMPLETE_CONFIG.md` ❌ DO NOT COMMIT
+`vercel.json` has been created with cron configuration:
+- Calls `/api/grading/process` every minute
+- Automatically processes pending grading jobs
 
-## Verification
+**Option B: Manual Polling Script**
 
-Before pushing, verify:
-- [x] Sensitive files in `.gitignore`
-- [x] No hardcoded keys in code
-- [x] All changes reviewed
-- [ ] Run `npm run build` to check for errors
-- [ ] Test locally if possible
+Run periodically:
+```bash
+curl -X POST https://your-domain.com/api/grading/process
+```
 
-## Ready to Push ✅
+### 3. Test the System
 
-All changes are safe to commit and push to GitHub!
+1. **Test Streaming Grading:**
+   ```bash
+   ./scripts/test-sse-endpoint.sh <sessionId>
+   ```
 
-**Note:** The files with keys (`STRIPE_LIVE_KEYS.md`, etc.) are protected by `.gitignore` and will NOT be committed.
+2. **Test Job Queue:**
+   - Create a session and complete it
+   - Check `grading_jobs` table for queued jobs
+   - Verify jobs are processed via `/api/grading/process`
 
+3. **Test Partial Rendering:**
+   - View analytics page while line-by-line grading is in progress
+   - Verify "Processing..." indicators appear
+   - Verify ratings appear as batches complete
+
+## 📋 Migration Checklist
+
+- [ ] Run migration `081_add_grading_status.sql`
+- [ ] Run migration `082_create_grading_jobs_table.sql`
+- [ ] Run migration `083_create_phrase_cache_table.sql`
+- [ ] Verify tables created: `grading_jobs`, `phrase_cache`
+- [ ] Verify column added: `live_sessions.grading_status`
+
+## 🔧 Configuration
+
+No environment variables needed! (Using Supabase instead of Redis)
+
+## 🐛 Known Limitations
+
+1. **Job Processing**: Requires periodic calls to `/api/grading/process` (via cron or manual)
+2. **Cache Performance**: Database caching is slower than Redis but simpler
+3. **Concurrency**: Processes one job at a time per API call (can be improved with multiple workers)
+
+## ✅ Ready to Push
+
+All code is implemented and ready. After pushing:
+
+1. Run migrations
+2. Set up cron job (or manual polling)
+3. Test with a real session

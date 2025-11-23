@@ -339,6 +339,7 @@ export default function AnalyticsPage() {
           lineRatings={session.analytics?.line_ratings || []}
           duration={session.duration_seconds || 600}
           wordCount={session.full_transcript?.reduce((sum, line) => sum + (line.text || line.message || '').split(' ').length, 0)}
+          sessionId={sessionId as string}
         />
       )
     }
