@@ -61,7 +61,7 @@ export function PlanCard({
   return (
     <div
       className={cn(
-        'relative rounded-xl border-2 p-6 bg-card/60 dark:bg-black/60 transition-all flex flex-col',
+        'relative rounded-xl border-2 p-6 bg-card/60 dark:bg-black/60 transition-all flex flex-col h-full',
         isCurrent
           ? 'border-emerald-500/50 shadow-lg shadow-emerald-500/10'
           : 'border-border/40 hover:border-border/60',
@@ -74,22 +74,22 @@ export function PlanCard({
         </Badge>
       )}
 
-        <div className="space-y-4 flex-1 flex flex-col">
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              'w-12 h-12 rounded-lg flex items-center justify-center',
-              config.color === 'purple' && 'bg-purple-500/20',
-              config.color === 'emerald' && 'bg-emerald-500/20',
-              config.color === 'blue' && 'bg-blue-500/20'
-            )}>
-              <Icon className={cn(
-                'w-6 h-6',
-                config.color === 'purple' && 'text-purple-400',
-                config.color === 'emerald' && 'text-emerald-400',
-                config.color === 'blue' && 'text-blue-400'
-              )} />
-            </div>
+      <div className="space-y-4 flex-1 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            'w-12 h-12 rounded-lg flex items-center justify-center',
+            config.color === 'purple' && 'bg-purple-500/20',
+            config.color === 'emerald' && 'bg-emerald-500/20',
+            config.color === 'blue' && 'bg-blue-500/20'
+          )}>
+            <Icon className={cn(
+              'w-6 h-6',
+              config.color === 'purple' && 'text-purple-400',
+              config.color === 'emerald' && 'text-emerald-400',
+              config.color === 'blue' && 'text-blue-400'
+            )} />
+          </div>
           <div>
             <h3 className="text-xl font-bold text-foreground font-space">{config.name}</h3>
             <p className="text-sm text-foreground/60 font-sans">
@@ -109,7 +109,7 @@ export function PlanCard({
         </div>
 
         {/* Features */}
-        <ul className="space-y-2">
+        <ul className="space-y-2 flex-1">
           {features.map((feature, idx) => (
             <li key={idx} className="flex items-start gap-2">
               <CheckCircle2 className={cn(
@@ -123,36 +123,38 @@ export function PlanCard({
           ))}
         </ul>
 
-        {/* CTA */}
-        {(onSelect || onContactSales) && (
-          <div className="space-y-2 mt-auto pt-4">
-            <Button
-              onClick={tier === 'enterprise' && onContactSales ? onContactSales : onSelect}
-              disabled={disabled || isCurrent || isStarterUnavailable}
-              className={cn(
-                'w-full',
-                isCurrent
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
-                  : isStarterUnavailable
-                    ? 'bg-[#1a1a1a] border border-[#2a2a2a] text-[#666] cursor-not-allowed opacity-50'
-                    : 'bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a]'
+        {/* CTA - Always at bottom */}
+        <div className="mt-auto pt-4">
+          {(onSelect || onContactSales) && (
+            <div className="space-y-2">
+              <Button
+                onClick={tier === 'enterprise' && onContactSales ? onContactSales : onSelect}
+                disabled={disabled || isCurrent || isStarterUnavailable}
+                className={cn(
+                  'w-full h-10',
+                  isCurrent
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
+                    : isStarterUnavailable
+                      ? 'bg-[#1a1a1a] border border-[#2a2a2a] text-[#666] cursor-not-allowed opacity-50'
+                      : 'bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a]'
+                )}
+              >
+                {isCurrent 
+                  ? 'Current Plan' 
+                  : isStarterUnavailable 
+                    ? 'Unavailable'
+                    : tier === 'enterprise' 
+                      ? 'Contact Sales' 
+                      : 'Upgrade'}
+              </Button>
+              {isStarterUnavailable && (
+                <p className="text-xs text-foreground/60 font-sans text-center">
+                  * Unavailable due to excess in seats
+                </p>
               )}
-            >
-              {isCurrent 
-                ? 'Current Plan' 
-                : isStarterUnavailable 
-                  ? 'Unavailable'
-                  : tier === 'enterprise' 
-                    ? 'Contact Sales' 
-                    : 'Upgrade'}
-            </Button>
-            {isStarterUnavailable && (
-              <p className="text-xs text-foreground/60 font-sans text-center">
-                * Unavailable due to excess in seats
-              </p>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
