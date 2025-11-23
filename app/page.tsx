@@ -503,24 +503,24 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
   
   const benefits = [
     {
-      icon: Clock,
-      title: "Year-Round Training",
-      description: "Not just onboarding - continuous skill development keeps your team sharp all season long"
-    },
-    {
-      icon: Smartphone,
-      title: "Virtual Manager in Every Pocket",
-      description: "Each rep has 24/7 access to AI coaching, consistent feedback, and practice scenarios"
-    },
-    {
       icon: TrendingUp,
       title: "40% Less Shadowing",
       description: "Teams see significantly reduced manager shadowing time, freeing up leadership for strategic initiatives"
     },
     {
+      icon: Clock,
+      title: "10 Hours Saved Per Manager Weekly",
+      description: "Average manager saves 10+ hours per week previously spent on field training and ride-alongs"
+    },
+    {
+      icon: TrendingUp,
+      title: "15-20% Higher Close Rates",
+      description: "Reps who practice with DoorIQ see 15-20% improvement in close rates within 60 days"
+    },
+    {
       icon: Users,
-      title: "Built for Teams 5+",
-      description: "Scale your training program without scaling your management overhead"
+      title: "Consistent Training Across 100+ Rep Teams",
+      description: "Scale your training program without scaling management overhead - every rep gets the same high-quality practice"
     }
   ]
 
