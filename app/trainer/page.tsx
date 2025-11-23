@@ -782,90 +782,30 @@ function TrainerPageContent() {
     }
   }, [sessionId, router])
 
-  // Trigger grading automatically after door close video finishes
+  // SIMPLIFIED: Trigger grading non-blocking - just fire and forget, redirect immediately
   const triggerGradingAfterDoorClose = useCallback(async (sessionId: string) => {
     console.log('🎯 Triggering automatic grading for session:', sessionId)
     
-    try {
-      // Wait a moment for session data to be fully saved
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Check if transcript exists before grading
-      const sessionCheck = await fetch(`/api/session?id=${sessionId}`)
-      if (!sessionCheck.ok) {
-        throw new Error('Failed to fetch session')
-      }
-      
-      const sessionData = await sessionCheck.json()
-      if (!sessionData.full_transcript || sessionData.full_transcript.length === 0) {
-        console.warn('⚠️ No transcript found, waiting a bit longer...')
-        await new Promise(resolve => setTimeout(resolve, 2000))
-      }
-      
-      // Trigger grading (non-streaming endpoint)
-      console.log('🎯 Starting grading...')
-      const gradeResponse = await fetch('/api/grade/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
-      })
-      
-      if (!gradeResponse.ok) {
-        const errorText = await gradeResponse.text().catch(() => 'Unknown error')
-        throw new Error(`Grading failed: ${gradeResponse.status} - ${errorText}`)
-      }
-      
-      // Grading endpoint processes synchronously, but we'll poll to be safe
-      console.log('🎯 Grading request sent, polling for completion...')
-      let pollCount = 0
-      const maxPolls = 60 // 2 minutes max (poll every 2 seconds)
-      
-      const pollInterval = setInterval(async () => {
-        pollCount++
-        
-        try {
-          const checkResponse = await fetch(`/api/session?id=${sessionId}`)
-          if (checkResponse.ok) {
-            const session = await checkResponse.json()
-            const graded = Boolean(
-              session.overall_score ||
-              session.analytics?.scores?.overall ||
-              session.analytics?.graded_at
-            )
-            
-            if (graded) {
-              console.log('✅ Grading complete! Redirecting to analytics...')
-              clearInterval(pollInterval)
-              // Redirect to analytics page
-              window.location.href = `/analytics/${sessionId}`
-            } else if (pollCount >= maxPolls) {
-              console.warn('⚠️ Grading taking longer than expected, redirecting anyway...')
-              clearInterval(pollInterval)
-              // Redirect to analytics page (grading will continue in background)
-              window.location.href = `/analytics/${sessionId}`
-            }
-          }
-        } catch (error) {
-          console.error('Error polling for grading:', error)
-          if (pollCount >= maxPolls) {
-            clearInterval(pollInterval)
-            window.location.href = `/analytics/${sessionId}`
-          }
+    // Fire grading request in background - don't wait for it
+    fetch('/api/grade/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId }),
+    })
+      .then(response => {
+        if (response.ok) {
+          console.log('✅ Grading request sent successfully')
+        } else {
+          console.warn('⚠️ Grading request failed:', response.status, 'Analytics page will retry')
         }
-      }, 2000) // Poll every 2 seconds
-      
-      // Fallback timeout
-      setTimeout(() => {
-        clearInterval(pollInterval)
-        console.log('⏰ Grading timeout reached, redirecting to analytics...')
-        window.location.href = `/analytics/${sessionId}`
-      }, 120000) // 2 minute timeout
-      
-    } catch (error) {
-      console.error('❌ Error triggering automatic grading:', error)
-      // Fallback: redirect to loading page which will handle grading
-      window.location.href = `/trainer/loading/${sessionId}`
-    }
+      })
+      .catch(error => {
+        console.warn('⚠️ Error sending grading request:', error, 'Analytics page will handle it')
+      })
+    
+    // Redirect immediately - analytics page will poll for grading completion
+    console.log('🚀 Redirecting to analytics page (grading will complete in background)')
+    window.location.href = `/analytics/${sessionId}`
   }, [])
 
   const endSession = useCallback(async (endReason?: string, skipRedirect: boolean = false) => {
@@ -1286,17 +1226,26 @@ function TrainerPageContent() {
     handleDoorClosingSequence(reason)
   }, [handleDoorClosingSequence])
 
-  // Auto-end detection hook - triggers door closing sequence when conversation ends
-  useConversationEndDetection({
-    onConversationEnd: useCallback(() => {
-      console.log('🚪 Auto-end detected, triggering door closing sequence...')
-      handleDoorClosingSequence('Auto-end detected')
-    }, [handleDoorClosingSequence]),
-    transcript,
-    sessionStartTime: sessionStartTimeRef.current,
-    sessionActive,
-    enabled: sessionActive
-  })
+  // SIMPLIFIED: Direct event listener for ElevenLabs disconnect
+  useEffect(() => {
+    if (!sessionActive || typeof window === 'undefined') return
+
+    const handleDisconnect = (e: CustomEvent) => {
+      const status = e?.detail
+      console.log('🔌 Connection status received:', status)
+      
+      if (status === 'disconnected' && sessionActive && sessionId) {
+        console.log('🚪 ElevenLabs disconnected - triggering door closing sequence')
+        handleDoorClosingSequence('ElevenLabs disconnected')
+      }
+    }
+
+    window.addEventListener('connection:status', handleDisconnect as EventListener)
+    
+    return () => {
+      window.removeEventListener('connection:status', handleDisconnect as EventListener)
+    }
+  }, [sessionActive, sessionId, handleDoorClosingSequence])
   
   // Handle manual end session requests only
   useEffect(() => {

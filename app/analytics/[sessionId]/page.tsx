@@ -239,11 +239,7 @@ export default function AnalyticsPage() {
       
       if (needsGrading) {
         console.log('🎯 No grading found, triggering grading and setting up polling...')
-        const gradingStarted = await triggerGrading()
-        
-        if (!gradingStarted) {
-          console.warn('⚠️ Failed to start grading after retries, will continue polling anyway')
-        }
+        triggerGrading() // Fire and forget - don't await
         
         // Poll every 3 seconds for grading completion (up to 2 minutes)
         let pollCount = 0
@@ -297,44 +293,34 @@ export default function AnalyticsPage() {
     }
   }
 
-  const triggerGrading = async (retryCount = 0): Promise<boolean> => {
-    const maxRetries = 3
-    console.log('🎯 Triggering grading for session:', sessionId, retryCount > 0 ? `(retry ${retryCount}/${maxRetries})` : '')
+  // SIMPLIFIED: Fire and forget grading - don't block on errors
+  const triggerGrading = async (): Promise<void> => {
+    console.log('🎯 Triggering grading for session:', sessionId)
     setGrading(true)
-    try {
-      const response = await fetch('/api/grade/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      })
-      
-      console.log('📊 Grading response status:', response.status)
-      const result = await response.json()
-      console.log('📊 Grading result:', result)
-      
-      if (!response.ok) {
-        // Retry on 503 (service unavailable) or 504 (timeout) errors
-        if ((response.status === 503 || response.status === 504) && retryCount < maxRetries) {
-          console.log(`⏳ Grading service unavailable, retrying in ${(retryCount + 1) * 2}s...`)
-          await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000))
-          return triggerGrading(retryCount + 1)
+    
+    // Fire grading request - don't wait for response
+    fetch('/api/grade/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId })
+    })
+      .then(async response => {
+        console.log('📊 Grading response status:', response.status)
+        if (response.ok) {
+          console.log('✅ Grading request accepted')
+        } else {
+          const result = await response.json().catch(() => ({}))
+          console.warn('⚠️ Grading request failed:', response.status, result)
+          // Don't throw - just log and continue polling
         }
-        console.error('❌ Grading failed:', result)
-        return false
-      }
-      return true
-    } catch (error) {
-      console.error('Error grading session:', error)
-      // Retry on network errors
-      if (retryCount < maxRetries) {
-        console.log(`⏳ Network error, retrying in ${(retryCount + 1) * 2}s...`)
-        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000))
-        return triggerGrading(retryCount + 1)
-      }
-      return false
-    } finally {
-      setGrading(false)
-    }
+      })
+      .catch(error => {
+        console.warn('⚠️ Error sending grading request:', error)
+        // Don't throw - just log and continue polling
+      })
+      .finally(() => {
+        setGrading(false)
+      })
   }
 
   const renderBody = () => {
