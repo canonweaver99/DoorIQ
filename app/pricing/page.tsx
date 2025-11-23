@@ -502,7 +502,7 @@ function PricingPageContent() {
                     <div className="flex items-center gap-3 mb-6">
                       <Calculator className="w-6 h-6 text-emerald-400" />
                       <h3 className="text-2xl font-bold text-white font-space">
-                        ROI Calculator
+                        ROI Calculator — When each rep closes just 1 extra deal per month
                       </h3>
                             </div>
 
@@ -577,9 +577,6 @@ function PricingPageContent() {
                                           </div>
                                         </div>
                                       </div>
-                        <p className="text-xs text-white/60 italic font-sans pt-2 border-t border-white/10">
-                          *Assumes each rep closes just 1 extra deal per month
-                        </p>
                                 </div>
                               </div>
                             </div>

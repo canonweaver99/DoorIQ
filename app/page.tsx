@@ -679,7 +679,7 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
               {/* ROI Header */}
               <div className="text-center mb-6">
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground mb-2 tracking-tight font-space" style={{ letterSpacing: '-0.02em' }}>
-                  Calculate Your ROI
+                  Calculate Your ROI — When each rep closes just 1 extra deal per month
                 </h3>
               </div>
 
@@ -832,9 +832,6 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                     </span>
                   </motion.div>
                 </div>
-                <p className="text-xs text-foreground/60 italic font-sans pt-2 border-t border-border/20">
-                  *Assumes each rep closes just 1 extra deal per month
-                </p>
               </div>
               </div>
             </div>
