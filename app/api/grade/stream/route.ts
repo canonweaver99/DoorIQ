@@ -208,12 +208,7 @@ Return ONLY valid JSON. No commentary.`
           // Send initial status
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', message: 'Starting AI analysis...' })}\n\n`))
           
-          // Add timeout wrapper for streaming (must be longer than OpenAI client timeout)
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('OpenAI streaming timeout after 50 seconds')), 50000)
-          })
-          
-          const apiPromise = openai.chat.completions.create({
+          const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini", // Faster model for reliable grading
             messages: messages as any,
             response_format: { type: "json_object" },
@@ -222,9 +217,15 @@ Return ONLY valid JSON. No commentary.`
             stream: true
           })
           
-          const completion = await Promise.race([apiPromise, timeoutPromise]) as any
+          // Add timeout handling for streaming chunks
+          const streamStartTime = Date.now()
+          const STREAM_TIMEOUT = 50000 // 50 seconds max for streaming
 
           for await (const chunk of completion) {
+            // Check timeout during streaming
+            if (Date.now() - streamStartTime > STREAM_TIMEOUT) {
+              throw new Error('OpenAI streaming timeout after 50 seconds')
+            }
             const content = chunk.choices[0]?.delta?.content || ''
             accumulatedContent += content
             
