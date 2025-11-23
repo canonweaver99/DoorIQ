@@ -27,7 +27,7 @@ const tabs = [
   { id: 'teams' as Tab, name: 'Team Management', icon: UserCog },
 ]
 
-export default function OrganizationSettingsPage() {
+function OrganizationSettingsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
