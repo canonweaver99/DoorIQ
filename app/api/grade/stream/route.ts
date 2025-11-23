@@ -54,6 +54,95 @@ function calculateQuestionRatio(transcript: any[]): number {
   return Math.round((questions / repEntries.length) * 100)
 }
 
+// Helper to repair incomplete JSON
+function repairIncompleteJSON(jsonString: string): string {
+  let repaired = jsonString.trim()
+  
+  // Remove trailing commas before closing braces/brackets
+  repaired = repaired.replace(/,(\s*[}\]])/g, '$1')
+  
+  // Check if we're in an unterminated string
+  let inString = false
+  let escapeNext = false
+  
+  for (let i = 0; i < repaired.length; i++) {
+    const char = repaired[i]
+    
+    if (escapeNext) {
+      escapeNext = false
+      continue
+    }
+    
+    if (char === '\\') {
+      escapeNext = true
+      continue
+    }
+    
+    if (char === '"') {
+      inString = !inString
+    }
+  }
+  
+  // If we're still in a string, close it
+  if (inString) {
+    // Check if the last character is a quote (shouldn't happen, but be safe)
+    const lastChar = repaired[repaired.length - 1]
+    if (lastChar !== '"') {
+      // Add closing quote
+      repaired += '"'
+    }
+  }
+  
+  // Count braces and brackets (only outside strings)
+  let openBraces = 0
+  let closeBraces = 0
+  let openBrackets = 0
+  let closeBrackets = 0
+  inString = false
+  escapeNext = false
+  
+  for (let i = 0; i < repaired.length; i++) {
+    const char = repaired[i]
+    
+    if (escapeNext) {
+      escapeNext = false
+      continue
+    }
+    
+    if (char === '\\') {
+      escapeNext = true
+      continue
+    }
+    
+    if (char === '"') {
+      inString = !inString
+      continue
+    }
+    
+    if (!inString) {
+      if (char === '{') openBraces++
+      if (char === '}') closeBraces++
+      if (char === '[') openBrackets++
+      if (char === ']') closeBrackets++
+    }
+  }
+  
+  // Remove trailing comma if present
+  repaired = repaired.replace(/,(\s*)$/, '$1')
+  
+  // Close unclosed arrays
+  for (let i = 0; i < openBrackets - closeBrackets; i++) {
+    repaired += ']'
+  }
+  
+  // Close unclosed objects
+  for (let i = 0; i < openBraces - closeBraces; i++) {
+    repaired += '}'
+  }
+  
+  return repaired
+}
+
 // Helper to extract sections from streaming JSON
 function extractCompletedSections(partialJson: string) {
   const sections: any = {}
@@ -329,7 +418,7 @@ Return ONLY valid JSON.` },
             model: "gpt-4o", // Faster model for JSON mode - 2-3x faster than gpt-4o-mini
             messages: messages as any,
             response_format: { type: "json_object" },
-            max_tokens: 800, // Reduced for faster processing
+            max_tokens: 2000, // Increased to ensure complete responses
             temperature: 0.1,
             stream: true
           })
@@ -382,28 +471,63 @@ Return ONLY valid JSON.` },
               lastChars: accumulatedContent.substring(Math.max(0, accumulatedContent.length - 200))
             })
             
-            // Try to fix common JSON issues
-            let fixedContent = accumulatedContent.trim()
+            // Try to repair incomplete JSON
+            let fixedContent = repairIncompleteJSON(accumulatedContent)
             
-            // Remove any trailing commas before closing braces/brackets
-            fixedContent = fixedContent.replace(/,(\s*[}\]])/g, '$1')
-            
-            // Try parsing again
+            // Try parsing again with repaired JSON
             try {
               gradingResult = JSON.parse(fixedContent)
-              logger.info('Successfully parsed after fixing JSON')
-            } catch (secondParseError) {
-              // If still fails, send error and close
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                type: 'error', 
-                message: 'Failed to parse AI response: ' + (parseError?.message || 'Unknown error'),
-                details: {
-                  parseError: parseError?.message,
-                  contentLength: accumulatedContent.length
+              logger.info('Successfully parsed after repairing JSON', {
+                originalLength: accumulatedContent.length,
+                repairedLength: fixedContent.length
+              })
+            } catch (secondParseError: any) {
+              // Try one more time with more aggressive repair
+              try {
+                // Extract what we can from partial JSON
+                const sections = extractCompletedSections(accumulatedContent)
+                
+                // Build a minimal valid JSON structure with what we have
+                gradingResult = {
+                  session_summary: sections.session_summary || {},
+                  scores: sections.scores || {},
+                  feedback: sections.feedback || { strengths: [], improvements: [], specific_tips: [] },
+                  objection_analysis: sections.objection_analysis || { total_objections: 0, objections: [] },
+                  coaching_plan: {},
+                  timeline_key_moments: [],
+                  sale_closed: false,
+                  return_appointment: false,
+                  virtual_earnings: 0,
+                  earnings_data: {},
+                  deal_details: {},
+                  enhanced_metrics: {}
                 }
-              })}\n\n`))
-              controller.close()
-              return
+                
+                logger.warn('Using partial JSON recovery', {
+                  recoveredSections: Object.keys(sections),
+                  contentLength: accumulatedContent.length
+                })
+              } catch (recoveryError) {
+                // If all recovery attempts fail, send error and close
+                logger.error('All JSON parsing attempts failed', recoveryError, {
+                  originalError: parseError?.message,
+                  secondError: secondParseError?.message,
+                  contentLength: accumulatedContent.length,
+                  contentPreview: accumulatedContent.substring(0, 500)
+                })
+                
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+                  type: 'error', 
+                  message: 'Failed to parse AI response: ' + (parseError?.message || 'Unknown error'),
+                  details: {
+                    parseError: parseError?.message,
+                    contentLength: accumulatedContent.length,
+                    contentPreview: accumulatedContent.substring(0, 200)
+                  }
+                })}\n\n`))
+                controller.close()
+                return
+              }
             }
           }
 
