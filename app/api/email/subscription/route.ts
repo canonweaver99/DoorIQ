@@ -48,7 +48,7 @@ const EMAIL_TEMPLATES = {
         </ul>
 
         <p>Want to cancel? No problem!</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/billing" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
           Manage Subscription
         </a>
         
@@ -77,7 +77,7 @@ const EMAIL_TEMPLATES = {
           Continue Training
         </a>
         <p style="color: #666; font-size: 14px; margin-top: 30px;">
-          Manage your subscription anytime from your <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing">billing page</a>.
+          Manage your subscription anytime from your <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/billing">billing page</a>.
         </p>
       </div>
     `
@@ -90,7 +90,7 @@ const EMAIL_TEMPLATES = {
         <h1 style="color: #10b981;">Payment Successful</h1>
         <p>Your payment of <strong>$${data.amount} ${data.currency?.toUpperCase()}</strong> has been processed successfully.</p>
         <p>Your DoorIQ subscription is active and you have continued access to all premium features.</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/billing" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
           View Billing Details
         </a>
         <p style="color: #666; font-size: 14px; margin-top: 30px;">
@@ -113,7 +113,7 @@ const EMAIL_TEMPLATES = {
           <p style="margin: 8px 0 0 0;">After 4 failed attempts, your subscription will be canceled and you'll lose access to premium features.</p>
         </div>
 
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" style="display: inline-block; background: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/billing" style="display: inline-block; background: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
           Update Payment Method
         </a>
         
@@ -160,7 +160,7 @@ const EMAIL_TEMPLATES = {
         
         <p>Changed your mind? You can reactivate your subscription anytime before that date.</p>
         
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings/billing" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
           Reactivate Subscription
         </a>
         

@@ -18,7 +18,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/privacy',
     '/terms',
     '/help',
-    '/knowledge-base',
   ]
 
   return routes.map((route) => ({
