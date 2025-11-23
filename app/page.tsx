@@ -279,31 +279,31 @@ function ProblemSolutionSection() {
   
   const problems = [
     {
-      title: "New Reps Burn Out in Week 1",
-      description: "Without real practice, they're learning on actual customers"
+      title: "40% of New Reps Quit in First 30 Days",
+      description: "Lack of confidence from poor preparation drives attrition"
     },
     {
-      title: "No Way to Practice Without Knocking",
-      description: "Role-play doesn't cut it, but you can't waste leads"
+      title: "Good Training Requires Your Best People Off Doors",
+      description: "Your closers should be closing, not teaching"
     },
     {
-      title: "You're Guessing What Works",
-      description: "No data on objection handling, talk time, or close rates"
+      title: "Objection Handling Takes 3-6 Months to Master",
+      description: "That's half a selling season wasted on basic skills"
     }
   ]
 
   const solutions = [
     {
-      title: "Unlimited Realistic Practice",
-      description: "Face 14 AI homeowner personas from skeptical to eager"
+      title: "Build Confidence in Days, Not Months",
+      description: "Reps face every objection type before their first real door"
     },
     {
-      title: "Reps Ramp 3x Faster",
-      description: "Master objections and build confidence before their first real knock"
+      title: "Clone Your Top Performers Without Pulling Them Off Doors",
+      description: "AI learns from your best reps and trains the rest 24/7"
     },
     {
-      title: "Know Exactly What's Working",
-      description: "Track objection handling, talk-time, and close techniques with AI-powered grading"
+      title: "Master Objections in Weeks With Unlimited Practice",
+      description: "Reps practice the hard conversations 50x before going live"
     }
   ]
 
@@ -436,7 +436,7 @@ function ProblemSolutionSection() {
                 mass: 1
               }}
             >
-              Practice on AI Homeowners Before Real Doors
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">DoorIQ</span> offers a solution
             </motion.h3>
             <motion.div 
               className="mt-3 sm:mt-4 lg:mt-6 space-y-2.5 sm:space-y-3 lg:space-y-4"
