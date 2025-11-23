@@ -251,6 +251,9 @@ PRE-COMPUTED METRICS (use these values, don't recalculate):
 - Speaking pace: ${precomputedWPM} WPM
 - Question ratio: ${precomputedQuestionRatio}%`
 
+    const messages = [
+      { role: "system", content: systemPrompt + `
+
 {
   "session_summary": { "total_lines": int, "rep_lines": int, "customer_lines": int, "objections_detected": int, "questions_asked": int },
   "scores": { "overall": int, "rapport": int, "discovery": int, "objection_handling": int, "closing": int, "safety": int, "introduction": int, "listening": int, "speaking_pace": int, "question_ratio": int, "active_listening": int, "assumptive_language": int },
@@ -295,10 +298,7 @@ EARNINGS: sale_closed=true ONLY if PAID service committed. return_appointment=tr
 
 FILLER WORDS: Use pre-computed count (${precomputedFillerCount}). Count only "um", "uh", "uhh", "erm", "err", "hmm". Never count "like".
 
-Return ONLY valid JSON.`
-
-    const messages = [
-      { role: "system", content: systemPrompt },
+Return ONLY valid JSON.` },
       { role: "user", content: `TRANSCRIPT:\n${formattedTranscript}` }
     ]
 
