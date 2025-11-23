@@ -803,22 +803,23 @@ function TrainerPageContent() {
       console.warn('⚠️ Error checking session:', error)
     }
     
-    // Fire grading request in background - don't wait for it
-    fetch('/api/grade/session', {
+    // Fire new phased grading orchestration in background - don't wait for it
+    fetch('/api/grade/orchestrate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId }),
     })
       .then(async response => {
         if (response.ok) {
-          console.log('✅ Grading request sent successfully')
+          const data = await response.json().catch(() => ({}))
+          console.log('✅ Phased grading orchestration started', data.phases)
         } else {
           const errorData = await response.json().catch(() => ({}))
-          console.warn('⚠️ Grading request failed:', response.status, errorData, 'Analytics page will retry')
+          console.error('❌ Grading orchestration failed:', response.status, errorData)
         }
       })
       .catch(error => {
-        console.warn('⚠️ Error sending grading request:', error, 'Analytics page will handle it')
+        console.error('❌ Error starting grading orchestration:', error)
       })
     
     // Redirect to loading page - it will wait for grading to complete before showing analytics

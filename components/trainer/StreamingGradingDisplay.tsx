@@ -191,7 +191,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       const abortController = new AbortController()
       abortControllerRef.current = abortController
       
-      const response = await fetch('/api/grade/stream', {
+      // Use new orchestration endpoint
+      const response = await fetch('/api/grade/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: currentSessionId }),
@@ -208,118 +209,117 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         } else if (response.status >= 400 && response.status < 500) {
           errorType = 'server'
         }
-        throw { message: `Failed to start streaming: ${response.status} ${response.statusText} - ${errorText}`, errorType }
+        throw { message: `Failed to start grading: ${response.status} ${response.statusText} - ${errorText}`, errorType }
       }
       
       setConnectionState('connected')
-
-        const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
-
-        if (!reader) {
-          throw new Error('No reader available - response body is null')
+      const orchestrationData = await response.json()
+      
+      // Handle orchestration response phases
+      if (orchestrationData.phases) {
+        // Phase 1: Instant Metrics
+        if (orchestrationData.phases.instant?.status === 'complete') {
+          setStatus('Instant metrics calculated')
+          setCurrentSection('instant')
+          setCompletedSections(prev => new Set(prev).add('instant'))
         }
         
-        // Store reader reference for cleanup
-        readerRef.current = reader
-
-        setStatus('AI is analyzing your conversation...')
-
-        while (true) {
-          // Check if sessionId changed during processing
-          if (currentSessionId !== sessionId) {
-            console.log('⚠️ SessionId changed during stream processing, aborting')
-            await reader.cancel()
-            break
-          }
+        // Phase 2: Key Moments
+        if (orchestrationData.phases.keyMoments?.status === 'complete') {
+          setStatus('Key moments detected')
+          setCurrentSection('keyMoments')
+          setCompletedSections(prev => new Set(prev).add('keyMoments'))
+          setSections(prev => ({
+            ...prev,
+            key_moments: orchestrationData.phases.keyMoments.keyMoments
+          }))
+        }
+        
+        // Phase 3: Deep Analysis (polling)
+        setStatus('Running deep analysis...')
+        setCurrentSection('deepAnalysis')
+        
+        // Poll for completion
+        const pollForCompletion = async () => {
+          const maxPolls = 60 // 2 minutes max
+          let pollCount = 0
           
-          const { done, value } = await reader.read()
-          
-          if (done) break
-
-          const chunk = decoder.decode(value)
-          const lines = chunk.split('\n')
-
-          for (const line of lines) {
-            // Skip if sessionId changed
-            if (currentSessionId !== sessionId) {
-              break
+          while (pollCount < maxPolls && currentSessionId === sessionId) {
+            if (abortController.signal.aborted) break
+            
+            try {
+              const sessionResponse = await fetch(`/api/session?id=${currentSessionId}`)
+              if (sessionResponse.ok) {
+                const session = await sessionResponse.json()
+                
+                // Check if grading is complete
+                if (session.grading_status === 'complete' || session.overall_score) {
+                  setIsComplete(true)
+                  setStatus('Grading complete!')
+                  setCompletedSections(prev => new Set(prev).add('deepAnalysis'))
+                  setSections(prev => ({
+                    ...prev,
+                    scores: session.analytics?.scores || {},
+                    feedback: session.analytics?.feedback || {},
+                    coaching_plan: session.analytics?.coaching_plan || {}
+                  }))
+                  
+                  setTimeout(() => {
+                    if (currentSessionId === sessionId) {
+                      onComplete()
+                    }
+                  }, 1500)
+                  return
+                }
+                
+                // Update status based on grading_status
+                if (session.grading_status === 'instant_complete') {
+                  setStatus('Instant metrics ready, detecting key moments...')
+                } else if (session.grading_status === 'moments_complete') {
+                  setStatus('Key moments detected, running deep analysis...')
+                }
+              }
+            } catch (pollError) {
+              console.warn('Polling error:', pollError)
             }
             
-            if (line.startsWith('data: ')) {
-              const jsonStr = line.substring(6)
-              try {
-                const data = JSON.parse(jsonStr)
-
-                switch (data.type) {
-                  case 'status':
-                    if (currentSessionId === sessionId) {
-                      setStatus(data.message)
-                    }
-                    break
-
-                  case 'section':
-                    if (currentSessionId === sessionId) {
-                      setCurrentSection(data.section)
-                      setSections(prev => ({
-                        ...prev,
-                        [data.section]: data.data
-                      }))
-                      setCompletedSections(prev => new Set(prev).add(data.section))
-                      // Convert underscore-separated strings to readable text
-                      const readableSection = SECTION_LABELS[data.section] || 
-                        data.section
-                          .replace(/_/g, ' ')
-                          .split(' ')
-                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                          .join(' ')
-                      setStatus(`Analyzing: ${readableSection}`)
-                    }
-                    break
-
-                  case 'complete':
-                    if (currentSessionId === sessionId) {
-                      setIsComplete(true)
-                      setStatus('Grading complete!')
-                      setTimeout(() => {
-                        if (currentSessionId === sessionId) {
-                          onComplete()
-                        }
-                      }, 1500)
-                    }
-                    break
-
-                  case 'error':
-                    if (currentSessionId === sessionId) {
-                      const errorType = (data.errorType || 'unknown') as ErrorType
-                      setError(data.message || 'An error occurred')
-                      setErrorType(errorType)
-                      setConnectionState('disconnected')
-                      setStatus('Error occurred')
-                      
-                      // Auto-retry on network/timeout errors if under max retries
-                      if ((errorType === 'network' || errorType === 'timeout') && retryCount < MAX_RETRIES) {
-                        const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount) // Exponential backoff
-                        setStatus(`Retrying in ${delay / 1000}s...`)
-                        retryTimeoutRef.current = setTimeout(() => {
-                          setRetryCount(prev => prev + 1)
-                          connectToStream(true)
-                        }, delay)
-                      } else {
-                        setConnectionState('failed')
-                      }
-                    }
-                    break
-                }
-              } catch (e) {
-                console.error('Failed to parse streaming data:', e)
+            pollCount++
+            await new Promise(resolve => setTimeout(resolve, 2000)) // Poll every 2 seconds
+          }
+          
+          // Timeout - check one more time
+          if (currentSessionId === sessionId) {
+            const finalCheck = await fetch(`/api/session?id=${currentSessionId}`)
+            if (finalCheck.ok) {
+              const session = await finalCheck.json()
+              if (session.grading_status === 'complete' || session.overall_score) {
+                setIsComplete(true)
+                setStatus('Grading complete!')
+                setTimeout(() => {
+                  if (currentSessionId === sessionId) {
+                    onComplete()
+                  }
+                }, 1500)
+              } else {
+                setError('Grading is taking longer than expected. Please check back in a moment.')
+                setErrorType('timeout')
+                setConnectionState('failed')
               }
             }
           }
         }
         
-        // Clear reader reference
-        readerRef.current = null
+        pollForCompletion()
+      } else {
+        // No phases - assume complete
+        setIsComplete(true)
+        setStatus('Grading complete!')
+        setTimeout(() => {
+          if (currentSessionId === sessionId) {
+            onComplete()
+          }
+        }, 1500)
+      }
 
       } catch (err: any) {
         // Ignore abort errors
@@ -361,16 +361,18 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             
             // Fallback to non-streaming grading
             try {
-              const fallbackResponse = await fetch('/api/grade/session', {
+            // Retry orchestration
+            console.error('Orchestration failed, will retry')
+            const retryResponse = await fetch('/api/grade/orchestrate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sessionId: currentSessionId }),
                 signal: abortController.signal
               })
               
-              if (fallbackResponse.ok) {
-                const result = await fallbackResponse.json()
-                console.log('✅ Fallback grading completed')
+              if (retryResponse.ok) {
+                const result = await retryResponse.json()
+                console.log('✅ Retry grading completed')
                 setIsComplete(true)
                 setStatus('Grading complete!')
                 setTimeout(() => {
@@ -380,10 +382,10 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                 }, 1500)
                 return
               } else {
-                throw new Error(`Fallback grading failed: ${fallbackResponse.statusText}`)
+                throw new Error(`Retry grading failed: ${retryResponse.statusText}`)
               }
-            } catch (fallbackError: any) {
-              if (fallbackError.name === 'AbortError') {
+            } catch (retryError: any) {
+              if (retryError.name === 'AbortError') {
                 return
               }
               setError('Grading timed out. Please try again or check back later.')

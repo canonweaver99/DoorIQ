@@ -176,6 +176,75 @@ function extractCompletedSections(partialJson: string) {
 }
 
 export async function POST(request: NextRequest) {
+  // Legacy streaming endpoint - redirects to new orchestration system
+  // Streaming will be handled by progressive status updates in the new system
+  try {
+    const { sessionId } = await request.json()
+    
+    if (!sessionId) {
+      return new Response('Session ID required', { status: 400 })
+    }
+
+    logger.info('Legacy /api/grade/stream called - redirecting to orchestration', { sessionId })
+    
+    // Call the new orchestration endpoint internally
+    const orchestrationResponse = await fetch(`${request.nextUrl.origin}/api/grade/orchestrate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sessionId })
+    })
+    
+    if (orchestrationResponse.ok) {
+      const data = await orchestrationResponse.json()
+      
+      // Return streaming-like response with phases
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        async start(controller) {
+          // Send instant phase
+          if (data.phases?.instant) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ phase: 'instant', ...data.phases.instant })}\n\n`))
+          }
+          
+          // Send key moments phase
+          if (data.phases?.keyMoments) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ phase: 'keyMoments', ...data.phases.keyMoments })}\n\n`))
+          }
+          
+          // Send deep analysis phase
+          if (data.phases?.deepAnalysis) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ phase: 'deepAnalysis', ...data.phases.deepAnalysis })}\n\n`))
+          }
+          
+          // Send completion
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ phase: 'complete', ...data })}\n\n`))
+          controller.close()
+        }
+      })
+      
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        }
+      })
+    } else {
+      const error = await orchestrationResponse.text()
+      logger.error('Orchestration failed from legacy streaming endpoint', { sessionId, error })
+      return new Response('Grading failed - please use /api/grade/orchestrate directly', { status: 500 })
+    }
+  } catch (error: any) {
+    logger.error('Error in legacy streaming endpoint', error)
+    return new Response(error.message || 'Failed to grade session', { status: 500 })
+  }
+}
+
+// OLD IMPLEMENTATION BELOW - DEPRECATED
+// Keeping for reference but not used
+async function OLD_STREAM_IMPLEMENTATION(request: NextRequest) {
   const encoder = new TextEncoder()
   const startTime = Date.now()
   

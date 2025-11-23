@@ -101,7 +101,7 @@ export default function UploadTrainingPage() {
       const newSessionId = transcribeData.sessionId
 
       // Step 3: Grade the session
-      const gradeResponse = await fetch('/api/grade/session', {
+      const gradeResponse = await fetch('/api/grade/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: newSessionId })

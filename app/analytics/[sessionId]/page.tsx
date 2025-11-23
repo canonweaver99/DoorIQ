@@ -13,6 +13,8 @@ const TranscriptView = dynamic(() => import('@/components/analytics/TranscriptVi
 const TranscriptViewV2 = dynamic(() => import('@/components/analytics/TranscriptViewV2'), { ssr: false })
 const AudioPlayer = dynamic(() => import('@/components/analytics/AudioPlayer'), { ssr: false })
 const SpeechQualitySection = dynamic(() => import('@/components/analytics/SpeechQualitySection'), { ssr: false })
+const InstantFeedback = dynamic(() => import('@/components/analytics/InstantFeedback').then(m => ({ default: m.InstantFeedback })), { ssr: false })
+const KeyMomentsTimeline = dynamic(() => import('@/components/analytics/KeyMomentsTimeline').then(m => ({ default: m.KeyMomentsTimeline })), { ssr: false })
 
 interface SessionData {
   id: string
@@ -132,6 +134,14 @@ interface SessionData {
   video_url: string | null
   has_video: boolean | null
   duration_seconds: number | null
+  // New grading system fields
+  instant_metrics?: any
+  key_moments?: any[]
+  moment_analysis?: any
+  elevenlabs_conversation_id?: string | null
+  elevenlabs_metrics?: any
+  grading_version?: string | null
+  grading_status?: string | null
 }
 
 export default function AnalyticsPage() {
@@ -298,25 +308,24 @@ export default function AnalyticsPage() {
     console.log('🎯 Triggering grading for session:', sessionId)
     setGrading(true)
     
-    // Fire grading request - don't wait for response
-    fetch('/api/grade/session', {
+    // Fire new phased grading orchestration - don't wait for response
+    fetch('/api/grade/orchestrate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId })
     })
       .then(async response => {
-        console.log('📊 Grading response status:', response.status)
+        console.log('📊 Orchestration response status:', response.status)
         if (response.ok) {
-          console.log('✅ Grading request accepted')
+          const data = await response.json().catch(() => ({}))
+          console.log('✅ Phased grading orchestration started', data.phases)
         } else {
-          const result = await response.json().catch(() => ({}))
-          console.warn('⚠️ Grading request failed:', response.status, result)
-          // Don't throw - just log and continue polling
+          const errorData = await response.json().catch(() => ({}))
+          console.error('❌ Grading orchestration failed:', response.status, errorData)
         }
       })
       .catch(error => {
-        console.warn('⚠️ Error sending grading request:', error)
-        // Don't throw - just log and continue polling
+        console.error('❌ Error starting grading orchestration:', error)
       })
       .finally(() => {
         setGrading(false)
@@ -530,6 +539,21 @@ export default function AnalyticsPage() {
 
     return (
       <>
+        {/* Instant Feedback - Show if instant_metrics exist */}
+        {(session as any).instant_metrics && (
+          <div className="mb-8">
+            <InstantFeedback metrics={(session as any).instant_metrics} />
+          </div>
+        )}
+        
+        {/* Key Moments Timeline - Show if key_moments exist */}
+        {(session as any).key_moments && Array.isArray((session as any).key_moments) && (session as any).key_moments.length > 0 && (
+          <div className="mb-8 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8">
+            <h2 className="text-2xl font-bold text-white mb-6">Key Moments Analysis</h2>
+            <KeyMomentsTimeline moments={(session as any).key_moments} />
+          </div>
+        )}
+        
         <ScoresViewV2
           sessionId={session.id}
           overallScore={session.overall_score || 0}

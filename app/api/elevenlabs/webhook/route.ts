@@ -159,12 +159,37 @@ async function handleConversationCompleted(data: any) {
       }
     }
 
-    // Update session with conversation_id if we found a match
+    // Extract ElevenLabs metrics for instant grading
+    const elevenLabsMetrics = {
+      conversation_id,
+      duration: durationSeconds,
+      message_count: messageCount,
+      analysis: analysis || null,
+      metadata: metadata || null,
+      sentiment_progression: analysis?.sentiment_progression || metadata?.sentiment_progression || [],
+      interruption_count: metadata?.interruptions_count || 0,
+      audio_quality: metadata?.audio_quality || 85
+    }
+
+    // Update session with conversation_id and metrics if we found a match
     if (sessionMatch && sessionMatch.confidence !== 'low') {
       await correlator.updateSessionWithConversationId(
         sessionMatch.session_id,
         conversation_id
       )
+      
+      // Update session with ElevenLabs metrics immediately for instant grading
+      const { error: metricsError } = await supabase
+        .from('live_sessions')
+        .update({
+          elevenlabs_conversation_id: conversation_id,
+          elevenlabs_metrics: elevenLabsMetrics
+        })
+        .eq('id', sessionMatch.session_id)
+      
+      if (metricsError) {
+        logger.warn('Error updating session with ElevenLabs metrics', metricsError)
+      }
       
       // Also update the conversation record with session_id if not already set in insert
       await correlator.updateConversationWithSessionId(
@@ -177,7 +202,8 @@ async function handleConversationCompleted(data: any) {
     logger.info('Successfully stored conversation', {
       conversation_id,
       session_id: sessionMatch?.session_id || null,
-      matched: !!sessionMatch
+      matched: !!sessionMatch,
+      metricsStored: !!(sessionMatch && sessionMatch.confidence !== 'low')
     })
 
     // TODO: Trigger async speech analysis (Phase 2)

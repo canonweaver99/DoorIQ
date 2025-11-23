@@ -348,6 +348,51 @@ if (!process.env.OPENAI_API_KEY) {
 }
 
 export async function POST(request: NextRequest) {
+  // Legacy endpoint - redirects to new orchestration system
+  try {
+    const { sessionId } = await request.json()
+    
+    if (!sessionId) {
+      return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
+    }
+
+    logger.info('Legacy /api/grade/session called - redirecting to orchestration', { sessionId })
+    
+    // Call the new orchestration endpoint internally
+    const orchestrationResponse = await fetch(`${request.nextUrl.origin}/api/grade/orchestrate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sessionId })
+    })
+    
+    if (orchestrationResponse.ok) {
+      const data = await orchestrationResponse.json()
+      return NextResponse.json({
+        ...data,
+        message: 'Grading completed via new orchestration system'
+      })
+    } else {
+      const error = await orchestrationResponse.text()
+      logger.error('Orchestration failed from legacy endpoint', { sessionId, error })
+      return NextResponse.json(
+        { error: 'Grading failed - please use /api/grade/orchestrate directly' },
+        { status: 500 }
+      )
+    }
+  } catch (error: any) {
+    logger.error('Error in legacy grading endpoint', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to grade session' },
+      { status: 500 }
+    )
+  }
+}
+
+// OLD IMPLEMENTATION BELOW - DEPRECATED
+// Keeping for reference but not used
+async function OLD_POST_IMPLEMENTATION(request: NextRequest) {
   const startTime = Date.now()
   
   try {
