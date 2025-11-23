@@ -48,6 +48,7 @@ function BillingSettingsPage() {
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [isManager, setIsManager] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const [invoices, setInvoices] = useState<any[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -62,6 +63,7 @@ function BillingSettingsPage() {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
 
   useEffect(() => {
+    fetchUserRole()
     fetchBillingData()
     fetchInvoices()
 
@@ -99,6 +101,25 @@ function BillingSettingsPage() {
       }, 5000)
     }
   }, [searchParams, router])
+
+  const fetchUserRole = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (userData?.role) {
+        setUserRole(userData.role)
+      }
+    } catch (err) {
+      console.error('Error fetching user role:', err)
+    }
+  }
 
   const fetchBillingData = async () => {
     try {
@@ -330,14 +351,15 @@ function BillingSettingsPage() {
     )
   }
 
-  // Restrict access to managers only
-  if (!isManager) {
+  // Restrict access to managers and admins only
+  const hasAccess = isManager || userRole === 'admin'
+  if (!hasAccess) {
     return (
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-foreground/30 mx-auto mb-4" />
         <h2 className="text-xl font-space font-bold text-foreground mb-2">Access Restricted</h2>
         <p className="text-foreground/60 font-sans">
-          Billing settings are only available to managers. Please contact your manager for billing inquiries.
+          Billing settings are only available to managers and admins. Please contact your manager for billing inquiries.
         </p>
       </div>
     )
@@ -498,7 +520,7 @@ function BillingSettingsPage() {
       </div>
 
       {/* Seat Management */}
-      {isManager && plan && (
+      {(isManager || userRole === 'admin') && plan && (
         <div className="p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
           <div className="space-y-4">
             <div>
