@@ -257,11 +257,21 @@ async function analyzeKeyMoments(moments: KeyMoment[]): Promise<KeyMoment[]> {
   
   try {
     const prompt = `Analyze these ${moments.length} key moments from a door-to-door sales conversation.
+IMPORTANT: Address the sales rep directly using "you" instead of "the user" or "the rep". Write as if coaching them personally.
+
 For each moment, provide:
-1. What happened (one sentence)
-2. What worked well (if anything, one sentence)
-3. What could improve (one sentence)
-4. Alternative response (one sentence)
+1. What happened (one sentence, direct to the rep)
+2. What worked well (if anything, one sentence addressing the rep)
+3. What could improve (one sentence with direct advice)
+4. Alternative response (one sentence suggestion)
+
+Categorize each moment's outcome:
+- success: They responded positively (green ✅)
+- opportunity: Could improve (yellow ⚠️)
+- failure: Major failure (red ❌)
+- insight: Learning moment (blue 💡)
+
+If the homeowner responded positively (yes, sure, okay, sounds good), note the interest level change.
 
 Moments:
 ${moments.map((m, i) => `
@@ -272,10 +282,11 @@ Outcome: ${m.outcome}
 
 Return JSON array with this structure for each moment:
 {
-  "whatHappened": "string",
-  "whatWorked": "string",
-  "whatToImprove": "string",
-  "alternativeResponse": "string"
+  "whatHappened": "string (address rep directly with 'you')",
+  "whatWorked": "string (address rep directly)",
+  "whatToImprove": "string (direct advice)",
+  "alternativeResponse": "string",
+  "interestLevelChange": number (optional, e.g. +20 for positive response)
 }`
 
     const response = await openai.chat.completions.create({
@@ -307,13 +318,25 @@ Return JSON array with this structure for each moment:
     return moments.map((moment, index) => {
       const analysis = analysisData[index]
       if (analysis) {
+        // Clean up any "the user" references and replace with "you"
+        const cleanText = (text: string) => {
+          if (!text) return text
+          return text
+            .replace(/\bthe user\b/gi, 'you')
+            .replace(/\bthe rep\b/gi, 'you')
+            .replace(/\bthe sales rep\b/gi, 'you')
+            .replace(/\bthey\b/gi, 'you')
+            .replace(/\btheir\b/gi, 'your')
+        }
+        
         return {
           ...moment,
           analysis: {
-            whatHappened: analysis.whatHappened || 'Analysis pending',
-            whatWorked: analysis.whatWorked || '',
-            whatToImprove: analysis.whatToImprove || 'Could be improved',
-            alternativeResponse: analysis.alternativeResponse || ''
+            whatHappened: cleanText(analysis.whatHappened || 'Analysis pending'),
+            whatWorked: cleanText(analysis.whatWorked || ''),
+            whatToImprove: cleanText(analysis.whatToImprove || 'Could be improved'),
+            alternativeResponse: cleanText(analysis.alternativeResponse || ''),
+            interestLevelChange: analysis.interestLevelChange || null
           }
         }
       }

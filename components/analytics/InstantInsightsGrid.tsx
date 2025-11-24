@@ -46,6 +46,21 @@ function MetricTooltip({ children, content }: { children: React.ReactNode, conte
   )
 }
 
+/**
+ * InstantInsightsGrid - Displays speaking and dialogue metrics
+ * 
+ * NOTE: Speaking and Dialogue cards require ElevenLabs webhook to be configured:
+ * 1. Set up webhook endpoint at /api/elevenlabs/webhook
+ * 2. Configure ElevenLabs to send conversation.analyzed events
+ * 3. Ensure conversation includes transcript with speaker labels (user/agent)
+ * 4. Metrics are calculated from transcript analysis and stored in instant_metrics
+ * 
+ * If cards show empty data, verify:
+ * - ElevenLabs webhook is receiving events
+ * - Session has elevenlabs_conversation_id set
+ * - Transcript includes speaker information
+ * - instant_metrics contains wordsPerMinute and conversationBalance
+ */
 export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps) {
   const metrics = instantMetrics || {}
   const wpm = metrics.wordsPerMinute || 0

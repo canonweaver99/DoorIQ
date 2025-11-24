@@ -18,6 +18,7 @@ interface CriticalMoment {
     whatWorked?: string
     whatToImprove?: string
     alternativeResponse?: string
+    interestLevelChange?: number
   }
   coachingTip?: string
 }
@@ -119,6 +120,18 @@ export function CriticalMomentsTimeline({
           const isSuccess = moment.outcome === 'success'
           const isFailure = moment.outcome === 'failure'
           const isMissed = moment.outcome === 'missed_opportunity'
+          const isNeutral = moment.outcome === 'neutral'
+          
+          // Determine visual category
+          const getOutcomeCategory = () => {
+            if (isSuccess) return { emoji: '✅', label: 'Success Moment', color: 'green' }
+            if (isMissed) return { emoji: '⚠️', label: 'Opportunity', color: 'yellow' }
+            if (isFailure) return { emoji: '❌', label: 'Critical Miss', color: 'red' }
+            return { emoji: '💡', label: 'Insight', color: 'blue' }
+          }
+          
+          const category = getOutcomeCategory()
+          const interestChange = moment.analysis?.interestLevelChange
           
           return (
             <motion.div
@@ -136,10 +149,11 @@ export function CriticalMomentsTimeline({
                   ? "bg-red-500/10 border-red-500/30"
                   : isMissed
                   ? "bg-yellow-500/10 border-yellow-500/30"
-                  : "bg-slate-800/50 border-slate-700/50"
+                  : "bg-blue-500/10 border-blue-500/30"
               )}>
-                {/* Status Icon */}
-                <div className="flex-shrink-0">
+                {/* Status Icon with Emoji */}
+                <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                  <div className="text-2xl">{category.emoji}</div>
                   {isSuccess ? (
                     <CheckCircle2 className="w-6 h-6 text-green-400" />
                   ) : isFailure ? (
@@ -179,34 +193,67 @@ export function CriticalMomentsTimeline({
                   
                   {/* Transcript Quote */}
                   <div className="mb-3 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                    <p className="text-sm text-gray-200 italic">
+                    <p className="text-sm text-gray-200 italic mb-2">
                       "{moment.transcript.length > 150 ? moment.transcript.slice(0, 150) + '...' : moment.transcript}"
                     </p>
+                    {/* Success Indicator - Interest Level Change */}
+                    {interestChange && interestChange > 0 && (
+                      <div className="mt-2 flex items-center gap-2 text-green-400 text-xs font-semibold">
+                        <span>📈</span>
+                        <span>Interest Level: +{interestChange}% (They engaged!)</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Outcome Category Label */}
+                  <div className="mb-2">
+                    <span className={cn(
+                      "text-xs font-semibold px-2 py-1 rounded-full",
+                      category.color === 'green' && "bg-green-500/20 text-green-400",
+                      category.color === 'yellow' && "bg-yellow-500/20 text-yellow-400",
+                      category.color === 'red' && "bg-red-500/20 text-red-400",
+                      category.color === 'blue' && "bg-blue-500/20 text-blue-400"
+                    )}>
+                      {category.emoji} {category.label}
+                    </span>
                   </div>
                   
                   {/* Analysis */}
                   {moment.analysis?.whatHappened && (
                     <div className="mb-2 text-sm text-gray-300">
-                      {moment.analysis.whatHappened}
+                      {moment.analysis.whatHappened.replace(/\bthe user\b/gi, 'you').replace(/\bthe rep\b/gi, 'you').replace(/\bthe sales rep\b/gi, 'you')}
                     </div>
                   )}
                   
                   {/* What Worked */}
                   {moment.analysis?.whatWorked && (
                     <div className="mb-2 text-sm">
-                      <span className="text-green-400 font-medium">Keep this energy throughout</span>
+                      <span className="text-green-400 font-medium">✓ What worked: </span>
+                      <span className="text-gray-300">
+                        {moment.analysis.whatWorked.replace(/\bthe user\b/gi, 'you').replace(/\bthe rep\b/gi, 'you').replace(/\bthe sales rep\b/gi, 'you')}
+                      </span>
                     </div>
                   )}
                   
-                  {/* Coaching Tip */}
-                  {(moment.coachingTip || moment.analysis?.whatToImprove || moment.analysis?.alternativeResponse) && (
+                  {/* What to Improve */}
+                  {moment.analysis?.whatToImprove && (
+                    <div className="mb-2 text-sm">
+                      <span className="text-orange-400 font-medium">⚠ Improvement: </span>
+                      <span className="text-gray-300">
+                        {moment.analysis.whatToImprove.replace(/\bthe user\b/gi, 'you').replace(/\bthe rep\b/gi, 'you').replace(/\bthe sales rep\b/gi, 'you')}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Coaching Tip / Alternative Response */}
+                  {(moment.coachingTip || moment.analysis?.alternativeResponse) && (
                     <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                       <div className="flex items-start gap-2">
                         <Lightbulb className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <span className="text-blue-400 font-medium">Try: </span>
-                          <span className="text-white">
-                            {moment.coachingTip || moment.analysis?.whatToImprove || moment.analysis?.alternativeResponse}
+                          <span className="text-blue-400 font-medium">💡 Try this instead: </span>
+                          <span className="text-blue-200 italic">
+                            "{moment.coachingTip || moment.analysis?.alternativeResponse}"
                           </span>
                         </div>
                       </div>

@@ -96,7 +96,7 @@
   },
   "overrides": {
     "class-variance-authority": "^0.7.1",
-    "glob": "^10.3.10",
-    "@xmldom/xmldom": "^0.8.10"
+    "glob": "^10.4.5",
+    "@xmldom/xmldom": "^0.8.11"
   }
 }

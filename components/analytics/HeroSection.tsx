@@ -130,13 +130,13 @@ export function HeroSection({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Score and Info */}
             <div className="lg:col-span-2">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <div className="text-sm uppercase tracking-[0.25em] text-slate-500 mb-2 font-sans">AI-Powered Training Results</div>
-                  <h2 className="text-2xl font-bold text-white font-space">Overall Performance</h2>
-                </div>
-                <div className="text-right flex items-start gap-4">
-                  <div className="flex flex-col items-end">
+              <div className="mb-6">
+                <div className="text-sm uppercase tracking-[0.25em] text-slate-500 mb-2 font-sans">AI-Powered Training Results</div>
+                <h2 className="text-2xl font-bold text-white font-space mb-6">Overall Performance</h2>
+                
+                {/* Score and Circle - Moved below heading */}
+                <div className="flex items-start gap-6 mb-6">
+                  <div className="flex flex-col">
                     <div className={`text-6xl font-bold mb-1 font-space`} style={{ color: getScoreColor(overallScore) }}>
                       {overallScore}
                     </div>
@@ -162,38 +162,40 @@ export function HeroSection({
                 </div>
               </div>
               
-              {/* Comparison Metrics */}
-              <div className="space-y-2 text-sm mb-6">
+              {/* Comparison Metrics - Increased font size */}
+              <div className="space-y-3 text-base mb-6">
                 <div className="flex items-center gap-2 text-gray-300">
                   {vsUserAverage > 0 ? (
-                    <ArrowUp className="w-4 h-4 text-green-400" />
+                    <ArrowUp className="w-5 h-5 text-green-400" />
                   ) : vsUserAverage < 0 ? (
-                    <ArrowDown className="w-4 h-4 text-red-400" />
+                    <ArrowDown className="w-5 h-5 text-red-400" />
                   ) : null}
-                  <span>
+                  <span className="text-lg">
                     vs Your Average: <span className={cn(
+                      "font-semibold",
                       vsUserAverage >= 0 ? 'text-green-400' : 'text-red-400'
                     )}>{getTrendText(vsUserAverage)}</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-300">
                   {vsTeamAverage > 0 ? (
-                    <ArrowUp className="w-4 h-4 text-green-400" />
+                    <ArrowUp className="w-5 h-5 text-green-400" />
                   ) : vsTeamAverage < 0 ? (
-                    <ArrowDown className="w-4 h-4 text-red-400" />
+                    <ArrowDown className="w-5 h-5 text-red-400" />
                   ) : null}
-                  <span>
+                  <span className="text-lg">
                     vs Team Average: <span className={cn(
+                      "font-semibold",
                       vsTeamAverage >= 0 ? 'text-green-400' : 'text-red-400'
                     )}>{getTrendText(vsTeamAverage)}</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-400">
-                  <span>
+                  <span className="text-lg">
                     Percentile: <span className="text-white font-semibold font-sans">{percentileLabel} this week</span>
                   </span>
                   <MetricTooltip content="Your percentile rank shows how you compare to other users this week. Higher percentiles indicate better performance relative to your peers. This helps you understand your competitive position.">
-                    <Info className="w-4 h-4 text-gray-500 hover:text-gray-300 transition-colors" />
+                    <Info className="w-5 h-5 text-gray-500 hover:text-gray-300 transition-colors" />
                   </MetricTooltip>
                 </div>
               </div>
@@ -314,14 +316,14 @@ export function HeroSection({
                 </div>
               </div>
               
-              {/* Quick Verdict Card */}
+              {/* Quick Verdict Card - Equal size to Earnings card */}
               {quickVerdict && (
-                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm font-semibold text-blue-400">Quick Verdict:</span>
+                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden bg-blue-500/10 border border-blue-500/20`}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Zap className="w-5 h-5 text-blue-400" />
+                    <span className="text-xs uppercase tracking-[0.25em] text-blue-400 font-space">Quick Verdict</span>
                   </div>
-                  <div className="text-white text-sm leading-relaxed">"{quickVerdict}"</div>
+                  <div className="text-white text-base leading-relaxed font-sans">"{quickVerdict}"</div>
                 </div>
               )}
             </div>
