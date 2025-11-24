@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowLeft, Zap, ArrowUp, ArrowDown, DollarSign, Clock, XCircle, Info } from 'lucide-react'
+import { ArrowLeft, ArrowUp, ArrowDown, DollarSign, Clock, XCircle, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
 
@@ -53,6 +53,19 @@ interface HeroSectionProps {
     objection_handling: number
     closing: number
   }
+  currentScores?: {
+    rapport: number
+    discovery: number
+    objection_handling: number
+    closing: number
+  }
+  recentScores?: {
+    overall?: number[]
+    rapport?: number[]
+    discovery?: number[]
+    objection_handling?: number[]
+    closing?: number[]
+  }
 }
 
 export function HeroSection({
@@ -65,7 +78,9 @@ export function HeroSection({
   earningsData,
   dealDetails,
   quickVerdict,
-  trends = { rapport: 0, discovery: 0, objection_handling: 0, closing: 0 }
+  trends = { rapport: 0, discovery: 0, objection_handling: 0, closing: 0 },
+  currentScores,
+  recentScores
 }: HeroSectionProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#10b981'
@@ -169,12 +184,19 @@ export function HeroSection({
                   ) : vsUserAverage < 0 ? (
                     <ArrowDown className="w-5 h-5 text-red-400" />
                   ) : null}
-                  <span className="text-lg">
-                    vs Your Average: <span className={cn(
-                      "font-semibold",
-                      vsUserAverage >= 0 ? 'text-green-400' : 'text-red-400'
-                    )}>{getTrendText(vsUserAverage)}</span>
-                  </span>
+                  <div className="flex-1">
+                    <span className="text-lg">
+                      vs Your Average: <span className={cn(
+                        "font-semibold",
+                        vsUserAverage >= 0 ? 'text-green-400' : 'text-red-400'
+                      )}>{getTrendText(vsUserAverage)}</span>
+                    </span>
+                    {recentScores?.overall && recentScores.overall.length >= 3 && (
+                      <div className="text-sm text-gray-500 mt-1 font-sans">
+                        Last {Math.min(recentScores.overall.length, 5)} sessions: {recentScores.overall.slice(-5).join(' → ')}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-gray-300">
                   {vsTeamAverage > 0 ? (
@@ -198,45 +220,99 @@ export function HeroSection({
                   </MetricTooltip>
                 </div>
               </div>
+              
+              {/* Score Breakdown */}
+              {currentScores && (
+                <div className="mt-6 pt-6 border-t border-slate-700/50">
+                  <h3 className="text-sm font-semibold text-gray-400 mb-4 font-sans uppercase tracking-wide">Score Breakdown</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { key: 'rapport', label: 'Rapport Building', score: currentScores.rapport, trend: trends.rapport },
+                      { key: 'discovery', label: 'Discovery', score: currentScores.discovery, trend: trends.discovery },
+                      { key: 'objection_handling', label: 'Objection Handling', score: currentScores.objection_handling, trend: trends.objection_handling },
+                      { key: 'closing', label: 'Closing Technique', score: currentScores.closing, trend: trends.closing }
+                    ].map(({ key, label, score, trend }) => {
+                      const scoreData = recentScores?.[key as keyof typeof recentScores] as number[] | undefined
+                      const hasTrendData = scoreData && scoreData.length >= 2
+                      const lastValue = hasTrendData ? scoreData[scoreData.length - 1] : null
+                      const previousValue = hasTrendData && scoreData.length >= 2 ? scoreData[scoreData.length - 2] : null
+                      const trendChange = hasTrendData && previousValue !== null ? lastValue! - previousValue : null
+                      
+                      return (
+                        <div key={key} className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-medium text-gray-300 font-sans">{label}</span>
+                            {trend !== 0 && (
+                              <span className={cn(
+                                "text-xs font-semibold px-2 py-0.5 rounded",
+                                trend > 0 ? 'text-green-400 bg-green-500/20' : 'text-red-400 bg-red-500/20'
+                              )}>
+                                {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}pts vs avg
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-2xl font-bold font-space mb-1" style={{ color: getScoreColor(score) }}>
+                            {score}%
+                          </div>
+                          {hasTrendData && trendChange !== null && trendChange !== 0 && (
+                            <div className={cn(
+                              "text-xs font-sans flex items-center gap-1",
+                              trendChange > 0 ? 'text-green-400' : 'text-red-400'
+                            )}>
+                              {trendChange > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                              {Math.abs(trendChange)}pts from last session
+                            </div>
+                          )}
+                          {hasTrendData && scoreData.length >= 3 && (
+                            <div className="text-xs text-gray-500 mt-1 font-sans">
+                              Last 3: {scoreData.slice(-3).map(s => `${s}%`).join(' → ')}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
             
-            {/* Right Column - Deal Status, and Quick Verdict */}
+            {/* Right Column - Deal Status */}
             <div className="flex-[3] min-w-0">
-              {/* Earnings and Quick Verdict Cards - Taking up 60% of overall card */}
-              <div className="flex gap-4 h-full w-full">
+              {/* Earnings Card */}
+              <div className="h-full w-full">
                 {/* Earnings Card - From Old Grading Page */}
-                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden flex flex-col justify-between flex-[3] min-w-0 ${
+                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden flex flex-col justify-between w-full ${
                   saleClosed && virtualEarnings > 0
-                    ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
+                    ? 'bg-gradient-to-br from-emerald-900/70 to-green-800/70 border-2 border-emerald-500/60'
                     : dealDetails?.next_step
-                      ? 'bg-gradient-to-br from-amber-900/40 to-yellow-800/40 border border-amber-500/30'
-                      : 'bg-gradient-to-br from-red-900/40 to-rose-800/40 border border-red-500/30'
+                      ? 'bg-gradient-to-br from-amber-900/70 to-yellow-800/70 border-2 border-amber-500/60'
+                      : 'bg-gradient-to-br from-red-900/70 to-rose-800/70 border-2 border-red-500/60'
                 }`}>
                   {/* Sparkle background */}
                   <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
                     saleClosed && virtualEarnings > 0
-                      ? 'bg-gradient-to-br from-emerald-400/20 to-green-400/20'
+                      ? 'bg-gradient-to-br from-emerald-400/40 to-green-400/40'
                       : dealDetails?.next_step
-                        ? 'bg-gradient-to-br from-amber-400/20 to-yellow-400/20'
-                        : 'bg-gradient-to-br from-red-400/20 to-rose-400/20'
+                        ? 'bg-gradient-to-br from-amber-400/40 to-yellow-400/40'
+                        : 'bg-gradient-to-br from-red-400/40 to-rose-400/40'
                   }`}></div>
                   
                   <div className="relative z-10 flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-4">
                       {saleClosed && virtualEarnings > 0 ? (
                         <>
-                          <DollarSign className="w-5 h-5 text-emerald-400" />
-                          <span className="text-sm uppercase tracking-[0.25em] text-emerald-400 font-space">You Earned</span>
+                          <DollarSign className="w-5 h-5 text-emerald-300" />
+                          <span className="text-sm uppercase tracking-[0.25em] text-emerald-300 font-space font-bold">You Earned</span>
                         </>
                       ) : dealDetails?.next_step ? (
                         <>
-                          <Clock className="w-5 h-5 text-amber-400" />
-                          <span className="text-sm uppercase tracking-[0.25em] text-amber-400 font-space">Soft Close</span>
+                          <Clock className="w-5 h-5 text-yellow-300" />
+                          <span className="text-sm uppercase tracking-[0.25em] text-yellow-300 font-space font-bold">Soft Close</span>
                         </>
                       ) : (
                         <>
-                          <XCircle className="w-5 h-5 text-red-400" />
-                          <span className="text-sm uppercase tracking-[0.25em] text-red-400 font-space">Close Failed</span>
+                          <XCircle className="w-5 h-5 text-red-300" />
+                          <span className="text-sm uppercase tracking-[0.25em] text-red-300 font-space font-bold">Close Failed</span>
                         </>
                       )}
                     </div>
@@ -289,17 +365,6 @@ export function HeroSection({
                     </div>
                   </div>
                 </div>
-                
-                {/* Quick Verdict Card - Right of Earnings */}
-                {quickVerdict && (
-                  <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between flex-[2] min-w-0 h-full`}>
-                    <div className="flex items-center gap-2 mb-4">
-                      <Zap className="w-5 h-5 text-blue-400" />
-                      <span className="text-sm uppercase tracking-[0.25em] text-blue-400 font-space">Quick Verdict</span>
-                    </div>
-                    <div className="text-white text-base leading-relaxed font-sans flex-1 flex items-center">"{quickVerdict}"</div>
-                  </div>
-                )}
               </div>
             </div>
           </div>

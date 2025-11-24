@@ -11,6 +11,7 @@ import { CriticalMomentsTimeline } from '@/components/analytics/CriticalMomentsT
 import { ComparativePerformance } from '@/components/analytics/ComparativePerformance'
 import { AICoachingInsights } from '@/components/analytics/AICoachingInsights'
 import { ElevenLabsSpeechMetrics } from '@/components/analytics/ElevenLabsSpeechMetrics'
+import { FocusArea } from '@/components/analytics/FocusArea'
 
 interface SessionData {
   id: string
@@ -307,31 +308,6 @@ export default function AnalyticsPage() {
 
   const overallScore = session.overall_score || 0
   
-  // Generate quick verdict from feedback or create one
-  const getQuickVerdict = () => {
-    if (session.analytics?.feedback?.specific_tips?.[0]) {
-      return session.analytics.feedback.specific_tips[0]
-    }
-    if (session.analytics?.feedback?.improvements?.[0]) {
-      return session.analytics.feedback.improvements[0]
-    }
-    // Generate a simple verdict based on scores
-    const rapport = session.rapport_score || 0
-    const closing = session.close_score || 0
-    if (rapport >= 70 && closing < 50) {
-      return 'Strong rapport, weak closing'
-    }
-    if (closing >= 70 && rapport < 50) {
-      return 'Good closing, needs better rapport'
-    }
-    if (overallScore >= 70) {
-      return 'Solid performance overall'
-    }
-    return 'Room for improvement across key areas'
-  }
-  
-  const quickVerdict = getQuickVerdict()
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       <div className="max-w-6xl mx-auto px-6 pt-8 pb-12">
@@ -346,10 +322,28 @@ export default function AnalyticsPage() {
             virtualEarnings={session.virtual_earnings || 0}
             earningsData={session.earnings_data}
             dealDetails={session.deal_details}
-            quickVerdict={quickVerdict}
             trends={comparison.trends}
+            currentScores={{
+              rapport: session.rapport_score || 0,
+              discovery: session.discovery_score || 0,
+              objection_handling: session.objection_handling_score || 0,
+              closing: session.close_score || 0
+            }}
+            recentScores={comparison.recentScores}
           />
         )}
+        
+        {/* ElevenLabs Speech Metrics - Right after Overall Performance */}
+        {(session.elevenlabs_metrics || session.analytics?.voice_analysis) ? (
+          loadingStates.speech ? (
+            <ElevenLabsSpeechMetrics
+              elevenlabsMetrics={session.elevenlabs_metrics}
+              voiceAnalysis={session.analytics?.voice_analysis}
+            />
+          ) : (
+            <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
+          )
+        ) : null}
         
         {/* Instant Insights Grid - Loads after hero */}
         {session.instant_metrics ? (
@@ -378,6 +372,21 @@ export default function AnalyticsPage() {
           )
         ) : null}
         
+        {/* Focus Area - Shows biggest opportunity */}
+        {comparison && session.overall_score && (
+          loadingStates.comparison ? (
+            <FocusArea
+              currentScores={{
+                rapport: session.rapport_score || 0,
+                discovery: session.discovery_score || 0,
+                objection_handling: session.objection_handling_score || 0,
+                closing: session.close_score || 0
+              }}
+              userName={userName}
+            />
+          ) : null
+        )}
+        
         {/* Comparative Performance - Loads after moments */}
         {comparison ? (
           loadingStates.comparison ? (
@@ -388,6 +397,8 @@ export default function AnalyticsPage() {
               currentClosePercentage={comparison.current.closePercentage}
               userAverageClosePercentage={comparison.userAverage.closePercentage}
               teamAverageClosePercentage={comparison.teamAverage.closePercentage}
+              closeAttempts={comparison.closeAttempts}
+              teamCloseAttempts={comparison.teamCloseAttempts}
             />
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
@@ -400,18 +411,6 @@ export default function AnalyticsPage() {
             <AICoachingInsights
               coachingPlan={session.analytics?.coaching_plan}
               feedback={session.analytics?.feedback}
-            />
-          ) : (
-            <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
-          )
-        ) : null}
-        
-        {/* ElevenLabs Speech Metrics - Loads last if available */}
-        {(session.elevenlabs_metrics || session.analytics?.voice_analysis) ? (
-          loadingStates.speech ? (
-            <ElevenLabsSpeechMetrics
-              elevenlabsMetrics={session.elevenlabs_metrics}
-              voiceAnalysis={session.analytics?.voice_analysis}
             />
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />

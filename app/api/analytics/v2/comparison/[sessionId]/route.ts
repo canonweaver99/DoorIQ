@@ -26,22 +26,35 @@ export async function GET(
     
     const userId = session.user_id
     
-    // Get user's last 10 sessions for average calculation
+    // Get user's last 15 sessions for average calculation and trends
     const { data: userSessions, error: userSessionsError } = await supabase
       .from('live_sessions')
       .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, sale_closed, created_at')
       .eq('user_id', userId)
       .not('overall_score', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(10)
+      .limit(15)
     
-    // Get recent scores for sparklines (last 5 sessions)
-    const recentSessions = (userSessions || []).slice(0, 5).reverse() // Reverse to show chronological order
+    // Get recent scores for trend display (last 15 sessions, reversed for chronological order)
+    const recentSessions = (userSessions || []).slice().reverse() // Reverse to show chronological order
     const recentScores = {
+      overall: recentSessions.map(s => s.overall_score || 0).filter(s => s > 0),
       rapport: recentSessions.map(s => s.rapport_score || 0).filter(s => s > 0),
       discovery: recentSessions.map(s => s.discovery_score || 0).filter(s => s > 0),
       objection_handling: recentSessions.map(s => s.objection_handling_score || 0).filter(s => s > 0),
       closing: recentSessions.map(s => s.close_score || 0).filter(s => s > 0)
+    }
+    
+    // Get close attempts data (last 15 sessions)
+    const closeAttempts = {
+      total: recentSessions.length,
+      successful: recentSessions.filter(s => s.sale_closed === true).length,
+      recent5: recentSessions.slice(-5).filter(s => s.sale_closed === true).length,
+      previous5: recentSessions.slice(-10, -5).filter(s => s.sale_closed === true).length,
+      sessions: recentSessions.map(s => ({
+        closed: s.sale_closed === true,
+        date: s.created_at
+      }))
     }
     
     if (userSessionsError) {
@@ -225,6 +238,36 @@ export async function GET(
     else if (percentile >= 20) percentileLabel = 'Bottom 40%'
     else percentileLabel = 'Bottom 20%'
     
+    // Calculate team close attempts if available (need to reference validTeamSessions from team calculation)
+    let teamCloseAttempts = null
+    if (userProfile?.team_id) {
+      const { data: teamMembers } = await supabase
+        .from('users')
+        .select('id')
+        .eq('team_id', userProfile.team_id)
+      
+      const teamMemberIds = teamMembers?.map(m => m.id) || []
+      
+      if (teamMemberIds.length > 0) {
+        const oneWeekAgo = new Date()
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+        
+        const { data: teamSessions } = await supabase
+          .from('live_sessions')
+          .select('sale_closed')
+          .in('user_id', teamMemberIds)
+          .gte('created_at', oneWeekAgo.toISOString())
+          .not('overall_score', 'is', null)
+        
+        if (teamSessions && teamSessions.length > 0) {
+          teamCloseAttempts = {
+            total: teamSessions.length,
+            successful: teamSessions.filter(s => s.sale_closed === true).length
+          }
+        }
+      }
+    }
+    
     return NextResponse.json({
       current: currentScores,
       userAverage: userAverages,
@@ -235,7 +278,9 @@ export async function GET(
       percentile,
       percentileLabel,
       sessionCount: validUserSessions.length,
-      recentScores
+      recentScores,
+      closeAttempts,
+      teamCloseAttempts
     })
   } catch (error: any) {
     console.error('Error in comparison API:', error)

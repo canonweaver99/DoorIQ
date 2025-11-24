@@ -12,6 +12,16 @@ interface ComparativePerformanceProps {
   currentClosePercentage?: number
   userAverageClosePercentage?: number
   teamAverageClosePercentage?: number
+  closeAttempts?: {
+    total: number
+    successful: number
+    recent5: number
+    previous5: number
+  }
+  teamCloseAttempts?: {
+    total: number
+    successful: number
+  } | null
 }
 
 export function ComparativePerformance({
@@ -20,7 +30,9 @@ export function ComparativePerformance({
   teamAverageOverall,
   currentClosePercentage = 0,
   userAverageClosePercentage = 0,
-  teamAverageClosePercentage = 0
+  teamAverageClosePercentage = 0,
+  closeAttempts,
+  teamCloseAttempts
 }: ComparativePerformanceProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#10b981'
@@ -91,9 +103,21 @@ export function ComparativePerformance({
               </td>
             </tr>
             <tr className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-              <td className="py-3 px-4 text-sm font-medium text-white">Close %</td>
+              <td className="py-3 px-4 text-sm font-medium text-white">
+                <div>Close %</div>
+                {closeAttempts && (
+                  <div className="text-xs text-gray-500 mt-1 font-sans">
+                    {closeAttempts.successful}/{closeAttempts.total} attempts
+                    {teamCloseAttempts && (
+                      <span className="ml-2">
+                        (Team avg: {teamCloseAttempts.successful} in {teamCloseAttempts.total})
+                      </span>
+                    )}
+                  </div>
+                )}
+              </td>
               <td className="py-3 px-4">
-                <div className="flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center gap-2">
                   <ProgressRing
                     value={currentClosePercentage}
                     max={100}
@@ -102,10 +126,15 @@ export function ComparativePerformance({
                     color={getScoreColor(currentClosePercentage)}
                     showValue={true}
                   />
+                  {closeAttempts && (
+                    <div className="text-xs text-gray-400 text-center font-sans">
+                      {closeAttempts.successful > 0 ? '✓ Closed' : '✗ No close'}
+                    </div>
+                  )}
                 </div>
               </td>
               <td className="py-3 px-4">
-                <div className="flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center gap-2">
                   <ProgressRing
                     value={userAverageClosePercentage}
                     max={100}
@@ -114,6 +143,12 @@ export function ComparativePerformance({
                     color={getScoreColor(userAverageClosePercentage)}
                     showValue={true}
                   />
+                  {closeAttempts && closeAttempts.total >= 10 && (
+                    <div className="text-xs text-gray-400 text-center font-sans">
+                      <div>Last 5: {closeAttempts.recent5} closes</div>
+                      <div className="text-gray-500">Prev 5: {closeAttempts.previous5} closes</div>
+                    </div>
+                  )}
                 </div>
               </td>
               <td className="py-3 px-4">
