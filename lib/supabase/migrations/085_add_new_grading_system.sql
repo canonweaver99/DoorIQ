@@ -80,14 +80,23 @@ BEGIN
   completed_batches := (NEW.analytics->>'line_ratings_completed_batches')::INTEGER;
   
   -- Update grading_status based on new phased system
-  -- If instant_metrics exists, mark as instant_complete
-  IF NEW.instant_metrics IS NOT NULL AND NEW.grading_status = 'pending' THEN
-    NEW.grading_status := 'instant_complete';
+  -- Only auto-update if status hasn't been explicitly set to 'complete'
+  -- If status is already 'complete', don't override it
+  IF NEW.grading_status != 'complete' THEN
+    -- If instant_metrics exists, mark as instant_complete
+    IF NEW.instant_metrics IS NOT NULL AND NEW.grading_status = 'pending' THEN
+      NEW.grading_status := 'instant_complete';
+    END IF;
+    
+    -- If key_moments exists, mark as moments_complete
+    IF NEW.key_moments IS NOT NULL AND NEW.grading_status IN ('pending', 'instant_complete') THEN
+      NEW.grading_status := 'moments_complete';
+    END IF;
   END IF;
   
-  -- If key_moments exists, mark as moments_complete
-  IF NEW.key_moments IS NOT NULL AND NEW.grading_status IN ('pending', 'instant_complete') THEN
-    NEW.grading_status := 'moments_complete';
+  -- Check if deep analysis is complete (has deep_analysis in analytics)
+  IF NEW.analytics->'deep_analysis' IS NOT NULL AND NEW.grading_status != 'complete' THEN
+    NEW.grading_status := 'complete';
   END IF;
   
   -- Legacy line_ratings status handling (for backward compatibility)
