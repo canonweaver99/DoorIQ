@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Mic, MessageSquare, AlertTriangle, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ProgressRing } from './ProgressRing'
 
 interface InstantInsightsGridProps {
   instantMetrics?: {
@@ -53,9 +54,18 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
     >
       {/* Speaking Pace */}
       <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-3">
-          <Mic className="w-5 h-5 text-blue-400" />
-          <span className="text-sm font-semibold text-white">Speaking</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Mic className="w-5 h-5 text-blue-400" />
+            <span className="text-sm font-semibold text-white">Speaking</span>
+          </div>
+          <ProgressRing
+            value={wpm}
+            max={200}
+            size={60}
+            strokeWidth={6}
+            showValue={false}
+          />
         </div>
         <div className="mb-2">
           <div className="text-2xl font-bold text-white mb-1">
@@ -68,9 +78,18 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
       
       {/* Dialogue Balance */}
       <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-3">
-          <MessageSquare className="w-5 h-5 text-purple-400" />
-          <span className="text-sm font-semibold text-white">Dialogue</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <MessageSquare className="w-5 h-5 text-purple-400" />
+            <span className="text-sm font-semibold text-white">Dialogue</span>
+          </div>
+          <ProgressRing
+            value={balance}
+            max={100}
+            size={60}
+            strokeWidth={6}
+            showValue={false}
+          />
         </div>
         <div className="mb-2">
           <div className="text-2xl font-bold text-white mb-1">

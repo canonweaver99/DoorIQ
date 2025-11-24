@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Mic } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ProgressRing } from './ProgressRing'
 
 interface ElevenLabsSpeechMetricsProps {
   elevenlabsMetrics?: any
@@ -69,77 +70,65 @@ export function ElevenLabsSpeechMetrics({
         </span>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
         {/* Energy Level */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-300">Energy Level</span>
-            <span className="text-sm text-gray-400">{energyLevel}%</span>
-          </div>
-          <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
-            <motion.div
-              className={cn("h-full", getMetricColor(energyLevel))}
-              initial={{ width: 0 }}
-              animate={{ width: `${energyLevel}%` }}
-              transition={{ duration: 1, delay: 1 }}
+        <div className="flex flex-col items-center">
+          <div className="mb-2">
+            <ProgressRing
+              value={energyLevel}
+              max={100}
+              size={80}
+              strokeWidth={8}
             />
           </div>
-          <div className="text-xs text-gray-400 mt-1">{getMetricLabel(energyLevel)} energy!</div>
+          <div className="text-sm font-medium text-gray-300 mb-1">Energy Level</div>
+          <div className="text-xs text-gray-400">{getMetricLabel(energyLevel)}</div>
         </div>
         
         {/* Confidence */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-300">Confidence</span>
-            <span className="text-sm text-gray-400">{confidence}%</span>
-          </div>
-          <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
-            <motion.div
-              className={cn("h-full", getMetricColor(confidence))}
-              initial={{ width: 0 }}
-              animate={{ width: `${confidence}%` }}
-              transition={{ duration: 1, delay: 1.1 }}
+        <div className="flex flex-col items-center">
+          <div className="mb-2">
+            <ProgressRing
+              value={confidence}
+              max={100}
+              size={80}
+              strokeWidth={8}
             />
           </div>
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-sm font-medium text-gray-300 mb-1">Confidence</div>
+          <div className="text-xs text-gray-400">
             {confidence >= 60 ? 'Confident' : 'Sounds uncertain'}
           </div>
         </div>
         
         {/* Clarity */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-300">Clarity</span>
-            <span className="text-sm text-gray-400">{clarity}%</span>
-          </div>
-          <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
-            <motion.div
-              className={cn("h-full", getMetricColor(clarity))}
-              initial={{ width: 0 }}
-              animate={{ width: `${clarity}%` }}
-              transition={{ duration: 1, delay: 1.2 }}
+        <div className="flex flex-col items-center">
+          <div className="mb-2">
+            <ProgressRing
+              value={clarity}
+              max={100}
+              size={80}
+              strokeWidth={8}
             />
           </div>
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-sm font-medium text-gray-300 mb-1">Clarity</div>
+          <div className="text-xs text-gray-400">
             {clarity >= 80 ? 'Crystal clear' : 'Could be clearer'}
           </div>
         </div>
         
         {/* Pace Variety */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-300">Pace Variety</span>
-            <span className="text-sm text-gray-400">{paceVariety}%</span>
-          </div>
-          <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
-            <motion.div
-              className={cn("h-full", getMetricColor(paceVariety))}
-              initial={{ width: 0 }}
-              animate={{ width: `${paceVariety}%` }}
-              transition={{ duration: 1, delay: 1.3 }}
+        <div className="flex flex-col items-center">
+          <div className="mb-2">
+            <ProgressRing
+              value={paceVariety}
+              max={100}
+              size={80}
+              strokeWidth={8}
             />
           </div>
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-sm font-medium text-gray-300 mb-1">Pace Variety</div>
+          <div className="text-xs text-gray-400">
             {paceVariety >= 60 ? 'Good variety' : 'Too monotone'}
           </div>
         </div>

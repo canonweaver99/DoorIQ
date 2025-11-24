@@ -35,6 +35,15 @@ export async function GET(
       .order('created_at', { ascending: false })
       .limit(10)
     
+    // Get recent scores for sparklines (last 5 sessions)
+    const recentSessions = (userSessions || []).slice(0, 5).reverse() // Reverse to show chronological order
+    const recentScores = {
+      rapport: recentSessions.map(s => s.rapport_score || 0).filter(s => s > 0),
+      discovery: recentSessions.map(s => s.discovery_score || 0).filter(s => s > 0),
+      objection_handling: recentSessions.map(s => s.objection_handling_score || 0).filter(s => s > 0),
+      closing: recentSessions.map(s => s.close_score || 0).filter(s => s > 0)
+    }
+    
     if (userSessionsError) {
       console.error('Error fetching user sessions:', userSessionsError)
     }
@@ -208,7 +217,8 @@ export async function GET(
       trends,
       percentile,
       percentileLabel,
-      sessionCount: validUserSessions.length
+      sessionCount: validUserSessions.length,
+      recentScores
     })
   } catch (error: any) {
     console.error('Error in comparison API:', error)

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft, TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Badge, getBadgesForSession } from './Badge'
+import { ProgressRing } from './ProgressRing'
 
 interface HeroSectionProps {
   overallScore: number
@@ -14,6 +16,12 @@ interface HeroSectionProps {
   virtualEarnings: number
   dealDetails?: any
   quickVerdict?: string
+  trends?: {
+    rapport: number
+    discovery: number
+    objection_handling: number
+    closing: number
+  }
 }
 
 export function HeroSection({
@@ -24,7 +32,8 @@ export function HeroSection({
   saleClosed,
   virtualEarnings,
   dealDetails,
-  quickVerdict
+  quickVerdict,
+  trends = { rapport: 0, discovery: 0, objection_handling: 0, closing: 0 }
 }: HeroSectionProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-400'
@@ -66,8 +75,23 @@ export function HeroSection({
       
       {/* Overall Performance */}
       <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold text-white">Overall Performance</h2>
+            <ProgressRing
+              value={overallScore}
+              max={100}
+              size={100}
+              strokeWidth={10}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {getBadgesForSession(overallScore, vsUserAverage, vsTeamAverage, saleClosed, trends).map((badgeType) => (
+              <Badge key={badgeType} type={badgeType} size="sm" />
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-2xl font-bold text-white">Overall Performance</h2>
           <span className={cn(
             "text-4xl font-bold",
             getScoreColor(overallScore)

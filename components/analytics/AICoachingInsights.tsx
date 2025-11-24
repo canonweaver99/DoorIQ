@@ -51,12 +51,20 @@ export function AICoachingInsights({ coachingPlan, feedback }: AICoachingInsight
               <h3 className="text-lg font-semibold text-white">IMMEDIATE FIX</h3>
               <span className="text-xs text-gray-400">(Do this next session)</span>
             </div>
-            <p className="text-white mb-2">{immediateFix.issue}</p>
+            <p className="text-white mb-2 font-medium">{immediateFix.issue}</p>
             {immediateFix.practice_scenario && (
               <div className="mt-3 p-3 bg-slate-800/50 rounded-lg">
-                <div className="text-xs text-gray-400 mb-1">Practice:</div>
+                <div className="text-xs text-gray-400 mb-1 font-semibold">Try this next time:</div>
                 <div className="text-sm text-gray-200">{immediateFix.practice_scenario}</div>
               </div>
+            )}
+            {immediateFix.resource_link && (
+              <a
+                href={immediateFix.resource_link}
+                className="mt-2 inline-block text-xs text-orange-400 hover:text-orange-300 underline"
+              >
+                Learn more →
+              </a>
             )}
           </div>
         )}
@@ -69,10 +77,16 @@ export function AICoachingInsights({ coachingPlan, feedback }: AICoachingInsight
               <h3 className="text-lg font-semibold text-white">SKILL TO DEVELOP</h3>
               <span className="text-xs text-gray-400">(This week)</span>
             </div>
-            <p className="text-white mb-2">{skillDevelopment.skill}</p>
+            <p className="text-white mb-2 font-medium">{skillDevelopment.skill}</p>
+            {skillDevelopment.current_level && skillDevelopment.target_level && (
+              <div className="text-xs text-gray-400 mb-2">
+                Current: <span className="text-white">{skillDevelopment.current_level}</span> → 
+                Target: <span className="text-blue-400">{skillDevelopment.target_level}</span>
+              </div>
+            )}
             {skillDevelopment.recommended_exercises && skillDevelopment.recommended_exercises.length > 0 && (
               <div className="mt-3 space-y-2">
-                <div className="text-xs text-gray-400 mb-1">Practice:</div>
+                <div className="text-xs text-gray-400 mb-1 font-semibold">Specific exercises to practice:</div>
                 {skillDevelopment.recommended_exercises.map((exercise, idx) => (
                   <div key={idx} className="text-sm text-gray-200 pl-4">• {exercise}</div>
                 ))}

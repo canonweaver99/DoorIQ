@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Sparkline } from './Sparkline'
 
 interface ComparativePerformanceProps {
   current: {
@@ -29,13 +30,20 @@ interface ComparativePerformanceProps {
     objection_handling: number
     closing: number
   }
+  recentScores?: {
+    rapport: number[]
+    discovery: number[]
+    objection_handling: number[]
+    closing: number[]
+  }
 }
 
 export function ComparativePerformance({
   current,
   userAverage,
   teamAverage,
-  trends = { rapport: 0, discovery: 0, objection_handling: 0, closing: 0 }
+  trends = { rapport: 0, discovery: 0, objection_handling: 0, closing: 0 },
+  recentScores
 }: ComparativePerformanceProps) {
   const categories = [
     { key: 'rapport', label: 'Rapport' },
@@ -73,6 +81,7 @@ export function ComparativePerformance({
               <th className="text-right py-3 px-4 text-sm font-semibold text-gray-300">You</th>
               <th className="text-right py-3 px-4 text-sm font-semibold text-gray-300">Your Avg</th>
               <th className="text-right py-3 px-4 text-sm font-semibold text-gray-300">Team Avg</th>
+              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-300">Trend</th>
             </tr>
           </thead>
           <tbody>
@@ -127,6 +136,13 @@ export function ComparativePerformance({
                         {getTrendText(vsTeam)}
                       </span>
                     </div>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    {recentScores?.[category.key] && recentScores[category.key].length > 0 ? (
+                      <Sparkline data={recentScores[category.key]} />
+                    ) : (
+                      <div className="w-[60px] h-[20px] flex items-center justify-center text-gray-500 text-xs">—</div>
+                    )}
                   </td>
                 </tr>
               )

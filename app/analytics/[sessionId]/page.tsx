@@ -75,6 +75,12 @@ interface ComparisonData {
   }
   percentile: number
   percentileLabel: string
+  recentScores?: {
+    rapport: number[]
+    discovery: number[]
+    objection_handling: number[]
+    closing: number[]
+  }
 }
 
 export default function AnalyticsPage() {
@@ -96,14 +102,14 @@ export default function AnalyticsPage() {
   // Fetch session data
   useEffect(() => {
     if (!sessionId) return
-    
-    const fetchSession = async () => {
-      try {
-        const response = await fetch(`/api/session?id=${sessionId}`)
+
+  const fetchSession = async () => {
+    try {
+      const response = await fetch(`/api/session?id=${sessionId}`)
         if (!response.ok) throw new Error('Failed to fetch session')
-        
-        const data = await response.json()
-        setSession(data)
+      
+      const data = await response.json()
+      setSession(data)
         setLoadingStates(prev => ({ ...prev, hero: true }))
         
         // Load insights immediately if available
@@ -132,14 +138,14 @@ export default function AnalyticsPage() {
           setTimeout(() => {
             setLoadingStates(prev => ({ ...prev, speech: true }))
           }, 2500)
-        }
-      } catch (error) {
-        console.error('Error fetching session:', error)
-      } finally {
-        setLoading(false)
       }
+    } catch (error) {
+      console.error('Error fetching session:', error)
+    } finally {
+      setLoading(false)
     }
-    
+  }
+
     fetchSession()
   }, [sessionId])
   
@@ -167,27 +173,27 @@ export default function AnalyticsPage() {
     fetchComparison()
   }, [session, sessionId])
   
-  if (loading) {
-    return (
+    if (loading) {
+      return (
       <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-4" />
           <p className="text-gray-500">Loading session analysis...</p>
         </div>
-      </div>
-    )
-  }
-  
-  if (!session) {
-    return (
+        </div>
+      )
+    }
+
+    if (!session) {
+      return (
       <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-400 mb-4">Session not found</p>
         </div>
-      </div>
-    )
-  }
-  
+          </div>
+        )
+      }
+
   const overallScore = session.overall_score || 0
   
   // Generate quick verdict from feedback or create one
@@ -214,7 +220,7 @@ export default function AnalyticsPage() {
   }
   
   const quickVerdict = getQuickVerdict()
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       <div className="max-w-6xl mx-auto px-6 pt-8 pb-12">
@@ -229,6 +235,7 @@ export default function AnalyticsPage() {
             virtualEarnings={session.virtual_earnings || 0}
             dealDetails={session.deal_details}
             quickVerdict={quickVerdict}
+            trends={comparison.trends}
           />
         )}
         
@@ -263,6 +270,7 @@ export default function AnalyticsPage() {
               userAverage={comparison.userAverage}
               teamAverage={comparison.teamAverage}
               trends={comparison.trends}
+              recentScores={comparison.recentScores}
             />
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
