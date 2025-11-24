@@ -146,11 +146,11 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
     const diff = now.getTime() - date.getTime()
     const seconds = Math.floor(diff / 1000)
     
-    if (seconds < 60) return `${seconds}s ago`
+    if (seconds < 60) return `${seconds}sec ago`
     const minutes = Math.floor(seconds / 60)
-    if (minutes < 60) return `${minutes}m ago`
+    if (minutes < 60) return `${minutes}min ago`
     const hours = Math.floor(minutes / 60)
-    return `${hours}h ago`
+    return `${hours}hr ago`
   }
 
   return (

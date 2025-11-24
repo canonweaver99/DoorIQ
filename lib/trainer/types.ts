@@ -26,12 +26,15 @@ export interface FeedbackItem {
   message: string
   severity: FeedbackSeverity
   metadata?: {
-    objectionType?: 'price' | 'time' | 'authority' | 'need'
+    objectionType?: 'price' | 'timing' | 'trust' | 'need' | 'authority' | 'comparison' | 'skepticism' | 'time' // 'time' kept for backward compatibility
     techniqueName?: string
-    closingType?: 'trial_close' | 'direct_close' | 'assumptive'
+    closingType?: 'trial_close' | 'direct_close' | 'assumptive' | 'soft' | 'hard' | 'urgency'
     momentumType?: 'building_rapport' | 'interest_growing' | 'losing_engagement' | 'strong_recovery'
     questionType?: 'discovery' | 'qualifying' | 'closed'
     priceHandlingType?: 'too_early' | 'great_framing' | 'breakdown_used' | 'skipped'
+    handlingQuality?: 'poor' | 'adequate' | 'good' | 'excellent'
+    commitmentLevel?: 'minimal' | 'moderate' | 'strong' | 'buying'
+    closeTiming?: 'too_early' | 'appropriate' | 'too_late' | 'none'
   }
 }
 

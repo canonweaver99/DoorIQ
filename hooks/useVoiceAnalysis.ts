@@ -503,6 +503,46 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     }
   }, [stopAnalysis])
   
+  // Periodically save voice analysis data to database during session
+  useEffect(() => {
+    if (!enabled || !sessionId || !isAnalyzing) return
+    
+    const saveInterval = setInterval(async () => {
+      const voiceData = getVoiceAnalysisData()
+      if (!voiceData || transcript.length === 0) return
+      
+      // Only save if we have meaningful data (WPM > 0 or filler words detected)
+      if (voiceData.avgWPM === 0 && voiceData.totalFillerWords === 0) return
+      
+      try {
+        const response = await fetch('/api/session/voice-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            voice_analysis: voiceData
+          })
+        })
+        
+        if (response.ok) {
+          console.log('✅ Voice analysis saved incrementally:', {
+            avgWPM: voiceData.avgWPM,
+            wpmTimelineLength: voiceData.wpmTimeline?.length || 0
+          })
+        } else {
+          console.warn('⚠️ Failed to save voice analysis incrementally:', response.status)
+        }
+      } catch (error) {
+        console.warn('⚠️ Error saving voice analysis incrementally:', error)
+        // Don't throw - this is non-critical, data will be saved at session end
+      }
+    }, 15000) // Save every 15 seconds
+    
+    return () => {
+      clearInterval(saveInterval)
+    }
+  }, [enabled, sessionId, isAnalyzing, transcript.length, getVoiceAnalysisData])
+  
   return {
     metrics,
     feedbackItems: [], // No feedback during live session

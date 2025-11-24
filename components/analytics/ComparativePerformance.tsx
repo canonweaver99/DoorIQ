@@ -1,67 +1,29 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, Minus, ArrowUp, ArrowDown } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ProgressRing } from './ProgressRing'
 
 interface ComparativePerformanceProps {
-  current: {
-    rapport: number
-    discovery: number
-    objection_handling: number
-    closing: number
-  }
-  userAverage: {
-    rapport: number
-    discovery: number
-    objection_handling: number
-    closing: number
-  }
-  teamAverage: {
-    rapport: number
-    discovery: number
-    objection_handling: number
-    closing: number
-  }
-  trends?: {
-    rapport: number
-    discovery: number
-    objection_handling: number
-    closing: number
-  }
-  recentScores?: {
-    rapport: number[]
-    discovery: number[]
-    objection_handling: number[]
-    closing: number[]
-  }
+  currentOverall: number
+  userAverageOverall: number
+  teamAverageOverall: number
 }
 
 export function ComparativePerformance({
-  current,
-  userAverage,
-  teamAverage,
-  trends = { rapport: 0, discovery: 0, objection_handling: 0, closing: 0 },
-  recentScores
+  currentOverall,
+  userAverageOverall,
+  teamAverageOverall
 }: ComparativePerformanceProps) {
-  const categories = [
-    { key: 'rapport', label: 'Rapport' },
-    { key: 'discovery', label: 'Discovery' },
-    { key: 'objection_handling', label: 'Objections' },
-    { key: 'closing', label: 'Closing' }
-  ] as const
-  
-  const getTrendIcon = (value: number) => {
-    if (value > 0) return <TrendingUp className="w-4 h-4 text-green-400" />
-    if (value < 0) return <TrendingDown className="w-4 h-4 text-red-400" />
-    return <Minus className="w-4 h-4 text-gray-400" />
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#10b981'
+    if (score >= 60) return '#3b82f6'
+    if (score >= 40) return '#f59e0b'
+    return '#ef4444'
   }
   
-  const getTrendText = (value: number) => {
-    if (value > 0) return '↑'
-    if (value < 0) return '↓'
-    return '→'
-  }
+  const vsUser = currentOverall - userAverageOverall
   
   return (
     <motion.div
@@ -76,43 +38,52 @@ export function ComparativePerformance({
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-700/50">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Category</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-300">You</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-300">Your Avg</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-300">Team Avg</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Metric</th>
+              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-300">This Session</th>
+              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-300">Your Avg (Last 10)</th>
+              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-300">Team Avg</th>
             </tr>
           </thead>
           <tbody>
-            {categories.map((category) => {
-              const currentValue = current[category.key]
-              const userAvg = userAverage[category.key]
-              const teamAvg = teamAverage[category.key]
-              const vsUser = currentValue - userAvg
-              const vsTeam = currentValue - teamAvg
-              
-              return (
-                <tr key={category.key} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                  <td className="py-3 px-4 text-sm font-medium text-white">{category.label}</td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <span className={cn(
-                        "text-sm font-semibold",
-                        vsUser < 0 ? 'text-red-400' : vsUser > 0 ? 'text-green-400' : 'text-white'
-                      )}>
-                        {currentValue}%
-                      </span>
-                      {getTrendIcon(vsUser)}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="text-sm text-gray-300">{userAvg}%</span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="text-sm text-gray-300">{teamAvg}%</span>
-                  </td>
-                </tr>
-              )
-            })}
+            <tr className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+              <td className="py-3 px-4 text-sm font-medium text-white">Overall Score</td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center">
+                  <ProgressRing
+                    value={currentOverall}
+                    max={100}
+                    size={60}
+                    strokeWidth={6}
+                    color={getScoreColor(currentOverall)}
+                    showValue={true}
+                  />
+                </div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center">
+                  <ProgressRing
+                    value={userAverageOverall}
+                    max={100}
+                    size={60}
+                    strokeWidth={6}
+                    color={getScoreColor(userAverageOverall)}
+                    showValue={true}
+                  />
+                </div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center">
+                  <ProgressRing
+                    value={teamAverageOverall}
+                    max={100}
+                    size={60}
+                    strokeWidth={6}
+                    color={getScoreColor(teamAverageOverall)}
+                    showValue={true}
+                  />
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>

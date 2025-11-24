@@ -124,10 +124,10 @@ export function CriticalMomentsTimeline({
           
           // Determine visual category
           const getOutcomeCategory = () => {
-            if (isSuccess) return { emoji: '✅', label: 'Success Moment', color: 'green' }
-            if (isMissed) return { emoji: '⚠️', label: 'Opportunity', color: 'yellow' }
-            if (isFailure) return { emoji: '❌', label: 'Critical Miss', color: 'red' }
-            return { emoji: '💡', label: 'Insight', color: 'blue' }
+            if (isSuccess) return { label: 'Success Moment', color: 'green' }
+            if (isMissed) return { label: 'Opportunity', color: 'yellow' }
+            if (isFailure) return { label: 'Critical Miss', color: 'red' }
+            return { label: 'Insight', color: 'blue' }
           }
           
           const category = getOutcomeCategory()
@@ -151,9 +151,8 @@ export function CriticalMomentsTimeline({
                   ? "bg-yellow-500/10 border-yellow-500/30"
                   : "bg-blue-500/10 border-blue-500/30"
               )}>
-                {/* Status Icon with Emoji */}
-                <div className="flex-shrink-0 flex flex-col items-center gap-2">
-                  <div className="text-2xl">{category.emoji}</div>
+                {/* Status Icon */}
+                <div className="flex-shrink-0">
                   {isSuccess ? (
                     <CheckCircle2 className="w-6 h-6 text-green-400" />
                   ) : isFailure ? (
@@ -205,19 +204,6 @@ export function CriticalMomentsTimeline({
                     )}
                   </div>
                   
-                  {/* Outcome Category Label */}
-                  <div className="mb-2">
-                    <span className={cn(
-                      "text-xs font-semibold px-2 py-1 rounded-full",
-                      category.color === 'green' && "bg-green-500/20 text-green-400",
-                      category.color === 'yellow' && "bg-yellow-500/20 text-yellow-400",
-                      category.color === 'red' && "bg-red-500/20 text-red-400",
-                      category.color === 'blue' && "bg-blue-500/20 text-blue-400"
-                    )}>
-                      {category.emoji} {category.label}
-                    </span>
-                  </div>
-                  
                   {/* Analysis */}
                   {moment.analysis?.whatHappened && (
                     <div className="mb-2 text-sm text-gray-300">
@@ -251,7 +237,7 @@ export function CriticalMomentsTimeline({
                       <div className="flex items-start gap-2">
                         <Lightbulb className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <span className="text-blue-400 font-medium">💡 Try this instead: </span>
+                          <span className="text-blue-400 font-medium">Try this instead: </span>
                           <span className="text-blue-200 italic">
                             "{moment.coachingTip || moment.analysis?.alternativeResponse}"
                           </span>

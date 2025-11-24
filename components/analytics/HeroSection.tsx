@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft, Zap, ArrowUp, ArrowDown, DollarSign, Clock, XCircle, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Badge, getBadgesForSession } from './Badge'
 import { ProgressRing } from './ProgressRing'
 
 // Tooltip Component
@@ -201,131 +200,105 @@ export function HeroSection({
               </div>
             </div>
             
-            {/* Right Column - Badges, Deal Status, and Quick Verdict */}
+            {/* Right Column - Deal Status, and Quick Verdict */}
             <div className="lg:col-span-1 space-y-4">
-              {/* Badges Row */}
-              <div className="flex flex-wrap gap-2">
-                {getBadgesForSession(overallScore, vsUserAverage, vsTeamAverage, saleClosed, trends).map((badgeType) => (
-                  <Badge key={badgeType} type={badgeType} size="sm" />
-                ))}
-              </div>
-              
-              {/* Earnings Card - From Old Grading Page */}
-              <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden ${
-                saleClosed && virtualEarnings > 0
-                  ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
-                  : dealDetails?.next_step
-                    ? 'bg-gradient-to-br from-amber-900/40 to-yellow-800/40 border border-amber-500/30'
-                    : 'bg-gradient-to-br from-red-900/40 to-rose-800/40 border border-red-500/30'
-              }`}>
-                {/* Sparkle background */}
-                <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
+              {/* Earnings and Quick Verdict Cards - Side by Side */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Earnings Card - From Old Grading Page */}
+                <div className={`relative rounded-3xl backdrop-blur-xl p-4 overflow-hidden ${
                   saleClosed && virtualEarnings > 0
-                    ? 'bg-gradient-to-br from-emerald-400/20 to-green-400/20'
+                    ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
                     : dealDetails?.next_step
-                      ? 'bg-gradient-to-br from-amber-400/20 to-yellow-400/20'
-                      : 'bg-gradient-to-br from-red-400/20 to-rose-400/20'
-                }`}></div>
-                
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-4">
+                      ? 'bg-gradient-to-br from-amber-900/40 to-yellow-800/40 border border-amber-500/30'
+                      : 'bg-gradient-to-br from-red-900/40 to-rose-800/40 border border-red-500/30'
+                }`}>
+                  {/* Sparkle background */}
+                  <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl ${
+                    saleClosed && virtualEarnings > 0
+                      ? 'bg-gradient-to-br from-emerald-400/20 to-green-400/20'
+                      : dealDetails?.next_step
+                        ? 'bg-gradient-to-br from-amber-400/20 to-yellow-400/20'
+                        : 'bg-gradient-to-br from-red-400/20 to-rose-400/20'
+                  }`}></div>
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-3">
+                      {saleClosed && virtualEarnings > 0 ? (
+                        <>
+                          <DollarSign className="w-4 h-4 text-emerald-400" />
+                          <span className="text-xs uppercase tracking-[0.25em] text-emerald-400 font-space">You Earned</span>
+                        </>
+                      ) : dealDetails?.next_step ? (
+                        <>
+                          <Clock className="w-4 h-4 text-amber-400" />
+                          <span className="text-xs uppercase tracking-[0.25em] text-amber-400 font-space">Soft Close</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 text-red-400" />
+                          <span className="text-xs uppercase tracking-[0.25em] text-red-400 font-space">Close Failed</span>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className={`text-3xl font-bold text-white mb-3 font-space ${
+                      !saleClosed || virtualEarnings === 0 ? 'line-through opacity-50' : ''
+                    }`}>
+                      ${saleClosed && virtualEarnings > 0 ? virtualEarnings.toFixed(2) : '0.00'}
+                    </div>
+
                     {saleClosed && virtualEarnings > 0 ? (
                       <>
-                        <DollarSign className="w-5 h-5 text-emerald-400" />
-                        <span className="text-xs uppercase tracking-[0.25em] text-emerald-400 font-space">You Earned</span>
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-400 font-sans">Deal Value</span>
+                            <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
+                          </div>
+                          {commissionEarned > 0 && (
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-400 font-sans">Commission</span>
+                              <span className="text-emerald-400 font-medium font-sans">${commissionEarned.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {totalBonus > 0 && (
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-400 font-sans">Bonuses</span>
+                              <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
+                            </div>
+                          )}
+                        </div>
                       </>
                     ) : dealDetails?.next_step ? (
-                      <>
-                        <Clock className="w-5 h-5 text-amber-400" />
-                        <span className="text-xs uppercase tracking-[0.25em] text-amber-400 font-space">Soft Close</span>
-                      </>
+                      <div className="space-y-2">
+                        <div className="text-lg font-bold text-amber-300 font-space">Next Step ✓</div>
+                        <p className="text-xs text-white font-medium leading-relaxed font-sans">{dealDetails.next_step}</p>
+                      </div>
                     ) : (
-                      <>
-                        <XCircle className="w-5 h-5 text-red-400" />
-                        <span className="text-xs uppercase tracking-[0.25em] text-red-400 font-space">Close Failed</span>
-                      </>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-300 font-medium font-sans">Potential Value</span>
+                          <span className="text-white/70 font-semibold line-through font-sans">$--</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-300 font-medium font-sans">Missed</span>
+                          <span className="text-red-300 font-semibold font-sans">$0.00</span>
+                        </div>
+                      </div>
                     )}
                   </div>
-                  
-                  <div className={`text-4xl font-bold text-white mb-4 font-space ${
-                    !saleClosed || virtualEarnings === 0 ? 'line-through opacity-50' : ''
-                  }`}>
-                    ${saleClosed && virtualEarnings > 0 ? virtualEarnings.toFixed(2) : '0.00'}
-                  </div>
-
-                  {saleClosed && virtualEarnings > 0 ? (
-                    <>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-400 font-sans">Deal Value</span>
-                          <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
-                        </div>
-                        {commissionEarned > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-slate-400 font-sans">Commission (30%)</span>
-                            <span className="text-emerald-400 font-medium font-sans">${commissionEarned.toFixed(2)}</span>
-                          </div>
-                        )}
-                        {totalBonus > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-slate-400 font-sans">Bonuses</span>
-                            <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
-                          </div>
-                        )}
-                        <div className="pt-2 border-t border-emerald-500/20 flex justify-between">
-                          <span className="text-white font-semibold font-space text-sm">Total Virtual Earnings</span>
-                          <span className="text-emerald-400 font-bold text-base font-space">${virtualEarnings.toFixed(2)}</span>
-                        </div>
-                      </div>
-
-                      {dealDetails?.product_sold && (
-                        <div className="mt-3 pt-3 border-t border-emerald-500/20">
-                          <div className="text-xs text-slate-400 mb-1 font-sans">Product Sold</div>
-                          <div className="text-sm text-white font-sans">{dealDetails.product_sold}</div>
-                        </div>
-                      )}
-                    </>
-                  ) : dealDetails?.next_step ? (
-                    <div className="space-y-3">
-                      <div className="text-2xl font-bold text-amber-300 mb-2 font-space">Next Step Set ✓</div>
-                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                        <div className="text-xs text-amber-400/80 mb-1 uppercase tracking-wide font-semibold font-space">
-                          {dealDetails.next_step_type?.replace(/_/g, ' ') || 'Follow-up'}
-                        </div>
-                        <p className="text-sm text-white font-medium leading-relaxed font-sans">{dealDetails.next_step}</p>
-                      </div>
-                      <div className="pt-2 border-t border-amber-500/30">
-                        <p className="text-xs text-amber-200/80 font-sans">No immediate sale, but you kept the door open. Follow through on this commitment to close the deal.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-300 font-medium font-sans">Potential Deal Value</span>
-                        <span className="text-white/70 font-semibold line-through font-sans">$--</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-300 font-medium font-sans">Missed Commission</span>
-                        <span className="text-red-300 font-semibold font-sans">$0.00</span>
-                      </div>
-                      <div className="pt-2 border-t border-red-500/30">
-                        <p className="text-sm text-red-200 font-medium leading-relaxed font-sans">No sale was closed this session. Review the feedback below to improve your approach.</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
+                
+                {/* Quick Verdict Card - Right of Earnings */}
+                {quickVerdict && (
+                  <div className={`relative rounded-3xl backdrop-blur-xl p-4 overflow-hidden bg-blue-500/10 border border-blue-500/20`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Zap className="w-4 h-4 text-blue-400" />
+                      <span className="text-xs uppercase tracking-[0.25em] text-blue-400 font-space">Quick Verdict</span>
+                    </div>
+                    <div className="text-white text-sm leading-relaxed font-sans">"{quickVerdict}"</div>
+                  </div>
+                )}
               </div>
-              
-              {/* Quick Verdict Card - Equal size to Earnings card */}
-              {quickVerdict && (
-                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden bg-blue-500/10 border border-blue-500/20`}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Zap className="w-5 h-5 text-blue-400" />
-                    <span className="text-xs uppercase tracking-[0.25em] text-blue-400 font-space">Quick Verdict</span>
-                  </div>
-                  <div className="text-white text-base leading-relaxed font-sans">"{quickVerdict}"</div>
-                </div>
-              )}
             </div>
           </div>
         </div>

@@ -30,6 +30,7 @@ export function ProgressRing({
   const offset = circumference - (percentage / 100) * circumference
   
   const getColorClass = () => {
+    if (color) return '' // Use inline color if provided
     if (percentage >= 80) return 'stroke-green-400'
     if (percentage >= 60) return 'stroke-yellow-400'
     if (percentage >= 40) return 'stroke-orange-400'
@@ -54,7 +55,7 @@ export function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="currentColor"
+          stroke={color || "currentColor"}
           strokeWidth={strokeWidth}
           fill="none"
           strokeLinecap="round"

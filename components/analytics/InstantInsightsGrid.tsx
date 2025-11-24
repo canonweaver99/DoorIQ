@@ -269,17 +269,6 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
           </div>
         )}
         
-        {/* Empty State - Zero Objections */}
-        {objections === 0 && (
-          <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-            <div className="text-xs text-amber-200 font-sans leading-relaxed">
-              No objections detected. This might indicate you're not pushing hard enough. Consider asking more probing questions to uncover concerns. Objections are opportunities to address real needs.
-            </div>
-            <button className="mt-2 text-xs text-amber-400 hover:text-amber-300 font-semibold font-sans flex items-center gap-1">
-              Learn Probing Questions <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-        )}
       </div>
       
       {/* Closing */}

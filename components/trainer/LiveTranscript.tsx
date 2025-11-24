@@ -18,12 +18,14 @@ function TranscriptMessage({
   entry, 
   agentName, 
   agentImageUrl, 
-  userAvatarUrl 
+  userAvatarUrl,
+  sessionStartTime
 }: { 
   entry: TranscriptEntry
   agentName?: string
   agentImageUrl?: string | null
   userAvatarUrl?: string | null
+  sessionStartTime: Date | null
 }) {
   const [copied, setCopied] = useState(false)
   const isUser = entry.speaker === 'user'
@@ -39,12 +41,12 @@ function TranscriptMessage({
   }
 
   const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    })
+    if (!sessionStartTime) return '0:00'
+    const diff = date.getTime() - sessionStartTime.getTime()
+    const totalSeconds = Math.floor(diff / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes}:${String(seconds).padStart(2, '0')}`
   }
 
   // Get avatar image URL
@@ -120,6 +122,9 @@ function TranscriptMessage({
 export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvatarUrl }: LiveTranscriptProps) {
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  
+  // Get session start time from first transcript entry
+  const sessionStartTime = transcript.length > 0 ? transcript[0].timestamp : null
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -162,6 +167,7 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
                 agentName={agentName}
                 agentImageUrl={agentImageUrl}
                 userAvatarUrl={userAvatarUrl}
+                sessionStartTime={sessionStartTime}
               />
             ))}
             <div ref={transcriptEndRef} />

@@ -2,6 +2,16 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { TranscriptEntry, FeedbackItem, FeedbackType, FeedbackSeverity, LiveSessionMetrics } from '@/lib/trainer/types'
+import {
+  detectObjection as detectEnhancedObjection,
+  detectMicroCommitment,
+  detectCloseAttempt,
+  assessObjectionHandling,
+  assessCloseSuccess,
+  assessCloseTiming,
+  generateConciseFeedback,
+  getObjectionApproach
+} from '@/lib/trainer/enhancedPatternAnalyzer'
 
 interface UseLiveSessionAnalysisReturn {
   feedbackItems: FeedbackItem[]
@@ -58,19 +68,23 @@ const TECHNIQUE_PATTERNS = {
   ]
 }
 
-// Check if text contains objection patterns
+// Legacy objection detection (kept for metrics calculation)
 function detectObjection(text: string): { type: 'price' | 'time' | 'authority' | 'need' } | null {
-  const lowerText = text.toLowerCase()
+  const enhanced = detectEnhancedObjection(text)
+  if (!enhanced) return null
   
-  for (const [type, patterns] of Object.entries(OBJECTION_PATTERNS)) {
-    for (const pattern of patterns) {
-      if (lowerText.includes(pattern)) {
-        return { type: type as 'price' | 'time' | 'authority' | 'need' }
-      }
-    }
+  // Map enhanced types to legacy types for backward compatibility
+  const typeMap: Record<string, 'price' | 'time' | 'authority' | 'need'> = {
+    price: 'price',
+    timing: 'time',
+    trust: 'need', // Map trust to need for legacy
+    need: 'need',
+    authority: 'authority',
+    comparison: 'price', // Map comparison to price for legacy
+    skepticism: 'need' // Map skepticism to need for legacy
   }
   
-  return null
+  return { type: typeMap[enhanced.type] || 'need' }
 }
 
 // Check if text contains technique patterns
@@ -374,8 +388,10 @@ function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
 export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSessionAnalysisReturn {
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([])
   const previousTranscriptLengthRef = useRef(0)
-  const objectionTimestampsRef = useRef<Map<string, Date>>(new Map())
+  const objectionIndicesRef = useRef<Map<string, number>>(new Map()) // Track objection indices for assessment
   const objectionHandledRef = useRef<Map<string, boolean>>(new Map())
+  const closeAttemptIndicesRef = useRef<number[]>([]) // Track close attempts for timing
+  const unhandledObjectionIndicesRef = useRef<number[]>([]) // Track unhandled objections
   const lastMonologueStartRef = useRef<Date | null>(null)
   const lastMonologueSpeakerRef = useRef<'user' | 'homeowner' | null>(null)
   const recentEntriesRef = useRef<TranscriptEntry[]>([])
@@ -432,91 +448,96 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     
     console.log('🔍 Analyzing new transcript entries:', newEntries.length, 'entries')
     
-    newEntries.forEach(entry => {
-      console.log('📝 Processing entry:', { speaker: entry.speaker, text: entry.text.substring(0, 50) })
+    newEntries.forEach((entry, relativeIndex) => {
+      const entryIndex = previousTranscriptLengthRef.current + relativeIndex
+      console.log('📝 Processing entry:', { speaker: entry.speaker, text: entry.text.substring(0, 50), index: entryIndex })
       
-      // Objection detection (only for homeowner)
+      // Enhanced objection detection (only for homeowner)
       if (entry.speaker === 'homeowner') {
-        const objection = detectObjection(entry.text)
+        const objection = detectEnhancedObjection(entry.text)
         console.log('🏠 Homeowner entry - objection check:', objection ? objection.type : 'none')
         if (objection) {
           const objectionKey = `${objection.type}-${entry.id}`
-          if (!objectionTimestampsRef.current.has(objectionKey)) {
-            objectionTimestampsRef.current.set(objectionKey, entry.timestamp)
+          
+          if (!objectionIndicesRef.current.has(objectionKey)) {
+            objectionIndicesRef.current.set(objectionKey, entryIndex)
             objectionHandledRef.current.set(objectionKey, false)
+            unhandledObjectionIndicesRef.current.push(entryIndex)
             
-            const objectionMessages = {
-              price: 'Price objection detected',
-              time: 'Time objection detected',
-              authority: 'Authority objection detected',
-              need: 'Need objection detected'
-            }
+            // Generate concise feedback message
+            const message = generateConciseFeedback('objection', {
+              objectionType: objection.type,
+              severity: objection.severity
+            })
+            
+            // Map timing to 'time' for backward compatibility
+            const objectionType = objection.type === 'timing' ? 'time' : objection.type
             
             addFeedbackItem(
               'objection_detected',
-              objectionMessages[objection.type],
-              'neutral',
-              { objectionType: objection.type }
+              message,
+              objection.severity === 'critical' ? 'needs_improvement' : 'neutral',
+              { 
+                objectionType: objectionType as any,
+                handlingQuality: undefined
+              }
             )
             
-            // Check for objection handling after 30 seconds
+            // Assess objection handling after a short delay (allows for rep response)
             setTimeout(() => {
-              const objectionTime = objectionTimestampsRef.current.get(objectionKey)
-              if (objectionTime) {
-                // Check if there's been a user response since objection
-                const userResponses = transcript.filter(
-                  t => t.speaker === 'user' && 
-                  t.timestamp > objectionTime &&
-                  t.timestamp.getTime() - objectionTime.getTime() < 30000
-                )
+              const objectionIndex = objectionIndicesRef.current.get(objectionKey)
+              if (objectionIndex !== undefined && transcript.length > objectionIndex) {
+                const handling = assessObjectionHandling(objectionIndex, transcript)
                 
-                if (userResponses.length === 0) {
+                if (handling.wasHandled) {
+                  objectionHandledRef.current.set(objectionKey, true)
+                  // Remove from unhandled list
+                  const unhandledIdx = unhandledObjectionIndicesRef.current.indexOf(objectionIndex)
+                  if (unhandledIdx > -1) {
+                    unhandledObjectionIndicesRef.current.splice(unhandledIdx, 1)
+                  }
+                  
+                  const message = generateConciseFeedback('objection_handling', {
+                    quality: handling.quality,
+                    wasHandled: true
+                  })
+                  
                   addFeedbackItem(
                     'objection_handling',
-                    'Objection ignored - no response',
-                    'needs_improvement',
-                    {}
+                    message,
+                    handling.quality === 'poor' || handling.quality === 'adequate' ? 'needs_improvement' : 'good',
+                    { handlingQuality: handling.quality || undefined }
                   )
-                } else {
-                  // Check handling quality
-                  const lastResponse = userResponses[userResponses.length - 1]
-                  const handling = detectObjectionHandling(lastResponse.text, objectionTime, lastResponse.timestamp)
+                } else if (handling.quality === 'poor') {
+                  const message = generateConciseFeedback('objection_handling', {
+                    quality: handling.quality,
+                    wasHandled: false
+                  })
                   
-                  if (handling) {
-                    if (handling.quality === 'strong') {
-                      objectionHandledRef.current.set(objectionKey, true)
-                      addFeedbackItem(
-                        'objection_handling',
-                        handling.message,
-                        'good',
-                        {}
-                      )
-                    } else if (handling.quality === 'weak') {
-                      addFeedbackItem(
-                        'objection_handling',
-                        handling.message,
-                        'needs_improvement',
-                        {}
-                      )
-                    }
-                  }
+                  addFeedbackItem(
+                    'objection_handling',
+                    message,
+                    'needs_improvement',
+                    { handlingQuality: handling.quality || undefined }
+                  )
                 }
-                
-                // Check again after 60 seconds for ignored
-                setTimeout(() => {
-                  if (!objectionHandledRef.current.get(objectionKey)) {
-                    addFeedbackItem(
-                      'objection_handling',
-                      'Objection ignored - no response',
-                      'needs_improvement',
-                      {}
-                    )
-                  }
-                  objectionTimestampsRef.current.delete(objectionKey)
-                  objectionHandledRef.current.delete(objectionKey)
-                }, 30000) // Additional 30 seconds = 60 total
               }
-            }, 30000)
+            }, 5000) // Check after 5 seconds
+          }
+        }
+        
+        // Enhanced micro-commitment detection
+        const commitment = detectMicroCommitment(entry.text)
+        if (commitment) {
+          // Only show moderate+ commitments to avoid spam
+          if (commitment === 'moderate' || commitment === 'strong' || commitment === 'buying') {
+            const message = generateConciseFeedback('micro_commitment', { level: commitment })
+            addFeedbackItem(
+              'coaching_tip',
+              message,
+              commitment === 'buying' ? 'good' : 'neutral',
+              { commitmentLevel: commitment }
+            )
           }
         }
         
@@ -557,15 +578,58 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
           valueStatementsCountRef.current++
         }
         
-        // Detect closing behaviors
-        const closing = detectClosingBehavior(entry.text)
-        if (closing) {
-          addFeedbackItem(
-            'closing_behavior',
-            closing.message,
-            'good',
-            { closingType: closing.type }
+        // Enhanced close attempt detection
+        const closeType = detectCloseAttempt(entry.text)
+        if (closeType) {
+          closeAttemptIndicesRef.current.push(entryIndex)
+          
+          // Assess close timing
+          const timing = assessCloseTiming(
+            entryIndex,
+            transcript,
+            unhandledObjectionIndicesRef.current
           )
+          
+          // Assess close success after short delay
+          setTimeout(() => {
+            const wasSuccessful = assessCloseSuccess(entryIndex, transcript)
+            const message = generateConciseFeedback('close_attempt', {
+              closeType,
+              wasSuccessful
+            })
+            
+            addFeedbackItem(
+              'closing_behavior',
+              message,
+              wasSuccessful ? 'good' : 'neutral',
+              { 
+                closingType: closeType as any,
+                closeTiming: timing
+              }
+            )
+            
+            // If timing is inappropriate, provide feedback
+            if (timing === 'too_early' || timing === 'too_late') {
+              const timingMessage = generateConciseFeedback('close_timing', { timing })
+              addFeedbackItem(
+                'coaching_tip',
+                timingMessage,
+                'needs_improvement',
+                { closeTiming: timing }
+              )
+            }
+          }, 3000) // Check after 3 seconds
+        } else {
+          // Legacy closing behavior detection (fallback)
+          const closing = detectClosingBehavior(entry.text)
+          if (closing) {
+            addFeedbackItem(
+              'closing_behavior',
+              closing.message,
+              'good',
+              { closingType: closing.type }
+            )
+          }
         }
         
         // Detect question quality
@@ -643,21 +707,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
         closedQuestionCountRef.current = 0
       }
       
-      // Detect buying signals from homeowner
-      if (entry.speaker === 'homeowner') {
-        const buyingSignals = [
-          'when can you', 'how soon', 'how much', 'what\'s included',
-          'warranty', 'guarantee', 'install', 'schedule', 'available'
-        ]
-        const lowerText = entry.text.toLowerCase()
-        if (buyingSignals.some(signal => lowerText.includes(signal))) {
-          addFeedbackItem(
-            'coaching_tip',
-            'Buying signal detected! Move toward closing.',
-            'good'
-          )
-        }
-      }
+      // Buying signals are now handled by micro-commitment detection above
     })
   }, [transcript, addFeedbackItem])
   
