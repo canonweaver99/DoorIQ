@@ -9,12 +9,18 @@ interface ComparativePerformanceProps {
   currentOverall: number
   userAverageOverall: number
   teamAverageOverall: number
+  currentClosePercentage?: number
+  userAverageClosePercentage?: number
+  teamAverageClosePercentage?: number
 }
 
 export function ComparativePerformance({
   currentOverall,
   userAverageOverall,
-  teamAverageOverall
+  teamAverageOverall,
+  currentClosePercentage = 0,
+  userAverageClosePercentage = 0,
+  teamAverageClosePercentage = 0
 }: ComparativePerformanceProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#10b981'
@@ -79,6 +85,45 @@ export function ComparativePerformance({
                     size={60}
                     strokeWidth={6}
                     color={getScoreColor(teamAverageOverall)}
+                    showValue={true}
+                  />
+                </div>
+              </td>
+            </tr>
+            <tr className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+              <td className="py-3 px-4 text-sm font-medium text-white">Close %</td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center">
+                  <ProgressRing
+                    value={currentClosePercentage}
+                    max={100}
+                    size={60}
+                    strokeWidth={6}
+                    color={getScoreColor(currentClosePercentage)}
+                    showValue={true}
+                  />
+                </div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center">
+                  <ProgressRing
+                    value={userAverageClosePercentage}
+                    max={100}
+                    size={60}
+                    strokeWidth={6}
+                    color={getScoreColor(userAverageClosePercentage)}
+                    showValue={true}
+                  />
+                </div>
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center">
+                  <ProgressRing
+                    value={teamAverageClosePercentage}
+                    max={100}
+                    size={60}
+                    strokeWidth={6}
+                    color={getScoreColor(teamAverageClosePercentage)}
                     showValue={true}
                   />
                 </div>

@@ -20,6 +20,7 @@ const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#EC4899', '#F59E0B', '#EF4444'
 interface Analytics {
   totalSessions: number
   teamAverage: number
+  teamClosePercentage?: number
   activeReps: number
   trainingROI: number
   performanceData: Array<{
@@ -52,6 +53,7 @@ interface Analytics {
     }
     revenue: number
     lastActive: string
+    closePercentage?: number
   }>
   hourlyPerformance?: Array<{
     hour: number
@@ -441,6 +443,18 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             textColor: 'text-gray-300',
             iconColor: 'text-gray-400',
             subtitle: 'Overall performance rating'
+          },
+          { 
+            label: 'Close %', 
+            value: `${analytics.teamClosePercentage || 0}%`, 
+            change: '', 
+            changeValue: 0,
+            icon: Target,
+            bgColor: '#1a1a1a',
+            borderColor: '#2a2a2a',
+            textColor: 'text-gray-300',
+            iconColor: 'text-gray-400',
+            subtitle: 'Percentage of sessions closed'
           },
         ].map((metric, idx) => {
           const Icon = metric.icon

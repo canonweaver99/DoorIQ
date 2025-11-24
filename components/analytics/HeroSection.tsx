@@ -203,9 +203,9 @@ export function HeroSection({
             {/* Right Column - Deal Status, and Quick Verdict */}
             <div className="lg:col-span-1 space-y-4">
               {/* Earnings and Quick Verdict Cards - Side by Side */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4 h-full">
                 {/* Earnings Card - From Old Grading Page */}
-                <div className={`relative rounded-3xl backdrop-blur-xl p-4 overflow-hidden ${
+                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden flex flex-col justify-between ${
                   saleClosed && virtualEarnings > 0
                     ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
                     : dealDetails?.next_step
@@ -213,7 +213,7 @@ export function HeroSection({
                       : 'bg-gradient-to-br from-red-900/40 to-rose-800/40 border border-red-500/30'
                 }`}>
                   {/* Sparkle background */}
-                  <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl ${
+                  <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
                     saleClosed && virtualEarnings > 0
                       ? 'bg-gradient-to-br from-emerald-400/20 to-green-400/20'
                       : dealDetails?.next_step
@@ -221,81 +221,83 @@ export function HeroSection({
                         : 'bg-gradient-to-br from-red-400/20 to-rose-400/20'
                   }`}></div>
                   
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-3">
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="flex items-center gap-2 mb-4">
                       {saleClosed && virtualEarnings > 0 ? (
                         <>
-                          <DollarSign className="w-4 h-4 text-emerald-400" />
-                          <span className="text-xs uppercase tracking-[0.25em] text-emerald-400 font-space">You Earned</span>
+                          <DollarSign className="w-5 h-5 text-emerald-400" />
+                          <span className="text-sm uppercase tracking-[0.25em] text-emerald-400 font-space">You Earned</span>
                         </>
                       ) : dealDetails?.next_step ? (
                         <>
-                          <Clock className="w-4 h-4 text-amber-400" />
-                          <span className="text-xs uppercase tracking-[0.25em] text-amber-400 font-space">Soft Close</span>
+                          <Clock className="w-5 h-5 text-amber-400" />
+                          <span className="text-sm uppercase tracking-[0.25em] text-amber-400 font-space">Soft Close</span>
                         </>
                       ) : (
                         <>
-                          <XCircle className="w-4 h-4 text-red-400" />
-                          <span className="text-xs uppercase tracking-[0.25em] text-red-400 font-space">Close Failed</span>
+                          <XCircle className="w-5 h-5 text-red-400" />
+                          <span className="text-sm uppercase tracking-[0.25em] text-red-400 font-space">Close Failed</span>
                         </>
                       )}
                     </div>
                     
-                    <div className={`text-3xl font-bold text-white mb-3 font-space ${
+                    <div className={`text-4xl font-bold text-white mb-4 font-space ${
                       !saleClosed || virtualEarnings === 0 ? 'line-through opacity-50' : ''
                     }`}>
                       ${saleClosed && virtualEarnings > 0 ? virtualEarnings.toFixed(2) : '0.00'}
                     </div>
 
-                    {saleClosed && virtualEarnings > 0 ? (
-                      <>
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs">
-                            <span className="text-slate-400 font-sans">Deal Value</span>
-                            <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
+                    <div className="flex-1 flex flex-col justify-end">
+                      {saleClosed && virtualEarnings > 0 ? (
+                        <>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-400 font-sans">Deal Value</span>
+                              <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
+                            </div>
+                            {commissionEarned > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-400 font-sans">Commission</span>
+                                <span className="text-emerald-400 font-medium font-sans">${commissionEarned.toFixed(2)}</span>
+                              </div>
+                            )}
+                            {totalBonus > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-400 font-sans">Bonuses</span>
+                                <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
+                              </div>
+                            )}
                           </div>
-                          {commissionEarned > 0 && (
-                            <div className="flex justify-between text-xs">
-                              <span className="text-slate-400 font-sans">Commission</span>
-                              <span className="text-emerald-400 font-medium font-sans">${commissionEarned.toFixed(2)}</span>
-                            </div>
-                          )}
-                          {totalBonus > 0 && (
-                            <div className="flex justify-between text-xs">
-                              <span className="text-slate-400 font-sans">Bonuses</span>
-                              <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
-                            </div>
-                          )}
+                        </>
+                      ) : dealDetails?.next_step ? (
+                        <div className="space-y-3">
+                          <div className="text-xl font-bold text-amber-300 font-space">Next Step ✓</div>
+                          <p className="text-sm text-white font-medium leading-relaxed font-sans">{dealDetails.next_step}</p>
                         </div>
-                      </>
-                    ) : dealDetails?.next_step ? (
-                      <div className="space-y-2">
-                        <div className="text-lg font-bold text-amber-300 font-space">Next Step ✓</div>
-                        <p className="text-xs text-white font-medium leading-relaxed font-sans">{dealDetails.next_step}</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-300 font-medium font-sans">Potential Value</span>
-                          <span className="text-white/70 font-semibold line-through font-sans">$--</span>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-300 font-medium font-sans">Potential Value</span>
+                            <span className="text-white/70 font-semibold line-through font-sans">$--</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-300 font-medium font-sans">Missed</span>
+                            <span className="text-red-300 font-semibold font-sans">$0.00</span>
+                          </div>
                         </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-300 font-medium font-sans">Missed</span>
-                          <span className="text-red-300 font-semibold font-sans">$0.00</span>
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
                 
                 {/* Quick Verdict Card - Right of Earnings */}
                 {quickVerdict && (
-                  <div className={`relative rounded-3xl backdrop-blur-xl p-4 overflow-hidden bg-blue-500/10 border border-blue-500/20`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Zap className="w-4 h-4 text-blue-400" />
-                      <span className="text-xs uppercase tracking-[0.25em] text-blue-400 font-space">Quick Verdict</span>
+                  <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between h-full`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Zap className="w-5 h-5 text-blue-400" />
+                      <span className="text-sm uppercase tracking-[0.25em] text-blue-400 font-space">Quick Verdict</span>
                     </div>
-                    <div className="text-white text-sm leading-relaxed font-sans">"{quickVerdict}"</div>
+                    <div className="text-white text-base leading-relaxed font-sans flex-1 flex items-center">"{quickVerdict}"</div>
                   </div>
                 )}
               </div>

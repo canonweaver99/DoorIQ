@@ -34,6 +34,7 @@ interface RepPerformance {
   }
   revenue: number
   lastActive: string
+  closePercentage?: number
 }
 
 export default function RepManagement() {
@@ -299,6 +300,10 @@ export default function RepManagement() {
                     <div className="text-center">
                       <p className="text-2xl font-bold text-emerald-300 mb-1 font-space">${(rep.revenue / 1000).toFixed(1)}k</p>
                       <p className="text-xs text-white/50 font-sans">Revenue</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-purple-300 mb-1 font-space">{rep.closePercentage || 0}%</p>
+                      <p className="text-xs text-white/50 font-sans">Close %</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex flex-col gap-1">

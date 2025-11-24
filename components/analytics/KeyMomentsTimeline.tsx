@@ -126,39 +126,6 @@ export function KeyMomentsTimeline({ moments }: KeyMomentsTimelineProps) {
                     "{moment.transcript.length > 200 ? moment.transcript.slice(0, 200) + '...' : moment.transcript}"
                   </p>
                 </div>
-                
-                {/* Analysis */}
-                {moment.analysis && (
-                  <div className="space-y-3 border-t border-slate-700/50 pt-4">
-                    <div className="text-sm">
-                      <span className="font-medium text-slate-400">What happened: </span>
-                      <span className="text-slate-300">{moment.analysis.whatHappened}</span>
-                    </div>
-                    
-                    {moment.analysis.whatWorked && (
-                      <div className="text-sm">
-                        <span className="font-medium text-green-400">✓ What worked: </span>
-                        <span className="text-slate-300">{moment.analysis.whatWorked}</span>
-                      </div>
-                    )}
-                    
-                    {moment.analysis.whatToImprove && (
-                      <div className="text-sm">
-                        <span className="font-medium text-orange-400">⚠ Improvement: </span>
-                        <span className="text-slate-300">{moment.analysis.whatToImprove}</span>
-                      </div>
-                    )}
-                    
-                    {moment.analysis.alternativeResponse && (
-                      <div className="mt-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                        <div className="text-sm">
-                          <span className="font-medium text-blue-400">💡 Try this instead: </span>
-                          <span className="text-blue-200 italic">"{moment.analysis.alternativeResponse}"</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </motion.div>

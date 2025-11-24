@@ -203,48 +203,6 @@ export function CriticalMomentsTimeline({
                       </div>
                     )}
                   </div>
-                  
-                  {/* Analysis */}
-                  {moment.analysis?.whatHappened && (
-                    <div className="mb-2 text-sm text-gray-300">
-                      {moment.analysis.whatHappened.replace(/\bthe user\b/gi, 'you').replace(/\bthe rep\b/gi, 'you').replace(/\bthe sales rep\b/gi, 'you')}
-                    </div>
-                  )}
-                  
-                  {/* What Worked */}
-                  {moment.analysis?.whatWorked && (
-                    <div className="mb-2 text-sm">
-                      <span className="text-green-400 font-medium">✓ What worked: </span>
-                      <span className="text-gray-300">
-                        {moment.analysis.whatWorked.replace(/\bthe user\b/gi, 'you').replace(/\bthe rep\b/gi, 'you').replace(/\bthe sales rep\b/gi, 'you')}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* What to Improve */}
-                  {moment.analysis?.whatToImprove && (
-                    <div className="mb-2 text-sm">
-                      <span className="text-orange-400 font-medium">⚠ Improvement: </span>
-                      <span className="text-gray-300">
-                        {moment.analysis.whatToImprove.replace(/\bthe user\b/gi, 'you').replace(/\bthe rep\b/gi, 'you').replace(/\bthe sales rep\b/gi, 'you')}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Coaching Tip / Alternative Response */}
-                  {(moment.coachingTip || moment.analysis?.alternativeResponse) && (
-                    <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <Lightbulb className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm">
-                          <span className="text-blue-400 font-medium">Try this instead: </span>
-                          <span className="text-blue-200 italic">
-                            "{moment.coachingTip || moment.analysis?.alternativeResponse}"
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </motion.div>

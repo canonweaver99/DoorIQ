@@ -16,7 +16,7 @@ export async function GET(
     // Get current session
     const { data: session, error: sessionError } = await supabase
       .from('live_sessions')
-      .select('user_id, overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at')
+      .select('user_id, overall_score, rapport_score, discovery_score, objection_handling_score, close_score, sale_closed, created_at')
       .eq('id', sessionId)
       .single()
     
@@ -29,7 +29,7 @@ export async function GET(
     // Get user's last 10 sessions for average calculation
     const { data: userSessions, error: userSessionsError } = await supabase
       .from('live_sessions')
-      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at')
+      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, sale_closed, created_at')
       .eq('user_id', userId)
       .not('overall_score', 'is', null)
       .order('created_at', { ascending: false })
@@ -64,12 +64,18 @@ export async function GET(
         : 0
     }
     
+    // Calculate close % for user (last 10 sessions)
+    const userClosePercentage = validUserSessions.length > 0
+      ? Math.round((validUserSessions.filter(s => s.sale_closed === true).length / validUserSessions.length) * 100)
+      : 0
+    
     const userAverages = {
       overall: userAverage,
       rapport: calculateCategoryAverage('rapport_score'),
       discovery: calculateCategoryAverage('discovery_score'),
       objection_handling: calculateCategoryAverage('objection_handling_score'),
-      closing: calculateCategoryAverage('close_score')
+      closing: calculateCategoryAverage('close_score'),
+      closePercentage: userClosePercentage
     }
     
     // Calculate trends from last 3 sessions
@@ -128,7 +134,7 @@ export async function GET(
         
         const { data: teamSessions } = await supabase
           .from('live_sessions')
-          .select('user_id, overall_score, rapport_score, discovery_score, objection_handling_score, close_score')
+          .select('user_id, overall_score, rapport_score, discovery_score, objection_handling_score, close_score, sale_closed')
           .in('user_id', teamMemberIds)
           .gte('created_at', oneWeekAgo.toISOString())
           .not('overall_score', 'is', null)
@@ -151,12 +157,18 @@ export async function GET(
               : 0
           }
           
+          // Calculate team close %
+          const teamClosePercentage = validTeamSessions.length > 0
+            ? Math.round((validTeamSessions.filter(s => s.sale_closed === true).length / validTeamSessions.length) * 100)
+            : 0
+          
           teamAverages = {
             overall: teamAverage,
             rapport: calculateTeamCategoryAverage('rapport_score'),
             discovery: calculateTeamCategoryAverage('discovery_score'),
             objection_handling: calculateTeamCategoryAverage('objection_handling_score'),
-            closing: calculateTeamCategoryAverage('close_score')
+            closing: calculateTeamCategoryAverage('close_score'),
+            closePercentage: teamClosePercentage
           }
           
           // Calculate percentile (user's position vs team)
@@ -175,12 +187,15 @@ export async function GET(
     }
     
     // Current session scores
+    const currentClosePercentage = session.sale_closed === true ? 100 : 0
+    
     const currentScores = {
       overall: session.overall_score || 0,
       rapport: session.rapport_score || 0,
       discovery: session.discovery_score || 0,
       objection_handling: session.objection_handling_score || 0,
-      closing: session.close_score || 0
+      closing: session.close_score || 0,
+      closePercentage: currentClosePercentage
     }
     
     // Calculate differences
@@ -189,7 +204,8 @@ export async function GET(
       rapport: currentScores.rapport - userAverages.rapport,
       discovery: currentScores.discovery - userAverages.discovery,
       objection_handling: currentScores.objection_handling - userAverages.objection_handling,
-      closing: currentScores.closing - userAverages.closing
+      closing: currentScores.closing - userAverages.closing,
+      closePercentage: currentScores.closePercentage - userAverages.closePercentage
     }
     
     const vsTeamAverage = {
@@ -197,7 +213,8 @@ export async function GET(
       rapport: currentScores.rapport - teamAverages.rapport,
       discovery: currentScores.discovery - teamAverages.discovery,
       objection_handling: currentScores.objection_handling - teamAverages.objection_handling,
-      closing: currentScores.closing - teamAverages.closing
+      closing: currentScores.closing - teamAverages.closing,
+      closePercentage: currentScores.closePercentage - teamAverages.closePercentage
     }
     
     // Determine percentile label

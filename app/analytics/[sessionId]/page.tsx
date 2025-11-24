@@ -39,6 +39,7 @@ interface ComparisonData {
     discovery: number
     objection_handling: number
     closing: number
+    closePercentage?: number
   }
   userAverage: {
     overall: number
@@ -46,6 +47,7 @@ interface ComparisonData {
     discovery: number
     objection_handling: number
     closing: number
+    closePercentage?: number
   }
   teamAverage: {
     overall: number
@@ -53,6 +55,7 @@ interface ComparisonData {
     discovery: number
     objection_handling: number
     closing: number
+    closePercentage?: number
   }
   vsUserAverage: {
     overall: number
@@ -60,6 +63,7 @@ interface ComparisonData {
     discovery: number
     objection_handling: number
     closing: number
+    closePercentage?: number
   }
   vsTeamAverage: {
     overall: number
@@ -67,6 +71,7 @@ interface ComparisonData {
     discovery: number
     objection_handling: number
     closing: number
+    closePercentage?: number
   }
   trends: {
     rapport: number
@@ -270,6 +275,9 @@ export default function AnalyticsPage() {
               currentOverall={comparison.current.overall}
               userAverageOverall={comparison.userAverage.overall}
               teamAverageOverall={comparison.teamAverage.overall}
+              currentClosePercentage={comparison.current.closePercentage}
+              userAverageClosePercentage={comparison.userAverage.closePercentage}
+              teamAverageClosePercentage={comparison.teamAverage.closePercentage}
             />
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />

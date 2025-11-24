@@ -34,6 +34,7 @@ interface SessionData {
 interface RepStats {
   totalSessions: number
   averageScore: number
+  closePercentage?: number
   totalEarnings: number
   bestScore: number
   recentTrend: number
@@ -391,7 +392,7 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
           </div>
 
         {/* Stats Cards - Always show */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -438,6 +439,19 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
               <Calendar className="w-8 h-8 text-blue-400 mb-3" />
               <p className="text-2xl font-bold text-white">{stats.totalSessions || 0}</p>
               <p className="text-sm text-slate-400">Total Sessions</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            >
+              <Target className="w-8 h-8 text-emerald-400 mb-3" />
+              <p className={`text-2xl font-bold ${getScoreColor(stats.closePercentage || 0)}`}>
+                {stats.closePercentage || 0}%
+              </p>
+              <p className="text-sm text-slate-400">Close %</p>
             </motion.div>
           </div>
 

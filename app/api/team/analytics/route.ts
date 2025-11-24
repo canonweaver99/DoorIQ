@@ -36,7 +36,7 @@ export async function GET() {
     // Get all sessions for team
     const { data: allSessions } = await supabase
       .from('live_sessions')
-      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, user_id')
+      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, sale_closed, created_at, user_id')
       .in('user_id', memberIds)
       .not('overall_score', 'is', null)
       .order('created_at', { ascending: true })
@@ -120,6 +120,11 @@ export async function GET() {
       ? Math.round(recentSessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / recentSessions.length)
       : 0
 
+    // Calculate team close %
+    const teamClosePercentage = recentSessions.length > 0
+      ? Math.round((recentSessions.filter(s => s.sale_closed === true).length / recentSessions.length) * 100)
+      : 0
+
     // Count active reps (had at least 1 session in last 30 days)
     const activeReps = new Set(recentSessions.map(s => s.user_id)).size
 
@@ -194,6 +199,17 @@ export async function GET() {
         }
       }
     })
+    
+    // Track close counts per rep
+    const repCloseCounts = new Map<string, { total: number; closed: number }>()
+    recentSessions.forEach(session => {
+      const current = repCloseCounts.get(session.user_id) || { total: 0, closed: 0 }
+      current.total++
+      if (session.sale_closed === true) {
+        current.closed++
+      }
+      repCloseCounts.set(session.user_id, current)
+    })
 
     // Get detailed session data for skills
     const { data: detailedSessions } = await supabase
@@ -256,6 +272,12 @@ export async function GET() {
           lastActiveStr = `${hoursAgo}h ago`
         }
 
+        // Calculate close % for this rep
+        const closeData = repCloseCounts.get(rep.id) || { total: 0, closed: 0 }
+        const closePercentage = closeData.total > 0
+          ? Math.round((closeData.closed / closeData.total) * 100)
+          : 0
+
         return {
           id: rep.id,
           name: rep.name,
@@ -269,7 +291,8 @@ export async function GET() {
             closing: avgClosing
           },
           revenue: rep.earnings,
-          lastActive: lastActiveStr
+          lastActive: lastActiveStr,
+          closePercentage
         }
       })
       .filter(rep => rep.sessions > 0)
@@ -279,6 +302,7 @@ export async function GET() {
       analytics: {
         totalSessions,
         teamAverage: avgScore,
+        teamClosePercentage,
         activeReps,
         trainingROI: 340, // Mock for now
         performanceData,

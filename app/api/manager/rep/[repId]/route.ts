@@ -53,6 +53,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ rep
 
     // Calculate stats
     const validSessions = sessions?.filter(s => s.overall_score !== null) || []
+    
+    // Calculate close %
+    const closePercentage = validSessions.length > 0
+      ? Math.round((validSessions.filter(s => s.sale_closed === true).length / validSessions.length) * 100)
+      : 0
+    
     const stats = {
       totalSessions: validSessions.length,
       averageScore: validSessions.length > 0 
@@ -61,7 +67,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ rep
       totalEarnings: sessions?.reduce((sum, s) => sum + (s.virtual_earnings || 0), 0) || 0,
       bestScore: validSessions.length > 0 ? Math.max(...validSessions.map(s => s.overall_score || 0)) : 0,
       activeDays: sessions ? new Set(sessions.map(s => s.created_at.split('T')[0])).size : 0,
-      totalCallTime: sessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0
+      totalCallTime: sessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0,
+      closePercentage
     }
 
     // Calculate trend

@@ -160,30 +160,6 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
           <div className="text-lg text-gray-300 font-sans">{wpm} WPM</div>
         </div>
         <div className="text-xs text-gray-400 font-sans mb-3">Target: 150 WPM</div>
-        
-        {/* Actionable Recommendation */}
-        {wpm !== 0 && (
-          <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="text-xs text-white font-sans leading-relaxed">
-                {getWPMRecommendation()}
-              </div>
-            </div>
-            <button className="mt-2 text-xs text-blue-400 hover:text-blue-300 font-semibold font-sans flex items-center gap-1">
-              Practice Voice Coach <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-        
-        {/* Empty State */}
-        {wpm === 0 && (
-          <div className="mt-3 p-3 bg-slate-800/50 border border-slate-700/50 rounded-lg">
-            <div className="text-xs text-gray-300 font-sans">
-              No speaking data detected. Start a practice session to track your speaking pace.
-            </div>
-          </div>
-        )}
       </div>
       
       {/* Dialogue Balance */}
@@ -211,30 +187,6 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
           <div className="text-sm text-gray-300 font-sans">({balance}% You)</div>
         </div>
         <div className="text-xs text-gray-400 font-sans mb-3">Target: 40%</div>
-        
-        {/* Actionable Recommendation */}
-        {balance !== 0 && (
-          <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
-              <div className="text-xs text-white font-sans leading-relaxed">
-                {getBalanceRecommendation()}
-              </div>
-            </div>
-            <button className="mt-2 text-xs text-purple-400 hover:text-purple-300 font-semibold font-sans flex items-center gap-1">
-              Practice Discovery <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-        
-        {/* Empty State */}
-        {balance === 0 && (
-          <div className="mt-3 p-3 bg-slate-800/50 border border-slate-700/50 rounded-lg">
-            <div className="text-xs text-gray-300 font-sans">
-              No dialogue data detected. Practice sessions will track your conversation balance.
-            </div>
-          </div>
-        )}
       </div>
       
       {/* Objections */}
@@ -253,22 +205,6 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
         <div className="text-xs text-gray-400 font-sans mb-3">
           {objections > 0 ? `Rate: ${Math.round((objections / objections) * 100)}%` : 'Rate: N/A'}
         </div>
-        
-        {/* Actionable Recommendation */}
-        {objections > 0 && (
-          <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div className="text-xs text-white font-sans leading-relaxed">
-                {getObjectionRecommendation()}
-              </div>
-            </div>
-            <button className="mt-2 text-xs text-amber-400 hover:text-amber-300 font-semibold font-sans flex items-center gap-1">
-              Practice Objection Handling <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-        
       </div>
       
       {/* Closing */}
@@ -287,33 +223,6 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
           </div>
         </div>
         <div className={cn("text-xs font-sans mb-3", closeStatus.color)}>{closeStatus.label}</div>
-        
-        {/* Actionable Recommendation */}
-        {closeAttempts > 0 && (
-          <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <div className="text-xs text-white font-sans leading-relaxed">
-                {getCloseRecommendation()}
-              </div>
-            </div>
-            <button className="mt-2 text-xs text-emerald-400 hover:text-emerald-300 font-semibold font-sans flex items-center gap-1">
-              Practice Closing Techniques <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-        
-        {/* Empty State - Zero Close Attempts */}
-        {closeAttempts === 0 && (
-          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <div className="text-xs text-red-200 font-sans leading-relaxed">
-              No close attempts detected. Practice closing techniques! Try assumptive closes like 'When would you like to get started?' to move conversations forward.
-            </div>
-            <button className="mt-2 text-xs text-red-400 hover:text-red-300 font-semibold font-sans flex items-center gap-1">
-              Learn Closing Techniques <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-        )}
       </div>
     </motion.div>
   )
