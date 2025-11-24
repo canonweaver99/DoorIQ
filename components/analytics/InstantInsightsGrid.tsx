@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MessageSquare, AlertTriangle, Target, Info, Lightbulb, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ProgressRing } from './ProgressRing'
 
 interface InstantInsightsGridProps {
   instantMetrics?: {
@@ -164,29 +163,45 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
       
       {/* Time-Talk Ratio */}
       <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-purple-400" />
-            <span className="text-sm font-semibold text-white font-space">Time-Talk Ratio</span>
-            <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer, calculated by character count. Target is 40% to maintain engagement while allowing discovery. Too low means you're not guiding the conversation, too high means you're talking too much.">
-              <Info className="w-4 h-4 text-gray-400 hover:text-purple-400 transition-colors" />
-            </MetricTooltip>
-          </div>
-          <ProgressRing
-            value={balance}
-            max={100}
-            size={60}
-            strokeWidth={6}
-            showValue={false}
-          />
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare className="w-5 h-5 text-purple-400" />
+          <span className="text-sm font-semibold text-white font-space">Time-Talk Ratio</span>
+          <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer, calculated by character count. Target is 60% to maintain engagement while allowing discovery. Too low means you're not guiding the conversation, too high means you're talking too much.">
+            <Info className="w-4 h-4 text-gray-400 hover:text-purple-400 transition-colors" />
+          </MetricTooltip>
         </div>
+        
+        {/* Horizontal Progress Bar */}
+        <div className="mb-3">
+          <div className="relative h-2 bg-slate-800/80 rounded-full overflow-hidden mb-2">
+            <motion.div
+              className={cn(
+                "absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500",
+                balance >= 35 && balance <= 45
+                  ? "from-green-500 to-green-400"
+                  : balance < 35 || balance > 45
+                  ? balance < 35 
+                    ? "from-yellow-500 to-yellow-400"
+                    : "from-red-500 to-red-400"
+                  : "from-purple-500 to-purple-400"
+              )}
+              initial={{ width: 0 }}
+              animate={{ width: `${balance}%` }}
+              transition={{ duration: 0.5 }}
+            />
+            {/* Target indicator at 60% */}
+            {balance !== 60 && (
+              <div className="absolute left-[60%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-4 bg-slate-500/60" />
+            )}
+          </div>
+        </div>
+        
         <div className="mb-2">
           <div className="text-2xl font-bold text-white mb-1 font-space">
-            Balance: <span className={balanceStatus.color}>{balance}%</span>
+            <span className={balanceStatus.color}>{balance}%</span> <span className="text-gray-300">(You)</span>
           </div>
-          <div className="text-sm text-gray-300 font-sans">({balance}% You)</div>
         </div>
-        <div className="text-xs text-gray-400 font-sans mb-3">Target: 40%</div>
+        <div className="text-xs text-gray-400 font-sans">Target: 60% You</div>
       </div>
       
       {/* Objections */}
