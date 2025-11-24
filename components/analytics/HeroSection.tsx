@@ -126,9 +126,9 @@ export function HeroSection({
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
         
         <div className="relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Column - Score and Info */}
-            <div className="lg:col-span-2">
+            <div className="flex-[2]">
               <div className="mb-6">
                 <div className="text-sm uppercase tracking-[0.25em] text-slate-500 mb-2 font-sans">AI-Powered Training Results</div>
                 <h2 className="text-2xl font-bold text-white font-space mb-6">Overall Performance</h2>
@@ -201,11 +201,11 @@ export function HeroSection({
             </div>
             
             {/* Right Column - Deal Status, and Quick Verdict */}
-            <div className="lg:col-span-1 space-y-4">
-              {/* Earnings and Quick Verdict Cards - Expanded to 60% */}
-              <div className="flex gap-4 h-full">
+            <div className="flex-[3] min-w-0">
+              {/* Earnings and Quick Verdict Cards - Taking up 60% of overall card */}
+              <div className="flex gap-4 h-full w-full">
                 {/* Earnings Card - From Old Grading Page */}
-                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden flex flex-col justify-between flex-[0.6] ${
+                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden flex flex-col justify-between flex-[3] min-w-0 ${
                   saleClosed && virtualEarnings > 0
                     ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
                     : dealDetails?.next_step
@@ -292,7 +292,7 @@ export function HeroSection({
                 
                 {/* Quick Verdict Card - Right of Earnings */}
                 {quickVerdict && (
-                  <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between flex-[0.4] h-full`}>
+                  <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between flex-[2] min-w-0 h-full`}>
                     <div className="flex items-center gap-2 mb-4">
                       <Zap className="w-5 h-5 text-blue-400" />
                       <span className="text-sm uppercase tracking-[0.25em] text-blue-400 font-space">Quick Verdict</span>
