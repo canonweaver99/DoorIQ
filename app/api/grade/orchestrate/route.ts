@@ -140,8 +140,11 @@ export async function POST(req: NextRequest) {
     try {
       logger.info('Starting Phase 3: Deep Analysis (background)', { sessionId })
       
-      // Fire and forget - don't await
-      fetch(`${req.nextUrl.origin}/api/grade/deep-analysis`, {
+      // Fire and forget - don't await, but log the request
+      const deepAnalysisUrl = `${req.nextUrl.origin}/api/grade/deep-analysis`
+      logger.info('Triggering deep analysis', { sessionId, url: deepAnalysisUrl })
+      
+      fetch(deepAnalysisUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -152,8 +155,18 @@ export async function POST(req: NextRequest) {
           instantMetrics: results.phases.instant?.metrics || session.instant_metrics,
           elevenLabsData: session.elevenlabs_metrics
         })
-      }).catch(error => {
-        logger.error('Phase 3 background error', { sessionId, error: error.message })
+      })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await response.json().catch(() => ({}))
+          logger.info('Deep analysis completed successfully', { sessionId, status: data.status })
+        } else {
+          const errorText = await response.text().catch(() => 'Unknown error')
+          logger.error('Deep analysis failed', { sessionId, status: response.status, error: errorText })
+        }
+      })
+      .catch(error => {
+        logger.error('Phase 3 background error', { sessionId, error: error.message, stack: error.stack })
       })
       
       results.phases.deepAnalysis = {
@@ -161,7 +174,7 @@ export async function POST(req: NextRequest) {
         message: 'Deep analysis running in background'
       }
     } catch (error: any) {
-      logger.error('Phase 3 trigger error', { sessionId, error: error.message })
+      logger.error('Phase 3 trigger error', { sessionId, error: error.message, stack: error.stack })
       results.phases.deepAnalysis = {
         status: 'error',
         error: error.message

@@ -399,7 +399,7 @@ export async function POST(req: NextRequest) {
           final_scores: finalScores,
           grading_version: '2.0'
         },
-        grading_status: 'completed',
+        grading_status: 'complete',
         graded_at: new Date().toISOString(),
         grading_version: '2.0'
       })

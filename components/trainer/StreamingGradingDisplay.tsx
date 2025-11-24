@@ -252,8 +252,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               if (sessionResponse.ok) {
                 const session = await sessionResponse.json()
                 
-                // Check if grading is complete
-                if (session.grading_status === 'complete' || session.overall_score) {
+                // Check if grading is complete (check both 'complete' and 'completed' for compatibility)
+                if (session.grading_status === 'complete' || session.grading_status === 'completed' || session.overall_score) {
                   setIsComplete(true)
                   setStatus('Grading complete!')
                   setCompletedSections(prev => new Set(prev).add('deepAnalysis'))
