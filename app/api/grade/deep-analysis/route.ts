@@ -423,10 +423,12 @@ export async function POST(req: NextRequest) {
       hasVoiceAnalysis: !!newAnalytics.voice_analysis
     })
     
-    const { error: updateError } = await supabase
+    const { data: updatedSession, error: updateError } = await supabase
       .from('live_sessions')
       .update(updateData)
       .eq('id', sessionId)
+      .select('id, grading_status, overall_score, analytics')
+      .single()
     
     if (updateError) {
       logger.error('Error updating session with deep analysis', {
@@ -447,12 +449,23 @@ export async function POST(req: NextRequest) {
       }, { status: 500 })
     }
     
-    const timeElapsed = Date.now() - startTime
-    logger.info('Deep analysis completed', {
+    // Verify the update succeeded
+    if (!updatedSession) {
+      logger.error('Update returned no data', { sessionId })
+      return NextResponse.json({ error: 'Update succeeded but no data returned' }, { status: 500 })
+    }
+    
+    logger.info('Deep analysis completed and verified', {
       sessionId,
-      timeElapsed: `${timeElapsed}ms`,
-      finalScore: finalScores.overall
+      timeElapsed: `${Date.now() - startTime}ms`,
+      finalScore: finalScores.overall,
+      updatedStatus: updatedSession.grading_status,
+      updatedScore: updatedSession.overall_score,
+      hasDeepAnalysis: !!updatedSession.analytics?.deep_analysis,
+      hasCoachingPlan: !!updatedSession.analytics?.coaching_plan
     })
+    
+    const timeElapsed = Date.now() - startTime
     
     return NextResponse.json({ 
       status: 'complete',
