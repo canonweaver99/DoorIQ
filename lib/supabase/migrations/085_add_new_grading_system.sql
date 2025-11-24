@@ -26,7 +26,7 @@ BEGIN
   -- Add new constraint with expanded statuses
   ALTER TABLE live_sessions
   ADD CONSTRAINT live_sessions_grading_status_check 
-  CHECK (grading_status IN ('pending', 'processing', 'instant_complete', 'moments_complete', 'completed', 'failed'));
+  CHECK (grading_status IN ('pending', 'processing', 'instant_complete', 'moments_complete', 'complete', 'failed'));
 END $$;
 
 -- Create moment_patterns table for caching pattern matching results
