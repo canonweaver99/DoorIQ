@@ -24,22 +24,45 @@ interface CriticalMoment {
 
 interface CriticalMomentsTimelineProps {
   moments: CriticalMoment[]
+  sessionStartTime?: string | Date
+  durationSeconds?: number
 }
 
-function formatTimestamp(timestamp: string): string {
+function formatTimestamp(
+  timestamp: string, 
+  sessionStartTime?: string | Date,
+  durationSeconds?: number
+): string {
   if (!timestamp) return ''
   
   try {
-    // Try parsing as ISO string or timestamp
-    const date = new Date(timestamp)
-    if (isNaN(date.getTime())) {
-      // If not a valid date, might be MM:SS format already
+    // If already in MM:SS format, return as is
+    const mmssMatch = timestamp.match(/^(\d+):(\d+)$/)
+    if (mmssMatch) {
       return timestamp
     }
     
-    // Calculate seconds from start (assuming timestamp is relative)
-    const totalSeconds = Math.floor(date.getTime() / 1000) % 3600
-    const minutes = Math.floor(totalSeconds / 60)
+    // Try parsing as ISO string
+    const momentTime = new Date(timestamp)
+    if (isNaN(momentTime.getTime())) {
+      return timestamp
+    }
+    
+    // If we have session start time, calculate relative time
+    if (sessionStartTime) {
+      const startTime = new Date(sessionStartTime)
+      if (!isNaN(startTime.getTime())) {
+        const secondsFromStart = Math.floor((momentTime.getTime() - startTime.getTime()) / 1000)
+        const minutes = Math.floor(secondsFromStart / 60)
+        const seconds = secondsFromStart % 60
+        return `${minutes}:${String(seconds).padStart(2, '0')}`
+      }
+    }
+    
+    // Fallback: if we have duration and position info, estimate
+    // Otherwise, try to extract from timestamp
+    const totalSeconds = Math.floor(momentTime.getTime() / 1000) % 86400
+    const minutes = Math.floor(totalSeconds / 60) % 60
     const seconds = totalSeconds % 60
     return `${minutes}:${String(seconds).padStart(2, '0')}`
   } catch {
@@ -64,7 +87,11 @@ function getMomentTypeLabel(type: string): string {
   return labels[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
 
-export function CriticalMomentsTimeline({ moments }: CriticalMomentsTimelineProps) {
+export function CriticalMomentsTimeline({ 
+  moments, 
+  sessionStartTime, 
+  durationSeconds 
+}: CriticalMomentsTimelineProps) {
   if (!moments || moments.length === 0) {
     return (
       <motion.div
@@ -128,7 +155,7 @@ export function CriticalMomentsTimeline({ moments }: CriticalMomentsTimelineProp
                   <div className="flex items-center gap-3 mb-3">
                     <Clock className="w-4 h-4 text-gray-400" />
                     <span className="text-sm font-medium text-gray-300">
-                      {formatTimestamp(moment.timestamp)}
+                      {formatTimestamp(moment.timestamp, sessionStartTime, durationSeconds)}
                     </span>
                     <span className="text-sm font-semibold text-white">
                       - {getMomentTypeLabel(moment.type)}
@@ -167,7 +194,7 @@ export function CriticalMomentsTimeline({ moments }: CriticalMomentsTimelineProp
                   {/* What Worked */}
                   {moment.analysis?.whatWorked && (
                     <div className="mb-2 text-sm">
-                      <span className="text-green-400 font-medium">💡 Keep this energy throughout</span>
+                      <span className="text-green-400 font-medium">Keep this energy throughout</span>
                     </div>
                   )}
                   
@@ -177,7 +204,7 @@ export function CriticalMomentsTimeline({ moments }: CriticalMomentsTimelineProp
                       <div className="flex items-start gap-2">
                         <Lightbulb className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <span className="text-blue-400 font-medium">🔧 Try: </span>
+                          <span className="text-blue-400 font-medium">Try: </span>
                           <span className="text-white">
                             {moment.coachingTip || moment.analysis?.whatToImprove || moment.analysis?.alternativeResponse}
                           </span>

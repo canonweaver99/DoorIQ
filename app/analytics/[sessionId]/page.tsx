@@ -20,6 +20,7 @@ interface SessionData {
   close_score: number | null
   sale_closed: boolean | null
   virtual_earnings: number | null
+  earnings_data?: any | null
   deal_details: any | null
   instant_metrics?: any
   key_moments?: any[]
@@ -233,6 +234,7 @@ export default function AnalyticsPage() {
             percentileLabel={comparison.percentileLabel}
             saleClosed={session.sale_closed || false}
             virtualEarnings={session.virtual_earnings || 0}
+            earningsData={session.earnings_data}
             dealDetails={session.deal_details}
             quickVerdict={quickVerdict}
             trends={comparison.trends}
@@ -251,7 +253,11 @@ export default function AnalyticsPage() {
         {/* Critical Moments Timeline - Loads after insights */}
         {session.key_moments && Array.isArray(session.key_moments) && session.key_moments.length > 0 ? (
           loadingStates.moments ? (
-            <CriticalMomentsTimeline moments={session.key_moments} />
+            <CriticalMomentsTimeline 
+              moments={session.key_moments}
+              sessionStartTime={(session as any).created_at || (session as any).started_at}
+              durationSeconds={(session as any).duration_seconds}
+            />
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
           )
