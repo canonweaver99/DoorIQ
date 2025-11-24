@@ -381,36 +381,53 @@ export async function POST(req: NextRequest) {
     const existingAnalytics = existingSession?.analytics || {}
     
     // Step 7: Update with complete analysis
+    // Build update object step by step to avoid issues
+    const updateData: any = {
+      overall_score: finalScores.overall,
+      rapport_score: Math.round(finalScores.rapport),
+      discovery_score: Math.round(finalScores.discovery),
+      objection_handling_score: Math.round(finalScores.objectionHandling),
+      close_score: Math.round(finalScores.closing),
+      grading_status: 'complete',
+      grading_version: '2.0'
+    }
+    
+    // Only add safety_score if column exists (it might not in all schemas)
+    if (finalScores.safety !== undefined) {
+      updateData.safety_score = Math.round(finalScores.safety)
+    }
+    
+    // Merge analytics carefully
+    updateData.analytics = {
+      ...existingAnalytics,
+      deep_analysis: deepAnalysis,
+      coaching_plan: coachingPlan,
+      comparative_performance: comparativePerformance,
+      improvement_trends: improvementTrends,
+      final_scores: finalScores,
+      grading_version: '2.0',
+      graded_at: new Date().toISOString()
+    }
+    
     const { error: updateError } = await supabase
       .from('live_sessions')
-      .update({
-        overall_score: finalScores.overall,
-        rapport_score: Math.round(finalScores.rapport),
-        discovery_score: Math.round(finalScores.discovery),
-        objection_handling_score: Math.round(finalScores.objectionHandling),
-        close_score: Math.round(finalScores.closing),
-        safety_score: Math.round(finalScores.safety),
-        analytics: {
-          ...existingAnalytics,
-          deep_analysis: deepAnalysis,
-          coaching_plan: coachingPlan,
-          comparative_performance: comparativePerformance,
-          improvement_trends: improvementTrends,
-          final_scores: finalScores,
-          grading_version: '2.0',
-          graded_at: new Date().toISOString()
-        },
-        grading_status: 'complete',
-        grading_version: '2.0'
-      })
+      .update(updateData)
       .eq('id', sessionId)
     
     if (updateError) {
-      logger.error('Error updating session with deep analysis', updateError)
+      logger.error('Error updating session with deep analysis', {
+        error: updateError,
+        message: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint
+      })
       return NextResponse.json({ 
         error: 'Failed to save deep analysis',
         details: updateError.message || updateError.code || 'Unknown database error',
-        hint: 'Check database logs for more details'
+        code: updateError.code,
+        hint: 'Check database logs for more details',
+        updateDataKeys: Object.keys(updateData)
       }, { status: 500 })
     }
     
