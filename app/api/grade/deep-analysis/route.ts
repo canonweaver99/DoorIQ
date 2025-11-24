@@ -397,10 +397,10 @@ export async function POST(req: NextRequest) {
           comparative_performance: comparativePerformance,
           improvement_trends: improvementTrends,
           final_scores: finalScores,
-          grading_version: '2.0'
+          grading_version: '2.0',
+          graded_at: new Date().toISOString()
         },
         grading_status: 'complete',
-        graded_at: new Date().toISOString(),
         grading_version: '2.0'
       })
       .eq('id', sessionId)
