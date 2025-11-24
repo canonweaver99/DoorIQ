@@ -407,7 +407,11 @@ export async function POST(req: NextRequest) {
     
     if (updateError) {
       logger.error('Error updating session with deep analysis', updateError)
-      return NextResponse.json({ error: 'Failed to save deep analysis' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to save deep analysis',
+        details: updateError.message || updateError.code || 'Unknown database error',
+        hint: 'Check database logs for more details'
+      }, { status: 500 })
     }
     
     const timeElapsed = Date.now() - startTime
