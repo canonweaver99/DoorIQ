@@ -335,15 +335,19 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     }
     
     // Return data even if pitch/volume isn't available - at least show WPM and filler words
-    // Only require transcript data (which should always be available)
-    if (transcript.length === 0 && !hasValidPitches) {
-      console.warn('⚠️ getVoiceAnalysisData: No transcript or pitch data available - cannot generate voice analysis')
-      return null
-    }
-    
-    // Always return data if we have transcript (even without pitch/volume from microphone)
+    // Always return data if we have transcript OR pitch data
     const hasTranscriptData = transcript.length > 0
     const hasAudioData = hasValidPitches
+    
+    // Only return null if we have absolutely no data
+    if (!hasTranscriptData && !hasAudioData) {
+      console.warn('⚠️ getVoiceAnalysisData: No transcript or pitch data available - cannot generate voice analysis', {
+        transcriptLength: transcript.length,
+        hasValidPitches,
+        pitchHistoryLength: pitchHistoryRef.current.length
+      })
+      return null
+    }
     
     console.log('🎤 getVoiceAnalysisData: Returning data', {
       hasPitchData: hasAudioData,
@@ -351,6 +355,7 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
       transcriptLength: transcript.length,
       avgWPM: avgWPM || 0,
       totalFillerWords: totalFillerWords || 0,
+      fillerWordsPerMinute: fillerWordsPerMinute || 0,
       pitchHistoryLength: pitchHistoryRef.current.length,
       volumeHistoryLength: volumeHistoryRef.current.length,
       isAnalyzing,
@@ -504,15 +509,42 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
   }, [stopAnalysis])
   
   // Periodically save voice analysis data to database during session
+  // IMPORTANT: Run even if isAnalyzing is false - we can still calculate WPM/filler words from transcript
   useEffect(() => {
-    if (!enabled || !sessionId || !isAnalyzing) return
+    if (!enabled || !sessionId) return
     
     const saveInterval = setInterval(async () => {
       const voiceData = getVoiceAnalysisData()
-      if (!voiceData || transcript.length === 0) return
+      if (!voiceData) {
+        console.log('⚠️ Voice analysis: No data available yet (transcript may be empty)')
+        return
+      }
       
       // Only save if we have meaningful data (WPM > 0 or filler words detected)
-      if (voiceData.avgWPM === 0 && voiceData.totalFillerWords === 0) return
+      // Allow saving even without transcript if we have pitch/volume data
+      const hasTranscriptData = transcript.length > 0 && (voiceData.avgWPM > 0 || voiceData.totalFillerWords > 0)
+      const hasAudioData = voiceData.avgPitch > 0 || voiceData.avgVolume > -60
+      
+      if (!hasTranscriptData && !hasAudioData) {
+        console.log('⚠️ Voice analysis: No meaningful data to save yet', {
+          transcriptLength: transcript.length,
+          avgWPM: voiceData.avgWPM,
+          totalFillerWords: voiceData.totalFillerWords,
+          avgPitch: voiceData.avgPitch,
+          avgVolume: voiceData.avgVolume
+        })
+        return
+      }
+      
+      console.log('💾 Attempting to save voice analysis incrementally:', {
+        sessionId,
+        hasTranscriptData,
+        hasAudioData,
+        avgWPM: voiceData.avgWPM,
+        totalFillerWords: voiceData.totalFillerWords,
+        wpmTimelineLength: voiceData.wpmTimeline?.length || 0,
+        pitchTimelineLength: voiceData.pitchTimeline?.length || 0
+      })
       
       try {
         const response = await fetch('/api/session/voice-analysis', {
@@ -525,12 +557,19 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
         })
         
         if (response.ok) {
+          const result = await response.json().catch(() => ({}))
           console.log('✅ Voice analysis saved incrementally:', {
             avgWPM: voiceData.avgWPM,
-            wpmTimelineLength: voiceData.wpmTimeline?.length || 0
+            totalFillerWords: voiceData.totalFillerWords,
+            wpmTimelineLength: voiceData.wpmTimeline?.length || 0,
+            confirmedSaved: result.voiceAnalysisSaved
           })
         } else {
-          console.warn('⚠️ Failed to save voice analysis incrementally:', response.status)
+          const errorText = await response.text().catch(() => 'Unknown error')
+          console.warn('⚠️ Failed to save voice analysis incrementally:', {
+            status: response.status,
+            error: errorText
+          })
         }
       } catch (error) {
         console.warn('⚠️ Error saving voice analysis incrementally:', error)
@@ -541,7 +580,7 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     return () => {
       clearInterval(saveInterval)
     }
-  }, [enabled, sessionId, isAnalyzing, transcript.length, getVoiceAnalysisData])
+  }, [enabled, sessionId, transcript.length, getVoiceAnalysisData])
   
   return {
     metrics,
