@@ -31,7 +31,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       bg: 'bg-blue-500/20',
       hover: 'group-hover:bg-blue-500/30',
       progress: 'from-blue-500 to-blue-400',
-      border: 'border-blue-500/40',
+      border: 'border-blue-500/60',
       accent: 'bg-blue-500/30'
     },
     amber: {
@@ -39,7 +39,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       bg: 'bg-amber-500/20',
       hover: 'group-hover:bg-amber-500/30',
       progress: 'from-amber-500 to-amber-400',
-      border: 'border-amber-500/40',
+      border: 'border-amber-500/60',
       accent: 'bg-amber-500/30'
     },
     emerald: {
@@ -47,7 +47,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       bg: 'bg-emerald-500/20',
       hover: 'group-hover:bg-emerald-500/30',
       progress: 'from-emerald-500 to-emerald-400',
-      border: 'border-emerald-500/40',
+      border: 'border-emerald-500/60',
       accent: 'bg-emerald-500/30'
     }
   }
@@ -61,7 +61,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "bg-slate-900/98 rounded-lg pt-4 px-4 pb-4 border-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] transition-all duration-300 group flex flex-col",
+          "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col",
           classes.border,
           className
         )}
@@ -73,8 +73,8 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
             </div>
           </div>
           <div>
-            <div className="text-sm sm:text-base font-medium text-slate-200 font-space">{label}</div>
-            {subtitle && <div className="text-[10px] sm:text-xs text-slate-400 font-space">{subtitle}</div>}
+            <div className="text-sm sm:text-base font-semibold text-white font-space">{label}</div>
+            {subtitle && <div className="text-[10px] sm:text-xs text-slate-300 font-space font-medium">{subtitle}</div>}
           </div>
         </div>
         <div className="text-3xl sm:text-4xl font-bold text-white font-space">{value}</div>
@@ -88,7 +88,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
         className={cn(
-          "bg-slate-900/98 rounded-lg pt-4 px-4 pb-2 border-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] transition-all duration-300 group",
+          "bg-slate-900 rounded-lg pt-4 px-4 pb-2 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group",
           classes.border,
           className
         )}
@@ -101,14 +101,14 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
             </div>
           </div>
           <div>
-            <div className="text-xs sm:text-sm font-medium text-slate-200 font-space">{label}</div>
-            {subtitle && <div className="text-[10px] sm:text-xs text-slate-400 font-space">{subtitle}</div>}
+            <div className="text-xs sm:text-sm font-semibold text-white font-space">{label}</div>
+            {subtitle && <div className="text-[10px] sm:text-xs text-slate-300 font-space font-medium">{subtitle}</div>}
           </div>
         </div>
         <div className="text-right">
           <div className="text-xl sm:text-2xl font-bold text-white mb-0.5 font-space">{value}</div>
           {badge && (
-            <Badge variant={badgeVariant} className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 bg-slate-800 border-slate-600 text-slate-300">
+            <Badge variant={badgeVariant} className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold">
               {badge}
             </Badge>
           )}
@@ -129,7 +129,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
             )}
           </div>
           {progressLabel && (
-            <div className="flex justify-between text-[10px] sm:text-xs text-slate-400 font-space">
+            <div className="flex justify-between text-[10px] sm:text-xs text-slate-300 font-space font-medium">
               <span className="truncate">Them: {progress}%</span>
               <span className="hidden sm:inline">Ideal: 50-60%</span>
               <span className="truncate">You: {100 - progress}%</span>

@@ -61,8 +61,8 @@ function TranscriptMessage({
       className={cn(
         "flex gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg transition-all group",
         isUser 
-          ? "bg-blue-900/20 border border-blue-500/30 shadow-[0_2px_8px_rgba(59,130,246,0.15)]" 
-          : "bg-slate-800/70 border border-slate-700/50 shadow-[0_2px_8px_rgba(0,0,0,0.2)]",
+          ? "bg-blue-900/30 border-[2px] border-blue-500/60 shadow-[0_4px_12px_rgba(59,130,246,0.3)]" 
+          : "bg-slate-800 border-[2px] border-slate-700 shadow-[0_4px_12px_rgba(0,0,0,0.4)]",
       )}
     >
       {/* Avatar */}
@@ -91,25 +91,25 @@ function TranscriptMessage({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5 flex-wrap">
           <span className={cn(
-            "text-xs sm:text-sm font-medium font-space",
-            isUser ? "text-slate-200" : "text-slate-200"
+            "text-xs sm:text-sm font-semibold font-space",
+            isUser ? "text-white" : "text-white"
           )}>
             {isUser ? 'You' : agentName || 'Homeowner'}
           </span>
-          <span className="text-[10px] sm:text-sm text-slate-400 font-space">{formatTime(entry.timestamp)}</span>
+          <span className="text-[10px] sm:text-sm text-slate-300 font-space font-medium">{formatTime(entry.timestamp)}</span>
           <button
             onClick={handleCopy}
             className="ml-auto opacity-0 sm:group-hover:opacity-100 transition-opacity p-0.5 sm:p-1 rounded hover:bg-slate-700/70 touch-manipulation"
             aria-label="Copy message"
           >
             {copied ? (
-              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
             ) : (
-              <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" />
+              <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
             )}
           </button>
         </div>
-        <p className="text-sm sm:text-base text-slate-200 leading-relaxed break-words font-space">
+        <p className="text-sm sm:text-base text-white leading-relaxed break-words font-space font-medium">
           {entry.text}
         </p>
       </div>
@@ -137,10 +137,10 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
   }, [transcript.length])
 
   return (
-    <div className="h-full flex flex-col bg-slate-900/98 rounded-lg overflow-hidden border border-slate-700/90 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
-      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700/80 flex-shrink-0 bg-slate-900/50">
-        <h3 className="text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-1.5 sm:gap-2 font-space">
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-500 animate-pulse" />
+    <div className="h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden border-[2px] border-slate-700 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700 flex-shrink-0 bg-slate-900">
+        <h3 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5 sm:gap-2 font-space">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-400 animate-pulse" />
           Live Transcript
         </h3>
       </div>
@@ -150,7 +150,7 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
         className="flex-1 overflow-y-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-1 custom-scrollbar space-y-2 sm:space-y-2.5 min-h-0"
       >
         {transcript.length === 0 ? (
-          <div className="flex items-center justify-center h-full w-full text-slate-400 text-sm font-space">
+          <div className="flex items-center justify-center h-full w-full text-slate-300 text-sm font-space font-medium">
             <p className="text-center">Waiting for conversation to begin...</p>
           </div>
         ) : (

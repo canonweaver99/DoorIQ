@@ -20,9 +20,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'OBJECTION',
         iconBg: 'bg-red-500/20',
         iconColor: 'text-red-400',
-        borderColor: 'border-red-500/30',
-        accentColor: 'bg-red-500/40',
-        bgColor: 'bg-red-900/20'
+        borderColor: 'border-red-500/60',
+        accentColor: 'bg-red-500/50',
+        bgColor: 'bg-red-900/30'
       }
     case 'technique_used':
       return {
@@ -31,9 +31,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'TECHNIQUE',
         iconBg: 'bg-emerald-500/20',
         iconColor: 'text-emerald-400',
-        borderColor: 'border-emerald-500/30',
-        accentColor: 'bg-emerald-500/40',
-        bgColor: 'bg-emerald-900/20'
+        borderColor: 'border-emerald-500/60',
+        accentColor: 'bg-emerald-500/50',
+        bgColor: 'bg-emerald-900/30'
       }
     case 'coaching_tip':
       return {
@@ -42,9 +42,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'TIP',
         iconBg: 'bg-amber-500/20',
         iconColor: 'text-amber-400',
-        borderColor: 'border-amber-500/30',
-        accentColor: 'bg-amber-500/40',
-        bgColor: 'bg-amber-900/20'
+        borderColor: 'border-amber-500/60',
+        accentColor: 'bg-amber-500/50',
+        bgColor: 'bg-amber-900/30'
       }
     case 'warning':
       return {
@@ -53,9 +53,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'WARNING',
         iconBg: 'bg-red-500/20',
         iconColor: 'text-red-400',
-        borderColor: 'border-red-500/30',
-        accentColor: 'bg-red-500/40',
-        bgColor: 'bg-red-900/20'
+        borderColor: 'border-red-500/60',
+        accentColor: 'bg-red-500/50',
+        bgColor: 'bg-red-900/30'
       }
     case 'voice_coaching':
       return {
@@ -64,9 +64,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'VOICE',
         iconBg: 'bg-blue-500/20',
         iconColor: 'text-blue-400',
-        borderColor: 'border-blue-500/30',
-        accentColor: 'bg-blue-500/40',
-        bgColor: 'bg-blue-900/20'
+        borderColor: 'border-blue-500/60',
+        accentColor: 'bg-blue-500/50',
+        bgColor: 'bg-blue-900/30'
       }
     case 'objection_handling':
       return {
@@ -75,9 +75,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'OBJECTION HANDLING',
         iconBg: 'bg-red-500/20',
         iconColor: 'text-red-400',
-        borderColor: 'border-red-500/30',
-        accentColor: 'bg-red-500/40',
-        bgColor: 'bg-red-900/20'
+        borderColor: 'border-red-500/60',
+        accentColor: 'bg-red-500/50',
+        bgColor: 'bg-red-900/30'
       }
     case 'closing_behavior':
       return {
@@ -86,9 +86,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'CLOSING',
         iconBg: 'bg-emerald-500/20',
         iconColor: 'text-emerald-400',
-        borderColor: 'border-emerald-500/30',
-        accentColor: 'bg-emerald-500/40',
-        bgColor: 'bg-emerald-900/20'
+        borderColor: 'border-emerald-500/60',
+        accentColor: 'bg-emerald-500/50',
+        bgColor: 'bg-emerald-900/30'
       }
     case 'momentum_shift':
       return {
@@ -97,9 +97,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'MOMENTUM',
         iconBg: 'bg-purple-500/20',
         iconColor: 'text-purple-400',
-        borderColor: 'border-purple-500/30',
-        accentColor: 'bg-purple-500/40',
-        bgColor: 'bg-purple-900/20'
+        borderColor: 'border-purple-500/60',
+        accentColor: 'bg-purple-500/50',
+        bgColor: 'bg-purple-900/30'
       }
     case 'question_quality':
       return {
@@ -108,9 +108,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'QUESTION',
         iconBg: 'bg-amber-500/20',
         iconColor: 'text-amber-400',
-        borderColor: 'border-amber-500/30',
-        accentColor: 'bg-amber-500/40',
-        bgColor: 'bg-amber-900/20'
+        borderColor: 'border-amber-500/60',
+        accentColor: 'bg-amber-500/50',
+        bgColor: 'bg-amber-900/30'
       }
     case 'price_handling':
       return {
@@ -119,9 +119,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'PRICE',
         iconBg: 'bg-red-500/20',
         iconColor: 'text-red-400',
-        borderColor: 'border-red-500/30',
-        accentColor: 'bg-red-500/40',
-        bgColor: 'bg-red-900/20'
+        borderColor: 'border-red-500/60',
+        accentColor: 'bg-red-500/50',
+        bgColor: 'bg-red-900/30'
       }
     default:
       return {
@@ -130,9 +130,9 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         badgeText: 'INFO',
         iconBg: 'bg-slate-700/50',
         iconColor: 'text-slate-300',
-        borderColor: 'border-slate-600/40',
-        accentColor: 'bg-slate-600/40',
-        bgColor: 'bg-slate-800/70'
+        borderColor: 'border-slate-600/60',
+        accentColor: 'bg-slate-600/50',
+        bgColor: 'bg-slate-800/80'
       }
   }
 }
@@ -162,13 +162,13 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
         "relative rounded-lg p-2.5 sm:p-3 transition-all group",
         "w-full min-h-[60px] sm:h-[70px] flex-shrink-0",
         config.bgColor,
-        "border shadow-[0_2px_8px_rgba(0,0,0,0.2)]",
+        "border-[2px] shadow-[0_4px_12px_rgba(0,0,0,0.4)]",
         config.borderColor
       )}
     >
       {/* Accent line */}
       <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-1 rounded-l-lg",
+        "absolute left-0 top-0 bottom-0 w-1.5 rounded-l-lg",
         config.accentColor
       )} />
       
@@ -186,13 +186,13 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
           <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-shrink-0">
             <Badge 
               variant={config.badgeVariant}
-              className="text-[8px] sm:text-[9px] font-medium px-1.5 sm:px-2 py-0.5 bg-slate-800 border-slate-600 text-slate-300"
+              className="text-[8px] sm:text-[9px] font-semibold px-1.5 sm:px-2 py-0.5 bg-slate-800 border-slate-600 text-white"
             >
               {config.badgeText}
             </Badge>
-            <span className="text-[10px] sm:text-xs text-slate-400 font-space">{formatTime(item.timestamp)}</span>
+            <span className="text-[10px] sm:text-xs text-slate-300 font-space font-medium">{formatTime(item.timestamp)}</span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed break-words font-space line-clamp-2 overflow-hidden">
+          <p className="text-xs sm:text-sm text-white leading-relaxed break-words font-space font-medium line-clamp-2 overflow-hidden">
             {item.message}
           </p>
         </div>
@@ -232,10 +232,10 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
   }, [deduplicatedItems.length])
 
   return (
-    <div className="h-full flex flex-col bg-slate-900/98 rounded-lg overflow-hidden border border-slate-700/90 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
-      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700/80 flex-shrink-0 bg-slate-900/50">
-        <h3 className="text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-1.5 sm:gap-2 font-space">
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-500 animate-pulse" />
+    <div className="h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden border-[2px] border-slate-700 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700 flex-shrink-0 bg-slate-900">
+        <h3 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5 sm:gap-2 font-space">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-400 animate-pulse" />
           Live Feedback
         </h3>
       </div>
@@ -246,9 +246,9 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
         style={{ maxHeight: '100%' }}
       >
         {deduplicatedItems.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-400 text-sm font-space">
+          <div className="flex items-center justify-center h-full text-slate-300 text-sm font-space font-medium">
             <div className="text-center">
-              <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
+              <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50 text-slate-400" />
               <p>Waiting for feedback...</p>
             </div>
           </div>

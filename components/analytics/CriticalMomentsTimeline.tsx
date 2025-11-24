@@ -1,0 +1,197 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import { CheckCircle2, XCircle, AlertTriangle, Clock, Lightbulb } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+interface CriticalMoment {
+  id: string
+  type: 'objection' | 'close_attempt' | 'rapport' | 'discovery' | 'safety' | 'opening'
+  startIndex?: number
+  endIndex?: number
+  transcript: string
+  timestamp: string
+  importance?: number
+  outcome: 'success' | 'failure' | 'neutral' | 'missed_opportunity'
+  analysis?: {
+    whatHappened?: string
+    whatWorked?: string
+    whatToImprove?: string
+    alternativeResponse?: string
+  }
+  coachingTip?: string
+}
+
+interface CriticalMomentsTimelineProps {
+  moments: CriticalMoment[]
+}
+
+function formatTimestamp(timestamp: string): string {
+  if (!timestamp) return ''
+  
+  try {
+    // Try parsing as ISO string or timestamp
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) {
+      // If not a valid date, might be MM:SS format already
+      return timestamp
+    }
+    
+    // Calculate seconds from start (assuming timestamp is relative)
+    const totalSeconds = Math.floor(date.getTime() / 1000) % 3600
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes}:${String(seconds).padStart(2, '0')}`
+  } catch {
+    // If parsing fails, try to extract MM:SS from string
+    const match = timestamp.match(/(\d+):(\d+)/)
+    if (match) {
+      return `${match[1]}:${match[2]}`
+    }
+    return timestamp
+  }
+}
+
+function getMomentTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    opening: 'Opening',
+    rapport: 'Rapport Building',
+    discovery: 'Discovery',
+    objection: 'Objection Handling',
+    close_attempt: 'Close Attempt',
+    safety: 'Safety'
+  }
+  return labels[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+export function CriticalMomentsTimeline({ moments }: CriticalMomentsTimelineProps) {
+  if (!moments || moments.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 text-center"
+      >
+        <AlertTriangle className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+        <p className="text-slate-400">No critical moments identified for this session</p>
+      </motion.div>
+    )
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
+      className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 mb-8"
+    >
+      <h2 className="text-2xl font-bold text-white mb-6">Key Moments That Defined This Session</h2>
+      
+      <div className="space-y-6">
+        {moments.slice(0, 5).map((moment, index) => {
+          const isSuccess = moment.outcome === 'success'
+          const isFailure = moment.outcome === 'failure'
+          const isMissed = moment.outcome === 'missed_opportunity'
+          
+          return (
+            <motion.div
+              key={moment.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 + 0.3 }}
+              className="relative"
+            >
+              <div className={cn(
+                "flex gap-4 p-6 rounded-xl border-2 transition-all",
+                isSuccess 
+                  ? "bg-green-500/10 border-green-500/30" 
+                  : isFailure
+                  ? "bg-red-500/10 border-red-500/30"
+                  : isMissed
+                  ? "bg-yellow-500/10 border-yellow-500/30"
+                  : "bg-slate-800/50 border-slate-700/50"
+              )}>
+                {/* Status Icon */}
+                <div className="flex-shrink-0">
+                  {isSuccess ? (
+                    <CheckCircle2 className="w-6 h-6 text-green-400" />
+                  ) : isFailure ? (
+                    <XCircle className="w-6 h-6 text-red-400" />
+                  ) : (
+                    <AlertTriangle className="w-6 h-6 text-yellow-400" />
+                  )}
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-300">
+                      {formatTimestamp(moment.timestamp)}
+                    </span>
+                    <span className="text-sm font-semibold text-white">
+                      - {getMomentTypeLabel(moment.type)}
+                    </span>
+                    {isSuccess && (
+                      <span className="px-2 py-1 text-xs font-semibold bg-green-500/20 text-green-400 rounded-full">
+                        Success
+                      </span>
+                    )}
+                    {isFailure && (
+                      <span className="px-2 py-1 text-xs font-semibold bg-red-500/20 text-red-400 rounded-full">
+                        Critical Failure
+                      </span>
+                    )}
+                    {isMissed && (
+                      <span className="px-2 py-1 text-xs font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">
+                        Missed Opportunity
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Transcript Quote */}
+                  <div className="mb-3 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50">
+                    <p className="text-sm text-gray-200 italic">
+                      "{moment.transcript.length > 150 ? moment.transcript.slice(0, 150) + '...' : moment.transcript}"
+                    </p>
+                  </div>
+                  
+                  {/* Analysis */}
+                  {moment.analysis?.whatHappened && (
+                    <div className="mb-2 text-sm text-gray-300">
+                      {moment.analysis.whatHappened}
+                    </div>
+                  )}
+                  
+                  {/* What Worked */}
+                  {moment.analysis?.whatWorked && (
+                    <div className="mb-2 text-sm">
+                      <span className="text-green-400 font-medium">💡 Keep this energy throughout</span>
+                    </div>
+                  )}
+                  
+                  {/* Coaching Tip */}
+                  {(moment.coachingTip || moment.analysis?.whatToImprove || moment.analysis?.alternativeResponse) && (
+                    <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <Lightbulb className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm">
+                          <span className="text-blue-400 font-medium">🔧 Try: </span>
+                          <span className="text-white">
+                            {moment.coachingTip || moment.analysis?.whatToImprove || moment.analysis?.alternativeResponse}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+    </motion.div>
+  )
+}
+
