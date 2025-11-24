@@ -397,8 +397,8 @@ export async function POST(req: NextRequest) {
       updateData.safety_score = Math.round(finalScores.safety)
     }
     
-    // Merge analytics carefully
-    updateData.analytics = {
+    // Merge analytics carefully - preserve voice_analysis and other existing data
+    const newAnalytics = {
       ...existingAnalytics,
       deep_analysis: deepAnalysis,
       coaching_plan: coachingPlan,
@@ -408,6 +408,20 @@ export async function POST(req: NextRequest) {
       grading_version: '2.0',
       graded_at: new Date().toISOString()
     }
+    
+    // Preserve voice_analysis if it exists (critical!)
+    if (existingAnalytics.voice_analysis) {
+      newAnalytics.voice_analysis = existingAnalytics.voice_analysis
+    }
+    
+    updateData.analytics = newAnalytics
+    
+    logger.info('Updating session with deep analysis', {
+      sessionId,
+      updateKeys: Object.keys(updateData),
+      analyticsKeys: Object.keys(newAnalytics),
+      hasVoiceAnalysis: !!newAnalytics.voice_analysis
+    })
     
     const { error: updateError } = await supabase
       .from('live_sessions')
@@ -420,14 +434,16 @@ export async function POST(req: NextRequest) {
         message: updateError.message,
         code: updateError.code,
         details: updateError.details,
-        hint: updateError.hint
+        hint: updateError.hint,
+        updateDataKeys: Object.keys(updateData)
       })
       return NextResponse.json({ 
         error: 'Failed to save deep analysis',
         details: updateError.message || updateError.code || 'Unknown database error',
         code: updateError.code,
         hint: 'Check database logs for more details',
-        updateDataKeys: Object.keys(updateData)
+        updateDataKeys: Object.keys(updateData),
+        errorObject: JSON.stringify(updateError).substring(0, 500)
       }, { status: 500 })
     }
     
