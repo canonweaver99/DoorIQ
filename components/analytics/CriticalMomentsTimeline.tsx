@@ -115,7 +115,7 @@ export function CriticalMomentsTimeline({
       transition={{ duration: 0.5, delay: 0.3 }}
       className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 mb-8"
     >
-      <h2 className="text-2xl font-bold text-white mb-6">Key Moments That Defined This Session</h2>
+      <h2 className="text-3xl font-bold text-white mb-6">Key Moments That Defined This Session</h2>
       
       <div className="space-y-6">
         {moments.slice(0, 5).map((moment, index) => {
@@ -156,45 +156,45 @@ export function CriticalMomentsTimeline({
                 {/* Status Icon */}
                 <div className="flex-shrink-0">
                   {isSuccess ? (
-                    <CheckCircle2 className="w-6 h-6 text-green-400" />
+                    <CheckCircle2 className="w-8 h-8 text-green-400" />
                   ) : isFailure ? (
-                    <XCircle className="w-6 h-6 text-red-400" />
+                    <XCircle className="w-8 h-8 text-red-400" />
                   ) : (
-                    <AlertTriangle className="w-6 h-6 text-yellow-400" />
+                    <AlertTriangle className="w-8 h-8 text-yellow-400" />
                   )}
                 </div>
                 
                 {/* Content */}
                 <div className="flex-1">
                   {/* Header */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Clock className="w-5 h-5 text-gray-400" />
+                    <span className="text-base font-medium text-gray-300">
                       {formatTimestamp(moment.timestamp, sessionStartTime, durationSeconds)}
                     </span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-base font-semibold text-white">
                       - {getMomentTypeLabel(moment.type)}
                     </span>
                     {isSuccess && (
-                      <span className="px-2 py-1 text-xs font-semibold bg-green-500/20 text-green-400 rounded-full">
+                      <span className="px-3 py-1.5 text-sm font-semibold bg-green-500/20 text-green-400 rounded-full">
                         Success
                       </span>
                     )}
                     {isFailure && (
-                      <span className="px-2 py-1 text-xs font-semibold bg-red-500/20 text-red-400 rounded-full">
+                      <span className="px-3 py-1.5 text-sm font-semibold bg-red-500/20 text-red-400 rounded-full">
                         Critical Failure
                       </span>
                     )}
                     {isMissed && (
-                      <span className="px-2 py-1 text-xs font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">
+                      <span className="px-3 py-1.5 text-sm font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">
                         Missed Opportunity
                       </span>
                     )}
                   </div>
                   
                   {/* Transcript Quote */}
-                  <div className="mb-3 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                    <p className="text-sm text-gray-200 italic mb-2">
+                  <div className="mb-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700/50">
+                    <p className="text-base text-gray-200 italic mb-2">
                       "{(() => {
                         let transcriptText = moment.transcript.length > 150 ? moment.transcript.slice(0, 150) + '...' : moment.transcript
                         // Replace "homeowner:" with agent name if available (case-insensitive)
@@ -206,7 +206,7 @@ export function CriticalMomentsTimeline({
                     </p>
                     {/* Success Indicator - Interest Level Change */}
                     {interestChange && interestChange > 0 && (
-                      <div className="mt-2 flex items-center gap-2 text-green-400 text-xs font-semibold">
+                      <div className="mt-2 flex items-center gap-2 text-green-400 text-sm font-semibold">
                         <span>📈</span>
                         <span>Interest Level: +{interestChange}% (They engaged!)</span>
                       </div>
@@ -215,22 +215,22 @@ export function CriticalMomentsTimeline({
                   
                   {/* What Worked and Try This Next Time */}
                   {moment.analysis && (moment.analysis.whatWorked || moment.analysis.whatToImprove) && (
-                    <div className="space-y-2 mt-3">
+                    <div className="space-y-3 mt-4">
                       {moment.analysis.whatWorked && (
-                        <div className="flex items-start gap-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
-                          <Lightbulb className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex items-start gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                          <Lightbulb className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
                           <div>
-                            <div className="text-xs font-semibold text-green-400 mb-1">What Worked</div>
-                            <p className="text-sm text-gray-200">{moment.analysis.whatWorked}</p>
+                            <div className="text-sm font-semibold text-green-400 mb-1.5">What Worked</div>
+                            <p className="text-base text-gray-200">{moment.analysis.whatWorked}</p>
                           </div>
                         </div>
                       )}
                       {moment.analysis.whatToImprove && (
-                        <div className="flex items-start gap-2 p-2 bg-blue-500/10 rounded-lg border border-blue-500/30">
-                          <Lightbulb className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex items-start gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                          <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                           <div>
-                            <div className="text-xs font-semibold text-blue-400 mb-1">Try This Next Time</div>
-                            <p className="text-sm text-gray-200">{moment.analysis.whatToImprove}</p>
+                            <div className="text-sm font-semibold text-blue-400 mb-1.5">Try This Next Time</div>
+                            <p className="text-base text-gray-200">{moment.analysis.whatToImprove}</p>
                           </div>
                         </div>
                       )}

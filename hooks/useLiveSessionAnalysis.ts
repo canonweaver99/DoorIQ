@@ -198,6 +198,47 @@ function detectClosingBehavior(text: string): { type: 'trial_close' | 'direct_cl
   return null
 }
 
+// Detect personal rapport-building questions from user
+function detectPersonalRapportQuestion(text: string): boolean {
+  const lowerText = text.toLowerCase()
+  
+  // Personal life questions
+  const personalQuestionPatterns = [
+    'how has your day been',
+    'how\'s your day',
+    'how are you doing',
+    'how are things',
+    'how\'s it going',
+    'how have you been',
+    'how\'s life',
+    'how\'s everything',
+    'how\'s the family',
+    'how are the kids',
+    'how\'s work',
+    'what do you do',
+    'where are you from',
+    'how long have you lived',
+    'tell me about yourself',
+    'what brings you here',
+    'what\'s your name',
+    'nice to meet you',
+    'how\'s your weekend',
+    'how was your week',
+    'enjoying the weather',
+    'how\'s the neighborhood',
+    'been here long',
+    'how do you like living here'
+  ]
+  
+  // Check if it's a question (ends with ? or starts with question words)
+  const isQuestion = text.trim().endsWith('?') || /^(how|what|where|tell me)/i.test(text.trim())
+  
+  // Check if it contains personal rapport patterns
+  const hasPersonalPattern = personalQuestionPatterns.some(pattern => lowerText.includes(pattern))
+  
+  return isQuestion && hasPersonalPattern
+}
+
 // Detect momentum shifts
 function detectMomentumShift(
   currentEntry: TranscriptEntry,
@@ -217,20 +258,9 @@ function detectMomentumShift(
   const avgLength = lengths.reduce((a, b) => a + b, 0) / lengths.length
   const currentLength = currentEntry.text.length
   
-  // Check for questions from homeowner (engagement signal)
-  const questionPatterns = ['?', 'what', 'how', 'why', 'when', 'where', 'tell me', 'explain']
-  const hasQuestions = recentHomeownerEntries.some(e => 
-    questionPatterns.some(pattern => e.text.toLowerCase().includes(pattern))
-  )
-  
   // Strong recovery after objection
   if (objectionHandled && currentLength > avgLength * 1.3) {
     return { type: 'strong_recovery', message: 'Strong recovery! Regained momentum.' }
-  }
-  
-  // Building rapport - homeowner asking questions or sharing details
-  if (hasQuestions && currentLength > 30) {
-    return { type: 'building_rapport', message: 'Building rapport! Homeowner engaged.' }
   }
   
   // Interest growing - responses getting longer
@@ -570,6 +600,31 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             'good',
             { techniqueName: technique }
           )
+        }
+        
+        // Building rapport - only when user asks personal questions
+        const isPersonalRapportQuestion = detectPersonalRapportQuestion(entry.text)
+        if (isPersonalRapportQuestion) {
+          // Check if we've shown this recently (avoid spam) - use setFeedbackItems callback to access current state
+          setFeedbackItems(prev => {
+            const lastRapportFeedback = prev
+              .slice()
+              .reverse()
+              .find((item: FeedbackItem) => item.type === 'momentum_shift' && item.message.includes('Building rapport'))
+            
+            if (!lastRapportFeedback || Date.now() - lastRapportFeedback.timestamp.getTime() > 30000) {
+              const newItem: FeedbackItem = {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                timestamp: new Date(),
+                type: 'momentum_shift',
+                message: 'Building rapport! Getting to know the homeowner.',
+                severity: 'good',
+                metadata: { momentumType: 'building_rapport' }
+              }
+              return [...prev, newItem]
+            }
+            return prev
+          })
         }
         
         // Track value statements for price handling

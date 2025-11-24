@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, MessageSquare, AlertTriangle, Target, Info, Lightbulb, ExternalLink } from 'lucide-react'
+import { Mic, MessageSquare, AlertTriangle, Book, Info, Lightbulb, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface InstantInsightsGridProps {
@@ -12,7 +12,10 @@ interface InstantInsightsGridProps {
     objectionCount?: number
     closeAttempts?: number
     closeSuccessRate?: number
+    techniquesUsed?: string[]
   }
+  userName?: string
+  transcript?: Array<{ speaker: string; text: string }>
 }
 
 // Tooltip Component
@@ -60,13 +63,75 @@ function MetricTooltip({ children, content }: { children: React.ReactNode, conte
  * - Transcript includes speaker information
  * - instant_metrics contains wordsPerMinute and conversationBalance
  */
-export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps) {
+// Technique detection patterns (same as live session)
+const TECHNIQUE_PATTERNS = {
+  feelFeltFound: [
+    'i understand how you feel', 'i felt the same way', 'others have felt',
+    'i know how you feel', 'i felt that', 'others felt', 'i\'ve felt'
+  ],
+  socialProof: [
+    'other customers', 'neighbors', 'other homeowners', 'many customers',
+    'lots of people', 'others have', 'most people', 'customers say',
+    'neighbors love', 'everyone says'
+  ],
+  urgency: [
+    'limited time', 'today only', 'special offer', 'act now',
+    'don\'t wait', 'limited availability', 'while supplies last',
+    'expires soon', 'ending soon', 'last chance'
+  ],
+  activeListening: [
+    'i hear you', 'i understand', 'that makes sense', 'i see',
+    'got it', 'i get that', 'absolutely', 'you\'re right',
+    'i can see why', 'that\'s understandable'
+  ]
+}
+
+function detectTechnique(text: string): string | null {
+  const lowerText = text.toLowerCase()
+  
+  // Check for open-ended questions
+  if (/^(what|how|why|when|where|tell me|can you explain)/i.test(text.trim())) {
+    return 'Open-Ended Question'
+  }
+  
+  // Check other techniques
+  for (const [technique, patterns] of Object.entries(TECHNIQUE_PATTERNS)) {
+    for (const pattern of patterns) {
+      if (lowerText.includes(pattern)) {
+        const formattedName = technique
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, str => str.toUpperCase())
+          .trim()
+        return formattedName === 'Feel Felt Found' ? 'Feel-Felt-Found' : formattedName
+      }
+    }
+  }
+  
+  return null
+}
+
+export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcript }: InstantInsightsGridProps) {
   const metrics = instantMetrics || {}
   const wpm = metrics.wordsPerMinute || 0
   const balance = metrics.conversationBalance || 0
   const objections = metrics.objectionCount || 0
-  const closeAttempts = metrics.closeAttempts || 0
-  const closeSuccess = metrics.closeSuccessRate || 0
+  
+  // Calculate techniques used from transcript or use provided data
+  let techniquesUsed: string[] = []
+  if (metrics.techniquesUsed && Array.isArray(metrics.techniquesUsed)) {
+    techniquesUsed = metrics.techniquesUsed
+  } else if (transcript && Array.isArray(transcript)) {
+    const techniquesSet = new Set<string>()
+    transcript.forEach((entry: any) => {
+      if (entry.speaker === 'user' || entry.speaker === 'rep') {
+        const technique = detectTechnique(entry.text || '')
+        if (technique) {
+          techniquesSet.add(technique)
+        }
+      }
+    })
+    techniquesUsed = Array.from(techniquesSet)
+  }
   
   const getWPMStatus = () => {
     if (wpm >= 140 && wpm <= 160) return { label: 'GOOD', color: 'text-green-400' }
@@ -80,11 +145,6 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
     return { label: 'TALK LESS', color: 'text-red-400' }
   }
   
-  const getCloseStatus = () => {
-    if (closeAttempts === 0) return { label: 'WEAK CLOSE', color: 'text-red-400' }
-    if (closeSuccess >= 50) return { label: 'STRONG CLOSE', color: 'text-green-400' }
-    return { label: 'NEEDS WORK', color: 'text-yellow-400' }
-  }
   
   const getWPMRecommendation = () => {
     if (wpm < 140) {
@@ -113,19 +173,8 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
     return "You handled objections well! Continue practicing objection handling scenarios to improve your response rate."
   }
   
-  const getCloseRecommendation = () => {
-    if (closeAttempts === 0) {
-      return "Practice closing techniques! Try assumptive closes like 'When would you like to get started?' to move conversations forward."
-    }
-    if (closeSuccess < 50) {
-      return "Work on your closing approach. Practice different closing techniques and learn to read buying signals."
-    }
-    return "Strong closing performance! Keep refining your techniques to maintain this success rate."
-  }
-  
   const wpmStatus = getWPMStatus()
   const balanceStatus = getBalanceStatus()
-  const closeStatus = getCloseStatus()
   
   return (
     <motion.div
@@ -198,10 +247,10 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
         
         <div className="mb-2">
           <div className="text-2xl font-bold text-white mb-1 font-space">
-            <span className={balanceStatus.color}>{balance}%</span> <span className="text-gray-300">(You)</span>
+            <span className={balanceStatus.color}>{balance}%</span> <span className="text-gray-300">({userName})</span>
           </div>
         </div>
-        <div className="text-xs text-gray-400 font-sans">Target: 60% You</div>
+        <div className="text-xs text-gray-400 font-sans">Target: 60% {userName}</div>
       </div>
       
       {/* Objections */}
@@ -222,22 +271,36 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
         </div>
       </div>
       
-      {/* Closing */}
+      {/* Techniques Used */}
       <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
         <div className="flex items-center gap-2 mb-3">
-          <Target className="w-5 h-5 text-emerald-400" />
-          <span className="text-sm font-semibold text-white font-space">Closing</span>
-          <MetricTooltip content="Closing attempts measure how many times you tried to close the sale. Success rate shows how effective your closing techniques were. Multiple attempts with high success rate indicate strong closing skills.">
+          <Book className="w-5 h-5 text-emerald-400" />
+          <span className="text-sm font-semibold text-white font-space">Techniques</span>
+          <MetricTooltip content="Techniques Used shows the sales techniques you applied during the conversation. Using multiple techniques demonstrates versatility and helps build rapport, handle objections, and close deals effectively.">
             <Info className="w-4 h-4 text-gray-400 hover:text-emerald-400 transition-colors" />
           </MetricTooltip>
         </div>
         <div className="mb-2">
-          <div className="text-2xl font-bold text-white mb-1 font-space">Attempts: {closeAttempts}</div>
-          <div className="text-sm text-gray-300 font-sans">
-            Success: <span className={closeStatus.color}>{closeSuccess}%</span>
-          </div>
+          <div className="text-2xl font-bold text-white mb-1 font-space">{techniquesUsed.length}</div>
+          <div className="text-sm text-gray-300 font-sans">Used</div>
         </div>
-        <div className={cn("text-xs font-sans mb-3", closeStatus.color)}>{closeStatus.label}</div>
+        {techniquesUsed.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {techniquesUsed.slice(0, 3).map((technique, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-1 text-xs font-medium bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30"
+              >
+                {technique}
+              </span>
+            ))}
+            {techniquesUsed.length > 3 && (
+              <span className="px-2 py-1 text-xs font-medium text-gray-400">
+                +{techniquesUsed.length - 3} more
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   )

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { createClient } from '@/lib/supabase/client'
 import { HeroSection } from '@/components/analytics/HeroSection'
 import { InstantInsightsGrid } from '@/components/analytics/InstantInsightsGrid'
 import { CriticalMomentsTimeline } from '@/components/analytics/CriticalMomentsTimeline'
@@ -95,6 +96,7 @@ export default function AnalyticsPage() {
   
   const [session, setSession] = useState<SessionData | null>(null)
   const [comparison, setComparison] = useState<ComparisonData | null>(null)
+  const [userName, setUserName] = useState<string>('You')
   const [loading, setLoading] = useState(true)
   const [loadingStates, setLoadingStates] = useState({
     hero: false,
@@ -105,6 +107,38 @@ export default function AnalyticsPage() {
     speech: false
   })
   
+  // Fetch user name
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) return
+        
+        const { data: userData } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', user.id)
+          .single()
+        
+        if (userData?.full_name) {
+          // Get first name
+          const firstName = userData.full_name.split(' ')[0] || 'You'
+          setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+        } else if (user.email) {
+          // Use email username as fallback
+          const emailName = user.email.split('@')[0] || 'You'
+          setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
+        }
+      } catch (error) {
+        console.error('Error fetching user name:', error)
+      }
+    }
+    
+    fetchUserName()
+  }, [])
+
   // Fetch session data
   useEffect(() => {
     if (!sessionId) return
@@ -249,7 +283,11 @@ export default function AnalyticsPage() {
         {/* Instant Insights Grid - Loads after hero */}
         {session.instant_metrics ? (
           loadingStates.insights ? (
-            <InstantInsightsGrid instantMetrics={session.instant_metrics} />
+            <InstantInsightsGrid 
+              instantMetrics={session.instant_metrics} 
+              userName={userName}
+              transcript={(session as any).full_transcript}
+            />
           ) : (
             <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />
           )
