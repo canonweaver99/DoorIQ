@@ -202,10 +202,10 @@ export function HeroSection({
             
             {/* Right Column - Deal Status, and Quick Verdict */}
             <div className="lg:col-span-1 space-y-4">
-              {/* Earnings and Quick Verdict Cards - Side by Side */}
-              <div className="grid grid-cols-2 gap-4 h-full">
+              {/* Earnings and Quick Verdict Cards - Expanded to 60% */}
+              <div className="flex gap-4 h-full">
                 {/* Earnings Card - From Old Grading Page */}
-                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden flex flex-col justify-between ${
+                <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden flex flex-col justify-between flex-[0.6] ${
                   saleClosed && virtualEarnings > 0
                     ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
                     : dealDetails?.next_step
@@ -292,7 +292,7 @@ export function HeroSection({
                 
                 {/* Quick Verdict Card - Right of Earnings */}
                 {quickVerdict && (
-                  <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between h-full`}>
+                  <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden bg-blue-500/10 border border-blue-500/20 flex flex-col justify-between flex-[0.4] h-full`}>
                     <div className="flex items-center gap-2 mb-4">
                       <Zap className="w-5 h-5 text-blue-400" />
                       <span className="text-sm uppercase tracking-[0.25em] text-blue-400 font-space">Quick Verdict</span>

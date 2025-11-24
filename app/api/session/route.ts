@@ -74,7 +74,7 @@ export async function PATCH(req: Request) {
     // Get current session data from database (transcript saved incrementally, analytics may exist)
     const { data: currentSession, error: fetchError } = await (supabase as any)
       .from('live_sessions')
-      .select('full_transcript, analytics')
+      .select('full_transcript, analytics, instant_metrics')
       .eq('id', id)
       .single()
     
@@ -191,6 +191,49 @@ export async function PATCH(req: Request) {
         analyticsKeys: Object.keys(analytics),
         voiceAnalysisIncluded: !!analytics.voice_analysis
       })
+      
+      // Also populate instant_metrics if we have voice analysis data and transcript
+      if (finalTranscript && Array.isArray(finalTranscript) && finalTranscript.length > 0 && analytics.voice_analysis) {
+        // Calculate talk time ratio using character count (same as live session)
+        let userCharCount = 0
+        let homeownerCharCount = 0
+        
+        finalTranscript.forEach((entry: any) => {
+          const charCount = (entry.text || '').length
+          if (entry.speaker === 'user' || entry.speaker === 'rep') {
+            userCharCount += charCount
+          } else if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
+            homeownerCharCount += charCount
+          }
+        })
+        
+        const totalChars = userCharCount + homeownerCharCount
+        const conversationBalance = totalChars > 0 ? Math.round((userCharCount / totalChars) * 100) : 0
+        
+        // Extract wordsPerMinute from voice_analysis
+        const wordsPerMinute = analytics.voice_analysis.avgWPM || 0
+        
+        // Get existing instant_metrics or create new
+        const existingInstantMetrics = currentSession?.instant_metrics || {}
+        
+        updateData.instant_metrics = {
+          ...existingInstantMetrics,
+          wordsPerMinute,
+          conversationBalance,
+          // Preserve other existing instant metrics fields
+          ...(existingInstantMetrics.objectionCount !== undefined && { objectionCount: existingInstantMetrics.objectionCount }),
+          ...(existingInstantMetrics.closeAttempts !== undefined && { closeAttempts: existingInstantMetrics.closeAttempts }),
+          ...(existingInstantMetrics.closeSuccessRate !== undefined && { closeSuccessRate: existingInstantMetrics.closeSuccessRate })
+        }
+        
+        console.log('✅ PATCH: Instant metrics populated', {
+          wordsPerMinute,
+          conversationBalance,
+          userCharCount,
+          homeownerCharCount,
+          totalChars
+        })
+      }
     } else if (hadExistingAnalytics) {
       // Preserve existing analytics even if no voice_analysis in this request
       updateData.analytics = analytics

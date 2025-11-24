@@ -262,6 +262,7 @@ export default function AnalyticsPage() {
               moments={session.key_moments}
               sessionStartTime={(session as any).created_at || (session as any).started_at}
               durationSeconds={(session as any).duration_seconds}
+              agentName={(session as any).agent_name}
             />
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />

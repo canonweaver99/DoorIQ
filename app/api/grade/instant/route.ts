@@ -154,18 +154,33 @@ function getVoiceMetrics(analytics: any) {
   }
 }
 
-// Calculate conversation balance (rep talk time %)
+// Calculate conversation balance (rep talk time %) using character count
+// This matches the live session's calculateTalkTimeRatio calculation
 function calculateConversationBalance(transcript: any[], durationSeconds: number): number {
-  if (!transcript || transcript.length === 0 || durationSeconds <= 0) return 0
+  if (!transcript || transcript.length === 0) return 50 // Default to 50% if no transcript
   
-  const repEntries = transcript.filter((entry: any) => 
-    entry.speaker === 'rep' || entry.speaker === 'user'
-  )
+  let userCharCount = 0
+  let homeownerCharCount = 0
   
-  const totalEntries = transcript.length
-  if (totalEntries === 0) return 0
+  transcript.forEach((entry: any) => {
+    const charCount = (entry.text || '').length
+    // Explicitly check for 'user' or 'rep' speaker (sales rep)
+    if (entry.speaker === 'user' || entry.speaker === 'rep') {
+      userCharCount += charCount
+    } 
+    // Explicitly check for 'homeowner' or 'agent' speaker (AI agent)
+    else if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
+      homeownerCharCount += charCount
+    }
+    // Ignore any other speaker values to avoid counting errors
+  })
   
-  return Math.round((repEntries.length / totalEntries) * 100)
+  const totalChars = userCharCount + homeownerCharCount
+  if (totalChars === 0) return 50
+  
+  // Calculate user's percentage: (user chars / total chars) * 100
+  // This means: more user talk = higher %, more agent talk = lower %
+  return Math.round((userCharCount / totalChars) * 100)
 }
 
 // Fetch ElevenLabs metrics if conversation ID exists

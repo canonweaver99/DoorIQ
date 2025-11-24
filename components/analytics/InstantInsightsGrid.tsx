@@ -47,9 +47,9 @@ function MetricTooltip({ children, content }: { children: React.ReactNode, conte
 }
 
 /**
- * InstantInsightsGrid - Displays speaking and dialogue metrics
+ * InstantInsightsGrid - Displays speaking and time-talk ratio metrics
  * 
- * NOTE: Speaking and Dialogue cards require ElevenLabs webhook to be configured:
+ * NOTE: Speaking and Time-Talk Ratio cards require ElevenLabs webhook to be configured:
  * 1. Set up webhook endpoint at /api/elevenlabs/webhook
  * 2. Configure ElevenLabs to send conversation.analyzed events
  * 3. Ensure conversation includes transcript with speaker labels (user/agent)
@@ -104,7 +104,7 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
     if (balance > 45) {
       return "Give customers more space to speak. Listening more helps uncover needs and build rapport."
     }
-    return "Excellent balance! You're maintaining engagement while allowing customers to share their needs."
+    return "Excellent time-talk ratio! You're maintaining engagement while allowing customers to share their needs."
   }
   
   const getObjectionRecommendation = () => {
@@ -162,13 +162,13 @@ export function InstantInsightsGrid({ instantMetrics }: InstantInsightsGridProps
         <div className="text-xs text-gray-400 font-sans mb-3">Target: 150 WPM</div>
       </div>
       
-      {/* Dialogue Balance */}
+      {/* Time-Talk Ratio */}
       <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-purple-400" />
-            <span className="text-sm font-semibold text-white font-space">Dialogue</span>
-            <MetricTooltip content="Conversation Balance measures the percentage of conversation you led vs. the customer. Target is 40% to maintain engagement while allowing discovery. Too low means you're not guiding the conversation, too high means you're talking too much.">
+            <span className="text-sm font-semibold text-white font-space">Time-Talk Ratio</span>
+            <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer, calculated by character count. Target is 40% to maintain engagement while allowing discovery. Too low means you're not guiding the conversation, too high means you're talking too much.">
               <Info className="w-4 h-4 text-gray-400 hover:text-purple-400 transition-colors" />
             </MetricTooltip>
           </div>

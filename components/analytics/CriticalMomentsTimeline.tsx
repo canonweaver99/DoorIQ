@@ -27,6 +27,7 @@ interface CriticalMomentsTimelineProps {
   moments: CriticalMoment[]
   sessionStartTime?: string | Date
   durationSeconds?: number
+  agentName?: string | null
 }
 
 function formatTimestamp(
@@ -91,7 +92,8 @@ function getMomentTypeLabel(type: string): string {
 export function CriticalMomentsTimeline({ 
   moments, 
   sessionStartTime, 
-  durationSeconds 
+  durationSeconds,
+  agentName
 }: CriticalMomentsTimelineProps) {
   if (!moments || moments.length === 0) {
     return (
@@ -193,7 +195,14 @@ export function CriticalMomentsTimeline({
                   {/* Transcript Quote */}
                   <div className="mb-3 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50">
                     <p className="text-sm text-gray-200 italic mb-2">
-                      "{moment.transcript.length > 150 ? moment.transcript.slice(0, 150) + '...' : moment.transcript}"
+                      "{(() => {
+                        let transcriptText = moment.transcript.length > 150 ? moment.transcript.slice(0, 150) + '...' : moment.transcript
+                        // Replace "homeowner:" with agent name if available (case-insensitive)
+                        if (agentName) {
+                          transcriptText = transcriptText.replace(/homeowner\s*:/gi, `${agentName}:`)
+                        }
+                        return transcriptText
+                      })()}"
                     </p>
                     {/* Success Indicator - Interest Level Change */}
                     {interestChange && interestChange > 0 && (
@@ -203,6 +212,30 @@ export function CriticalMomentsTimeline({
                       </div>
                     )}
                   </div>
+                  
+                  {/* What Worked and Try This Next Time */}
+                  {moment.analysis && (moment.analysis.whatWorked || moment.analysis.whatToImprove) && (
+                    <div className="space-y-2 mt-3">
+                      {moment.analysis.whatWorked && (
+                        <div className="flex items-start gap-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
+                          <Lightbulb className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="text-xs font-semibold text-green-400 mb-1">What Worked</div>
+                            <p className="text-sm text-gray-200">{moment.analysis.whatWorked}</p>
+                          </div>
+                        </div>
+                      )}
+                      {moment.analysis.whatToImprove && (
+                        <div className="flex items-start gap-2 p-2 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                          <Lightbulb className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="text-xs font-semibold text-blue-400 mb-1">Try This Next Time</div>
+                            <p className="text-sm text-gray-200">{moment.analysis.whatToImprove}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
