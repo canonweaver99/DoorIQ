@@ -30,7 +30,7 @@ async function getUserPerformanceHistory(sessionId: string, supabase: any) {
     // Get user's recent sessions (last 10)
     const { data: sessions, error: historyError } = await supabase
       .from('live_sessions')
-      .select('overall_score, rapport_score, discovery_score, objection_score, close_score, created_at')
+      .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at')
       .eq('user_id', session.user_id)
       .not('overall_score', 'is', null)
       .order('created_at', { ascending: false })
@@ -63,7 +63,7 @@ async function getUserPerformanceHistory(sessionId: string, supabase: any) {
       recentScores: scores,
       averageRapport: calculateAverage(sessions.map(s => s.rapport_score)),
       averageDiscovery: calculateAverage(sessions.map(s => s.discovery_score)),
-      averageObjection: calculateAverage(sessions.map(s => s.objection_score)),
+      averageObjection: calculateAverage(sessions.map(s => s.objection_handling_score)),
       averageClosing: calculateAverage(sessions.map(s => s.close_score))
     }
   } catch (error) {
@@ -387,7 +387,7 @@ export async function POST(req: NextRequest) {
         overall_score: finalScores.overall,
         rapport_score: Math.round(finalScores.rapport),
         discovery_score: Math.round(finalScores.discovery),
-        objection_score: Math.round(finalScores.objectionHandling),
+        objection_handling_score: Math.round(finalScores.objectionHandling),
         close_score: Math.round(finalScores.closing),
         safety_score: Math.round(finalScores.safety),
         analytics: {
