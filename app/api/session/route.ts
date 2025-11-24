@@ -192,8 +192,8 @@ export async function PATCH(req: Request) {
         voiceAnalysisIncluded: !!analytics.voice_analysis
       })
       
-      // Also populate instant_metrics if we have voice analysis data and transcript
-      if (finalTranscript && Array.isArray(finalTranscript) && finalTranscript.length > 0 && analytics.voice_analysis) {
+      // Also populate instant_metrics if we have transcript
+      if (finalTranscript && Array.isArray(finalTranscript) && finalTranscript.length > 0) {
         // Calculate talk time ratio using character count (same as live session)
         let userCharCount = 0
         let homeownerCharCount = 0
@@ -210,8 +210,22 @@ export async function PATCH(req: Request) {
         const totalChars = userCharCount + homeownerCharCount
         const conversationBalance = totalChars > 0 ? Math.round((userCharCount / totalChars) * 100) : 0
         
-        // Extract wordsPerMinute from voice_analysis
-        const wordsPerMinute = analytics.voice_analysis.avgWPM || 0
+        // Calculate wordsPerMinute from transcript or use voice_analysis if available
+        let wordsPerMinute = 0
+        if (analytics.voice_analysis?.avgWPM) {
+          wordsPerMinute = analytics.voice_analysis.avgWPM
+        } else if (duration_seconds && duration_seconds > 0) {
+          // Calculate WPM from transcript
+          const repEntries = finalTranscript.filter((entry: any) => 
+            entry.speaker === 'user' || entry.speaker === 'rep'
+          )
+          const totalWords = repEntries.reduce((sum: number, entry: any) => {
+            const text = entry.text || entry.message || ''
+            return sum + text.split(/\s+/).filter((word: string) => word.length > 0).length
+          }, 0)
+          const durationMinutes = duration_seconds / 60
+          wordsPerMinute = Math.round(totalWords / durationMinutes)
+        }
         
         // Get existing instant_metrics or create new
         const existingInstantMetrics = currentSession?.instant_metrics || {}
@@ -231,7 +245,8 @@ export async function PATCH(req: Request) {
           conversationBalance,
           userCharCount,
           homeownerCharCount,
-          totalChars
+          totalChars,
+          calculatedFromTranscript: !analytics.voice_analysis?.avgWPM
         })
       }
     } else if (hadExistingAnalytics) {

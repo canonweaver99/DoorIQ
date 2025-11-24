@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
     speech: false
   })
   
-  // Fetch user name
+  // Fetch user name and check for free demo redirect
   useEffect(() => {
     const fetchUserName = async () => {
       try {
@@ -118,7 +118,7 @@ export default function AnalyticsPage() {
         
         const { data: userData } = await supabase
           .from('users')
-          .select('full_name')
+          .select('full_name, subscription_status, used_free_demo, free_demo_used_at')
           .eq('id', user.id)
           .single()
         
@@ -130,6 +130,47 @@ export default function AnalyticsPage() {
           // Use email username as fallback
           const emailName = user.email.split('@')[0] || 'You'
           setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
+        }
+        
+        // Check if user used free demo and needs to be redirected to pricing
+        const status = userData?.subscription_status || null
+        const usedFreeDemo = userData?.used_free_demo || false
+        const freeDemoUsedAt = userData?.free_demo_used_at
+        
+        // If user has no subscription and used free demo, check if this session was their free demo
+        if (!status || status === 'none') {
+          if (usedFreeDemo && freeDemoUsedAt) {
+            // Check if this session was created around the time they used free demo
+            // Allow them to view analytics, then redirect after a delay
+            const checkAndRedirect = async () => {
+              // Wait for analytics to load (give them time to see feedback)
+              setTimeout(async () => {
+                // Check if they've scrolled or interacted (basic check)
+                let hasInteracted = false
+                const interactionTimeout = setTimeout(() => {
+                  if (!hasInteracted) {
+                    // Redirect to pricing after viewing analytics
+                    window.location.href = '/pricing?from=demo'
+                  }
+                }, 30000) // 30 seconds to view analytics
+                
+                // Track interactions
+                const handleInteraction = () => {
+                  hasInteracted = true
+                  clearTimeout(interactionTimeout)
+                  // Redirect after they've interacted
+                  setTimeout(() => {
+                    window.location.href = '/pricing?from=demo'
+                  }, 10000) // 10 seconds after interaction
+                }
+                
+                window.addEventListener('scroll', handleInteraction, { once: true })
+                window.addEventListener('click', handleInteraction, { once: true })
+              }, 5000) // Wait 5 seconds for analytics to load
+            }
+            
+            checkAndRedirect()
+          }
         }
       } catch (error) {
         console.error('Error fetching user name:', error)
@@ -178,7 +219,7 @@ export default function AnalyticsPage() {
           setTimeout(() => {
             setLoadingStates(prev => ({ ...prev, speech: true }))
           }, 2500)
-      }
+        }
     } catch (error) {
       console.error('Error fetching session:', error)
     } finally {

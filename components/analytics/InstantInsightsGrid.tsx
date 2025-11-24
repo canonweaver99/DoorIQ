@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MessageSquare, AlertTriangle, Book, Info, Lightbulb, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ProgressRing } from './ProgressRing'
 
 interface InstantInsightsGridProps {
   instantMetrics?: {

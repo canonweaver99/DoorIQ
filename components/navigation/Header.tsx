@@ -105,6 +105,8 @@ function HeaderContent() {
   const [lastScrollY, setLastScrollY] = useState(0)
   const [avatarError, setAvatarError] = useState(false)
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
+  const [usedFreeDemo, setUsedFreeDemo] = useState(false)
+  const [showTryForFree, setShowTryForFree] = useState(false)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -298,6 +300,28 @@ function HeaderContent() {
         })
         // Credit system removed - no credit setting needed
       }
+      
+      // Check if user should see "Try for Free" CTA
+      if (userData || authUser) {
+        const currentUserId = (userData as any)?.id || authUser.id
+        if (currentUserId) {
+          const { data: freeDemoData } = await supabase
+            .from('users')
+            .select('subscription_status, used_free_demo')
+            .eq('id', currentUserId)
+            .single()
+
+          if (freeDemoData) {
+            const status = freeDemoData.subscription_status || null
+            const hasActiveSub = status === 'active' || status === 'trialing'
+            const hasUsedFreeDemo = freeDemoData.used_free_demo || false
+
+            // Show CTA if user is signed in, has no subscription, and hasn't used free demo
+            setShowTryForFree(!hasActiveSub && !hasUsedFreeDemo)
+            setUsedFreeDemo(hasUsedFreeDemo)
+          }
+        }
+      }
     }
 
     // Initial fetch
@@ -320,6 +344,7 @@ function HeaderContent() {
         setUser(null)
         setAuthMeta(null)
         setHasActiveSubscription(false)
+        setShowTryForFree(false)
       }
     })
 
@@ -617,13 +642,28 @@ function HeaderContent() {
             })}
 
             {!isSignedIn && (
+              <div className="ml-2 md:ml-3 pl-2 md:pl-3 border-l border-border/20 dark:border-white/10 flex-shrink-0 flex items-center gap-2">
+                <Link href="/trainer">
+                  <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-600/30 hover:from-purple-500 hover:to-indigo-500 transition">
+                    <span className="tracking-tight whitespace-nowrap">Try for Free</span>
+                  </button>
+                </Link>
+                <Link href="/auth/login">
+                  <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-medium bg-white dark:bg-white text-gray-900 border border-gray-200 dark:border-gray-300 shadow-sm">
+                    <LogIn className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                    <span className="tracking-tight whitespace-nowrap">Sign In</span>
+                  </button>
+                </Link>
+              </div>
+            )}
+
+            {isSignedIn && showTryForFree && (
               <Link
-                href="/auth/login"
+                href="/trainer"
                 className="ml-2 md:ml-3 pl-2 md:pl-3 border-l border-border/20 dark:border-white/10 flex-shrink-0"
               >
-                <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-medium bg-white dark:bg-white text-gray-900 border border-gray-200 dark:border-gray-300 shadow-sm">
-                  <LogIn className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
-                  <span className="tracking-tight whitespace-nowrap">Sign In</span>
+                <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-600/30 hover:from-purple-500 hover:to-indigo-500 transition">
+                  <span className="tracking-tight whitespace-nowrap">Try for Free</span>
                 </button>
               </Link>
             )}

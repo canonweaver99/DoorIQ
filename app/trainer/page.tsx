@@ -624,22 +624,38 @@ function TrainerPageContent() {
       // Check if user has active trial or subscription
       const { data: userData } = await supabase
         .from('users')
-        .select('subscription_status, trial_ends_at')
+        .select('subscription_status, trial_ends_at, used_free_demo')
         .eq('id', user.id)
         .single()
 
       const status = userData?.subscription_status || null
       const trialEndsAt = userData?.trial_ends_at || null
+      const usedFreeDemo = userData?.used_free_demo || false
       const now = Date.now()
       const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
       const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
       const hasActiveSubscription = status === 'active' || isTrialing
 
       if (!hasActiveSubscription) {
-        // Redirect to pricing page to start free trial
-        router.push(`/pricing?redirect=/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`)
-        setLoading(false)
-        return
+        // Allow 1 free demo session if they haven't used it yet
+        if (!usedFreeDemo) {
+          // Mark user as having used free demo
+          await supabase
+            .from('users')
+            .update({ 
+              used_free_demo: true,
+              free_demo_used_at: new Date().toISOString()
+            })
+            .eq('id', user.id)
+          
+          console.log('✅ Free demo session granted - user can try 1 session for free')
+          // Continue with session start
+        } else {
+          // They've already used their free demo, redirect to pricing
+          router.push(`/pricing?redirect=/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`)
+          setLoading(false)
+          return
+        }
       }
 
       const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id)

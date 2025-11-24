@@ -415,6 +415,30 @@ function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
   return userPercentage
 }
 
+// Calculate WPM from transcript entries
+function calculateWPMFromTranscript(
+  transcript: TranscriptEntry[],
+  sessionStartTime: Date | null,
+  currentTime: Date
+): number {
+  if (!transcript || transcript.length === 0 || !sessionStartTime) return 0
+  
+  // Filter to only user/rep entries
+  const repEntries = transcript.filter(entry => entry.speaker === 'user')
+  if (repEntries.length === 0) return 0
+  
+  // Count total words
+  const totalWords = repEntries.reduce((sum, entry) => {
+    return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
+  }, 0)
+  
+  // Calculate duration in minutes
+  const durationMs = currentTime.getTime() - sessionStartTime.getTime()
+  const durationMinutes = Math.max(1, durationMs / 60000)
+  
+  return Math.round(totalWords / durationMinutes)
+}
+
 export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSessionAnalysisReturn {
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([])
   const previousTranscriptLengthRef = useRef(0)
@@ -770,6 +794,14 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
   const metrics = useMemo((): LiveSessionMetrics => {
     const talkTimeRatio = calculateTalkTimeRatio(transcript)
     
+    // Calculate WPM
+    const currentTime = new Date()
+    const wordsPerMinute = calculateWPMFromTranscript(
+      transcript,
+      sessionStartTimeRef.current,
+      currentTime
+    )
+    
     console.log('📊 Calculating metrics for transcript length:', transcript.length)
     
     // Count objections
@@ -801,6 +833,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     
     const metricsResult = {
       talkTimeRatio,
+      wordsPerMinute,
       objectionCount,
       techniquesUsed: Array.from(techniquesSet)
     }
@@ -818,13 +851,12 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     const now = new Date()
     
     // New thresholds:
-    // 40-60%: Ideal (no feedback)
-    // 35-40% or 60-70%: OK (no feedback)
-    // <35%: Warning "Try to listen more and engage"
-    // >70%: Warning "Engage more - ask questions"
+    // 20-80%: Acceptable range (no feedback)
+    // <20%: Warning "Try to listen more and engage"
+    // >80%: Warning "Engage more - ask questions"
     
     // Only show one warning at a time - check if we need to show a new one
-    if (ratio > 70) {
+    if (ratio > 80) {
       // High ratio warning
       const timeSinceLastWarning = lastTalkTimeWarningRef.current.timestamp 
         ? now.getTime() - lastTalkTimeWarningRef.current.timestamp.getTime()
@@ -855,7 +887,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
         
         lastTalkTimeWarningRef.current = { threshold: 'high', timestamp: now }
       }
-    } else if (ratio < 35) {
+    } else if (ratio < 20) {
       // Low ratio warning
       const timeSinceLastWarning = lastTalkTimeWarningRef.current.timestamp 
         ? now.getTime() - lastTalkTimeWarningRef.current.timestamp.getTime()

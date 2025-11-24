@@ -4,6 +4,7 @@ import { FeedbackItem } from '../components/trainer/LiveFeedbackFeed'
 
 export interface LiveSessionMetrics {
   talkTimeRatio: number
+  wordsPerMinute: number
   objectionCount: number
   techniquesUsed: string[]
 }
@@ -115,9 +116,34 @@ function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
   return userPercentage
 }
 
+// Calculate WPM from transcript entries
+function calculateWPMFromTranscript(
+  transcript: TranscriptEntry[],
+  sessionStartTime: Date | null,
+  currentTime: Date
+): number {
+  if (!transcript || transcript.length === 0 || !sessionStartTime) return 0
+  
+  // Filter to only user/rep entries
+  const repEntries = transcript.filter(entry => entry.speaker === 'user')
+  if (repEntries.length === 0) return 0
+  
+  // Count total words
+  const totalWords = repEntries.reduce((sum, entry) => {
+    return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
+  }, 0)
+  
+  // Calculate duration in minutes
+  const durationMs = currentTime.getTime() - sessionStartTime.getTime()
+  const durationMinutes = Math.max(1, durationMs / 60000)
+  
+  return Math.round(totalWords / durationMinutes)
+}
+
 export function useLiveSessionAnalysis(transcript: TranscriptEntry[]) {
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([])
   const previousTranscriptLengthRef = useRef(0)
+  const sessionStartTimeRef = useRef<Date | null>(null)
   const objectionTimestampsRef = useRef<Map<string, Date>>(new Map())
   const objectionHandledRef = useRef<Map<string, boolean>>(new Map())
   const recentEntriesRef = useRef<TranscriptEntry[]>([])
@@ -197,8 +223,23 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]) {
     })
   }, [transcript, addFeedbackItem])
   
+  // Initialize session start time
+  useEffect(() => {
+    if (transcript.length > 0 && !sessionStartTimeRef.current) {
+      sessionStartTimeRef.current = transcript[0].timestamp
+    }
+  }, [transcript.length])
+
   const metrics = useMemo((): LiveSessionMetrics => {
     const talkTimeRatio = calculateTalkTimeRatio(transcript)
+    
+    // Calculate WPM
+    const currentTime = new Date()
+    const wordsPerMinute = calculateWPMFromTranscript(
+      transcript,
+      sessionStartTimeRef.current,
+      currentTime
+    )
     
     const homeownerEntries = transcript.filter(entry => entry.speaker === 'homeowner')
     const objectionCount = homeownerEntries
@@ -216,6 +257,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]) {
     
     return {
       talkTimeRatio,
+      wordsPerMinute,
       objectionCount,
       techniquesUsed: Array.from(techniquesSet)
     }
@@ -226,7 +268,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]) {
     
     const ratio = metrics.talkTimeRatio
     
-    if (ratio > 70 && feedbackItems.length > 0) {
+    if (ratio > 80 && feedbackItems.length > 0) {
       const lastWarning = feedbackItems
         .slice()
         .reverse()
@@ -239,7 +281,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]) {
           'needs_improvement'
         )
       }
-    } else if (ratio < 35 && feedbackItems.length > 0) {
+    } else if (ratio < 20 && feedbackItems.length > 0) {
       const lastWarning = feedbackItems
         .slice()
         .reverse()

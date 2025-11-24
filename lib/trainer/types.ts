@@ -48,6 +48,7 @@ export interface VoiceMetrics {
 
 export interface LiveSessionMetrics {
   talkTimeRatio: number // Percentage (0-100) of rep talking vs homeowner
+  wordsPerMinute: number // WPM calculated from transcript
   objectionCount: number
   techniquesUsed: string[]
   voiceMetrics?: VoiceMetrics

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 
 export interface LiveSessionMetrics {
   talkTimeRatio: number
+  wordsPerMinute: number
   objectionCount: number
   techniquesUsed: string[]
 }
@@ -22,7 +23,7 @@ function MetricCard({
   icon: string
   label: string
   value: string | number
-  color: 'blue' | 'amber' | 'emerald'
+  color: 'blue' | 'amber' | 'emerald' | 'purple'
   badge?: string
   progress?: number
 }) {
@@ -41,6 +42,11 @@ function MetricCard({
       iconBg: '#10b981',
       text: '#34d399',
       progress: '#10b981',
+    },
+    purple: {
+      iconBg: '#a855f7',
+      text: '#c084fc',
+      progress: '#a855f7',
     },
   }
 
@@ -89,7 +95,7 @@ function MetricCard({
 }
 
 export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
-  const { talkTimeRatio, objectionCount, techniquesUsed } = metrics
+  const { talkTimeRatio, wordsPerMinute, objectionCount, techniquesUsed } = metrics
 
   const getTalkTimeStatus = () => {
     if (talkTimeRatio >= 40 && talkTimeRatio <= 60) {
@@ -103,7 +109,21 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
     }
   }
 
+  const getWPMStatus = () => {
+    if (wordsPerMinute >= 140 && wordsPerMinute <= 160) {
+      return { badge: 'Good', variant: 'good' as const }
+    } else if (wordsPerMinute < 140) {
+      return { badge: 'Slow', variant: 'ok' as const }
+    } else {
+      return { badge: 'Fast', variant: 'warning' as const }
+    }
+  }
+
   const talkTimeStatus = getTalkTimeStatus()
+  const wpmStatus = getWPMStatus()
+  
+  // Calculate WPM progress (0-200 scale, with 150 as target)
+  const wpmProgress = Math.min(100, (wordsPerMinute / 200) * 100)
 
   return (
     <View style={localStyles.container}>
@@ -114,6 +134,14 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
         color="blue"
         badge={talkTimeStatus.badge}
         progress={talkTimeRatio}
+      />
+      <MetricCard
+        icon="🎤"
+        label="Words Per Minute"
+        value={wordsPerMinute}
+        color="purple"
+        badge={wpmStatus.badge}
+        progress={wpmProgress}
       />
       <View style={localStyles.rightMetrics}>
         <MetricCard

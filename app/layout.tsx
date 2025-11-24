@@ -277,6 +277,21 @@ export default function RootLayout({
           data-rewardful="2154b7"
           strategy="lazyOnload"
         />
+        <Script id="share-modal-error-handler" strategy="afterInteractive">
+          {`
+            // Prevent share-modal.js errors by safely handling missing elements
+            (function() {
+              const originalAddEventListener = Element.prototype.addEventListener;
+              Element.prototype.addEventListener = function(type, listener, options) {
+                if (this === null || this === undefined) {
+                  console.warn('Attempted to addEventListener on null/undefined element');
+                  return;
+                }
+                return originalAddEventListener.call(this, type, listener, options);
+              };
+            })();
+          `}
+        </Script>
         <ThemeProvider>
           <ToastProvider>
             <NotificationProvider>

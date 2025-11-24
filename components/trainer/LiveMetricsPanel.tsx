@@ -14,7 +14,7 @@ interface MetricCardProps {
   icon: React.ReactNode
   label: string
   value: number | string
-  color: 'blue' | 'amber' | 'emerald'
+  color: 'blue' | 'amber' | 'emerald' | 'purple'
   subtitle?: string
   badge?: string
   badgeVariant?: 'default' | 'secondary' | 'destructive'
@@ -24,7 +24,7 @@ interface MetricCardProps {
   className?: string
 }
 
-function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant = 'default', progress, progressLabel, verticalLayout = false, className }: MetricCardProps) {
+function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant = 'default', progress, progressLabel, verticalLayout = false, className, wpmValue }: MetricCardProps & { wpmValue?: number }) {
   const colorClasses = {
     blue: {
       icon: 'text-blue-400',
@@ -49,6 +49,14 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
       progress: 'from-emerald-500 to-emerald-400',
       border: 'border-emerald-500/60',
       accent: 'bg-emerald-500/30'
+    },
+    purple: {
+      icon: 'text-purple-400',
+      bg: 'bg-purple-500/20',
+      hover: 'group-hover:bg-purple-500/30',
+      progress: 'from-purple-500 to-purple-400',
+      border: 'border-purple-500/60',
+      accent: 'bg-purple-500/30'
     }
   }
 
@@ -130,9 +138,18 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
           </div>
           {progressLabel && (
             <div className="flex justify-between text-[10px] sm:text-xs text-slate-300 font-space font-medium">
-              <span className="truncate">Them: {progress}%</span>
-              <span className="hidden sm:inline">Ideal: 60%</span>
-              <span className="truncate">You: {100 - progress}%</span>
+              {progressLabel.includes('Target') ? (
+                <>
+                  <span className="truncate">Current: {wpmValue || Math.round((progress / 100) * 200)} WPM</span>
+                  <span className="hidden sm:inline">{progressLabel}</span>
+                </>
+              ) : (
+                <>
+                  <span className="truncate">Them: {progress}%</span>
+                  <span className="hidden sm:inline">Ideal: 60%</span>
+                  <span className="truncate">You: {100 - progress}%</span>
+                </>
+              )}
             </div>
           )}
         </>
@@ -142,7 +159,7 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
 }
 
 export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
-  const { talkTimeRatio, objectionCount, techniquesUsed } = metrics
+  const { talkTimeRatio, wordsPerMinute, objectionCount, techniquesUsed } = metrics
 
   // Determine talk time status
   const getTalkTimeStatus = () => {
@@ -157,10 +174,25 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
     }
   }
 
+  // Determine WPM status
+  const getWPMStatus = () => {
+    if (wordsPerMinute >= 140 && wordsPerMinute <= 160) {
+      return { badge: 'Good', variant: 'default' as const }
+    } else if (wordsPerMinute < 140) {
+      return { badge: 'Slow', variant: 'secondary' as const }
+    } else {
+      return { badge: 'Fast', variant: 'destructive' as const }
+    }
+  }
+
   const talkTimeStatus = getTalkTimeStatus()
+  const wpmStatus = getWPMStatus()
+
+  // Calculate WPM progress (0-200 scale, with 150 as target)
+  const wpmProgress = Math.min(100, (wordsPerMinute / 200) * 100)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-[2fr_1.5fr_1.5fr] gap-3 sm:gap-4 h-auto">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_2fr_1.5fr_1.5fr] gap-3 sm:gap-4 h-auto">
       {/* Talk Time Card - Wider */}
       <MetricCard
         icon={<Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
@@ -171,6 +203,19 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
         badgeVariant={talkTimeStatus.variant}
         progress={talkTimeRatio}
         progressLabel="Talk time breakdown"
+      />
+      
+      {/* WPM Card - Wider, styled like talk ratio */}
+      <MetricCard
+        icon={<Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
+        label="Words Per Minute"
+        value={`${wordsPerMinute}`}
+        color="purple"
+        badge={wpmStatus.badge}
+        badgeVariant={wpmStatus.variant}
+        progress={wpmProgress}
+        progressLabel={`Target: 150 WPM`}
+        wpmValue={wordsPerMinute}
       />
       
       {/* Objections Card - Hidden on mobile */}
