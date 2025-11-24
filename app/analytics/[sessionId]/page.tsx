@@ -114,6 +114,40 @@ export default function AnalyticsPage() {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         
+        // Check for anonymous free demo redirect (localStorage)
+        const usedFreeDemo = localStorage.getItem('used_free_demo') === 'true'
+        if (usedFreeDemo && !user) {
+          // Anonymous user who used free demo - redirect after viewing analytics
+          const checkAndRedirect = () => {
+            // Wait for analytics to load (give them time to see feedback)
+            setTimeout(() => {
+              // Check if they've scrolled or interacted (basic check)
+              let hasInteracted = false
+              const interactionTimeout = setTimeout(() => {
+                if (!hasInteracted) {
+                  // Redirect to pricing after viewing analytics
+                  window.location.href = '/pricing?from=demo'
+                }
+              }, 30000) // 30 seconds to view analytics
+              
+              // Track interactions
+              const handleInteraction = () => {
+                hasInteracted = true
+                clearTimeout(interactionTimeout)
+                // Redirect after they've interacted
+                setTimeout(() => {
+                  window.location.href = '/pricing?from=demo'
+                }, 10000) // 10 seconds after interaction
+              }
+              
+              window.addEventListener('scroll', handleInteraction, { once: true })
+              window.addEventListener('click', handleInteraction, { once: true })
+            }, 5000) // Wait 5 seconds for analytics to load
+          }
+          
+          checkAndRedirect()
+        }
+        
         if (!user) return
         
         const { data: userData } = await supabase
@@ -134,43 +168,39 @@ export default function AnalyticsPage() {
         
         // Check if user used free demo and needs to be redirected to pricing
         const status = userData?.subscription_status || null
-        const usedFreeDemo = userData?.used_free_demo || false
+        const usedFreeDemoAuth = userData?.used_free_demo || false
         const freeDemoUsedAt = userData?.free_demo_used_at
         
-        // If user has no subscription and used free demo, check if this session was their free demo
-        if (!status || status === 'none') {
-          if (usedFreeDemo && freeDemoUsedAt) {
-            // Check if this session was created around the time they used free demo
-            // Allow them to view analytics, then redirect after a delay
-            const checkAndRedirect = async () => {
-              // Wait for analytics to load (give them time to see feedback)
-              setTimeout(async () => {
-                // Check if they've scrolled or interacted (basic check)
-                let hasInteracted = false
-                const interactionTimeout = setTimeout(() => {
-                  if (!hasInteracted) {
-                    // Redirect to pricing after viewing analytics
-                    window.location.href = '/pricing?from=demo'
-                  }
-                }, 30000) // 30 seconds to view analytics
-                
-                // Track interactions
-                const handleInteraction = () => {
-                  hasInteracted = true
-                  clearTimeout(interactionTimeout)
-                  // Redirect after they've interacted
-                  setTimeout(() => {
-                    window.location.href = '/pricing?from=demo'
-                  }, 10000) // 10 seconds after interaction
+        // If user has no subscription and used free demo, redirect after viewing analytics
+        if ((!status || status === 'none') && usedFreeDemoAuth && freeDemoUsedAt) {
+          const checkAndRedirect = () => {
+            // Wait for analytics to load (give them time to see feedback)
+            setTimeout(() => {
+              // Check if they've scrolled or interacted (basic check)
+              let hasInteracted = false
+              const interactionTimeout = setTimeout(() => {
+                if (!hasInteracted) {
+                  // Redirect to pricing after viewing analytics
+                  window.location.href = '/pricing?from=demo'
                 }
-                
-                window.addEventListener('scroll', handleInteraction, { once: true })
-                window.addEventListener('click', handleInteraction, { once: true })
-              }, 5000) // Wait 5 seconds for analytics to load
-            }
-            
-            checkAndRedirect()
+              }, 30000) // 30 seconds to view analytics
+              
+              // Track interactions
+              const handleInteraction = () => {
+                hasInteracted = true
+                clearTimeout(interactionTimeout)
+                // Redirect after they've interacted
+                setTimeout(() => {
+                  window.location.href = '/pricing?from=demo'
+                }, 10000) // 10 seconds after interaction
+              }
+              
+              window.addEventListener('scroll', handleInteraction, { once: true })
+              window.addEventListener('click', handleInteraction, { once: true })
+            }, 5000) // Wait 5 seconds for analytics to load
           }
+          
+          checkAndRedirect()
         }
       } catch (error) {
         console.error('Error fetching user name:', error)

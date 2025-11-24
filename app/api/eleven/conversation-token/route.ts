@@ -15,40 +15,56 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if this is a free demo session (from request body)
+    const isFreeDemo = body?.is_free_demo === true
+    
     // Check if user has active trial or subscription
     const { createServerSupabaseClient } = await import('@/lib/supabase/server')
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (authError || !user) {
+    // Allow anonymous users for free demo
+    if ((authError || !user) && !isFreeDemo) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const { data: userData } = await supabase
-      .from('users')
-      .select('subscription_status, trial_ends_at')
-      .eq('id', user.id)
-      .single()
+    // If anonymous free demo, allow it
+    if (isFreeDemo && !user) {
+      console.log('✅ Allowing anonymous free demo conversation token')
+      // Continue to create token
+    } else if (user) {
+      // Check subscription for authenticated users
+      const { data: userData } = await supabase
+        .from('users')
+        .select('subscription_status, trial_ends_at, used_free_demo')
+        .eq('id', user.id)
+        .single()
 
-    const status = userData?.subscription_status || null
-    const trialEndsAt = userData?.trial_ends_at || null
-    const now = Date.now()
-    const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
-    const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
-    const hasActiveSubscription = status === 'active' || isTrialing
+      const status = userData?.subscription_status || null
+      const trialEndsAt = userData?.trial_ends_at || null
+      const now = Date.now()
+      const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
+      const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
+      const hasActiveSubscription = status === 'active' || isTrialing
+      const usedFreeDemo = userData?.used_free_demo || false
 
-    if (!hasActiveSubscription) {
-      return NextResponse.json(
-        { 
-          error: 'Free trial required',
-          details: 'Please start a free trial to use agents. Visit /pricing to get started.',
-          requiresTrial: true
-        },
-        { status: 403 }
-      );
+      // Allow free demo for authenticated users without subscription
+      if (!hasActiveSubscription && !usedFreeDemo && isFreeDemo) {
+        console.log('✅ Allowing authenticated free demo conversation token')
+        // Continue to create token
+      } else if (!hasActiveSubscription && !isFreeDemo) {
+        return NextResponse.json(
+          { 
+            error: 'Free trial required',
+            details: 'Please start a free trial to use agents. Visit /pricing to get started.',
+            requiresTrial: true
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const apiKey = process.env.ELEVEN_LABS_API_KEY;

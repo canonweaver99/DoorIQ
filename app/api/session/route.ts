@@ -7,22 +7,26 @@ export const runtime = 'nodejs'
 // CREATE session
 export async function POST(req: Request) {
   try {
-    const { agent_name, agent_id } = await req.json()
+    const { agent_name, agent_id, is_free_demo } = await req.json()
     
-    // Get authenticated user
+    // Get authenticated user (optional for free demo)
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) {
+    // Allow anonymous sessions for free demo
+    const isAnonymous = !user && is_free_demo === true
+    
+    if (!user && !isAnonymous) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
     
     // Create session with service role
     const serviceSupabase = await createServiceSupabaseClient()
     const sessionData: any = {
-      user_id: user.id,
+      user_id: user?.id || null, // null for anonymous free demo sessions
       agent_name: agent_name,
-      started_at: new Date().toISOString()
+      started_at: new Date().toISOString(),
+      is_free_demo: isAnonymous || false
     }
     
     // Add agent_id if provided
