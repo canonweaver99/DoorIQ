@@ -1,9 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, ArrowUp, ArrowDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Sparkline } from './Sparkline'
 
 interface ComparativePerformanceProps {
   current: {
@@ -138,11 +137,21 @@ export function ComparativePerformance({
                     </div>
                   </td>
                   <td className="py-3 px-4 text-center">
-                    {recentScores?.[category.key] && recentScores[category.key].length > 0 ? (
-                      <Sparkline data={recentScores[category.key]} />
-                    ) : (
-                      <div className="w-[60px] h-[20px] flex items-center justify-center text-gray-500 text-xs">—</div>
-                    )}
+                    <div className="flex items-center justify-center gap-1">
+                      {trend > 0 ? (
+                        <>
+                          <ArrowUp className="w-4 h-4 text-green-400" />
+                          <span className="text-xs text-green-400 font-semibold font-sans">+{Math.abs(trend)}%</span>
+                        </>
+                      ) : trend < 0 ? (
+                        <>
+                          <ArrowDown className="w-4 h-4 text-red-400" />
+                          <span className="text-xs text-red-400 font-semibold font-sans">{trend}%</span>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400 font-sans">—</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )

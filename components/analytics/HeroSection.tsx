@@ -1,11 +1,42 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowLeft, Zap, ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowLeft, Zap, ArrowUp, ArrowDown, DollarSign, Clock, XCircle, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge, getBadgesForSession } from './Badge'
 import { ProgressRing } from './ProgressRing'
+
+// Tooltip Component
+function MetricTooltip({ children, content }: { children: React.ReactNode, content: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+  
+  return (
+    <div className="relative inline-block">
+      <div 
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
+        className="cursor-help"
+      >
+        {children}
+      </div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 border border-slate-700 rounded-lg shadow-xl text-xs text-gray-200 font-sans leading-relaxed"
+          >
+            {content}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 border-r border-b border-slate-700 rotate-45"></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
 
 interface HeroSectionProps {
   overallScore: number
@@ -157,8 +188,13 @@ export function HeroSection({
                     )}>{getTrendText(vsTeamAverage)}</span>
                   </span>
                 </div>
-                <div className="text-gray-400">
-                  Percentile: <span className="text-white font-semibold">{percentileLabel} this week</span>
+                <div className="flex items-center gap-2 text-gray-400">
+                  <span>
+                    Percentile: <span className="text-white font-semibold font-sans">{percentileLabel} this week</span>
+                  </span>
+                  <MetricTooltip content="Your percentile rank shows how you compare to other users this week. Higher percentiles indicate better performance relative to your peers. This helps you understand your competitive position.">
+                    <Info className="w-4 h-4 text-gray-500 hover:text-gray-300 transition-colors" />
+                  </MetricTooltip>
                 </div>
               </div>
             </div>
@@ -172,61 +208,110 @@ export function HeroSection({
                 ))}
               </div>
               
-              {/* Deal Status Card with Earnings Breakdown */}
-              <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-gray-300">Deal Status:</span>
-                  <span className={cn(
-                    "text-sm font-bold",
-                    saleClosed ? 'text-green-400' : 'text-red-400'
-                  )}>
-                    {saleClosed ? 'CLOSED' : 'NOT CLOSED'}
-                  </span>
-                </div>
+              {/* Earnings Card - From Old Grading Page */}
+              <div className={`relative rounded-3xl backdrop-blur-xl p-6 overflow-hidden ${
+                saleClosed && virtualEarnings > 0
+                  ? 'bg-gradient-to-br from-emerald-900/40 to-green-800/40 border border-emerald-500/30'
+                  : dealDetails?.next_step
+                    ? 'bg-gradient-to-br from-amber-900/40 to-yellow-800/40 border border-amber-500/30'
+                    : 'bg-gradient-to-br from-red-900/40 to-rose-800/40 border border-red-500/30'
+              }`}>
+                {/* Sparkle background */}
+                <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl ${
+                  saleClosed && virtualEarnings > 0
+                    ? 'bg-gradient-to-br from-emerald-400/20 to-green-400/20'
+                    : dealDetails?.next_step
+                      ? 'bg-gradient-to-br from-amber-400/20 to-yellow-400/20'
+                      : 'bg-gradient-to-br from-red-400/20 to-rose-400/20'
+                }`}></div>
                 
-                {saleClosed && virtualEarnings > 0 ? (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-400 font-sans">Deal Value</span>
-                      <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
-                    </div>
-                    {commissionEarned > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-400 font-sans">Commission (30%)</span>
-                        <span className="text-emerald-400 font-medium font-sans">${commissionEarned.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {totalBonus > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-400 font-sans">Bonuses</span>
-                        <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="pt-2 border-t border-emerald-500/20 flex justify-between">
-                      <span className="text-white font-semibold font-space">Total Virtual Earnings</span>
-                      <span className="text-emerald-400 font-bold text-lg font-space">${virtualEarnings.toFixed(2)}</span>
-                    </div>
-                    {dealDetails?.product_sold && (
-                      <div className="pt-2 border-t border-emerald-500/20">
-                        <div className="text-xs text-slate-400 mb-1 font-sans">Product Sold</div>
-                        <div className="text-sm text-white font-sans">{dealDetails.product_sold}</div>
-                      </div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-4">
+                    {saleClosed && virtualEarnings > 0 ? (
+                      <>
+                        <DollarSign className="w-5 h-5 text-emerald-400" />
+                        <span className="text-xs uppercase tracking-[0.25em] text-emerald-400 font-space">You Earned</span>
+                      </>
+                    ) : dealDetails?.next_step ? (
+                      <>
+                        <Clock className="w-5 h-5 text-amber-400" />
+                        <span className="text-xs uppercase tracking-[0.25em] text-amber-400 font-space">Soft Close</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-5 h-5 text-red-400" />
+                        <span className="text-xs uppercase tracking-[0.25em] text-red-400 font-space">Close Failed</span>
+                      </>
                     )}
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Potential:</span>
-                      <span className="text-white font-semibold">${dealValue.toFixed(0)}</span>
-                    </div>
-                    {dealValue > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Lost:</span>
-                        <span className="text-red-400 font-semibold">${dealValue.toFixed(0)}</span>
-                      </div>
-                    )}
+                  
+                  <div className={`text-4xl font-bold text-white mb-4 font-space ${
+                    !saleClosed || virtualEarnings === 0 ? 'line-through opacity-50' : ''
+                  }`}>
+                    ${saleClosed && virtualEarnings > 0 ? virtualEarnings.toFixed(2) : '0.00'}
                   </div>
-                )}
+
+                  {saleClosed && virtualEarnings > 0 ? (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400 font-sans">Deal Value</span>
+                          <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
+                        </div>
+                        {commissionEarned > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-400 font-sans">Commission (30%)</span>
+                            <span className="text-emerald-400 font-medium font-sans">${commissionEarned.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {totalBonus > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-400 font-sans">Bonuses</span>
+                            <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="pt-2 border-t border-emerald-500/20 flex justify-between">
+                          <span className="text-white font-semibold font-space text-sm">Total Virtual Earnings</span>
+                          <span className="text-emerald-400 font-bold text-base font-space">${virtualEarnings.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {dealDetails?.product_sold && (
+                        <div className="mt-3 pt-3 border-t border-emerald-500/20">
+                          <div className="text-xs text-slate-400 mb-1 font-sans">Product Sold</div>
+                          <div className="text-sm text-white font-sans">{dealDetails.product_sold}</div>
+                        </div>
+                      )}
+                    </>
+                  ) : dealDetails?.next_step ? (
+                    <div className="space-y-3">
+                      <div className="text-2xl font-bold text-amber-300 mb-2 font-space">Next Step Set ✓</div>
+                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                        <div className="text-xs text-amber-400/80 mb-1 uppercase tracking-wide font-semibold font-space">
+                          {dealDetails.next_step_type?.replace(/_/g, ' ') || 'Follow-up'}
+                        </div>
+                        <p className="text-sm text-white font-medium leading-relaxed font-sans">{dealDetails.next_step}</p>
+                      </div>
+                      <div className="pt-2 border-t border-amber-500/30">
+                        <p className="text-xs text-amber-200/80 font-sans">No immediate sale, but you kept the door open. Follow through on this commitment to close the deal.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-300 font-medium font-sans">Potential Deal Value</span>
+                        <span className="text-white/70 font-semibold line-through font-sans">$--</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-300 font-medium font-sans">Missed Commission</span>
+                        <span className="text-red-300 font-semibold font-sans">$0.00</span>
+                      </div>
+                      <div className="pt-2 border-t border-red-500/30">
+                        <p className="text-sm text-red-200 font-medium leading-relaxed font-sans">No sale was closed this session. Review the feedback below to improve your approach.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               
               {/* Quick Verdict Card */}
