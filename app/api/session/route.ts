@@ -34,6 +34,13 @@ export async function POST(req: Request) {
       sessionData.agent_id = agent_id
     }
     
+    console.log('Creating session with data:', { 
+      agent_name: sessionData.agent_name, 
+      agent_id: sessionData.agent_id,
+      is_free_demo: sessionData.is_free_demo,
+      user_id: sessionData.user_id || 'null (anonymous)'
+    })
+    
     const { data, error } = await (serviceSupabase as any)
       .from('live_sessions')
       .insert(sessionData)
@@ -42,7 +49,12 @@ export async function POST(req: Request) {
     
     if (error) {
       console.error('Session creation error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('Error details:', JSON.stringify(error, null, 2))
+      console.error('Session data attempted:', JSON.stringify(sessionData, null, 2))
+      return NextResponse.json({ 
+        error: error.message || 'Failed to create session',
+        details: error.details || error.hint || error.code
+      }, { status: 500 })
     }
     
     return NextResponse.json({ id: data.id })

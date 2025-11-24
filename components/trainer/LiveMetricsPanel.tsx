@@ -192,7 +192,7 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
   const wpmProgress = Math.min(100, (wordsPerMinute / 200) * 100)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 h-auto">
+    <div className="grid grid-cols-2 gap-2 sm:gap-3 h-auto">
       {/* Talk Time Card - Wider */}
       <MetricCard
         icon={<Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
