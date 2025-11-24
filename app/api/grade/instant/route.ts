@@ -398,7 +398,11 @@ export async function POST(req: NextRequest) {
     
     if (updateError) {
       logger.error('Error updating session with instant metrics', updateError)
-      return NextResponse.json({ error: 'Failed to save instant metrics' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to save instant metrics',
+        details: updateError.message || updateError.code || 'Unknown database error',
+        hint: 'Make sure migration 085_add_new_grading_system.sql has been run'
+      }, { status: 500 })
     }
     
     const timeElapsed = Date.now() - startTime

@@ -429,7 +429,11 @@ export async function POST(req: NextRequest) {
     
     if (updateError) {
       logger.error('Error updating session with key moments', updateError)
-      return NextResponse.json({ error: 'Failed to save key moments' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to save key moments',
+        details: updateError.message || updateError.code || 'Unknown database error',
+        hint: 'Make sure migration 085_add_new_grading_system.sql has been run'
+      }, { status: 500 })
     }
     
     const timeElapsed = Date.now() - startTime
