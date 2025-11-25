@@ -703,21 +703,21 @@ function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCar
       )}
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      {/* Header: Icon + Title */}
+      {/* Header: Icon + Title + Counter */}
       <div className="flex items-start gap-2 mb-3 flex-shrink-0">
         <div className="p-1.5 rounded-md transition-colors bg-amber-500/20 group-hover:bg-amber-500/30 flex-shrink-0">
           <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
-            Objections
+          <div className="flex items-start justify-between gap-2">
+            <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
+              Objections
+            </div>
+            <div className="text-right flex-shrink-0">
+              <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">{objections.length}</div>
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Main Value */}
-      <div className="mb-3 flex-shrink-0">
-        <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">{objections.length}</div>
       </div>
       
       {/* Content - Pushed to bottom */}
@@ -810,21 +810,21 @@ function EnhancedTechniquesCard({ techniquesUsed, className }: EnhancedTechnique
         className
       )}
     >
-      {/* Header: Icon + Title */}
+      {/* Header: Icon + Title + Counter */}
       <div className="flex items-start gap-2 mb-3 flex-shrink-0">
         <div className="p-1.5 rounded-md transition-colors bg-emerald-500/20 group-hover:bg-emerald-500/30 flex-shrink-0">
           <Book className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
-            Techniques
+          <div className="flex items-start justify-between gap-2">
+            <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
+              Techniques
+            </div>
+            <div className="text-right flex-shrink-0">
+              <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">{displayedTechniques.length}</div>
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Main Value */}
-      <div className="mb-3 flex-shrink-0">
-        <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">{displayedTechniques.length}</div>
       </div>
       
       {/* Content - Pushed to bottom */}
@@ -953,15 +953,13 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
               <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">Talk Time Ratio</div>
               <div className="text-right flex-shrink-0">
                 <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">{talkTimeRatio}%</div>
+                {talkTimeStatus.badge && (
+                  <Badge variant={talkTimeStatus.variant} className="text-xs sm:text-sm px-1.5 sm:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold mt-0.5">
+                    {talkTimeStatus.badge}
+                  </Badge>
+                )}
               </div>
             </div>
-            {talkTimeStatus.badge && (
-              <div className="mt-0.5">
-                <Badge variant={talkTimeStatus.variant} className="text-xs sm:text-sm px-1.5 sm:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold">
-                  {talkTimeStatus.badge}
-                </Badge>
-              </div>
-            )}
           </div>
         </div>
         
@@ -1005,16 +1003,16 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           
           {/* Percentage markers */}
           <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-1 leading-tight">
-            <span>0%</span>
-            <span>40%</span>
-            <span>60%</span>
-            <span>100%</span>
+            <span className="flex-shrink-0">0%</span>
+            <span className="flex-shrink-0">40%</span>
+            <span className="flex-shrink-0">60%</span>
+            <span className="flex-shrink-0">100%</span>
           </div>
           
           {/* Current and ideal range */}
-          <div className="flex justify-between items-center text-xs sm:text-sm text-slate-300 font-space font-medium mt-1">
-            <span className="truncate">Current: {talkTimeRatio}%</span>
-            <span className="truncate ml-2">Ideal: 40-60%</span>
+          <div className="flex justify-between items-center gap-2 text-xs sm:text-sm text-slate-300 font-space font-medium mt-1">
+            <span className="whitespace-nowrap">Current: {talkTimeRatio}%</span>
+            <span className="whitespace-nowrap">Ideal: 40-60%</span>
           </div>
         </div>
       </motion.div>

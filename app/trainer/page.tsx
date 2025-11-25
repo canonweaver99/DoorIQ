@@ -1665,14 +1665,6 @@ function TrainerPageContent() {
                       ) : null
                     })()}
                     
-                    {/* Persona badge */}
-                    {sessionActive && selectedAgent && (
-                      <div className="hidden sm:block absolute top-6 left-6 z-10">
-                        <div className="bg-slate-900/95 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/80 shadow-lg">
-                          <span className="text-white text-sm font-medium">{selectedAgent.name}</span>
-                        </div>
-                      </div>
-                    )}
                     
                     {/* Session progress bar */}
                     {sessionActive && (

@@ -220,60 +220,6 @@ export function HeroSection({
                   </MetricTooltip>
                 </div>
               </div>
-              
-              {/* Score Breakdown */}
-              {currentScores && (
-                <div className="mt-6 pt-6 border-t border-slate-700/50">
-                  <h3 className="text-sm font-semibold text-gray-400 mb-4 font-sans uppercase tracking-wide">Score Breakdown</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { key: 'rapport', label: 'Rapport Building', score: currentScores.rapport, trend: trends.rapport },
-                      { key: 'discovery', label: 'Discovery', score: currentScores.discovery, trend: trends.discovery },
-                      { key: 'objection_handling', label: 'Objection Handling', score: currentScores.objection_handling, trend: trends.objection_handling },
-                      { key: 'closing', label: 'Closing Technique', score: currentScores.closing, trend: trends.closing }
-                    ].map(({ key, label, score, trend }) => {
-                      const scoreData = recentScores?.[key as keyof typeof recentScores] as number[] | undefined
-                      const hasTrendData = scoreData && scoreData.length >= 2
-                      const lastValue = hasTrendData ? scoreData[scoreData.length - 1] : null
-                      const previousValue = hasTrendData && scoreData.length >= 2 ? scoreData[scoreData.length - 2] : null
-                      const trendChange = hasTrendData && previousValue !== null ? lastValue! - previousValue : null
-                      
-                      return (
-                        <div key={key} className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/30">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-medium text-gray-300 font-sans">{label}</span>
-                            {trend !== 0 && (
-                              <span className={cn(
-                                "text-xs font-semibold px-2 py-0.5 rounded",
-                                trend > 0 ? 'text-green-400 bg-green-500/20' : 'text-red-400 bg-red-500/20'
-                              )}>
-                                {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}pts vs avg
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-2xl font-bold font-space mb-1" style={{ color: getScoreColor(score) }}>
-                            {score}%
-                          </div>
-                          {hasTrendData && trendChange !== null && trendChange !== 0 && (
-                            <div className={cn(
-                              "text-xs font-sans flex items-center gap-1",
-                              trendChange > 0 ? 'text-green-400' : 'text-red-400'
-                            )}>
-                              {trendChange > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                              {Math.abs(trendChange)}pts from last session
-                            </div>
-                          )}
-                          {hasTrendData && scoreData.length >= 3 && (
-                            <div className="text-xs text-gray-500 mt-1 font-sans">
-                              Last 3: {scoreData.slice(-3).map(s => `${s}%`).join(' → ')}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
             
             {/* Right Column - Deal Status */}
