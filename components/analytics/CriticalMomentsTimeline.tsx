@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, AlertTriangle, Clock, Lightbulb } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, Clock, Lightbulb, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface CriticalMoment {
@@ -89,6 +89,23 @@ function getMomentTypeLabel(type: string): string {
   return labels[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
 
+// Convert importance (1-10) to star rating (1-5)
+function importanceToStars(importance?: number): number {
+  if (!importance) return 3 // Default to 3 stars
+  if (importance >= 9) return 5
+  if (importance >= 7) return 4
+  if (importance >= 5) return 3
+  if (importance >= 3) return 2
+  return 1
+}
+
+// Get color based on star rating
+function getRatingColor(rating: number): { border: string; bg: string } {
+  if (rating >= 4) return { border: 'border-green-500/40', bg: 'bg-green-500/10' }
+  if (rating === 3) return { border: 'border-yellow-500/40', bg: 'bg-yellow-500/10' }
+  return { border: 'border-red-500/40', bg: 'bg-red-500/10' }
+}
+
 export function CriticalMomentsTimeline({ 
   moments, 
   sessionStartTime, 
@@ -108,6 +125,11 @@ export function CriticalMomentsTimeline({
     )
   }
 
+  // Sort by importance and take top 3
+  const sortedMoments = [...moments]
+    .sort((a, b) => (b.importance || 0) - (a.importance || 0))
+    .slice(0, 3)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -118,7 +140,9 @@ export function CriticalMomentsTimeline({
       <h2 className="text-3xl font-bold text-white mb-6">Key Moments That Defined This Session</h2>
       
       <div className="space-y-6">
-        {moments.slice(0, 5).map((moment, index) => {
+        {sortedMoments.map((moment, index) => {
+          const starRating = importanceToStars(moment.importance)
+          const ratingColors = getRatingColor(starRating)
           const isSuccess = moment.outcome === 'success'
           const isFailure = moment.outcome === 'failure'
           const isMissed = moment.outcome === 'missed_opportunity'
@@ -145,13 +169,8 @@ export function CriticalMomentsTimeline({
             >
               <div className={cn(
                 "flex gap-4 p-6 rounded-xl border-2 transition-all",
-                isSuccess 
-                  ? "bg-green-500/10 border-green-500/30" 
-                  : isFailure
-                  ? "bg-red-500/10 border-red-500/30"
-                  : isMissed
-                  ? "bg-yellow-500/10 border-yellow-500/30"
-                  : "bg-blue-500/10 border-blue-500/30"
+                ratingColors.bg,
+                ratingColors.border
               )}>
                 {/* Status Icon */}
                 <div className="flex-shrink-0">
@@ -167,7 +186,7 @@ export function CriticalMomentsTimeline({
                 {/* Content */}
                 <div className="flex-1">
                   {/* Header */}
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-4 flex-wrap">
                     <Clock className="w-5 h-5 text-gray-400" />
                     <span className="text-base font-medium text-gray-300">
                       {formatTimestamp(moment.timestamp, sessionStartTime, durationSeconds)}
@@ -175,6 +194,21 @@ export function CriticalMomentsTimeline({
                     <span className="text-base font-semibold text-white">
                       - {getMomentTypeLabel(moment.type)}
                     </span>
+                    {/* Star Rating */}
+                    <div className="flex items-center gap-1 ml-auto">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={cn(
+                            "w-4 h-4",
+                            star <= starRating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-600"
+                          )}
+                        />
+                      ))}
+                      <span className="text-sm text-gray-400 ml-1">({starRating}/5)</span>
+                    </div>
                     {isSuccess && (
                       <span className="px-3 py-1.5 text-sm font-semibold bg-green-500/20 text-green-400 rounded-full">
                         Success
@@ -221,7 +255,7 @@ export function CriticalMomentsTimeline({
                           <Lightbulb className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
                           <div>
                             <div className="text-sm font-semibold text-green-400 mb-1.5">What Worked</div>
-                            <p className="text-base text-gray-200">{moment.analysis.whatWorked}</p>
+                            <p className="text-sm text-gray-200">{moment.analysis.whatWorked}</p>
                           </div>
                         </div>
                       )}
@@ -229,8 +263,8 @@ export function CriticalMomentsTimeline({
                         <div className="flex items-start gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
                           <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                           <div>
-                            <div className="text-sm font-semibold text-blue-400 mb-1.5">Try This Next Time</div>
-                            <p className="text-base text-gray-200">{moment.analysis.whatToImprove}</p>
+                            <div className="text-sm font-semibold text-blue-400 mb-1.5">Try Next Time</div>
+                            <p className="text-sm text-gray-200">{moment.analysis.whatToImprove}</p>
                           </div>
                         </div>
                       )}

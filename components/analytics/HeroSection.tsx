@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowLeft, ArrowUp, ArrowDown, DollarSign, Clock, XCircle, Info } from 'lucide-react'
+import { ArrowLeft, ArrowUp, ArrowDown, DollarSign, Clock, XCircle, Info, TrendingUp, TrendingDown, Trophy, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
 
@@ -66,6 +66,45 @@ interface HeroSectionProps {
     objection_handling?: number[]
     closing?: number[]
   }
+  feedback?: {
+    strengths?: string[]
+    improvements?: string[]
+  }
+  failureAnalysis?: {
+    critical_moments?: Array<{
+      line: number
+      event: string
+      customer_reaction: string
+      rep_recovery_attempted: boolean
+      success: boolean
+      better_approach: string
+    }>
+    point_of_no_return?: {
+      line: number
+      reason: string
+      could_have_saved: boolean
+      how: string
+    }
+    missed_pivots?: Array<{
+      line: number
+      opportunity: string
+      suggested_pivot: string
+    }>
+    recovery_failures?: Array<{
+      line: number
+      attempt: string
+      why_failed: string
+      better_approach: string
+    }>
+  }
+  voiceAnalysis?: {
+    wpmTimeline?: Array<{ time: number; value: number }>
+    volumeTimeline?: Array<{ time: number; value: number }>
+  }
+  instantMetrics?: {
+    conversationBalance?: number
+    closeAttempts?: number
+  }
 }
 
 export function HeroSection({
@@ -80,7 +119,11 @@ export function HeroSection({
   quickVerdict,
   trends = { rapport: 0, discovery: 0, objection_handling: 0, closing: 0 },
   currentScores,
-  recentScores
+  recentScores,
+  failureAnalysis,
+  voiceAnalysis,
+  instantMetrics,
+  feedback
 }: HeroSectionProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#10b981'
@@ -176,6 +219,83 @@ export function HeroSection({
                 </div>
               </div>
               
+              {/* Strengths and Opportunities Breakdown */}
+              {currentScores && (
+                <div className="space-y-4 mb-6">
+                  {/* Strengths */}
+                  {(() => {
+                    const strengths = []
+                    if (currentScores.rapport >= 80) strengths.push({ name: 'Rapport Building', score: currentScores.rapport, diff: currentScores.rapport - 70 })
+                    if (currentScores.objection_handling >= 80) strengths.push({ name: 'Objection Handling', score: currentScores.objection_handling, diff: currentScores.objection_handling - 70 })
+                    if (currentScores.discovery >= 75) strengths.push({ name: 'Needs Discovery', score: currentScores.discovery, diff: currentScores.discovery - 65 })
+                    
+                    if (strengths.length > 0) {
+                      return (
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                          <div className="flex items-center gap-2 mb-3">
+                            <TrendingUp className="w-5 h-5 text-emerald-400" />
+                            <span className="text-sm font-semibold text-emerald-400 uppercase tracking-wide">Strengths</span>
+                          </div>
+                          <div className="space-y-2">
+                            {strengths.slice(0, 2).map((strength, idx) => (
+                              <div key={idx} className="flex items-center justify-between">
+                                <span className="text-white font-medium">↑ {strength.name}: {strength.score}%</span>
+                                <span className="text-emerald-400 font-semibold">+{strength.diff}pts above team</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
+
+                  {/* Opportunities */}
+                  {(() => {
+                    const opportunities = []
+                    if (currentScores.closing < 60) opportunities.push({ name: 'Closing Technique', score: currentScores.closing, gap: 60 - currentScores.closing })
+                    if (currentScores.objection_handling < 70) opportunities.push({ name: 'Objection Handling', score: currentScores.objection_handling, gap: 70 - currentScores.objection_handling })
+                    if (currentScores.discovery < 65) opportunities.push({ name: 'Needs Discovery', score: currentScores.discovery, gap: 65 - currentScores.discovery })
+                    
+                    if (opportunities.length > 0) {
+                      return (
+                        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                          <div className="flex items-center gap-2 mb-3">
+                            <TrendingDown className="w-5 h-5 text-amber-400" />
+                            <span className="text-sm font-semibold text-amber-400 uppercase tracking-wide">Opportunity</span>
+                          </div>
+                          <div className="space-y-2">
+                            {opportunities.slice(0, 1).map((opp, idx) => (
+                              <div key={idx} className="flex items-center justify-between">
+                                <span className="text-white font-medium">↓ {opp.name}: {opp.score}%</span>
+                                <span className="text-amber-400 font-semibold">-{opp.gap}pts closing gap</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
+
+                  {/* Bottom Line Message */}
+                  <div className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      {(() => {
+                        const percentile = parseInt(percentileLabel.replace(/\D/g, '')) || 0
+                        if (percentile >= 70) {
+                          return `You're in the top ${100 - percentile}% of reps. Keep up the excellent work!`
+                        } else if (percentile >= 30) {
+                          return `You're in the top ${100 - percentile}% of reps but leaving money on the table at the close.`
+                        } else {
+                          return `Focus on building stronger rapport and handling objections to move up the rankings.`
+                        }
+                      })()}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Comparison Metrics - Increased font size */}
               <div className="space-y-3 text-base mb-6">
                 <div className="flex items-center gap-2 text-gray-300">
@@ -297,14 +417,82 @@ export function HeroSection({
                           <p className="text-sm text-white font-medium leading-relaxed font-sans">{dealDetails.next_step}</p>
                         </div>
                       ) : (
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-slate-300 font-medium font-sans">Potential Value</span>
+                        <div className="space-y-4">
+                          <div className="flex justify-between text-base">
+                            <span className="text-slate-300 font-medium font-sans">Potential Deal Value</span>
                             <span className="text-white/70 font-semibold line-through font-sans">$--</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-slate-300 font-medium font-sans">Missed</span>
+                          <div className="flex justify-between text-base">
+                            <span className="text-slate-300 font-medium font-sans">Missed Commission</span>
                             <span className="text-red-300 font-semibold font-sans">$0.00</span>
+                          </div>
+                          
+                          {/* Why it failed */}
+                          {(() => {
+                            const reasons = []
+                            const closeAttempts = instantMetrics?.closeAttempts || 0
+                            const talkRatio = instantMetrics?.conversationBalance || 0
+                            
+                            if (closeAttempts === 0) {
+                              reasons.push("Didn't ask for the close (no attempt detected)")
+                            }
+                            
+                            if (talkRatio > 55) {
+                              reasons.push(`Talk ratio shifted to ${Math.round(talkRatio)}% (should be 40%)`)
+                            } else if (talkRatio < 35) {
+                              reasons.push(`Talk ratio was ${Math.round(talkRatio)}% (should be 40%)`)
+                            }
+                            
+                            // Check voice analysis for energy drop
+                            if (voiceAnalysis?.volumeTimeline && voiceAnalysis.volumeTimeline.length > 10) {
+                              const lastTwoMinutes = voiceAnalysis.volumeTimeline.slice(-20)
+                              const earlier = voiceAnalysis.volumeTimeline.slice(0, Math.floor(voiceAnalysis.volumeTimeline.length / 2))
+                              const avgLater = lastTwoMinutes.reduce((sum, v) => sum + (v.value || 0), 0) / lastTwoMinutes.length
+                              const avgEarlier = earlier.reduce((sum, v) => sum + (v.value || 0), 0) / earlier.length
+                              
+                              if (avgLater < avgEarlier * 0.7) {
+                                reasons.push("Energy dropped to " + Math.round(avgLater) + "% in final 2 minutes")
+                              }
+                            }
+                            
+                            // Check failure analysis
+                            if (failureAnalysis?.point_of_no_return) {
+                              reasons.push(failureAnalysis.point_of_no_return.reason)
+                            }
+                            
+                            if (reasons.length > 0) {
+                              return (
+                                <div className="pt-4 border-t border-red-500/30">
+                                  <div className="text-sm font-semibold text-red-300 mb-2">Why it failed:</div>
+                                  <ul className="space-y-1.5">
+                                    {reasons.slice(0, 3).map((reason, idx) => (
+                                      <li key={idx} className="text-sm text-red-200 flex items-start gap-2">
+                                        <span className="text-red-400 mt-0.5">•</span>
+                                        <span>{reason}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )
+                            }
+                            return null
+                          })()}
+                          
+                          {/* What to try */}
+                          <div className="pt-4 border-t border-red-500/30">
+                            <div className="text-sm font-semibold text-amber-300 mb-2">What to try:</div>
+                            <p className="text-sm text-amber-200 leading-relaxed">
+                              {(() => {
+                                const closeAttempts = instantMetrics?.closeAttempts || 0
+                                if (closeAttempts === 0) {
+                                  return "Use assumptive close language earlier in the conversation. Try phrases like 'When we get started...' or 'Once you see the results...'"
+                                }
+                                if (currentScores?.closing && currentScores.closing < 50) {
+                                  return "Practice trial closes throughout the conversation to gauge interest before attempting the final close."
+                                }
+                                return "Review the key moments below to identify where you lost momentum and practice recovery techniques."
+                              })()}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -316,6 +504,26 @@ export function HeroSection({
           </div>
         </div>
       </div>
+
+      {/* Session Highlight / Win Callout */}
+      {feedback?.strengths && feedback.strengths.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-6 p-6 bg-gradient-to-br from-emerald-900/30 to-green-800/30 border border-emerald-500/40 rounded-xl"
+        >
+          <div className="flex items-start gap-3">
+            <Trophy className="w-6 h-6 text-emerald-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-emerald-400 mb-2 uppercase tracking-wide">Session Highlight</div>
+              <p className="text-base text-white leading-relaxed font-sans">
+                {feedback.strengths[0]}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   )
 }

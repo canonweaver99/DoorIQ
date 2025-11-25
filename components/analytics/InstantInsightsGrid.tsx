@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MessageSquare, AlertTriangle, Book, Info, Lightbulb, ExternalLink, TrendingUp, CheckCircle2, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
+import { Sparkline } from './Sparkline'
 
 interface InstantInsightsGridProps {
   instantMetrics?: {
@@ -17,6 +18,10 @@ interface InstantInsightsGridProps {
   }
   userName?: string
   transcript?: Array<{ speaker: string; text: string }>
+  voiceAnalysis?: {
+    wpmTimeline?: Array<{ time: number; value: number }>
+    volumeTimeline?: Array<{ time: number; value: number }>
+  }
 }
 
 // Tooltip Component
@@ -116,7 +121,7 @@ function detectObjection(text: string): { type: string; text: string } | null {
   return null
 }
 
-export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcript }: InstantInsightsGridProps) {
+export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcript, voiceAnalysis }: InstantInsightsGridProps) {
   const metrics = instantMetrics || {}
   const wpm = metrics.wordsPerMinute || 0
   const balance = metrics.conversationBalance || 0
@@ -233,6 +238,17 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
               <div className="text-right min-w-[120px]">
                 <div className={cn("text-lg font-bold mb-1 font-space", wpmStatus.color)}>{wpmStatus.label}</div>
                 <div className="text-lg font-bold text-white font-space">Target 150 WPM</div>
+                {voiceAnalysis?.wpmTimeline && voiceAnalysis.wpmTimeline.length > 0 && (
+                  <div className="mt-2 flex items-center justify-end gap-2">
+                    <span className="text-xs text-gray-400 font-sans">Throughout call:</span>
+                    <Sparkline 
+                      data={voiceAnalysis.wpmTimeline} 
+                      width={60} 
+                      height={16} 
+                      color={wpm < 140 ? '#f59e0b' : wpm > 160 ? '#ef4444' : '#10b981'} 
+                    />
+                  </div>
+                )}
                 <div className="text-xs text-gray-500 font-sans mt-1">
                   {wpm < 140 ? 'Try speaking faster' : wpm > 160 ? 'Slow down slightly' : 'Optimal pace'}
                 </div>
@@ -289,6 +305,17 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                   <span className={balanceStatus.color}>{balance}%</span>
                 </div>
                 <div className="text-lg font-bold text-white font-space mb-1">Target 40%</div>
+                {voiceAnalysis?.volumeTimeline && voiceAnalysis.volumeTimeline.length > 0 && (
+                  <div className="mt-2 flex items-center justify-end gap-2">
+                    <span className="text-xs text-gray-400 font-sans">Throughout call:</span>
+                    <Sparkline 
+                      data={voiceAnalysis.volumeTimeline} 
+                      width={60} 
+                      height={16} 
+                      color={balance >= 35 && balance <= 45 ? '#10b981' : balance < 35 ? '#f59e0b' : '#ef4444'} 
+                    />
+                  </div>
+                )}
                 <div className="text-sm text-gray-300 font-sans mb-1">{userName}</div>
                 <div className={cn("text-sm font-bold font-space", balanceStatus.color)}>{balanceStatus.label}</div>
               </div>

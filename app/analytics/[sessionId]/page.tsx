@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { HeroSection } from '@/components/analytics/HeroSection'
+import { SessionSummaryHero } from '@/components/analytics/SessionSummaryHero'
 import { InstantInsightsGrid } from '@/components/analytics/InstantInsightsGrid'
 import { CriticalMomentsTimeline } from '@/components/analytics/CriticalMomentsTimeline'
 import { ComparativePerformance } from '@/components/analytics/ComparativePerformance'
@@ -311,6 +312,19 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       <div className="max-w-6xl mx-auto px-6 pt-8 pb-12">
+        {/* Session Summary Hero - Loads immediately */}
+        {loadingStates.hero && (
+          <SessionSummaryHero
+            overallScore={overallScore}
+            saleClosed={session.sale_closed || false}
+            objectionHandlingScore={session.objection_handling_score || 0}
+            closeScore={session.close_score || 0}
+            objectionCount={session.instant_metrics?.objectionCount || 0}
+            closeAttempts={session.instant_metrics?.closeAttempts || 0}
+            feedback={session.analytics?.feedback}
+          />
+        )}
+        
         {/* Hero Section - Loads immediately */}
         {loadingStates.hero && comparison && (
           <HeroSection
@@ -330,6 +344,10 @@ export default function AnalyticsPage() {
               closing: session.close_score || 0
             }}
             recentScores={comparison.recentScores}
+            failureAnalysis={session.analytics?.failure_analysis}
+            voiceAnalysis={session.analytics?.voice_analysis}
+            instantMetrics={session.instant_metrics}
+            feedback={session.analytics?.feedback}
           />
         )}
         
@@ -352,6 +370,7 @@ export default function AnalyticsPage() {
               instantMetrics={session.instant_metrics} 
               userName={userName}
               transcript={(session as any).full_transcript}
+              voiceAnalysis={session.analytics?.voice_analysis}
             />
           ) : (
             <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />
