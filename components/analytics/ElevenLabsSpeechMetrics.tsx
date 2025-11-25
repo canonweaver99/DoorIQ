@@ -48,11 +48,29 @@ export function ElevenLabsSpeechMetrics({
     return 'Needs Work'
   }
   
-  const getMetricColor = (value: number) => {
-    if (value >= 80) return 'bg-green-500'
-    if (value >= 60) return 'bg-yellow-500'
-    if (value >= 40) return 'bg-orange-500'
-    return 'bg-red-500'
+  // Calculate color on red-to-green scale (0-100)
+  const getPercentageColor = (value: number): string => {
+    // Smooth gradient from red (0) to green (100)
+    // Red: rgb(239, 68, 68) = #ef4444
+    // Yellow: rgb(234, 179, 8) = #eab308
+    // Green: rgb(16, 185, 129) = #10b981
+    const clampedValue = Math.max(0, Math.min(100, value))
+    
+    if (clampedValue <= 50) {
+      // Red to yellow: 0-50
+      const ratio = clampedValue / 50
+      const r = Math.round(239 - (239 - 234) * ratio)  // 239 to 234
+      const g = Math.round(68 + (179 - 68) * ratio)    // 68 to 179
+      const b = Math.round(68 - (68 - 8) * ratio)      // 68 to 8
+      return `rgb(${r}, ${g}, ${b})`
+    } else {
+      // Yellow to green: 50-100
+      const ratio = (clampedValue - 50) / 50
+      const r = Math.round(234 - (234 - 16) * ratio)  // 234 to 16
+      const g = Math.round(179 + (185 - 179) * ratio)  // 179 to 185
+      const b = Math.round(8 + (129 - 8) * ratio)      // 8 to 129
+      return `rgb(${r}, ${g}, ${b})`
+    }
   }
   
   return (
@@ -79,6 +97,7 @@ export function ElevenLabsSpeechMetrics({
               max={100}
               size={80}
               strokeWidth={8}
+              color={getPercentageColor(energyLevel)}
             />
           </div>
           <div className="text-sm font-medium text-gray-300 mb-1">Energy Level</div>
@@ -93,6 +112,7 @@ export function ElevenLabsSpeechMetrics({
               max={100}
               size={80}
               strokeWidth={8}
+              color={getPercentageColor(confidence)}
             />
           </div>
           <div className="text-sm font-medium text-gray-300 mb-1">Confidence</div>
@@ -109,6 +129,7 @@ export function ElevenLabsSpeechMetrics({
               max={100}
               size={80}
               strokeWidth={8}
+              color={getPercentageColor(clarity)}
             />
           </div>
           <div className="text-sm font-medium text-gray-300 mb-1">Clarity</div>
@@ -125,6 +146,7 @@ export function ElevenLabsSpeechMetrics({
               max={100}
               size={80}
               strokeWidth={8}
+              color={getPercentageColor(paceVariety)}
             />
           </div>
           <div className="text-sm font-medium text-gray-300 mb-1">Pace Variety</div>

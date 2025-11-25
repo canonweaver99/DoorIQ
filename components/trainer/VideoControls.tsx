@@ -32,13 +32,6 @@ export function VideoControls({
 
   return (
     <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-black/90 via-black/70 to-transparent z-10">
-      {/* Persona Name */}
-      {personaName && (
-        <div className="hidden sm:block mb-2 sm:mb-3">
-          <span className="text-xs sm:text-sm font-semibold text-white font-space truncate block">{personaName}</span>
-        </div>
-      )}
-      
       {/* Session Timer with Live Indicator */}
       <div className="hidden sm:flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
         <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-red-500/20 rounded-full border border-red-500/30 backdrop-blur-sm">

@@ -71,7 +71,12 @@ export function ProgressRing({
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {showValue && (
-          <div className="text-lg font-bold text-white">{Math.round(percentage)}%</div>
+          <div 
+            className="text-lg font-bold" 
+            style={{ color: color || 'white' }}
+          >
+            {Math.round(percentage)}%
+          </div>
         )}
         {label && (
           <div className="text-xs text-gray-400 mt-1">{label}</div>

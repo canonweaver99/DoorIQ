@@ -415,7 +415,7 @@ function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
   return userPercentage
 }
 
-// Calculate WPM from transcript entries
+// Calculate WPM from transcript entries - uses recent speaking activity for current pace
 function calculateWPMFromTranscript(
   transcript: TranscriptEntry[],
   sessionStartTime: Date | null,
@@ -427,16 +427,43 @@ function calculateWPMFromTranscript(
   const repEntries = transcript.filter(entry => entry.speaker === 'user')
   if (repEntries.length === 0) return 0
   
-  // Count total words
+  // Use a rolling window approach: calculate WPM based on recent speech (last 2 minutes)
+  // This gives a better sense of current speaking pace rather than cumulative average
+  const windowMs = 2 * 60 * 1000 // 2 minutes in milliseconds
+  const windowStartTime = currentTime.getTime() - windowMs
+  
+  // Get entries within the time window
+  const recentEntries = repEntries.filter(entry => {
+    const entryTime = entry.timestamp?.getTime() || sessionStartTime.getTime()
+    return entryTime >= windowStartTime
+  })
+  
+  // If we have recent entries, calculate WPM from them
+  if (recentEntries.length > 0) {
+    const recentWords = recentEntries.reduce((sum, entry) => {
+      return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
+    }, 0)
+    
+    // Use the time span of recent entries, or minimum 30 seconds
+    const firstRecentTime = recentEntries[0].timestamp?.getTime() || sessionStartTime.getTime()
+    const lastRecentTime = recentEntries[recentEntries.length - 1].timestamp?.getTime() || currentTime.getTime()
+    const recentDurationMs = Math.max(30000, lastRecentTime - firstRecentTime) // Minimum 30 seconds
+    const recentDurationMinutes = recentDurationMs / 60000
+    
+    return Math.round(recentWords / recentDurationMinutes)
+  }
+  
+  // Fallback: if no recent entries, calculate from all entries but use time between first and last entry
+  const firstEntryTime = repEntries[0].timestamp?.getTime() || sessionStartTime.getTime()
+  const lastEntryTime = repEntries[repEntries.length - 1].timestamp?.getTime() || currentTime.getTime()
+  const totalDurationMs = Math.max(30000, lastEntryTime - firstEntryTime) // Minimum 30 seconds
+  const totalDurationMinutes = totalDurationMs / 60000
+  
   const totalWords = repEntries.reduce((sum, entry) => {
     return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
   }, 0)
   
-  // Calculate duration in minutes
-  const durationMs = currentTime.getTime() - sessionStartTime.getTime()
-  const durationMinutes = Math.max(1, durationMs / 60000)
-  
-  return Math.round(totalWords / durationMinutes)
+  return Math.round(totalWords / totalDurationMinutes)
 }
 
 export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSessionAnalysisReturn {

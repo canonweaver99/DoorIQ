@@ -246,12 +246,80 @@ export async function PATCH(req: Request) {
         // Get existing instant_metrics or create new
         const existingInstantMetrics = currentSession?.instant_metrics || {}
         
+        // Calculate objections and techniques from transcript if not already saved
+        let objectionCount = existingInstantMetrics.objectionCount
+        let techniquesUsed = existingInstantMetrics.techniquesUsed || []
+        
+        if (finalTranscript && Array.isArray(finalTranscript) && finalTranscript.length > 0) {
+          // Objection detection patterns
+          const objectionPatterns = {
+            price: ['too expensive', 'can\'t afford', 'price is high', 'price is high', 'costs too much', 'too much money', 'expensive', 'cheaper', 'lower price', 'budget'],
+            time: ['not right now', 'maybe later', 'need to think', 'think about it', 'not ready', 'later', 'some other time', 'not now'],
+            authority: ['talk to spouse', 'need to discuss', 'not my decision', 'spouse', 'partner', 'wife', 'husband', 'check with'],
+            need: ['don\'t need it', 'already have', 'not interested', 'don\'t want', 'not needed', 'no need', 'already got']
+          }
+          
+          function detectObjection(text: string): boolean {
+            const lowerText = text.toLowerCase()
+            for (const patterns of Object.values(objectionPatterns)) {
+              if (patterns.some(pattern => lowerText.includes(pattern))) {
+                return true
+              }
+            }
+            return false
+          }
+          
+          // Technique detection patterns
+          const techniquePatterns = {
+            feelFeltFound: ['i understand how you feel', 'i felt the same way', 'others have felt', 'i know how you feel', 'i felt that'],
+            socialProof: ['other customers', 'neighbors', 'other homeowners', 'many customers', 'lots of people', 'others have'],
+            urgency: ['limited time', 'today only', 'special offer', 'act now', 'don\'t wait', 'limited availability'],
+            activeListening: ['i hear you', 'i understand', 'that makes sense', 'i see', 'got it', 'i get that', 'absolutely']
+          }
+          
+          function detectTechnique(text: string): string | null {
+            const lowerText = text.toLowerCase()
+            if (/^(what|how|why|when|where|tell me|can you explain)/i.test(text.trim())) {
+              return 'Open-Ended Question'
+            }
+            for (const [technique, patterns] of Object.entries(techniquePatterns)) {
+              if (patterns.some(pattern => lowerText.includes(pattern))) {
+                const formattedName = technique.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim()
+                return formattedName === 'Feel Felt Found' ? 'Feel-Felt-Found' : formattedName
+              }
+            }
+            return null
+          }
+          
+          // Count objections from homeowner/agent entries
+          if (objectionCount === undefined) {
+            const homeownerEntries = finalTranscript.filter((entry: any) => entry.speaker === 'homeowner' || entry.speaker === 'agent')
+            objectionCount = homeownerEntries.filter((entry: any) => detectObjection(entry.text || '')).length
+            console.log('✅ PATCH: Calculated objectionCount from transcript:', objectionCount)
+          }
+          
+          // Detect techniques from user/rep entries
+          if (!techniquesUsed || techniquesUsed.length === 0) {
+            const techniquesSet = new Set<string>()
+            const userEntries = finalTranscript.filter((entry: any) => entry.speaker === 'user' || entry.speaker === 'rep')
+            userEntries.forEach((entry: any) => {
+              const technique = detectTechnique(entry.text || '')
+              if (technique) {
+                techniquesSet.add(technique)
+              }
+            })
+            techniquesUsed = Array.from(techniquesSet)
+            console.log('✅ PATCH: Calculated techniquesUsed from transcript:', techniquesUsed)
+          }
+        }
+        
         updateData.instant_metrics = {
           ...existingInstantMetrics,
           wordsPerMinute,
           conversationBalance,
+          objectionCount: objectionCount !== undefined ? objectionCount : existingInstantMetrics.objectionCount,
+          techniquesUsed: techniquesUsed.length > 0 ? techniquesUsed : existingInstantMetrics.techniquesUsed,
           // Preserve other existing instant metrics fields
-          ...(existingInstantMetrics.objectionCount !== undefined && { objectionCount: existingInstantMetrics.objectionCount }),
           ...(existingInstantMetrics.closeAttempts !== undefined && { closeAttempts: existingInstantMetrics.closeAttempts }),
           ...(existingInstantMetrics.closeSuccessRate !== undefined && { closeSuccessRate: existingInstantMetrics.closeSuccessRate })
         }

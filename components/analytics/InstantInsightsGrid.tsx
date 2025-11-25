@@ -259,65 +259,91 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
         
         {/* Time-Talk Ratio - Horizontal Card */}
         <div className={cn("rounded-xl p-5 border-2", balanceStatus.borderColor, balanceStatus.bgColor)}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-6 h-6 text-purple-400" />
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base font-semibold text-white font-space">Time-Talk Ratio</span>
-                    <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer. Target is 40% to maintain engagement while allowing discovery.">
-                      <Info className="w-4 h-4 text-gray-400 hover:text-purple-400 transition-colors" />
-                    </MetricTooltip>
-                  </div>
-                  <div className="text-xs text-gray-400 font-sans">Your speaking time vs. customer</div>
+          <div className="flex items-center justify-between gap-6">
+            {/* Left Side: Icon + Title + Description */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <MessageSquare className="w-6 h-6 text-purple-400 flex-shrink-0" />
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base font-semibold text-white font-space">Time-Talk Ratio</span>
+                  <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer. Target is 40% to maintain engagement while allowing discovery.">
+                    <Info className="w-4 h-4 text-gray-400 hover:text-purple-400 transition-colors" />
+                  </MetricTooltip>
                 </div>
+                <div className="text-xs text-gray-400 font-sans">Your speaking time vs. customer</div>
               </div>
             </div>
             
-            <div className="flex items-center gap-6">
-              <div className="flex-1 max-w-[300px]">
-                <div className="relative h-3 bg-slate-800/80 rounded-full overflow-hidden mb-2">
+            {/* Center: Progress Bar */}
+            <div className="flex-1 max-w-[350px] flex items-center">
+              <div className="w-full">
+                <div className="relative h-4 bg-slate-800/80 rounded-full overflow-hidden mb-2">
+                  {/* Background zones */}
+                  <div className="absolute inset-0 flex">
+                    <div className="w-[30%] bg-red-500/20" />
+                    <div className="w-[20%] bg-green-500/20" />
+                    <div className="flex-1 bg-red-500/20" />
+                  </div>
+                  
+                  {/* Progress fill */}
                   <motion.div
                     className={cn(
                       "absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500",
-                      balance >= 35 && balance <= 45
+                      balance >= 30 && balance <= 50
                         ? "from-green-500 to-green-400"
-                        : balance < 35
-                        ? "from-yellow-500 to-yellow-400"
                         : "from-red-500 to-red-400"
                     )}
                     initial={{ width: 0 }}
                     animate={{ width: `${balance}%` }}
                     transition={{ duration: 0.5 }}
                   />
-                  <div className="absolute left-[40%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-4 bg-slate-500/60" />
+                  
+                  {/* Zone markers */}
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="absolute left-[30%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
+                    <div className="absolute left-[40%] top-1/2 -translate-y-1/2 w-0.5 h-4 bg-slate-600/80 font-bold" />
+                    <div className="absolute left-[50%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
+                  </div>
                 </div>
                 <div className="flex justify-between text-xs text-gray-400 font-sans">
                   <span>0%</span>
-                  <span className="text-lg font-bold text-white font-space">Target 40%</span>
+                  <span className="text-slate-500">Target 40%</span>
                   <span>100%</span>
                 </div>
               </div>
+            </div>
+            
+            {/* Right Side: Metric + Target + Sparkline + Coaching */}
+            <div className="text-right min-w-[140px] flex-shrink-0">
+              {/* Primary Metric */}
+              <div className="text-4xl font-bold text-white mb-2 font-space">
+                <span className={balanceStatus.color}>{balance}%</span>
+              </div>
               
-              <div className="text-right min-w-[120px]">
-                <div className="text-3xl font-bold text-white mb-1 font-space">
-                  <span className={balanceStatus.color}>{balance}%</span>
-                </div>
-                <div className="text-lg font-bold text-white font-space mb-1">Target 40%</div>
-                {voiceAnalysis?.volumeTimeline && voiceAnalysis.volumeTimeline.length > 0 && (
-                  <div className="mt-2 flex items-center justify-end gap-2">
-                    <span className="text-xs text-gray-400 font-sans">Throughout call:</span>
+              {/* Target Info */}
+              <div className="text-sm text-gray-400 font-sans mb-3">Target: 40%</div>
+              
+              {/* Sparkline */}
+              {voiceAnalysis?.volumeTimeline && voiceAnalysis.volumeTimeline.length > 0 && (
+                <div className="mb-3 flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
                     <Sparkline 
                       data={voiceAnalysis.volumeTimeline} 
-                      width={60} 
-                      height={16} 
-                      color={balance >= 35 && balance <= 45 ? '#10b981' : balance < 35 ? '#f59e0b' : '#ef4444'} 
+                      width={80} 
+                      height={20} 
+                      color={balance >= 30 && balance <= 50 ? '#10b981' : '#ef4444'} 
                     />
                   </div>
-                )}
-                <div className="text-sm text-gray-300 font-sans mb-1">{userName}</div>
-                <div className={cn("text-sm font-bold font-space", balanceStatus.color)}>{balanceStatus.label}</div>
+                  <div className="text-xs text-gray-500 font-sans">Throughout call</div>
+                </div>
+              )}
+              
+              {/* User Name */}
+              <div className="text-sm text-gray-300 font-sans mb-2">{userName}</div>
+              
+              {/* Coaching Tip */}
+              <div className={cn("text-sm font-bold font-space", balanceStatus.color)}>
+                {balanceStatus.label}
               </div>
             </div>
           </div>

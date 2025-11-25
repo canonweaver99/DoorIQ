@@ -278,21 +278,6 @@ export function HeroSection({
                     return null
                   })()}
 
-                  {/* Bottom Line Message */}
-                  <div className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
-                    <p className="text-sm text-slate-300 leading-relaxed">
-                      {(() => {
-                        const percentile = parseInt(percentileLabel.replace(/\D/g, '')) || 0
-                        if (percentile >= 70) {
-                          return `You're in the top ${100 - percentile}% of reps. Keep up the excellent work!`
-                        } else if (percentile >= 30) {
-                          return `You're in the top ${100 - percentile}% of reps but leaving money on the table at the close.`
-                        } else {
-                          return `Focus on building stronger rapport and handling objections to move up the rankings.`
-                        }
-                      })()}
-                    </p>
-                  </div>
                 </div>
               )}
 
@@ -311,11 +296,6 @@ export function HeroSection({
                         vsUserAverage >= 0 ? 'text-green-400' : 'text-red-400'
                       )}>{getTrendText(vsUserAverage)}</span>
                     </span>
-                    {recentScores?.overall && recentScores.overall.length >= 3 && (
-                      <div className="text-sm text-gray-500 mt-1 font-sans">
-                        Last {Math.min(recentScores.overall.length, 5)} sessions: {recentScores.overall.slice(-5).join(' → ')}
-                      </div>
-                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-gray-300">
@@ -463,11 +443,11 @@ export function HeroSection({
                             if (reasons.length > 0) {
                               return (
                                 <div className="pt-4 border-t border-red-500/30">
-                                  <div className="text-sm font-semibold text-red-300 mb-2">Why it failed:</div>
-                                  <ul className="space-y-1.5">
+                                  <div className="text-lg font-bold text-amber-300 mb-3">Why it failed:</div>
+                                  <ul className="space-y-2">
                                     {reasons.slice(0, 3).map((reason, idx) => (
-                                      <li key={idx} className="text-sm text-red-200 flex items-start gap-2">
-                                        <span className="text-red-400 mt-0.5">•</span>
+                                      <li key={idx} className="text-base text-white font-medium flex items-start gap-2">
+                                        <span className="text-red-400 mt-0.5 font-bold">•</span>
                                         <span>{reason}</span>
                                       </li>
                                     ))}
@@ -480,8 +460,8 @@ export function HeroSection({
                           
                           {/* What to try */}
                           <div className="pt-4 border-t border-red-500/30">
-                            <div className="text-sm font-semibold text-amber-300 mb-2">What to try:</div>
-                            <p className="text-sm text-amber-200 leading-relaxed">
+                            <div className="text-lg font-bold text-amber-300 mb-3">What to try:</div>
+                            <p className="text-base text-white font-medium leading-relaxed">
                               {(() => {
                                 const closeAttempts = instantMetrics?.closeAttempts || 0
                                 if (closeAttempts === 0) {
