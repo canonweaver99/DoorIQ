@@ -6,13 +6,13 @@ import { Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { HeroSection } from '@/components/analytics/HeroSection'
-import { SessionSummaryHero } from '@/components/analytics/SessionSummaryHero'
 import { InstantInsightsGrid } from '@/components/analytics/InstantInsightsGrid'
 import { CriticalMomentsTimeline } from '@/components/analytics/CriticalMomentsTimeline'
 import { ComparativePerformance } from '@/components/analytics/ComparativePerformance'
 import { AICoachingInsights } from '@/components/analytics/AICoachingInsights'
 import { ElevenLabsSpeechMetrics } from '@/components/analytics/ElevenLabsSpeechMetrics'
 import { FocusArea } from '@/components/analytics/FocusArea'
+import { ConversationFlow } from '@/components/analytics/ConversationFlow'
 
 interface SessionData {
   id: string
@@ -92,6 +92,176 @@ interface ComparisonData {
   }
 }
 
+// Helper function to format time in MM:SS
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${String(secs).padStart(2, '0')}`
+}
+
+// Calculate phases from session data
+function calculatePhases(session: SessionData, durationSeconds: number) {
+  const segmentDuration = durationSeconds / 4
+  
+  return [
+    {
+      name: 'Opening',
+      timeRange: `0:00-${formatTime(segmentDuration)}`,
+      score: session.rapport_score || 0,
+      passed: (session.rapport_score || 0) >= 60
+    },
+    {
+      name: 'Building Value',
+      timeRange: `${formatTime(segmentDuration)}-${formatTime(segmentDuration * 2)}`,
+      score: session.discovery_score || 0,
+      passed: (session.discovery_score || 0) >= 60
+    },
+    {
+      name: 'Objections',
+      timeRange: `${formatTime(segmentDuration * 2)}-${formatTime(segmentDuration * 3)}`,
+      score: session.objection_handling_score || 0,
+      passed: (session.objection_handling_score || 0) >= 60
+    },
+    {
+      name: 'Close',
+      timeRange: `${formatTime(segmentDuration * 3)}-${formatTime(durationSeconds)}`,
+      score: session.close_score || 0,
+      passed: (session.close_score || 0) >= 60
+    }
+  ]
+}
+
+// Derive energy data from voice analysis or generate placeholder
+function deriveEnergyData(voiceAnalysis: any, durationSeconds: number): number[] {
+  // If we have timeline data, use it
+  if (voiceAnalysis?.pitchTimeline && voiceAnalysis?.volumeTimeline) {
+    const pitchTimeline = voiceAnalysis.pitchTimeline
+    const volumeTimeline = voiceAnalysis.volumeTimeline
+    
+    // Combine pitch and volume to calculate energy
+    const energyPoints: number[] = []
+    const maxLength = Math.max(pitchTimeline.length, volumeTimeline.length)
+    
+    for (let i = 0; i < maxLength; i++) {
+      const pitch = pitchTimeline[i]?.value || 0
+      const volume = volumeTimeline[i]?.value || 0
+      
+      // Normalize pitch (assuming 0-500 Hz range, normalize to 0-5)
+      const normalizedPitch = Math.min(5, (pitch / 100))
+      // Normalize volume (assuming 0-100 range, normalize to 0-5)
+      const normalizedVolume = Math.min(5, (volume / 20))
+      
+      // Combine (energy = average of normalized pitch and volume)
+      const energy = (normalizedPitch + normalizedVolume) / 2
+      energyPoints.push(Math.max(0, Math.min(10, energy)))
+    }
+    
+    // If we have enough points, return them
+    if (energyPoints.length >= 8) {
+      return energyPoints
+    }
+  }
+  
+  // Fallback: generate energy array based on overall metrics
+  const avgEnergy = voiceAnalysis?.issues?.lowEnergy 
+    ? 3 
+    : voiceAnalysis?.pitchVariation 
+      ? Math.min(10, (voiceAnalysis.pitchVariation / 20) * 10)
+      : 6
+  
+  // Generate smooth energy curve (start high, may drop)
+  const dataPoints = Math.max(16, Math.floor(durationSeconds / 15)) // ~1 point per 15 seconds, min 16
+  const energyData: number[] = []
+  
+  // Simulate energy curve (start high, may decline)
+  const startEnergy = avgEnergy + 2
+  const endEnergy = avgEnergy - 1
+  
+  for (let i = 0; i < dataPoints; i++) {
+    const progress = i / (dataPoints - 1)
+    // Smooth curve with some variation
+    const baseEnergy = startEnergy + (endEnergy - startEnergy) * progress
+    const variation = Math.sin(progress * Math.PI * 4) * 1.5 // Add some wave
+    energyData.push(Math.max(1, Math.min(10, baseEnergy + variation)))
+  }
+  
+  return energyData
+}
+
+// Generate focus area from phases
+function generateFocusArea(phases: ReturnType<typeof calculatePhases>, voiceAnalysis: any, instantMetrics: any) {
+  // Find phase with lowest score
+  const sortedPhases = [...phases].sort((a, b) => a.score - b.score)
+  const focusPhase = sortedPhases[0]
+  
+  if (!focusPhase || focusPhase.passed) {
+    return null
+  }
+  
+  const issues: string[] = []
+  
+  // Energy drop detection
+  if (focusPhase.name === 'Close') {
+    const openingPhase = phases.find(p => p.name === 'Opening')
+    if (openingPhase && openingPhase.score > focusPhase.score + 20) {
+      issues.push(`Energy dropped from ${openingPhase.score}% → ${focusPhase.score}%`)
+    }
+  }
+  
+  // Talk ratio issues
+  if (instantMetrics?.conversationBalance) {
+    const talkRatio = instantMetrics.conversationBalance
+    if (talkRatio > 70) {
+      issues.push(`Talk ratio went from balanced → ${talkRatio}% (too much talking)`)
+    }
+  }
+  
+  // Closing technique detection
+  if (focusPhase.name === 'Close' && focusPhase.score < 50) {
+    if (!instantMetrics?.techniquesUsed || instantMetrics.techniquesUsed.length === 0) {
+      issues.push('No closing technique detected')
+    }
+  }
+  
+  // Voice analysis issues
+  if (voiceAnalysis?.issues?.lowEnergy && focusPhase.name === 'Close') {
+    issues.push('Low energy detected in closing phase')
+  }
+  
+  // If no specific issues found, add generic one
+  if (issues.length === 0) {
+    issues.push(`Score of ${focusPhase.score}% is below passing threshold`)
+  }
+  
+  return {
+    phase: focusPhase.name,
+    timeRange: focusPhase.timeRange.split('-')[1] || focusPhase.timeRange,
+    issues
+  }
+}
+
+// Generate voice tip based on focus area
+function generateVoiceTip(focusArea: ReturnType<typeof generateFocusArea>, phases: ReturnType<typeof calculatePhases>): string {
+  if (!focusArea) {
+    // Generic tip based on overall performance
+    const avgScore = phases.reduce((sum, p) => sum + p.score, 0) / phases.length
+    if (avgScore < 60) {
+      return 'Focus on maintaining consistent energy throughout the conversation. Practice taking deep breaths between phases.'
+    }
+    return 'Great job maintaining energy! Continue practicing to refine your technique.'
+  }
+  
+  // Phase-specific tips
+  const tips: Record<string, string> = {
+    'Opening': 'Start strong with confident energy. Take a deep breath before beginning and maintain enthusiasm.',
+    'Building Value': 'Keep your energy steady while building value. Vary your pitch to maintain engagement.',
+    'Objections': 'Stay calm and confident when handling objections. Lower your pitch slightly to show authority.',
+    'Close': 'Maintain your opening energy through the close. Take a deep breath before asking for the sale.'
+  }
+  
+  return tips[focusArea.phase] || 'Focus on maintaining consistent energy throughout the conversation.'
+}
+
 export default function AnalyticsPage() {
   const params = useParams()
   const sessionId = params.sessionId as string
@@ -106,7 +276,8 @@ export default function AnalyticsPage() {
     moments: false,
     comparison: false,
     coaching: false,
-    speech: false
+    speech: false,
+    conversationFlow: false
   })
   
   // Fetch user name and check for free demo redirect
@@ -252,6 +423,13 @@ export default function AnalyticsPage() {
             setLoadingStates(prev => ({ ...prev, speech: true }))
           }, 2500)
         }
+        
+        // Load conversation flow if we have scores and duration
+        if (data.duration_seconds && (data.rapport_score !== null || data.discovery_score !== null || data.objection_handling_score !== null || data.close_score !== null)) {
+          setTimeout(() => {
+            setLoadingStates(prev => ({ ...prev, conversationFlow: true }))
+          }, 3000)
+        }
     } catch (error) {
       console.error('Error fetching session:', error)
     } finally {
@@ -309,22 +487,24 @@ export default function AnalyticsPage() {
 
   const overallScore = session.overall_score || 0
   
+  // Calculate conversation flow data
+  const conversationFlowData = session.duration_seconds && (session.rapport_score !== null || session.discovery_score !== null || session.objection_handling_score !== null || session.close_score !== null)
+    ? (() => {
+        const phases = calculatePhases(session, session.duration_seconds || 0)
+        const focusArea = generateFocusArea(phases, session.analytics?.voice_analysis, session.instant_metrics)
+        return {
+          phases,
+          energyData: deriveEnergyData(session.analytics?.voice_analysis, session.duration_seconds || 0),
+          focusArea,
+          voiceTip: generateVoiceTip(focusArea, phases),
+          durationSeconds: session.duration_seconds || 0
+        }
+      })()
+    : null
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
       <div className="max-w-6xl mx-auto px-6 pt-8 pb-12">
-        {/* Session Summary Hero - Loads immediately */}
-        {loadingStates.hero && (
-          <SessionSummaryHero
-            overallScore={overallScore}
-            saleClosed={session.sale_closed || false}
-            objectionHandlingScore={session.objection_handling_score || 0}
-            closeScore={session.close_score || 0}
-            objectionCount={session.instant_metrics?.objectionCount || 0}
-            closeAttempts={session.instant_metrics?.closeAttempts || 0}
-            feedback={session.analytics?.feedback}
-          />
-        )}
-        
         {/* Hero Section - Loads immediately */}
         {loadingStates.hero && comparison && (
           <HeroSection
@@ -388,6 +568,21 @@ export default function AnalyticsPage() {
             />
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
+          )
+        ) : null}
+        
+        {/* Conversation Flow - Loads after moments */}
+        {conversationFlowData ? (
+          loadingStates.conversationFlow ? (
+            <ConversationFlow
+              phases={conversationFlowData.phases}
+              energyData={conversationFlowData.energyData}
+              focusArea={conversationFlowData.focusArea || undefined}
+              voiceTip={conversationFlowData.voiceTip}
+              durationSeconds={conversationFlowData.durationSeconds}
+            />
+          ) : (
+            <div className="h-96 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
           )
         ) : null}
         
