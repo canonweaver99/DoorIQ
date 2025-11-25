@@ -1566,13 +1566,13 @@ function TrainerPageContent() {
           </div>
         </div>
 
-        {/* Main Content Area - Stacked on mobile, side-by-side on desktop */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-8">
+        {/* Main Content Area - 2x2 Grid Layout */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-2 overflow-hidden min-h-0 gap-2 p-3 sm:p-4 lg:p-8">
           
-          {/* LEFT SIDE (48%) - Agent Video with PIP and Transcript */}
-          <div className="w-full lg:w-[48%] flex flex-col gap-3 sm:gap-4 lg:gap-6 overflow-hidden">
-            {/* Webcam - Reduced height */}
-            <div className="relative bg-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[40vh] lg:h-[45%] lg:min-h-[300px] flex-shrink-0">
+          {/* TOP LEFT QUADRANT - Agent Video */}
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            {/* Webcam - Full height of quadrant */}
+            <div className="relative bg-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[40vh] lg:h-full flex-shrink-0">
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -1765,39 +1765,32 @@ function TrainerPageContent() {
               )}
             </div>
             </div>
-            
-            {/* Transcript - Under webcam on left side */}
-            <div className="hidden lg:flex flex-1 flex-col overflow-hidden min-h-0">
-              <LiveTranscript 
-                transcript={transcript} 
-                agentName={selectedAgent?.name}
-                agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                userAvatarUrl={userAvatarUrl}
+          </div>
+
+          {/* TOP RIGHT QUADRANT - Metrics Panel */}
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <div className="h-full flex flex-col overflow-hidden">
+              <LiveMetricsPanel 
+                metrics={metrics} 
+                getVoiceAnalysisData={getVoiceAnalysisData}
+                transcript={transcript}
               />
             </div>
           </div>
 
-          {/* RIGHT SIDE (45%) - Metrics and Feedback */}
-          <div className="hidden lg:flex w-full lg:w-[45%] flex-col gap-3 sm:gap-4 lg:gap-6 overflow-hidden lg:h-full">
-            {/* Metrics Panel - 2x2 grid */}
-            <div className="flex-shrink-0 lg:h-[40%] lg:min-h-[200px]">
-              <LiveMetricsPanel metrics={metrics} />
-            </div>
-            
-            {/* Feedback Feed - Pushed down */}
-            <div className="flex flex-1 flex-col overflow-hidden min-h-0">
-              <LiveFeedbackFeed feedbackItems={feedbackItems} />
-            </div>
-            
-            {/* Transcript - Mobile only */}
-            <div className="lg:hidden flex-1 flex flex-col overflow-hidden">
-              <LiveTranscript 
-                transcript={transcript} 
-                agentName={selectedAgent?.name}
-                agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                userAvatarUrl={userAvatarUrl}
-              />
-            </div>
+          {/* BOTTOM LEFT QUADRANT - Transcript */}
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <LiveTranscript 
+              transcript={transcript} 
+              agentName={selectedAgent?.name}
+              agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+              userAvatarUrl={userAvatarUrl}
+            />
+          </div>
+
+          {/* BOTTOM RIGHT QUADRANT - Feedback Feed */}
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <LiveFeedbackFeed feedbackItems={feedbackItems} />
           </div>
         </div>
       </div>

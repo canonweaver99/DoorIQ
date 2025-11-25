@@ -396,43 +396,49 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "bg-slate-900 rounded-lg pt-3 px-4 pb-1 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col cursor-pointer",
+        "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col cursor-pointer",
         colors.border,
         className
       )}
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      <div className="flex items-start gap-1.5 sm:gap-2 mb-1">
-        <div className={cn("p-1.5 sm:p-2 rounded-md transition-colors flex-shrink-0", colors.bg, colors.hover)}>
-          <Flame className={cn("w-5 h-5 sm:w-6 sm:h-6", colors.icon)} />
+      {/* Header: Icon + Title + Percentage */}
+      <div className="flex items-start gap-2 mb-3 flex-shrink-0">
+        <div className={cn("p-1.5 rounded-md transition-colors flex-shrink-0", colors.bg, colors.hover)}>
+          <Flame className={cn("w-4 h-4 sm:w-5 sm:h-5", colors.icon)} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <div className="text-sm sm:text-base font-semibold text-white font-space">
-              Vocal Energy
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
+                Vocal Energy
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowInfo(!showInfo)
+                }}
+                className="p-0.5 hover:bg-slate-700/50 rounded transition-colors flex-shrink-0"
+                aria-label="Show energy calculation info"
+              >
+                <Info className="w-3 h-3 text-slate-400 hover:text-slate-200" />
+              </button>
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowInfo(!showInfo)
-              }}
-              className="p-0.5 hover:bg-slate-700/50 rounded transition-colors"
-              aria-label="Show energy calculation info"
-            >
-              <Info className="w-3.5 h-3.5 text-slate-400 hover:text-slate-200" />
-            </button>
+            <div className="text-right flex-shrink-0">
+              <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">
+                {score}%
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="text-xl sm:text-2xl font-bold text-white font-space">
-              {score}% {status}
-            </div>
+          <div className="text-sm sm:text-base text-slate-400 font-space mt-0.5">
+            {status}
           </div>
         </div>
       </div>
       
-      {/* Progress Bar */}
-      <div className="mt-8 -mb-5">
-        <div className="relative h-2.5 bg-slate-800/80 rounded-full overflow-hidden mb-0.5">
+      {/* Progress Bar - Pushed to bottom */}
+      <div className="mt-auto pt-1 flex-shrink-0 min-h-0">
+        <div className="relative h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1">
           {/* Background zones */}
           <div className="absolute inset-0 flex">
             <div className="w-[40%] bg-orange-500/20" />
@@ -450,26 +456,26 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
           
           {/* Zone markers */}
           <div className="absolute inset-0 flex items-center">
-            <div className="absolute left-[40%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
-            <div className="absolute left-[70%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
+            <div className="absolute left-[40%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+            <div className="absolute left-[70%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
           </div>
           
           {/* Current position indicator */}
           <div 
-            className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white rounded-full shadow-lg"
-            style={{ left: `calc(${score}% - 2px)` }}
+            className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-white rounded-full shadow-lg"
+            style={{ left: `calc(${score}% - 1px)` }}
           />
         </div>
         
         {/* Scale labels */}
-        <div className="flex justify-between text-xs text-slate-400 font-space font-medium mb-0.5">
+        <div className="flex justify-between text-xs text-slate-400 font-space font-medium mb-0.5 leading-tight">
           <span>Low</span>
           <span>Balanced</span>
           <span>High</span>
         </div>
         
         {/* Percentage markers */}
-        <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-1">
+        <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-1 leading-tight">
           <span>0%</span>
           <span>40%</span>
           <span>70%</span>
@@ -477,9 +483,9 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
         </div>
         
         {/* Current and ideal range */}
-        <div className="flex justify-between text-xs sm:text-sm text-slate-300 font-space font-medium">
-          <span className="truncate">Current: {status} ({score}%)</span>
-          <span className="hidden sm:inline">Ideal Range: 60-75%</span>
+        <div className="flex justify-between items-center text-xs sm:text-sm text-slate-300 font-space font-medium mt-1">
+          <span className="truncate">Current: {status}</span>
+          <span className="truncate ml-2">Ideal: 60-75%</span>
         </div>
       </div>
       
@@ -692,81 +698,88 @@ function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCar
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "bg-slate-900 rounded-lg pt-3 px-4 pb-2 border-[2px] border-amber-500/60 shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col h-full cursor-pointer",
+        "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] border-amber-500/60 shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col h-full cursor-pointer",
         className
       )}
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-        <div className="p-2 sm:p-2.5 rounded-md transition-colors bg-amber-500/20 group-hover:bg-amber-500/30">
-          <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+      {/* Header: Icon + Title */}
+      <div className="flex items-start gap-2 mb-3 flex-shrink-0">
+        <div className="p-1.5 rounded-md transition-colors bg-amber-500/20 group-hover:bg-amber-500/30 flex-shrink-0">
+          <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
         </div>
-        <div className="flex-1">
-          <div className="text-base sm:text-lg font-semibold text-white font-space">
-            ⚠️ Objections ({objections.length} detected)
+        <div className="flex-1 min-w-0">
+          <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
+            Objections
           </div>
         </div>
       </div>
       
-      <div className="mt-8">
-      {objections.length === 0 ? (
-        <div className="text-sm text-slate-400 font-space">No objections detected</div>
-      ) : (
-        <>
-          {objections.slice(0, isExpanded ? undefined : 2).map((objection) => {
-            const qualityColor = objection.quality === 'excellent' || objection.quality === 'good' 
-              ? 'text-emerald-400' 
-              : objection.quality === 'poor' 
-                ? 'text-red-400' 
-                : 'text-amber-400'
+      {/* Main Value */}
+      <div className="mb-3 flex-shrink-0">
+        <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">{objections.length}</div>
+      </div>
+      
+      {/* Content - Pushed to bottom */}
+      <div className="mt-auto pt-1 flex-shrink-0 min-h-0 overflow-hidden">
+        {objections.length === 0 ? (
+          <div className="text-sm sm:text-base text-slate-400 font-space leading-tight">No objections detected</div>
+        ) : (
+          <>
+            {objections.slice(0, isExpanded ? undefined : 2).map((objection) => {
+              const qualityColor = objection.quality === 'excellent' || objection.quality === 'good' 
+                ? 'text-emerald-400' 
+                : objection.quality === 'poor' 
+                  ? 'text-red-400' 
+                  : 'text-amber-400'
+              
+              return (
+                <div key={objection.id} className="mb-2 last:mb-0">
+                  <div className="flex items-start justify-between gap-1.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
+                        {formatObjectionType(objection.type)}
+                      </div>
+                      <div className="text-xs sm:text-sm text-slate-300 font-space italic mt-0.5 leading-tight line-clamp-2">
+                        "{objection.text.length > 50 ? objection.text.substring(0, 50) + '...' : objection.text}"
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                      <div className={cn("text-xs font-mono leading-tight", qualityColor)}>
+                        {qualityToDots(objection.quality)}
+                      </div>
+                      <div className={cn("text-xs font-space leading-tight", qualityColor)}>
+                        {getQualityLabel(objection.quality)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
             
-            return (
-              <div key={objection.id} className="mb-3 last:mb-0">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold text-white font-space">
-                      {formatObjectionType(objection.type)}
-                    </div>
-                    <div className="text-xs text-slate-300 font-space italic mt-0.5">
-                      "{objection.text.length > 60 ? objection.text.substring(0, 60) + '...' : objection.text}"
-                    </div>
+            {isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-2 pt-2 border-t border-slate-700/50"
+              >
+                <div className="text-xs sm:text-sm text-slate-400 font-space font-medium mb-1.5 leading-tight">Quick Tips:</div>
+                {Array.from(new Set(objections.map(o => o.type))).map((type) => (
+                  <div key={type} className="text-xs sm:text-sm text-slate-300 font-space mb-1 leading-tight">
+                    ↳ {formatObjectionType(type)}: {getObjectionCoachingTips(type)}
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <div className={cn("text-xs font-mono", qualityColor)}>
-                      {qualityToDots(objection.quality)}
-                    </div>
-                    <div className={cn("text-xs font-space", qualityColor)}>
-                      {getQualityLabel(objection.quality)}
-                    </div>
-                  </div>
-                </div>
+                ))}
+              </motion.div>
+            )}
+            
+            {objections.length > 2 && !isExpanded && (
+              <div className="text-xs sm:text-sm text-slate-400 font-space mt-1.5 leading-tight">
+                Click to see all {objections.length} objections...
               </div>
-            )
-          })}
-          
-          {isExpanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-3 pt-3 border-t border-slate-700/50"
-            >
-              <div className="text-xs text-slate-400 font-space font-medium mb-2">Quick Tips:</div>
-              {Array.from(new Set(objections.map(o => o.type))).map((type) => (
-                <div key={type} className="text-xs text-slate-300 font-space mb-1">
-                  ↳ {formatObjectionType(type)}: {getObjectionCoachingTips(type)}
-                </div>
-              ))}
-            </motion.div>
-          )}
-          
-          {objections.length > 2 && !isExpanded && (
-            <div className="text-xs text-slate-400 font-space mt-2">
-              Click to see all {objections.length} objections...
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
       </div>
     </motion.div>
   )
@@ -793,31 +806,38 @@ function EnhancedTechniquesCard({ techniquesUsed, className }: EnhancedTechnique
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "bg-slate-900 rounded-lg pt-3 px-4 pb-2 border-[2px] border-emerald-500/60 shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col h-full",
+        "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] border-emerald-500/60 shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col h-full",
         className
       )}
     >
-      <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-        <div className="p-2 sm:p-2.5 rounded-md transition-colors bg-emerald-500/20 group-hover:bg-emerald-500/30">
-          <Book className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+      {/* Header: Icon + Title */}
+      <div className="flex items-start gap-2 mb-3 flex-shrink-0">
+        <div className="p-1.5 rounded-md transition-colors bg-emerald-500/20 group-hover:bg-emerald-500/30 flex-shrink-0">
+          <Book className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
         </div>
-        <div className="flex-1">
-          <div className="text-base sm:text-lg font-semibold text-white font-space">
-            📚 Techniques ({displayedTechniques.length} used)
+        <div className="flex-1 min-w-0">
+          <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
+            Techniques
           </div>
         </div>
       </div>
       
-      <div className="mt-8 space-y-2">
+      {/* Main Value */}
+      <div className="mb-3 flex-shrink-0">
+        <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">{displayedTechniques.length}</div>
+      </div>
+      
+      {/* Content - Pushed to bottom */}
+      <div className="mt-auto pt-1 space-y-1.5 flex-shrink-0 min-h-0 overflow-hidden">
         {displayedTechniques.length > 0 ? (
           displayedTechniques.map((tech) => (
-            <div key={tech} className="flex items-center gap-2 text-sm text-slate-300 font-space mb-1.5">
+            <div key={tech} className="flex items-center gap-1.5 text-sm sm:text-base text-slate-300 font-space leading-tight">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span className="text-white">{tech}</span>
+              <span className="text-white truncate">{tech}</span>
             </div>
           ))
         ) : (
-          <div className="text-sm text-slate-400 font-space">No techniques detected yet</div>
+          <div className="text-sm sm:text-base text-slate-400 font-space leading-tight">No techniques detected yet</div>
         )}
       </div>
     </motion.div>
@@ -912,37 +932,42 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
   const talkTimeColors = getTalkTimeColor()
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-3 h-full items-stretch">
+    <div className="grid grid-cols-2 gap-2 h-full items-stretch" style={{ gridTemplateRows: '1.15fr 1fr' }}>
       {/* Talk Time Card - With Dynamic Bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "bg-slate-900 rounded-lg pt-3 px-4 pb-1 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col",
+          "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col",
           talkTimeColors.border
         )}
       >
-        <div className="flex items-start gap-1.5 sm:gap-2 mb-1">
-          <div className={cn("p-1.5 sm:p-2 rounded-md transition-colors flex-shrink-0", talkTimeColors.bg, talkTimeColors.hover)}>
-            <Mic className={cn("w-5 h-5 sm:w-6 sm:h-6", talkTimeColors.icon)} />
+        {/* Header: Icon + Title + Percentage */}
+        <div className="flex items-start gap-2 mb-3 flex-shrink-0">
+          <div className={cn("p-1.5 rounded-md transition-colors flex-shrink-0", talkTimeColors.bg, talkTimeColors.hover)}>
+            <Mic className={cn("w-4 h-4 sm:w-5 sm:h-5", talkTimeColors.icon)} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm sm:text-base font-semibold text-white font-space mb-0.5">Talk Time Ratio</div>
-            <div className="flex items-center gap-2">
-              <div className="text-xl sm:text-2xl font-bold text-white font-space">{talkTimeRatio}%</div>
-              {talkTimeStatus.badge && (
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">Talk Time Ratio</div>
+              <div className="text-right flex-shrink-0">
+                <div className="text-xl sm:text-2xl font-bold text-white font-space leading-tight">{talkTimeRatio}%</div>
+              </div>
+            </div>
+            {talkTimeStatus.badge && (
+              <div className="mt-0.5">
                 <Badge variant={talkTimeStatus.variant} className="text-xs sm:text-sm px-1.5 sm:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold">
                   {talkTimeStatus.badge}
                 </Badge>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
         
-        {/* Dynamic Progress Bar */}
-        <div className="mt-8 -mb-5">
-          <div className="relative h-2.5 bg-slate-800/80 rounded-full overflow-hidden mb-0.5">
+        {/* Dynamic Progress Bar - Pushed to bottom */}
+        <div className="mt-auto pt-1 flex-shrink-0 min-h-0">
+          <div className="relative h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1">
             {/* Background zones */}
             <div className="absolute inset-0 flex">
               <div className="w-[40%] bg-orange-500/20" />
@@ -960,26 +985,26 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
             
             {/* Zone markers */}
             <div className="absolute inset-0 flex items-center">
-              <div className="absolute left-[40%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
-              <div className="absolute left-[60%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
+              <div className="absolute left-[40%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+              <div className="absolute left-[60%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
             </div>
             
             {/* Current position indicator */}
             <div 
-              className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white rounded-full shadow-lg"
-              style={{ left: `calc(${talkTimeRatio}% - 2px)` }}
+              className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-white rounded-full shadow-lg"
+              style={{ left: `calc(${talkTimeRatio}% - 1px)` }}
             />
           </div>
           
           {/* Scale labels */}
-          <div className="flex justify-between text-xs text-slate-400 font-space font-medium mb-0.5">
+          <div className="flex justify-between text-xs text-slate-400 font-space font-medium mb-0.5 leading-tight">
             <span>Listen</span>
             <span>Balanced</span>
             <span>Talk</span>
           </div>
           
           {/* Percentage markers */}
-          <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-1">
+          <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-1 leading-tight">
             <span>0%</span>
             <span>40%</span>
             <span>60%</span>
@@ -987,9 +1012,9 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
           
           {/* Current and ideal range */}
-          <div className="flex justify-between text-xs sm:text-sm text-slate-300 font-space font-medium">
+          <div className="flex justify-between items-center text-xs sm:text-sm text-slate-300 font-space font-medium mt-1">
             <span className="truncate">Current: {talkTimeRatio}%</span>
-            <span className="hidden sm:inline">Ideal: 40-60%</span>
+            <span className="truncate ml-2">Ideal: 40-60%</span>
           </div>
         </div>
       </motion.div>
@@ -1011,3 +1036,5 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
     </div>
   )
 }
+
+
