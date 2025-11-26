@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 
 interface LiveFeedbackFeedProps {
   feedbackItems: FeedbackItem[]
+  sessionActive?: boolean
 }
 
 const getFeedbackConfig = (item: FeedbackItem) => {
@@ -201,7 +202,7 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
   )
 }
 
-export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
+export function LiveFeedbackFeed({ feedbackItems, sessionActive = false }: LiveFeedbackFeedProps) {
   const feedEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [dismissedItems, setDismissedItems] = useState<Set<string>>(new Set())
@@ -235,7 +236,7 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
     <div className="h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden border-[2px] border-slate-700 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
       <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700 flex-shrink-0 bg-slate-900">
         <h3 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5 sm:gap-2 font-space">
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-400 animate-pulse" />
+          <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full animate-pulse ${sessionActive ? 'bg-green-500 shadow-lg shadow-green-500/50' : 'bg-slate-400'}`} />
           Live Feedback
         </h3>
       </div>

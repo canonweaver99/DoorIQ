@@ -1567,7 +1567,7 @@ function TrainerPageContent() {
         </div>
 
         {/* Main Content Area - 2x2 Grid Layout */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-2 overflow-hidden min-h-0 gap-2 p-3 sm:p-4 lg:p-8">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[1.15fr_0.85fr] overflow-hidden min-h-0 gap-2 p-3 sm:p-4 lg:p-8">
           
           {/* TOP LEFT QUADRANT - Agent Video */}
           <div className="w-full h-full flex flex-col overflow-hidden">
@@ -1777,12 +1777,13 @@ function TrainerPageContent() {
               agentName={selectedAgent?.name}
               agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
               userAvatarUrl={userAvatarUrl}
+              sessionActive={sessionActive}
             />
           </div>
 
           {/* BOTTOM RIGHT QUADRANT - Feedback Feed */}
           <div className="w-full h-full flex flex-col overflow-hidden">
-            <LiveFeedbackFeed feedbackItems={feedbackItems} />
+            <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
           </div>
         </div>
       </div>

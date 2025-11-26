@@ -396,7 +396,7 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col cursor-pointer",
+        "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col cursor-pointer relative",
         colors.border,
         className
       )}
@@ -436,8 +436,8 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
         </div>
       </div>
       
-      {/* Progress Bar - Pushed to bottom */}
-      <div className="mt-auto pt-1 flex-shrink-0 min-h-0">
+      {/* Progress Bar - Centered */}
+      <div className="-mt-2 pt-7 flex-shrink-0 min-h-0">
         <div className="relative h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1">
           {/* Background zones */}
           <div className="absolute inset-0 flex">
@@ -475,18 +475,18 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
         </div>
         
         {/* Percentage markers */}
-        <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-1 leading-tight">
+        <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-0.5 leading-tight">
           <span>0%</span>
           <span>40%</span>
           <span>70%</span>
           <span>100%</span>
         </div>
-        
-        {/* Current and ideal range */}
-        <div className="flex justify-between items-center text-xs sm:text-sm text-slate-300 font-space font-medium mt-1">
-          <span className="truncate">Current: {status}</span>
-          <span className="truncate ml-2">Ideal: 60-75%</span>
-        </div>
+      </div>
+      
+      {/* Current and ideal range - Bottom corners */}
+      <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center text-xs sm:text-sm text-slate-300 font-space font-medium">
+        <span className="truncate">Current: {status}</span>
+        <span className="truncate ml-2">Ideal: 60-75%</span>
       </div>
       
       {/* Expanded breakdown */}
@@ -939,7 +939,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col",
+          "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col relative",
           talkTimeColors.border
         )}
       >
@@ -963,8 +963,8 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
         </div>
         
-        {/* Dynamic Progress Bar - Pushed to bottom */}
-        <div className="mt-auto pt-1 flex-shrink-0 min-h-0">
+        {/* Dynamic Progress Bar - Centered */}
+        <div className="-mt-2 pt-7 flex-shrink-0 min-h-0">
           <div className="relative h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1">
             {/* Background zones */}
             <div className="absolute inset-0 flex">
@@ -1002,18 +1002,18 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
           
           {/* Percentage markers */}
-          <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-1 leading-tight">
+          <div className="flex justify-between text-xs text-slate-500 font-space font-medium mb-0.5 leading-tight">
             <span className="flex-shrink-0">0%</span>
             <span className="flex-shrink-0">40%</span>
             <span className="flex-shrink-0">60%</span>
             <span className="flex-shrink-0">100%</span>
           </div>
-          
-          {/* Current and ideal range */}
-          <div className="flex justify-between items-center gap-2 text-xs sm:text-sm text-slate-300 font-space font-medium mt-1">
-            <span className="whitespace-nowrap">Current: {talkTimeRatio}%</span>
-            <span className="whitespace-nowrap">Ideal: 40-60%</span>
-          </div>
+        </div>
+        
+        {/* Current and ideal range - Bottom corners */}
+        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center gap-2 text-xs sm:text-sm text-slate-300 font-space font-medium">
+          <span className="whitespace-nowrap">Current: {talkTimeRatio}%</span>
+          <span className="whitespace-nowrap">Ideal: 40-60%</span>
         </div>
       </motion.div>
       

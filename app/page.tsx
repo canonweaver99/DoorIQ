@@ -697,12 +697,21 @@ function ManagerPricingSection({ onBookDemo }: { onBookDemo: () => void }) {
                     <div className="text-center">
                       <input
                         type="number"
-                        min="5"
-                        max="500"
-                        value={numReps}
+                        min="1"
+                        max="1000"
+                        value={numReps || ''}
                         onChange={(e) => {
-                          const value = parseInt(e.target.value) || 5
-                          setNumReps(Math.max(5, Math.min(500, value)))
+                          if (e.target.value === '') {
+                            setNumReps(0)
+                          } else {
+                            const value = parseInt(e.target.value) || 0
+                            setNumReps(Math.max(1, Math.min(1000, value)))
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                            setNumReps(1)
+                          }
                         }}
                         className="inline-block px-4 py-2.5 rounded-lg border-2 border-border/40 dark:border-white/40 bg-background dark:bg-black text-foreground text-xl sm:text-2xl font-bold font-space text-center w-24 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/30 transition-all"
                       />
