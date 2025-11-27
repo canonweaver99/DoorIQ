@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast'
 import { TeamManagement } from '@/components/settings/TeamManagement'
+import { TeamManagementWalkthrough } from '@/components/onboarding/TeamManagementWalkthrough'
 import { cn } from '@/lib/utils'
 
 type Tab = 'overview' | 'teams'
@@ -42,6 +43,7 @@ function OrganizationSettingsPage() {
   const [seatUsage, setSeatUsage] = useState({ used: 0, limit: 0 })
   const [pendingInvites, setPendingInvites] = useState<any[]>([])
   const [invitesLoading, setInvitesLoading] = useState(false)
+  const [showWalkthrough, setShowWalkthrough] = useState(false)
 
   // Initialize activeTab from URL parameter
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -51,6 +53,17 @@ function OrganizationSettingsPage() {
     }
     return 'overview'
   })
+
+  // Check if walkthrough should be shown
+  useEffect(() => {
+    const walkthroughParam = searchParams.get('walkthrough')
+    if (walkthroughParam === 'true' && isManager) {
+      // Small delay to ensure page is rendered
+      setTimeout(() => {
+        setShowWalkthrough(true)
+      }, 500)
+    }
+  }, [searchParams, isManager])
 
   // Update active tab when URL parameter changes
   useEffect(() => {
@@ -263,7 +276,7 @@ function OrganizationSettingsPage() {
 
             {/* Invite Member */}
             {isManager && (
-              <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
+              <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8" data-walkthrough="invite-section">
                 <div className="space-y-4">
                   <div>
                     <h2 className="text-xl font-semibold text-white mb-2 font-space">Invite Team Member</h2>
@@ -339,7 +352,7 @@ function OrganizationSettingsPage() {
             )}
 
             {/* Team Members */}
-            <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
+            <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8" data-walkthrough="members-section">
               <div className="space-y-4">
                 <div>
                   <h2 className="text-xl font-semibold text-white mb-2 font-space">Team Members</h2>
@@ -355,7 +368,7 @@ function OrganizationSettingsPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {members.map((member) => (
+                    {members.map((member, index) => (
                       <div
                         key={member.id}
                         className="p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] hover:border-[#2a2a2a] transition-colors"
@@ -379,6 +392,7 @@ function OrganizationSettingsPage() {
                                 value={member.role}
                                 onChange={(e) => handleUpdateRole(member.id, e.target.value)}
                                 className="px-3 py-1.5 rounded-lg border border-[#2a2a2a] bg-[#0a0a0a] text-white text-sm font-sans"
+                                {...(index === 0 ? { 'data-walkthrough': 'roles-section' } : {})}
                               >
                                 <option value="rep">Rep</option>
                                 <option value="manager">Manager</option>
@@ -419,10 +433,33 @@ function OrganizationSettingsPage() {
     }
   }
 
+  const handleWalkthroughComplete = () => {
+    setShowWalkthrough(false)
+    // Remove walkthrough parameter from URL
+    const newSearchParams = new URLSearchParams(searchParams.toString())
+    newSearchParams.delete('walkthrough')
+    router.push(`/settings/organization?${newSearchParams.toString()}`, { scroll: false })
+  }
+
+  const handleWalkthroughSkip = () => {
+    setShowWalkthrough(false)
+    const newSearchParams = new URLSearchParams(searchParams.toString())
+    newSearchParams.delete('walkthrough')
+    router.push(`/settings/organization?${newSearchParams.toString()}`, { scroll: false })
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Walkthrough overlay */}
+      {showWalkthrough && isManager && (
+        <TeamManagementWalkthrough
+          onComplete={handleWalkthroughComplete}
+          onSkip={handleWalkthroughSkip}
+        />
+      )}
+
       {/* Tab Navigation */}
-      <div className="border-b border-[#2a2a2a]">
+      <div className="border-b border-[#2a2a2a]" data-walkthrough="tabs">
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {tabs.map((tab, index) => {
             const Icon = tab.icon

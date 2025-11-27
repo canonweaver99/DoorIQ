@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import StreamingGradingDisplay from '@/components/trainer/StreamingGradingDisplay'
+import { createClient } from '@/lib/supabase/client'
 
 const TIPS = [
   'Great sales reps ask 3-5 discovery questions before presenting solutions',
@@ -24,6 +25,7 @@ export default function LoadingPage() {
   const [gradingStatus, setGradingStatus] = useState<'idle' | 'in-progress' | 'completed' | 'error'>('idle')
   const [lastError, setLastError] = useState<string | null>(null)
   const [showSkip, setShowSkip] = useState(false)
+  const [checkedFirstSession, setCheckedFirstSession] = useState(false)
   const sessionId = params.sessionId as string
   
   const handleSkip = () => {
@@ -36,13 +38,95 @@ export default function LoadingPage() {
     router.push(`/analytics/${sessionId}`)
   }
 
-  // If streaming mode is enabled, show the streaming display
-  if (useStreaming) {
+  // Check if this is a manager's first completed session and redirect accordingly
+  useEffect(() => {
+    const checkFirstSessionRedirect = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          setCheckedFirstSession(true)
+          return
+        }
+
+        // Get user role and check if they have completed any other sessions
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role, onboarding_steps_completed')
+          .eq('id', user.id)
+          .single()
+
+        if (!userData) {
+          setCheckedFirstSession(true)
+          return
+        }
+
+        const isManager = userData.role === 'manager' || userData.role === 'admin'
+        const stepsCompleted = userData.onboarding_steps_completed || {}
+        const hasInvitedTeam = stepsCompleted.invite_team === true
+
+        // Check if this is their first completed session (excluding current session)
+        const { count: completedSessionsCount } = await supabase
+          .from('sessions')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .neq('id', sessionId)
+          .not('grading_status', 'is', null)
+          .in('grading_status', ['complete', 'completed'])
+
+        const isFirstCompletedSession = (completedSessionsCount || 0) === 0
+
+        // If manager, first completed session, and hasn't invited team yet, redirect to invite page (skip grading)
+        if (isManager && isFirstCompletedSession && !hasInvitedTeam) {
+          console.log('👋 Manager first completed session detected - redirecting to invite page')
+          // Mark first_session as complete before redirecting (if not already marked)
+          if (!stepsCompleted.first_session) {
+            await fetch('/api/onboarding/complete-step', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ step: 'first_session' }),
+            })
+          }
+          router.push(`/onboarding/invite-team`)
+          return
+        }
+
+        setCheckedFirstSession(true)
+      } catch (error) {
+        console.error('Error checking first session:', error)
+        setCheckedFirstSession(true) // Continue with normal flow on error
+      }
+    }
+
+    checkFirstSessionRedirect()
+  }, [router, sessionId])
+
+  // If streaming mode is enabled and we've checked first session, show the streaming display
+  if (useStreaming && checkedFirstSession) {
     return (
       <StreamingGradingDisplay 
         sessionId={sessionId} 
         onComplete={handleStreamingComplete}
       />
+    )
+  }
+
+  // Show loading while checking first session
+  if (!checkedFirstSession) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            className="inline-block mb-4"
+          >
+            <Loader2 className="w-16 h-16 text-purple-500" />
+          </motion.div>
+          <p className="text-slate-400">Preparing your session...</p>
+        </div>
+      </div>
     )
   }
 
