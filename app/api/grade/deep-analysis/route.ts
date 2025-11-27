@@ -113,7 +113,7 @@ JSON:
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o', // Best model for quality
       messages: [
         { role: 'system', content: 'Expert sales coach. Be concise. Return JSON only.' },
         { role: 'user', content: prompt }

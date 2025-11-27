@@ -51,6 +51,34 @@ export async function POST(req: NextRequest) {
       logger.info('Starting Phase 1: Instant Metrics', { sessionId })
       const instantStart = Date.now()
       
+      // Try to sync ElevenLabs metrics if conversation_id exists but metrics don't
+      const conversationId = elevenLabsConversationId || session.elevenlabs_conversation_id
+      if (conversationId && !session.elevenlabs_metrics) {
+        logger.info('Attempting to sync ElevenLabs metrics', { sessionId, conversationId })
+        try {
+          const syncResponse = await fetch(`${req.nextUrl.origin}/api/elevenlabs/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+          })
+          if (syncResponse.ok) {
+            logger.info('Successfully synced ElevenLabs metrics', { sessionId })
+            // Refresh session data to get updated metrics
+            const { data: updatedSession } = await supabase
+              .from('live_sessions')
+              .select('elevenlabs_metrics, elevenlabs_conversation_id')
+              .eq('id', sessionId)
+              .single()
+            if (updatedSession) {
+              session.elevenlabs_metrics = updatedSession.elevenlabs_metrics
+              session.elevenlabs_conversation_id = updatedSession.elevenlabs_conversation_id
+            }
+          }
+        } catch (syncError) {
+          logger.warn('Failed to sync ElevenLabs metrics (non-blocking)', { sessionId, error: syncError })
+        }
+      }
+      
       const instantResponse = await fetch(`${req.nextUrl.origin}/api/grade/instant`, {
         method: 'POST',
         headers: {
@@ -59,7 +87,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           sessionId,
           transcript: sessionTranscript,
-          elevenLabsConversationId: elevenLabsConversationId || session.elevenlabs_conversation_id
+          elevenLabsConversationId: conversationId
         })
       })
       

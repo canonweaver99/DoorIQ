@@ -150,8 +150,8 @@ export function HeroSection({
   }
   
   const getTrendText = (value: number) => {
-    if (value > 0) return `+${value} points ↑`
-    if (value < 0) return `${value} points ↓`
+    if (value > 0) return `+${value}% ↑`
+    if (value < 0) return `${value}% ↓`
     return 'No change'
   }
   

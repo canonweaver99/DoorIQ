@@ -14,23 +14,23 @@ interface FocusAreaProps {
   userName?: string
 }
 
-// Map of skill areas to suggested drills/personas
+// Map of skill areas to suggested drills/personas (using actual agent names)
 const skillRecommendations: Record<string, { drill: string; persona?: string }> = {
   rapport: {
     drill: 'Practice building rapport in the first 2 minutes',
-    persona: 'Friendly Neighbor'
+    persona: 'No Problem Nancy'
   },
   discovery: {
     drill: 'Focus on asking open-ended questions',
-    persona: 'Curious Customer'
+    persona: 'Spouse Check Susan'
   },
   objection_handling: {
     drill: 'Practice the Feel-Felt-Found technique',
-    persona: 'Price-Conscious Buyer'
+    persona: 'Too Expensive Tim'
   },
   closing: {
     drill: 'Work on assumptive closing language',
-    persona: 'Hesitant Decision Maker'
+    persona: 'Think About It Tina'
   }
 }
 
@@ -135,7 +135,7 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
               <div className="flex items-start gap-2">
                 <span className="text-amber-400 font-bold">→</span>
                 <span className="text-gray-200 font-sans">
-                  <span className="font-semibold">Practice with:</span> {recommendation.persona} persona
+                  <span className="font-semibold">Practice with:</span> {recommendation.persona}
                 </span>
               </div>
             )}
