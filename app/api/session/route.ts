@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceSupabaseClient, createServerSupabaseClient } from '@/lib/supabase/server'
+import { detectObjection as detectEnhancedObjection, detectTechnique as detectEnhancedTechnique } from '@/lib/trainer/enhancedPatternAnalyzer'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -251,37 +252,33 @@ export async function PATCH(req: Request) {
         let techniquesUsed = existingInstantMetrics.techniquesUsed || []
         
         if (finalTranscript && Array.isArray(finalTranscript) && finalTranscript.length > 0) {
-          // Objection detection patterns
-          const objectionPatterns = {
-            price: ['too expensive', 'can\'t afford', 'price is high', 'price is high', 'costs too much', 'too much money', 'expensive', 'cheaper', 'lower price', 'budget'],
-            time: ['not right now', 'maybe later', 'need to think', 'think about it', 'not ready', 'later', 'some other time', 'not now'],
-            authority: ['talk to spouse', 'need to discuss', 'not my decision', 'spouse', 'partner', 'wife', 'husband', 'check with'],
-            need: ['don\'t need it', 'already have', 'not interested', 'don\'t want', 'not needed', 'no need', 'already got']
-          }
-          
+          // Enhanced objection detection (uses enhancedPatternAnalyzer)
           function detectObjection(text: string): boolean {
-            const lowerText = text.toLowerCase()
-            for (const patterns of Object.values(objectionPatterns)) {
-              if (patterns.some(pattern => lowerText.includes(pattern))) {
-                return true
-              }
-            }
-            return false
+            const enhanced = detectEnhancedObjection(text)
+            return enhanced !== null
           }
           
-          // Technique detection patterns
-          const techniquePatterns = {
-            feelFeltFound: ['i understand how you feel', 'i felt the same way', 'others have felt', 'i know how you feel', 'i felt that'],
-            socialProof: ['other customers', 'neighbors', 'other homeowners', 'many customers', 'lots of people', 'others have'],
-            urgency: ['limited time', 'today only', 'special offer', 'act now', 'don\'t wait', 'limited availability'],
-            activeListening: ['i hear you', 'i understand', 'that makes sense', 'i see', 'got it', 'i get that', 'absolutely']
-          }
-          
+          // Enhanced technique detection (uses enhancedPatternAnalyzer)
           function detectTechnique(text: string): string | null {
+            // Try enhanced detection first
+            const enhancedTechnique = detectEnhancedTechnique(text)
+            if (enhancedTechnique) {
+              return enhancedTechnique
+            }
+            
+            // Fallback to legacy patterns
             const lowerText = text.toLowerCase()
             if (/^(what|how|why|when|where|tell me|can you explain)/i.test(text.trim())) {
               return 'Open-Ended Question'
             }
+            
+            const techniquePatterns = {
+              feelFeltFound: ['i understand how you feel', 'i felt the same way', 'others have felt', 'i know how you feel', 'i felt that'],
+              socialProof: ['other customers', 'neighbors', 'other homeowners', 'many customers', 'lots of people', 'others have'],
+              urgency: ['limited time', 'today only', 'special offer', 'act now', 'don\'t wait', 'limited availability'],
+              activeListening: ['i hear you', 'i understand', 'that makes sense', 'i see', 'got it', 'i get that', 'absolutely']
+            }
+            
             for (const [technique, patterns] of Object.entries(techniquePatterns)) {
               if (patterns.some(pattern => lowerText.includes(pattern))) {
                 const formattedName = technique.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim()

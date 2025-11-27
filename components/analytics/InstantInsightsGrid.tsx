@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MessageSquare, AlertTriangle, Book, Info, Lightbulb, ExternalLink, TrendingUp, CheckCircle2, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
-import { Sparkline } from './Sparkline'
+import { detectObjection as detectEnhancedObjection, detectTechnique as detectEnhancedTechnique } from '@/lib/trainer/enhancedPatternAnalyzer'
 
 interface InstantInsightsGridProps {
   instantMetrics?: {
@@ -54,30 +54,14 @@ function MetricTooltip({ children, content }: { children: React.ReactNode, conte
   )
 }
 
-// Technique detection patterns (same as live session)
-const TECHNIQUE_PATTERNS = {
-  feelFeltFound: [
-    'i understand how you feel', 'i felt the same way', 'others have felt',
-    'i know how you feel', 'i felt that', 'others felt', 'i\'ve felt'
-  ],
-  socialProof: [
-    'other customers', 'neighbors', 'other homeowners', 'many customers',
-    'lots of people', 'others have', 'most people', 'customers say',
-    'neighbors love', 'everyone says'
-  ],
-  urgency: [
-    'limited time', 'today only', 'special offer', 'act now',
-    'don\'t wait', 'limited availability', 'while supplies last',
-    'expires soon', 'ending soon', 'last chance'
-  ],
-  activeListening: [
-    'i hear you', 'i understand', 'that makes sense', 'i see',
-    'got it', 'i get that', 'absolutely', 'you\'re right',
-    'i can see why', 'that\'s understandable'
-  ]
-}
-
+// Technique detection - uses enhanced analyzer first, falls back to legacy
 function detectTechnique(text: string): string | null {
+  // Try enhanced technique detection first
+  const enhancedTechnique = detectEnhancedTechnique(text)
+  if (enhancedTechnique) {
+    return enhancedTechnique
+  }
+  
   const lowerText = text.toLowerCase()
   
   // Check for open-ended questions
@@ -85,7 +69,29 @@ function detectTechnique(text: string): string | null {
     return 'Open-Ended Question'
   }
   
-  // Check other techniques
+  // Legacy technique patterns (fallback)
+  const TECHNIQUE_PATTERNS = {
+    feelFeltFound: [
+      'i understand how you feel', 'i felt the same way', 'others have felt',
+      'i know how you feel', 'i felt that', 'others felt', 'i\'ve felt'
+    ],
+    socialProof: [
+      'other customers', 'neighbors', 'other homeowners', 'many customers',
+      'lots of people', 'others have', 'most people', 'customers say',
+      'neighbors love', 'everyone says'
+    ],
+    urgency: [
+      'limited time', 'today only', 'special offer', 'act now',
+      'don\'t wait', 'limited availability', 'while supplies last',
+      'expires soon', 'ending soon', 'last chance'
+    ],
+    activeListening: [
+      'i hear you', 'i understand', 'that makes sense', 'i see',
+      'got it', 'i get that', 'absolutely', 'you\'re right',
+      'i can see why', 'that\'s understandable'
+    ]
+  }
+  
   for (const [technique, patterns] of Object.entries(TECHNIQUE_PATTERNS)) {
     for (const pattern of patterns) {
       if (lowerText.includes(pattern)) {
@@ -101,15 +107,40 @@ function detectTechnique(text: string): string | null {
   return null
 }
 
-// Objection detection patterns
-const OBJECTION_PATTERNS = {
-  price: ['too expensive', 'can\'t afford', 'price is high', 'costs too much', 'too much money', 'expensive', 'cheaper', 'lower price', 'budget'],
-  time: ['not right now', 'maybe later', 'need to think', 'think about it', 'not ready', 'later', 'some other time', 'not now'],
-  authority: ['talk to spouse', 'need to discuss', 'not my decision', 'spouse', 'partner', 'wife', 'husband', 'check with'],
-  need: ['don\'t need it', 'already have', 'not interested', 'don\'t want', 'not needed', 'no need', 'already got']
-}
-
+// Objection detection - uses enhanced analyzer first, falls back to legacy
 function detectObjection(text: string): { type: string; text: string } | null {
+  // Try enhanced objection detection first
+  const enhancedObjection = detectEnhancedObjection(text)
+  if (enhancedObjection) {
+    // Map enhanced types to display names
+    const typeMap: Record<string, string> = {
+      price: 'price',
+      timing: 'time',
+      trust: 'trust',
+      need: 'need',
+      authority: 'authority',
+      comparison: 'comparison',
+      skepticism: 'skepticism',
+      renter_ownership: 'renter_ownership',
+      existing_service: 'existing_service',
+      no_problem: 'no_problem',
+      contract_fear: 'contract_fear',
+      door_policy: 'door_policy',
+      brush_off: 'brush_off',
+      bad_experience: 'bad_experience',
+      just_moved: 'just_moved'
+    }
+    return { type: typeMap[enhancedObjection.type] || enhancedObjection.type, text }
+  }
+  
+  // Legacy objection patterns (fallback)
+  const OBJECTION_PATTERNS = {
+    price: ['too expensive', 'can\'t afford', 'price is high', 'costs too much', 'too much money', 'expensive', 'cheaper', 'lower price', 'budget'],
+    time: ['not right now', 'maybe later', 'need to think', 'think about it', 'not ready', 'later', 'some other time', 'not now'],
+    authority: ['talk to spouse', 'need to discuss', 'not my decision', 'spouse', 'partner', 'wife', 'husband', 'check with'],
+    need: ['don\'t need it', 'already have', 'not interested', 'don\'t want', 'not needed', 'no need', 'already got']
+  }
+  
   const lowerText = text.toLowerCase()
   for (const [type, patterns] of Object.entries(OBJECTION_PATTERNS)) {
     for (const pattern of patterns) {
@@ -238,17 +269,6 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
               <div className="text-right min-w-[120px]">
                 <div className={cn("text-lg font-bold mb-1 font-space", wpmStatus.color)}>{wpmStatus.label}</div>
                 <div className="text-lg font-bold text-white font-space">Target 150 WPM</div>
-                {voiceAnalysis?.wpmTimeline && voiceAnalysis.wpmTimeline.length > 0 && (
-                  <div className="mt-2 flex items-center justify-end gap-2">
-                    <span className="text-xs text-gray-400 font-sans">Throughout call:</span>
-                    <Sparkline 
-                      data={voiceAnalysis.wpmTimeline} 
-                      width={60} 
-                      height={16} 
-                      color={wpm < 140 ? '#f59e0b' : wpm > 160 ? '#ef4444' : '#10b981'} 
-                    />
-                  </div>
-                )}
                 <div className="text-xs text-gray-500 font-sans mt-1">
                   {wpm < 140 ? 'Try speaking faster' : wpm > 160 ? 'Slow down slightly' : 'Optimal pace'}
                 </div>
@@ -322,24 +342,6 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
               
               {/* Target Info */}
               <div className="text-sm text-gray-400 font-sans mb-3">Target: 40%</div>
-              
-              {/* Sparkline */}
-              {voiceAnalysis?.volumeTimeline && voiceAnalysis.volumeTimeline.length > 0 && (
-                <div className="mb-3 flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Sparkline 
-                      data={voiceAnalysis.volumeTimeline} 
-                      width={80} 
-                      height={20} 
-                      color={balance >= 30 && balance <= 50 ? '#10b981' : '#ef4444'} 
-                    />
-                  </div>
-                  <div className="text-xs text-gray-500 font-sans">Throughout call</div>
-                </div>
-              )}
-              
-              {/* User Name */}
-              <div className="text-sm text-gray-300 font-sans mb-2">{userName}</div>
               
               {/* Coaching Tip */}
               <div className={cn("text-sm font-bold font-space", balanceStatus.color)}>

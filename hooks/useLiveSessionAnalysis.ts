@@ -6,11 +6,18 @@ import {
   detectObjection as detectEnhancedObjection,
   detectMicroCommitment,
   detectCloseAttempt,
+  detectTechnique as detectEnhancedTechnique,
   assessObjectionHandling,
   assessCloseSuccess,
   assessCloseTiming,
   generateConciseFeedback,
-  getObjectionApproach
+  getObjectionApproach,
+  calculateObjectionTiming,
+  trackObjection,
+  getObjectionSequence,
+  resetObjectionSequence,
+  detectObjectionStacking,
+  calculateBuyingTemperature
 } from '@/lib/trainer/enhancedPatternAnalyzer'
 
 interface UseLiveSessionAnalysisReturn {
@@ -42,7 +49,7 @@ const OBJECTION_PATTERNS = {
   ]
 }
 
-// Technique detection patterns
+// Technique detection patterns (legacy - now uses enhancedPatternAnalyzer)
 const TECHNIQUE_PATTERNS = {
   feelFeltFound: [
     'i understand how you feel', 'i felt the same way', 'others have felt',
@@ -65,6 +72,31 @@ const TECHNIQUE_PATTERNS = {
     'i hear you', 'i understand', 'that makes sense', 'i see',
     'got it', 'i get that', 'absolutely', 'you\'re right',
     'i can see why', 'that\'s understandable'
+  ],
+  // New techniques added
+  tieDowns: [
+    'right?', 'wouldn\'t you agree', 'makes sense', 'don\'t you think', 'fair enough'
+  ],
+  futurePacing: [
+    'imagine', 'picture this', 'think about', 'wouldn\'t it be nice', 'what if you could'
+  ],
+  painDiscovery: [
+    'have you noticed', 'what kind of bugs', 'how often do you see', 'what\'s been your experience'
+  ],
+  takeaway: [
+    'might not be for you', 'not for everyone', 'only if', 'no pressure', 'totally understand if'
+  ],
+  alternativeClose: [
+    'morning or afternoon', 'this week or next', 'would you prefer', 'which works better'
+  ],
+  priceReframe: [
+    'less than a dollar', 'cost of a coffee', 'pennies a day', 'compared to', 'cheaper than'
+  ],
+  thirdPartyStory: [
+    'had a customer', 'talked to someone', 'neighbor down the street', 'just last week', 'funny story'
+  ],
+  patternInterrupt: [
+    'before you say no', 'I know what you\'re thinking', 'hear me out', 'quick question'
   ]
 }
 
@@ -87,8 +119,14 @@ function detectObjection(text: string): { type: 'price' | 'time' | 'authority' |
   return { type: typeMap[enhanced.type] || 'need' }
 }
 
-// Check if text contains technique patterns
+// Check if text contains technique patterns (uses enhanced analyzer first, falls back to legacy)
 function detectTechnique(text: string): string | null {
+  // Try enhanced technique detection first
+  const enhancedTechnique = detectEnhancedTechnique(text)
+  if (enhancedTechnique) {
+    return enhancedTechnique
+  }
+  
   const lowerText = text.toLowerCase()
   
   // Check for open-ended questions
@@ -96,7 +134,7 @@ function detectTechnique(text: string): string | null {
     return 'Open-Ended Question'
   }
   
-  // Check other techniques
+  // Check legacy techniques
   for (const [technique, patterns] of Object.entries(TECHNIQUE_PATTERNS)) {
     if (technique === 'openEndedQuestion') continue // Already checked
     
@@ -481,6 +519,17 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
   const valueStatementsCountRef = useRef(0)
   const priceQuestionAskedRef = useRef<Date | null>(null)
   const lastTalkTimeWarningRef = useRef<{ threshold: 'high' | 'low' | null; timestamp: Date | null }>({ threshold: null, timestamp: null })
+  const recentObjectionsRef = useRef<Array<{ timestamp: Date; type: 'price' | 'timing' | 'trust' | 'need' | 'authority' | 'comparison' | 'skepticism' | 'renter_ownership' | 'existing_service' | 'no_problem' | 'contract_fear' | 'door_policy' | 'brush_off' | 'bad_experience' | 'just_moved' }>>([]) // For stacking detection
+  const commitmentHistoryRef = useRef<Array<{ timestamp: Date; level: 'minimal' | 'moderate' | 'strong' | 'buying' }>>([]) // For buying temperature
+  
+  // Reset objection sequence on new session
+  useEffect(() => {
+    if (transcript.length === 0) {
+      resetObjectionSequence()
+      recentObjectionsRef.current = []
+      commitmentHistoryRef.current = []
+    }
+  }, [transcript.length])
   
   // Generate feedback item
   const addFeedbackItem = useCallback((
@@ -533,9 +582,10 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       const entryIndex = previousTranscriptLengthRef.current + relativeIndex
       console.log('📝 Processing entry:', { speaker: entry.speaker, text: entry.text.substring(0, 50), index: entryIndex })
       
-      // Enhanced objection detection (only for homeowner)
+      // Enhanced objection detection (only for homeowner) with context awareness
       if (entry.speaker === 'homeowner') {
-        const objection = detectEnhancedObjection(entry.text)
+        // Use context-aware detection
+        const objection = detectEnhancedObjection(entry.text, transcript, entryIndex)
         console.log('🏠 Homeowner entry - objection check:', objection ? objection.type : 'none')
         if (objection) {
           const objectionKey = `${objection.type}-${entry.id}`
@@ -545,11 +595,35 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             objectionHandledRef.current.set(objectionKey, false)
             unhandledObjectionIndicesRef.current.push(entryIndex)
             
+            // Calculate timing
+            const timing = sessionStartTimeRef.current 
+              ? calculateObjectionTiming(entry.timestamp, sessionStartTimeRef.current)
+              : 'mid'
+            
+            // Track objection for sequence and stacking
+            trackObjection(objection.type, timing, entry.timestamp)
+            recentObjectionsRef.current.push({ timestamp: entry.timestamp, type: objection.type })
+            recentObjectionsRef.current = recentObjectionsRef.current.slice(-10) // Keep last 10
+            
+            // Check for stacking
+            const isStacked = detectObjectionStacking(recentObjectionsRef.current)
+            
             // Generate concise feedback message
-            const message = generateConciseFeedback('objection', {
+            let message = generateConciseFeedback('objection', {
               objectionType: objection.type,
               severity: objection.severity
             })
+            
+            // Add timing and stacking info to message
+            if (timing === 'early') {
+              message += ' (Early - possible brush-off)'
+            } else if (timing === 'late') {
+              message += ' (Late - genuine concern)'
+            }
+            
+            if (isStacked) {
+              message += ' [Stacked - multiple objections]'
+            }
             
             // Map timing to 'time' for backward compatibility
             const objectionType = objection.type === 'timing' ? 'time' : objection.type
@@ -557,7 +631,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             addFeedbackItem(
               'objection_detected',
               message,
-              objection.severity === 'critical' ? 'needs_improvement' : 'neutral',
+              objection.severity === 'critical' || isStacked ? 'needs_improvement' : 'neutral',
               { 
                 objectionType: objectionType as any,
                 handlingQuality: undefined
@@ -607,12 +681,27 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
           }
         }
         
-        // Enhanced micro-commitment detection
-        const commitment = detectMicroCommitment(entry.text)
+        // Enhanced micro-commitment detection with context awareness
+        const commitment = detectMicroCommitment(entry.text, transcript, entryIndex)
         if (commitment) {
+          // Track for buying temperature
+          commitmentHistoryRef.current.push({ timestamp: entry.timestamp, level: commitment })
+          commitmentHistoryRef.current = commitmentHistoryRef.current.slice(-20) // Keep last 20
+          
+          // Calculate buying temperature
+          const temperature = calculateBuyingTemperature(commitmentHistoryRef.current, entry.timestamp)
+          
           // Only show moderate+ commitments to avoid spam
           if (commitment === 'moderate' || commitment === 'strong' || commitment === 'buying') {
-            const message = generateConciseFeedback('micro_commitment', { level: commitment })
+            let message = generateConciseFeedback('micro_commitment', { level: commitment })
+            
+            // Add temperature trend info
+            if (temperature.trend === 'warming_up') {
+              message += ' - Temperature rising!'
+            } else if (temperature.trend === 'cooling_off') {
+              message += ' - Temperature cooling'
+            }
+            
             addFeedbackItem(
               'coaching_tip',
               message,

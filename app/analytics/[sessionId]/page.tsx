@@ -602,8 +602,8 @@ export default function AnalyticsPage() {
         )}
         
         
-        {/* AI Coaching Insights - Loads after comparison */}
-        {(session.analytics?.coaching_plan || session.analytics?.feedback) ? (
+        {/* AI Coaching Insights - ARCHIVED */}
+        {/* {(session.analytics?.coaching_plan || session.analytics?.feedback) ? (
           loadingStates.coaching ? (
             <AICoachingInsights
               coachingPlan={session.analytics?.coaching_plan}
@@ -612,7 +612,7 @@ export default function AnalyticsPage() {
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
           )
-        ) : null}
+        ) : null} */}
       </div>
     </div>
   )
