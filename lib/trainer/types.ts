@@ -26,7 +26,7 @@ export interface FeedbackItem {
   message: string
   severity: FeedbackSeverity
   metadata?: {
-    objectionType?: 'price' | 'timing' | 'trust' | 'need' | 'authority' | 'comparison' | 'skepticism' | 'time' // 'time' kept for backward compatibility
+    objectionType?: 'price' | 'timing' | 'trust' | 'need' | 'authority' | 'comparison' | 'skepticism' | 'time' | 'renter_ownership' | 'existing_service' | 'no_problem' | 'contract_fear' | 'door_policy' | 'brush_off' | 'bad_experience' | 'just_moved' // 'time' kept for backward compatibility
     techniqueName?: string
     closingType?: 'trial_close' | 'direct_close' | 'assumptive' | 'soft' | 'hard' | 'urgency'
     momentumType?: 'building_rapport' | 'interest_growing' | 'losing_engagement' | 'strong_recovery'
@@ -35,6 +35,10 @@ export interface FeedbackItem {
     handlingQuality?: 'poor' | 'adequate' | 'good' | 'excellent'
     commitmentLevel?: 'minimal' | 'moderate' | 'strong' | 'buying'
     closeTiming?: 'too_early' | 'appropriate' | 'too_late' | 'none'
+    resolutionSignals?: string[]
+    isResolved?: boolean
+    isReObjection?: boolean
+    previousObjectionIndex?: number
   }
 }
 

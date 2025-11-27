@@ -509,6 +509,9 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
   const previousTranscriptLengthRef = useRef(0)
   const objectionIndicesRef = useRef<Map<string, number>>(new Map()) // Track objection indices for assessment
   const objectionHandledRef = useRef<Map<string, boolean>>(new Map())
+  const objectionResolvedRef = useRef<Map<string, boolean>>(new Map()) // Track if objection is fully resolved
+  const objectionTypesRef = useRef<Map<string, string>>(new Map()) // Track objection types for re-objection detection
+  const objectionLastCheckedRef = useRef<Map<string, number>>(new Map()) // Track last check index for each objection
   const closeAttemptIndicesRef = useRef<number[]>([]) // Track close attempts for timing
   const unhandledObjectionIndicesRef = useRef<number[]>([]) // Track unhandled objections
   const lastMonologueStartRef = useRef<Date | null>(null)
@@ -608,10 +611,12 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             // Check for stacking
             const isStacked = detectObjectionStacking(recentObjectionsRef.current)
             
-            // Generate concise feedback message
+            // Generate concise feedback message with sub-category
             let message = generateConciseFeedback('objection', {
               objectionType: objection.type,
-              severity: objection.severity
+              severity: objection.severity,
+              subCategory: objection.subCategory,
+              confidence: objection.confidence
             })
             
             // Add timing and stacking info to message
@@ -638,46 +643,10 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
               }
             )
             
-            // Assess objection handling after a short delay (allows for rep response)
-            setTimeout(() => {
-              const objectionIndex = objectionIndicesRef.current.get(objectionKey)
-              if (objectionIndex !== undefined && transcript.length > objectionIndex) {
-                const handling = assessObjectionHandling(objectionIndex, transcript)
-                
-                if (handling.wasHandled) {
-                  objectionHandledRef.current.set(objectionKey, true)
-                  // Remove from unhandled list
-                  const unhandledIdx = unhandledObjectionIndicesRef.current.indexOf(objectionIndex)
-                  if (unhandledIdx > -1) {
-                    unhandledObjectionIndicesRef.current.splice(unhandledIdx, 1)
-                  }
-                  
-                  const message = generateConciseFeedback('objection_handling', {
-                    quality: handling.quality,
-                    wasHandled: true
-                  })
-                  
-                  addFeedbackItem(
-                    'objection_handling',
-                    message,
-                    handling.quality === 'poor' || handling.quality === 'adequate' ? 'needs_improvement' : 'good',
-                    { handlingQuality: handling.quality || undefined }
-                  )
-                } else if (handling.quality === 'poor') {
-                  const message = generateConciseFeedback('objection_handling', {
-                    quality: handling.quality,
-                    wasHandled: false
-                  })
-                  
-                  addFeedbackItem(
-                    'objection_handling',
-                    message,
-                    'needs_improvement',
-                    { handlingQuality: handling.quality || undefined }
-                  )
-                }
-              }
-            }, 5000) // Check after 5 seconds
+            // Store objection type for re-objection detection
+            objectionTypesRef.current.set(objectionKey, objection.type)
+            objectionLastCheckedRef.current.set(objectionKey, entryIndex)
+            objectionResolvedRef.current.set(objectionKey, false)
           }
         }
         
@@ -903,6 +872,150 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       }
       
       // Buying signals are now handled by micro-commitment detection above
+    })
+  }, [transcript, addFeedbackItem])
+  
+  // Continuous objection monitoring - check resolution status on every transcript update
+  useEffect(() => {
+    // Check all pending objections for resolution status
+    objectionIndicesRef.current.forEach((objectionIndex, objectionKey) => {
+      const isResolved = objectionResolvedRef.current.get(objectionKey)
+      const lastChecked = objectionLastCheckedRef.current.get(objectionKey) || objectionIndex
+      
+      // Only check if not already resolved and transcript has grown
+      if (!isResolved && transcript.length > lastChecked) {
+        const objectionType = objectionTypesRef.current.get(objectionKey)
+        const handling = assessObjectionHandling(
+          objectionIndex, 
+          transcript,
+          objectionType as any
+        )
+        
+        // Update last checked index
+        objectionLastCheckedRef.current.set(objectionKey, transcript.length - 1)
+        
+        // Check if objection is now handled
+        if (handling.wasHandled && !objectionHandledRef.current.get(objectionKey)) {
+          objectionHandledRef.current.set(objectionKey, true)
+          
+          // Remove from unhandled list
+          const unhandledIdx = unhandledObjectionIndicesRef.current.indexOf(objectionIndex)
+          if (unhandledIdx > -1) {
+            unhandledObjectionIndicesRef.current.splice(unhandledIdx, 1)
+          }
+          
+          let message = generateConciseFeedback('objection_handling', {
+            quality: handling.quality,
+            wasHandled: true
+          })
+          
+          // Add resolution signals to message if available
+          if (handling.resolutionSignals && handling.resolutionSignals.length > 0) {
+            message += ` (${handling.resolutionSignals.slice(0, 2).join(', ')})`
+          }
+          
+          addFeedbackItem(
+            'objection_handling',
+            message,
+            handling.quality === 'poor' || handling.quality === 'adequate' ? 'needs_improvement' : 'good',
+            { 
+              handlingQuality: handling.quality || undefined,
+              resolutionSignals: handling.resolutionSignals
+            }
+          )
+        }
+        
+        // Check if objection is fully resolved
+        if (handling.isResolved && !isResolved) {
+          objectionResolvedRef.current.set(objectionKey, true)
+          
+          let message = 'Objection resolved! '
+          if (handling.resolutionSignals && handling.resolutionSignals.length > 0) {
+            message += handling.resolutionSignals.join(', ')
+          } else {
+            message += 'Homeowner accepted the solution.'
+          }
+          
+          addFeedbackItem(
+            'objection_handling',
+            message,
+            'good',
+            { 
+              handlingQuality: handling.quality || undefined,
+              isResolved: true,
+              resolutionSignals: handling.resolutionSignals
+            }
+          )
+        }
+        
+        // Check if handling quality is poor
+        if (handling.quality === 'poor' && !objectionHandledRef.current.get(objectionKey)) {
+          const message = generateConciseFeedback('objection_handling', {
+            quality: handling.quality,
+            wasHandled: false
+          })
+          
+          addFeedbackItem(
+            'objection_handling',
+            message,
+            'needs_improvement',
+            { handlingQuality: handling.quality || undefined }
+          )
+        }
+      }
+    })
+  }, [transcript, addFeedbackItem])
+  
+  // Re-objection detection - check if homeowner raises same objection again
+  useEffect(() => {
+    if (transcript.length <= previousTranscriptLengthRef.current) {
+      return
+    }
+    
+    const newEntries = transcript.slice(previousTranscriptLengthRef.current)
+    
+    newEntries.forEach((entry, relativeIndex) => {
+      if (entry.speaker === 'homeowner') {
+        const entryIndex = previousTranscriptLengthRef.current + relativeIndex
+        const objection = detectEnhancedObjection(entry.text, transcript, entryIndex)
+        
+        if (objection) {
+          // Check if we've seen this objection type before
+          objectionIndicesRef.current.forEach((previousIndex, objectionKey) => {
+            const previousType = objectionTypesRef.current.get(objectionKey)
+            const wasResolved = objectionResolvedRef.current.get(objectionKey)
+            
+            // Same objection type and it was previously handled/resolved
+            if (previousType === objection.type && (objectionHandledRef.current.get(objectionKey) || wasResolved)) {
+              // Check if this is a re-objection (not the same entry)
+              if (previousIndex !== entryIndex && entryIndex > previousIndex + 2) {
+                // Re-objection detected - mark previous as not resolved
+                objectionResolvedRef.current.set(objectionKey, false)
+                objectionHandledRef.current.set(objectionKey, false)
+                
+                // Add back to unhandled if not already there
+                if (!unhandledObjectionIndicesRef.current.includes(previousIndex)) {
+                  unhandledObjectionIndicesRef.current.push(previousIndex)
+                }
+                
+                // Map objection type for backward compatibility
+                const mappedObjectionType = objection.type === 'timing' ? 'time' : objection.type
+                
+                addFeedbackItem(
+                  'objection_detected',
+                  `Re-objection: ${objection.type} concern raised again - previous resolution may not have been effective`,
+                  'needs_improvement',
+                  {
+                    objectionType: mappedObjectionType as any,
+                    isReObjection: true,
+                    previousObjectionIndex: previousIndex
+                  }
+                )
+              }
+            }
+          })
+        }
+      }
     })
   }, [transcript, addFeedbackItem])
   

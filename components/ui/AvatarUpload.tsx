@@ -119,7 +119,8 @@ export default function AvatarUpload({ currentAvatarUrl, userId, onUploadComplet
       console.error('Error uploading avatar:', err)
       
       // Provide helpful error messages
-      const errorMessage = err.message || 'Unknown error'
+      const errorMessage = err?.message || err?.toString() || 'Unknown error'
+      console.error('Error details:', { message: errorMessage, error: err })
       
       if (errorMessage.includes('not found') || errorMessage.includes('does not exist') || errorMessage.includes('Bucket not found')) {
         setError('Profile pics bucket not found. Please create a bucket named "profile pics" in Supabase Storage and run the migration SQL to set up permissions.')

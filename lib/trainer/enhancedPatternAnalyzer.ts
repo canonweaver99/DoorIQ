@@ -23,6 +23,15 @@ type ObjectionType =
   | 'brush_off'
   | 'bad_experience'
   | 'just_moved'
+
+type ObjectionSubCategory = 
+  | 'price_affordability' 
+  | 'price_value_perception'
+  | 'timing_busy'
+  | 'timing_not_ready'
+  | 'trust_legitimacy'
+  | 'trust_references'
+  | null
 type HandlingQuality = 'poor' | 'adequate' | 'good' | 'excellent'
 type MicroCommitmentLevel = 'minimal' | 'moderate' | 'strong' | 'buying'
 type CloseAttemptType = 'soft' | 'hard' | 'assumptive' | 'urgency'
@@ -303,37 +312,139 @@ const OBJECTION_PATTERNS: Record<ObjectionType, {
   }
 }
 
-// Positive response indicators
+// Positive response indicators - expanded for better resolution detection
 const POSITIVE_INDICATORS = [
+  // Explicit acceptance
   /I see/i,
   /that makes sense/i,
+  /I understand/i,
+  /I get it/i,
+  /that's true/i,
+  /you're right/i,
+  /fair enough/i,
+  /I hear you/i,
+  /I can see why/i,
+  /that's understandable/i,
+  /that's reasonable/i,
+  /makes sense/i,
+  
+  // Engagement and interest
   /good point/i,
   /tell me more/i,
   /interesting/i,
   /didn't know that/i,
   /oh really/i,
+  /that's interesting/i,
+  /I didn't realize/i,
+  /I hadn't thought of that/i,
+  /that's helpful/i,
+  /good to know/i,
+  
+  // Buying signals - questions about next steps
   /what.*include/i,
   /how.*work/i,
   /when.*start/i,
+  /what.*next/i,
+  /how.*sign up/i,
+  /where.*sign/i,
+  /what.*process/i,
+  /how.*get started/i,
+  /what.*cost/i,
+  /how much/i,
+  /what.*price/i,
+  
+  // Agreement and acceptance
   /okay/i,
-  /fair enough/i,
-  /I understand/i,
-  /that's true/i,
-  /you're right/i
+  /sure/i,
+  /yes/i,
+  /yeah/i,
+  /alright/i,
+  /sounds good/i,
+  /that works/i,
+  /that's fine/i,
+  /I'm okay with/i,
+  /I can do that/i,
+  /let's do it/i,
+  /count me in/i,
+  /I'm ready/i,
+  
+  // Positive sentiment after objection
+  /I guess.*could/i,
+  /maybe.*work/i,
+  /I suppose/i,
+  /that might/i,
+  /could be/i,
+  /I'll consider/i,
+  /I'll think about it/i,
+  
+  // Acknowledgment of solution
+  /that solves/i,
+  /that addresses/i,
+  /that helps/i,
+  /that would work/i,
+  /that's better/i,
+  /I like that/i,
+  /that sounds/i
 ]
 
-// Negative indicators
+// Negative indicators - expanded for better resolution detection
 const NEGATIVE_INDICATORS = [
+  // Persistent objections
   /still not/i,
+  /still don't/i,
+  /still can't/i,
+  /still won't/i,
+  /still skeptical/i,
+  /still not convinced/i,
+  /still not sure/i,
+  /still have concerns/i,
+  /still worried/i,
+  
+  // Rejection
   /don't think so/i,
   /no thanks/i,
+  /not interested/i,
   /not convinced/i,
-  /still skeptical/i,
   /I'll pass/i,
+  /not for me/i,
+  /not what I want/i,
+  /don't want it/i,
+  /not going to/i,
+  /won't work/i,
+  /can't do it/i,
+  
+  // Dismissal
   /goodbye/i,
   /not today/i,
   /leave/i,
-  /go away/i
+  /go away/i,
+  /get lost/i,
+  /no way/i,
+  /absolutely not/i,
+  /definitely not/i,
+  
+  // Repeating same objection
+  /but.*still.*(expensive|cost|price|money)/i,
+  /but.*still.*(can't afford|too much)/i,
+  /but.*still.*(not ready|later|think)/i,
+  /but.*still.*(don't trust|sketchy|scam)/i,
+  
+  // Negative sentiment
+  /I doubt/i,
+  /I'm skeptical/i,
+  /seems like/i,
+  /sounds like/i,
+  /probably not/i,
+  /unlikely/i,
+  /doubtful/i,
+  
+  // Closing conversation
+  /I have to go/i,
+  /need to go/i,
+  /gotta go/i,
+  /have to leave/i,
+  /busy right now/i,
+  /not a good time/i
 ]
 
 // Technique patterns
@@ -490,7 +601,100 @@ const CLOSE_PATTERNS: Record<CloseAttemptType, RegExp[]> = {
 }
 
 /**
+ * Detect objection sub-category for more granular labeling
+ */
+function detectObjectionSubCategory(
+  type: ObjectionType,
+  text: string
+): ObjectionSubCategory {
+  const lowerText = text.toLowerCase()
+  
+  switch (type) {
+    case 'price':
+      // Affordability: direct statements about not being able to pay
+      if (/can't afford|can't pay|out of.*price|beyond.*budget|too much money|don't have.*money/i.test(lowerText)) {
+        return 'price_affordability'
+      }
+      // Value perception: questioning if it's worth it
+      if (/worth it|value|expensive|too much|overpriced|rip off/i.test(lowerText)) {
+        return 'price_value_perception'
+      }
+      return 'price_affordability' // Default
+      
+    case 'timing':
+      // Busy: specific time constraints
+      if (/busy|schedule|appointment|time|right now|today|this week/i.test(lowerText)) {
+        return 'timing_busy'
+      }
+      // Not ready: need more time to decide
+      if (/not ready|think about|decide|consider|need time|think it over/i.test(lowerText)) {
+        return 'timing_not_ready'
+      }
+      return 'timing_not_ready' // Default
+      
+    case 'trust':
+      // Legitimacy: questioning if company is real/legitimate
+      if (/legitimate|real|scam|sketchy|door to door|never heard/i.test(lowerText)) {
+        return 'trust_legitimacy'
+      }
+      // References: asking for proof/references
+      if (/references|proof|guarantee|how do i know|who else|customers/i.test(lowerText)) {
+        return 'trust_references'
+      }
+      return 'trust_legitimacy' // Default
+      
+    default:
+      return null
+  }
+}
+
+/**
+ * Calculate confidence score for objection detection (0-1)
+ */
+function calculateObjectionConfidence(
+  type: ObjectionType,
+  text: string,
+  contextWindow?: TranscriptEntry[],
+  contextIndex?: number
+): number {
+  const config = OBJECTION_PATTERNS[type]
+  if (!config) return 0.5
+  
+  let confidence = 0.5 // Base confidence
+  
+  // Check how many patterns match
+  const matchingPatterns = config.patterns.filter(pattern => {
+    if (config.requiresContext && contextWindow && contextIndex !== undefined) {
+      return detectWithContext(text, pattern, contextWindow, contextIndex)
+    }
+    return pattern.test(text)
+  }).length
+  
+  // More patterns = higher confidence
+  if (matchingPatterns > 1) confidence += 0.2
+  if (matchingPatterns > 2) confidence += 0.1
+  
+  // Check for explicit objection language
+  const explicitLanguage = /(can't|won't|don't|not|never|no way|impossible)/i.test(text)
+  if (explicitLanguage) confidence += 0.1
+  
+  // Check context - if previous entry was rep explaining something, higher confidence
+  if (contextWindow && contextIndex !== undefined && contextIndex > 0) {
+    const prevEntry = contextWindow[contextIndex - 1]
+    if (prevEntry && prevEntry.speaker === 'user') {
+      // Rep just explained something, homeowner objecting = higher confidence
+      if (/explain|tell|show|here's|this is|we/i.test(prevEntry.text)) {
+        confidence += 0.1
+      }
+    }
+  }
+  
+  return Math.min(1.0, confidence)
+}
+
+/**
  * Detect objection type and severity with context awareness
+ * Enhanced with sub-categories and confidence scores
  */
 export function detectObjection(
   text: string,
@@ -501,6 +705,8 @@ export function detectObjection(
   severity: 'low' | 'medium' | 'high' | 'critical'
   timing?: ObjectionTiming
   isStacked?: boolean
+  subCategory?: ObjectionSubCategory
+  confidence?: number
 } | null {
   for (const [type, config] of Object.entries(OBJECTION_PATTERNS)) {
     for (const pattern of config.patterns) {
@@ -513,9 +719,15 @@ export function detectObjection(
       }
       
       if (matches) {
+        const objectionType = type as ObjectionType
+        const subCategory = detectObjectionSubCategory(objectionType, text)
+        const confidence = calculateObjectionConfidence(objectionType, text, contextWindow, contextIndex)
+        
         return { 
-          type: type as ObjectionType, 
-          severity: config.severity 
+          type: objectionType, 
+          severity: config.severity,
+          subCategory,
+          confidence
         }
       }
     }
@@ -741,30 +953,34 @@ export function detectCloseAttempt(text: string): CloseAttemptType | null {
 
 /**
  * Assess if an objection was handled based on follow-up window
- * Enhanced with technique pattern detection
+ * Enhanced with technique pattern detection and multiple resolution signals
  */
 export function assessObjectionHandling(
   objectionIndex: number,
-  transcript: TranscriptEntry[]
+  transcript: TranscriptEntry[],
+  objectionType?: ObjectionType
 ): {
   wasHandled: boolean
   quality: HandlingQuality | null
   responseText?: string
   techniqueUsed?: string
+  resolutionSignals?: string[]
+  isResolved?: boolean
 } {
-  // Look at next 5 exchanges after objection (3 exchanges = rep response + homeowner response + rep follow-up)
+  // Look at next 8 exchanges after objection (expanded window for better detection)
   const followupWindow = transcript.slice(
     objectionIndex + 1,
-    Math.min(objectionIndex + 6, transcript.length)
+    Math.min(objectionIndex + 9, transcript.length)
   )
 
   let positiveCount = 0
   let negativeCount = 0
   let responseText = ''
   let techniqueUsed: string | undefined
+  const resolutionSignals: string[] = []
 
-  // Get rep's immediate response (within 3 exchanges)
-  const repResponses = followupWindow.filter(e => e.speaker === 'user').slice(0, 3)
+  // Get rep's immediate response (within 4 exchanges)
+  const repResponses = followupWindow.filter(e => e.speaker === 'user').slice(0, 4)
   if (repResponses.length > 0) {
     responseText = repResponses[0].text
     
@@ -773,39 +989,97 @@ export function assessObjectionHandling(
       const technique = detectTechnique(response.text)
       if (technique) {
         techniqueUsed = technique
+        resolutionSignals.push(`Technique used: ${technique}`)
         break
+      }
+    }
+    
+    // Check if rep addressed the objection directly
+    const objectionKeywords: Record<string, string[]> = {
+      price: ['price', 'cost', 'afford', 'money', 'expensive', 'cheap', 'budget', 'payment'],
+      timing: ['time', 'when', 'schedule', 'ready', 'later', 'now', 'timing'],
+      trust: ['trust', 'legitimate', 'proof', 'guarantee', 'references', 'company'],
+      need: ['need', 'want', 'interested', 'necessary', 'important', 'problem']
+    }
+    
+    if (objectionType && objectionKeywords[objectionType]) {
+      const keywords = objectionKeywords[objectionType]
+      const repText = repResponses.map(r => r.text.toLowerCase()).join(' ')
+      const addressedDirectly = keywords.some(keyword => repText.includes(keyword))
+      if (addressedDirectly) {
+        resolutionSignals.push('Objection directly addressed')
       }
     }
   }
 
   // Check customer responses for indicators
-  followupWindow
-    .filter(e => e.speaker === 'homeowner')
-    .forEach(entry => {
-      // Check positive indicators
-      POSITIVE_INDICATORS.forEach(pattern => {
-        if (pattern.test(entry.text)) {
-          positiveCount++
+  const homeownerResponses = followupWindow.filter(e => e.speaker === 'homeowner')
+  
+  homeownerResponses.forEach(entry => {
+    // Check positive indicators
+    POSITIVE_INDICATORS.forEach(pattern => {
+      if (pattern.test(entry.text)) {
+        positiveCount++
+        // Categorize positive signals
+        if (/I see|I understand|that makes sense|I get it/i.test(entry.text)) {
+          resolutionSignals.push('Explicit acceptance')
         }
-      })
-
-      // Check negative indicators
-      NEGATIVE_INDICATORS.forEach(pattern => {
-        if (pattern.test(entry.text)) {
-          negativeCount++
+        if (/what.*include|how.*work|when.*start|what.*next/i.test(entry.text)) {
+          resolutionSignals.push('Buying signal - asking about next steps')
         }
-      })
+        if (/sounds good|that works|I'm ready|let's do it/i.test(entry.text)) {
+          resolutionSignals.push('Strong agreement')
+        }
+      }
     })
 
+    // Check negative indicators
+    NEGATIVE_INDICATORS.forEach(pattern => {
+      if (pattern.test(entry.text)) {
+        negativeCount++
+      }
+    })
+    
+    // Check for micro-commitments (buying signals)
+    const commitment = detectMicroCommitment(entry.text, followupWindow, homeownerResponses.indexOf(entry))
+    if (commitment && (commitment === 'strong' || commitment === 'buying')) {
+      resolutionSignals.push(`Strong buying signal: ${commitment}`)
+      positiveCount += 2 // Weight buying signals higher
+    }
+  })
+
+  // Check if homeowner repeats the same objection (indicates NOT resolved)
+  if (objectionType && homeownerResponses.length > 0) {
+    const objectionPatterns = OBJECTION_PATTERNS[objectionType]?.patterns || []
+    const homeownerText = homeownerResponses.map(r => r.text).join(' ').toLowerCase()
+    const reObjection = objectionPatterns.some(pattern => pattern.test(homeownerText))
+    if (reObjection) {
+      negativeCount += 2 // Re-objection is strong negative signal
+      resolutionSignals.push('Same objection repeated - not resolved')
+    }
+  }
+
   // Determine if handled and quality
-  // Technique used = handled well
-  const wasHandled = techniqueUsed ? true : positiveCount > negativeCount
+  // Multiple signals = better resolution
+  const hasMultipleSignals = resolutionSignals.length >= 2
+  const hasExplicitAcceptance = resolutionSignals.some(s => s.includes('Explicit acceptance') || s.includes('Strong agreement'))
+  const hasBuyingSignal = resolutionSignals.some(s => s.includes('Buying signal') || s.includes('buying signal'))
+  
+  // Resolution is more confident if we have multiple positive signals
+  const wasHandled = techniqueUsed || hasExplicitAcceptance || (positiveCount > negativeCount && positiveCount >= 2)
+  const isResolved = wasHandled && !negativeCount && (hasExplicitAcceptance || hasBuyingSignal || hasMultipleSignals)
   
   let quality: HandlingQuality | null = null
   if (wasHandled) {
-    if (techniqueUsed || positiveCount >= 3) quality = 'excellent'
-    else if (positiveCount >= 2) quality = 'good'
-    else quality = 'adequate'
+    if (isResolved && (techniqueUsed || hasBuyingSignal || positiveCount >= 4)) {
+      quality = 'excellent'
+    } else if (techniqueUsed || positiveCount >= 3 || hasExplicitAcceptance) {
+      quality = 'good'
+    } else if (positiveCount >= 2) {
+      quality = 'adequate'
+    } else {
+      quality = 'adequate'
+    }
   } else if (negativeCount > 0) {
     quality = 'poor'
   }
@@ -814,7 +1088,9 @@ export function assessObjectionHandling(
     wasHandled,
     quality,
     responseText,
-    techniqueUsed
+    techniqueUsed,
+    resolutionSignals: resolutionSignals.length > 0 ? resolutionSignals : undefined,
+    isResolved
   }
 }
 
@@ -885,7 +1161,7 @@ export function generateConciseFeedback(
 ): string {
   switch (type) {
     case 'objection': {
-      const { objectionType, severity } = data
+      const { objectionType, severity, subCategory, confidence } = data
       const typeMap: Record<ObjectionType, string> = {
         price: 'Price',
         timing: 'Timing',
@@ -909,7 +1185,23 @@ export function generateConciseFeedback(
         medium: 'Medium',
         low: 'Low'
       }
-      return `${typeMap[objectionType]} objection (${severityMap[severity]})`
+      const subCategoryMap: Record<string, string> = {
+        price_affordability: 'Affordability',
+        price_value_perception: 'Value Perception',
+        timing_busy: 'Busy Schedule',
+        timing_not_ready: 'Not Ready to Decide',
+        trust_legitimacy: 'Legitimacy Concern',
+        trust_references: 'Needs References'
+      }
+      
+      let message = `${typeMap[objectionType]} objection (${severityMap[severity]})`
+      if (subCategory && subCategoryMap[subCategory]) {
+        message += ` - ${subCategoryMap[subCategory]}`
+      }
+      if (confidence !== undefined && confidence < 0.7) {
+        message += ' [Low confidence]'
+      }
+      return message
     }
 
     case 'objection_handling': {

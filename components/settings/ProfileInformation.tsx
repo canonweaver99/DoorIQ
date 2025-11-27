@@ -221,6 +221,12 @@ export function ProfileInformation({
                   src={avatarUrl}
                   alt="Profile"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Failed to load avatar image:', avatarUrl)
+                    setAvatarUrl(null)
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                  }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

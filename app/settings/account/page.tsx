@@ -45,6 +45,11 @@ export default function AccountSettingsPage() {
 
       if (userError) {
         console.error('Error fetching user data:', userError)
+        showToast({ 
+          type: 'error', 
+          title: 'Failed to load user data', 
+          message: userError.message || 'Unable to fetch your profile information' 
+        })
         return
       }
 
@@ -92,7 +97,13 @@ export default function AccountSettingsPage() {
       }
     } catch (err: any) {
       console.error('Error fetching user data:', err)
-      showToast({ type: 'error', title: 'Failed to load account data' })
+      const errorMessage = err?.message || err?.toString() || 'Unknown error occurred'
+      console.error('Error details:', { message: errorMessage, error: err })
+      showToast({ 
+        type: 'error', 
+        title: 'Failed to load account data', 
+        message: errorMessage 
+      })
     } finally {
       setLoading(false)
     }

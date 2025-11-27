@@ -77,10 +77,12 @@ export function SimpleAvatarUpload({ currentAvatarUrl, userId, onUploadComplete 
       showToast({ type: 'success', title: 'Profile photo updated' })
     } catch (err: any) {
       console.error('Error uploading avatar:', err)
+      const errorMessage = err?.message || err?.toString() || 'Unknown error occurred'
+      console.error('Error details:', { message: errorMessage, error: err })
       showToast({ 
         type: 'error', 
         title: 'Upload failed', 
-        message: err.message || 'Failed to upload photo' 
+        message: errorMessage 
       })
     } finally {
       setUploading(false)
@@ -112,10 +114,12 @@ export function SimpleAvatarUpload({ currentAvatarUrl, userId, onUploadComplete 
       showToast({ type: 'success', title: 'Profile photo removed' })
     } catch (err: any) {
       console.error('Error removing avatar:', err)
+      const errorMessage = err?.message || err?.toString() || 'Unknown error occurred'
+      console.error('Error details:', { message: errorMessage, error: err })
       showToast({ 
         type: 'error', 
         title: 'Failed to remove photo', 
-        message: err.message || 'An error occurred' 
+        message: errorMessage 
       })
     } finally {
       setUploading(false)

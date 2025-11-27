@@ -927,12 +927,16 @@ function HeaderContent() {
                     {isSignedIn ? (
                       <div className="rounded-xl border border-border/20 dark:border-white/10 bg-card/60 dark:bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
                         <div className="flex items-center gap-[12px]">
-                          {profileAvatar ? (
+                          {profileAvatar && !avatarError ? (
                             <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border border-purple-500/30">
                               <img 
                                 src={profileAvatar} 
                                 alt={profileName}
                                 className="w-full h-full object-cover"
+                                onError={() => {
+                                  console.error('Failed to load profile avatar:', profileAvatar)
+                                  setAvatarError(true)
+                                }}
                               />
                             </div>
                           ) : (
