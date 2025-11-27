@@ -530,17 +530,18 @@ export default function AnalyticsPage() {
           />
         )}
         
-        {/* ElevenLabs Speech Metrics - Right after Overall Performance */}
-        {(session.elevenlabs_metrics || session.analytics?.voice_analysis) ? (
-          loadingStates.speech ? (
-            <ElevenLabsSpeechMetrics
-              elevenlabsMetrics={session.elevenlabs_metrics}
-              voiceAnalysis={session.analytics?.voice_analysis}
-            />
-          ) : (
-            <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
-          )
-        ) : null}
+        {/* ElevenLabs Speech Metrics - Right after Overall Performance - Always show */}
+        {loadingStates.speech ? (
+          <ElevenLabsSpeechMetrics
+            elevenlabsMetrics={session.elevenlabs_metrics}
+            voiceAnalysis={session.analytics?.voice_analysis}
+            instantMetrics={session.instant_metrics}
+            transcript={session.full_transcript}
+            durationSeconds={session.duration_seconds}
+          />
+        ) : (
+          <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
+        )}
         
         {/* Instant Insights Grid - Loads after hero */}
         {session.instant_metrics ? (

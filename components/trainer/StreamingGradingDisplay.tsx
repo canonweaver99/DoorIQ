@@ -232,25 +232,46 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               total_lines: orchestrationData.phases.instant?.metrics?.totalLines || 0
             }
           }))
+          
+          // If we have instant scores, mark scores section as complete too
+          if (orchestrationData.phases.instant?.scores) {
+            setCompletedSections(prev => {
+              const newSet = new Set(prev)
+              newSet.add('scores')
+              return newSet
+            })
+            setSections(prev => ({
+              ...prev,
+              scores: orchestrationData.phases.instant.scores
+            }))
+          }
         }
         
-        // Phase 2: Key Moments - marks progress
+        // Phase 2: Key Moments - marks progress and can mark feedback/objection sections
         if (orchestrationData.phases.keyMoments?.status === 'complete') {
           setStatus('Key moments detected, analyzing performance...')
-          setCurrentSection('scores')
+          setCurrentSection('feedback')
+          setCompletedSections(prev => {
+            const newSet = new Set(prev)
+            newSet.add('objection_analysis') // Key moments include objection analysis
+            return newSet
+          })
           setSections(prev => ({
             ...prev,
-            key_moments: orchestrationData.phases.keyMoments.keyMoments
+            key_moments: orchestrationData.phases.keyMoments.keyMoments,
+            objection_analysis: {
+              total_objections: orchestrationData.phases.keyMoments.keyMoments?.filter((m: any) => m.type === 'objection').length || 0
+            }
           }))
         }
         
-        // Phase 3: Deep Analysis (polling)
+        // Phase 3: Deep Analysis (polling) - but don't wait for it
         setStatus('Running deep analysis...')
-        setCurrentSection('scores')
+        setCurrentSection('coaching_plan')
         
         // Poll for completion and track section progress
         const pollForCompletion = async () => {
-          const maxPolls = 60 // 2 minutes max
+          const maxPolls = 90 // 1.5 minutes max (90 polls * 1s = 90s)
           let pollCount = 0
           
           while (pollCount < maxPolls && currentSessionId === sessionId) {
@@ -261,66 +282,67 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               if (sessionResponse.ok) {
                 const session = await sessionResponse.json()
                 
-                // Track section completion based on available data
+                // Track section completion based on available data - batch updates
                 const newCompletedSections = new Set(completedSections)
+                const newSections = { ...sections }
+                let updated = false
                 
                 // Session Summary - available when instant metrics exist
                 if (session.instant_metrics && !newCompletedSections.has('session_summary')) {
                   newCompletedSections.add('session_summary')
-                  setCompletedSections(newCompletedSections)
-                  setSections(prev => ({
-                    ...prev,
-                    session_summary: {
-                      total_lines: session.full_transcript?.length || 0,
-                      rep_lines: session.full_transcript?.filter((t: any) => t.speaker === 'rep' || t.speaker === 'user').length || 0
+                  newSections.session_summary = {
+                    total_lines: session.full_transcript?.length || 0,
+                    rep_lines: session.full_transcript?.filter((t: any) => t.speaker === 'rep' || t.speaker === 'user').length || 0
+                  }
+                  updated = true
+                }
+                
+                // Performance Scores - available when overall_score exists OR instant_metrics has scores
+                if ((session.overall_score !== null && session.overall_score !== undefined) || session.instant_metrics?.estimatedScores) {
+                  if (!newCompletedSections.has('scores')) {
+                    newCompletedSections.add('scores')
+                    newSections.scores = {
+                      overall: session.overall_score || session.instant_metrics?.estimatedScore || 0,
+                      rapport: session.rapport_score || session.instant_metrics?.estimatedScores?.rapport || 0,
+                      discovery: session.discovery_score || session.instant_metrics?.estimatedScores?.discovery || 0,
+                      objection_handling: session.objection_handling_score || session.instant_metrics?.estimatedScores?.objectionHandling || 0,
+                      closing: session.close_score || session.instant_metrics?.estimatedScores?.closing || 0
                     }
-                  }))
+                    updated = true
+                  }
                 }
                 
-                // Performance Scores - available when overall_score exists
-                if (session.overall_score !== null && session.overall_score !== undefined && !newCompletedSections.has('scores')) {
-                  newCompletedSections.add('scores')
-                  setCompletedSections(newCompletedSections)
-                  setSections(prev => ({
-                    ...prev,
-                    scores: {
-                      overall: session.overall_score,
-                      rapport: session.rapport_score,
-                      discovery: session.discovery_score,
-                      objection_handling: session.objection_handling_score,
-                      closing: session.close_score
-                    }
-                  }))
-                }
-                
-                // Detailed Feedback - available when analytics.feedback exists
-                if (session.analytics?.feedback && !newCompletedSections.has('feedback')) {
-                  newCompletedSections.add('feedback')
-                  setCompletedSections(newCompletedSections)
-                  setSections(prev => ({
-                    ...prev,
-                    feedback: session.analytics.feedback
-                  }))
-                }
-                
-                // Objection Handling - available when analytics.objection_analysis exists
-                if (session.analytics?.objection_analysis && !newCompletedSections.has('objection_analysis')) {
+                // Objection Handling - available when key_moments exist OR analytics.objection_analysis exists
+                if ((session.key_moments?.length > 0 || session.analytics?.objection_analysis) && !newCompletedSections.has('objection_analysis')) {
                   newCompletedSections.add('objection_analysis')
-                  setCompletedSections(newCompletedSections)
-                  setSections(prev => ({
-                    ...prev,
-                    objection_analysis: session.analytics.objection_analysis
-                  }))
+                  newSections.objection_analysis = session.analytics?.objection_analysis || {
+                    total_objections: session.key_moments?.filter((m: any) => m.type === 'objection').length || session.instant_metrics?.objectionCount || 0
+                  }
+                  updated = true
+                }
+                
+                // Detailed Feedback - available when analytics.feedback exists OR key_moments feedback exists
+                if ((session.analytics?.feedback || session.key_moments?.some((m: any) => m.feedback)) && !newCompletedSections.has('feedback')) {
+                  newCompletedSections.add('feedback')
+                  newSections.feedback = session.analytics?.feedback || {
+                    strengths: [],
+                    improvements: [],
+                    specific_tips: []
+                  }
+                  updated = true
                 }
                 
                 // Personalized Coaching - available when analytics.coaching_plan exists
                 if (session.analytics?.coaching_plan && !newCompletedSections.has('coaching_plan')) {
                   newCompletedSections.add('coaching_plan')
+                  newSections.coaching_plan = session.analytics.coaching_plan
+                  updated = true
+                }
+                
+                // Batch update state if anything changed
+                if (updated) {
                   setCompletedSections(newCompletedSections)
-                  setSections(prev => ({
-                    ...prev,
-                    coaching_plan: session.analytics.coaching_plan
-                  }))
+                  setSections(newSections)
                 }
                 
                 // Check if grading is complete (check both 'complete' and 'completed' for compatibility)
@@ -363,7 +385,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             }
             
             pollCount++
-            await new Promise(resolve => setTimeout(resolve, 1000)) // Poll every 1 second for faster updates
+            // Poll more frequently at the start (every 500ms for first 10 polls), then every 1s
+            const pollDelay = pollCount < 10 ? 500 : 1000
+            await new Promise(resolve => setTimeout(resolve, pollDelay))
           }
           
           // Timeout - check one more time
@@ -691,27 +715,6 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                       `}>
                         {label}
                       </div>
-                      
-                      {/* Show preview data if available */}
-                      {isCompleted && sectionData && (
-                        <div className="mt-1 text-xs text-slate-500 font-sans">
-                          {key === 'scores' && sectionData.overall && (
-                            <span>Overall Score: {sectionData.overall}/100</span>
-                          )}
-                          {key === 'session_summary' && sectionData.total_lines && (
-                            <span>{sectionData.total_lines} conversation lines analyzed</span>
-                          )}
-                          {key === 'feedback' && sectionData.strengths && (
-                            <span>{sectionData.strengths.length} strengths identified</span>
-                          )}
-                          {key === 'objection_analysis' && sectionData.total_objections !== undefined && (
-                            <span>{sectionData.total_objections} objections handled</span>
-                          )}
-                          {key === 'line_ratings' && Array.isArray(sectionData) && (
-                            <span>{sectionData.length} lines rated</span>
-                          )}
-                        </div>
-                      )}
                     </div>
 
                     {isCompleted && (

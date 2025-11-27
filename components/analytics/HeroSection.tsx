@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowLeft, ArrowUp, ArrowDown, DollarSign, Clock, XCircle, Info, TrendingUp, TrendingDown, Trophy, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowUp, ArrowDown, DollarSign, Clock, XCircle, Info, TrendingUp, Trophy, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
 
@@ -241,34 +241,6 @@ export function HeroSection({
                               <div key={idx} className="flex items-center justify-between">
                                 <span className="text-white font-medium">↑ {strength.name}: {strength.score}%</span>
                                 <span className="text-emerald-400 font-semibold">+{strength.diff}pts above team</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    }
-                    return null
-                  })()}
-
-                  {/* Opportunities */}
-                  {(() => {
-                    const opportunities = []
-                    if (currentScores.closing < 60) opportunities.push({ name: 'Closing Technique', score: currentScores.closing, gap: 60 - currentScores.closing })
-                    if (currentScores.objection_handling < 70) opportunities.push({ name: 'Objection Handling', score: currentScores.objection_handling, gap: 70 - currentScores.objection_handling })
-                    if (currentScores.discovery < 65) opportunities.push({ name: 'Needs Discovery', score: currentScores.discovery, gap: 65 - currentScores.discovery })
-                    
-                    if (opportunities.length > 0) {
-                      return (
-                        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                          <div className="flex items-center gap-2 mb-3">
-                            <TrendingDown className="w-5 h-5 text-amber-400" />
-                            <span className="text-sm font-semibold text-amber-400 uppercase tracking-wide">Opportunity</span>
-                          </div>
-                          <div className="space-y-2">
-                            {opportunities.slice(0, 1).map((opp, idx) => (
-                              <div key={idx} className="flex items-center justify-between">
-                                <span className="text-white font-medium">↓ {opp.name}: {opp.score}%</span>
-                                <span className="text-amber-400 font-semibold">-{opp.gap}pts closing gap</span>
                               </div>
                             ))}
                           </div>
