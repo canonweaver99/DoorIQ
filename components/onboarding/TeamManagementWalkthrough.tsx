@@ -75,30 +75,51 @@ export function TeamManagementWalkthrough({ onComplete, onSkip }: TeamManagement
     let retryTimeout: NodeJS.Timeout | null = null
 
     const findTarget = () => {
-      const element = document.querySelector(currentStepData.targetSelector || '') as HTMLElement
-      if (element) {
-        setTargetElement(element)
-        const rect = element.getBoundingClientRect()
-        setTargetRect(rect)
-        
-        // Scroll element into view if needed
-        element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
-      } else {
-        // Retry after a short delay if element not found (elements might not be rendered yet)
-        retryTimeout = setTimeout(() => {
-          const retryElement = document.querySelector(currentStepData.targetSelector || '') as HTMLElement
-          if (retryElement) {
-            setTargetElement(retryElement)
-            const rect = retryElement.getBoundingClientRect()
-            setTargetRect(rect)
-            retryElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
-          } else {
-            // If element still not found, show tooltip in center (element might not exist)
-            console.warn(`Walkthrough target not found: ${currentStepData.targetSelector}`)
-            setTargetElement(null)
-            setTargetRect(null)
+      try {
+        const element = document.querySelector(currentStepData.targetSelector || '') as HTMLElement
+        if (element && element.offsetParent !== null) {
+          setTargetElement(element)
+          const rect = element.getBoundingClientRect()
+          setTargetRect(rect)
+          
+          // Scroll element into view if needed
+          try {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
+          } catch (scrollError) {
+            // Ignore scroll errors
+            console.warn('Scroll error:', scrollError)
           }
-        }, 300)
+        } else {
+          // Retry after a short delay if element not found (elements might not be rendered yet)
+          retryTimeout = setTimeout(() => {
+            try {
+              const retryElement = document.querySelector(currentStepData.targetSelector || '') as HTMLElement
+              if (retryElement && retryElement.offsetParent !== null) {
+                setTargetElement(retryElement)
+                const rect = retryElement.getBoundingClientRect()
+                setTargetRect(rect)
+                try {
+                  retryElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
+                } catch (scrollError) {
+                  console.warn('Scroll error:', scrollError)
+                }
+              } else {
+                // If element still not found, show tooltip in center (element might not exist)
+                console.warn(`Walkthrough target not found: ${currentStepData.targetSelector}`)
+                setTargetElement(null)
+                setTargetRect(null)
+              }
+            } catch (error) {
+              console.warn('Error finding walkthrough target:', error)
+              setTargetElement(null)
+              setTargetRect(null)
+            }
+          }, 500) // Increased delay to give more time for rendering
+        }
+      } catch (error) {
+        console.warn('Error in findTarget:', error)
+        setTargetElement(null)
+        setTargetRect(null)
       }
     }
 

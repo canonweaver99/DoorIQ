@@ -57,13 +57,15 @@ function OrganizationSettingsPage() {
   // Check if walkthrough should be shown
   useEffect(() => {
     const walkthroughParam = searchParams.get('walkthrough')
-    if (walkthroughParam === 'true' && isManager) {
-      // Small delay to ensure page is rendered
-      setTimeout(() => {
+    if (walkthroughParam === 'true' && isManager && !loading) {
+      // Delay to ensure page is fully rendered and all elements are available
+      const timer = setTimeout(() => {
         setShowWalkthrough(true)
-      }, 500)
+      }, 1000) // Increased delay to ensure page is fully loaded
+      
+      return () => clearTimeout(timer)
     }
-  }, [searchParams, isManager])
+  }, [searchParams, isManager, loading])
 
   // Update active tab when URL parameter changes
   useEffect(() => {

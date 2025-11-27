@@ -55,7 +55,19 @@ export default function InviteTeamPage() {
     }
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    // Mark invite_team step as complete even when skipping
+    try {
+      await fetch('/api/onboarding/complete-step', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step: 'invite_team' }),
+      })
+    } catch (error) {
+      console.error('Error marking invite_team step complete:', error)
+      // Continue anyway - don't block navigation
+    }
+    
     router.push('/settings/organization?walkthrough=true&tab=overview')
   }
 
@@ -73,7 +85,7 @@ export default function InviteTeamPage() {
       />
       
       {/* Content */}
-      <div className="relative z-10 min-h-[calc(100vh-200px)] flex flex-col items-center justify-center p-4 sm:p-6">
+      <div className="relative z-10 min-h-[calc(100vh-200px)] flex flex-col items-center justify-center p-4 sm:p-6 pt-20 sm:pt-24 md:pt-32">
         <AnimatePresence mode="wait">
           {!inviteSent ? (
             <motion.div
