@@ -44,6 +44,10 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   const PING_TIMEOUT = 60000 // 60 seconds without ping = connection likely dead
   const AGENT_RESPONSE_TIMEOUT = 45000 // 45 seconds without agent response = agent may have stopped
   const lastAgentResponseTimeRef = useRef<number>(Date.now()) // Track last time agent actually spoke
+  
+  // Track intentional ends (via client tool) to skip reconnection
+  const intentionalEndRef = useRef<boolean>(false)
+  const intentionalEndReasonRef = useRef<string | null>(null)
 
   // Helper to safely dispatch events (guards against SSR)
   const safeDispatchEvent = (eventName: string, detail: any) => {
@@ -159,6 +163,8 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           lastMessageTimeRef.current = Date.now()
           lastPingTimeRef.current = Date.now()
           lastAgentResponseTimeRef.current = Date.now() // Reset agent response timer
+          intentionalEndRef.current = false // Reset intentional end flag
+          intentionalEndReasonRef.current = null
           
           // Start connection health monitoring
           setTimeout(() => startHealthMonitoring(), 1000)
@@ -226,6 +232,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             }
             
             // Don't attempt reconnection if we have an active session - the session should end
+            return
+          }
+          
+          // Don't reconnect if this was an intentional end (via client tool)
+          if (intentionalEndRef.current) {
+            console.log('🚪 Intentional end detected - skipping reconnection')
             return
           }
           
@@ -322,6 +334,63 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           console.log('📨 Message type:', msg?.type)
           console.log('📨 Message keys:', Object.keys(msg || {}))
           safeDispatchEvent('agent:message', msg)
+          
+          // Handle tool calls (client tools) - check for tool_call or function_call message types
+          if (msg?.type === 'tool_call' || msg?.type === 'function_call' || msg?.tool_call || msg?.function_call) {
+            const toolCall = msg.tool_call || msg.function_call || msg
+            const toolName = toolCall.name || toolCall.function?.name || msg.name
+            let toolArgs = toolCall.arguments || toolCall.function?.arguments || msg.arguments || {}
+            
+            // Parse arguments if they're a string
+            if (typeof toolArgs === 'string') {
+              try {
+                toolArgs = JSON.parse(toolArgs)
+              } catch (e) {
+                console.warn('⚠️ Failed to parse tool arguments:', e)
+                toolArgs = {}
+              }
+            }
+            
+            console.log('🔧 Tool call detected in message:', { toolName, toolArgs })
+            
+            // Handle end_call tool - immediate door close trigger
+            if (toolName === 'end_call' || toolName === 'trigger_door_close' || toolName === 'end_conversation') {
+              const reason = toolArgs.reason || toolArgs.message || 'Agent requested door close'
+              const finalMessage = toolArgs.finalMessage || toolArgs.message || null
+              
+              console.log('🚪 end_call tool called by agent:', { reason, finalMessage })
+              
+              // Mark as intentional end to prevent reconnection
+              intentionalEndRef.current = true
+              intentionalEndReasonRef.current = reason
+              
+              // Stop health monitoring immediately
+              stopHealthMonitoringFn()
+              
+              // Dispatch door close event immediately (no wait)
+              safeDispatchEvent('agent:door-close-requested', {
+                reason,
+                finalMessage,
+                timestamp: Date.now(),
+                intentional: true,
+                sessionId: sessionIdRef.current
+              })
+              
+              // Also dispatch disconnect event with intentional flag
+              safeDispatchEvent('agent:disconnect', {
+                reason: `Intentional end: ${reason}`,
+                intentional: true,
+                hasSessionId: !!sessionIdRef.current,
+                sessionId: sessionIdRef.current
+              })
+              
+              // Don't process further - tool call handled
+              return
+            }
+            
+            // Handle other tools if needed
+            console.warn('⚠️ Unknown tool call:', toolName)
+          }
           
           // Update last message time for connection health monitoring
           lastMessageTimeRef.current = Date.now()
@@ -553,6 +622,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
             sessionId: sessionIdRef.current
           })
           
+          // Don't reconnect if this was an intentional end
+          if (intentionalEndRef.current) {
+            console.log('🚪 Intentional end detected - skipping reconnection')
+            return
+          }
+          
           // Attempt automatic reconnection if we were previously connected
           if (wasConnectedRef.current && !isReconnectingRef.current) {
             console.warn('⚠️ Connection error during active session, attempting reconnection...')
@@ -766,6 +841,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
     
     console.log('🏥 Starting connection health monitoring')
     healthCheckIntervalRef.current = setInterval(() => {
+      // Skip all health checks if this was an intentional end
+      if (intentionalEndRef.current) {
+        console.log('🚪 Intentional end - skipping health monitoring')
+        return
+      }
+      
       const now = Date.now()
       const timeSinceLastMessage = now - lastMessageTimeRef.current
       const timeSinceLastPing = now - lastPingTimeRef.current

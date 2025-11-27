@@ -1319,17 +1319,38 @@ function TrainerPageContent() {
       }
     }
 
+    // Handle door close request from agent (via client tool) - immediate trigger, no wait
+    const handleDoorCloseRequested = (e: CustomEvent) => {
+      const data = e?.detail
+      console.log('🚪 Agent requested door close via client tool:', data)
+      
+      if (sessionActive && sessionId && data?.intentional) {
+        // Optional: Show final message if provided
+        if (data?.finalMessage) {
+          console.log('💬 Final message from agent:', data.finalMessage)
+          // Could display this in UI or use TTS
+        }
+        
+        // Trigger door closing sequence immediately (no 60 second wait)
+        console.log('🚪 Triggering immediate door closing sequence:', data.reason)
+        handleDoorClosingSequence(data.reason || 'Agent requested door close')
+      }
+    }
+
     // Listen for explicit agent disconnect event (most reliable)
     window.addEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
     // Also listen for connection status as backup
     window.addEventListener('connection:status', handleConnectionStatus as EventListener)
     // Listen for agent inactivity (agent stopped responding but connection still alive)
     window.addEventListener('agent:inactivity', handleAgentInactivity as EventListener)
+    // Listen for door close request from agent (client tool)
+    window.addEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
     
     return () => {
       window.removeEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
       window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
       window.removeEventListener('agent:inactivity', handleAgentInactivity as EventListener)
+      window.removeEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
     }
   }, [sessionActive, sessionId, handleDoorClosingSequence])
   
