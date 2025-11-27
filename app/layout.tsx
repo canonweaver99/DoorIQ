@@ -249,6 +249,15 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://r.wdfl.co" />
         <link rel="preconnect" href="https://r.wdfl.co" />
+        {/* Supabase - critical for all API calls */}
+        <link rel="dns-prefetch" href="https://api.supabase.co" />
+        <link rel="preconnect" href="https://api.supabase.co" />
+        {/* OpenAI - used for grading */}
+        <link rel="dns-prefetch" href="https://api.openai.com" />
+        <link rel="preconnect" href="https://api.openai.com" />
+        {/* ElevenLabs - used for voice conversations */}
+        <link rel="dns-prefetch" href="https://api.elevenlabs.io" />
+        <link rel="preconnect" href="https://api.elevenlabs.io" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

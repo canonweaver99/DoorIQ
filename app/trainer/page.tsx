@@ -75,7 +75,6 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
   }
   
   if (agentImageMap[agent.name]) {
-    console.log(`✅ Using agent image for ${agent.name}:`, agentImageMap[agent.name])
     return agentImageMap[agent.name]
   }
 
@@ -947,19 +946,7 @@ function TrainerPageContent() {
           console.warn('⚠️ This may indicate microphone access failed or voice analysis hook had an error')
         }
         
-        console.log('💾 === SESSION SAVE DEBUG ===')
-        console.log('💾 Voice analysis data exists:', !!voiceAnalysisData)
-        console.log('💾 Voice analysis keys:', voiceAnalysisData ? Object.keys(voiceAnalysisData) : 'NULL')
-        console.log('💾 Full voice analysis:', JSON.stringify(voiceAnalysisData, null, 2))
-        console.log('💾 Session data to save:', {
-          sessionId,
-          transcriptLength: transcript.length,
-          duration,
-          endReason: endReason || 'manual',
-          hasVoiceAnalysis: !!voiceAnalysisData
-        })
-        console.log('💾 ========================')
-        
+        // Save session data
         const saveResponse = await fetch('/api/session', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

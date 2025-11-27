@@ -3,12 +3,7 @@
 # dependencies
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
 
 # testing
 /coverage
@@ -28,10 +23,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# local env files
+.env*.local
+.env
 
 # vercel
 .vercel
@@ -39,22 +34,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-.env.stripe.keys
 
-# Production sensitive files (contain API keys)
-STRIPE_LIVE_KEYS.md
-PRODUCTION_ENV_VARS.md
-STRIPE_COMPLETE_CONFIG.md
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Expo/Mobile
-mobile/.expo/
-mobile/.expo-shared/
-mobile/dist/
-mobile/web-build/
-mobile/node_modules/
-mobile/.metro-health-check*
-mobile/*.tsbuildinfo
-mobile/.env*.local
+# Temporary files
+*.old
+*.bak
+*.tmp
 
-# Large video files (over GitHub's 100MB limit)
+# Large video files
 public/Demo Video Home.mp4
+*.mp4

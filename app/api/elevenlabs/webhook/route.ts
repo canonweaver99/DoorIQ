@@ -206,12 +206,111 @@ async function handleConversationCompleted(data: any) {
       metricsStored: !!(sessionMatch && sessionMatch.confidence !== 'low')
     })
 
-    // TODO: Trigger async speech analysis (Phase 2)
-    // await analyzeConversation(conversation_id)
+    // Trigger async speech analysis (Phase 2) - fire and forget
+    if (sessionMatch?.session_id) {
+      analyzeConversation(conversation_id, sessionMatch.session_id).catch((error) => {
+        logger.error('Error in async speech analysis', { conversation_id, session_id: sessionMatch.session_id, error })
+      })
+    }
 
   } catch (error: any) {
     logger.error('Error handling conversation completed', error)
     throw error
+  }
+}
+
+/**
+ * Analyze conversation for speech metrics (Phase 2)
+ * Runs asynchronously after conversation is stored
+ */
+async function analyzeConversation(conversationId: string, sessionId: string) {
+  const supabase = await createServiceSupabaseClient()
+  
+  try {
+    logger.info('Starting async speech analysis', { conversation_id: conversationId, session_id: sessionId })
+    
+    // Fetch conversation data
+    const { data: conversation, error: convError } = await supabase
+      .from('elevenlabs_conversations')
+      .select('transcript, metadata, analysis, duration_seconds')
+      .eq('conversation_id', conversationId)
+      .single()
+    
+    if (convError || !conversation) {
+      logger.error('Conversation not found for analysis', { conversation_id: conversationId, error: convError })
+      return
+    }
+    
+    // Fetch session data for additional context
+    const { data: session, error: sessionError } = await supabase
+      .from('live_sessions')
+      .select('analytics, duration_seconds')
+      .eq('id', sessionId)
+      .single()
+    
+    if (sessionError) {
+      logger.warn('Session not found for analysis', { session_id: sessionId, error: sessionError })
+    }
+    
+    // Extract speech metrics from transcript and analysis
+    const transcript = conversation.transcript || []
+    const durationSeconds = conversation.duration_seconds || session?.duration_seconds || 0
+    
+    // Calculate basic speech metrics
+    const repMessages = Array.isArray(transcript) 
+      ? transcript.filter((msg: any) => msg.role === 'user' || msg.role === 'rep')
+      : []
+    
+    const totalWords = repMessages.reduce((sum: number, msg: any) => {
+      const text = msg.content || msg.text || ''
+      return sum + text.split(/\s+/).filter((w: string) => w.length > 0).length
+    }, 0)
+    
+    const avgWPM = durationSeconds > 0 ? Math.round((totalWords / durationSeconds) * 60) : 0
+    
+    // Count filler words
+    const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm|like)\b/gi
+    const fillerWords = repMessages.reduce((sum: number, msg: any) => {
+      const text = msg.content || msg.text || ''
+      const matches = text.match(fillerPattern)
+      return sum + (matches ? matches.length : 0)
+    }, 0)
+    
+    // Extract metrics from ElevenLabs analysis if available
+    const elevenLabsAnalysis = conversation.analysis || {}
+    const sentimentProgression = elevenLabsAnalysis.sentiment_progression || []
+    const interruptionCount = conversation.metadata?.interruptions_count || 0
+    
+    // Store speech analysis results
+    const { error: insertError } = await supabase
+      .from('speech_analysis')
+      .insert({
+        session_id: sessionId,
+        is_final: true,
+        avg_wpm: avgWPM,
+        total_filler_words: fillerWords,
+        filler_words_per_minute: durationSeconds > 0 ? (fillerWords / durationSeconds) * 60 : 0,
+        issues: {
+          excessiveFillers: fillerWords > 10,
+          tooFast: avgWPM > 200,
+          tooSlow: avgWPM < 120 && avgWPM > 0
+        },
+        analysis_timestamp: new Date().toISOString()
+      })
+    
+    if (insertError) {
+      logger.error('Error storing speech analysis', { session_id: sessionId, error: insertError })
+    } else {
+      logger.info('Speech analysis completed', { 
+        conversation_id: conversationId, 
+        session_id: sessionId,
+        avg_wpm: avgWPM,
+        filler_words: fillerWords
+      })
+    }
+  } catch (error: any) {
+    logger.error('Error in analyzeConversation', { conversation_id: conversationId, session_id: sessionId, error })
+    // Don't throw - this is async and shouldn't block webhook response
   }
 }
 

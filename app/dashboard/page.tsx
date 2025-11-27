@@ -216,9 +216,7 @@ function DashboardPageContent() {
       .order('created_at', { ascending: false })
     
     if (weekError) {
-      console.error('❌ Error fetching weekly sessions:', weekError)
-    } else {
-      console.log('📊 Sessions this week:', sessionsThisWeekData?.length || 0, sessionsThisWeekData)
+      console.error('Error fetching weekly sessions:', weekError)
     }
     
     // Get total sessions count (all time) - include all sessions regardless of status
@@ -228,9 +226,7 @@ function DashboardPageContent() {
       .eq('user_id', user.id)
     
     if (allError) {
-      console.error('❌ Error fetching all sessions:', allError)
-    } else {
-      console.log('📊 Total sessions:', allSessionsData?.length || 0, 'Sample:', allSessionsData?.slice(0, 3))
+      console.error('Error fetching all sessions:', allError)
     }
     
     const sessionsThisWeek = sessionsThisWeekData?.length || 0
@@ -650,9 +646,6 @@ function OverviewTabContent() {
       // Filter to only sessions with scores for trend calculations
       const allSessions = (allSessionsRaw || []).filter((s: any) => s.overall_score !== null && s.overall_score !== undefined)
       
-      console.log('📊 All sessions fetched:', allSessionsRaw?.length || 0, 'Total')
-      console.log('📊 Sessions with scores:', allSessions.length, 'Graded')
-      
       // Get recent sessions with agent_name (for display) - fetch all sessions, not just graded ones
       const { data: recentSessionsData, error: recentSessionsError } = await supabase
         .from('live_sessions')
@@ -661,29 +654,11 @@ function OverviewTabContent() {
         .order('created_at', { ascending: false })
         .limit(10)
       
-      console.log('📊 Recent sessions query result:', {
-        count: recentSessionsData?.length || 0,
-        error: recentSessionsError?.message,
-        sample: recentSessionsData?.[0]
-      })
-      
       if (recentSessionsError) {
-        console.error('❌ Error fetching recent sessions:', recentSessionsError)
+        console.error('Error fetching recent sessions:', recentSessionsError)
         setRecentSessions([])
         // Don't return - continue to set metrics
       }
-    
-    console.log('📊 Raw recent sessions data:', recentSessionsData)
-    console.log('📊 Recent sessions count:', recentSessionsData?.length || 0)
-    if (recentSessionsData && recentSessionsData.length > 0) {
-      console.log('📊 Sample session:', {
-        id: recentSessionsData[0].id,
-        agent_name: recentSessionsData[0].agent_name,
-        created_at: recentSessionsData[0].created_at,
-        ended_at: recentSessionsData[0].ended_at,
-        has_score: recentSessionsData[0].overall_score !== null
-      })
-    }
     
     // Format recent sessions for display
     if (recentSessionsData && recentSessionsData.length > 0) {
@@ -711,10 +686,8 @@ function OverviewTabContent() {
       })
         .filter((session: any) => session && session.id) // Final filter to ensure valid sessions
       
-      console.log('✅ Formatted recent sessions:', formattedSessions)
       setRecentSessions(formattedSessions)
     } else {
-      console.log('⚠️ No recent sessions found in database')
       setRecentSessions([])
     }
     
@@ -1037,21 +1010,7 @@ function OverviewTabContent() {
         earningsMonthData.push({ day: `Week ${4 - i}`, earnings: total })
       }
       
-      console.log('📊 Performance data calculated:', {
-        day: dayData.length,
-        week: weekData.length,
-        month: monthWeeks.length,
-        sampleDay: dayData[0],
-        sampleWeek: weekData[0]
-      })
-      
-      console.log('💰 Earnings data calculated:', {
-        day: earningsDayData.length,
-        week: earningsWeekData.length,
-        month: earningsMonthData.length,
-        sampleDay: earningsDayData[0],
-        sampleWeek: earningsWeekData[0]
-      })
+      // Performance and earnings data calculated
       
       setPerformanceData({
         day: dayData,
@@ -1151,15 +1110,7 @@ function OverviewTabContent() {
   const hasData = currentData.length > 0 && currentData.some((p: any) => p.overall > 0)
   const hasEarningsData = currentEarnings.length > 0 && currentEarnings.some((e: any) => e.earnings > 0)
   
-  console.log('📊 Chart data check:', {
-    chartTimeRange,
-    dataLength: currentData.length,
-    hasData,
-    samplePoint: currentData[0],
-    earningsLength: currentEarnings.length,
-    hasEarningsData,
-    sampleEarnings: currentEarnings[0]
-  })
+  // Chart data ready
 
   // Use real notifications if available, otherwise show empty state
   const notificationsData = notifications.length > 0 ? notifications : []
