@@ -89,37 +89,35 @@ async function performDeepAnalysis(data: {
 }) {
   const { keyMoments, instantMetrics, elevenLabsData, userHistory, transcript, durationSeconds } = data
   
-  // Limit key moments to top 3 for faster processing
-  const topKeyMoments = keyMoments.slice(0, 3)
+  // Limit key moments to top 2 for faster processing
+  const topKeyMoments = keyMoments.slice(0, 2)
   
-  const prompt = `Expert sales coach. Analyze session and return JSON.
+  const prompt = `Sales coach. Return JSON.
 
-Context: Avg ${userHistory?.averageScore || 'N/A'}, Score ${instantMetrics?.estimatedScore || 'N/A'}, ${topKeyMoments.length} moments, ${Math.round(durationSeconds / 60)}min
+Avg: ${userHistory?.averageScore || 'N/A'}, Score: ${instantMetrics?.estimatedScore || 'N/A'}, ${topKeyMoments.length} moments
 
-Moments:
-${topKeyMoments.map((m, i) => `${i + 1}. ${m.type}: "${m.transcript.slice(0, 100)}"`).join('\n')}
+${topKeyMoments.map((m, i) => `${i + 1}. ${m.type}: "${m.transcript.slice(0, 60)}"`).join('\n')}
 
-Metrics: WPM ${instantMetrics?.wordsPerMinute || 'N/A'}, Balance ${instantMetrics?.conversationBalance || 'N/A'}%, Obj ${instantMetrics?.objectionCount || 0}, Closes ${instantMetrics?.closeAttempts || 0}
+WPM: ${instantMetrics?.wordsPerMinute || 'N/A'}, Balance: ${instantMetrics?.conversationBalance || 'N/A'}%, Obj: ${instantMetrics?.objectionCount || 0}, Closes: ${instantMetrics?.closeAttempts || 0}
 
-JSON:
 {
-  "overallAssessment": "Brief comparison (2 sentences)",
-  "topStrengths": ["strength 1", "strength 2"],
-  "topImprovements": ["improvement 1", "improvement 2"],
-  "finalScores": {"overall": number, "rapport": number, "discovery": number, "objectionHandling": number, "closing": number, "safety": number},
-  "coachingPlan": {"immediateFixes": [{"issue": "issue", "practiceScenario": "scenario"}], "rolePlayScenarios": [{"scenario": "desc", "focus": "focus"}]},
-  "feedback": {"strengths": ["s1", "s2"], "improvements": ["i1", "i2"], "specific_tips": ["tip1", "tip2"]}
+  "overallAssessment": "1 sentence comparison",
+  "topStrengths": ["s1", "s2"],
+  "topImprovements": ["i1", "i2"],
+  "finalScores": {"overall": n, "rapport": n, "discovery": n, "objectionHandling": n, "closing": n, "safety": n},
+  "coachingPlan": {"immediateFixes": [{"issue": "i", "practiceScenario": "s"}], "rolePlayScenarios": [{"scenario": "s", "focus": "f"}]},
+  "feedback": {"strengths": ["s1"], "improvements": ["i1"], "specific_tips": ["t1"]}
 }`
 
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o', // Best model for quality
       messages: [
-        { role: 'system', content: 'Expert sales coach. Be concise. Return JSON only.' },
+        { role: 'system', content: 'Sales coach. JSON only.' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.5, // Lower temperature for faster, more consistent responses
-      max_tokens: 1500, // Further reduced for speed
+      temperature: 0.3, // Lower temperature for faster responses
+      max_tokens: 1000, // Reduced for speed
       response_format: { type: 'json_object' }
     })
     

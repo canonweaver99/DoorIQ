@@ -256,45 +256,25 @@ async function analyzeKeyMoments(moments: KeyMoment[]): Promise<KeyMoment[]> {
   if (moments.length === 0) return moments
   
   try {
-    const prompt = `Analyze these ${moments.length} key moments from a door-to-door sales conversation.
-IMPORTANT: Address the sales rep directly using "you" instead of "the user" or "the rep". Write as if coaching them personally.
+    const prompt = `Analyze ${moments.length} key moments. Address rep with "you".
 
-For each moment, provide:
-1. What happened (one sentence, direct to the rep)
-2. What worked well (if anything, one sentence addressing the rep)
-3. What could improve (one sentence with direct advice)
-4. Alternative response (one sentence suggestion)
-
-Categorize each moment's outcome:
-- success: They responded positively (green ✅)
-- opportunity: Could improve (yellow ⚠️)
-- failure: Major failure (red ❌)
-- insight: Learning moment (blue 💡)
-
-If the homeowner responded positively (yes, sure, okay, sounds good), note the interest level change.
+For each: what happened (1 sentence), what worked (1 sentence), what to improve (1 sentence), alternative (1 sentence).
 
 Moments:
-${moments.map((m, i) => `
-Moment ${i + 1} (${m.type}):
-"${m.transcript}"
-Outcome: ${m.outcome}
-`).join('\n')}
+${moments.map((m, i) => `${i + 1}. ${m.type}: "${m.transcript.slice(0, 150)}" Outcome: ${m.outcome}`).join('\n')}
 
-Return JSON array with this structure for each moment:
-{
-  "whatHappened": "string (address rep directly with 'you')",
-  "whatWorked": "string (address rep directly)",
-  "whatToImprove": "string (direct advice)",
-  "alternativeResponse": "string",
-  "interestLevelChange": number (optional, e.g. +20 for positive response)
-}`
+Return JSON:
+{"moments": [{"whatHappened": "s", "whatWorked": "s", "whatToImprove": "s", "alternativeResponse": "s"}]}`
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o', // Best model for quality
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'system', content: 'Sales coach. JSON only.' },
+        { role: 'user', content: prompt }
+      ],
       response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_tokens: 2000
+      temperature: 0.2, // Lower for faster responses
+      max_tokens: 1200 // Reduced for speed
     })
     
     const content = response.choices[0].message.content
@@ -427,8 +407,8 @@ export async function POST(req: NextRequest) {
     // Step 2: Score each segment for importance
     const scoredSegments = scoreSegmentImportance(segments)
     
-    // Step 3: Extract top 10 key moments
-    const keyMoments = extractKeyMoments(scoredSegments, 10)
+    // Step 3: Extract top 5 key moments (reduced for speed)
+    const keyMoments = extractKeyMoments(scoredSegments, 5)
     
     // Step 4: Quick AI analysis on key moments ONLY
     const analyzedMoments = await analyzeKeyMoments(keyMoments)
