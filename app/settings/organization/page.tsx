@@ -57,7 +57,8 @@ function OrganizationSettingsPage() {
   // Check if walkthrough should be shown
   useEffect(() => {
     const walkthroughParam = searchParams.get('walkthrough')
-    if (walkthroughParam === 'true' && isManager && !loading) {
+    const isManagerCheck = userRole === 'manager' || userRole === 'admin'
+    if (walkthroughParam === 'true' && isManagerCheck && !loading) {
       // Delay to ensure page is fully rendered and all elements are available
       const timer = setTimeout(() => {
         setShowWalkthrough(true)
@@ -65,7 +66,7 @@ function OrganizationSettingsPage() {
       
       return () => clearTimeout(timer)
     }
-  }, [searchParams, isManager, loading])
+  }, [searchParams, userRole, loading])
 
   // Update active tab when URL parameter changes
   useEffect(() => {
@@ -224,6 +225,7 @@ function OrganizationSettingsPage() {
     }
   }
 
+  // Calculate isManager after userRole is set
   const isManager = userRole === 'manager' || userRole === 'admin'
 
   if (loading) {

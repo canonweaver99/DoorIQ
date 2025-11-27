@@ -39,6 +39,40 @@ const SECTION_LABELS: { [key: string]: string } = {
   coaching_plan: 'Personalized Coaching',
 }
 
+// Define sequential order for sections - must complete in this order
+const SECTION_ORDER: string[] = [
+  'session_summary',
+  'scores',
+  'feedback',
+  'objection_analysis',
+  'coaching_plan'
+]
+
+// Helper function to get the next section that should be processing
+const getNextSection = (completedSections: Set<string>): string => {
+  for (const section of SECTION_ORDER) {
+    if (!completedSections.has(section)) {
+      return section
+    }
+  }
+  return '' // All sections complete
+}
+
+// Helper function to check if a section can be marked complete (all previous sections must be complete)
+const canCompleteSection = (section: string, completedSections: Set<string>): boolean => {
+  const sectionIndex = SECTION_ORDER.indexOf(section)
+  if (sectionIndex === -1) return false
+  
+  // Check if all previous sections are complete
+  for (let i = 0; i < sectionIndex; i++) {
+    if (!completedSections.has(SECTION_ORDER[i])) {
+      return false
+    }
+  }
+  
+  return true
+}
+
 export default function StreamingGradingDisplay({ sessionId, onComplete }: StreamingGradingDisplayProps) {
   const [sections, setSections] = useState<StreamingSection>({})
   const [completedSections, setCompletedSections] = useState<Set<string>>(new Set())
@@ -216,16 +250,14 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       const orchestrationData = await response.json()
       
       // Handle orchestration response phases
+      // IMPORTANT: Sections must complete in sequential order
       if (orchestrationData.phases) {
-        // Phase 1: Instant Metrics - marks session_summary as complete
+        const initialCompletedSections = new Set<string>()
+        
+        // Phase 1: Instant Metrics - marks session_summary as complete (first in order)
         if (orchestrationData.phases.instant?.status === 'complete') {
           setStatus('Instant metrics calculated')
-          setCurrentSection('session_summary')
-          setCompletedSections(prev => {
-            const newSet = new Set(prev)
-            newSet.add('session_summary')
-            return newSet
-          })
+          initialCompletedSections.add('session_summary')
           setSections(prev => ({
             ...prev,
             session_summary: {
@@ -233,13 +265,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             }
           }))
           
-          // If we have instant scores, mark scores section as complete too
+          // If we have instant scores, mark scores section as complete too (second in order)
           if (orchestrationData.phases.instant?.scores) {
-            setCompletedSections(prev => {
-              const newSet = new Set(prev)
-              newSet.add('scores')
-              return newSet
-            })
+            initialCompletedSections.add('scores')
             setSections(prev => ({
               ...prev,
               scores: orchestrationData.phases.instant.scores
@@ -247,15 +275,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           }
         }
         
-        // Phase 2: Key Moments - marks progress and can mark feedback/objection sections
+        // Phase 2: Key Moments - prepare data but don't mark complete yet (must wait for sequential order)
         if (orchestrationData.phases.keyMoments?.status === 'complete') {
           setStatus('Key moments detected, analyzing performance...')
-          setCurrentSection('feedback')
-          setCompletedSections(prev => {
-            const newSet = new Set(prev)
-            newSet.add('objection_analysis') // Key moments include objection analysis
-            return newSet
-          })
           setSections(prev => ({
             ...prev,
             key_moments: orchestrationData.phases.keyMoments.keyMoments,
@@ -265,9 +287,13 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           }))
         }
         
+        // Update completed sections and current section based on sequential order
+        setCompletedSections(initialCompletedSections)
+        const nextSection = getNextSection(initialCompletedSections)
+        setCurrentSection(nextSection)
+        
         // Phase 3: Deep Analysis (polling) - but don't wait for it
         setStatus('Running deep analysis...')
-        setCurrentSection('coaching_plan')
         
         // Poll for completion and track section progress
         const pollForCompletion = async () => {
@@ -283,23 +309,26 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                 const session = await sessionResponse.json()
                 
                 // Track section completion based on available data - batch updates
+                // IMPORTANT: Sections must complete in sequential order
                 const newCompletedSections = new Set(completedSections)
                 const newSections = { ...sections }
                 let updated = false
                 
                 // Session Summary - available when instant metrics exist
                 if (session.instant_metrics && !newCompletedSections.has('session_summary')) {
-                  newCompletedSections.add('session_summary')
-                  newSections.session_summary = {
-                    total_lines: session.full_transcript?.length || 0,
-                    rep_lines: session.full_transcript?.filter((t: any) => t.speaker === 'rep' || t.speaker === 'user').length || 0
+                  if (canCompleteSection('session_summary', newCompletedSections)) {
+                    newCompletedSections.add('session_summary')
+                    newSections.session_summary = {
+                      total_lines: session.full_transcript?.length || 0,
+                      rep_lines: session.full_transcript?.filter((t: any) => t.speaker === 'rep' || t.speaker === 'user').length || 0
+                    }
+                    updated = true
                   }
-                  updated = true
                 }
                 
                 // Performance Scores - available when overall_score exists OR instant_metrics has scores
                 if ((session.overall_score !== null && session.overall_score !== undefined) || session.instant_metrics?.estimatedScores) {
-                  if (!newCompletedSections.has('scores')) {
+                  if (!newCompletedSections.has('scores') && canCompleteSection('scores', newCompletedSections)) {
                     newCompletedSections.add('scores')
                     newSections.scores = {
                       overall: session.overall_score || session.instant_metrics?.estimatedScore || 0,
@@ -312,37 +341,56 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                   }
                 }
                 
-                // Objection Handling - available when key_moments exist OR analytics.objection_analysis exists
-                if ((session.key_moments?.length > 0 || session.analytics?.objection_analysis) && !newCompletedSections.has('objection_analysis')) {
-                  newCompletedSections.add('objection_analysis')
-                  newSections.objection_analysis = session.analytics?.objection_analysis || {
-                    total_objections: session.key_moments?.filter((m: any) => m.type === 'objection').length || session.instant_metrics?.objectionCount || 0
+                // Detailed Feedback - available when analytics.feedback exists OR key_moments feedback exists
+                // NOTE: Feedback comes before objection_analysis in the order
+                if ((session.analytics?.feedback || session.key_moments?.some((m: any) => m.feedback)) && !newCompletedSections.has('feedback')) {
+                  if (canCompleteSection('feedback', newCompletedSections)) {
+                    newCompletedSections.add('feedback')
+                    newSections.feedback = session.analytics?.feedback || {
+                      strengths: [],
+                      improvements: [],
+                      specific_tips: []
+                    }
+                    updated = true
                   }
-                  updated = true
                 }
                 
-                // Detailed Feedback - available when analytics.feedback exists OR key_moments feedback exists
-                if ((session.analytics?.feedback || session.key_moments?.some((m: any) => m.feedback)) && !newCompletedSections.has('feedback')) {
-                  newCompletedSections.add('feedback')
-                  newSections.feedback = session.analytics?.feedback || {
-                    strengths: [],
-                    improvements: [],
-                    specific_tips: []
+                // Objection Handling - available when key_moments exist OR analytics.objection_analysis exists
+                if ((session.key_moments?.length > 0 || session.analytics?.objection_analysis) && !newCompletedSections.has('objection_analysis')) {
+                  if (canCompleteSection('objection_analysis', newCompletedSections)) {
+                    newCompletedSections.add('objection_analysis')
+                    newSections.objection_analysis = session.analytics?.objection_analysis || {
+                      total_objections: session.key_moments?.filter((m: any) => m.type === 'objection').length || session.instant_metrics?.objectionCount || 0
+                    }
+                    updated = true
                   }
-                  updated = true
                 }
                 
                 // Personalized Coaching - available when analytics.coaching_plan exists
                 if (session.analytics?.coaching_plan && !newCompletedSections.has('coaching_plan')) {
-                  newCompletedSections.add('coaching_plan')
-                  newSections.coaching_plan = session.analytics.coaching_plan
-                  updated = true
+                  if (canCompleteSection('coaching_plan', newCompletedSections)) {
+                    newCompletedSections.add('coaching_plan')
+                    newSections.coaching_plan = session.analytics.coaching_plan
+                    updated = true
+                  }
                 }
                 
                 // Batch update state if anything changed
                 if (updated) {
                   setCompletedSections(newCompletedSections)
                   setSections(newSections)
+                  
+                  // Update currentSection to show which section should be processing next
+                  const nextSection = getNextSection(newCompletedSections)
+                  if (nextSection !== currentSection) {
+                    setCurrentSection(nextSection)
+                  }
+                } else {
+                  // Even if no sections completed, update currentSection based on what's available
+                  const nextSection = getNextSection(newCompletedSections)
+                  if (nextSection !== currentSection && nextSection) {
+                    setCurrentSection(nextSection)
+                  }
                 }
                 
                 // Check if grading is complete (check both 'complete' and 'completed' for compatibility)

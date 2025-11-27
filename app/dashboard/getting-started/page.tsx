@@ -1,726 +1,951 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Users, 
-  Settings, 
-  Mic, 
-  Compass, 
-  CheckCircle2, 
-  ArrowRight, 
-  Loader2,
-  X,
-  BookOpen,
-  Video,
-  MessageCircle,
-  Mail,
-  CreditCard,
-  Calendar,
-  ExternalLink
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
+import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { getAgentImageStyle } from '@/lib/agents/imageStyles'
+import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
-interface OnboardingStatus {
-  onboarding_completed: boolean
-  steps_completed: {
-    invite_team: boolean
-    configure_settings: boolean
-    first_session: boolean
-    explore_features: boolean
-  }
-  onboarding_dismissed: boolean
-}
-
-interface Organization {
+// Types
+type Persona = {
   id: string
-  name: string
-  plan_tier: string
-  seat_limit: number
-  seats_used: number
-  stripe_subscription_id?: string
+  name: AllowedAgentName
+  emoji: string
+  tagline: string
+  difficulty: 'Easy' | 'Moderate' | 'Hard'
+  description: string
+  audioPreview?: string
+  color: string
+  elevenAgentId: string
 }
 
-interface PlanData {
-  tier: string
-  seatLimit: number
-  seatsUsed: number
-  subscription?: {
-    currentPeriodEnd: string
+type OnboardingStep = 'welcome' | 'choose-persona' | 'ready'
+
+// Persona data mapped to actual agent names
+const PERSONAS: Persona[] = [
+  {
+    id: 'no-problem-nancy',
+    name: 'No Problem Nancy',
+    emoji: '😊',
+    tagline: 'The Easy Yes',
+    difficulty: 'Easy',
+    description: 'Friendly and agreeable. Perfect for building confidence and practicing your pitch flow.',
+    color: '#22c55e',
+    elevenAgentId: 'agent_0101k6dvb96zejkv35ncf1zkj88m'
+  },
+  {
+    id: 'average-austin',
+    name: 'Average Austin',
+    emoji: '🏡',
+    tagline: 'Skeptical but Fair',
+    difficulty: 'Moderate',
+    description: 'A typical suburban dad. Skeptical at first, but closeable if you earn his trust.',
+    color: '#3b82f6',
+    elevenAgentId: 'agent_7001k5jqfjmtejvs77jvhjf254tz'
+  },
+  {
+    id: 'busy-beth',
+    name: 'Busy Beth',
+    emoji: '⏰',
+    tagline: 'Time Crunch',
+    difficulty: 'Moderate',
+    description: "She's got 2 minutes. Hit your value prop fast or she's closing the door.",
+    color: '#f59e0b',
+    elevenAgentId: 'agent_4801k6dvap8tfnjtgd4f99hhsf10'
   }
-}
+]
 
-export default function GettingStartedPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null)
-  const [organization, setOrganization] = useState<Organization | null>(null)
-  const [planData, setPlanData] = useState<PlanData | null>(null)
-  const [showInviteModal, setShowInviteModal] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<'rep' | 'manager'>('rep')
-  const [inviteLoading, setInviteLoading] = useState(false)
-  const [completing, setCompleting] = useState(false)
-  const [dismissing, setDismissing] = useState(false)
-
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
-    try {
-      setLoading(true)
-      
-      // Fetch onboarding status
-      const statusRes = await fetch('/api/onboarding/status')
-      if (statusRes.ok) {
-        const statusData = await statusRes.json()
-        setOnboardingStatus(statusData)
-      }
-
-      // Fetch organization data
-      const orgRes = await fetch('/api/organizations/current')
-      if (orgRes.ok) {
-        const orgData = await orgRes.json()
-        setOrganization(orgData.organization)
-      }
-
-      // Fetch plan data
-      const planRes = await fetch('/api/billing/current-plan')
-      if (planRes.ok) {
-        const planData = await planRes.json()
-        setPlanData(planData.plan)
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleInvite = async () => {
-    if (!inviteEmail.trim()) return
-
-    try {
-      setInviteLoading(true)
-      const response = await fetch('/api/invites/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: inviteEmail.trim(),
-          role: inviteRole,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send invite')
-      }
-
-      // Mark step as complete if plan has >1 seat
-      if (planData && planData.seatLimit > 1) {
-        await fetch('/api/onboarding/complete-step', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ step: 'invite_team' }),
-        })
-        await fetchData() // Refresh status
-      }
-
-      setShowInviteModal(false)
-      setInviteEmail('')
-      setInviteRole('rep')
-    } catch (err: any) {
-      alert(err.message || 'Failed to send invite')
-    } finally {
-      setInviteLoading(false)
-    }
-  }
-
-  const handleComplete = async () => {
-    try {
-      setCompleting(true)
-      const response = await fetch('/api/onboarding/complete', {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        // Redirect to dashboard after short delay
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 500)
-      }
-    } catch (error) {
-      console.error('Error completing onboarding:', error)
-    } finally {
-      setCompleting(false)
-    }
-  }
-
-  const handleDismiss = async () => {
-    try {
-      setDismissing(true)
-      await fetch('/api/onboarding/dismiss', {
-        method: 'POST',
-      })
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('Error dismissing onboarding:', error)
-    } finally {
-      setDismissing(false)
-    }
-  }
-
-  const getPlanName = () => {
-    if (!planData) return 'your plan'
-    return planData.tier === 'starter' ? 'Starter Plan' : 'Team Plan'
-  }
-
-  const getCompletedStepsCount = () => {
-    if (!onboardingStatus) return 0
-    return Object.values(onboardingStatus.steps_completed).filter(Boolean).length
-  }
-
-  const allStepsCompleted = getCompletedStepsCount() === 4
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] pt-32 pb-16 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#00d4aa]" />
-      </div>
-    )
-  }
-
-  const steps = [
-    {
-      id: 'invite_team',
-      icon: Users,
-      title: 'Invite Your Sales Reps',
-      description: `Add your team members so they can start practicing. You have ${planData?.seatLimit || 0} seats available.`,
-      completed: onboardingStatus?.steps_completed.invite_team || false,
-      action: () => setShowInviteModal(true),
-      actionLabel: 'Invite Team Members',
-      skipLabel: 'Skip for now',
-    },
-    {
-      id: 'configure_settings',
-      icon: Settings,
-      title: 'Set Up Practice Preferences',
-      description: 'Choose default difficulty levels and scenarios that match your sales approach.',
-      completed: onboardingStatus?.steps_completed.configure_settings || false,
-      action: () => router.push('/settings/preferences'),
-      actionLabel: 'Configure Settings',
-      skipLabel: 'Skip for now',
-    },
-    {
-      id: 'first_session',
-      icon: Mic,
-      title: 'Take a Practice Session',
-      description: 'Experience DoorIQ firsthand. Practice with one of our AI homeowners.',
-      completed: onboardingStatus?.steps_completed.first_session || false,
-      action: () => router.push('/trainer'),
-      actionLabel: 'Start Practice Session',
-      skipLabel: 'Skip for now',
-    },
-    {
-      id: 'explore_features',
-      icon: Compass,
-      title: 'Explore Advanced Features',
-      description: 'Get familiar with everything DoorIQ offers',
-      completed: onboardingStatus?.steps_completed.explore_features || false,
-      action: () => router.push('/analytics'),
-      actionLabel: 'Take a Tour',
-      skipLabel: 'Skip for now',
-    },
-  ]
-
-  // Recommended personas for Step 3
-  const recommendedPersonas: AllowedAgentName[] = [
-    'Average Austin',
-    'No Problem Nancy',
-    'Busy Beth',
-  ]
-
+// Animated door component
+const AnimatedDoor = ({ isOpen, onClick }: { isOpen: boolean; onClick?: () => void }) => {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-32 pb-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Welcome to DoorIQ! 🎉
-          </h1>
-          <p className="text-gray-400 text-lg">
-            You're now on the <span className="text-[#00d4aa] font-semibold">{getPlanName()}</span>. Here's how to get your team training in minutes.
-          </p>
+    <div 
+      className="relative w-32 h-48 sm:w-40 sm:h-60 md:w-48 md:h-72 cursor-pointer group"
+      onClick={onClick}
+    >
+      {/* Door frame */}
+      <div className="absolute inset-0 bg-zinc-900 rounded-t-lg border-4 border-zinc-700" />
+      
+      {/* Door */}
+      <motion.div
+        className="absolute inset-1 bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 rounded-t-md origin-left shadow-2xl"
+        style={{ transformStyle: 'preserve-3d' }}
+        animate={{ 
+          rotateY: isOpen ? -75 : 0,
+          boxShadow: isOpen 
+            ? '20px 0 40px rgba(0,0,0,0.8)' 
+            : '5px 0 15px rgba(0,0,0,0.3)'
+        }}
+        transition={{ 
+          type: 'spring', 
+          stiffness: 100, 
+          damping: 20 
+        }}
+      >
+        {/* Door panels */}
+        <div className="absolute inset-4 flex flex-col gap-3">
+          <div className="flex-1 border-2 border-amber-700/50 rounded-sm bg-amber-800/30" />
+          <div className="flex-1 border-2 border-amber-700/50 rounded-sm bg-amber-800/30" />
         </div>
-
-        {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            {[1, 2, 3, 4].map((stepNum) => {
-              const isCompleted = getCompletedStepsCount() >= stepNum
-              return (
-                <div key={stepNum} className="flex items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                      isCompleted
-                        ? 'bg-[#00d4aa] text-black'
-                        : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400'
-                    }`}
-                  >
-                    {isCompleted ? <CheckCircle2 className="w-6 h-6" /> : stepNum}
-                  </div>
-                  {stepNum < 4 && (
-                    <div
-                      className={`w-16 h-1 mx-2 ${
-                        isCompleted ? 'bg-[#00d4aa]' : 'bg-[#1a1a1a]'
-                      }`}
-                    />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-          <p className="text-center text-gray-400 text-sm">
-            {getCompletedStepsCount()} of 4 steps completed
-          </p>
+        
+        {/* Door handle */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="w-3 h-8 bg-yellow-600 rounded-full shadow-lg" />
         </div>
-
-        {/* Completion State */}
-        {allStepsCompleted && (
+        
+        {/* Peephole */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-8 w-4 h-4 rounded-full bg-zinc-800 border-2 border-yellow-700" />
+      </motion.div>
+      
+      {/* Light from inside when open */}
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 p-6 bg-gradient-to-r from-[#00d4aa]/20 to-purple-500/20 border border-[#00d4aa]/30 rounded-lg text-center"
-          >
-            <h2 className="text-2xl font-bold text-white mb-2">
-              🎉 You're all set! Your team is ready to start training.
-            </h2>
-            <p className="text-gray-300 mb-4">
-              You've completed all setup steps. Start training your team now!
-            </p>
-            <Button
-              onClick={handleComplete}
-              disabled={completing}
-              className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-semibold"
-            >
-              {completing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Completing...
-                </>
-              ) : (
-                <>
-                  Go to Dashboard <ArrowRight className="ml-2 w-4 h-4" />
-                </>
-              )}
-            </Button>
-          </motion.div>
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-1 bg-gradient-to-r from-yellow-500/20 to-transparent rounded-t-md"
+          />
         )}
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Steps Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {steps.map((step, index) => {
-              const StepIcon = step.icon
-              return (
-                <motion.div
-                  key={step.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`p-6 bg-[#1a1a1a] border rounded-lg ${
-                    step.completed
-                      ? 'border-[#00d4aa]/50'
-                      : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
-                  } transition-all`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`p-3 rounded-lg ${
-                        step.completed
-                          ? 'bg-[#00d4aa]/20 text-[#00d4aa]'
-                          : 'bg-[#2a2a2a] text-gray-400'
-                      }`}
-                    >
-                      <StepIcon className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xl font-bold text-white">
-                          {step.title}
-                        </h3>
-                        {step.completed && (
-                          <CheckCircle2 className="w-5 h-5 text-[#00d4aa]" />
-                        )}
-                      </div>
-                      <p className="text-gray-400 mb-4">{step.description}</p>
-
-                      {/* Step 1: Show seat usage */}
-                      {step.id === 'invite_team' && planData && (
-                        <div className="mb-4 p-3 bg-[#0a0a0a] rounded border border-[#2a2a2a]">
-                          <p className="text-sm text-gray-300">
-                            <span className="font-semibold text-white">
-                              {planData.seatsUsed}
-                            </span>{' '}
-                            of{' '}
-                            <span className="font-semibold text-white">
-                              {planData.seatLimit}
-                            </span>{' '}
-                            seats used
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Step 2: Show checklist */}
-                      {step.id === 'configure_settings' && (
-                        <div className="mb-4 space-y-2">
-                          <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <div className="w-4 h-4 border border-[#2a2a2a] rounded" />
-                            Select default AI persona difficulty
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <div className="w-4 h-4 border border-[#2a2a2a] rounded" />
-                            Choose primary sales scenarios
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <div className="w-4 h-4 border border-[#2a2a2a] rounded" />
-                            Set session duration preferences
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Step 3: Show recommended personas */}
-                      {step.id === 'first_session' && (
-                        <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {recommendedPersonas.map((personaName) => {
-                            const persona = PERSONA_METADATA[personaName]
-                            if (!persona) return null
-                            return (
-                              <div
-                                key={personaName}
-                                className="p-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded"
-                              >
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-lg">
-                                    {persona.card.avatar}
-                                  </span>
-                                  <span className="font-semibold text-white text-sm">
-                                    {personaName}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-gray-400 mb-1">
-                                  {persona.bubble.subtitle}
-                                </p>
-                                <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded">
-                                  {persona.bubble.difficulty}
-                                </span>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-
-                      {/* Step 4: Show feature grid */}
-                      {step.id === 'explore_features' && (
-                        <div className="mb-4 grid grid-cols-2 gap-3">
-                          <Link
-                            href="/analytics"
-                            className="p-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded hover:border-[#00d4aa]/50 transition-colors"
-                          >
-                            <div className="text-2xl mb-1">📊</div>
-                            <div className="font-semibold text-white text-sm">
-                              Analytics Dashboard
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              Track team performance
-                            </div>
-                          </Link>
-                          <Link
-                            href="/leaderboard"
-                            className="p-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded hover:border-[#00d4aa]/50 transition-colors"
-                          >
-                            <div className="text-2xl mb-1">🏆</div>
-                            <div className="font-semibold text-white text-sm">
-                              Leaderboard
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              Motivate with competition
-                            </div>
-                          </Link>
-                          <div className="p-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded opacity-60">
-                            <div className="text-2xl mb-1">📝</div>
-                            <div className="font-semibold text-white text-sm">
-                              Custom Scenarios
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              Create your own scripts
-                            </div>
-                            {planData?.tier === 'team' && (
-                              <span className="text-xs px-1.5 py-0.5 bg-purple-500/20 text-purple-300 rounded mt-1 inline-block">
-                                Team+
-                              </span>
-                            )}
-                          </div>
-                          <div className="p-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded opacity-60">
-                            <div className="text-2xl mb-1">🎯</div>
-                            <div className="font-semibold text-white text-sm">
-                              Performance Insights
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              Identify improvement areas
-                            </div>
-                            {planData?.tier === 'team' && (
-                              <span className="text-xs px-1.5 py-0.5 bg-purple-500/20 text-purple-300 rounded mt-1 inline-block">
-                                Team+
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-3">
-                        <Button
-                          onClick={step.action}
-                          disabled={step.completed}
-                          className={`${
-                            step.completed
-                              ? 'bg-[#00d4aa]/20 text-[#00d4aa] cursor-not-allowed'
-                              : 'bg-[#00d4aa] hover:bg-[#00c19a] text-black'
-                          } font-semibold`}
-                        >
-                          {step.completed ? (
-                            <>
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              Completed
-                            </>
-                          ) : (
-                            <>
-                              {step.actionLabel}{' '}
-                              <ArrowRight className="ml-2 w-4 h-4" />
-                            </>
-                          )}
-                        </Button>
-                        {!step.completed && (
-                          <button
-                            onClick={() => {
-                              // Skip logic - just mark as complete for now
-                              fetch('/api/onboarding/complete-step', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ step: step.id }),
-                              }).then(() => fetchData())
-                            }}
-                            className="text-sm text-gray-400 hover:text-gray-300"
-                          >
-                            {step.skipLabel}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
-
-          {/* Side Panel */}
-          <div className="space-y-6">
-            {/* Quick Stats Card */}
-            <div className="p-6 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
-              <h3 className="text-lg font-bold text-white mb-4">Quick Stats</h3>
-              <div className="space-y-3">
-                <div>
-                  <div className="text-sm text-gray-400">Current Plan</div>
-                  <div className="text-lg font-semibold text-[#00d4aa]">
-                    {getPlanName()}
-                  </div>
-                </div>
-                {planData && (
-                  <>
-                    <div>
-                      <div className="text-sm text-gray-400">Seats</div>
-                      <div className="text-lg font-semibold text-white">
-                        {planData.seatsUsed} of {planData.seatLimit} used
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-400">Billing</div>
-                      <div className="text-lg font-semibold text-white">
-                        ${planData.seatLimit * (planData.tier === 'starter' ? 99 : planData.tier === 'enterprise' ? 49 : 69)}/month
-                      </div>
-                    </div>
-                  </>
-                )}
-                <Link href="/settings/billing">
-                  <Button
-                    variant="outline"
-                    className="w-full border-[#2a2a2a] text-gray-300 hover:bg-[#2a2a2a]"
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Manage Billing
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Resources Card */}
-            <div className="p-6 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
-              <h3 className="text-lg font-bold text-white mb-4">
-                Helpful Resources
-              </h3>
-              <div className="space-y-2">
-                <Link
-                  href="/help"
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  Documentation
-                </Link>
-                <a
-                  href="#"
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                >
-                  <Video className="w-4 h-4" />
-                  Video Tutorials
-                </a>
-                <a
-                  href="#"
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Join Community
-                </a>
-                <Link
-                  href="/contact-sales"
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                >
-                  <Mail className="w-4 h-4" />
-                  Contact Support
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Actions */}
-        {!allStepsCompleted && (
-          <div className="mt-8 text-center">
-            <Button
-              onClick={handleComplete}
-              disabled={completing}
-              className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-semibold px-8"
-            >
-              {completing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Completing...
-                </>
-              ) : (
-                "I'm ready to go"
-              )}
-            </Button>
-            <button
-              onClick={handleDismiss}
-              disabled={dismissing}
-              className="ml-4 text-gray-400 hover:text-gray-300 text-sm"
-            >
-              {dismissing ? 'Dismissing...' : 'Remind me later'}
-            </button>
-          </div>
-        )}
-
-        {/* Invite Modal */}
-        {showInviteModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 max-w-md w-full">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-white">Invite Team Member</h2>
-                <button
-                  onClick={() => {
-                    setShowInviteModal(false)
-                    setInviteEmail('')
-                  }}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="email" className="text-gray-300">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="colleague@company.com"
-                    className="mt-2 bg-[#0a0a0a] border-[#2a2a2a] text-white"
-                    autoFocus
-                    onKeyPress={(e) => e.key === 'Enter' && handleInvite()}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="role" className="text-gray-300">
-                    Role
-                  </Label>
-                  <select
-                    id="role"
-                    value={inviteRole}
-                    onChange={(e) =>
-                      setInviteRole(e.target.value as 'rep' | 'manager')
-                    }
-                    className="mt-2 w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-md px-3 py-2 text-white"
-                  >
-                    <option value="rep">Sales Rep</option>
-                    <option value="manager">Manager</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowInviteModal(false)
-                    setInviteEmail('')
-                  }}
-                  className="flex-1 border-[#2a2a2a] text-gray-300 hover:bg-[#2a2a2a]"
-                  disabled={inviteLoading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleInvite}
-                  disabled={inviteLoading || !inviteEmail.trim()}
-                  className="flex-1 bg-[#00d4aa] hover:bg-[#00c19a] text-black font-semibold"
-                >
-                  {inviteLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    'Send Invite'
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      </AnimatePresence>
+      
+      {/* Hover glow */}
+      <div className="absolute inset-0 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-emerald-500/10 pointer-events-none" />
     </div>
   )
 }
 
+// Stats ticker component
+const StatsTicker = () => {
+  const [count, setCount] = useState(847)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Math.random() > 0.7) {
+        setCount(c => c + 1)
+      }
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <motion.div 
+      className="flex items-center gap-2 text-zinc-400 text-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 1 }}
+    >
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </span>
+      <span>
+        <motion.span
+          key={count}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-emerald-400 font-semibold"
+        >
+          {count.toLocaleString()}
+        </motion.span>
+        {' '}reps practiced this week
+      </span>
+    </motion.div>
+  )
+}
+
+// Persona card component - using AgentBubbleSelector style
+const PersonaCard = ({ 
+  persona, 
+  isSelected, 
+  onSelect,
+  index
+}: { 
+  persona: Persona
+  isSelected: boolean
+  onSelect: () => void
+  index: number
+}) => {
+  const [isHovered, setIsHovered] = useState(false)
+  
+  // Get persona metadata for styling
+  const personaMetadata = PERSONA_METADATA[persona.name]
+  const agentImage = personaMetadata?.bubble?.image
+  const variantKey = (personaMetadata?.bubble?.color || 'primary') as keyof typeof COLOR_VARIANTS
+  const variantStyles = COLOR_VARIANTS[variantKey]
+  
+  const getCardStyle = () => {
+    switch (persona.difficulty) {
+      case 'Easy':
+        return { border: 'border-green-500/40', bg: 'bg-[#1a1a1a]' }
+      case 'Moderate':
+        return { border: 'border-yellow-500/40', bg: 'bg-[#1a1a1a]' }
+      case 'Hard':
+        return { border: 'border-orange-500/40', bg: 'bg-[#1a1a1a]' }
+      default:
+        return { border: 'border-gray-700', bg: 'bg-[#1a1a1a]' }
+    }
+  }
+  
+  const cardStyle = getCardStyle()
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.05 }}
+      className="select-none focus:outline-none cursor-pointer"
+      onClick={onSelect}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className={cn(
+          "h-full flex flex-col items-center p-5 relative rounded-xl border-2",
+          cardStyle.border,
+          cardStyle.bg,
+          isSelected && "ring-2 ring-emerald-500"
+        )}
+      >
+        {/* Animated Bubble */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          tabIndex={-1}
+          className="relative mb-3 focus:outline-none group"
+        >
+          <div className="relative h-40 w-40 mx-auto">
+            {/* Concentric circles */}
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                className={cn(
+                  "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
+                  variantStyles.border[i],
+                  variantStyles.gradient
+                )}
+                animate={isHovered ? {
+                  rotate: 360,
+                  scale: 1,
+                  opacity: 1,
+                } : {
+                  rotate: 360,
+                  scale: [1, 1.05, 1],
+                  opacity: isSelected ? [1, 1, 1] : [0.7, 0.9, 0.7],
+                }}
+                transition={isHovered ? {
+                  rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                  scale: { duration: 0.3 },
+                  opacity: { duration: 0.3 },
+                } : {
+                  rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                  scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                  opacity: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                }}
+              >
+                <div
+                  className={cn(
+                    "absolute inset-0 rounded-full mix-blend-screen",
+                    `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
+                      "from-",
+                      ""
+                    )}/20%,transparent_70%)]`
+                  )}
+                />
+              </motion.div>
+            ))}
+
+            {/* Profile Image */}
+            {agentImage && (
+              <motion.div 
+                className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
+                animate={isHovered ? {
+                  scale: 1,
+                } : {
+                  scale: [1, 1.05, 1],
+                }}
+                transition={isHovered ? {
+                  duration: 0.3,
+                } : {
+                  duration: 4,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                  delay: 0,
+                }}
+              >
+                <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                  {(() => {
+                    const imageStyle = getAgentImageStyle(persona.name)
+                    const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                    let translateY = '0'
+                    const verticalNum = parseFloat(vertical)
+                    if (verticalNum !== 50) {
+                      const translatePercent = ((verticalNum - 50) / 150) * 100
+                      translateY = `${translatePercent}%`
+                    }
+                    const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                    
+                    return (
+                      <Image
+                        src={agentImage}
+                        alt={persona.name}
+                        fill
+                        className="object-cover"
+                        style={{
+                          objectPosition: `${horizontal} ${vertical}`,
+                          transform: `scale(${scaleValue}) translateY(${translateY})`,
+                        }}
+                        sizes="160px"
+                        unoptimized={agentImage.includes(' ') || agentImage.includes('&')}
+                      />
+                    )
+                  })()}
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </motion.button>
+
+        {/* Agent Info */}
+        <div className="text-center w-full mt-auto">
+          <h3 className="text-lg font-bold text-white mb-2">
+            {persona.name}
+          </h3>
+          <p className="text-sm text-white mb-3">
+            {persona.tagline}
+          </p>
+          {/* Difficulty Dot */}
+          <div className="flex items-center justify-center gap-2">
+            <div className={cn(
+              "w-3 h-3 rounded-full flex-shrink-0 shadow-lg",
+              persona.difficulty === 'Easy' && "bg-green-400 shadow-green-400/50",
+              persona.difficulty === 'Moderate' && "bg-yellow-400 shadow-yellow-400/50",
+              persona.difficulty === 'Hard' && "bg-orange-400 shadow-orange-400/50",
+            )} />
+            <span className="text-xs text-white font-medium">
+              {persona.difficulty}
+            </span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// Audio preview button
+const AudioPreviewButton = () => {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  
+  const togglePlay = () => {
+    // In production, this would play an actual audio preview
+    setIsPlaying(!isPlaying)
+    setTimeout(() => setIsPlaying(false), 3000)
+  }
+  
+  return (
+    <motion.button
+      onClick={togglePlay}
+      className="flex items-center gap-3 px-5 py-3 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700 rounded-full transition-all group"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isPlaying ? 'bg-emerald-500' : 'bg-zinc-700 group-hover:bg-zinc-600'}`}>
+        {isPlaying ? (
+          <div className="flex items-center gap-0.5">
+            <motion.div 
+              animate={{ scaleY: [1, 1.5, 1] }} 
+              transition={{ repeat: Infinity, duration: 0.5 }}
+              className="w-1 h-3 bg-white rounded-full"
+            />
+            <motion.div 
+              animate={{ scaleY: [1.5, 1, 1.5] }} 
+              transition={{ repeat: Infinity, duration: 0.5 }}
+              className="w-1 h-3 bg-white rounded-full"
+            />
+            <motion.div 
+              animate={{ scaleY: [1, 1.5, 1] }} 
+              transition={{ repeat: Infinity, duration: 0.5, delay: 0.1 }}
+              className="w-1 h-3 bg-white rounded-full"
+            />
+          </div>
+        ) : (
+          <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+          </svg>
+        )}
+      </div>
+      <div className="text-left">
+        <div className="text-white text-sm font-medium">
+          {isPlaying ? 'Playing preview...' : 'Hear a sample conversation'}
+        </div>
+        <div className="text-zinc-500 text-xs">15 second preview</div>
+      </div>
+    </motion.button>
+  )
+}
+
+// Microphone permission component
+const MicPermission = ({ onGranted }: { onGranted: () => void }) => {
+  const [status, setStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle')
+  
+  const requestPermission = async () => {
+    setStatus('requesting')
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true })
+      setStatus('granted')
+      setTimeout(onGranted, 500)
+    } catch (err) {
+      setStatus('denied')
+    }
+  }
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="text-center"
+    >
+      <motion.div
+        className={`w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center transition-colors ${
+          status === 'granted' ? 'bg-emerald-500/20' : 
+          status === 'denied' ? 'bg-red-500/20' : 
+          'bg-zinc-800'
+        }`}
+        animate={status === 'requesting' ? { scale: [1, 1.1, 1] } : {}}
+        transition={{ repeat: status === 'requesting' ? Infinity : 0, duration: 1 }}
+      >
+        {status === 'granted' ? (
+          <motion.svg 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-12 h-12 text-emerald-500" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </motion.svg>
+        ) : status === 'denied' ? (
+          <svg className="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="w-12 h-12 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+        )}
+      </motion.div>
+      
+      <h2 className="text-2xl font-bold text-white mb-3">
+        {status === 'granted' ? "You're all set!" : 
+         status === 'denied' ? 'Microphone blocked' : 
+         'One quick thing...'}
+      </h2>
+      
+      <p className="text-zinc-400 mb-6 max-w-md mx-auto">
+        {status === 'granted' ? 'Microphone access granted. Ready to knock!' : 
+         status === 'denied' ? 'Please enable microphone access in your browser settings to continue.' : 
+         'DoorIQ needs microphone access to have a real conversation with you. Your audio is never stored.'}
+      </p>
+      
+      {status !== 'granted' && (
+        <motion.button
+          onClick={requestPermission}
+          disabled={status === 'requesting'}
+          className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {status === 'requesting' ? 'Requesting access...' : 
+           status === 'denied' ? 'Try again' : 
+           'Enable microphone'}
+        </motion.button>
+      )}
+    </motion.div>
+  )
+}
+
+// Main onboarding component
+export default function GettingStartedPage() {
+  const router = useRouter()
+  const [step, setStep] = useState<OnboardingStep>('welcome')
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(null)
+  const [doorOpen, setDoorOpen] = useState(false)
+  const [micGranted, setMicGranted] = useState(false)
+  const [bubbleHovered, setBubbleHovered] = useState(false)
+  const [isManager, setIsManager] = useState<boolean | null>(null)
+  const [loadingRole, setLoadingRole] = useState(true)
+  
+  // Check if user is manager/admin
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          setLoadingRole(false)
+          return
+        }
+
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (userData) {
+          setIsManager(userData.role === 'manager' || userData.role === 'admin')
+        }
+      } catch (error) {
+        console.error('Error checking user role:', error)
+      } finally {
+        setLoadingRole(false)
+      }
+    }
+
+    checkUserRole()
+  }, [])
+  
+  // Auto-open door after initial render
+  useEffect(() => {
+    const timer = setTimeout(() => setDoorOpen(true), 800)
+    return () => clearTimeout(timer)
+  }, [])
+  
+  const handleStartPractice = async () => {
+    if (selectedPersona) {
+      const persona = PERSONAS.find(p => p.id === selectedPersona)
+      if (persona) {
+        // Mark first_session step as completed
+        try {
+        await fetch('/api/onboarding/complete-step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step: 'first_session' }),
+          })
+        } catch (error) {
+          console.error('Error marking onboarding step complete:', error)
+        }
+        
+        // Navigate to trainer with selected persona's eleven_agent_id
+        router.push(`/trainer?agent=${encodeURIComponent(persona.elevenAgentId)}`)
+      }
+    }
+  }
+
+  const handleSkipToInviteTeam = () => {
+    router.push('/onboarding/invite-team')
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-white relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-4">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
+      
+      {/* Subtle grid pattern */}
+      <div 
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }}
+      />
+      
+      {/* Content */}
+      <div className="relative z-10 min-h-[calc(100vh-200px)] flex flex-col">
+        {/* Main content */}
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-6 w-full min-h-[calc(100vh-250px)]">
+          <AnimatePresence mode="wait">
+            {/* Step 1: Welcome */}
+            {step === 'welcome' && (
+              <motion.div
+                key="welcome"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, x: -100 }}
+                className="text-center max-w-2xl mx-auto w-full pt-12 sm:pt-16 md:pt-20"
+              >
+                {/* Door animation */}
+                <div className="flex justify-center mb-6 md:mb-8">
+                  <AnimatedDoor isOpen={doorOpen} onClick={() => setDoorOpen(!doorOpen)} />
+        </div>
+
+                {/* Headline */}
+                <motion.h1 
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 tracking-tight px-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  Your first door
+                  <br />
+                  <span className="text-emerald-400">is waiting.</span>
+                </motion.h1>
+                
+                <motion.p 
+                  className="text-sm sm:text-base md:text-lg text-white mb-6 md:mb-8 max-w-md mx-auto px-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  Practice with AI homeowners that feel real. Get instant feedback. Close more deals.
+                </motion.p>
+                
+                {/* Audio preview and CTA */}
+                <motion.div
+                  className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <AudioPreviewButton />
+                  <motion.button
+                    onClick={() => setStep('choose-persona')}
+                    className="px-10 py-5 bg-emerald-500 hover:bg-emerald-400 text-black text-lg font-bold rounded-xl transition-colors inline-flex items-center gap-3 group"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Start practicing
+                    <svg 
+                      className="w-5 h-5 transition-transform group-hover:translate-x-1" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </motion.button>
+                </motion.div>
+
+                {/* Skip to invite team option for managers */}
+                {!loadingRole && isManager && (
+                  <motion.button
+                    onClick={handleSkipToInviteTeam}
+                    className="text-zinc-500 hover:text-emerald-400 transition-colors text-sm mt-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    Skip to invite teammates →
+                  </motion.button>
+                )}
+                
+                {/* Stats ticker */}
+                <motion.div
+                  className="flex justify-center mt-8"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <StatsTicker />
+                </motion.div>
+              </motion.div>
+            )}
+            
+            {/* Step 2: Choose persona */}
+            {step === 'choose-persona' && (
+              <motion.div
+                key="choose-persona"
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                className="w-full max-w-7xl mx-auto pt-12 sm:pt-16 md:pt-20"
+              >
+                <div className="text-center mb-8 sm:mb-10">
+                  <motion.h2 
+                    className="text-3xl sm:text-4xl md:text-5xl font-black mb-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    Who's behind the door?
+                  </motion.h2>
+                  <motion.p 
+                    className="text-white text-base sm:text-lg"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    Choose your first challenge. You can always try others later.
+                  </motion.p>
+          </div>
+
+                {/* Persona cards */}
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
+                  {PERSONAS.map((persona, index) => (
+                    <PersonaCard
+                      key={persona.id}
+                      persona={persona}
+                      isSelected={selectedPersona === persona.id}
+                      onSelect={() => {
+                        setSelectedPersona(persona.id)
+                      }}
+                      index={index}
+                    />
+                  ))}
+            </div>
+
+                {/* Copy and CTA */}
+                <motion.div 
+                  className="text-center mb-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-white font-bold text-base sm:text-lg mb-6">
+                    Select one to start
+                  </p>
+                  <p className="text-white text-base sm:text-lg mb-6 max-w-2xl mx-auto">
+                    Each homeowner has unique objections and personality traits. Start your first practice session and get instant feedback on your technique.
+                  </p>
+                  <motion.button
+                    onClick={() => selectedPersona && setStep('ready')}
+                    disabled={!selectedPersona}
+                    className={`px-10 py-4 rounded-xl font-bold text-lg transition-all inline-flex items-center gap-3 group ${
+                      selectedPersona 
+                        ? 'bg-emerald-500 hover:bg-emerald-400 text-black' 
+                        : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    }`}
+                    whileHover={selectedPersona ? { scale: 1.02 } : {}}
+                    whileTap={selectedPersona ? { scale: 0.98 } : {}}
+                  >
+                    Continue
+                    <svg 
+                      className="w-5 h-5 transition-transform group-hover:translate-x-1" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </motion.button>
+                </motion.div>
+
+                {/* Back button and skip option */}
+                <motion.div 
+                  className="flex flex-col items-center gap-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <button
+                    onClick={() => setStep('welcome')}
+                    className="px-6 py-3 text-white hover:text-emerald-400 transition-colors"
+                  >
+                    ← Back
+                  </button>
+                  
+                  {/* Skip to invite team option for managers */}
+                  {!loadingRole && isManager && (
+                    <motion.button
+                      onClick={handleSkipToInviteTeam}
+                      className="text-zinc-500 hover:text-emerald-400 transition-colors text-sm"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      Skip to invite teammates →
+                    </motion.button>
+                  )}
+                </motion.div>
+              </motion.div>
+            )}
+            
+            {/* Step 3: Ready (mic permission + launch) */}
+            {step === 'ready' && (
+              <motion.div
+                key="ready"
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0 }}
+                className="w-full max-w-lg mx-auto pt-6 sm:pt-10 md:pt-14"
+              >
+                {!micGranted ? (
+                  <MicPermission onGranted={() => setMicGranted(true)} />
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center"
+                  >
+                    {/* Agent Bubble */}
+                    {(() => {
+                      const persona = PERSONAS.find(p => p.id === selectedPersona)
+                      if (!persona) return null
+                      
+                      const personaMetadata = PERSONA_METADATA[persona.name]
+                      const agentImage = personaMetadata?.bubble?.image
+                      const variantKey = (personaMetadata?.bubble?.color || 'primary') as keyof typeof COLOR_VARIANTS
+                      const variantStyles = COLOR_VARIANTS[variantKey]
+                      
+                      return (
+                        <motion.div
+                          className="relative w-48 h-48 sm:w-56 sm:h-56 mx-auto mb-8"
+                          onMouseEnter={() => setBubbleHovered(true)}
+                          onMouseLeave={() => setBubbleHovered(false)}
+                        >
+                          {/* Concentric circles */}
+                          {[0, 1, 2].map((i) => (
+                            <motion.div
+                              key={i}
+                              className={cn(
+                                "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
+                                variantStyles.border[i],
+                                variantStyles.gradient
+                              )}
+                              animate={bubbleHovered ? {
+                                rotate: 360,
+                                scale: 1,
+                                opacity: 1,
+                              } : {
+                                rotate: 360,
+                                scale: [1, 1.05, 1],
+                                opacity: [0.7, 0.9, 0.7],
+                              }}
+                              transition={bubbleHovered ? {
+                                rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                                scale: { duration: 0.3 },
+                                opacity: { duration: 0.3 },
+                              } : {
+                                rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                                scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                                opacity: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                              }}
+                            >
+                              <div
+                                className={cn(
+                                  "absolute inset-0 rounded-full mix-blend-screen",
+                                  `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
+                                    "from-",
+                                    ""
+                                  )}/20%,transparent_70%)]`
+                                )}
+                              />
+                            </motion.div>
+                          ))}
+
+                          {/* Profile Image */}
+                          {agentImage && (
+                            <motion.div 
+                              className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
+                              animate={{
+                                scale: [1, 1.05, 1],
+                              }}
+                              transition={{
+                                duration: 4,
+                                repeat: Number.POSITIVE_INFINITY,
+                                ease: "easeInOut",
+                                delay: 0,
+                              }}
+                            >
+                              <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                                {(() => {
+                                  const imageStyle = getAgentImageStyle(persona.name)
+                                  const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                                  let translateY = '0'
+                                  const verticalNum = parseFloat(vertical)
+                                  if (verticalNum !== 50) {
+                                    const translatePercent = ((verticalNum - 50) / 150) * 100
+                                    translateY = `${translatePercent}%`
+                                  }
+                                  const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                                  
+                                  return (
+                                    <Image
+                                      src={agentImage}
+                                      alt={persona.name}
+                                      fill
+                                      className="object-cover"
+                                      style={{
+                                        objectPosition: `${horizontal} ${vertical}`,
+                                        transform: `scale(${scaleValue}) translateY(${translateY})`,
+                                      }}
+                                      sizes="160px"
+                                      unoptimized={agentImage.includes(' ') || agentImage.includes('&')}
+                                    />
+                                  )
+                                })()}
+                              </div>
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      )
+                    })()}
+                    
+                    <h2 className="text-3xl font-black mb-2">Ready to knock?</h2>
+                    
+                    <p className="text-xl font-bold text-emerald-400 mb-6">
+                      {PERSONAS.find(p => p.id === selectedPersona)?.name}
+                    </p>
+                    
+                    {/* Tips */}
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 mb-6 text-left">
+                      <h4 className="font-semibold text-white mb-4 flex items-center gap-2 text-lg">
+                        <span>💡</span> Quick tips
+                      </h4>
+                      <ul className="space-y-3 text-base text-white">
+                        <li className="flex items-start gap-4">
+                          <span className="text-emerald-500 text-6xl leading-none flex-shrink-0 -mt-5">•</span>
+                          <span>Speak naturally. The AI understands conversational language</span>
+                        </li>
+                        <li className="flex items-start gap-4">
+                          <span className="text-emerald-500 text-6xl leading-none flex-shrink-0 -mt-5">•</span>
+                          <span>Use your real pitch. This is practice for real doors</span>
+                        </li>
+                        <li className="flex items-start gap-4">
+                          <span className="text-emerald-500 text-6xl leading-none flex-shrink-0 -mt-5">•</span>
+                          <span>You'll get scored on technique, objection handling & more</span>
+                        </li>
+                      </ul>
+              </div>
+
+                    {/* Launch buttons */}
+                    <div className="flex flex-col gap-3">
+                      <motion.button
+                        onClick={handleStartPractice}
+                        className="w-full px-10 py-5 bg-emerald-500 hover:bg-emerald-400 text-black text-xl font-black rounded-xl transition-colors inline-flex items-center justify-center gap-3 group"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>🚪</span>
+                        Knock on the door
+                      </motion.button>
+                      
+                      <button
+                        onClick={() => setStep('choose-persona')}
+                        className="text-white hover:text-emerald-400 transition-colors text-sm"
+                      >
+                        ← Choose a different persona
+                      </button>
+
+                      {/* Skip to invite team option for managers */}
+                      {!loadingRole && isManager && (
+                        <motion.button
+                          onClick={handleSkipToInviteTeam}
+                          className="text-zinc-500 hover:text-emerald-400 transition-colors text-sm mt-2"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          Skip to invite teammates →
+                        </motion.button>
+                      )}
+            </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+        
+        {/* Footer */}
+        <footer className="p-4 sm:p-6 text-center text-zinc-600 text-xs sm:text-sm mt-auto">
+          <p>© 2025 DoorIQ. Practice like a pro, close like a champion.</p>
+        </footer>
+      </div>
+    </div>
+  )
+}

@@ -62,17 +62,31 @@ export async function POST(request: Request) {
       }
     }
 
-    // Update the user's team_id, organization_id, role, and set is_active = true
-    // The trigger will automatically increment seats_used when is_active is set to true
+    // Update user record - activate them and set organization/role
+    // Check if this is a pre-created user (from bulk invite) that was inactive
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id, full_name, is_active')
+      .eq('id', user.id)
+      .single()
+
+    // Use existing name if available, otherwise from user metadata or email
+    const userName = existingUser?.full_name || user.user_metadata?.full_name || invite.email.split('@')[0]
+
     const { error: updateError } = await supabase
       .from('users')
-      .update({ 
+      .upsert({
+        id: user.id,
+        email: user.email,
+        full_name: userName,
         team_id: invite.team_id,
         organization_id: orgId,
         role: invite.role,
-        is_active: true // Set as active - trigger will handle seats_used increment
+        is_active: true, // Set as active - trigger will handle seats_used increment
+        virtual_earnings: existingUser ? undefined : 0, // Only set if new user
+      }, {
+        onConflict: 'id'
       })
-      .eq('id', user.id)
 
     if (updateError) {
       console.error('Error updating user:', updateError)
