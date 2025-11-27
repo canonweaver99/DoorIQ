@@ -1815,7 +1815,8 @@ function TrainerPageContent() {
           agentId={selectedAgent.eleven_agent_id} 
           conversationToken={conversationToken} 
           sessionId={sessionId}
-          autostart 
+          autostart
+          onAgentEndCall={handleCallEnd}
         />
       )}
       

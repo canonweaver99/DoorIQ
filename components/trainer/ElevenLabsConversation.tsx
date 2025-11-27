@@ -4,14 +4,24 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Conversation } from '@elevenlabs/client'
 import { useSessionRecording } from '@/hooks/useSessionRecording'
 
+// End call reason type - export for use in trainer page
+export type EndCallReason = 'rejection' | 'sale_complete' | 'goodbye' | 'hostile'
+
 type ElevenLabsConversationProps = {
   agentId: string
   conversationToken: string
   autostart?: boolean
   sessionId?: string | null
+  onAgentEndCall?: (reason: EndCallReason) => void  // Callback when AI ends the call
 }
 
-export default function ElevenLabsConversation({ agentId, conversationToken, autostart = true, sessionId = null }: ElevenLabsConversationProps) {
+export default function ElevenLabsConversation({ 
+  agentId, 
+  conversationToken, 
+  autostart = true, 
+  sessionId = null,
+  onAgentEndCall
+}: ElevenLabsConversationProps) {
   const conversationRef = useRef<any>(null)
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -48,6 +58,15 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
   // Track intentional ends (via client tool) to skip reconnection
   const intentionalEndRef = useRef<boolean>(false)
   const intentionalEndReasonRef = useRef<string | null>(null)
+  
+  // Track if end_call was already triggered (prevent double-fires)
+  const endCallTriggeredRef = useRef(false)
+  
+  // Store callback in ref so it's accessible in clientTools without stale closure issues
+  const onAgentEndCallRef = useRef(onAgentEndCall)
+  useEffect(() => {
+    onAgentEndCallRef.current = onAgentEndCall
+  }, [onAgentEndCall])
 
   // Helper to safely dispatch events (guards against SSR)
   const safeDispatchEvent = (eventName: string, detail: any) => {
@@ -135,6 +154,9 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       return
     }
 
+    // Reset end call trigger on new session
+    endCallTriggeredRef.current = false
+
     try {
       console.log('🎤 Requesting microphone permission...')
       await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -149,6 +171,47 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
       const conversation = await Conversation.startSession({
         conversationToken: currentToken,
         connectionType: 'webrtc',
+        
+        // ========== CLIENT TOOLS - AI can call these directly ==========
+        clientTools: {
+          // end_call tool - AI calls this to close the door
+          end_call: async (parameters: { reason?: string }) => {
+            const reason = (parameters?.reason || 'goodbye') as EndCallReason
+            
+            console.log('🚪 ========================================')
+            console.log('🚪 end_call TOOL TRIGGERED BY AI AGENT!')
+            console.log('🚪 Reason:', reason)
+            console.log('🚪 Session ID:', sessionIdRef.current)
+            console.log('🚪 ========================================')
+            
+            // Prevent double-firing
+            if (endCallTriggeredRef.current) {
+              console.log('⚠️ end_call already triggered, ignoring duplicate')
+              return 'Call already ending'
+            }
+            endCallTriggeredRef.current = true
+            
+            // Dispatch event for trainer page to catch (backup method)
+            safeDispatchEvent('agent:end_call', {
+              reason,
+              sessionId: sessionIdRef.current,
+              timestamp: Date.now()
+            })
+            
+            // Call the callback prop if provided (primary method)
+            if (onAgentEndCallRef.current) {
+              console.log('🚪 Calling onAgentEndCall callback with reason:', reason)
+              // Small delay to let the AI's final audio play
+              setTimeout(() => {
+                onAgentEndCallRef.current?.(reason)
+              }, 1500)
+            }
+            
+            // Return acknowledgment to the AI
+            return `Call ended: ${reason}`
+          }
+        },
+        // ================================================================
         
         onConnect: () => {
           console.log('✅ WebRTC Connected!')
@@ -165,6 +228,7 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           lastAgentResponseTimeRef.current = Date.now() // Reset agent response timer
           intentionalEndRef.current = false // Reset intentional end flag
           intentionalEndReasonRef.current = null
+          endCallTriggeredRef.current = false  // Reset end call trigger
           
           // Start connection health monitoring
           setTimeout(() => startHealthMonitoring(), 1000)
@@ -208,6 +272,26 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
           stopHealthMonitoringFn()
           
           const hasActiveSession = !!sessionIdRef.current
+          
+          // If end_call was triggered, the door close is already being handled
+          // Just clean up without trying to trigger door close again
+          if (endCallTriggeredRef.current) {
+            console.log('🚪 end_call was already triggered - disconnect is expected, cleaning up')
+            wasConnectedRef.current = false
+            setStatus('disconnected')
+            dispatchStatus('disconnected')
+            
+            if (audioRecordingActiveRef.current) {
+              console.log('🛑 Stopping audio recording from onDisconnect (end_call triggered)')
+              stopAudioRecording()
+              audioRecordingActiveRef.current = false
+            }
+            
+            if (conversationRef.current) {
+              conversationRef.current = null
+            }
+            return
+          }
           
           // CRITICAL: Always dispatch disconnect status when there's an active session
           // This ensures the trainer page detects when ElevenLabs hangs up
@@ -841,6 +925,12 @@ export default function ElevenLabsConversation({ agentId, conversationToken, aut
     
     console.log('🏥 Starting connection health monitoring')
     healthCheckIntervalRef.current = setInterval(() => {
+      // Don't run health checks if end_call was already triggered
+      if (endCallTriggeredRef.current) {
+        console.log('🏥 Skipping health check - end_call already triggered')
+        return
+      }
+      
       // Skip all health checks if this was an intentional end
       if (intentionalEndRef.current) {
         console.log('🚪 Intentional end - skipping health monitoring')
