@@ -21,6 +21,7 @@ import { LiveTranscript } from '@/components/trainer/LiveTranscript'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
 import DoorClosingVideo from '@/components/trainer/DoorClosingVideo'
+import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 
 // Dynamic imports for heavy components - only load when needed
 const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
@@ -1279,6 +1280,37 @@ function TrainerPageContent() {
     handleDoorClosingSequence(reason)
   }, [handleDoorClosingSequence])
 
+  // Handler for when AI agent explicitly ends the call via end_call tool
+  const handleAgentEndCall = useCallback((reason: EndCallReason) => {
+    console.log('🚪 ========================================')
+    console.log('🚪 handleAgentEndCall TRIGGERED!')
+    console.log('🚪 Reason:', reason)
+    console.log('🚪 Session active:', sessionActive)
+    console.log('🚪 Session ID:', sessionId)
+    console.log('🚪 ========================================')
+    
+    if (!sessionActive || !sessionId) {
+      console.log('⚠️ No active session, ignoring end_call')
+      return
+    }
+    
+    // Map the reason to a human-readable string for the session record
+    const reasonMap: Record<EndCallReason, string> = {
+      rejection: 'Homeowner rejected - door closed',
+      sale_complete: 'Sale completed successfully',
+      goodbye: 'Conversation ended naturally',
+      hostile: 'Homeowner became hostile'
+    }
+    
+    const endReason = reasonMap[reason] || 'Agent ended conversation'
+    
+    console.log('🚪 Triggering door closing sequence with reason:', endReason)
+    
+    // Trigger the door closing sequence
+    handleDoorClosingSequence(endReason)
+    
+  }, [sessionActive, sessionId, handleDoorClosingSequence])
+
   // Listen for agent disconnect (NOT user mic issues)
   // This triggers when ElevenLabs agent disconnects, not when user stops speaking
   useEffect(() => {
@@ -1351,6 +1383,38 @@ function TrainerPageContent() {
       window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
       window.removeEventListener('agent:inactivity', handleAgentInactivity as EventListener)
       window.removeEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
+    }
+  }, [sessionActive, sessionId, handleDoorClosingSequence])
+
+  // Backup listener for agent:end_call event (in case callback doesn't fire)
+  useEffect(() => {
+    if (!sessionActive || typeof window === 'undefined') return
+    
+    const handleEndCallEvent = (e: CustomEvent) => {
+      const { reason, sessionId: eventSessionId } = e.detail || {}
+      
+      console.log('🚪 agent:end_call EVENT received:', { reason, eventSessionId })
+      
+      // Only process if it matches our current session
+      if (eventSessionId === sessionId && sessionActive) {
+        console.log('🚪 Processing end_call event - triggering door close')
+        
+        const reasonMap: Record<string, string> = {
+          rejection: 'Homeowner rejected - door closed',
+          sale_complete: 'Sale completed successfully', 
+          goodbye: 'Conversation ended naturally',
+          hostile: 'Homeowner became hostile'
+        }
+        
+        const endReason = reasonMap[reason] || 'Agent ended conversation'
+        handleDoorClosingSequence(endReason)
+      }
+    }
+    
+    window.addEventListener('agent:end_call', handleEndCallEvent as EventListener)
+    
+    return () => {
+      window.removeEventListener('agent:end_call', handleEndCallEvent as EventListener)
     }
   }, [sessionActive, sessionId, handleDoorClosingSequence])
   
@@ -1816,7 +1880,7 @@ function TrainerPageContent() {
           conversationToken={conversationToken} 
           sessionId={sessionId}
           autostart
-          onAgentEndCall={handleCallEnd}
+          onAgentEndCall={handleAgentEndCall}
         />
       )}
       
