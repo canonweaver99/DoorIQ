@@ -88,91 +88,85 @@ export function ElevenLabsSpeechMetrics({
         </span>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
         {/* Energy Level */}
         <div className="flex flex-col items-center">
-          <div className="mb-2">
+          <div className="mb-3">
             <ProgressRing
               value={energyLevel}
               max={100}
-              size={80}
-              strokeWidth={8}
+              size={120}
+              strokeWidth={10}
               color={getPercentageColor(energyLevel)}
             />
           </div>
-          <div className="text-sm font-medium text-gray-300 mb-1">Energy Level</div>
-          <div className="text-xs text-gray-400">{getMetricLabel(energyLevel)}</div>
+          <div className="text-base font-medium text-gray-300 mb-1">Energy Level</div>
+          <div className="text-sm text-gray-400">{getMetricLabel(energyLevel)}</div>
         </div>
         
         {/* Confidence */}
         <div className="flex flex-col items-center">
-          <div className="mb-2">
+          <div className="mb-3">
             <ProgressRing
               value={confidence}
               max={100}
-              size={80}
-              strokeWidth={8}
+              size={120}
+              strokeWidth={10}
               color={getPercentageColor(confidence)}
             />
           </div>
-          <div className="text-sm font-medium text-gray-300 mb-1">Confidence</div>
-          <div className="text-xs text-gray-400">
+          <div className="text-base font-medium text-gray-300 mb-1">Confidence</div>
+          <div className="text-sm text-gray-400">
             {confidence >= 60 ? 'Confident' : 'Sounds uncertain'}
           </div>
         </div>
         
         {/* Clarity */}
         <div className="flex flex-col items-center">
-          <div className="mb-2">
+          <div className="mb-3">
             <ProgressRing
               value={clarity}
               max={100}
-              size={80}
-              strokeWidth={8}
+              size={120}
+              strokeWidth={10}
               color={getPercentageColor(clarity)}
             />
           </div>
-          <div className="text-sm font-medium text-gray-300 mb-1">Clarity</div>
-          <div className="text-xs text-gray-400">
+          <div className="text-base font-medium text-gray-300 mb-1">Clarity</div>
+          <div className="text-sm text-gray-400">
             {clarity >= 80 ? 'Crystal clear' : 'Could be clearer'}
           </div>
         </div>
         
         {/* Pace Variety */}
         <div className="flex flex-col items-center">
-          <div className="mb-2">
+          <div className="mb-3">
             <ProgressRing
               value={paceVariety}
               max={100}
-              size={80}
-              strokeWidth={8}
+              size={120}
+              strokeWidth={10}
               color={getPercentageColor(paceVariety)}
             />
           </div>
-          <div className="text-sm font-medium text-gray-300 mb-1">Pace Variety</div>
-          <div className="text-xs text-gray-400">
+          <div className="text-base font-medium text-gray-300 mb-1">Pace Variety</div>
+          <div className="text-sm text-gray-400">
             {paceVariety >= 60 ? 'Good variety' : 'Too monotone'}
           </div>
         </div>
       </div>
       
-      {/* Conversation Flow Waveform Placeholder */}
-      <div className="mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
-        <div className="text-sm font-medium text-gray-300 mb-2">Conversation Flow:</div>
-        <div className="h-20 bg-slate-900/50 rounded-lg flex items-center justify-center">
-          <div className="text-xs text-gray-500">Visual waveform showing energy over time</div>
-        </div>
-      </div>
-      
       {/* Voice Tip */}
-      <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-        <div className="text-sm font-semibold text-blue-400 mb-1">Voice Tip:</div>
-        <div className="text-sm text-white">
+      <div className="mt-6 p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+        <div className="text-lg font-semibold text-blue-400 mb-3">💡 Voice Tip:</div>
+        <div className="text-base text-white leading-relaxed">
           {voiceAnalysis?.issues?.monotone 
-            ? 'Vary your pace when explaining benefits'
+            ? 'Your voice lacks variety, which can make you sound less engaging. To improve: Practice varying your pace by slowing down when explaining important benefits and speeding up slightly during transitions. Use pauses strategically - pause after key points to let them sink in. Try emphasizing different words in your sentences to create natural rhythm. For example, when saying "This service protects your family," emphasize "protects" and "family" more than the other words. Record yourself practicing and listen for natural variation.'
             : voiceAnalysis?.issues?.lowEnergy
-            ? 'Increase energy level to sound more engaging'
-            : 'Maintain your current vocal variety'}
+            ? 'Your energy level is lower than ideal, which can make you sound less enthusiastic and confident. To improve: Before starting your pitch, take 3 deep breaths and do a quick physical warm-up (shoulder rolls, neck stretches). Stand up straight with your shoulders back - good posture naturally increases vocal energy. Practice speaking with 20% more enthusiasm than feels natural - what feels like "too much" to you sounds confident to customers. Smile while you talk (even on the phone) - it changes your vocal tone. Focus on varying your volume slightly, speaking louder on key benefits and softer when building rapport.'
+            : voiceAnalysis?.fillerWordsPerMinute && voiceAnalysis.fillerWordsPerMinute > 1
+            ? 'You\'re using filler words like "um" and "uh" which can undermine your confidence. To improve: Practice pausing instead of filling silence with filler words - a 1-2 second pause sounds thoughtful, not uncertain. Before speaking, take a moment to think about what you want to say. Record yourself and identify your most common filler words, then practice replacing them with pauses. Use phrases like "Let me think about that" or "That\'s a great question" as bridges instead of fillers. The more prepared you are with your talking points, the fewer fillers you\'ll use.'
+            : 'You\'re maintaining good vocal variety! To continue improving: Practice varying your pace based on what you\'re saying - slow down for important benefits, speed up slightly for transitions. Use strategic pauses after key points to let them sink in. Experiment with emphasizing different words to create natural rhythm. Record yourself regularly to maintain awareness of your vocal patterns. Consider practicing with different energy levels to expand your range.'}
         </div>
       </div>
     </motion.div>

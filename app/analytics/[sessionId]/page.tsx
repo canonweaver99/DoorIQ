@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/client'
 import { HeroSection } from '@/components/analytics/HeroSection'
 import { InstantInsightsGrid } from '@/components/analytics/InstantInsightsGrid'
 import { CriticalMomentsTimeline } from '@/components/analytics/CriticalMomentsTimeline'
-import { ComparativePerformance } from '@/components/analytics/ComparativePerformance'
 import { AICoachingInsights } from '@/components/analytics/AICoachingInsights'
 import { ElevenLabsSpeechMetrics } from '@/components/analytics/ElevenLabsSpeechMetrics'
 import { FocusArea } from '@/components/analytics/FocusArea'
@@ -601,23 +600,6 @@ export default function AnalyticsPage() {
           ) : null
         )}
         
-        {/* Comparative Performance - Loads after moments */}
-        {comparison ? (
-          loadingStates.comparison ? (
-            <ComparativePerformance
-              currentOverall={comparison.current.overall}
-              userAverageOverall={comparison.userAverage.overall}
-              teamAverageOverall={comparison.teamAverage.overall}
-              currentClosePercentage={comparison.current.closePercentage}
-              userAverageClosePercentage={comparison.userAverage.closePercentage}
-              teamAverageClosePercentage={comparison.teamAverage.closePercentage}
-              closeAttempts={comparison.closeAttempts}
-              teamCloseAttempts={comparison.teamCloseAttempts}
-            />
-          ) : (
-            <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
-          )
-        ) : null}
         
         {/* AI Coaching Insights - Loads after comparison */}
         {(session.analytics?.coaching_plan || session.analytics?.feedback) ? (

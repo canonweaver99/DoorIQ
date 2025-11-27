@@ -78,7 +78,7 @@ function calculateAverage(scores: (number | null)[]): number | null {
   return Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
 }
 
-// Perform deep GPT-4o analysis with full context
+// Perform deep GPT-4o analysis with full context - COMBINED with coaching plan for speed
 async function performDeepAnalysis(data: {
   keyMoments: any[]
   instantMetrics: any
@@ -89,47 +89,27 @@ async function performDeepAnalysis(data: {
 }) {
   const { keyMoments, instantMetrics, elevenLabsData, userHistory, transcript, durationSeconds } = data
   
-  const prompt = `You are an expert door-to-door sales coach analyzing a training session.
+  // Limit key moments to top 5 for faster processing
+  const topKeyMoments = keyMoments.slice(0, 5)
+  
+  const prompt = `You are an expert door-to-door sales coach analyzing a training session. Provide analysis AND coaching plan in ONE response.
 
 Context:
-- User's average performance: ${userHistory?.averageScore || 'N/A'} (from ${userHistory?.sessionCount || 0} previous sessions)
-- This session's instant score: ${instantMetrics?.estimatedScore || 'N/A'}
-- Key moments identified: ${keyMoments.length}
-- Session duration: ${Math.round(durationSeconds / 60)} minutes
-${elevenLabsData ? `- ElevenLabs sentiment trend: ${JSON.stringify(elevenLabsData.sentimentProgression || [])}` : ''}
+- User's average: ${userHistory?.averageScore || 'N/A'} (${userHistory?.sessionCount || 0} sessions)
+- Instant score: ${instantMetrics?.estimatedScore || 'N/A'}
+- Key moments: ${topKeyMoments.length}
+- Duration: ${Math.round(durationSeconds / 60)} min
 
-Key Moments Analysis:
-${keyMoments.map((m, i) => `
-${i + 1}. ${m.type.toUpperCase()} (${m.outcome}):
-   "${m.transcript.slice(0, 200)}"
-   Analysis: ${m.analysis?.whatHappened || 'Not analyzed'}
-`).join('\n')}
+Top Key Moments:
+${topKeyMoments.map((m, i) => `${i + 1}. ${m.type}: "${m.transcript.slice(0, 150)}"`).join('\n')}
 
-Instant Metrics:
-- Words per minute: ${instantMetrics?.wordsPerMinute || 'N/A'}
-- Conversation balance: ${instantMetrics?.conversationBalance || 'N/A'}%
-- Objections faced: ${instantMetrics?.objectionCount || 0}
-- Close attempts: ${instantMetrics?.closeAttempts || 0}
-- Safety mentions: ${instantMetrics?.safetyMentions || 0}
+Metrics: WPM ${instantMetrics?.wordsPerMinute || 'N/A'}, Balance ${instantMetrics?.conversationBalance || 'N/A'}%, Objections ${instantMetrics?.objectionCount || 0}, Closes ${instantMetrics?.closeAttempts || 0}
 
-Provide a comprehensive analysis in JSON format:
+Return JSON:
 {
-  "overallAssessment": "Compare this session to their usual performance (one paragraph)",
-  "topStrengths": ["strength 1", "strength 2", "strength 3"],
-  "topImprovements": ["improvement 1", "improvement 2", "improvement 3"],
-  "specificTechniques": ["technique 1 to practice", "technique 2 to practice"],
-  "psychologicalInsights": {
-    "confidence": "assessment of confidence level",
-    "energy": "assessment of energy level",
-    "rapport": "assessment of rapport building"
-  },
-  "scoreAdjustments": {
-    "rapport": {"adjustment": number, "reason": "why adjusted"},
-    "discovery": {"adjustment": number, "reason": "why adjusted"},
-    "objectionHandling": {"adjustment": number, "reason": "why adjusted"},
-    "closing": {"adjustment": number, "reason": "why adjusted"},
-    "safety": {"adjustment": number, "reason": "why adjusted"}
-  },
+  "overallAssessment": "One paragraph comparison to usual performance",
+  "topStrengths": ["strength 1", "strength 2"],
+  "topImprovements": ["improvement 1", "improvement 2"],
   "finalScores": {
     "overall": number (0-100),
     "rapport": number (0-100),
@@ -137,6 +117,15 @@ Provide a comprehensive analysis in JSON format:
     "objectionHandling": number (0-100),
     "closing": number (0-100),
     "safety": number (0-100)
+  },
+  "coachingPlan": {
+    "immediateFixes": [{"issue": "issue", "practiceScenario": "scenario"}],
+    "rolePlayScenarios": [{"scenario": "description", "focus": "what to practice"}]
+  },
+  "feedback": {
+    "strengths": ["strength 1", "strength 2"],
+    "improvements": ["improvement 1", "improvement 2"],
+    "specific_tips": ["tip 1", "tip 2"]
   }
 }`
 
@@ -144,11 +133,11 @@ Provide a comprehensive analysis in JSON format:
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
-        { role: 'system', content: 'You are an elite door-to-door sales coach with 20+ years of experience. Provide specific, actionable feedback.' },
+        { role: 'system', content: 'Expert sales coach. Provide concise, actionable feedback in JSON.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
-      max_tokens: 3000,
+      max_tokens: 2000, // Reduced from 3000+2000=5000 to 2000 total
       response_format: { type: 'json_object' }
     })
     
@@ -157,74 +146,42 @@ Provide a comprehensive analysis in JSON format:
       throw new Error('No content from OpenAI')
     }
     
-    return JSON.parse(content)
+    const parsed = JSON.parse(content)
+    
+    // Extract coaching plan from combined response
+    const coachingPlan = parsed.coachingPlan || {
+      immediateFixes: [],
+      skillDevelopment: [],
+      rolePlayScenarios: []
+    }
+    
+    // Return structured response matching old format
+    return {
+      overallAssessment: parsed.overallAssessment || '',
+      topStrengths: parsed.topStrengths || [],
+      topImprovements: parsed.topImprovements || [],
+      finalScores: parsed.finalScores || {},
+      coachingPlan,
+      feedback: parsed.feedback || {
+        strengths: parsed.topStrengths || [],
+        improvements: parsed.topImprovements || [],
+        specific_tips: []
+      }
+    }
   } catch (error: any) {
     logger.error('Error performing deep analysis', error)
     throw error
   }
 }
 
-// Generate personalized coaching plan
+// Generate personalized coaching plan - NOW COMBINED WITH performDeepAnalysis
+// Keeping function for backwards compatibility but it's no longer called separately
 async function generateCoachingPlan(deepAnalysis: any, userHistory: any) {
-  const prompt = `Based on this analysis, create a personalized coaching plan:
-
-Strengths: ${deepAnalysis.topStrengths?.join(', ') || 'None identified'}
-Improvements: ${deepAnalysis.topImprovements?.join(', ') || 'None identified'}
-User's average score: ${userHistory?.averageScore || 'N/A'}
-
-Create a coaching plan in JSON format:
-{
-  "immediateFixes": [
-    {
-      "issue": "specific issue",
-      "example": "example from conversation",
-      "practiceScenario": "role play scenario",
-      "resource": "suggested resource or technique"
-    }
-  ],
-  "skillDevelopment": [
-    {
-      "skill": "skill name",
-      "currentLevel": "assessment",
-      "targetLevel": "goal",
-      "exercises": ["exercise 1", "exercise 2"]
-    }
-  ],
-  "rolePlayScenarios": [
-    {
-      "scenario": "scenario description",
-      "focus": "what to practice",
-      "expectedOutcome": "what success looks like"
-    }
-  ]
-}`
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: 'You are an expert sales trainer creating personalized coaching plans.' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-      response_format: { type: 'json_object' }
-    })
-    
-    const content = response.choices[0].message.content
-    if (!content) {
-      throw new Error('No content from OpenAI')
-    }
-    
-    return JSON.parse(content)
-  } catch (error: any) {
-    logger.error('Error generating coaching plan', error)
-    // Return basic coaching plan if AI fails
-    return {
-      immediateFixes: [],
-      skillDevelopment: [],
-      rolePlayScenarios: []
-    }
+  // This is now included in performDeepAnalysis response
+  return deepAnalysis.coachingPlan || {
+    immediateFixes: [],
+    skillDevelopment: [],
+    rolePlayScenarios: []
   }
 }
 
@@ -351,7 +308,7 @@ export async function POST(req: NextRequest) {
     // Step 1: Get user's historical performance for comparison
     const userHistory = await getUserPerformanceHistory(sessionId, supabase)
     
-    // Step 2: Deep GPT-4o analysis with full context
+    // Step 2: Deep GPT-4o analysis with full context (now includes coaching plan)
     const deepAnalysis = await performDeepAnalysis({
       keyMoments: finalKeyMoments,
       instantMetrics: finalInstantMetrics,
@@ -361,8 +318,12 @@ export async function POST(req: NextRequest) {
       durationSeconds
     })
     
-    // Step 3: Generate personalized coaching plan
-    const coachingPlan = await generateCoachingPlan(deepAnalysis, userHistory)
+    // Step 3: Extract coaching plan from combined response
+    const coachingPlan = deepAnalysis.coachingPlan || {
+      immediateFixes: [],
+      skillDevelopment: [],
+      rolePlayScenarios: []
+    }
     
     // Step 4: Calculate final precise scores
     const finalScores = calculateFinalScores(deepAnalysis, finalInstantMetrics)
@@ -402,6 +363,11 @@ export async function POST(req: NextRequest) {
       ...existingAnalytics,
       deep_analysis: deepAnalysis,
       coaching_plan: coachingPlan,
+      feedback: deepAnalysis.feedback || existingAnalytics.feedback || {
+        strengths: deepAnalysis.topStrengths || [],
+        improvements: deepAnalysis.topImprovements || [],
+        specific_tips: []
+      },
       comparative_performance: comparativePerformance,
       improvement_trends: improvementTrends,
       final_scores: finalScores,

@@ -217,18 +217,27 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       
       // Handle orchestration response phases
       if (orchestrationData.phases) {
-        // Phase 1: Instant Metrics
+        // Phase 1: Instant Metrics - marks session_summary as complete
         if (orchestrationData.phases.instant?.status === 'complete') {
           setStatus('Instant metrics calculated')
-          setCurrentSection('instant')
-          setCompletedSections(prev => new Set(prev).add('instant'))
+          setCurrentSection('session_summary')
+          setCompletedSections(prev => {
+            const newSet = new Set(prev)
+            newSet.add('session_summary')
+            return newSet
+          })
+          setSections(prev => ({
+            ...prev,
+            session_summary: {
+              total_lines: orchestrationData.phases.instant?.metrics?.totalLines || 0
+            }
+          }))
         }
         
-        // Phase 2: Key Moments
+        // Phase 2: Key Moments - marks progress
         if (orchestrationData.phases.keyMoments?.status === 'complete') {
-          setStatus('Key moments detected')
-          setCurrentSection('keyMoments')
-          setCompletedSections(prev => new Set(prev).add('keyMoments'))
+          setStatus('Key moments detected, analyzing performance...')
+          setCurrentSection('scores')
           setSections(prev => ({
             ...prev,
             key_moments: orchestrationData.phases.keyMoments.keyMoments
@@ -237,9 +246,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         
         // Phase 3: Deep Analysis (polling)
         setStatus('Running deep analysis...')
-        setCurrentSection('deepAnalysis')
+        setCurrentSection('scores')
         
-        // Poll for completion
+        // Poll for completion and track section progress
         const pollForCompletion = async () => {
           const maxPolls = 60 // 2 minutes max
           let pollCount = 0
@@ -252,14 +261,82 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               if (sessionResponse.ok) {
                 const session = await sessionResponse.json()
                 
-                // Check if grading is complete (check both 'complete' and 'completed' for compatibility)
-                if (session.grading_status === 'complete' || session.grading_status === 'completed' || session.overall_score) {
-                  setIsComplete(true)
-                  setStatus('Grading complete!')
-                  setCompletedSections(prev => new Set(prev).add('deepAnalysis'))
+                // Track section completion based on available data
+                const newCompletedSections = new Set(completedSections)
+                
+                // Session Summary - available when instant metrics exist
+                if (session.instant_metrics && !newCompletedSections.has('session_summary')) {
+                  newCompletedSections.add('session_summary')
+                  setCompletedSections(newCompletedSections)
                   setSections(prev => ({
                     ...prev,
-                    scores: session.analytics?.scores || {},
+                    session_summary: {
+                      total_lines: session.full_transcript?.length || 0,
+                      rep_lines: session.full_transcript?.filter((t: any) => t.speaker === 'rep' || t.speaker === 'user').length || 0
+                    }
+                  }))
+                }
+                
+                // Performance Scores - available when overall_score exists
+                if (session.overall_score !== null && session.overall_score !== undefined && !newCompletedSections.has('scores')) {
+                  newCompletedSections.add('scores')
+                  setCompletedSections(newCompletedSections)
+                  setSections(prev => ({
+                    ...prev,
+                    scores: {
+                      overall: session.overall_score,
+                      rapport: session.rapport_score,
+                      discovery: session.discovery_score,
+                      objection_handling: session.objection_handling_score,
+                      closing: session.close_score
+                    }
+                  }))
+                }
+                
+                // Detailed Feedback - available when analytics.feedback exists
+                if (session.analytics?.feedback && !newCompletedSections.has('feedback')) {
+                  newCompletedSections.add('feedback')
+                  setCompletedSections(newCompletedSections)
+                  setSections(prev => ({
+                    ...prev,
+                    feedback: session.analytics.feedback
+                  }))
+                }
+                
+                // Objection Handling - available when analytics.objection_analysis exists
+                if (session.analytics?.objection_analysis && !newCompletedSections.has('objection_analysis')) {
+                  newCompletedSections.add('objection_analysis')
+                  setCompletedSections(newCompletedSections)
+                  setSections(prev => ({
+                    ...prev,
+                    objection_analysis: session.analytics.objection_analysis
+                  }))
+                }
+                
+                // Personalized Coaching - available when analytics.coaching_plan exists
+                if (session.analytics?.coaching_plan && !newCompletedSections.has('coaching_plan')) {
+                  newCompletedSections.add('coaching_plan')
+                  setCompletedSections(newCompletedSections)
+                  setSections(prev => ({
+                    ...prev,
+                    coaching_plan: session.analytics.coaching_plan
+                  }))
+                }
+                
+                // Check if grading is complete (check both 'complete' and 'completed' for compatibility)
+                if (session.grading_status === 'complete' || session.grading_status === 'completed' || (session.overall_score && newCompletedSections.size >= 3)) {
+                  setIsComplete(true)
+                  setStatus('Grading complete!')
+                  setCompletedSections(newCompletedSections)
+                  setSections(prev => ({
+                    ...prev,
+                    scores: session.analytics?.scores || {
+                      overall: session.overall_score,
+                      rapport: session.rapport_score,
+                      discovery: session.discovery_score,
+                      objection_handling: session.objection_handling_score,
+                      closing: session.close_score
+                    },
                     feedback: session.analytics?.feedback || {},
                     coaching_plan: session.analytics?.coaching_plan || {}
                   }))
@@ -272,11 +349,13 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                   return
                 }
                 
-                // Update status based on grading_status
-                if (session.grading_status === 'instant_complete') {
+                // Update status based on grading_status and section progress
+                if (session.grading_status === 'instant_complete' || newCompletedSections.has('session_summary')) {
                   setStatus('Instant metrics ready, detecting key moments...')
-                } else if (session.grading_status === 'moments_complete') {
+                } else if (session.grading_status === 'moments_complete' || session.key_moments?.length > 0) {
                   setStatus('Key moments detected, running deep analysis...')
+                } else if (newCompletedSections.size > 0) {
+                  setStatus(`Analyzing ${newCompletedSections.size} of ${Object.keys(SECTION_LABELS).length} sections...`)
                 }
               }
             } catch (pollError) {
@@ -284,7 +363,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             }
             
             pollCount++
-            await new Promise(resolve => setTimeout(resolve, 2000)) // Poll every 2 seconds
+            await new Promise(resolve => setTimeout(resolve, 1000)) // Poll every 1 second for faster updates
           }
           
           // Timeout - check one more time
