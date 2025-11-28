@@ -363,8 +363,8 @@ function HeaderContent() {
       // Dashboard only shows for reps, NOT for managers or admins
       ...(userRole === 'rep' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
       ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),
-      // Only show Pricing if user doesn't have an active subscription
-      ...(!hasActiveSubscription ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
+      // Only show Pricing if user doesn't have an active subscription (admins handled separately)
+      ...(!hasActiveSubscription && userRole !== 'admin' ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
     ]
 
     if (userRole === 'manager') {
@@ -386,11 +386,15 @@ function HeaderContent() {
         desktopOnly: true,
       })
       // Add Pricing link for admins (always visible regardless of subscription)
-      navItems.push({
-        name: 'Pricing',
-        href: '/pricing',
-        icon: DollarSign,
-      })
+      // Check if Pricing already exists to avoid duplicates
+      const hasPricing = navItems.some(item => item.href === '/pricing')
+      if (!hasPricing) {
+        navItems.push({
+          name: 'Pricing',
+          href: '/pricing',
+          icon: DollarSign,
+        })
+      }
     }
 
     return navItems
