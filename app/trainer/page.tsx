@@ -1854,9 +1854,10 @@ function TrainerPageContent() {
           </div>
 
           {/* BOTTOM RIGHT QUADRANT - Feedback Feed */}
-          <div className="w-full h-full flex flex-col overflow-hidden">
+          {/* Temporarily removed to make room for energy metric stats */}
+          {/* <div className="w-full h-full flex flex-col overflow-hidden">
             <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
-          </div>
+          </div> */}
         </div>
       </div>
 
