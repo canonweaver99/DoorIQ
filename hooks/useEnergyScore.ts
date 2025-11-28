@@ -92,7 +92,7 @@ function calculatePitchVariation(pitchHistory: number[]): number {
   return mean > 0 ? (stdDev / mean) * 100 : 0
 }
 
-// Calculate WPM from transcript entries
+// Calculate WPM from transcript entries using rolling window
 function calculateWPMFromTranscript(
   transcript: TranscriptEntry[],
   sessionStartTime: number,
@@ -104,15 +104,49 @@ function calculateWPMFromTranscript(
   const repEntries = transcript.filter(entry => entry.speaker === 'user')
   if (repEntries.length === 0) return 0
   
-  // Count total words
-  const totalWords = repEntries.reduce((sum, entry) => {
+  // Use rolling window: last 15 seconds for more accurate real-time WPM
+  const WINDOW_SECONDS = 15
+  const windowStartTime = currentTime - (WINDOW_SECONDS * 1000)
+  
+  // Filter entries within the rolling window
+  const recentEntries = repEntries.filter(entry => {
+    try {
+      const entryTime = entry.timestamp instanceof Date 
+        ? entry.timestamp.getTime()
+        : typeof entry.timestamp === 'string'
+          ? new Date(entry.timestamp).getTime()
+          : sessionStartTime
+      return entryTime >= windowStartTime
+    } catch {
+      return false
+    }
+  })
+  
+  if (recentEntries.length === 0) {
+    // Fallback: if no recent entries, use all entries but with minimum duration
+    const totalWords = repEntries.reduce((sum, entry) => {
+      return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
+    }, 0)
+    
+    // Use actual session duration with reasonable minimum
+    const durationMinutes = Math.max(0.5, (currentTime - sessionStartTime) / 60000)
+    const wpm = totalWords / durationMinutes
+    
+    // Cap at reasonable maximum to prevent early-session inflation
+    return Math.min(200, wpm)
+  }
+  
+  // Count words in recent window
+  const recentWords = recentEntries.reduce((sum, entry) => {
     return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
   }, 0)
   
-  // Calculate duration in minutes
-  const durationMinutes = Math.max(0.1, (currentTime - sessionStartTime) / 60000)
+  // Calculate WPM based on window duration
+  const windowDurationMinutes = WINDOW_SECONDS / 60
+  const wpm = recentWords / windowDurationMinutes
   
-  return totalWords / durationMinutes
+  // Cap at reasonable maximum
+  return Math.min(200, Math.max(0, wpm))
 }
 
 // Estimate speaking pace from audio activity (when transcript unavailable)
@@ -297,6 +331,41 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     return 100 - silencePercent
   }, [])
 
+  // Check if rep (user) is currently speaking based on transcript
+  const isRepSpeaking = useCallback((currentTime: number): boolean => {
+    if (!transcript || transcript.length === 0) {
+      // If no transcript, assume rep might be speaking (fallback to audio analysis)
+      return true
+    }
+
+    // Get the most recent transcript entry
+    const lastEntry = transcript[transcript.length - 1]
+    if (!lastEntry) return false
+
+    // Check if the last entry is from the rep (user)
+    if (lastEntry.speaker !== 'user') {
+      return false
+    }
+
+    // Check if the last rep entry is recent (within last 3 seconds)
+    // This accounts for the agent potentially speaking right after the rep
+    try {
+      const entryTime = lastEntry.timestamp instanceof Date 
+        ? lastEntry.timestamp.getTime()
+        : typeof lastEntry.timestamp === 'string'
+          ? new Date(lastEntry.timestamp).getTime()
+          : currentTime
+      
+      const timeSinceLastRepEntry = currentTime - entryTime
+      // If rep spoke within last 3 seconds, consider them still speaking
+      // This is a heuristic - adjust based on typical response patterns
+      return timeSinceLastRepEntry < 3000
+    } catch {
+      // If timestamp parsing fails, assume rep might be speaking
+      return true
+    }
+  }, [transcript])
+
   // Main analysis function
   const analyzeAudio = useCallback(() => {
     if (!analyserRef.current) return
@@ -309,7 +378,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     const currentTime = Date.now()
     const sessionElapsed = currentTime - sessionStartTimeRef.current
 
-    // Calculate volume (RMS)
+    // Calculate volume (RMS) - always collect for baseline and history
     const volumeDb = calculateVolumeRMS(dataArray)
     volumeHistoryRef.current.push(volumeDb)
     if (volumeHistoryRef.current.length > 100) {
@@ -374,7 +443,16 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       return
     }
 
-    // Calculate individual factors
+    // CRITICAL: Only calculate energy score when rep is speaking
+    // Don't update score when agent is speaking
+    const repIsSpeaking = isRepSpeaking(currentTime)
+    if (!repIsSpeaking) {
+      // Agent is speaking - don't update energy score
+      // Keep the last calculated score (it's already in state)
+      return
+    }
+
+    // Calculate individual factors (only when rep is speaking)
     const volumeScore = normalizeVolume(volumeDb)
     const pitchVariationPercent = calculatePitchVariation(pitchHistoryRef.current)
     const pitchVariationScore = normalizePitchVariation(pitchVariationPercent)
@@ -419,7 +497,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       level = 'good'
     }
 
-    // Update state
+    // Update state (only when rep is speaking)
     setEnergyScore(finalScore)
     setEnergyLevel(level)
     setFactors({
@@ -431,7 +509,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
 
     // Call callback if provided
     onScoreUpdate?.(finalScore)
-  }, [transcript, normalizeVolume, normalizePitchVariation, normalizeSpeakingPace, normalizeSilenceRatio, calculateSilenceRatio, onScoreUpdate])
+  }, [transcript, normalizeVolume, normalizePitchVariation, normalizeSpeakingPace, normalizeSilenceRatio, calculateSilenceRatio, isRepSpeaking, onScoreUpdate])
 
   // Start analysis
   const startAnalysis = useCallback(async () => {
