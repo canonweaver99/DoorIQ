@@ -57,6 +57,12 @@ export function PlanCard({
   // Check if starter plan is unavailable (user is on higher tier)
   const isStarterUnavailable = tier === 'starter' && currentTier && 
     (currentTier === 'team' || currentTier === 'enterprise')
+  
+  // Check if team plan is unavailable (user is on enterprise tier - can't downgrade)
+  const isTeamUnavailable = tier === 'team' && currentTier === 'enterprise'
+  
+  // Determine if plan is unavailable
+  const isUnavailable = isStarterUnavailable || isTeamUnavailable
 
   return (
     <div
@@ -129,25 +135,27 @@ export function PlanCard({
             <div className="space-y-2">
               <Button
                 onClick={tier === 'enterprise' && onContactSales ? onContactSales : onSelect}
-                disabled={disabled || isCurrent || isStarterUnavailable}
+                disabled={disabled || isCurrent || isUnavailable}
                 className={cn(
                   'w-full h-10',
                   isCurrent
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
-                    : isStarterUnavailable
+                    : isUnavailable
                       ? 'bg-[#1a1a1a] border border-[#2a2a2a] text-[#666] cursor-not-allowed opacity-50'
                       : 'bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a]'
                 )}
               >
                 {isCurrent 
                   ? 'Current Plan' 
-                  : isStarterUnavailable 
+                  : isUnavailable 
                     ? 'Unavailable'
                     : tier === 'enterprise' 
                       ? 'Contact Sales' 
-                      : 'Upgrade'}
+                      : tier === 'team' && currentTier === 'starter'
+                        ? 'Upgrade'
+                        : 'Unavailable'}
               </Button>
-              {isStarterUnavailable && (
+              {isUnavailable && (
                 <p className="text-xs text-foreground/60 font-sans text-center">
                   * Unavailable due to excess in seats
                 </p>

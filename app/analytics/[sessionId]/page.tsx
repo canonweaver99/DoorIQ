@@ -503,7 +503,7 @@ export default function AnalyticsPage() {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
-      <div className="max-w-6xl mx-auto px-6 pt-8 pb-12">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-4 sm:pt-6 lg:pt-8 pb-8 sm:pb-10 lg:pb-12">
         {/* Hero Section - Loads immediately */}
         {loadingStates.hero && comparison && (
           <HeroSection

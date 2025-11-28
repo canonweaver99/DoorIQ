@@ -618,31 +618,31 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         console.error('StreamingGradingDisplay error:', error, errorInfo)
       }}
     >
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-3 sm:p-4 lg:p-6">
       <div className="max-w-2xl w-full">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           {/* Main Status */}
           <motion.div
             animate={isComplete ? {} : { rotate: 360 }}
             transition={isComplete ? {} : { duration: 2, repeat: Infinity, ease: 'linear' }}
-            className="inline-block mb-6"
+            className="inline-block mb-4 sm:mb-6"
           >
             {isComplete ? (
-              <CheckCircle2 className="w-20 h-20 text-emerald-500" />
+              <CheckCircle2 className="w-16 h-16 sm:w-20 sm:h-20 text-emerald-500" />
             ) : (
-              <Loader2 className="w-20 h-20 text-purple-500" />
+              <Loader2 className="w-16 h-16 sm:w-20 sm:h-20 text-purple-500" />
             )}
           </motion.div>
 
-          <h1 className="text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-3 font-space">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-2 sm:mb-3 font-space px-2">
             {status}
           </h1>
           
-          <div className="flex items-center justify-center gap-4 text-sm text-slate-400 font-sans">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-slate-400 font-sans px-2">
             <span>{formatTime(elapsedTime)} elapsed</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>{getSectionProgress()}% complete</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <div className="flex items-center gap-1">
               {connectionState === 'connected' ? (
                 <>
@@ -666,8 +666,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           </div>
 
           {error && (
-            <div className="mt-4 space-y-3">
-              <div className={`px-4 py-3 rounded-xl text-sm font-sans border ${
+            <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
+              <div className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-sans border ${
                 errorType === 'timeout' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
                 errorType === 'network' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' :
                 'bg-red-500/10 border-red-500/20 text-red-400'
@@ -681,7 +681,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                 </div>
                 <div>{error}</div>
                 {retryCount > 0 && (
-                  <div className="mt-2 text-xs opacity-75">
+                  <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs opacity-75">
                     Retry attempts: {retryCount}/{MAX_RETRIES}
                   </div>
                 )}
@@ -689,7 +689,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               {connectionState === 'failed' && (
                 <button
                   onClick={handleRetry}
-                  className="w-full px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors font-space"
+                  className="w-full px-3 sm:px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg sm:rounded-xl text-purple-300 font-medium transition-colors font-space touch-manipulation text-sm sm:text-base"
                 >
                   Retry Connection
                 </button>
@@ -699,7 +699,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         </div>
 
         {/* Progress Sections */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           <AnimatePresence mode="popLayout">
             {Object.entries(SECTION_LABELS).map(([key, label]) => {
               const Icon = SECTION_ICONS[key]
@@ -714,7 +714,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   className={`
-                    relative overflow-hidden rounded-xl border transition-all duration-300
+                    relative overflow-hidden rounded-lg sm:rounded-xl border transition-all duration-300
                     ${isCompleted 
                       ? 'bg-emerald-500/5 border-emerald-500/20' 
                       : isCurrent
@@ -732,9 +732,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                     />
                   )}
                   
-                  <div className="relative p-4 flex items-center gap-4">
+                  <div className="relative p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
                     <div className={`
-                      flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
+                      flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center
                       ${isCompleted 
                         ? 'bg-emerald-500/20 text-emerald-400' 
                         : isCurrent
@@ -743,17 +743,17 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                       }
                     `}>
                       {isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5" />
+                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
                       ) : isCurrent ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                       ) : (
-                        <Icon className="w-5 h-5" />
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                       )}
                     </div>
 
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className={`
-                        font-medium font-space
+                        text-sm sm:text-base font-medium font-space
                         ${isCompleted 
                           ? 'text-emerald-300' 
                           : isCurrent
@@ -787,10 +787,10 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 2 }}
-            className="mt-8 text-center"
+            className="mt-6 sm:mt-8 text-center"
           >
-            <div className="inline-block px-6 py-3 bg-purple-500/10 border border-purple-500/20 rounded-full">
-              <span className="text-sm text-purple-300 font-sans">
+            <div className="inline-block px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-500/10 border border-purple-500/20 rounded-full">
+              <span className="text-xs sm:text-sm text-purple-300 font-sans">
                 Our AI is analyzing {sections.session_summary?.total_lines || 'hundreds of'} lines in real-time
               </span>
             </div>

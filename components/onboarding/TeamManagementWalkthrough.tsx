@@ -183,40 +183,94 @@ export function TeamManagementWalkthrough({ onComplete, onSkip }: TeamManagement
       }
     : {}
 
-  // Calculate tooltip position
+  // Calculate tooltip position with viewport boundary checks
   const getTooltipPosition = () => {
     if (!targetRect) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
 
     const position = currentStepData.position || 'bottom'
     const spacing = 20
+    const viewportHeight = window.innerHeight
+    const viewportWidth = window.innerWidth
+    const tooltipEstimatedHeight = 280 // Approximate height of tooltip with all content
+    const tooltipEstimatedWidth = 384 // max-w-md = 28rem = 448px, but we'll use a conservative estimate
+    const padding = 16 // Padding from viewport edges
 
-    switch (position) {
+    let finalPosition = position
+
+    // Check if bottom position would overflow, flip to top if needed
+    if (position === 'bottom') {
+      const bottomSpace = viewportHeight - targetRect.bottom - spacing
+      if (bottomSpace < tooltipEstimatedHeight + padding) {
+        const topSpace = targetRect.top - spacing
+        // Only flip to top if there's more space above
+        if (topSpace > bottomSpace) {
+          finalPosition = 'top'
+        }
+      }
+    }
+
+    // Check if top position would overflow, flip to bottom if needed
+    if (position === 'top') {
+      const topSpace = targetRect.top - spacing
+      if (topSpace < tooltipEstimatedHeight + padding) {
+        const bottomSpace = viewportHeight - targetRect.bottom - spacing
+        // Only flip to bottom if there's more space below
+        if (bottomSpace > topSpace) {
+          finalPosition = 'bottom'
+        }
+      }
+    }
+
+    let top: number | string
+    let left: number | string
+    let transform: string
+
+    switch (finalPosition) {
       case 'top':
-        return {
-          top: `${targetRect.top - spacing}px`,
-          left: `${targetRect.left + targetRect.width / 2}px`,
-          transform: 'translate(-50%, -100%)',
+        top = targetRect.top - spacing
+        left = targetRect.left + targetRect.width / 2
+        transform = 'translate(-50%, -100%)'
+        // Ensure tooltip doesn't go above viewport (with -100% transform, bottom edge is at top, top edge is at top - height)
+        if (typeof top === 'number' && top - tooltipEstimatedHeight < padding) {
+          top = tooltipEstimatedHeight + padding
         }
+        break
       case 'bottom':
-        return {
-          top: `${targetRect.bottom + spacing}px`,
-          left: `${targetRect.left + targetRect.width / 2}px`,
-          transform: 'translate(-50%, 0)',
+        top = targetRect.bottom + spacing
+        left = targetRect.left + targetRect.width / 2
+        transform = 'translate(-50%, 0)'
+        // Ensure tooltip doesn't go below viewport
+        if (typeof top === 'number' && top + tooltipEstimatedHeight > viewportHeight - padding) {
+          top = viewportHeight - tooltipEstimatedHeight - padding
         }
+        break
       case 'left':
-        return {
-          top: `${targetRect.top + targetRect.height / 2}px`,
-          left: `${targetRect.left - spacing}px`,
-          transform: 'translate(-100%, -50%)',
-        }
+        top = targetRect.top + targetRect.height / 2
+        left = Math.max(padding, targetRect.left - spacing)
+        transform = 'translate(-100%, -50%)'
+        break
       case 'right':
-        return {
-          top: `${targetRect.top + targetRect.height / 2}px`,
-          left: `${targetRect.right + spacing}px`,
-          transform: 'translate(0, -50%)',
+        top = targetRect.top + targetRect.height / 2
+        left = targetRect.right + spacing
+        // Ensure tooltip doesn't go beyond right edge
+        if (typeof left === 'number' && left + tooltipEstimatedWidth > viewportWidth - padding) {
+          left = viewportWidth - tooltipEstimatedWidth - padding
         }
+        transform = 'translate(0, -50%)'
+        break
       default:
         return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+    }
+
+    // Ensure left position stays within viewport
+    if (typeof left === 'number') {
+      left = Math.max(padding, Math.min(left, viewportWidth - tooltipEstimatedWidth - padding))
+    }
+
+    return {
+      top: typeof top === 'number' ? `${top}px` : top,
+      left: typeof left === 'number' ? `${left}px` : left,
+      transform,
     }
   }
 
@@ -255,8 +309,11 @@ export function TeamManagementWalkthrough({ onComplete, onSkip }: TeamManagement
 
         {/* Tooltip */}
         <motion.div
-          className="absolute bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-md pointer-events-auto"
-          style={getTooltipPosition()}
+          className="absolute bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-md pointer-events-auto max-h-[calc(100vh-2rem)] overflow-y-auto"
+          style={{
+            ...getTooltipPosition(),
+            maxHeight: 'calc(100vh - 2rem)',
+          }}
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9 }}

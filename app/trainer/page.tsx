@@ -1630,7 +1630,7 @@ function TrainerPageContent() {
       <div className="relative w-full h-screen flex flex-col bg-slate-950 overflow-hidden">
         
         {/* Header */}
-        <div className="hidden sm:flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98">
+        <div className="flex items-center justify-between px-3 sm:px-4 lg:px-8 py-2 sm:py-3 lg:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98">
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-xs sm:text-sm font-semibold text-white font-space truncate">
               {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
@@ -1638,13 +1638,13 @@ function TrainerPageContent() {
           </div>
         </div>
 
-        {/* Main Content Area - 2x2 Grid Layout */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[1.15fr_0.85fr] overflow-hidden min-h-0 gap-2 p-3 sm:p-4 lg:p-8">
+        {/* Main Content Area - Mobile: Vertical Stack, Desktop: 2x2 Grid Layout */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[1.15fr_0.85fr] overflow-hidden min-h-0 gap-2 sm:gap-3 p-2 sm:p-3 lg:p-8">
           
           {/* TOP LEFT QUADRANT - Agent Video */}
           <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Webcam - Full height of quadrant */}
-            <div className="relative bg-slate-900 rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[40vh] lg:h-full flex-shrink-0">
+            <div className="relative bg-slate-900 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[35vh] sm:h-[40vh] lg:h-full flex-shrink-0">
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -1781,13 +1781,13 @@ function TrainerPageContent() {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
                       <button
                         onClick={() => startSession()}
-                        className="relative px-8 lg:px-10 py-5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-space font-bold text-lg lg:text-xl rounded-xl transition-all duration-300 active:scale-95 border border-slate-700/80 hover:border-slate-600 min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
+                        className="relative px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-space font-bold text-base sm:text-lg lg:text-xl rounded-lg sm:rounded-xl transition-all duration-300 active:scale-95 border border-slate-700/80 hover:border-slate-600 min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
                       >
                         <span className="relative z-10 flex items-center gap-2">
                           <span className="hidden sm:inline">
                             Knock on <span className="text-white">{selectedAgent.name}'s</span> Door
                           </span>
-                          <span className="sm:hidden">Knock</span>
+                          <span className="sm:hidden text-sm">Knock</span>
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
                       </button>
@@ -1796,7 +1796,7 @@ function TrainerPageContent() {
                   
                   {/* PIP Webcam Overlay - Bottom Right (above controls) - Mobile optimized */}
                   {sessionActive && (
-                    <div className="absolute bottom-24 sm:bottom-28 lg:bottom-32 right-3 sm:right-4 lg:right-6 z-20 w-32 h-24 sm:w-40 sm:h-[120px] lg:w-[211px] lg:h-[158px] shadow-2xl rounded-lg overflow-hidden">
+                    <div className="absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden">
                       <WebcamPIP ref={webcamPIPRef} />
                     </div>
                   )}
