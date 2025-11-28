@@ -19,10 +19,10 @@ interface UseEnergyScoreOptions {
 }
 
 interface EnergyScoreFactors {
-  volume: number // 0-100 normalized score
+  volumeLevel: number // 0-100 normalized score (actual RMS volume)
   pitchVariation: number // 0-100 normalized score
   speakingPace: number // 0-100 normalized score
-  silenceRatio: number // 0-100 normalized score (inverted - lower silence = higher score)
+  speakingRatio: number // 0-100 normalized score (% of time speaking vs silent)
 }
 
 interface UseEnergyScoreReturn {
@@ -184,10 +184,10 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
   const [energyScore, setEnergyScore] = useState<number>(50) // Start at neutral
   const [energyLevel, setEnergyLevel] = useState<'low' | 'good' | 'high'>('good')
   const [factors, setFactors] = useState<EnergyScoreFactors>({
-    volume: 50,
+    volumeLevel: 50,
     pitchVariation: 50,
     speakingPace: 50,
-    silenceRatio: 50
+    speakingRatio: 50
   })
   const [isCalibrating, setIsCalibrating] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -222,12 +222,12 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
   // Session tracking
   const sessionStartTimeRef = useRef<number>(sessionStartTime || Date.now())
 
-  // Weight factors (as specified)
+  // Weight factors (updated as specified)
   const WEIGHTS = {
-    volume: 0.25,
-    pitchVariation: 0.30,
-    speakingPace: 0.25,
-    silenceRatio: 0.20
+    speakingPace: 0.30,      // WPM - 30%
+    pitchVariation: 0.30,    // Vocal dynamics - 30%
+    volumeLevel: 0.20,       // How loud (RMS) - 20%
+    speakingRatio: 0.20       // % of time speaking - 20%
   }
 
   // Thresholds
@@ -243,25 +243,37 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     }
   }, [sessionStartTime])
 
-  // Normalize volume to 0-100 scale with baseline calibration
-  const normalizeVolume = useCallback((volumeDb: number): number => {
+  // Normalize volume level (actual RMS) to 0-100 scale with baseline calibration
+  // This measures how loud they're speaking, not consistency
+  const normalizeVolumeLevel = useCallback((volumeDb: number): number => {
     if (!baselineCalibrationRef.current) {
       return 50 // Default neutral score during calibration
     }
 
     const { volumeMean, volumeStd, volumeMin, volumeMax } = baselineCalibrationRef.current
 
-    // Normalize based on baseline
+    // Normalize based on baseline: louder = higher score
     // If volume is at baseline mean, score = 50
-    // If volume is 1 std above mean, score increases
-    // If volume is below baseline, score decreases but not too harshly
+    // If volume is above baseline, score increases
+    // If volume is below baseline, score decreases
     
     const deviation = volumeDb - volumeMean
     
-    // Use std deviation for normalization, but cap extremes
-    const normalized = 50 + (deviation / Math.max(volumeStd, 5)) * 25 // Scale by std dev
+    // Use std deviation for normalization
+    // 1 std above mean = +25 points, 1 std below = -25 points
+    const normalized = 50 + (deviation / Math.max(volumeStd, 5)) * 25
     
-    // Clamp to reasonable range, but allow for dynamic range
+    // Also factor in absolute volume level relative to min/max range
+    // This ensures very quiet speakers can still get some score if they're loud relative to their baseline
+    const range = volumeMax - volumeMin
+    if (range > 0) {
+      const positionInRange = (volumeDb - volumeMin) / range
+      // Blend: 70% deviation-based, 30% position in range
+      const blended = normalized * 0.7 + (positionInRange * 100) * 0.3
+      return Math.max(0, Math.min(100, blended))
+    }
+    
+    // Clamp to reasonable range
     return Math.max(0, Math.min(100, normalized))
   }, [])
 
@@ -308,27 +320,29 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     }
   }, [])
 
-  // Calculate silence ratio (percentage of time spent in silence)
-  const calculateSilenceRatio = useCallback((): number => {
+  // Calculate speaking ratio (percentage of time spent speaking vs silent)
+  // Uses VAD (Voice Activity Detection) to determine when speech is happening
+  const calculateSpeakingRatio = useCallback((): number => {
     if (volumeSamplesRef.current.length < 10) return 0
 
-    const SILENCE_THRESHOLD = -45 // dB threshold for silence
-    let silenceSamples = 0
+    const SPEECH_THRESHOLD = -45 // dB threshold for speech detection
+    let speakingSamples = 0
 
     for (const volume of volumeSamplesRef.current) {
-      if (volume < SILENCE_THRESHOLD) {
-        silenceSamples++
+      if (volume >= SPEECH_THRESHOLD) {
+        speakingSamples++
       }
     }
 
-    return (silenceSamples / volumeSamplesRef.current.length) * 100
+    // Return percentage of time speaking (0-100)
+    return (speakingSamples / volumeSamplesRef.current.length) * 100
   }, [])
 
-  // Normalize silence ratio to 0-100 scale (inverted - lower silence = higher score)
-  const normalizeSilenceRatio = useCallback((silencePercent: number): number => {
-    // Lower silence ratio = higher energy score
-    // 0% silence = 100, 50% silence = 50, 100% silence = 0
-    return 100 - silencePercent
+  // Normalize speaking ratio to 0-100 scale
+  // Higher speaking ratio = higher energy score
+  // This directly maps: 0% speaking = 0 score, 100% speaking = 100 score
+  const normalizeSpeakingRatio = useCallback((speakingPercent: number): number => {
+    return Math.max(0, Math.min(100, speakingPercent))
   }, [])
 
   // Check if rep (user) is currently speaking based on transcript
@@ -453,7 +467,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     }
 
     // Calculate individual factors (only when rep is speaking)
-    const volumeScore = normalizeVolume(volumeDb)
+    const volumeLevelScore = normalizeVolumeLevel(volumeDb)
     const pitchVariationPercent = calculatePitchVariation(pitchHistoryRef.current)
     const pitchVariationScore = normalizePitchVariation(pitchVariationPercent)
 
@@ -464,21 +478,44 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       speakingPaceScore = normalizeSpeakingPace(wpm)
     } else {
       // Estimate from audio activity
-      const silenceRatio = calculateSilenceRatio()
-      const estimatedWPM = estimateSpeakingPaceFromAudio(volumeHistoryRef.current, silenceRatio)
+      const speakingRatio = calculateSpeakingRatio()
+      const estimatedWPM = estimateSpeakingPaceFromAudio(volumeHistoryRef.current, 100 - speakingRatio)
       speakingPaceScore = normalizeSpeakingPace(estimatedWPM)
     }
 
-    // Calculate silence ratio
-    const silenceRatio = calculateSilenceRatio()
-    const silenceRatioScore = normalizeSilenceRatio(silenceRatio)
+    // Calculate speaking ratio (% of time speaking vs silent)
+    const speakingRatio = calculateSpeakingRatio()
+    const speakingRatioScore = normalizeSpeakingRatio(speakingRatio)
 
-    // Calculate weighted energy score
+    // CRITICAL: Gate the score during silence
+    // If speaking ratio < 10%, don't update the energy score - hold last value or fade down slowly
+    const MIN_SPEAKING_RATIO = 10 // 10% minimum speaking time to update score
+    if (speakingRatio < MIN_SPEAKING_RATIO) {
+      // During silence, fade the score down slowly instead of updating
+      smoothedScoreRef.current = smoothedScoreRef.current * 0.95 // Fade down by 5% each update
+      const finalScore = Math.round(Math.max(0, Math.min(100, smoothedScoreRef.current)))
+      
+      // Update state with faded score
+      setEnergyScore(finalScore)
+      const level: 'low' | 'good' | 'high' = finalScore < THRESHOLDS.low ? 'low' : finalScore >= THRESHOLDS.high ? 'high' : 'good'
+      setEnergyLevel(level)
+      setFactors({
+        volumeLevel: Math.round(volumeLevelScore),
+        pitchVariation: Math.round(pitchVariationScore),
+        speakingPace: Math.round(speakingPaceScore),
+        speakingRatio: Math.round(speakingRatioScore)
+      })
+      
+      // Don't call callback during silence fade
+      return
+    }
+
+    // Calculate weighted energy score (only when speaking ratio is sufficient)
     const rawScore =
-      volumeScore * WEIGHTS.volume +
-      pitchVariationScore * WEIGHTS.pitchVariation +
       speakingPaceScore * WEIGHTS.speakingPace +
-      silenceRatioScore * WEIGHTS.silenceRatio
+      pitchVariationScore * WEIGHTS.pitchVariation +
+      volumeLevelScore * WEIGHTS.volumeLevel +
+      speakingRatioScore * WEIGHTS.speakingRatio
 
     // Apply exponential smoothing
     smoothedScoreRef.current =
@@ -497,19 +534,19 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       level = 'good'
     }
 
-    // Update state (only when rep is speaking)
+    // Update state (only when rep is speaking and speaking ratio is sufficient)
     setEnergyScore(finalScore)
     setEnergyLevel(level)
     setFactors({
-      volume: Math.round(volumeScore),
+      volumeLevel: Math.round(volumeLevelScore),
       pitchVariation: Math.round(pitchVariationScore),
       speakingPace: Math.round(speakingPaceScore),
-      silenceRatio: Math.round(silenceRatioScore)
+      speakingRatio: Math.round(speakingRatioScore)
     })
 
     // Call callback if provided
     onScoreUpdate?.(finalScore)
-  }, [transcript, normalizeVolume, normalizePitchVariation, normalizeSpeakingPace, normalizeSilenceRatio, calculateSilenceRatio, isRepSpeaking, onScoreUpdate])
+  }, [transcript, normalizeVolumeLevel, normalizePitchVariation, normalizeSpeakingPace, normalizeSpeakingRatio, calculateSpeakingRatio, isRepSpeaking, onScoreUpdate])
 
   // Start analysis
   const startAnalysis = useCallback(async () => {
@@ -600,10 +637,10 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     setEnergyScore(50)
     setEnergyLevel('good')
     setFactors({
-      volume: 50,
+      volumeLevel: 50,
       pitchVariation: 50,
       speakingPace: 50,
-      silenceRatio: 50
+      speakingRatio: 50
     })
   }, [providedStream])
 
