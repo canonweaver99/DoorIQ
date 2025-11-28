@@ -220,15 +220,19 @@ function calculatePausePattern(
     return score
   }
   
-  // Fallback to transcript timestamps
+  // Fallback to transcript timestamps - use recent entries for dynamic calculation
   if (transcript.length < 2) return 50 // Default
   
-  let pauseCount = 0
   const userEntries = transcript.filter(entry => entry.speaker === 'user')
+  if (userEntries.length < 2) return 50
   
-  for (let i = 1; i < userEntries.length; i++) {
-    const prev = userEntries[i - 1]
-    const curr = userEntries[i]
+  // Use recent entries (last 10 entries or all if less than 10) for dynamic calculation
+  const recentEntries = userEntries.slice(-10)
+  let pauseCount = 0
+  
+  for (let i = 1; i < recentEntries.length; i++) {
+    const prev = recentEntries[i - 1]
+    const curr = recentEntries[i]
     
     try {
       const prevTime = prev.timestamp instanceof Date 
@@ -243,7 +247,7 @@ function calculatePausePattern(
           : Date.now()
       const pauseDuration = currTime - prevTime
       
-      if (pauseDuration > 2000) { // >2 seconds
+      if (pauseDuration > 2000) { // >2 seconds = pause
         pauseCount++
       }
     } catch (e) {
@@ -251,22 +255,33 @@ function calculatePausePattern(
     }
   }
   
-  // Normalize based on number of user entries
-  if (userEntries.length === 0) return 50
-  
-  const pausesPerEntry = pauseCount / userEntries.length
+  // Calculate pauses per entry ratio
+  const pausesPerEntry = pauseCount / recentEntries.length
   // Ideal: <0.1 pauses per entry = 100, >0.5 pauses per entry = 0
-  return Math.max(0, Math.min(100, 100 - (pausesPerEntry * 200)))
+  // Scale: 0 pauses = 100, 0.1 pauses/entry = 80, 0.5 pauses/entry = 0
+  const score = Math.max(0, Math.min(100, 100 - (pausesPerEntry * 200)))
+  
+  return score
 }
 
 // Detect vocal fry and upspeak from pitch patterns
 function detectVocalFryUpspeak(voiceAnalysisData: VoiceAnalysisData | null): number {
-  if (!voiceAnalysisData || !voiceAnalysisData.pitchTimeline || voiceAnalysisData.pitchTimeline.length < 10) {
-    return 50 // Default if no pitch data
+  if (!voiceAnalysisData || !voiceAnalysisData.pitchTimeline || voiceAnalysisData.pitchTimeline.length < 5) {
+    // If no pitch data, return neutral score (not default 50, but calculate from available data)
+    return 75 // Neutral score when no data available
   }
   
-  const pitches = voiceAnalysisData.pitchTimeline.map(p => p.value).filter(p => p > 0)
-  if (pitches.length < 10) return 50
+  // Use recent pitch data for dynamic calculation (last 20 points or all if less)
+  const allPitches = voiceAnalysisData.pitchTimeline.map(p => p.value).filter(p => p > 0)
+  const recentPitches = allPitches.slice(-20) // Use last 20 pitch points
+  
+  if (recentPitches.length < 5) {
+    // If we have some data but not enough, use what we have
+    if (recentPitches.length === 0) return 75
+  }
+  
+  const pitches = recentPitches.length >= 5 ? recentPitches : allPitches
+  if (pitches.length === 0) return 75
   
   let vocalFryScore = 100
   let upspeakScore = 100
@@ -274,22 +289,34 @@ function detectVocalFryUpspeak(voiceAnalysisData: VoiceAnalysisData | null): num
   // Detect vocal fry: very low pitch (<80Hz) or irregular low patterns
   const lowPitchCount = pitches.filter(p => p < 80).length
   const lowPitchRatio = lowPitchCount / pitches.length
-  if (lowPitchRatio > 0.2) {
-    // More than 20% of speech is very low pitch = vocal fry
-    vocalFryScore = Math.max(0, 100 - (lowPitchRatio * 200))
+  
+  // Penalize vocal fry: more than 15% low pitch starts reducing score
+  if (lowPitchRatio > 0.15) {
+    // More than 15% of speech is very low pitch = vocal fry
+    // Scale: 15% = 100, 30% = 70, 50% = 40, 100% = 0
+    vocalFryScore = Math.max(0, 100 - ((lowPitchRatio - 0.15) / 0.85) * 100)
   }
   
-  // Detect upspeak: analyze pitch trends at sentence endings
-  // Simplified: check if pitch is generally rising (would need sentence boundaries for accurate detection)
-  // For now, check if average pitch is unusually high (>200Hz) which can indicate upspeak
+  // Detect upspeak: check if average pitch is unusually high (>200Hz) which can indicate upspeak
   const avgPitch = pitches.reduce((a, b) => a + b, 0) / pitches.length
+  
+  // Normal pitch range: 80-200Hz is good
+  // Below 80Hz = vocal fry (already handled)
+  // Above 200Hz = potential upspeak
   if (avgPitch > 200) {
     // Unusually high average pitch might indicate upspeak
-    upspeakScore = Math.max(0, 100 - ((avgPitch - 200) / 50) * 20)
+    // Scale: 200Hz = 100, 250Hz = 80, 300Hz = 60, 400Hz = 0
+    upspeakScore = Math.max(0, 100 - ((avgPitch - 200) / 200) * 100)
+  } else if (avgPitch < 80) {
+    // Very low average pitch also reduces score
+    upspeakScore = Math.max(0, (avgPitch / 80) * 100)
   }
   
   // Combine scores (take the lower one as the limiting factor)
-  return Math.min(vocalFryScore, upspeakScore)
+  const combinedScore = Math.min(vocalFryScore, upspeakScore)
+  
+  // Ensure score is between 0-100
+  return Math.max(0, Math.min(100, combinedScore))
 }
 
 // Calculate overall energy score
