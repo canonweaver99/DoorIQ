@@ -164,9 +164,10 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
 interface EnergyBreakdown {
   wpm: number // 0-100 normalized
   pitchVariation: number // 0-100 normalized
-  volumeConsistency: number // 0-100 normalized
-  pausePattern: number // 0-100 normalized
-  vocalFry: number // 0-100 normalized
+  volumeLevel: number // 0-100 normalized (changed from volumeConsistency)
+  speakingRatio: number // 0-100 normalized (new metric)
+  pausePattern: number // 0-100 normalized (deprecated, kept for compatibility)
+  vocalFry: number // 0-100 normalized (deprecated, kept for compatibility)
 }
 
 interface EnergyScore {
@@ -193,17 +194,36 @@ function normalizePitchVariation(pitchVariation: number): number {
   return Math.min(100, (pitchVariation / 20) * 100)
 }
 
-// Calculate volume consistency (coefficient of variation) - lower CV = more consistent = better
-function calculateVolumeConsistency(voiceAnalysisData: VoiceAnalysisData | null): number {
-  if (!voiceAnalysisData || voiceAnalysisData.volumeConsistency === undefined) {
+// Calculate volume level (actual RMS volume) - matches useEnergyScore hook
+// This measures how loud they're speaking, not consistency
+function calculateVolumeLevel(voiceAnalysisData: VoiceAnalysisData | null): number {
+  if (!voiceAnalysisData || voiceAnalysisData.avgVolume === undefined) {
     return 50 // Default middle value if no data
   }
   
-  // Lower volume consistency (CV) = more consistent = higher score
-  // Typical CV range: 0-50%, we want lower values to score higher
-  const cv = voiceAnalysisData.volumeConsistency
-  // Invert: CV of 0 = 100, CV of 50+ = 0
-  return Math.max(0, Math.min(100, 100 - (cv * 2)))
+  // Normalize volume dB to 0-100 scale
+  // Typical range: -60dB (silence) to 0dB (loud)
+  // Map: -60dB = 0, -30dB = 50, 0dB = 100
+  const volumeDb = voiceAnalysisData.avgVolume
+  const normalized = Math.max(0, Math.min(100, ((volumeDb + 60) / 60) * 100))
+  return normalized
+}
+
+// Calculate speaking ratio (% of time speaking vs silent) - matches useEnergyScore hook
+function calculateSpeakingRatio(voiceAnalysisData: VoiceAnalysisData | null, transcript: TranscriptEntry[]): number {
+  // If we have transcript data, estimate from pauses
+  if (transcript.length > 0) {
+    // Simple heuristic: count user entries vs total time
+    const userEntries = transcript.filter(e => e.speaker === 'user')
+    if (userEntries.length === 0) return 0
+    
+    // Estimate speaking time from transcript entries
+    // This is a rough estimate - actual implementation uses VAD
+    return Math.min(100, (userEntries.length / transcript.length) * 100)
+  }
+  
+  // Default to 50% if no data
+  return 50
 }
 
 // Calculate pause pattern score - fewer pauses = higher score
@@ -325,16 +345,18 @@ function detectVocalFryUpspeak(voiceAnalysisData: VoiceAnalysisData | null): num
   return 75
 }
 
-// Calculate overall energy score (removed vocal fry and pause pattern)
+// Calculate overall energy score - matches useEnergyScore hook implementation
 function calculateEnergyScore(
   wpm: number,
   pitchVariation: number,
-  volumeConsistency: number
+  volumeLevel: number,  // Changed from volumeConsistency
+  speakingRatio: number = 50  // New parameter, default to 50 if not provided
 ): EnergyScore {
   // Ensure all values are valid numbers
   const safeWPM = isNaN(wpm) || wpm < 0 ? 0 : wpm
   const safePitchVariation = isNaN(pitchVariation) || pitchVariation < 0 ? 0 : pitchVariation
-  const safeVolumeConsistency = isNaN(volumeConsistency) || volumeConsistency < 0 ? 50 : Math.max(0, Math.min(100, volumeConsistency))
+  const safeVolumeLevel = isNaN(volumeLevel) || volumeLevel < 0 ? 0 : Math.max(0, Math.min(100, volumeLevel))
+  const safeSpeakingRatio = isNaN(speakingRatio) || speakingRatio < 0 ? 0 : Math.max(0, Math.min(100, speakingRatio))
   
   const normalizedWPM = normalizeWPM(safeWPM)
   const normalizedPitch = normalizePitchVariation(safePitchVariation)
@@ -342,16 +364,19 @@ function calculateEnergyScore(
   const breakdown: EnergyBreakdown = {
     wpm: normalizedWPM,
     pitchVariation: normalizedPitch,
-    volumeConsistency: safeVolumeConsistency,
-    pausePattern: 75, // Neutral value (not used in calculation)
-    vocalFry: 75 // Neutral value (not used in calculation)
+    volumeLevel: safeVolumeLevel,
+    speakingRatio: safeSpeakingRatio,
+    pausePattern: 75, // Deprecated (not used in calculation)
+    vocalFry: 75 // Deprecated (not used in calculation)
   }
   
-  // Weighted combination (only using WPM, pitch variation, and volume consistency)
+  // Weighted combination matching useEnergyScore hook weights
+  // WPM: 30%, Pitch Variation: 30%, Volume Level: 20%, Speaking Ratio: 20%
   const score = Math.round(
-    (normalizedWPM * 0.4) +
-    (normalizedPitch * 0.35) +
-    (safeVolumeConsistency * 0.25)
+    (normalizedWPM * 0.30) +
+    (normalizedPitch * 0.30) +
+    (safeVolumeLevel * 0.20) +
+    (safeSpeakingRatio * 0.20)
   )
   
   // Clamp score to 0-100
@@ -536,8 +561,12 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
               <span className="font-mono">{scoreToDots(breakdown.pitchVariation)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span>Volume Consistency:</span>
-              <span className="font-mono">{scoreToDots(breakdown.volumeConsistency)}</span>
+              <span>Volume Level:</span>
+              <span className="font-mono">{scoreToDots(breakdown.volumeLevel)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Speaking Ratio:</span>
+              <span className="font-mono">{scoreToDots(breakdown.speakingRatio)}</span>
             </div>
           </div>
         </motion.div>
@@ -573,21 +602,27 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
               <div className="space-y-2">
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
                   <span>Words Per Minute (WPM)</span>
-                  <span className="font-semibold text-white">40%</span>
+                  <span className="font-semibold text-white">30%</span>
                 </div>
                 <div className="text-xs text-slate-400 pl-2">Speed/pace of speech (calculated from actual speaking time)</div>
                 
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
                   <span>Pitch Variation</span>
-                  <span className="font-semibold text-white">35%</span>
+                  <span className="font-semibold text-white">30%</span>
                 </div>
                 <div className="text-xs text-slate-400 pl-2">Monotone vs dynamic/enthusiastic</div>
                 
                 <div className="flex justify-between items-center py-1">
-                  <span>Volume Consistency</span>
-                  <span className="font-semibold text-white">25%</span>
+                  <span>Volume Level</span>
+                  <span className="font-semibold text-white">20%</span>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">Confidence indicator</div>
+                <div className="text-xs text-slate-400 pl-2">How loud you're speaking</div>
+                
+                <div className="flex justify-between items-center py-1">
+                  <span>Speaking Ratio</span>
+                  <span className="font-semibold text-white">20%</span>
+                </div>
+                <div className="text-xs text-slate-400 pl-2">% of time speaking vs silent</div>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
                 Formula: (WPM × 0.4) + (Pitch × 0.35) + (Volume × 0.25)
@@ -703,20 +738,27 @@ interface EnergyMetricsCard1Props {
   rawValues: {
     wpm: number
     pitchVariation: number
-    volumeConsistency: number
+    volumeLevel: number  // Changed from volumeConsistency
+    speakingRatio: number  // New metric
   }
   className?: string
 }
 
 function EnergyMetricsCard1({ energyScore, rawValues, className }: EnergyMetricsCard1Props) {
   const { breakdown } = energyScore
-  // Updated weights to match new energy score calculation (vocal fry and pause pattern removed)
-  const weights = { wpm: 0.4, pitchVariation: 0.35, volumeConsistency: 0.25 }
+  // Updated weights to match useEnergyScore hook implementation
+  const weights = { 
+    wpm: 0.30,              // 30% - Speaking pace
+    pitchVariation: 0.30,   // 30% - Vocal dynamics
+    volumeLevel: 0.20,      // 20% - How loud (RMS)
+    speakingRatio: 0.20     // 20% - % of time speaking vs silent
+  }
   
   const contributions = {
     wpm: breakdown.wpm * weights.wpm,
     pitchVariation: breakdown.pitchVariation * weights.pitchVariation,
-    volumeConsistency: breakdown.volumeConsistency * weights.volumeConsistency
+    volumeLevel: breakdown.volumeLevel * weights.volumeLevel,
+    speakingRatio: breakdown.speakingRatio * weights.speakingRatio
   }
   
   return (
@@ -785,23 +827,45 @@ function EnergyMetricsCard1({ energyScore, rawValues, className }: EnergyMetrics
           </div>
         </div>
         
-        {/* Volume Consistency */}
+        {/* Volume Level */}
         <div className="bg-slate-800/50 rounded-md p-2.5 border border-slate-700/50">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-400 font-space">Volume Consistency</span>
-            <span className="text-xs text-slate-500 font-mono">{(weights.volumeConsistency * 100).toFixed(0)}%</span>
+            <span className="text-xs text-slate-400 font-space">Volume Level</span>
+            <span className="text-xs text-slate-500 font-mono">{(weights.volumeLevel * 100).toFixed(0)}%</span>
           </div>
           <div className="flex items-end justify-between">
             <div>
-              <div className="text-lg font-bold text-white font-space">{rawValues.volumeConsistency.toFixed(0)}</div>
+              <div className="text-lg font-bold text-white font-space">{rawValues.volumeLevel.toFixed(0)}</div>
               <div className="text-xs text-slate-400 font-space">Raw</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-blue-400 font-space">{breakdown.volumeConsistency.toFixed(0)}</div>
+              <div className="text-lg font-bold text-blue-400 font-space">{breakdown.volumeLevel.toFixed(0)}</div>
               <div className="text-xs text-slate-400 font-space">Normalized</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.volumeConsistency.toFixed(1)}</div>
+              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.volumeLevel.toFixed(1)}</div>
+              <div className="text-xs text-slate-400 font-space">Contribution</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Speaking Ratio */}
+        <div className="bg-slate-800/50 rounded-md p-2.5 border border-slate-700/50">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-slate-400 font-space">Speaking Ratio</span>
+            <span className="text-xs text-slate-500 font-mono">{(weights.speakingRatio * 100).toFixed(0)}%</span>
+          </div>
+          <div className="flex items-end justify-between">
+            <div>
+              <div className="text-lg font-bold text-white font-space">{rawValues.speakingRatio.toFixed(0)}%</div>
+              <div className="text-xs text-slate-400 font-space">Raw</div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-bold text-blue-400 font-space">{breakdown.speakingRatio.toFixed(0)}</div>
+              <div className="text-xs text-slate-400 font-space">Normalized</div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.speakingRatio.toFixed(1)}</div>
               <div className="text-xs text-slate-400 font-space">Contribution</div>
             </div>
           </div>
@@ -811,7 +875,7 @@ function EnergyMetricsCard1({ energyScore, rawValues, className }: EnergyMetrics
         <div className="bg-emerald-500/10 rounded-md p-2.5 border border-emerald-500/30 mt-4">
           <div className="text-xs text-slate-400 font-space mb-1">Total Contribution</div>
           <div className="text-2xl font-bold text-emerald-400 font-space">
-            {(contributions.wpm + contributions.pitchVariation + contributions.volumeConsistency).toFixed(1)}
+            {(contributions.wpm + contributions.pitchVariation + contributions.volumeLevel + contributions.speakingRatio).toFixed(1)}
           </div>
           <div className="text-xs text-slate-500 font-space mt-1">
             Out of {energyScore.score.toFixed(0)} total energy score
@@ -1097,7 +1161,8 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
   // Calculate energy score
   const voiceAnalysisData = getVoiceAnalysisData?.() || null
   const pitchVariation = voiceMetrics?.pitchVariation || voiceAnalysisData?.pitchVariation || 0
-  const volumeConsistency = calculateVolumeConsistency(voiceAnalysisData)
+  const volumeLevel = calculateVolumeLevel(voiceAnalysisData)
+  const speakingRatio = calculateSpeakingRatio(voiceAnalysisData, transcript)
   
   // Estimate session duration from transcript or use a default
   let sessionDurationSeconds = 60 // Default 1 minute if no transcript
@@ -1121,11 +1186,12 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
     }
   }
   
-  // Calculate energy score (vocal fry and pause pattern removed)
+  // Calculate energy score - matches useEnergyScore hook implementation
   const energyScore = calculateEnergyScore(
     wordsPerMinute,
     pitchVariation,
-    volumeConsistency
+    volumeLevel,
+    speakingRatio
   )
 
   // Determine talk time color based on ratio
@@ -1249,13 +1315,14 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
       {/* Energy Card - Replaces WPM Card */}
       <EnergyCard energyScore={energyScore} />
       
-      {/* Energy Score Metrics Card - Shows WPM, Pitch Variation, and Volume Consistency */}
+      {/* Energy Score Metrics Card - Shows WPM, Pitch Variation, Volume Level, and Speaking Ratio */}
       <EnergyMetricsCard1 
         energyScore={energyScore}
         rawValues={{
           wpm: wordsPerMinute,
           pitchVariation: pitchVariation,
-          volumeConsistency: volumeConsistency
+          volumeLevel: volumeLevel,
+          speakingRatio: speakingRatio
         }}
         className="col-span-2"
       />

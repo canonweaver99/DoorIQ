@@ -123,17 +123,9 @@ function calculateWPMFromTranscript(
   })
   
   if (recentEntries.length === 0) {
-    // Fallback: if no recent entries, use all entries but with minimum duration
-    const totalWords = repEntries.reduce((sum, entry) => {
-      return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
-    }, 0)
-    
-    // Use actual session duration with reasonable minimum
-    const durationMinutes = Math.max(0.5, (currentTime - sessionStartTime) / 60000)
-    const wpm = totalWords / durationMinutes
-    
-    // Cap at reasonable maximum to prevent early-session inflation
-    return Math.min(200, wpm)
+    // No recent entries in the last 15 seconds = not speaking recently
+    // Return 0 WPM instead of using fallback to prevent inflation
+    return 0
   }
   
   // Count words in recent window
@@ -347,6 +339,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
 
   // Voice Activity Detection (VAD) - checks if user is currently speaking
   // Uses RMS threshold on current audio buffer AND volume dB threshold
+  // Made stricter to prevent false positives during silence
   const detectVoiceActivity = useCallback((dataArray: Float32Array, volumeDb: number): boolean => {
     // Calculate RMS from current audio buffer
     let sumSquares = 0
@@ -355,11 +348,12 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     }
     const rms = Math.sqrt(sumSquares / dataArray.length)
     
-    // Dual threshold check for more reliable VAD:
-    // 1. RMS > 0.01 indicates audio activity
-    // 2. Volume dB > -50 indicates speech-level volume (not silence/noise)
-    const RMS_THRESHOLD = 0.01
-    const VOLUME_DB_THRESHOLD = -50
+    // Stricter dual threshold check for more reliable VAD:
+    // 1. RMS > 0.02 indicates significant audio activity (increased from 0.01)
+    // 2. Volume dB > -45 indicates speech-level volume (increased from -50)
+    // Both must be true to consider it speech
+    const RMS_THRESHOLD = 0.02  // Increased threshold for stricter detection
+    const VOLUME_DB_THRESHOLD = -45  // Increased threshold for stricter detection
     
     return rms > RMS_THRESHOLD && volumeDb > VOLUME_DB_THRESHOLD
   }, [])
@@ -485,9 +479,9 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     
     // Only proceed if BOTH conditions are met: VAD detects speech AND rep is speaking
     if (!isCurrentlySpeaking || !repIsSpeaking) {
-      // User is not speaking - decay energy score slowly
-      // Option: Decay slowly from last value (more natural than instant zero)
-      smoothedScoreRef.current = Math.max(0, smoothedScoreRef.current - 2) // Decay by 2 points per update
+      // User is not speaking - decay energy score more aggressively
+      // Decay by 5 points per update (faster decay) to reach 0 quickly when silent
+      smoothedScoreRef.current = Math.max(0, smoothedScoreRef.current - 5)
       const finalScore = Math.round(Math.max(0, Math.min(100, smoothedScoreRef.current)))
       
       // Update state with decayed score
@@ -495,7 +489,14 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       const level: 'low' | 'good' | 'high' = finalScore < THRESHOLDS.low ? 'low' : finalScore >= THRESHOLDS.high ? 'high' : 'good'
       setEnergyLevel(level)
       
-      // Keep factors at last values (don't update during silence)
+      // Reset factors to 0 or low values when silent (don't show stale high values)
+      setFactors({
+        volumeLevel: 0,
+        pitchVariation: 0,
+        speakingPace: 0,  // WPM should be 0 when silent
+        speakingRatio: 0
+      })
+      
       // Don't call callback during silence decay
       return
     }
@@ -506,15 +507,25 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     const pitchVariationScore = normalizePitchVariation(pitchVariationPercent)
 
     // Calculate speaking pace
-    let speakingPaceScore = 50 // Default
+    // CRITICAL: Only calculate WPM if user is actually speaking (VAD confirmed)
+    // If not speaking, WPM should be 0
+    let speakingPaceScore = 0 // Start at 0, only increase if actually speaking
     if (transcript.length > 0 && sessionStartTimeRef.current) {
       const wpm = calculateWPMFromTranscript(transcript, sessionStartTimeRef.current, currentTime)
-      speakingPaceScore = normalizeSpeakingPace(wpm)
+      // Only use WPM if it's > 0 (meaning there was recent speech)
+      // If wpm is 0, speakingPaceScore stays at 0
+      if (wpm > 0) {
+        speakingPaceScore = normalizeSpeakingPace(wpm)
+      }
     } else {
-      // Estimate from audio activity
+      // Estimate from audio activity only if actually speaking
       const speakingRatio = calculateSpeakingRatio()
-      const estimatedWPM = estimateSpeakingPaceFromAudio(volumeHistoryRef.current, 100 - speakingRatio)
-      speakingPaceScore = normalizeSpeakingPace(estimatedWPM)
+      if (speakingRatio > 0) {
+        const estimatedWPM = estimateSpeakingPaceFromAudio(volumeHistoryRef.current, 100 - speakingRatio)
+        if (estimatedWPM > 0) {
+          speakingPaceScore = normalizeSpeakingPace(estimatedWPM)
+        }
+      }
     }
 
     // Calculate speaking ratio (% of time speaking vs silent)
