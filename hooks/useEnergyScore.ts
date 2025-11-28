@@ -92,7 +92,8 @@ function calculatePitchVariation(pitchHistory: number[]): number {
   return mean > 0 ? (stdDev / mean) * 100 : 0
 }
 
-// Calculate WPM from transcript entries using rolling window
+// Calculate WPM from transcript entries using actual speaking time
+// More accurate: uses time between first and last entry in window, not fixed window duration
 function calculateWPMFromTranscript(
   transcript: TranscriptEntry[],
   sessionStartTime: number,
@@ -108,36 +109,57 @@ function calculateWPMFromTranscript(
   const WINDOW_SECONDS = 15
   const windowStartTime = currentTime - (WINDOW_SECONDS * 1000)
   
-  // Filter entries within the rolling window
-  const recentEntries = repEntries.filter(entry => {
-    try {
-      const entryTime = entry.timestamp instanceof Date 
-        ? entry.timestamp.getTime()
-        : typeof entry.timestamp === 'string'
-          ? new Date(entry.timestamp).getTime()
-          : sessionStartTime
-      return entryTime >= windowStartTime
-    } catch {
-      return false
-    }
-  })
+  // Filter entries within the rolling window and parse timestamps
+  const recentEntriesWithTimes = repEntries
+    .map(entry => {
+      try {
+        const entryTime = entry.timestamp instanceof Date 
+          ? entry.timestamp.getTime()
+          : typeof entry.timestamp === 'string'
+            ? new Date(entry.timestamp).getTime()
+            : null
+        
+        if (!entryTime || entryTime < windowStartTime) {
+          return null
+        }
+        
+        return {
+          entry,
+          time: entryTime,
+          words: (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
+        }
+      } catch {
+        return null
+      }
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
   
-  if (recentEntries.length === 0) {
+  if (recentEntriesWithTimes.length === 0) {
     // No recent entries in the last 15 seconds = not speaking recently
-    // Return 0 WPM instead of using fallback to prevent inflation
     return 0
   }
   
-  // Count words in recent window
-  const recentWords = recentEntries.reduce((sum, entry) => {
-    return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
-  }, 0)
+  // Count total words
+  const totalWords = recentEntriesWithTimes.reduce((sum, item) => sum + item.words, 0)
   
-  // Calculate WPM based on window duration
-  const windowDurationMinutes = WINDOW_SECONDS / 60
-  const wpm = recentWords / windowDurationMinutes
+  if (totalWords === 0) return 0
   
-  // Cap at reasonable maximum
+  // Calculate actual speaking duration: time from first to last entry
+  // This is more accurate than using fixed window duration
+  const firstEntryTime = recentEntriesWithTimes[0].time
+  const lastEntryTime = recentEntriesWithTimes[recentEntriesWithTimes.length - 1].time
+  const actualSpeakingDurationMs = lastEntryTime - firstEntryTime
+  
+  // If all entries happened in < 1 second, use minimum duration of 1 second
+  // This prevents division by zero and unrealistic WPM spikes
+  const minDurationMs = 1000 // 1 second minimum
+  const speakingDurationMs = Math.max(minDurationMs, actualSpeakingDurationMs)
+  
+  // Calculate WPM based on actual speaking time
+  const speakingDurationMinutes = speakingDurationMs / 60000
+  const wpm = totalWords / speakingDurationMinutes
+  
+  // Cap at reasonable maximum (200 WPM is very fast, 250+ is unrealistic)
   return Math.min(200, Math.max(0, wpm))
 }
 
