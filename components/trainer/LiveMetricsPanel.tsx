@@ -325,20 +325,16 @@ function detectVocalFryUpspeak(voiceAnalysisData: VoiceAnalysisData | null): num
   return 75
 }
 
-// Calculate overall energy score
+// Calculate overall energy score (removed vocal fry and pause pattern)
 function calculateEnergyScore(
   wpm: number,
   pitchVariation: number,
-  volumeConsistency: number,
-  pausePattern: number,
-  vocalFry: number
+  volumeConsistency: number
 ): EnergyScore {
   // Ensure all values are valid numbers
   const safeWPM = isNaN(wpm) || wpm < 0 ? 0 : wpm
   const safePitchVariation = isNaN(pitchVariation) || pitchVariation < 0 ? 0 : pitchVariation
   const safeVolumeConsistency = isNaN(volumeConsistency) || volumeConsistency < 0 ? 50 : Math.max(0, Math.min(100, volumeConsistency))
-  const safePausePattern = isNaN(pausePattern) || pausePattern < 0 ? 50 : Math.max(0, Math.min(100, pausePattern))
-  const safeVocalFry = isNaN(vocalFry) || vocalFry < 0 ? 50 : Math.max(0, Math.min(100, vocalFry))
   
   const normalizedWPM = normalizeWPM(safeWPM)
   const normalizedPitch = normalizePitchVariation(safePitchVariation)
@@ -347,17 +343,15 @@ function calculateEnergyScore(
     wpm: normalizedWPM,
     pitchVariation: normalizedPitch,
     volumeConsistency: safeVolumeConsistency,
-    pausePattern: safePausePattern,
-    vocalFry: safeVocalFry
+    pausePattern: 75, // Neutral value (not used in calculation)
+    vocalFry: 75 // Neutral value (not used in calculation)
   }
   
-  // Weighted combination
+  // Weighted combination (only using WPM, pitch variation, and volume consistency)
   const score = Math.round(
-    (normalizedWPM * 0.3) +
-    (normalizedPitch * 0.25) +
-    (safeVolumeConsistency * 0.2) +
-    (safePausePattern * 0.15) +
-    (safeVocalFry * 0.1)
+    (normalizedWPM * 0.4) +
+    (normalizedPitch * 0.35) +
+    (safeVolumeConsistency * 0.25)
   )
   
   // Clamp score to 0-100
@@ -545,14 +539,6 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
               <span>Volume Consistency:</span>
               <span className="font-mono">{scoreToDots(breakdown.volumeConsistency)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span>Cadence (Pauses):</span>
-              <span className="font-mono">{scoreToDots(breakdown.pausePattern)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Tone (Vocal Fry):</span>
-              <span className="font-mono">{scoreToDots(breakdown.vocalFry)}</span>
-            </div>
           </div>
         </motion.div>
       )}
@@ -583,40 +569,28 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
               </button>
             </div>
             <div className="space-y-3 text-sm text-slate-300 font-space">
-              <div className="text-slate-400 mb-3">The Energy score is calculated from 5 weighted factors:</div>
+              <div className="text-slate-400 mb-3">The Energy score is calculated from 3 weighted factors:</div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
                   <span>Words Per Minute (WPM)</span>
-                  <span className="font-semibold text-white">30%</span>
+                  <span className="font-semibold text-white">40%</span>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">Speed/pace of speech</div>
+                <div className="text-xs text-slate-400 pl-2">Speed/pace of speech (calculated from actual speaking time)</div>
                 
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
                   <span>Pitch Variation</span>
-                  <span className="font-semibold text-white">25%</span>
+                  <span className="font-semibold text-white">35%</span>
                 </div>
                 <div className="text-xs text-slate-400 pl-2">Monotone vs dynamic/enthusiastic</div>
                 
-                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                <div className="flex justify-between items-center py-1">
                   <span>Volume Consistency</span>
-                  <span className="font-semibold text-white">20%</span>
+                  <span className="font-semibold text-white">25%</span>
                 </div>
                 <div className="text-xs text-slate-400 pl-2">Confidence indicator</div>
-                
-                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <span>Pause Pattern</span>
-                  <span className="font-semibold text-white">15%</span>
-                </div>
-                <div className="text-xs text-slate-400 pl-2">Strategic vs rushed</div>
-                
-                <div className="flex justify-between items-center py-1">
-                  <span>Vocal Fry/Upspeak</span>
-                  <span className="font-semibold text-white">10%</span>
-                </div>
-                <div className="text-xs text-slate-400 pl-2">Professional tone</div>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
-                Formula: (WPM × 0.3) + (Pitch × 0.25) + (Volume × 0.2) + (Pause × 0.15) + (Tone × 0.1)
+                Formula: (WPM × 0.4) + (Pitch × 0.35) + (Volume × 0.25)
               </div>
             </div>
           </motion.div>
@@ -736,7 +710,8 @@ interface EnergyMetricsCard1Props {
 
 function EnergyMetricsCard1({ energyScore, rawValues, className }: EnergyMetricsCard1Props) {
   const { breakdown } = energyScore
-  const weights = { wpm: 0.3, pitchVariation: 0.25, volumeConsistency: 0.2 }
+  // Updated weights to match new energy score calculation (vocal fry and pause pattern removed)
+  const weights = { wpm: 0.4, pitchVariation: 0.35, volumeConsistency: 0.25 }
   
   const contributions = {
     wpm: breakdown.wpm * weights.wpm,
@@ -760,7 +735,7 @@ function EnergyMetricsCard1({ energyScore, rawValues, className }: EnergyMetrics
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
-            Energy Metrics (1/2)
+            Energy Metrics
           </div>
         </div>
       </div>
@@ -1146,23 +1121,11 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
     }
   }
   
-  // Calculate pause pattern and vocal fry dynamically from transcript
-  // These recalculate on every render when transcript updates
-  const pausePattern = useMemo(() => 
-    calculatePausePattern(voiceAnalysisData, transcript, sessionDurationSeconds),
-    [voiceAnalysisData, transcript, sessionDurationSeconds]
-  )
-  const vocalFry = useMemo(() => 
-    detectVocalFryUpspeak(voiceAnalysisData),
-    [voiceAnalysisData]
-  )
-  
+  // Calculate energy score (vocal fry and pause pattern removed)
   const energyScore = calculateEnergyScore(
     wordsPerMinute,
     pitchVariation,
-    volumeConsistency,
-    pausePattern,
-    vocalFry
+    volumeConsistency
   )
 
   // Determine talk time color based on ratio
@@ -1286,7 +1249,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
       {/* Energy Card - Replaces WPM Card */}
       <EnergyCard energyScore={energyScore} />
       
-      {/* Energy Score Metrics Cards - Temporarily replacing Objections and Techniques */}
+      {/* Energy Score Metrics Card - Shows WPM, Pitch Variation, and Volume Consistency */}
       <EnergyMetricsCard1 
         energyScore={energyScore}
         rawValues={{
@@ -1294,14 +1257,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           pitchVariation: pitchVariation,
           volumeConsistency: volumeConsistency
         }}
-      />
-      
-      <EnergyMetricsCard2 
-        energyScore={energyScore}
-        rawValues={{
-          pausePattern: pausePattern,
-          vocalFry: vocalFry
-        }}
+        className="col-span-2"
       />
     </div>
   )
