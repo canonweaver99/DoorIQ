@@ -345,6 +345,25 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     return Math.max(0, Math.min(100, speakingPercent))
   }, [])
 
+  // Voice Activity Detection (VAD) - checks if user is currently speaking
+  // Uses RMS threshold on current audio buffer AND volume dB threshold
+  const detectVoiceActivity = useCallback((dataArray: Float32Array, volumeDb: number): boolean => {
+    // Calculate RMS from current audio buffer
+    let sumSquares = 0
+    for (let i = 0; i < dataArray.length; i++) {
+      sumSquares += dataArray[i] * dataArray[i]
+    }
+    const rms = Math.sqrt(sumSquares / dataArray.length)
+    
+    // Dual threshold check for more reliable VAD:
+    // 1. RMS > 0.01 indicates audio activity
+    // 2. Volume dB > -50 indicates speech-level volume (not silence/noise)
+    const RMS_THRESHOLD = 0.01
+    const VOLUME_DB_THRESHOLD = -50
+    
+    return rms > RMS_THRESHOLD && volumeDb > VOLUME_DB_THRESHOLD
+  }, [])
+
   // Check if rep (user) is currently speaking based on transcript
   const isRepSpeaking = useCallback((currentTime: number): boolean => {
     if (!transcript || transcript.length === 0) {
@@ -457,16 +476,31 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       return
     }
 
-    // CRITICAL: Only calculate energy score when rep is speaking
-    // Don't update score when agent is speaking
+    // CRITICAL: VAD check - gate everything behind voice activity detection
+    // First check: Is the user currently speaking (VAD on current buffer)?
+    const isCurrentlySpeaking = detectVoiceActivity(dataArray, volumeDb)
+    
+    // Second check: Is the rep speaking (not the agent)?
     const repIsSpeaking = isRepSpeaking(currentTime)
-    if (!repIsSpeaking) {
-      // Agent is speaking - don't update energy score
-      // Keep the last calculated score (it's already in state)
+    
+    // Only proceed if BOTH conditions are met: VAD detects speech AND rep is speaking
+    if (!isCurrentlySpeaking || !repIsSpeaking) {
+      // User is not speaking - decay energy score slowly
+      // Option: Decay slowly from last value (more natural than instant zero)
+      smoothedScoreRef.current = Math.max(0, smoothedScoreRef.current - 2) // Decay by 2 points per update
+      const finalScore = Math.round(Math.max(0, Math.min(100, smoothedScoreRef.current)))
+      
+      // Update state with decayed score
+      setEnergyScore(finalScore)
+      const level: 'low' | 'good' | 'high' = finalScore < THRESHOLDS.low ? 'low' : finalScore >= THRESHOLDS.high ? 'high' : 'good'
+      setEnergyLevel(level)
+      
+      // Keep factors at last values (don't update during silence)
+      // Don't call callback during silence decay
       return
     }
 
-    // Calculate individual factors (only when rep is speaking)
+    // User IS speaking - calculate all metrics
     const volumeLevelScore = normalizeVolumeLevel(volumeDb)
     const pitchVariationPercent = calculatePitchVariation(pitchHistoryRef.current)
     const pitchVariationScore = normalizePitchVariation(pitchVariationPercent)
@@ -487,30 +521,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     const speakingRatio = calculateSpeakingRatio()
     const speakingRatioScore = normalizeSpeakingRatio(speakingRatio)
 
-    // CRITICAL: Gate the score during silence
-    // If speaking ratio < 10%, don't update the energy score - hold last value or fade down slowly
-    const MIN_SPEAKING_RATIO = 10 // 10% minimum speaking time to update score
-    if (speakingRatio < MIN_SPEAKING_RATIO) {
-      // During silence, fade the score down slowly instead of updating
-      smoothedScoreRef.current = smoothedScoreRef.current * 0.95 // Fade down by 5% each update
-      const finalScore = Math.round(Math.max(0, Math.min(100, smoothedScoreRef.current)))
-      
-      // Update state with faded score
-      setEnergyScore(finalScore)
-      const level: 'low' | 'good' | 'high' = finalScore < THRESHOLDS.low ? 'low' : finalScore >= THRESHOLDS.high ? 'high' : 'good'
-      setEnergyLevel(level)
-      setFactors({
-        volumeLevel: Math.round(volumeLevelScore),
-        pitchVariation: Math.round(pitchVariationScore),
-        speakingPace: Math.round(speakingPaceScore),
-        speakingRatio: Math.round(speakingRatioScore)
-      })
-      
-      // Don't call callback during silence fade
-      return
-    }
-
-    // Calculate weighted energy score (only when speaking ratio is sufficient)
+    // Calculate weighted energy score (only when VAD detects speech)
     const rawScore =
       speakingPaceScore * WEIGHTS.speakingPace +
       pitchVariationScore * WEIGHTS.pitchVariation +
@@ -534,7 +545,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       level = 'good'
     }
 
-    // Update state (only when rep is speaking and speaking ratio is sufficient)
+    // Update state (only when VAD detects speech and rep is speaking)
     setEnergyScore(finalScore)
     setEnergyLevel(level)
     setFactors({
@@ -546,7 +557,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
 
     // Call callback if provided
     onScoreUpdate?.(finalScore)
-  }, [transcript, normalizeVolumeLevel, normalizePitchVariation, normalizeSpeakingPace, normalizeSpeakingRatio, calculateSpeakingRatio, isRepSpeaking, onScoreUpdate])
+  }, [transcript, normalizeVolumeLevel, normalizePitchVariation, normalizeSpeakingPace, normalizeSpeakingRatio, calculateSpeakingRatio, detectVoiceActivity, isRepSpeaking, onScoreUpdate])
 
   // Start analysis
   const startAnalysis = useCallback(async () => {
