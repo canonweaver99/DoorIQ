@@ -11,6 +11,11 @@ interface ElevenLabsSpeechMetricsProps {
     avgWPM?: number
     pitchVariation?: number
     fillerWordsPerMinute?: number
+    totalFillerWords?: number
+    volumeConsistency?: number
+    avgPitch?: number
+    minPitch?: number
+    maxPitch?: number
     issues?: {
       tooFast?: boolean
       tooSlow?: boolean
@@ -65,6 +70,21 @@ export function ElevenLabsSpeechMetrics({
   
   const wpm = calculateWPM()
   const fillerWordsPerMinute = calculateFillerWordsPerMinute()
+  
+  // Calculate total filler words
+  const totalFillerWords = voiceAnalysis?.totalFillerWords !== undefined
+    ? voiceAnalysis.totalFillerWords
+    : transcript && durationSeconds
+      ? Math.round(fillerWordsPerMinute * (durationSeconds / 60))
+      : 0
+  
+  // Get pitch variation (upspeak indicator)
+  const pitchVariation = voiceAnalysis?.pitchVariation || 0
+  
+  // Get volume consistency
+  const volumeConsistency = voiceAnalysis?.volumeConsistency !== undefined
+    ? voiceAnalysis.volumeConsistency
+    : null
   
   // Calculate metrics with fallbacks
   const energyLevel = voiceAnalysis?.issues?.lowEnergy ? 45 : (wpm > 0 ? 75 : 70)
@@ -190,6 +210,85 @@ export function ElevenLabsSpeechMetrics({
           <div className="text-sm text-gray-400">
             {paceVariety >= 60 ? 'Good variety' : 'Too monotone'}
           </div>
+        </div>
+      </div>
+      
+      {/* Detailed Stats Section */}
+      <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {/* WPM */}
+        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+          <div className="text-sm text-gray-400 mb-1">Words Per Minute</div>
+          <div className="text-2xl font-bold text-white mb-1">{wpm}</div>
+          <div className="text-xs text-gray-500">
+            {wpm >= 140 && wpm <= 160 
+              ? 'Ideal range ✓' 
+              : wpm < 140 
+                ? 'Too slow' 
+                : 'Too fast'}
+          </div>
+        </div>
+        
+        {/* Filler Words */}
+        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+          <div className="text-sm text-gray-400 mb-1">Filler Words</div>
+          <div className="text-2xl font-bold text-white mb-1">{totalFillerWords}</div>
+          <div className="text-xs text-gray-500">
+            {fillerWordsPerMinute.toFixed(1)}/min
+            {fillerWordsPerMinute < 1 
+              ? ' • Excellent ✓' 
+              : fillerWordsPerMinute < 2 
+                ? ' • Good' 
+                : ' • Needs work'}
+          </div>
+        </div>
+        
+        {/* Pitch Variation (Upspeak) */}
+        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+          <div className="text-sm text-gray-400 mb-1">Pitch Variation</div>
+          {pitchVariation > 0 ? (
+            <>
+              <div className="text-2xl font-bold text-white mb-1">{pitchVariation.toFixed(1)}%</div>
+              <div className="text-xs text-gray-500">
+                {voiceAnalysis?.avgPitch && voiceAnalysis?.minPitch && voiceAnalysis?.maxPitch
+                  ? `${voiceAnalysis.minPitch.toFixed(0)}-${voiceAnalysis.maxPitch.toFixed(0)} Hz`
+                  : 'Pitch range'}
+                {pitchVariation >= 20 
+                  ? ' • Good variety ✓' 
+                  : pitchVariation >= 10 
+                    ? ' • Moderate' 
+                    : ' • Too monotone'}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-2xl font-bold text-gray-500 mb-1">N/A</div>
+              <div className="text-xs text-gray-500">No audio data</div>
+            </>
+          )}
+        </div>
+        
+        {/* Volume Consistency */}
+        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+          <div className="text-sm text-gray-400 mb-1">Volume Consistency</div>
+          {volumeConsistency !== null ? (
+            <>
+              <div className="text-2xl font-bold text-white mb-1">
+                {volumeConsistency.toFixed(0)}%
+              </div>
+              <div className="text-xs text-gray-500">
+                {volumeConsistency >= 80 
+                  ? 'Very consistent ✓' 
+                  : volumeConsistency >= 60 
+                    ? 'Moderate variation' 
+                    : 'Inconsistent'}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-2xl font-bold text-gray-500 mb-1">N/A</div>
+              <div className="text-xs text-gray-500">No audio data</div>
+            </>
+          )}
         </div>
       </div>
       

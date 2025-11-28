@@ -207,28 +207,24 @@ function calculateVolumeConsistency(voiceAnalysisData: VoiceAnalysisData | null)
 }
 
 // Calculate pause pattern score - fewer pauses = higher score
+// Now calculates dynamically from transcript only (always updates)
 function calculatePausePattern(
   voiceAnalysisData: VoiceAnalysisData | null,
   transcript: TranscriptEntry[],
   sessionDurationSeconds: number
 ): number {
-  // Try audio analysis first
-  if (voiceAnalysisData && voiceAnalysisData.longPausesCount !== undefined && sessionDurationSeconds > 0) {
-    const pausesPerMinute = (voiceAnalysisData.longPausesCount / sessionDurationSeconds) * 60
-    // Ideal: <1 pause per minute = 100, >3 pauses per minute = 0
-    const score = Math.max(0, Math.min(100, 100 - (pausesPerMinute * 33.33)))
-    return score
-  }
-  
-  // Fallback to transcript timestamps - use recent entries for dynamic calculation
-  if (transcript.length < 2) return 50 // Default
+  // Always use transcript-based calculation for real-time updates
+  if (transcript.length < 2) return 75 // Neutral default
   
   const userEntries = transcript.filter(entry => entry.speaker === 'user')
-  if (userEntries.length < 2) return 50
+  if (userEntries.length < 2) return 75
   
-  // Use recent entries (last 10 entries or all if less than 10) for dynamic calculation
-  const recentEntries = userEntries.slice(-10)
+  // Use last 8 entries for recent pause pattern (dynamic calculation)
+  const recentEntries = userEntries.slice(-8)
+  if (recentEntries.length < 2) return 75
+  
   let pauseCount = 0
+  let totalGapTime = 0
   
   for (let i = 1; i < recentEntries.length; i++) {
     const prev = recentEntries[i - 1]
@@ -247,76 +243,86 @@ function calculatePausePattern(
           : Date.now()
       const pauseDuration = currTime - prevTime
       
-      if (pauseDuration > 2000) { // >2 seconds = pause
+      // Count pauses > 1.5 seconds
+      if (pauseDuration > 1500) {
         pauseCount++
+        totalGapTime += pauseDuration
       }
     } catch (e) {
       continue
     }
   }
   
-  // Calculate pauses per entry ratio
+  // Calculate score based on pause frequency and duration
+  // Fewer pauses = higher score
   const pausesPerEntry = pauseCount / recentEntries.length
-  // Ideal: <0.1 pauses per entry = 100, >0.5 pauses per entry = 0
-  // Scale: 0 pauses = 100, 0.1 pauses/entry = 80, 0.5 pauses/entry = 0
-  const score = Math.max(0, Math.min(100, 100 - (pausesPerEntry * 200)))
+  const avgPauseDuration = pauseCount > 0 ? totalGapTime / pauseCount : 0
   
-  return score
+  // Score starts at 100, decreases with more pauses
+  // 0 pauses = 100, 0.2 pauses/entry = 80, 0.5 pauses/entry = 50, 1 pause/entry = 0
+  let score = 100 - (pausesPerEntry * 200)
+  
+  // Also penalize very long pauses (>5 seconds)
+  if (avgPauseDuration > 5000) {
+    score -= 10
+  }
+  
+  return Math.max(0, Math.min(100, score))
 }
 
-// Detect vocal fry and upspeak from pitch patterns
+// Detect vocal fry and upspeak - simplified to calculate from speech patterns
+// Since pitch data may not be available, use speech rate and consistency as proxy
 function detectVocalFryUpspeak(voiceAnalysisData: VoiceAnalysisData | null): number {
-  if (!voiceAnalysisData || !voiceAnalysisData.pitchTimeline || voiceAnalysisData.pitchTimeline.length < 5) {
-    // If no pitch data, return neutral score (not default 50, but calculate from available data)
-    return 75 // Neutral score when no data available
+  // Try to use pitch data if available
+  if (voiceAnalysisData && voiceAnalysisData.pitchTimeline && voiceAnalysisData.pitchTimeline.length >= 5) {
+    const allPitches = voiceAnalysisData.pitchTimeline.map(p => p.value).filter(p => p > 0)
+    const recentPitches = allPitches.slice(-20)
+    
+    if (recentPitches.length >= 5) {
+      const pitches = recentPitches.length >= 5 ? recentPitches : allPitches
+      
+      let vocalFryScore = 100
+      let upspeakScore = 100
+      
+      // Detect vocal fry: very low pitch (<80Hz)
+      const lowPitchCount = pitches.filter(p => p < 80).length
+      const lowPitchRatio = lowPitchCount / pitches.length
+      
+      if (lowPitchRatio > 0.15) {
+        vocalFryScore = Math.max(0, 100 - ((lowPitchRatio - 0.15) / 0.85) * 100)
+      }
+      
+      // Detect upspeak: unusually high pitch (>200Hz)
+      const avgPitch = pitches.reduce((a, b) => a + b, 0) / pitches.length
+      
+      if (avgPitch > 200) {
+        upspeakScore = Math.max(0, 100 - ((avgPitch - 200) / 200) * 100)
+      } else if (avgPitch < 80) {
+        upspeakScore = Math.max(0, (avgPitch / 80) * 100)
+      }
+      
+      return Math.max(0, Math.min(100, Math.min(vocalFryScore, upspeakScore)))
+    }
   }
   
-  // Use recent pitch data for dynamic calculation (last 20 points or all if less)
-  const allPitches = voiceAnalysisData.pitchTimeline.map(p => p.value).filter(p => p > 0)
-  const recentPitches = allPitches.slice(-20) // Use last 20 pitch points
-  
-  if (recentPitches.length < 5) {
-    // If we have some data but not enough, use what we have
-    if (recentPitches.length === 0) return 75
+  // Fallback: Calculate from speech patterns (always available, always updates)
+  // Use volume consistency and pitch variation as proxies
+  // If we have voice analysis data, use those metrics
+  if (voiceAnalysisData) {
+    const volumeConsistency = voiceAnalysisData.volumeConsistency || 0
+    const pitchVariation = voiceAnalysisData.pitchVariation || 0
+    
+    // Good vocal quality = consistent volume + varied pitch
+    // Score based on these factors (both should be good)
+    const volumeScore = Math.min(100, volumeConsistency * 1.2) // Scale up volume consistency
+    const pitchScore = Math.min(100, pitchVariation * 1.5) // Scale up pitch variation
+    
+    // Average the two for overall vocal quality score
+    return Math.round((volumeScore + pitchScore) / 2)
   }
   
-  const pitches = recentPitches.length >= 5 ? recentPitches : allPitches
-  if (pitches.length === 0) return 75
-  
-  let vocalFryScore = 100
-  let upspeakScore = 100
-  
-  // Detect vocal fry: very low pitch (<80Hz) or irregular low patterns
-  const lowPitchCount = pitches.filter(p => p < 80).length
-  const lowPitchRatio = lowPitchCount / pitches.length
-  
-  // Penalize vocal fry: more than 15% low pitch starts reducing score
-  if (lowPitchRatio > 0.15) {
-    // More than 15% of speech is very low pitch = vocal fry
-    // Scale: 15% = 100, 30% = 70, 50% = 40, 100% = 0
-    vocalFryScore = Math.max(0, 100 - ((lowPitchRatio - 0.15) / 0.85) * 100)
-  }
-  
-  // Detect upspeak: check if average pitch is unusually high (>200Hz) which can indicate upspeak
-  const avgPitch = pitches.reduce((a, b) => a + b, 0) / pitches.length
-  
-  // Normal pitch range: 80-200Hz is good
-  // Below 80Hz = vocal fry (already handled)
-  // Above 200Hz = potential upspeak
-  if (avgPitch > 200) {
-    // Unusually high average pitch might indicate upspeak
-    // Scale: 200Hz = 100, 250Hz = 80, 300Hz = 60, 400Hz = 0
-    upspeakScore = Math.max(0, 100 - ((avgPitch - 200) / 200) * 100)
-  } else if (avgPitch < 80) {
-    // Very low average pitch also reduces score
-    upspeakScore = Math.max(0, (avgPitch / 80) * 100)
-  }
-  
-  // Combine scores (take the lower one as the limiting factor)
-  const combinedScore = Math.min(vocalFryScore, upspeakScore)
-  
-  // Ensure score is between 0-100
-  return Math.max(0, Math.min(100, combinedScore))
+  // Default: return neutral score that will update as data comes in
+  return 75
 }
 
 // Calculate overall energy score
@@ -1140,8 +1146,16 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
     }
   }
   
-  const pausePattern = calculatePausePattern(voiceAnalysisData, transcript, sessionDurationSeconds)
-  const vocalFry = detectVocalFryUpspeak(voiceAnalysisData)
+  // Calculate pause pattern and vocal fry dynamically from transcript
+  // These recalculate on every render when transcript updates
+  const pausePattern = useMemo(() => 
+    calculatePausePattern(voiceAnalysisData, transcript, sessionDurationSeconds),
+    [voiceAnalysisData, transcript, sessionDurationSeconds]
+  )
+  const vocalFry = useMemo(() => 
+    detectVocalFryUpspeak(voiceAnalysisData),
+    [voiceAnalysisData]
+  )
   
   const energyScore = calculateEnergyScore(
     wordsPerMinute,

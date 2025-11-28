@@ -453,7 +453,7 @@ function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
   return userPercentage
 }
 
-// Calculate WPM from transcript entries - uses recent speaking activity for current pace
+// Calculate WPM from transcript entries - uses actual speaking time (excluding pauses)
 function calculateWPMFromTranscript(
   transcript: TranscriptEntry[],
   sessionStartTime: Date | null,
@@ -465,64 +465,92 @@ function calculateWPMFromTranscript(
   const repEntries = transcript.filter(entry => entry.speaker === 'user')
   if (repEntries.length === 0) return 0
   
-  // Use a short rolling window: calculate WPM based on recent speech (last 15 seconds)
-  // This gives instantaneous speaking rate rather than cumulative average
-  const windowMs = 15 * 1000 // 15 seconds in milliseconds
-  const windowStartTime = currentTime.getTime() - windowMs
+  // Method: Calculate WPM based on time between consecutive speech segments
+  // This gives instantaneous rate by measuring actual speaking time
   
-  // Get entries within the time window
-  const recentEntries = repEntries.filter(entry => {
-    const entryTime = entry.timestamp?.getTime() || sessionStartTime.getTime()
-    return entryTime >= windowStartTime
-  })
+  // Use last 5-8 entries for recent speaking rate (enough data but not too much)
+  const recentCount = Math.min(8, Math.max(2, repEntries.length))
+  const recentEntries = repEntries.slice(-recentCount)
   
-  // If we have recent entries, calculate WPM from them using the fixed window
-  if (recentEntries.length > 0) {
-    const recentWords = recentEntries.reduce((sum, entry) => {
-      return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
-    }, 0)
+  if (recentEntries.length === 0) return 0
+  
+  // Calculate total words
+  const totalWords = recentEntries.reduce((sum, entry) => {
+    return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
+  }, 0)
+  
+  if (totalWords === 0) return 0
+  
+  // Calculate speaking time by summing time between consecutive entries
+  // Each entry represents a speech segment, and we estimate its duration
+  let totalSpeakingTimeMs = 0
+  
+  for (let i = 0; i < recentEntries.length; i++) {
+    const entry = recentEntries[i]
+    const words = (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
     
-    // Use the fixed window duration (15 seconds) for accurate instantaneous rate
-    const recentDurationMinutes = windowMs / 60000
+    if (words === 0) continue
     
-    // If we have at least 3 seconds of speech, calculate WPM
-    if (recentWords > 0) {
-      return Math.round(recentWords / recentDurationMinutes)
+    // Estimate speaking time for this entry: average speaking rate is ~150 WPM
+    // So 1 word takes ~400ms (60 seconds / 150 words = 0.4 seconds per word)
+    const estimatedEntryDuration = words * 400
+    
+    // If this isn't the last entry, check time gap to next entry
+    if (i < recentEntries.length - 1) {
+      const nextEntry = recentEntries[i + 1]
+      const entryTime = entry.timestamp instanceof Date
+        ? entry.timestamp.getTime()
+        : typeof entry.timestamp === 'string'
+          ? new Date(entry.timestamp).getTime()
+          : (sessionStartTime?.getTime() || currentTime.getTime())
+      
+      const nextEntryTime = nextEntry.timestamp instanceof Date
+        ? nextEntry.timestamp.getTime()
+        : typeof nextEntry.timestamp === 'string'
+          ? new Date(nextEntry.timestamp).getTime()
+          : currentTime.getTime()
+      
+      const gap = nextEntryTime - entryTime
+      
+      // If gap is small (< 3 seconds), assume continuous speech
+      // If gap is large, only count the estimated speaking time for this entry
+      if (gap < 3000) {
+        // Continuous speech - use the gap as speaking time (capped at estimated duration)
+        totalSpeakingTimeMs += Math.min(gap, estimatedEntryDuration)
+      } else {
+        // Pause detected - only count estimated speaking time for this entry
+        totalSpeakingTimeMs += estimatedEntryDuration
+      }
+    } else {
+      // Last entry - estimate its duration and add time since it was spoken
+      const entryTime = entry.timestamp instanceof Date
+        ? entry.timestamp.getTime()
+        : typeof entry.timestamp === 'string'
+          ? new Date(entry.timestamp).getTime()
+          : (sessionStartTime?.getTime() || currentTime.getTime())
+      
+      const timeSinceEntry = currentTime.getTime() - entryTime
+      
+      // If entry was very recent (< 2 seconds), include that time
+      // Otherwise, just use estimated duration
+      if (timeSinceEntry < 2000) {
+        totalSpeakingTimeMs += Math.min(timeSinceEntry, estimatedEntryDuration)
+      } else {
+        totalSpeakingTimeMs += estimatedEntryDuration
+      }
     }
   }
   
-  // Fallback: if no recent entries in last 15 seconds, use last 30 seconds
-  const fallbackWindowMs = 30 * 1000
-  const fallbackWindowStartTime = currentTime.getTime() - fallbackWindowMs
-  const fallbackEntries = repEntries.filter(entry => {
-    const entryTime = entry.timestamp?.getTime() || sessionStartTime.getTime()
-    return entryTime >= fallbackWindowStartTime
-  })
+  // Ensure minimum duration for calculation stability
+  const minDurationMs = 1000 // At least 1 second
+  const actualDurationMs = Math.max(minDurationMs, totalSpeakingTimeMs)
+  const durationMinutes = actualDurationMs / 60000
   
-  if (fallbackEntries.length > 0) {
-    const fallbackWords = fallbackEntries.reduce((sum, entry) => {
-      return sum + (entry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
-    }, 0)
-    const fallbackDurationMinutes = fallbackWindowMs / 60000
-    return Math.round(fallbackWords / fallbackDurationMinutes)
-  }
+  // Calculate WPM
+  const wpm = Math.round(totalWords / durationMinutes)
   
-  // Last resort: if speaking just started, estimate from very recent entries
-  if (repEntries.length > 0) {
-    const lastEntry = repEntries[repEntries.length - 1]
-    const lastEntryTime = lastEntry.timestamp?.getTime() || sessionStartTime.getTime()
-    const timeSinceLastEntry = currentTime.getTime() - lastEntryTime
-    
-    // If last entry was within last 5 seconds, use it to estimate
-    if (timeSinceLastEntry < 5000) {
-      const lastWords = (lastEntry.text?.split(/\s+/).filter(w => w.length > 0).length || 0)
-      // Estimate based on assuming they'll continue at this rate
-      const estimatedWPM = Math.round((lastWords / timeSinceLastEntry) * 60000)
-      return Math.min(200, Math.max(0, estimatedWPM)) // Cap at 200 WPM
-    }
-  }
-  
-  return 0
+  // Cap at reasonable limits (0-250 WPM)
+  return Math.max(0, Math.min(250, wpm))
 }
 
 export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSessionAnalysisReturn {
