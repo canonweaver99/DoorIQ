@@ -217,13 +217,18 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
   const volumeHistoryRef = useRef<number[]>([]) // dB values
   const pitchHistoryRef = useRef<number[]>([]) // Hz values
   const volumeSamplesRef = useRef<number[]>([]) // For silence detection
+  
+  // Speaking ratio tracking
+  const speakingFramesRef = useRef<number>(0) // Count of frames where user was speaking
+  const totalFramesRef = useRef<number>(0) // Total frames processed
 
   // Baseline calibration data
   const baselineCalibrationRef = useRef<{
-    volumeMean: number
-    volumeStd: number
-    volumeMin: number
-    volumeMax: number
+    volumeMean: number  // dB mean
+    volumeStd: number   // dB std dev
+    volumeMin: number   // dB min
+    volumeMax: number   // dB max
+    rmsMean: number     // RMS mean for volume normalization
     samples: number
   } | null>(null)
   const calibrationStartTimeRef = useRef<number | null>(null)
@@ -238,10 +243,10 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
 
   // Weight factors (updated as specified)
   const WEIGHTS = {
-    speakingPace: 0.30,      // WPM - 30%
+    speakingPace: 0.35,      // WPM - 35%
     pitchVariation: 0.30,    // Vocal dynamics - 30%
     volumeLevel: 0.20,       // How loud (RMS) - 20%
-    speakingRatio: 0.20       // % of time speaking - 20%
+    speakingRatio: 0.15       // % of time speaking - 15%
   }
 
   // Thresholds
@@ -258,98 +263,60 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
   }, [sessionStartTime])
 
   // Normalize volume level (actual RMS) to 0-100 scale with baseline calibration
-  // This measures how loud they're speaking, not consistency
-  const normalizeVolumeLevel = useCallback((volumeDb: number): number => {
+  // Updated: Normalize against user's baseline (calibrate first 5 seconds)
+  const normalizeVolumeLevel = useCallback((rms: number, volumeDb: number): number => {
     if (!baselineCalibrationRef.current) {
       return 50 // Default neutral score during calibration
     }
 
-    const { volumeMean, volumeStd, volumeMin, volumeMax } = baselineCalibrationRef.current
-
-    // Normalize based on baseline: louder = higher score
-    // If volume is at baseline mean, score = 50
-    // If volume is above baseline, score increases
-    // If volume is below baseline, score decreases
+    const { rmsMean } = baselineCalibrationRef.current
     
-    const deviation = volumeDb - volumeMean
+    // Normalize: Speaking at baseline = 70, louder = higher
+    const ratio = rms / Math.max(rmsMean, 0.001) // Avoid division by zero
+    const normalized = Math.min(100, ratio * 70)
     
-    // Use std deviation for normalization
-    // 1 std above mean = +25 points, 1 std below = -25 points
-    const normalized = 50 + (deviation / Math.max(volumeStd, 5)) * 25
-    
-    // Also factor in absolute volume level relative to min/max range
-    // This ensures very quiet speakers can still get some score if they're loud relative to their baseline
-    const range = volumeMax - volumeMin
-    if (range > 0) {
-      const positionInRange = (volumeDb - volumeMin) / range
-      // Blend: 70% deviation-based, 30% position in range
-      const blended = normalized * 0.7 + (positionInRange * 100) * 0.3
-      return Math.max(0, Math.min(100, blended))
-    }
-    
-    // Clamp to reasonable range
-    return Math.max(0, Math.min(100, normalized))
+    return Math.max(0, normalized)
   }, [])
 
   // Normalize pitch variation to 0-100 scale
+  // Updated: 5-30% coefficient of variation is typical
   const normalizePitchVariation = useCallback((variationPercent: number): number => {
-    // Typical pitch variation: 10-30% is good, <10% is monotone, >40% is very dynamic
-    // Map: 0% = 0, 15% = 50, 30% = 75, 50%+ = 100
     if (variationPercent === 0) return 0
     
-    if (variationPercent < 10) {
-      // Monotone - linear from 0-10% maps to 0-30
-      return (variationPercent / 10) * 30
-    } else if (variationPercent < 30) {
-      // Good range - linear from 10-30% maps to 30-75
-      return 30 + ((variationPercent - 10) / 20) * 45
+    if (variationPercent < 5) {
+      // Monotone = low score
+      return variationPercent * 10
+    } else if (variationPercent > 30) {
+      // Very dynamic = max score
+      return 100
     } else {
-      // Very dynamic - 30%+ maps to 75-100
-      return Math.min(100, 75 + ((variationPercent - 30) / 20) * 25)
+      // 5-30 maps to 50-100
+      return 50 + ((variationPercent - 5) / 25) * 50
     }
   }, [])
 
   // Normalize speaking pace (WPM) to 0-100 scale
+  // Updated: 80-200 is normal speech, 120-160 is energetic
   const normalizeSpeakingPace = useCallback((wpm: number): number => {
-    // Ideal speaking pace: 140-160 WPM
-    // Too slow: <120 WPM
-    // Too fast: >180 WPM
-    // Map: 100 WPM = 30, 140 WPM = 70, 160 WPM = 85, 180 WPM = 70, 200+ WPM = 40
-    
-    if (wpm < 100) {
-      // Very slow
-      return (wpm / 100) * 30
-    } else if (wpm < 140) {
-      // Slow to good
-      return 30 + ((wpm - 100) / 40) * 40
-    } else if (wpm < 160) {
-      // Ideal range
-      return 70 + ((wpm - 140) / 20) * 15
-    } else if (wpm < 180) {
-      // Fast but acceptable
-      return 85 - ((wpm - 160) / 20) * 15
+    if (wpm < 80) {
+      // Slow = low score
+      return (wpm / 80) * 50
+    } else if (wpm > 200) {
+      // Too fast = drops score
+      return Math.max(50, 100 - (wpm - 200) / 2)
     } else {
-      // Too fast - penalize
-      return Math.max(40, 70 - ((wpm - 180) / 20) * 30)
+      // 80-200 maps to 50-100
+      return 50 + ((wpm - 80) / 120) * 50
     }
   }, [])
 
   // Calculate speaking ratio (percentage of time spent speaking vs silent)
-  // Uses VAD (Voice Activity Detection) to determine when speech is happening
+  // Uses frame-based tracking for accurate ratio
   const calculateSpeakingRatio = useCallback((): number => {
-    if (volumeSamplesRef.current.length < 10) return 0
-
-    const SPEECH_THRESHOLD = -45 // dB threshold for speech detection
-    let speakingSamples = 0
-
-    for (const volume of volumeSamplesRef.current) {
-      if (volume >= SPEECH_THRESHOLD) {
-        speakingSamples++
-      }
-    }
-
+    if (totalFramesRef.current === 0) return 0
+    
     // Return percentage of time speaking (0-100)
-    return (speakingSamples / volumeSamplesRef.current.length) * 100
+    return (speakingFramesRef.current / totalFramesRef.current) * 100
   }, [])
 
   // Normalize speaking ratio to 0-100 scale
@@ -360,24 +327,18 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
   }, [])
 
   // Voice Activity Detection (VAD) - checks if user is currently speaking
-  // Uses RMS threshold on current audio buffer AND volume dB threshold
-  // Made stricter to prevent false positives during silence
-  const detectVoiceActivity = useCallback((dataArray: Float32Array, volumeDb: number): boolean => {
-    // Calculate RMS from current audio buffer
-    let sumSquares = 0
-    for (let i = 0; i < dataArray.length; i++) {
-      sumSquares += dataArray[i] * dataArray[i]
-    }
-    const rms = Math.sqrt(sumSquares / dataArray.length)
-    
-    // Stricter dual threshold check for more reliable VAD:
-    // 1. RMS > 0.02 indicates significant audio activity (increased from 0.01)
-    // 2. Volume dB > -45 indicates speech-level volume (increased from -50)
+  // Returns boolean speaking status (RMS is passed in to avoid recalculation)
+  const detectVoiceActivity = useCallback((dataArray: Float32Array, volumeDb: number, rms: number): { isSpeaking: boolean } => {
+    // Dual threshold check for more reliable VAD:
+    // 1. RMS > 0.01 indicates audio activity
+    // 2. Volume dB > -45 indicates speech-level volume
     // Both must be true to consider it speech
-    const RMS_THRESHOLD = 0.02  // Increased threshold for stricter detection
-    const VOLUME_DB_THRESHOLD = -45  // Increased threshold for stricter detection
+    const RMS_THRESHOLD = 0.01  // Threshold for speech detection
+    const VOLUME_DB_THRESHOLD = -45  // Threshold for speech-level volume
     
-    return rms > RMS_THRESHOLD && volumeDb > VOLUME_DB_THRESHOLD
+    const isSpeaking = rms > RMS_THRESHOLD && volumeDb > VOLUME_DB_THRESHOLD
+    
+    return { isSpeaking }
   }, [])
 
   // Check if rep (user) is currently speaking based on transcript
@@ -454,6 +415,13 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       }
     }
 
+    // Calculate RMS once for both calibration and VAD
+    let sumSquares = 0
+    for (let i = 0; i < dataArray.length; i++) {
+      sumSquares += dataArray[i] * dataArray[i]
+    }
+    const rms = Math.sqrt(sumSquares / dataArray.length)
+    
     // Baseline calibration (first 5 seconds)
     const isCalibratingNow = sessionElapsed < CALIBRATION_DURATION
     setIsCalibrating(isCalibratingNow)
@@ -466,6 +434,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
           volumeStd: 0,
           volumeMin: volumeDb,
           volumeMax: volumeDb,
+          rmsMean: rms,
           samples: 1
         }
         calibrationStartTimeRef.current = currentTime
@@ -473,9 +442,13 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
         const baseline = baselineCalibrationRef.current
         baseline.samples++
         
-        // Update running mean
+        // Update running mean for dB
         const oldMean = baseline.volumeMean
         baseline.volumeMean = oldMean + (volumeDb - oldMean) / baseline.samples
+        
+        // Update running mean for RMS
+        const oldRmsMean = baseline.rmsMean
+        baseline.rmsMean = oldRmsMean + (rms - oldRmsMean) / baseline.samples
         
         // Update min/max
         baseline.volumeMin = Math.min(baseline.volumeMin, volumeDb)
@@ -494,29 +467,39 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
 
     // CRITICAL: VAD check - gate everything behind voice activity detection
     // First check: Is the user currently speaking (VAD on current buffer)?
-    const isCurrentlySpeaking = detectVoiceActivity(dataArray, volumeDb)
+    const vadResult = detectVoiceActivity(dataArray, volumeDb, rms)
+    const { isSpeaking: isCurrentlySpeaking } = vadResult
     
     // Second check: Is the rep speaking (not the agent)?
     const repIsSpeaking = isRepSpeaking(currentTime)
     
-    // Only proceed if BOTH conditions are met: VAD detects speech AND rep is speaking
+    // Track speaking frames for speaking ratio calculation
+    totalFramesRef.current++
+    if (isCurrentlySpeaking && repIsSpeaking) {
+      speakingFramesRef.current++
+    }
+    
+    // Calculate speaking ratio (always, even during silence)
+    const speakingRatio = calculateSpeakingRatio()
+    const speakingRatioScore = normalizeSpeakingRatio(speakingRatio)
+    
+    // Gate all metrics behind VAD - only calculate when actually speaking
     if (!isCurrentlySpeaking || !repIsSpeaking) {
-      // User is not speaking - decay energy score more aggressively
-      // Decay by 5 points per update (faster decay) to reach 0 quickly when silent
-      smoothedScoreRef.current = Math.max(0, smoothedScoreRef.current - 5)
+      // User is not speaking - decay energy score slowly
+      smoothedScoreRef.current = Math.max(0, smoothedScoreRef.current * 0.95) // Slow decay
       const finalScore = Math.round(Math.max(0, Math.min(100, smoothedScoreRef.current)))
       
-      // Update state with decayed score
+      // Update state with decayed score and zeroed metrics
       setEnergyScore(finalScore)
       const level: 'low' | 'good' | 'high' = finalScore < THRESHOLDS.low ? 'low' : finalScore >= THRESHOLDS.high ? 'high' : 'good'
       setEnergyLevel(level)
       
-      // Reset factors to 0 or low values when silent (don't show stale high values)
+      // All metrics zero except speakingRatio (which shows actual ratio)
       setFactors({
         volumeLevel: 0,
         pitchVariation: 0,
         speakingPace: 0,  // WPM should be 0 when silent
-        speakingRatio: 0
+        speakingRatio: Math.round(speakingRatioScore)  // Show actual speaking ratio
       })
       
       // Don't call callback during silence decay
@@ -524,7 +507,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     }
 
     // User IS speaking - calculate all metrics
-    const volumeLevelScore = normalizeVolumeLevel(volumeDb)
+    const volumeLevelScore = normalizeVolumeLevel(rms, volumeDb)
     const pitchVariationPercent = calculatePitchVariation(pitchHistoryRef.current)
     const pitchVariationScore = normalizePitchVariation(pitchVariationPercent)
 
@@ -549,10 +532,6 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
         }
       }
     }
-
-    // Calculate speaking ratio (% of time speaking vs silent)
-    const speakingRatio = calculateSpeakingRatio()
-    const speakingRatioScore = normalizeSpeakingRatio(speakingRatio)
 
     // Calculate weighted energy score (only when VAD detects speech)
     const rawScore =
@@ -635,6 +614,8 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       volumeSamplesRef.current = []
       smoothedScoreRef.current = 50
       sessionStartTimeRef.current = sessionStartTime || Date.now()
+      speakingFramesRef.current = 0
+      totalFramesRef.current = 0
 
       setIsActive(true)
       setIsCalibrating(true)

@@ -371,12 +371,12 @@ function calculateEnergyScore(
   }
   
   // Weighted combination matching useEnergyScore hook weights
-  // WPM: 30%, Pitch Variation: 30%, Volume Level: 20%, Speaking Ratio: 20%
+  // WPM: 35%, Pitch Variation: 30%, Volume Level: 20%, Speaking Ratio: 15%
   const score = Math.round(
-    (normalizedWPM * 0.30) +
+    (normalizedWPM * 0.35) +
     (normalizedPitch * 0.30) +
     (safeVolumeLevel * 0.20) +
-    (safeSpeakingRatio * 0.20)
+    (safeSpeakingRatio * 0.15)
   )
   
   // Clamp score to 0-100
@@ -602,7 +602,7 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
               <div className="space-y-2">
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
                   <span>Words Per Minute (WPM)</span>
-                  <span className="font-semibold text-white">30%</span>
+                  <span className="font-semibold text-white">35%</span>
                 </div>
                 <div className="text-xs text-slate-400 pl-2">Speed/pace of speech (calculated from actual speaking time)</div>
                 
@@ -620,7 +620,7 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
                 
                 <div className="flex justify-between items-center py-1">
                   <span>Speaking Ratio</span>
-                  <span className="font-semibold text-white">20%</span>
+                  <span className="font-semibold text-white">15%</span>
                 </div>
                 <div className="text-xs text-slate-400 pl-2">% of time speaking vs silent</div>
               </div>
@@ -748,10 +748,10 @@ function EnergyMetricsCard1({ energyScore, rawValues, className }: EnergyMetrics
   const { breakdown } = energyScore
   // Updated weights to match useEnergyScore hook implementation
   const weights = { 
-    wpm: 0.30,              // 30% - Speaking pace
+    wpm: 0.35,              // 35% - Speaking pace
     pitchVariation: 0.30,   // 30% - Vocal dynamics
     volumeLevel: 0.20,      // 20% - How loud (RMS)
-    speakingRatio: 0.20     // 20% - % of time speaking vs silent
+    speakingRatio: 0.15     // 15% - % of time speaking vs silent
   }
   
   const contributions = {
