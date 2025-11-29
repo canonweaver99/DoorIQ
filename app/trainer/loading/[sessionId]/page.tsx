@@ -161,17 +161,16 @@ export default function LoadingPage() {
             overall_score: session.overall_score
           })
           
-          // Check if grading is 100% complete - verify all sections are populated
-          const hasOverallScore = session.overall_score || session.analytics?.scores?.overall
-          const hasAnalytics = session.analytics && (
-            session.analytics.scores ||
-            session.analytics.feedback ||
-            session.analytics.session_summary ||
-            session.analytics.graded_at
-          )
+          // Check if basic grading is complete (Phase 1 + Phase 2)
+          // Don't wait for Phase 3 (Deep Analysis) - it runs in background
+          const hasOverallScore = session.overall_score !== null && session.overall_score !== undefined
+          const hasInstantMetrics = session.instant_metrics !== null && session.instant_metrics !== undefined
+          const hasKeyMoments = session.key_moments !== null && session.key_moments !== undefined
           
-          // Only redirect if grading is truly complete
-          const gradingComplete = Boolean(hasOverallScore && hasAnalytics)
+          // Phase 1 (Instant Metrics) sets overall_score and instant_metrics
+          // Phase 2 (Key Moments) sets key_moments
+          // Phase 3 (Deep Analysis) runs in background and adds detailed analytics later
+          const gradingComplete = Boolean(hasOverallScore && hasInstantMetrics)
           
           if (gradingComplete) {
             console.log('✅ Grading 100% complete! Redirecting to analytics...')

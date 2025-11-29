@@ -76,6 +76,11 @@ The grading process is split into 3 phases:
 **What happens in background:**
 - Phase 3 (Deep Analysis): ~5-15 seconds (user doesn't wait)
 
+**⚠️ FIXED: Loading page was incorrectly waiting for Phase 3**
+- **Before**: Loading page waited for `analytics.scores` or `analytics.feedback` (only set by Phase 3)
+- **After**: Loading page proceeds once `overall_score` and `instant_metrics` exist (set by Phase 1)
+- **Result**: Wait time reduced from ~67 seconds to ~3-7 seconds
+
 ---
 
 ## Detailed Breakdown by Operation
