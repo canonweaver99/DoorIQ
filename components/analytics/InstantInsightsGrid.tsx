@@ -19,6 +19,7 @@ interface InstantInsightsGridProps {
   userName?: string
   transcript?: Array<{ speaker: string; text: string }>
   voiceAnalysis?: {
+    avgWPM?: number
     wpmTimeline?: Array<{ time: number; value: number }>
     volumeTimeline?: Array<{ time: number; value: number }>
   }
@@ -154,7 +155,53 @@ function detectObjection(text: string): { type: string; text: string } | null {
 
 export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcript, voiceAnalysis }: InstantInsightsGridProps) {
   const metrics = instantMetrics || {}
-  const wpm = metrics.wordsPerMinute || 0
+  
+  // Calculate average WPM - prioritize voiceAnalysis.avgWPM, then calculate from transcript
+  let wpm = metrics.wordsPerMinute || 0
+  
+  // Use voiceAnalysis avgWPM if available
+  if (voiceAnalysis?.avgWPM) {
+    wpm = voiceAnalysis.avgWPM
+  } else if (transcript && Array.isArray(transcript) && transcript.length > 0) {
+    // Calculate average WPM from transcript
+    const userEntries = transcript.filter((entry: any) => 
+      entry.speaker === 'user' || entry.speaker === 'rep'
+    )
+    
+    if (userEntries.length > 0) {
+      // Count total words
+      const totalWords = userEntries.reduce((sum: number, entry: any) => {
+        const text = entry.text || ''
+        return sum + text.split(/\s+/).filter((w: string) => w.length > 0).length
+      }, 0)
+      
+      // Calculate duration from first to last entry
+      try {
+        const firstEntry = userEntries[0]
+        const lastEntry = userEntries[userEntries.length - 1]
+        
+        const firstTime = firstEntry.timestamp instanceof Date 
+          ? firstEntry.timestamp.getTime()
+          : typeof firstEntry.timestamp === 'string'
+            ? new Date(firstEntry.timestamp).getTime()
+            : Date.now()
+        
+        const lastTime = lastEntry.timestamp instanceof Date
+          ? lastEntry.timestamp.getTime()
+          : typeof lastEntry.timestamp === 'string'
+            ? new Date(lastEntry.timestamp).getTime()
+            : Date.now()
+        
+        const durationMs = lastTime - firstTime
+        const durationMinutes = Math.max(0.1, durationMs / 60000) // At least 0.1 minutes (6 seconds) to avoid division issues
+        wpm = Math.round(totalWords / durationMinutes)
+      } catch (e) {
+        // Fallback: estimate based on average speaking rate if timestamp parsing fails
+        console.warn('Failed to calculate WPM from transcript timestamps:', e)
+      }
+    }
+  }
+  
   const balance = metrics.conversationBalance || 0
   
   // Calculate objections from transcript if not in metrics

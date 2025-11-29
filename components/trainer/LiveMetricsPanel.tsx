@@ -1142,6 +1142,9 @@ function EnhancedTechniquesCard({ techniquesUsed, className }: EnhancedTechnique
 
 export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [] }: LiveMetricsPanelProps) {
   const { talkTimeRatio, wordsPerMinute, objectionCount, techniquesUsed, voiceMetrics } = metrics
+  
+  // Extract objections from transcript
+  const objections = extractObjectionsFromTranscript(transcript)
 
   // Determine talk time status
   const getTalkTimeStatus = () => {
@@ -1226,7 +1229,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
   const talkTimeColors = getTalkTimeColor()
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-2.5 h-full items-stretch" style={{ gridTemplateRows: '1.15fr 1fr' }}>
+    <div className="grid grid-cols-2 gap-2 sm:gap-2.5 h-full items-stretch">
       {/* Talk Time Card - With Dynamic Bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -1312,20 +1315,14 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
         </div>
       </motion.div>
       
-      {/* Energy Card - Replaces WPM Card */}
+      {/* Energy Card */}
       <EnergyCard energyScore={energyScore} />
       
-      {/* Energy Score Metrics Card - Shows WPM, Pitch Variation, Volume Level, and Speaking Ratio */}
-      <EnergyMetricsCard1 
-        energyScore={energyScore}
-        rawValues={{
-          wpm: wordsPerMinute,
-          pitchVariation: pitchVariation,
-          volumeLevel: volumeLevel,
-          speakingRatio: speakingRatio
-        }}
-        className="col-span-2"
-      />
+      {/* Objections Card */}
+      <EnhancedObjectionsCard objections={objections} />
+      
+      {/* Techniques Card */}
+      <EnhancedTechniquesCard techniquesUsed={techniquesUsed} />
     </div>
   )
 }

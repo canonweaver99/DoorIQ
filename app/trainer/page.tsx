@@ -15,6 +15,7 @@ import { useConversationEndDetection } from '@/hooks/useConversationEndDetection
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { cn } from '@/lib/utils'
 import { LiveMetricsPanel } from '@/components/trainer/LiveMetricsPanel'
 import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { LiveTranscript } from '@/components/trainer/LiveTranscript'
@@ -1795,8 +1796,12 @@ function TrainerPageContent() {
                   )}
                   
                   {/* PIP Webcam Overlay - Bottom Right (above controls) - Mobile optimized */}
+                  {/* Keep component rendered for ref access, but hide when camera is off */}
                   {sessionActive && (
-                    <div className="absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden">
+                    <div className={cn(
+                      "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
+                      isCameraOff && "hidden"
+                    )}>
                       <WebcamPIP ref={webcamPIPRef} />
                     </div>
                   )}
