@@ -1836,8 +1836,8 @@ function TrainerPageContent() {
             </div>
           </div>
 
-          {/* TOP RIGHT QUADRANT - Metrics Panel (Extended to bottom-right) */}
-          <div className="w-full h-full flex flex-col overflow-hidden lg:row-span-2">
+          {/* TOP RIGHT QUADRANT - Metrics Panel */}
+          <div className="w-full h-full flex flex-col overflow-hidden">
             <div className="h-full flex flex-col overflow-hidden">
               <LiveMetricsPanel 
                 metrics={metrics} 
@@ -1859,10 +1859,9 @@ function TrainerPageContent() {
           </div>
 
           {/* BOTTOM RIGHT QUADRANT - Feedback Feed */}
-          {/* Temporarily removed to make room for energy metric stats - Metrics panel now extends here */}
-          {/* <div className="w-full h-full flex flex-col overflow-hidden">
+          <div className="w-full h-full flex flex-col overflow-hidden">
             <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
-          </div> */}
+          </div>
         </div>
       </div>
 
