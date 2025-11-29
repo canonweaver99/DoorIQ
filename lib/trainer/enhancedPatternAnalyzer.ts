@@ -1194,7 +1194,7 @@ export function generateConciseFeedback(
         trust_references: 'Needs References'
       }
       
-      let message = `${typeMap[objectionType]} objection (${severityMap[severity]})`
+      let message = `${typeMap[objectionType]} objection`
       if (subCategory && subCategoryMap[subCategory]) {
         message += ` - ${subCategoryMap[subCategory]}`
       }
