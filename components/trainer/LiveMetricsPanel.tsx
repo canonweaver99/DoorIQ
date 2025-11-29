@@ -350,7 +350,7 @@ function calculateEnergyScore(
   wpm: number,
   pitchVariation: number,
   volumeLevel: number,  // Changed from volumeConsistency
-  speakingRatio: number = 50  // New parameter, default to 50 if not provided
+  speakingRatio: number = 0  // New parameter, default to 0 if not provided
 ): EnergyScore {
   // Ensure all values are valid numbers
   const safeWPM = isNaN(wpm) || wpm < 0 ? 0 : wpm

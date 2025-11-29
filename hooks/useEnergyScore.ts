@@ -195,13 +195,13 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
     onScoreUpdate
   } = options
 
-  const [energyScore, setEnergyScore] = useState<number>(50) // Start at neutral
+  const [energyScore, setEnergyScore] = useState<number>(0) // Start at 0%
   const [energyLevel, setEnergyLevel] = useState<'low' | 'good' | 'high'>('good')
   const [factors, setFactors] = useState<EnergyScoreFactors>({
-    volumeLevel: 50,
-    pitchVariation: 50,
-    speakingPace: 50,
-    speakingRatio: 50
+    volumeLevel: 0,
+    pitchVariation: 0,
+    speakingPace: 0,
+    speakingRatio: 0
   })
   const [isCalibrating, setIsCalibrating] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -235,7 +235,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
   const CALIBRATION_DURATION = 5000 // 5 seconds
 
   // Smoothing
-  const smoothedScoreRef = useRef<number>(50)
+  const smoothedScoreRef = useRef<number>(0) // Start at 0%
   const SMOOTHING_ALPHA = 0.7 // Exponential smoothing factor
 
   // Session tracking
@@ -612,7 +612,7 @@ export function useEnergyScore(options: UseEnergyScoreOptions = {}): UseEnergySc
       volumeHistoryRef.current = []
       pitchHistoryRef.current = []
       volumeSamplesRef.current = []
-      smoothedScoreRef.current = 50
+      smoothedScoreRef.current = 0 // Reset to 0%
       sessionStartTimeRef.current = sessionStartTime || Date.now()
       speakingFramesRef.current = 0
       totalFramesRef.current = 0
