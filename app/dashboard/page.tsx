@@ -26,7 +26,8 @@ import {
   Square,
   X,
   User,
-  BarChart3
+  BarChart3,
+  ChevronRight
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
@@ -35,10 +36,37 @@ import { useVoiceRecorder } from '@/hooks/useVoiceRecorder'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
+import dynamic from 'next/dynamic'
+import { getAgentImageStyle } from '@/lib/agents/imageStyles'
+import { format } from 'date-fns'
+
+// Dynamic import for CircularProgress
+const CircularProgress = dynamic(() => import('@/components/ui/CircularProgress'), { ssr: false })
 
 // Helper to get cutout bubble image (no background)
 const getAgentBubbleImage = (agentName: string | null): string => {
+  if (!agentName) return '/agents/default.png'
+  const agentNameTyped = agentName as AllowedAgentName
+  if (PERSONA_METADATA[agentNameTyped]?.bubble?.image) {
+    return PERSONA_METADATA[agentNameTyped].bubble.image
+  }
+  return '/agents/default.png'
+}
+
+// Helper to get agent color variant
+const getAgentColorVariant = (agentName: string | null): keyof typeof COLOR_VARIANTS => {
+  if (!agentName) return 'primary'
+  const agentNameTyped = agentName as AllowedAgentName
+  if (PERSONA_METADATA[agentNameTyped]?.bubble?.color) {
+    return PERSONA_METADATA[agentNameTyped].bubble.color as keyof typeof COLOR_VARIANTS
+  }
+  return 'primary'
+}
+
+// Get cutout bubble image (no background) - for consistency with practice page
+const getAgentImage = (agentName: string | null): string => {
   if (!agentName) return '/agents/default.png'
   const agentNameTyped = agentName as AllowedAgentName
   if (PERSONA_METADATA[agentNameTyped]?.bubble?.image) {
@@ -293,36 +321,7 @@ function DashboardPageContent() {
     ] : []),
   ]
 
-  const quickStats = [
-    { 
-      label: 'Sessions', 
-      value: realStats.totalSessions, 
-      icon: Target,
-      iconColor: '#3b82f6',
-      iconBgColor: 'rgba(59, 130, 246, 0.2)',
-      glowColor: 'rgba(59, 130, 246, 0.2)',
-      valueClass: 'text-[26px]'
-    },
-    // Only show Rank card for team plan users
-    ...(hasTeam ? [{
-      label: 'Rank', 
-      value: `#${realStats.teamRank}`, 
-      icon: Award,
-      iconColor: '#f59e0b',
-      iconBgColor: 'rgba(245, 158, 11, 0.2)',
-      glowColor: 'rgba(245, 158, 11, 0.2)',
-      valueClass: 'text-2xl'
-    }] : []),
-    { 
-      label: 'Earnings', 
-      value: `$${realStats.totalEarnings.toFixed(0)}`, 
-      icon: DollarSign,
-      iconColor: '#10b981',
-      iconBgColor: 'rgba(16, 185, 129, 0.2)',
-      glowColor: 'rgba(16, 185, 129, 0.2)',
-      valueClass: 'text-[26px]'
-    },
-  ] as const
+  // Removed quickStats cards as per requirements
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -363,34 +362,6 @@ function DashboardPageContent() {
               </div>
             </div>
 
-            {/* Right: Quick Stats Cards - Vibrant Icons */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
-              {quickStats.map((stat, idx) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: idx * 0.1 }}
-                  className="bg-black/70 backdrop-blur-sm border border-indigo-500/30 rounded-lg p-3 sm:p-4 hover:border-indigo-400/50 transition-colors"
-                  style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' }}
-                >
-                  <div className="flex items-center justify-between gap-2 sm:gap-4">
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <p className="text-[10px] sm:text-xs text-indigo-300/80 truncate font-space uppercase tracking-wide">{stat.label}</p>
-                      <p className={`text-lg sm:text-xl lg:${stat.valueClass} font-bold text-white leading-tight truncate font-space tabular-nums`}>{stat.value}</p>
-                    </div>
-                    <div 
-                      className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-full shrink-0"
-                      style={{ 
-                        backgroundColor: stat.iconBgColor
-                      }}
-                    >
-                      <stat.icon className="w-[14px] h-[14px] sm:w-[18px] sm:h-[18px]" style={{ color: stat.iconColor }} />
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
           </div>
         </motion.div>
 
@@ -422,6 +393,35 @@ function DashboardPageContent() {
   )
 }
 
+// Helper function to get key insights from session
+const getKeyInsights = (session: any) => {
+  const insights = []
+  
+  // Check for low scores
+  if (session.rapport_score && session.rapport_score < 70) {
+    insights.push({ type: 'warning', text: 'Work on building rapport early in the conversation' })
+  }
+  if (session.objection_handling_score && session.objection_handling_score < 70) {
+    insights.push({ type: 'warning', text: 'Practice handling common objections more confidently' })
+  }
+  const closing = session.close_effectiveness_score ?? session.close_score ?? null
+  if (closing && closing < 70) {
+    insights.push({ type: 'warning', text: 'Focus on closing techniques and asking for the sale' })
+  }
+  
+  // Check for high scores
+  const safety = session.safety_score ?? null
+  if (safety && safety >= 80) {
+    insights.push({ type: 'success', text: 'Great job addressing safety concerns!' })
+  }
+  if (session.overall_score && session.overall_score >= 80) {
+    insights.push({ type: 'success', text: 'Excellent overall performance!' })
+  }
+  
+  // Return only the first insight
+  return insights.slice(0, 1)
+}
+
 // Overview Tab Component (Merged with Performance)
 function OverviewTabContent() {
   const [chartTimeRange, setChartTimeRange] = useState<'day' | 'week' | 'month'>('week')
@@ -430,6 +430,7 @@ function OverviewTabContent() {
   const [hoveredEarnings, setHoveredEarnings] = useState<{ day: string; value: number; } | null>(null)
   const [recentSessions, setRecentSessions] = useState<any[]>([])
   const [userProfile, setUserProfile] = useState<{ full_name: string; email: string; avatar_url?: string; rep_id?: string; created_at?: string; role?: string } | null>(null)
+  const [circleSize, setCircleSize] = useState(96)
   const [skillStats, setSkillStats] = useState<{
     overall: { current: number; previous: number }
     rapport: { current: number; previous: number }
@@ -528,6 +529,16 @@ function OverviewTabContent() {
   const earningsRef = useRef<HTMLDivElement>(null)
   const isChartInView = useInView(chartRef, { once: true, amount: 0.3 })
   const isEarningsInView = useInView(earningsRef, { once: true, amount: 0.3 })
+  
+  // Set circle size based on screen width
+  useEffect(() => {
+    const handleResize = () => {
+      setCircleSize(window.innerWidth >= 1024 ? 96 : 80)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
   
   // Fetch real data on mount
   useEffect(() => {
@@ -1337,7 +1348,13 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.overall?.current ?? 0}%</div>
+          <div className="flex items-center justify-center mb-2">
+            <CircularProgress 
+              percentage={skillStats?.overall?.current ?? 0}
+              size={80}
+              strokeWidth={6}
+            />
+          </div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1369,7 +1386,13 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.rapport?.current ?? 0}%</div>
+          <div className="flex items-center justify-center mb-2">
+            <CircularProgress 
+              percentage={skillStats?.rapport?.current ?? 0}
+              size={80}
+              strokeWidth={6}
+            />
+          </div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1401,7 +1424,13 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.discovery?.current ?? 0}%</div>
+          <div className="flex items-center justify-center mb-2">
+            <CircularProgress 
+              percentage={skillStats?.discovery?.current ?? 0}
+              size={80}
+              strokeWidth={6}
+            />
+          </div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1433,7 +1462,13 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.objection?.current ?? 0}%</div>
+          <div className="flex items-center justify-center mb-2">
+            <CircularProgress 
+              percentage={skillStats?.objection?.current ?? 0}
+              size={80}
+              strokeWidth={6}
+            />
+          </div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1465,7 +1500,13 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.closing?.current ?? 0}%</div>
+          <div className="flex items-center justify-center mb-2">
+            <CircularProgress 
+              percentage={skillStats?.closing?.current ?? 0}
+              size={80}
+              strokeWidth={6}
+            />
+          </div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1501,9 +1542,13 @@ function OverviewTabContent() {
             className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
           >
             <Target className="w-8 h-8 text-purple-400 mb-3" />
-            <p className={`text-2xl font-bold ${getScoreColor(summaryStats.averageScore || 0)}`}>
-              {summaryStats.averageScore || 0}%
-            </p>
+            <div className="flex items-center justify-center mb-2">
+              <CircularProgress 
+                percentage={summaryStats.averageScore || 0}
+                size={70}
+                strokeWidth={6}
+              />
+            </div>
             <p className="text-sm text-slate-400">Average Score</p>
           </motion.div>
 
@@ -1514,9 +1559,13 @@ function OverviewTabContent() {
             className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
           >
             <Award className="w-8 h-8 text-yellow-400 mb-3" />
-            <p className={`text-2xl font-bold ${getScoreColor(summaryStats.bestScore || 0)}`}>
-              {summaryStats.bestScore || 0}%
-            </p>
+            <div className="flex items-center justify-center mb-2">
+              <CircularProgress 
+                percentage={summaryStats.bestScore || 0}
+                size={70}
+                strokeWidth={6}
+              />
+            </div>
             <p className="text-sm text-slate-400">Best Score</p>
           </motion.div>
 
@@ -1538,9 +1587,13 @@ function OverviewTabContent() {
             className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
           >
             <Target className="w-8 h-8 text-emerald-400 mb-3" />
-            <p className={`text-2xl font-bold ${getScoreColor(summaryStats.closePercentage || 0)}`}>
-              {summaryStats.closePercentage || 0}%
-            </p>
+            <div className="flex items-center justify-center mb-2">
+              <CircularProgress 
+                percentage={summaryStats.closePercentage || 0}
+                size={70}
+                strokeWidth={6}
+              />
+            </div>
             <p className="text-sm text-slate-400">Close %</p>
           </motion.div>
         </div>
@@ -2150,47 +2203,129 @@ function OverviewTabContent() {
         </div>
         
         {allSessionsForList.length > 0 ? (
-          <div className="space-y-3">
-            {allSessionsForList.slice(0, 10).map((session: any, index: number) => (
-              <Link
-                key={session.id}
-                href={`/analytics/${session.id}`}
-                className="block p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
-                      {index + 1}
+          <div className="space-y-2 lg:space-y-3">
+            {allSessionsForList.slice(0, 10).map((session: any) => {
+              const insights = getKeyInsights(session)
+              
+              return (
+                <div
+                  key={session.id}
+                  className="bg-card/60 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-border/20 dark:border-slate-700 hover:border-border/40 dark:hover:border-slate-600 transition-colors shadow-xl"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="flex-1 flex items-start gap-2 lg:gap-3 min-w-0">
+                      {/* Agent Avatar with Gradient Rings */}
+                      <div 
+                        className="relative flex-shrink-0"
+                        style={{ width: `${circleSize}px`, height: `${circleSize}px`, minWidth: `${circleSize}px` }}
+                      >
+                        {(() => {
+                          const colorVariant = getAgentColorVariant(session.agent_name)
+                          const variantStyles = COLOR_VARIANTS[colorVariant]
+                          return (
+                            <>
+                              {/* Animated gradient rings */}
+                              {[0, 1, 2].map((i) => (
+                                <div
+                                  key={i}
+                                  className={`absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent ${variantStyles.border[i]} ${variantStyles.gradient}`}
+                                  style={{
+                                    animation: `spin 8s linear infinite`,
+                                    opacity: 0.6 - (i * 0.15)
+                                  }}
+                                >
+                                  <div
+                                    className={`absolute inset-0 rounded-full mix-blend-screen bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace('from-', '')}/20%,transparent_70%)]`}
+                                  />
+                                </div>
+                              ))}
+                              {/* Profile Image */}
+                              <div className="absolute inset-[2px] rounded-full overflow-hidden">
+                                <Image
+                                  src={getAgentImage(session.agent_name)}
+                                  alt={session.agent_name || 'Agent'}
+                                  fill
+                                  className="object-cover"
+                                  style={getAgentImageStyle(session.agent_name)}
+                                  sizes={`${circleSize}px`}
+                                  loading="lazy"
+                                />
+                              </div>
+                            </>
+                          )
+                        })()}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground dark:text-white mb-1 lg:mb-1.5 truncate font-space">
+                          {session.agent_name || 'Training Session'}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-sm sm:text-base text-foreground/60 dark:text-slate-400 font-sans">
+                          <span className="flex items-center flex-shrink-0">
+                            <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                            <span className="whitespace-nowrap">{format(new Date(session.created_at), 'MMM d, yyyy')}</span>
+                          </span>
+                          <span className="flex items-center flex-shrink-0">
+                            <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                            <span className="whitespace-nowrap">{session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}</span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white group-hover:text-purple-300 transition-colors">
-                        {session.agent_name || `Session ${index + 1}`}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(session.created_at).toLocaleDateString()} • {formatDuration(session.duration_seconds || 0)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className={`text-lg font-bold ${getScoreColor(session.overall_score || 0)}`}>
-                        {session.overall_score || 0}%
-                      </p>
-                      {session.sale_closed && (
-                        <p className="text-xs text-green-400">✓ Sale Closed</p>
-                      )}
-                    </div>
-                    {session.virtual_earnings && session.virtual_earnings > 0 && (
+                    
+                    <div className="mt-0 flex items-center gap-2 sm:gap-3 lg:gap-3.5 xl:gap-4 flex-shrink-0">
+                      {/* Earnings - Always Show */}
                       <div className="text-right">
-                        <p className="text-sm font-bold text-green-400">
-                          +${session.virtual_earnings.toFixed(2)}
+                        <p className="text-xs sm:text-sm text-foreground/60 dark:text-slate-400 mb-0.5 lg:mb-1 font-space">Earned</p>
+                        <p className={`text-xl sm:text-2xl lg:text-3xl font-bold font-space ${
+                          session.virtual_earnings && session.virtual_earnings > 0 
+                            ? 'text-emerald-500 dark:text-emerald-400' 
+                            : 'text-foreground/50 dark:text-slate-500'
+                        }`}>
+                          ${session.virtual_earnings ? session.virtual_earnings.toFixed(2) : '0.00'}
                         </p>
                       </div>
-                    )}
+                      
+                      {/* Overall Score - Responsive Circular Progress */}
+                      <div className="text-right">
+                        <CircularProgress 
+                          percentage={session.overall_score || 0}
+                          size={circleSize}
+                          strokeWidth={6}
+                        />
+                      </div>
+                      
+                      <Link
+                        href={`/analytics/${session.id}`}
+                        className="inline-flex items-center px-2.5 lg:px-3 py-1.5 lg:py-1.5 text-sm sm:text-base bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-500 dark:text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-indigo-600/30 transition-all border border-purple-500/20 font-space font-semibold"
+                      >
+                        View Details
+                        <ChevronRight className="ml-1 lg:ml-1 w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                      </Link>
+                    </div>
                   </div>
+                  
+                  {/* Key Insights - Larger and more readable */}
+                  {insights.length > 0 && (
+                    <div className="pt-2.5 lg:pt-3 mt-2.5 lg:mt-3 border-t border-border/20 dark:border-slate-700/50">
+                      <div className="space-y-0.5 lg:space-y-1">
+                        {insights.map((insight, idx) => (
+                          <div
+                            key={idx}
+                            className={`flex items-start space-x-2 lg:space-x-2.5 text-base sm:text-lg font-semibold font-space ${
+                              insight.type === 'success' ? 'text-green-500 dark:text-green-400' : 'text-amber-500 dark:text-yellow-400'
+                            }`}
+                          >
+                            <AlertCircle className="w-4 h-4 lg:w-5 lg:h-5 mt-0.5 flex-shrink-0" />
+                            <span className="leading-snug">{insight.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </Link>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div className="text-center py-12">

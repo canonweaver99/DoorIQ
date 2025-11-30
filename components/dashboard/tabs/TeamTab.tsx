@@ -1,10 +1,11 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Trophy, Crown, Medal, TrendingUp, TrendingDown, Users, Award, Target } from 'lucide-react'
+import { Trophy, Crown, Medal, TrendingUp, TrendingDown, Users, Award, Target, ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { LeaderboardEntry } from './types'
+import Link from 'next/link'
 
 interface TeamTabProps {
   leaderboard: LeaderboardEntry[]
@@ -202,14 +203,23 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
         transition={{ duration: 0.4, delay: 0.3 }}
         className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
-            <Trophy className="w-5 h-5 text-purple-400" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
+              <Trophy className="w-5 h-5 text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">Full Team Leaderboard</h3>
+              <p className="text-xs text-slate-400">This week's rankings</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">Full Team Leaderboard</h3>
-            <p className="text-xs text-slate-400">This week's rankings</p>
-          </div>
+          <Link
+            href="/leaderboard"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-indigo-600/30 transition-all border border-purple-500/20 font-semibold text-sm"
+          >
+            View Full Leaderboard
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
         <div className="space-y-3">
