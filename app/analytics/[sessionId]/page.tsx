@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
@@ -263,6 +263,7 @@ function generateVoiceTip(focusArea: ReturnType<typeof generateFocusArea>, phase
 
 export default function AnalyticsPage() {
   const params = useParams()
+  const router = useRouter()
   const sessionId = params.sessionId as string
   
   const [session, setSession] = useState<SessionData | null>(null)
@@ -279,12 +280,18 @@ export default function AnalyticsPage() {
     conversationFlow: false
   })
   
-  // Fetch user name and check for free demo redirect
+  // Fetch user name and check authentication
   useEffect(() => {
     const fetchUserName = async () => {
       try {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
+        
+        // Require authentication - redirect unsigned users
+        if (!user) {
+          router.push('/auth/login?redirect=/analytics/' + sessionId)
+          return
+        }
         
         // Check for anonymous free demo redirect (localStorage)
         const usedFreeDemo = localStorage.getItem('used_free_demo') === 'true'

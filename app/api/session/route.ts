@@ -419,12 +419,35 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
     }
     
-    const supabase = await createServiceSupabaseClient()
-    const { data, error } = await (supabase as any)
+    // Check authentication - require signed-in user
+    const supabase = await createServerSupabaseClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    
+    // Check if user is admin (admins can view any session)
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    
+    const isAdmin = userData?.role === 'admin'
+    
+    const serviceSupabase = await createServiceSupabaseClient()
+    let query = (serviceSupabase as any)
       .from('live_sessions')
       .select('*')
       .eq('id', id)
-      .single()
+    
+    // If not admin, only allow access to own sessions
+    if (!isAdmin) {
+      query = query.eq('user_id', user.id)
+    }
+    
+    const { data, error } = await query.single()
     
     if (error || !data) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
@@ -433,6 +456,8 @@ export async function GET(req: Request) {
     // Debug logging for voice_analysis
     console.log('🔍 GET: Session data retrieved', {
       sessionId: id,
+      userId: user.id,
+      isAdmin,
       hasAnalytics: !!data.analytics,
       analyticsType: typeof data.analytics,
       analyticsKeys: data.analytics ? Object.keys(data.analytics) : [],
