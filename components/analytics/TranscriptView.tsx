@@ -31,9 +31,19 @@ interface LineRating {
 interface TranscriptViewProps {
   transcript: TranscriptLine[]
   lineRatings: LineRating[]
+  agentName?: string // Agent name for formatting Tag Team transcripts
 }
 
-export default function TranscriptView({ transcript, lineRatings }: TranscriptViewProps) {
+// Helper function to format Tag Team Tanya & Tom transcript
+function formatTagTeamTranscript(text: string): string {
+  // Replace <Tanya>text</Tanya> with Tanya: text
+  text = text.replace(/<Tanya>(.*?)<\/Tanya>/gi, 'Tanya: $1')
+  // Replace <Tom>text</Tom> with Tom: text
+  text = text.replace(/<Tom>(.*?)<\/Tom>/gi, 'Tom: $1')
+  return text
+}
+
+export default function TranscriptView({ transcript, lineRatings, agentName }: TranscriptViewProps) {
   const ratingsMap = new Map(lineRatings.map(r => [r.line_number, r]))
 
   const getLineEffectiveness = (lineIndex: number, speaker: string): LineRating | null => {
@@ -42,7 +52,12 @@ export default function TranscriptView({ transcript, lineRatings }: TranscriptVi
   }
 
   const getLineText = (line: TranscriptLine): string => {
-    return line.text || line.message || ''
+    const text = line.text || line.message || ''
+    // Format for Tag Team Tanya & Tom if speaker is not rep/user
+    if (agentName === 'Tag Team Tanya & Tom' && line.speaker !== 'rep' && line.speaker !== 'user') {
+      return formatTagTeamTranscript(text)
+    }
+    return text
   }
 
   const getSpeakerLabel = (speaker: string) => {

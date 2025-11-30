@@ -365,6 +365,7 @@ export default function LegacyAnalyticsPage() {
           duration={session.duration_seconds || 600}
           wordCount={session.full_transcript?.reduce((sum, line) => sum + (line.text || line.message || '').split(' ').length, 0)}
           sessionId={sessionId as string}
+          agentName={session.agent_name || undefined}
         />
       )
     }

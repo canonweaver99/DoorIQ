@@ -33,9 +33,10 @@ interface TranscriptViewV2Props {
   duration?: number
   wordCount?: number
   sessionId?: string // For polling updates
+  agentName?: string // Agent name for formatting Tag Team transcripts
 }
 
-export default function TranscriptViewV2({ transcript, lineRatings, duration = 600, wordCount, sessionId }: TranscriptViewV2Props) {
+export default function TranscriptViewV2({ transcript, lineRatings, duration = 600, wordCount, sessionId, agentName }: TranscriptViewV2Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedFeedback, setExpandedFeedback] = useState<Set<number>>(new Set())
   const [copiedLine, setCopiedLine] = useState<number | null>(null)
@@ -166,8 +167,22 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
     setTimeout(() => setCopiedLine(null), 2000)
   }
 
-  const getLineText = (line: TranscriptLine): string => {
-    return line.text || line.message || ''
+  // Helper function to format Tag Team Tanya & Tom transcript
+  const formatTagTeamTranscript = (text: string): string => {
+    // Replace <Tanya>text</Tanya> with Tanya: text
+    text = text.replace(/<Tanya>(.*?)<\/Tanya>/gi, 'Tanya: $1')
+    // Replace <Tom>text</Tom> with Tom: text
+    text = text.replace(/<Tom>(.*?)<\/Tom>/gi, 'Tom: $1')
+    return text
+  }
+
+  const getLineText = (line: TranscriptLine, agentName?: string): string => {
+    const text = line.text || line.message || ''
+    // Format for Tag Team Tanya & Tom if speaker is not rep/user
+    if (agentName === 'Tag Team Tanya & Tom' && line.speaker !== 'rep' && line.speaker !== 'user') {
+      return formatTagTeamTranscript(text)
+    }
+    return text
   }
 
   const getSpeaker = (speaker: string) => {
@@ -178,7 +193,7 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
   // Filter transcript by search
   const filteredTranscript = searchTerm
     ? transcript.filter((line, i) => 
-        getLineText(line).toLowerCase().includes(searchTerm.toLowerCase())
+        getLineText(line, agentName).toLowerCase().includes(searchTerm.toLowerCase())
       )
     : transcript
 
@@ -220,7 +235,7 @@ export default function TranscriptViewV2({ transcript, lineRatings, duration = 6
       <div className="rounded-3xl bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-6">
         <div className="space-y-2 max-w-4xl mx-auto">
           {filteredTranscript.map((line, index) => {
-            const text = getLineText(line)
+            const text = getLineText(line, agentName)
             const rating = ratingsMap.get(index) || textMap.get(text.slice(0, 200))
             const isRep = getSpeaker(line.speaker) === 'rep'
             const showFeedback = expandedFeedback.has(index)

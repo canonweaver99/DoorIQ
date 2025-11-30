@@ -15,6 +15,15 @@ interface LiveTranscriptProps {
   sessionActive?: boolean
 }
 
+// Helper function to format Tag Team Tanya & Tom transcript
+function formatTagTeamTranscript(text: string): string {
+  // Replace <Tanya>text</Tanya> with Tanya: text
+  text = text.replace(/<Tanya>(.*?)<\/Tanya>/gi, 'Tanya: $1')
+  // Replace <Tom>text</Tom> with Tom: text
+  text = text.replace(/<Tom>(.*?)<\/Tom>/gi, 'Tom: $1')
+  return text
+}
+
 function TranscriptMessage({ 
   entry, 
   agentName, 
@@ -30,6 +39,11 @@ function TranscriptMessage({
 }) {
   const [copied, setCopied] = useState(false)
   const isUser = entry.speaker === 'user'
+  
+  // Format text for Tag Team Tanya & Tom
+  const displayText = agentName === 'Tag Team Tanya & Tom' && !isUser
+    ? formatTagTeamTranscript(entry.text)
+    : entry.text
 
   const handleCopy = async () => {
     try {
@@ -113,7 +127,7 @@ function TranscriptMessage({
           </button>
         </div>
         <p className="text-sm sm:text-base text-white leading-relaxed break-words font-space font-medium">
-          {entry.text}
+          {displayText}
         </p>
       </div>
     </motion.div>
