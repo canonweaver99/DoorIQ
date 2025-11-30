@@ -183,6 +183,8 @@ export default function Home() {
         }}
         ctaSecondaryText="Book a Demo"
         onCtaSecondaryClick={() => setIsCalendarModalOpen(true)}
+        ctaTertiaryText="Try For Free"
+        ctaTertiaryHref="/trainer/select-homeowner"
         bottomImage={undefined}
         gridOptions={{
           angle: 65,

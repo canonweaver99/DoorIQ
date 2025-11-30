@@ -359,7 +359,8 @@ function HeaderContent() {
     const navItems = [
       { name: 'Home', href: '/', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
-      { name: 'Sessions', href: '/sessions', icon: FileText },
+      // Sessions only shows for signed-in users
+      ...(isSignedIn ? [{ name: 'Sessions', href: '/sessions', icon: FileText }] : []),
       // Dashboard shows for reps and admins (admins can view their own dashboard)
       ...(userRole === 'rep' || userRole === 'admin' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
       ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),
@@ -398,7 +399,7 @@ function HeaderContent() {
     }
 
     return navItems
-  }, [userRole, user?.team_id, hasLearningPageAccess, hasActiveSubscription])
+  }, [userRole, user?.team_id, hasLearningPageAccess, hasActiveSubscription, isSignedIn])
 
   const isManagerLike = userRole === 'manager' || userRole === 'admin'
 
@@ -425,8 +426,8 @@ function HeaderContent() {
         title: 'Training',
         items: [
           { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award },
-          { name: 'Upload Sales Call', href: '/dashboard?tab=upload', icon: Upload, desktopOnly: true },
-          { name: 'Session History', href: '/sessions', icon: ClipboardList },
+          ...(isSignedIn ? [{ name: 'Upload Sales Call', href: '/dashboard?tab=upload', icon: Upload, desktopOnly: true }] : []),
+          ...(isSignedIn ? [{ name: 'Session History', href: '/sessions', icon: ClipboardList }] : []),
           ...(user?.team_id ? [{ name: 'Leaderboard', href: '/leaderboard', icon: BarChart2, desktopOnly: true }] : []),
         ],
       },
@@ -444,13 +445,23 @@ function HeaderContent() {
     // AI Insights removed per user request
 
     return sections
-  }, [isManagerLike, hasActiveSubscription, user?.team_id, (user as any)?.subscription_plan, hasLearningPageAccess])
+  }, [isManagerLike, hasActiveSubscription, user?.team_id, (user as any)?.subscription_plan, hasLearningPageAccess, isSignedIn])
 
-  const quickActions = useMemo(() => [
-    { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
-    { label: 'Review Sessions', href: '/sessions', icon: ClipboardList },
-    { label: 'Invite a Sales Rep', href: '/settings/organization', icon: Users },
-  ], [])
+  const quickActions = useMemo(() => {
+    const actions = [
+      { label: 'Start Training', href: '/trainer/select-homeowner', icon: Mic },
+    ]
+    
+    // Only show session-related actions for signed-in users
+    if (isSignedIn) {
+      actions.push(
+        { label: 'Review Sessions', href: '/sessions', icon: ClipboardList },
+        { label: 'Invite a Sales Rep', href: '/settings/organization', icon: Users }
+      )
+    }
+    
+    return actions
+  }, [isSignedIn])
 
   const profileNavigation = useMemo(() => {
     const subscriptionPlan = (user as any)?.subscription_plan

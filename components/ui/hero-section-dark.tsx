@@ -30,6 +30,9 @@ interface HeroSectionProps extends React.HTMLAttributes<HTMLDivElement> {
   ctaSecondaryText?: string
   ctaSecondaryHref?: string
   onCtaSecondaryClick?: () => void
+  ctaTertiaryText?: string
+  ctaTertiaryHref?: string
+  onCtaTertiaryClick?: () => void
   bottomImage?: {
     light: string
     dark: string
@@ -297,6 +300,9 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
       ctaSecondaryText,
       ctaSecondaryHref,
       onCtaSecondaryClick,
+      ctaTertiaryText,
+      ctaTertiaryHref,
+      onCtaTertiaryClick,
       bottomImage,
       gridOptions,
       ...props
@@ -412,58 +418,106 @@ const HeroSection = React.forwardRef<HTMLDivElement, HeroSectionProps>(
                     </motion.button>
                   ))}
                 </motion.div> */}
-                {/* Book a Demo Button - At Bottom */}
-                {ctaSecondaryText && (
+                {/* CTA Buttons - At Bottom */}
+                {(ctaSecondaryText || ctaTertiaryText) && (
                   <motion.div 
-                    className="flex items-center justify-center pt-3 sm:pt-4 lg:pt-4"
+                    className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 pt-3 sm:pt-4 lg:pt-4"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.0, duration: 0.6 }}
                   >
-                    <motion.span 
-                      className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
-                      whileHover={{ y: -3 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-                      <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
-                        {onCtaSecondaryClick ? (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault()
-                              if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-                                try {
-                                  navigator.vibrate(10)
-                                } catch {}
-                              }
-                              onCtaSecondaryClick()
-                            }}
-                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
-                          >
-                            {ctaSecondaryText}
-                          </button>
-                        ) : (
-                          <a
-                            href={ctaSecondaryHref}
-                            onClick={(e) => {
-                              if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-                                try {
-                                  navigator.vibrate(10)
-                                } catch {}
-                              }
-                              if (ctaSecondaryHref?.startsWith('#')) {
+                    {ctaSecondaryText && (
+                      <motion.span 
+                        className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
+                        whileHover={{ y: -3 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                        <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
+                          {onCtaSecondaryClick ? (
+                            <button
+                              onClick={(e) => {
                                 e.preventDefault()
-                                const element = document.querySelector(ctaSecondaryHref)
-                                element?.scrollIntoView({ behavior: 'smooth' })
-                              }
-                            }}
-                            className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
-                          >
-                            {ctaSecondaryText}
-                          </a>
-                        )}
-                      </div>
-                    </motion.span>
+                                if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+                                  try {
+                                    navigator.vibrate(10)
+                                  } catch {}
+                                }
+                                onCtaSecondaryClick()
+                              }}
+                              className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+                            >
+                              {ctaSecondaryText}
+                            </button>
+                          ) : (
+                            <a
+                              href={ctaSecondaryHref}
+                              onClick={(e) => {
+                                if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+                                  try {
+                                    navigator.vibrate(10)
+                                  } catch {}
+                                }
+                                if (ctaSecondaryHref?.startsWith('#')) {
+                                  e.preventDefault()
+                                  const element = document.querySelector(ctaSecondaryHref)
+                                  element?.scrollIntoView({ behavior: 'smooth' })
+                                }
+                              }}
+                              className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+                            >
+                              {ctaSecondaryText}
+                            </a>
+                          )}
+                        </div>
+                      </motion.span>
+                    )}
+                    {ctaTertiaryText && (
+                      <motion.span 
+                        className="relative inline-block overflow-hidden rounded-full p-[1.5px]"
+                        whileHover={{ y: -3 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+                        <div className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-950 text-xs font-medium backdrop-blur-3xl">
+                          {onCtaTertiaryClick ? (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+                                  try {
+                                    navigator.vibrate(10)
+                                  } catch {}
+                                }
+                                onCtaTertiaryClick()
+                              }}
+                              className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+                            >
+                              {ctaTertiaryText}
+                            </button>
+                          ) : (
+                            <a
+                              href={ctaTertiaryHref}
+                              onClick={(e) => {
+                                if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+                                  try {
+                                    navigator.vibrate(10)
+                                  } catch {}
+                                }
+                                if (ctaTertiaryHref?.startsWith('#')) {
+                                  e.preventDefault()
+                                  const element = document.querySelector(ctaTertiaryHref)
+                                  element?.scrollIntoView({ behavior: 'smooth' })
+                                }
+                              }}
+                              className="inline-flex rounded-full text-center group items-center justify-center bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-transparent dark:from-indigo-500/15 dark:via-purple-500/15 text-white border-indigo-500/30 border-[1px] hover:bg-gradient-to-tr hover:from-indigo-500/30 hover:via-purple-500/30 hover:to-transparent dark:hover:from-indigo-500/25 dark:hover:via-purple-500/25 transition-all py-3.5 px-8 text-base sm:text-lg font-semibold"
+                            >
+                              {ctaTertiaryText}
+                            </a>
+                          )}
+                        </div>
+                      </motion.span>
+                    )}
                   </motion.div>
                 )}
               </motion.div>
