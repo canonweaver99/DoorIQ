@@ -92,19 +92,83 @@ async function performDeepAnalysis(data: {
   // Limit key moments to top 2 for faster processing
   const topKeyMoments = keyMoments.slice(0, 2)
   
-  const prompt = `Sales coach. Return JSON.
+  // Format transcript excerpt for analysis (last 30 lines for context)
+  const transcriptExcerpt = transcript.slice(-30).map((entry: any) => {
+    const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'rep' : 'customer'
+    const text = entry.text || entry.message || ''
+    return `${speaker}: ${text}`
+  }).join('\n')
+  
+  const prompt = `Sales coach analyzing door-to-door sales conversation. Return JSON.
 
-Avg: ${userHistory?.averageScore || 'N/A'}, Score: ${instantMetrics?.estimatedScore || 'N/A'}, ${topKeyMoments.length} moments
+Context:
+- User avg score: ${userHistory?.averageScore || 'N/A'}
+- Instant estimated score: ${instantMetrics?.estimatedScore || 'N/A'}
+- Key moments: ${topKeyMoments.length}
+- WPM: ${instantMetrics?.wordsPerMinute || 'N/A'}
+- Talk ratio: ${instantMetrics?.conversationBalance || 'N/A'}%
+- Objections faced: ${instantMetrics?.objectionCount || 0}
+- Close attempts: ${instantMetrics?.closeAttempts || 0}
+- Duration: ${Math.round(durationSeconds / 60)} minutes
 
+Key moments:
 ${topKeyMoments.map((m, i) => `${i + 1}. ${m.type}: "${m.transcript.slice(0, 60)}"`).join('\n')}
 
-WPM: ${instantMetrics?.wordsPerMinute || 'N/A'}, Balance: ${instantMetrics?.conversationBalance || 'N/A'}%, Obj: ${instantMetrics?.objectionCount || 0}, Closes: ${instantMetrics?.closeAttempts || 0}
+Recent conversation excerpt:
+${transcriptExcerpt}
 
+SCORING RULES:
+- If sale_closed=true AND objections were handled well: overall score should be 90+
+- If sale_closed=true: closing score should be 90+, objectionHandling should reflect how well objections were addressed
+- If objections were handled effectively: objectionHandling should be 85+
+- Overall score = average of rapport, discovery, objectionHandling, closing (weighted equally)
+
+SALE DETECTION:
+- sale_closed=true ONLY if customer committed to PAID service (not just appointment)
+- Look for: payment agreement, contract signing, "I'll take it", "let's do it", commitment to start service
+- return_appointment=true if scheduled follow-up but no sale
+
+EARNINGS CALCULATION (if sale_closed=true):
+- Extract deal value from conversation (price mentioned × contract length)
+- Commission: 30% of total contract value
+- Bonuses: quick_close ($25 if <15min), upsell ($50), retention ($30), same_day_start ($20), referral ($25), perfect_pitch ($50 if overall>=90)
+- total_earned = commission + bonuses
+
+Return JSON:
 {
   "overallAssessment": "1 sentence comparison",
   "topStrengths": ["s1", "s2"],
   "topImprovements": ["i1", "i2"],
   "finalScores": {"overall": n, "rapport": n, "discovery": n, "objectionHandling": n, "closing": n, "safety": n},
+  "sale_closed": bool,
+  "return_appointment": bool,
+  "virtual_earnings": number,
+  "earnings_data": {
+    "base_amount": number,
+    "closed_amount": number,
+    "commission_rate": 0.30,
+    "commission_earned": number,
+    "bonus_modifiers": {
+      "quick_close": number,
+      "upsell": number,
+      "retention": number,
+      "same_day_start": number,
+      "referral_secured": number,
+      "perfect_pitch": number
+    },
+    "total_earned": number
+  },
+  "deal_details": {
+    "product_sold": string,
+    "service_type": string,
+    "base_price": number,
+    "monthly_value": number,
+    "contract_length": number,
+    "total_contract_value": number,
+    "payment_method": string,
+    "add_ons": [],
+    "start_date": string
+  },
   "coachingPlan": {"immediateFixes": [{"issue": "i", "practiceScenario": "s"}], "rolePlayScenarios": [{"scenario": "s", "focus": "f"}]},
   "feedback": {"strengths": ["s1"], "improvements": ["i1"], "specific_tips": ["t1"]}
 }`
@@ -141,6 +205,11 @@ WPM: ${instantMetrics?.wordsPerMinute || 'N/A'}, Balance: ${instantMetrics?.conv
       topStrengths: parsed.topStrengths || [],
       topImprovements: parsed.topImprovements || [],
       finalScores: parsed.finalScores || {},
+      saleClosed: parsed.sale_closed || false,
+      returnAppointment: parsed.return_appointment || false,
+      virtualEarnings: parsed.virtual_earnings || 0,
+      earningsData: parsed.earnings_data || {},
+      dealDetails: parsed.deal_details || {},
       coachingPlan,
       feedback: parsed.feedback || {
         strengths: parsed.topStrengths || [],
@@ -323,12 +392,23 @@ export async function POST(req: NextRequest) {
     
     // Step 7: Update with complete analysis
     // Build update object step by step to avoid issues
+    const saleClosed = deepAnalysis.saleClosed || false
+    const returnAppointment = deepAnalysis.returnAppointment || false
+    const virtualEarnings = saleClosed ? (deepAnalysis.virtualEarnings || 0) : 0
+    const earningsData = deepAnalysis.earningsData || {}
+    const dealDetails = deepAnalysis.dealDetails || {}
+    
     const updateData: any = {
       overall_score: finalScores.overall,
       rapport_score: Math.round(finalScores.rapport),
       discovery_score: Math.round(finalScores.discovery),
       objection_handling_score: Math.round(finalScores.objectionHandling),
       close_score: Math.round(finalScores.closing),
+      sale_closed: saleClosed,
+      return_appointment: returnAppointment,
+      virtual_earnings: virtualEarnings,
+      earnings_data: earningsData,
+      deal_details: dealDetails,
       grading_status: 'complete',
       grading_version: '2.0'
     }
@@ -351,6 +431,8 @@ export async function POST(req: NextRequest) {
       comparative_performance: comparativePerformance,
       improvement_trends: improvementTrends,
       final_scores: finalScores,
+      earnings_data: earningsData,
+      deal_details: dealDetails,
       grading_version: '2.0',
       graded_at: new Date().toISOString()
     }
@@ -420,6 +502,11 @@ export async function POST(req: NextRequest) {
       finalScores,
       comparativePerformance,
       improvementTrends,
+      saleClosed,
+      returnAppointment,
+      virtualEarnings,
+      earningsData,
+      dealDetails,
       timeElapsed 
     })
   } catch (error: any) {

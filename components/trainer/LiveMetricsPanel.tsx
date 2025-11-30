@@ -1148,14 +1148,14 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
 
   // Determine talk time status
   const getTalkTimeStatus = () => {
-    if (talkTimeRatio >= 40 && talkTimeRatio <= 60) {
+    if (talkTimeRatio >= 55 && talkTimeRatio <= 65) {
       return { badge: 'Balanced', variant: 'default' as const }
-    } else if ((talkTimeRatio >= 35 && talkTimeRatio < 40) || (talkTimeRatio > 60 && talkTimeRatio <= 70)) {
+    } else if ((talkTimeRatio >= 50 && talkTimeRatio < 55) || (talkTimeRatio > 65 && talkTimeRatio <= 75)) {
       return { badge: 'OK', variant: 'secondary' as const }
-    } else if (talkTimeRatio < 35) {
-      return { badge: 'Listen', variant: 'destructive' as const }
+    } else if (talkTimeRatio < 50) {
+      return { badge: 'Talk More', variant: 'destructive' as const }
     } else {
-      return { badge: 'Talk', variant: 'destructive' as const }
+      return { badge: 'Talk Less', variant: 'destructive' as const }
     }
   }
 
@@ -1199,7 +1199,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
 
   // Determine talk time color based on ratio
   const getTalkTimeColor = () => {
-    if (talkTimeRatio >= 40 && talkTimeRatio <= 60) {
+    if (talkTimeRatio >= 55 && talkTimeRatio <= 65) {
       return {
         progress: 'from-emerald-500 to-green-500',
         border: 'border-emerald-500/60',
@@ -1207,7 +1207,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
         bg: 'bg-emerald-500/20',
         hover: 'group-hover:bg-emerald-500/30'
       }
-    } else if (talkTimeRatio < 40) {
+    } else if (talkTimeRatio < 55) {
       return {
         progress: 'from-orange-500 to-amber-500',
         border: 'border-orange-500/60',

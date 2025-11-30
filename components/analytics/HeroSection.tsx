@@ -389,10 +389,10 @@ export function HeroSection({
                               reasons.push("Didn't ask for the close (no attempt detected)")
                             }
                             
-                            if (talkRatio > 55) {
-                              reasons.push(`Talk ratio shifted to ${Math.round(talkRatio)}% (should be 40%)`)
-                            } else if (talkRatio < 35) {
-                              reasons.push(`Talk ratio was ${Math.round(talkRatio)}% (should be 40%)`)
+                            if (talkRatio > 70) {
+                              reasons.push(`Talk ratio shifted to ${Math.round(talkRatio)}% (should be 60%)`)
+                            } else if (talkRatio < 50) {
+                              reasons.push(`Talk ratio was ${Math.round(talkRatio)}% (should be 60%)`)
                             }
                             
                             // Check voice analysis for energy drop

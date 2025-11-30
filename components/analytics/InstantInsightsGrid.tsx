@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MessageSquare, AlertTriangle, Book, Info, Lightbulb, ExternalLink, TrendingUp, CheckCircle2, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
-import { detectObjection as detectEnhancedObjection, detectTechnique as detectEnhancedTechnique } from '@/lib/trainer/enhancedPatternAnalyzer'
+import { detectObjection as detectEnhancedObjection, detectTechnique as detectEnhancedTechnique, assessObjectionHandling } from '@/lib/trainer/enhancedPatternAnalyzer'
 
 interface InstantInsightsGridProps {
   instantMetrics?: {
@@ -208,29 +208,80 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
   let objections = metrics.objectionCount || 0
   let objectionsHandled = 0
   const objectionTypes: Record<string, number> = {}
+  const detailedObjections: Array<{
+    id: string
+    text: string
+    type: string
+    quality: 'poor' | 'adequate' | 'good' | 'excellent' | null
+    responseText?: string
+  }> = []
   
-  if (transcript && Array.isArray(transcript) && objections === 0) {
+  if (transcript && Array.isArray(transcript)) {
     const homeownerEntries = transcript.filter((entry: any) => entry.speaker === 'homeowner' || entry.speaker === 'agent')
-    homeownerEntries.forEach((entry: any) => {
-      const objection = detectObjection(entry.text || '')
-      if (objection) {
-        objections++
-        objectionTypes[objection.type] = (objectionTypes[objection.type] || 0) + 1
-      }
-    })
+    const processedIds = new Set<string>()
     
-    // Count handled objections (user responds after homeowner objection)
     homeownerEntries.forEach((entry: any, index: number) => {
       const objection = detectObjection(entry.text || '')
-      if (objection && index < homeownerEntries.length - 1) {
-        const nextEntry = homeownerEntries[index + 1]
-        if (nextEntry && (nextEntry.speaker === 'user' || nextEntry.speaker === 'rep')) {
+      if (objection && !processedIds.has(entry.id || index.toString())) {
+        processedIds.add(entry.id || index.toString())
+        objections++
+        objectionTypes[objection.type] = (objectionTypes[objection.type] || 0) + 1
+        
+        // Assess handling quality using enhanced analyzer
+        const handling = assessObjectionHandling(index, transcript)
+        if (handling.quality === 'good' || handling.quality === 'excellent' || handling.responseText) {
           objectionsHandled++
         }
+        
+        detailedObjections.push({
+          id: entry.id || index.toString(),
+          text: entry.text || '',
+          type: objection.type,
+          quality: handling.quality,
+          responseText: handling.responseText
+        })
       }
     })
   } else {
     objectionsHandled = objections // Assume all were handled if we don't have transcript
+  }
+  
+  // Format objection type for display
+  const formatObjectionType = (type: string): string => {
+    const typeMap: Record<string, string> = {
+      price: 'Price Concern',
+      timing: 'Timing Concern',
+      trust: 'Trust Concern',
+      need: 'Need Concern',
+      authority: 'Authority Concern',
+      comparison: 'Comparison',
+      skepticism: 'Skepticism'
+    }
+    return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1)
+  }
+  
+  // Get quality label
+  const getQualityLabel = (quality: 'poor' | 'adequate' | 'good' | 'excellent' | null): string => {
+    if (!quality) return 'Unhandled'
+    switch (quality) {
+      case 'excellent': return 'Excellent'
+      case 'good': return 'Good'
+      case 'adequate': return 'Adequate'
+      case 'poor': return 'Poor'
+      default: return 'Unhandled'
+    }
+  }
+  
+  // Convert quality to color
+  const getQualityColor = (quality: 'poor' | 'adequate' | 'good' | 'excellent' | null): string => {
+    if (!quality) return 'text-slate-400'
+    switch (quality) {
+      case 'excellent': return 'text-emerald-400'
+      case 'good': return 'text-green-400'
+      case 'adequate': return 'text-amber-400'
+      case 'poor': return 'text-red-400'
+      default: return 'text-slate-400'
+    }
   }
   
   // Calculate techniques used from transcript or use provided data
@@ -257,8 +308,8 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
   }
   
   const getBalanceStatus = () => {
-    if (balance >= 35 && balance <= 45) return { label: 'BALANCED', color: 'text-green-400', bgColor: 'bg-green-500/20', borderColor: 'border-green-500/40' }
-    if (balance < 35) return { label: 'LISTEN MORE', color: 'text-yellow-400', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500/40' }
+    if (balance >= 55 && balance <= 65) return { label: 'BALANCED', color: 'text-green-400', bgColor: 'bg-green-500/20', borderColor: 'border-green-500/40' }
+    if (balance < 55) return { label: 'TALK MORE', color: 'text-yellow-400', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500/40' }
     return { label: 'TALK LESS', color: 'text-red-400', bgColor: 'bg-red-500/20', borderColor: 'border-red-500/40' }
   }
   
@@ -333,7 +384,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-base font-semibold text-white font-space">Time-Talk Ratio</span>
-                  <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer. Target is 40% to maintain engagement while allowing discovery.">
+                  <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer. Target is 60% to maintain engagement while allowing discovery.">
                     <Info className="w-4 h-4 text-gray-400 hover:text-purple-400 transition-colors" />
                   </MetricTooltip>
                 </div>
@@ -347,7 +398,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                 <div className="relative h-4 bg-slate-800/80 rounded-full overflow-hidden mb-2">
                   {/* Background zones */}
                   <div className="absolute inset-0 flex">
-                    <div className="w-[30%] bg-red-500/20" />
+                    <div className="w-[50%] bg-red-500/20" />
                     <div className="w-[20%] bg-green-500/20" />
                     <div className="flex-1 bg-red-500/20" />
                   </div>
@@ -356,7 +407,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                   <motion.div
                     className={cn(
                       "absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500",
-                      balance >= 30 && balance <= 50
+                      balance >= 55 && balance <= 65
                         ? "from-green-500 to-green-400"
                         : "from-red-500 to-red-400"
                     )}
@@ -367,14 +418,14 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                   
                   {/* Zone markers */}
                   <div className="absolute inset-0 flex items-center">
-                    <div className="absolute left-[30%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
-                    <div className="absolute left-[40%] top-1/2 -translate-y-1/2 w-0.5 h-4 bg-slate-600/80 font-bold" />
                     <div className="absolute left-[50%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
+                    <div className="absolute left-[60%] top-1/2 -translate-y-1/2 w-0.5 h-4 bg-slate-600/80 font-bold" />
+                    <div className="absolute left-[70%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
                   </div>
                 </div>
                 <div className="flex justify-between text-xs text-gray-400 font-sans">
                   <span>0%</span>
-                  <span className="text-slate-500">Target 40%</span>
+                  <span className="text-slate-500">Target 60%</span>
                   <span>100%</span>
                 </div>
               </div>
@@ -388,7 +439,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
               </div>
               
               {/* Target Info */}
-              <div className="text-sm text-gray-400 font-sans mb-3">Target: 40%</div>
+              <div className="text-sm text-gray-400 font-sans mb-3">Target: 60%</div>
               
               {/* Coaching Tip */}
               <div className={cn("text-sm font-bold font-space", balanceStatus.color)}>
@@ -398,25 +449,23 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
           </div>
         </div>
         
-        {/* Objections - Horizontal Card */}
+        {/* Objections - Enhanced Card with Details */}
         <div className="rounded-xl p-5 border-2 border-amber-500/40 bg-amber-500/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-6 h-6 text-amber-400" />
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base font-semibold text-white font-space">Objections</span>
-                    <MetricTooltip content="Objections are customer concerns or hesitations. Facing objections is normal and shows you're pushing for the sale. Handling them effectively demonstrates your ability to address concerns.">
-                      <Info className="w-4 h-4 text-gray-400 hover:text-amber-400 transition-colors" />
-                    </MetricTooltip>
-                  </div>
-                  <div className="text-xs text-gray-400 font-sans">Customer concerns and your responses</div>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-amber-400" />
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base font-semibold text-white font-space">Objections</span>
+                  <MetricTooltip content="Objections are customer concerns or hesitations. Facing objections is normal and shows you're pushing for the sale. Handling them effectively demonstrates your ability to address concerns.">
+                    <Info className="w-4 h-4 text-gray-400 hover:text-amber-400 transition-colors" />
+                  </MetricTooltip>
                 </div>
+                <div className="text-xs text-gray-400 font-sans">Customer concerns and your responses</div>
               </div>
             </div>
             
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-white mb-1 font-space">{objections}</div>
                 <div className="text-sm text-gray-300 font-sans">Faced</div>
@@ -432,18 +481,60 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                   {objections > 0 ? `${objectionRate}%` : 'N/A'}
                 </div>
                 <div className="text-sm text-gray-300 font-sans">Success Rate</div>
-                {Object.keys(objectionTypes).length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2 justify-center">
-                    {Object.entries(objectionTypes).slice(0, 3).map(([type, count]) => (
-                      <span key={type} className="px-2 py-0.5 text-xs bg-amber-500/30 text-amber-300 rounded-full border border-amber-500/40">
-                        {type}: {count}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </div>
+          
+          {/* Detailed Objections List */}
+          {detailedObjections.length > 0 ? (
+            <div className="space-y-3 mt-4 pt-4 border-t border-amber-500/30">
+              {detailedObjections.slice(0, 3).map((objection) => {
+                const qualityColor = getQualityColor(objection.quality)
+                return (
+                  <div key={objection.id} className="bg-slate-900/50 rounded-lg p-3 border border-amber-500/20">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-semibold text-white font-space">
+                            {formatObjectionType(objection.type)}
+                          </span>
+                          <span className={cn("text-xs font-medium", qualityColor)}>
+                            {getQualityLabel(objection.quality)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-300 font-sans italic mb-2">
+                          "{objection.text.length > 80 ? objection.text.substring(0, 80) + '...' : objection.text}"
+                        </div>
+                        {objection.responseText && (
+                          <div className="text-xs text-emerald-300 font-sans mt-1">
+                            <span className="text-emerald-400 font-medium">Your response: </span>
+                            {objection.responseText.length > 100 ? objection.responseText.substring(0, 100) + '...' : objection.responseText}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              {detailedObjections.length > 3 && (
+                <div className="text-xs text-slate-400 font-sans text-center pt-2">
+                  +{detailedObjections.length - 3} more objection{detailedObjections.length - 3 !== 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+          ) : Object.keys(objectionTypes).length > 0 ? (
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-amber-500/30">
+              {Object.entries(objectionTypes).map(([type, count]) => (
+                <span key={type} className="px-3 py-1.5 text-sm bg-amber-500/30 text-amber-300 rounded-lg border border-amber-500/40 font-medium">
+                  {formatObjectionType(type)}: {count}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-400 font-sans mt-4 pt-4 border-t border-amber-500/30 text-center">
+              No objections detected
+            </div>
+          )}
         </div>
         
         {/* Techniques Used - Horizontal Card */}
