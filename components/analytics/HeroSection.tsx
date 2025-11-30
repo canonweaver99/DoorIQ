@@ -69,6 +69,7 @@ interface HeroSectionProps {
   feedback?: {
     strengths?: string[]
     improvements?: string[]
+    session_highlight?: string
   }
   failureAnalysis?: {
     critical_moments?: Array<{
@@ -458,7 +459,7 @@ export function HeroSection({
       </div>
 
       {/* Session Highlight / Win Callout */}
-      {(feedback?.strengths && feedback.strengths.length > 0) || (session?.analytics?.session_highlight) ? (
+      {(feedback?.strengths && feedback.strengths.length > 0) || feedback?.session_highlight ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -468,9 +469,9 @@ export function HeroSection({
           <div className="flex items-start gap-3">
             <Trophy className="w-6 h-6 text-emerald-400 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <div className="text-sm font-semibold text-emerald-400 mb-2 uppercase tracking-wide">Session Highlight</div>
-              <p className="text-base text-white leading-relaxed font-sans">
-                {session?.analytics?.session_highlight || feedback?.strengths?.[0] || 'Good engagement with the homeowner'}
+              <div className="text-base font-semibold text-emerald-400 mb-2 uppercase tracking-wide">Session Highlight</div>
+              <p className="text-lg text-white leading-relaxed font-sans">
+                {feedback?.session_highlight || feedback?.strengths?.[0] || 'Good engagement with the homeowner'}
               </p>
             </div>
           </div>

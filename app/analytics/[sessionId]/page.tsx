@@ -526,7 +526,10 @@ export default function AnalyticsPage() {
             failureAnalysis={session.analytics?.failure_analysis}
             voiceAnalysis={session.analytics?.voice_analysis}
             instantMetrics={session.instant_metrics}
-            feedback={session.analytics?.feedback}
+            feedback={{
+              ...session.analytics?.feedback,
+              session_highlight: session.analytics?.session_highlight
+            }}
           />
         )}
         
