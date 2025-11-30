@@ -1348,13 +1348,7 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="flex items-center justify-center mb-2">
-            <CircularProgress 
-              percentage={skillStats?.overall?.current ?? 0}
-              size={80}
-              strokeWidth={6}
-            />
-          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.overall?.current ?? 0}%</div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1386,13 +1380,7 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="flex items-center justify-center mb-2">
-            <CircularProgress 
-              percentage={skillStats?.rapport?.current ?? 0}
-              size={80}
-              strokeWidth={6}
-            />
-          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.rapport?.current ?? 0}%</div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1424,13 +1412,7 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="flex items-center justify-center mb-2">
-            <CircularProgress 
-              percentage={skillStats?.discovery?.current ?? 0}
-              size={80}
-              strokeWidth={6}
-            />
-          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.discovery?.current ?? 0}%</div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1462,13 +1444,7 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="flex items-center justify-center mb-2">
-            <CircularProgress 
-              percentage={skillStats?.objection?.current ?? 0}
-              size={80}
-              strokeWidth={6}
-            />
-          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.objection?.current ?? 0}%</div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -1500,13 +1476,7 @@ function OverviewTabContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
-          <div className="flex items-center justify-center mb-2">
-            <CircularProgress 
-              percentage={skillStats?.closing?.current ?? 0}
-              size={80}
-              strokeWidth={6}
-            />
-          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.closing?.current ?? 0}%</div>
           <div className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
