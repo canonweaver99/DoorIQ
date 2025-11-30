@@ -24,7 +24,9 @@ import {
   Loader2,
   Mic,
   Square,
-  X
+  X,
+  User,
+  BarChart3
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
@@ -33,6 +35,7 @@ import { useVoiceRecorder } from '@/hooks/useVoiceRecorder'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 import Link from 'next/link'
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 
 // Helper to get cutout bubble image (no background)
 const getAgentBubbleImage = (agentName: string | null): string => {
@@ -42,6 +45,23 @@ const getAgentBubbleImage = (agentName: string | null): string => {
     return PERSONA_METADATA[agentNameTyped].bubble.image
   }
   return '/agents/default.png'
+}
+
+// Helper to format duration
+const formatDuration = (seconds: number) => {
+  if (!seconds || isNaN(seconds)) return '0m'
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m`
+}
+
+// Helper to get score color
+const getScoreColor = (score: number) => {
+  if (!score || isNaN(score)) return 'text-slate-400'
+  if (score >= 80) return 'text-green-400'
+  if (score >= 60) return 'text-yellow-400'
+  return 'text-red-400'
 }
 
 type LiveSession = Database['public']['Tables']['live_sessions']['Row']
@@ -409,6 +429,24 @@ function OverviewTabContent() {
   const [hoveredPoint, setHoveredPoint] = useState<{ day: string; value: number; } | null>(null)
   const [hoveredEarnings, setHoveredEarnings] = useState<{ day: string; value: number; } | null>(null)
   const [recentSessions, setRecentSessions] = useState<any[]>([])
+  const [userProfile, setUserProfile] = useState<{ full_name: string; email: string; avatar_url?: string; rep_id?: string; created_at?: string; role?: string } | null>(null)
+  const [skillStats, setSkillStats] = useState<{
+    overall: { current: number; previous: number }
+    rapport: { current: number; previous: number }
+    discovery: { current: number; previous: number }
+    objection: { current: number; previous: number }
+    closing: { current: number; previous: number }
+  } | null>(null)
+  const [summaryStats, setSummaryStats] = useState<{
+    totalEarnings: number
+    averageScore: number
+    bestScore: number
+    totalSessions: number
+    closePercentage: number
+  } | null>(null)
+  const [performanceChartData, setPerformanceChartData] = useState<Array<{ session: string; score: number; earnings: number; date: string }>>([])
+  const [earningsChartData, setEarningsChartData] = useState<Array<{ session: string; earnings: number; date: string }>>([])
+  const [allSessionsForList, setAllSessionsForList] = useState<any[]>([])
   const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([
     {
       id: 'overall',
@@ -630,14 +668,33 @@ function OverviewTabContent() {
         ])
         return
       }
+
+      // Fetch user profile
+      const { data: userData } = await supabase
+        .from('users')
+        .select('full_name, email, avatar_url, rep_id, created_at, role, virtual_earnings')
+        .eq('id', user.id)
+        .single()
+      
+      if (userData) {
+        setUserProfile({
+          full_name: userData.full_name || '',
+          email: userData.email || '',
+          avatar_url: userData.avatar_url || undefined,
+          rep_id: userData.rep_id || undefined,
+          created_at: userData.created_at || undefined,
+          role: userData.role || 'rep'
+        })
+      }
       
       // Get ALL user sessions for calculating averages and trends (with dates and earnings)
       // Include both graded and ungraded sessions for complete data
       const { data: allSessionsRaw, error: allSessionsError } = await supabase
         .from('live_sessions')
-        .select('overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, virtual_earnings, analytics')
+        .select('id, overall_score, rapport_score, discovery_score, objection_handling_score, close_score, created_at, virtual_earnings, analytics, agent_name, duration_seconds, sale_closed')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+        .limit(50)
       
       if (allSessionsError) {
         console.error('❌ Error fetching all sessions:', allSessionsError)
@@ -645,6 +702,112 @@ function OverviewTabContent() {
       
       // Filter to only sessions with scores for trend calculations
       const allSessions = (allSessionsRaw || []).filter((s: any) => s.overall_score !== null && s.overall_score !== undefined)
+      
+      // Store all sessions for list display
+      setAllSessionsForList(allSessionsRaw || [])
+      
+      // Calculate week-over-week comparisons (last 7 days vs previous 7 days)
+      const now = new Date()
+      const sevenDaysAgo = new Date(now)
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      const fourteenDaysAgo = new Date(now)
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+      
+      const recentSessions = allSessions.filter((s: any) => {
+        const sessionDate = new Date(s.created_at)
+        return sessionDate >= sevenDaysAgo
+      })
+      
+      const previousSessions = allSessions.filter((s: any) => {
+        const sessionDate = new Date(s.created_at)
+        return sessionDate >= fourteenDaysAgo && sessionDate < sevenDaysAgo
+      })
+      
+      const calculateAverage = (sessions: any[], field: string) => {
+        const valid = sessions.filter(s => s[field] !== null && s[field] !== undefined)
+        if (valid.length === 0) return 0
+        return Math.round(valid.reduce((sum, s) => sum + (s[field] || 0), 0) / valid.length)
+      }
+      
+      const skillStatsData = {
+        overall: {
+          current: calculateAverage(recentSessions, 'overall_score'),
+          previous: calculateAverage(previousSessions, 'overall_score')
+        },
+        rapport: {
+          current: calculateAverage(recentSessions, 'rapport_score'),
+          previous: calculateAverage(previousSessions, 'rapport_score')
+        },
+        discovery: {
+          current: calculateAverage(recentSessions, 'discovery_score'),
+          previous: calculateAverage(previousSessions, 'discovery_score')
+        },
+        objection: {
+          current: calculateAverage(recentSessions, 'objection_handling_score'),
+          previous: calculateAverage(previousSessions, 'objection_handling_score')
+        },
+        closing: {
+          current: calculateAverage(recentSessions, 'close_score'),
+          previous: calculateAverage(previousSessions, 'close_score')
+        }
+      }
+      
+      setSkillStats(skillStatsData)
+      
+      // Calculate summary stats
+      const totalEarnings = allSessions.reduce((sum: number, s: any) => {
+        const earnings = s.virtual_earnings || (s.analytics?.virtual_earnings) || 0
+        return sum + earnings
+      }, 0)
+      
+      const scores = allSessions.map((s: any) => s.overall_score || 0)
+      const averageScore = scores.length > 0 
+        ? Math.round(scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length)
+        : 0
+      const bestScore = scores.length > 0 ? Math.max(...scores) : 0
+      const totalSessions = allSessionsRaw?.length || 0
+      const closedSessions = allSessionsRaw?.filter((s: any) => s.sale_closed === true).length || 0
+      const closePercentage = totalSessions > 0 ? Math.round((closedSessions / totalSessions) * 100) : 0
+      
+      setSummaryStats({
+        totalEarnings,
+        averageScore,
+        bestScore,
+        totalSessions,
+        closePercentage
+      })
+      
+      // Prepare chart data for Recent Performance (last 10 sessions)
+      const chartData = allSessionsRaw && allSessionsRaw.length > 0 
+        ? allSessionsRaw.slice(0, 10).reverse().map((session: any, index: number) => ({
+            session: `#${allSessionsRaw.length - index}`,
+            score: session.overall_score || 0,
+            earnings: session.virtual_earnings || (session.analytics?.virtual_earnings) || 0,
+            date: new Date(session.created_at).toLocaleDateString()
+          }))
+        : Array.from({ length: 10 }, (_, i) => ({
+            session: `#${i + 1}`,
+            score: 0,
+            earnings: 0,
+            date: ''
+          }))
+      
+      setPerformanceChartData(chartData)
+      
+      // Prepare earnings chart data
+      const earningsChartData = allSessionsRaw && allSessionsRaw.length > 0
+        ? allSessionsRaw.slice(0, 10).reverse().map((session: any, index: number) => ({
+            session: `#${allSessionsRaw.length - index}`,
+            earnings: session.virtual_earnings || (session.analytics?.virtual_earnings) || 0,
+            date: new Date(session.created_at).toLocaleDateString()
+          }))
+        : Array.from({ length: 10 }, (_, i) => ({
+            session: `#${i + 1}`,
+            earnings: 0,
+            date: ''
+          }))
+      
+      setEarningsChartData(earningsChartData)
       
       // Get recent sessions with agent_name (for display) - fetch all sessions, not just graded ones
       const { data: recentSessionsData, error: recentSessionsError } = await supabase
@@ -719,36 +882,30 @@ function OverviewTabContent() {
     }
     
     // Calculate average scores from all sessions that have scores
-    if (allSessions && allSessions.length > 0) {
-      // Filter sessions with valid scores for each metric (include 0 as valid score)
-      const sessionsWithOverall = allSessions.filter((s: any) => s.overall_score !== null && s.overall_score !== undefined)
-      const sessionsWithRapport = allSessions.filter((s: any) => s.rapport_score !== null && s.rapport_score !== undefined)
-      const sessionsWithDiscovery = allSessions.filter((s: any) => s.discovery_score !== null && s.discovery_score !== undefined)
-      const sessionsWithObjection = allSessions.filter((s: any) => s.objection_handling_score !== null && s.objection_handling_score !== undefined)
-      const sessionsWithClosing = allSessions.filter((s: any) => s.close_score !== null && s.close_score !== undefined)
-      
-      const avgOverall = sessionsWithOverall.length > 0
-        ? Math.round(sessionsWithOverall.reduce((sum: number, s: any) => sum + (s.overall_score || 0), 0) / sessionsWithOverall.length)
+    if (allSessions && allSessions.length > 0 && skillStatsData) {
+      // Calculate change percentages
+      const overallChange = skillStatsData.overall.previous > 0 
+        ? skillStatsData.overall.current - skillStatsData.overall.previous
         : 0
-      const avgRapport = sessionsWithRapport.length > 0
-        ? Math.round(sessionsWithRapport.reduce((sum: number, s: any) => sum + (s.rapport_score || 0), 0) / sessionsWithRapport.length)
+      const rapportChange = skillStatsData.rapport.previous > 0
+        ? skillStatsData.rapport.current - skillStatsData.rapport.previous
         : 0
-      const avgDiscovery = sessionsWithDiscovery.length > 0
-        ? Math.round(sessionsWithDiscovery.reduce((sum: number, s: any) => sum + (s.discovery_score || 0), 0) / sessionsWithDiscovery.length)
+      const discoveryChange = skillStatsData.discovery.previous > 0
+        ? skillStatsData.discovery.current - skillStatsData.discovery.previous
         : 0
-      const avgObjection = sessionsWithObjection.length > 0
-        ? Math.round(sessionsWithObjection.reduce((sum: number, s: any) => sum + (s.objection_handling_score || 0), 0) / sessionsWithObjection.length)
+      const objectionChange = skillStatsData.objection.previous > 0
+        ? skillStatsData.objection.current - skillStatsData.objection.previous
         : 0
-      const avgClosing = sessionsWithClosing.length > 0
-        ? Math.round(sessionsWithClosing.reduce((sum: number, s: any) => sum + (s.close_score || 0), 0) / sessionsWithClosing.length)
+      const closingChange = skillStatsData.closing.previous > 0
+        ? skillStatsData.closing.current - skillStatsData.closing.previous
         : 0
       
       setPerformanceMetrics([
         {
           id: 'overall',
           title: 'Overall Score',
-          value: avgOverall,
-          change: '+7%',
+          value: skillStatsData.overall.current,
+          change: overallChange > 0 ? `+${overallChange}%` : `${overallChange}%`,
           feedback: 'Consistency across all areas improving. Rapport and discovery skills show promise.',
           borderColor: '#8b5cf6',
           textColor: 'text-purple-300',
@@ -758,8 +915,8 @@ function OverviewTabContent() {
         {
           id: 'rapport',
           title: 'Rapport',
-          value: avgRapport,
-          change: '+5%',
+          value: skillStatsData.rapport.current,
+          change: rapportChange > 0 ? `+${rapportChange}%` : `${rapportChange}%`,
           feedback: 'Incorporate personalized questions within the first 30 seconds.',
           borderColor: '#10b981',
           textColor: 'text-emerald-300',
@@ -769,8 +926,8 @@ function OverviewTabContent() {
         {
           id: 'discovery',
           title: 'Discovery',
-          value: avgDiscovery,
-          change: '+13%',
+          value: skillStatsData.discovery.current,
+          change: discoveryChange > 0 ? `+${discoveryChange}%` : `${discoveryChange}%`,
           feedback: 'Dig deeper into pain points with follow-up questions.',
           borderColor: '#3b82f6',
           textColor: 'text-blue-300',
@@ -780,8 +937,8 @@ function OverviewTabContent() {
         {
           id: 'objection',
           title: 'Objection Handling',
-          value: avgObjection,
-          change: '+8%',
+          value: skillStatsData.objection.current,
+          change: objectionChange > 0 ? `+${objectionChange}%` : `${objectionChange}%`,
           feedback: 'Reframe price concerns as investment discussions.',
           borderColor: '#f59e0b',
           textColor: 'text-amber-300',
@@ -791,8 +948,8 @@ function OverviewTabContent() {
         {
           id: 'closing',
           title: 'Closing',
-          value: avgClosing,
-          change: '+6%',
+          value: skillStatsData.closing.current,
+          change: closingChange > 0 ? `+${closingChange}%` : `${closingChange}%`,
           feedback: 'Use assumptive language: "When we install" vs "If you decide".',
           borderColor: '#ec4899',
           textColor: 'text-pink-300',
@@ -1116,39 +1273,364 @@ function OverviewTabContent() {
   const notificationsData = notifications.length > 0 ? notifications : []
 
   return (
-    <div className="space-y-6">
-      {/* Performance Metrics Cards - Demo Style */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 lg:gap-4">
-        {performanceMetrics.map((metric, idx) => (
-          <motion.div
-            key={metric.id}
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: idx * 0.05 }}
-            className="rounded-lg sm:rounded-xl cursor-pointer transition-all will-change-transform p-2 sm:p-3 lg:p-4 border border-indigo-500/30 bg-black/50 backdrop-blur-sm hover:border-indigo-400/50 hover:bg-black/60"
-          >
-            <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <h3 className="text-[9px] sm:text-xs font-semibold text-indigo-300 uppercase tracking-wide font-space">
-                {metric.title}
-              </h3>
+    <div className="space-y-8">
+      {/* Profile Header Card */}
+      {userProfile && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 mb-8"
+        >
+          <div className="flex items-center gap-6">
+            {userProfile.avatar_url ? (
+              <img 
+                src={userProfile.avatar_url} 
+                alt={userProfile.full_name}
+                className="w-20 h-20 rounded-2xl object-cover"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+                {userProfile.full_name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-white">{userProfile.full_name || 'User'}</h1>
+              <p className="text-slate-400">{userProfile.email || 'No email'}</p>
+              <div className="flex items-center gap-4 mt-2">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm">
+                  <User className="w-4 h-4" />
+                  {userProfile.role || 'rep'}
+                </span>
+                {userProfile.rep_id && (
+                  <span className="text-sm text-slate-400">
+                    Rep ID: {userProfile.rep_id}
+                  </span>
+                )}
+                {userProfile.created_at && (
+                  <span className="text-sm text-slate-400">
+                    Joined {new Date(userProfile.created_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
             </div>
-            
-            <div className="text-lg sm:text-xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 tabular-nums font-space">
-              {metric.value}%
-            </div>
-            
-            <div className="flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-              <p className="text-[9px] sm:text-xs font-semibold text-emerald-400 font-sans">{metric.change} from last week</p>
-            </div>
-          </motion.div>
-        ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Performance Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-8">
+        {/* Overall Score Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-lg p-5"
+          style={{ 
+            backgroundColor: '#2a1a3a',
+            border: '2px solid #4a2a6a',
+            boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-purple-200 uppercase tracking-wide">Overall Score</h3>
+            <svg className="w-3 h-3 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.overall?.current ?? 0}%</div>
+          <div className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <p className="text-xs font-semibold text-green-400">
+              {skillStats?.overall?.previous && skillStats.overall.previous > 0 
+                ? `${(skillStats.overall.current - skillStats.overall.previous) > 0 ? '+' : ''}${skillStats.overall.current - skillStats.overall.previous}% from last week`
+                : '0% from last week'
+              }
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Rapport Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="rounded-lg p-5"
+          style={{ 
+            backgroundColor: '#1a3a2a',
+            border: '2px solid #2a6a4a',
+            boxShadow: 'inset 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-emerald-200 uppercase tracking-wide">Rapport</h3>
+            <svg className="w-3 h-3 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.rapport?.current ?? 0}%</div>
+          <div className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <p className="text-xs font-semibold text-green-400">
+              {skillStats?.rapport?.previous && skillStats.rapport.previous > 0 
+                ? `${(skillStats.rapport.current - skillStats.rapport.previous) > 0 ? '+' : ''}${skillStats.rapport.current - skillStats.rapport.previous}% from last week`
+                : '0% from last week'
+              }
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Discovery Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="rounded-lg p-5"
+          style={{ 
+            backgroundColor: '#1a2a3a',
+            border: '2px solid #2a4a6a',
+            boxShadow: 'inset 0 0 20px rgba(59, 130, 246, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-blue-200 uppercase tracking-wide">Discovery</h3>
+            <svg className="w-3 h-3 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.discovery?.current ?? 0}%</div>
+          <div className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <p className="text-xs font-semibold text-green-400">
+              {skillStats?.discovery?.previous && skillStats.discovery.previous > 0 
+                ? `${(skillStats.discovery.current - skillStats.discovery.previous) > 0 ? '+' : ''}${skillStats.discovery.current - skillStats.discovery.previous}% from last week`
+                : '0% from last week'
+              }
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Objection Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="rounded-lg p-5"
+          style={{ 
+            backgroundColor: '#3a2a1a',
+            border: '2px solid #6a4a2a',
+            boxShadow: 'inset 0 0 20px rgba(245, 158, 11, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-amber-200 uppercase tracking-wide">Objection</h3>
+            <svg className="w-3 h-3 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.objection?.current ?? 0}%</div>
+          <div className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <p className="text-xs font-semibold text-green-400">
+              {skillStats?.objection?.previous && skillStats.objection.previous > 0 
+                ? `${(skillStats.objection.current - skillStats.objection.previous) > 0 ? '+' : ''}${skillStats.objection.current - skillStats.objection.previous}% from last week`
+                : '0% from last week'
+              }
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Closing Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="rounded-lg p-5"
+          style={{ 
+            backgroundColor: '#3a1a2a',
+            border: '2px solid #6a2a4a',
+            boxShadow: 'inset 0 0 20px rgba(236, 72, 153, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-pink-200 uppercase tracking-wide">Closing</h3>
+            <svg className="w-3 h-3 text-pink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-white mb-2 tabular-nums">{skillStats?.closing?.current ?? 0}%</div>
+          <div className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <p className="text-xs font-semibold text-green-400">
+              {skillStats?.closing?.previous && skillStats.closing.previous > 0 
+                ? `${(skillStats.closing.current - skillStats.closing.previous) > 0 ? '+' : ''}${skillStats.closing.current - skillStats.closing.previous}% from last week`
+                : '0% from last week'
+              }
+            </p>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {/* Stats Cards */}
+      {summaryStats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          >
+            <DollarSign className="w-8 h-8 text-green-400 mb-3" />
+            <p className="text-2xl font-bold text-white">${(summaryStats.totalEarnings || 0).toFixed(2)}</p>
+            <p className="text-sm text-slate-400">Total Earnings</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          >
+            <Target className="w-8 h-8 text-purple-400 mb-3" />
+            <p className={`text-2xl font-bold ${getScoreColor(summaryStats.averageScore || 0)}`}>
+              {summaryStats.averageScore || 0}%
+            </p>
+            <p className="text-sm text-slate-400">Average Score</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          >
+            <Award className="w-8 h-8 text-yellow-400 mb-3" />
+            <p className={`text-2xl font-bold ${getScoreColor(summaryStats.bestScore || 0)}`}>
+              {summaryStats.bestScore || 0}%
+            </p>
+            <p className="text-sm text-slate-400">Best Score</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          >
+            <Calendar className="w-8 h-8 text-blue-400 mb-3" />
+            <p className="text-2xl font-bold text-white">{summaryStats.totalSessions || 0}</p>
+            <p className="text-sm text-slate-400">Total Sessions</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+          >
+            <Target className="w-8 h-8 text-emerald-400 mb-3" />
+            <p className={`text-2xl font-bold ${getScoreColor(summaryStats.closePercentage || 0)}`}>
+              {summaryStats.closePercentage || 0}%
+            </p>
+            <p className="text-sm text-slate-400">Close %</p>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Performance Charts - Split Screen */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+        {/* Recent Performance Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+        >
+          <h2 className="text-xl font-semibold text-white mb-6">Recent Performance</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={performanceChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis 
+                dataKey="session" 
+                stroke="#6B7280"
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+              />
+              <YAxis 
+                stroke="#6B7280"
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+                domain={[0, 100]}
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: '#1e1e30',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: 'white'
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="score" 
+                stroke="#a855f7" 
+                strokeWidth={2}
+                dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Earnings Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+        >
+          <h2 className="text-xl font-semibold text-white mb-6">Earnings</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={earningsChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis 
+                dataKey="session" 
+                stroke="#6B7280"
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+              />
+              <YAxis 
+                stroke="#6B7280"
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: '#1e1e30',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: 'white'
+                }}
+                formatter={(value: any) => `$${value.toFixed(2)}`}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="earnings" 
+                stroke="#10b981" 
+                strokeWidth={2}
+                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </div>
+
+      {/* Old Charts Grid - Remove this entire section */}
+      <div className="hidden">
         {/* Performance Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1653,226 +2135,71 @@ function OverviewTabContent() {
         </motion.div>
       </div>
 
-      {/* Bottom Grid: Recent Sessions + Insights + Notifications */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-        {/* Recent Sessions */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl px-4 pt-2 pb-4 min-h-[280px] sm:min-h-[320px]"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-white font-space">Recent Sessions</h3>
-            <Link href="/sessions" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium font-sans">
-              View All →
-            </Link>
+      {/* Recent Sessions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-white">Recent Sessions</h2>
+          <div className="text-xs text-slate-400 px-3 py-1 bg-slate-700/50 rounded-lg">
+            {allSessionsForList.length} total sessions
           </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            {recentSessions.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                <p className="text-sm font-sans">No recent sessions</p>
-                <p className="text-xs mt-1 font-sans">Complete a practice session to see it here</p>
-              </div>
-            ) : recentSessions.slice(0, 3).map((session, idx) => {
-              const circumference = 2 * Math.PI * 16
-              const strokeDashoffset = circumference - (session.score / 100) * circumference
-              const gradients = ['from-purple-500/30', 'from-blue-500/30', 'from-pink-500/30']
-
-              return (
-                <Link
-                  key={session.id || idx}
-                  href={session.id ? `/analytics/${session.id}` : '/sessions'}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.4 + idx * 0.1 }}
-                    className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/30 hover:bg-black/50 transition-colors border border-indigo-500/20 cursor-pointer"
-                  >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="relative flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10">
-                      <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${gradients[idx]} to-transparent blur-md`}></div>
-                      {(() => {
-                        const agentName = session.name as AllowedAgentName
-                        const getAgentColorVariant = (name: string): keyof typeof COLOR_VARIANTS => {
-                          if (PERSONA_METADATA[name as AllowedAgentName]?.bubble?.color) {
-                            return PERSONA_METADATA[name as AllowedAgentName].bubble.color as keyof typeof COLOR_VARIANTS
-                          }
-                          return 'primary'
-                        }
-                        const colorVariant = getAgentColorVariant(agentName || '')
-                        const variantStyles = COLOR_VARIANTS[colorVariant]
-                        return (
-                          <>
-                            {/* Animated gradient rings */}
-                            {[0, 1, 2].map((i) => (
-                              <div
-                                key={i}
-                                className={`absolute inset-0 rounded-full border ${variantStyles.border[i]} ${variantStyles.gradient} bg-gradient-to-br to-transparent`}
-                                style={{
-                                  animation: `spin 8s linear infinite`,
-                                  opacity: 0.5 - (i * 0.1),
-                                  transform: `scale(${1 - i * 0.05})`
-                                }}
-                              />
-                            ))}
-                            {/* Profile Image */}
-                            <img 
-                              src={session.avatar || '/agents/default.png'}
-                              alt={session.name}
-                              className="relative w-full h-full rounded-full ring-2 ring-white/20 z-10 object-cover"
-                              onError={(e) => {
-                                // Fallback to default if image fails to load
-                                const target = e.target as HTMLImageElement
-                                if (target.src !== '/agents/default.png') {
-                                  target.src = '/agents/default.png'
-                                }
-                              }}
-                            />
-                          </>
-                        )
-                      })()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-white truncate font-sans">{session.name}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5 font-sans">{session.time}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="relative w-8 h-8">
-                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                        <circle cx="18" cy="18" r="16" stroke="rgba(99, 102, 241, 0.2)" strokeWidth="3" fill="none" />
-                        <motion.circle
-                          cx="18"
-                          cy="18"
-                          r="16"
-                          stroke={(() => {
-                            if (session.score >= 90) return '#10b981'
-                            if (session.score >= 80) return '#22c55e'
-                            if (session.score >= 70) return '#eab308'
-                            if (session.score >= 60) return '#f97316'
-                            return '#ef4444'
-                          })()}
-                          strokeWidth="3"
-                          strokeDasharray={circumference}
-                          strokeDashoffset={strokeDashoffset}
-                          strokeLinecap="round"
-                          fill="none"
-                          initial={{ strokeDashoffset: circumference }}
-                          animate={{ strokeDashoffset }}
-                          transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[9px] font-bold text-white font-space">{session.score}%</span>
-                      </div>
-                    </div>
-                    <div className="text-xs font-bold text-emerald-400 tabular-nums font-sans">+${session.earned}</div>
-                  </div>
-                  </motion.div>
-                </Link>
-              )
-            })}
-          </div>
-        </motion.div>
-
-        {/* Insights - Enhanced */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4 min-h-[280px] sm:min-h-[320px]"
-        >
-          <h3 className="text-sm font-bold text-white mb-2 font-space">Insights</h3>
-
-          <div className="space-y-2 sm:space-y-2.5">
-            {insightsData.map((insight, idx) => {
-              const Icon = insight.icon
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.5 + idx * 0.1 }}
-                  className="pb-2.5 border-b border-indigo-500/20 last:border-0 last:pb-0"
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-500/20">
-                      <Icon className="w-3.5 h-3.5 text-indigo-400" />
+        </div>
+        
+        {allSessionsForList.length > 0 ? (
+          <div className="space-y-3">
+            {allSessionsForList.slice(0, 10).map((session: any, index: number) => (
+              <Link
+                key={session.id}
+                href={`/analytics/${session.id}`}
+                className="block p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                      {index + 1}
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-[11px] font-bold text-white font-space">{insight.title}</h4>
-                      <p className="text-[10px] text-slate-200 leading-relaxed font-sans">
-                        {insight.percentage && <span className="text-indigo-400 font-semibold">{insight.percentage}</span>}
-                        {insight.percentage && ' '}
-                        {insight.message}
+                      <p className="text-sm font-medium text-white group-hover:text-purple-300 transition-colors">
+                        {session.agent_name || `Session ${index + 1}`}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {new Date(session.created_at).toLocaleDateString()} • {formatDuration(session.duration_seconds || 0)}
                       </p>
                     </div>
                   </div>
-                </motion.div>
-              )
-            })}
-          </div>
-        </motion.div>
-
-        {/* Notifications */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="bg-black/50 backdrop-blur-sm border border-indigo-500/30 rounded-lg sm:rounded-xl p-4 min-h-[280px] sm:min-h-[320px]"
-        >
-          <h3 className="text-sm font-bold text-white mb-2 font-space">Notifications</h3>
-
-          <div className="space-y-2 sm:space-y-2.5">
-            {notificationsData.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                <p className="text-sm font-sans">No notifications</p>
-                <p className="text-xs mt-1 font-sans">You're all caught up!</p>
-              </div>
-            ) : notificationsData.map((notif, idx) => {
-              const getIcon = () => {
-                switch(notif.type) {
-                  case 'manager':
-                    return MessageCircle
-                  case 'leaderboard':
-                    return TrendingUp
-                  case 'achievement':
-                    return Award
-                  default:
-                    return AlertCircle
-                }
-              }
-              const Icon = getIcon()
-              
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.6 + idx * 0.1 }}
-                  className="p-2 rounded-lg border border-indigo-500/20 transition-colors cursor-pointer bg-black/30 hover:bg-black/50"
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-500/20">
-                      <Icon className="w-3.5 h-3.5 text-indigo-400" />
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className={`text-lg font-bold ${getScoreColor(session.overall_score || 0)}`}>
+                        {session.overall_score || 0}%
+                      </p>
+                      {session.sale_closed && (
+                        <p className="text-xs text-green-400">✓ Sale Closed</p>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <h4 className="text-[11px] font-bold text-white font-space">{notif.title}</h4>
-                        <span className="text-[9px] text-slate-400 font-medium font-sans">{notif.time}</span>
+                    {session.virtual_earnings && session.virtual_earnings > 0 && (
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-green-400">
+                          +${session.virtual_earnings.toFixed(2)}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-slate-200 leading-relaxed font-sans">{notif.message}</p>
-                    </div>
+                    )}
                   </div>
-                </motion.div>
-              )
-            })}
+                </div>
+              </Link>
+            ))}
           </div>
-        </motion.div>
-      </div>
+        ) : (
+          <div className="text-center py-12">
+            <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-400">No sessions yet</p>
+            <p className="text-xs text-slate-500 mt-1">Complete training sessions to see them here</p>
+          </div>
+        )}
+      </motion.div>
     </div>
   )
 }
