@@ -14,6 +14,7 @@ import {
   Target as TargetIcon, UserCheck, Timer, CheckCircle2, XCircle, Star, Mail, UserPlus, Trophy, X, Copy, MessageSquare
 } from 'lucide-react'
 import Link from 'next/link'
+import { ProgressRing } from '@/components/analytics/ProgressRing'
 
 const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#EC4899', '#F59E0B', '#EF4444']
 
@@ -394,7 +395,7 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
   return (
     <div className="space-y-8">
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { 
             label: 'Total Earned', 
@@ -423,6 +424,7 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
           { 
             label: 'Team Average', 
             value: `${analytics.teamAverage}%`, 
+            percentage: analytics.teamAverage,
             change: `${analytics.changes.score > 0 ? '+' : ''}${analytics.changes.score}%`, 
             changeValue: analytics.changes.score,
             icon: TrendingUp,
@@ -430,11 +432,13 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             borderColor: '#2a2a2a',
             textColor: 'text-gray-300',
             iconColor: 'text-gray-400',
-            subtitle: 'Overall performance rating'
+            subtitle: 'Overall performance rating',
+            showCircle: true
           },
           { 
             label: 'Close %', 
             value: `${analytics.teamClosePercentage || 0}%`, 
+            percentage: analytics.teamClosePercentage || 0,
             change: '', 
             changeValue: 0,
             icon: Target,
@@ -442,7 +446,8 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             borderColor: '#2a2a2a',
             textColor: 'text-gray-300',
             iconColor: 'text-gray-400',
-            subtitle: 'Percentage of sessions closed'
+            subtitle: 'Percentage of sessions closed',
+            showCircle: true
           },
         ].map((metric, idx) => {
           const Icon = metric.icon
@@ -485,8 +490,24 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
                     </div>
                   )}
                 </div>
-                <p className="text-4xl font-bold text-white mb-1 font-space">{metric.value}</p>
-                <p className="text-lg font-semibold text-white font-space">{metric.subtitle}</p>
+                {metric.showCircle ? (
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <ProgressRing
+                      value={metric.percentage}
+                      max={100}
+                      size={120}
+                      strokeWidth={10}
+                      color={metric.percentage >= 60 ? '#10b981' : metric.percentage >= 40 ? '#f59e0b' : '#ef4444'}
+                      showValue={true}
+                    />
+                    <p className="text-lg font-semibold text-white font-space mt-4 text-center">{metric.subtitle}</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-4xl font-bold text-white mb-1 font-space">{metric.value}</p>
+                    <p className="text-lg font-semibold text-white font-space">{metric.subtitle}</p>
+                  </>
+                )}
               </div>
             </motion.div>
           )
