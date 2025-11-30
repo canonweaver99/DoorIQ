@@ -84,6 +84,30 @@ function detectWithContext(
     if (!priceContext) return false
   }
 
+  // Check for authority objection patterns - exclude casual mentions of family
+  if (pattern.source.includes('spouse|husband|wife|partner')) {
+    // Exclude casual rapport-building statements
+    const isCasualRapport = /(yeah|yes|yep|uh huh|mm|hmm|okay|sure|alright|well|so|and|or|,|\.|!)/i.test(currentText) &&
+      !/(need|have|must|should|can't|won't|can't decide|not my decision|speak to|ask|check|discuss|approval|permission)/i.test(currentText)
+    
+    // Exclude statements that are just listing family members
+    const isJustListing = /^(yeah|yes|yep|uh huh|mm|hmm|okay|sure|alright|well|so|and|or|,|\.|!)/i.test(currentText.trim()) &&
+      /(wife|husband|spouse|partner|kids|children|dog|pet|family)/i.test(currentText) &&
+      !/(need|have|must|should|can't|won't|can't decide|not my decision|speak to|ask|check|discuss|approval|permission)/i.test(currentText)
+    
+    // Check if previous context was a discovery question (likely rapport building)
+    const prevWasQuestion = contextIndex > 0 && contextWindow[contextIndex - 1]?.text?.trim().endsWith('?')
+    const isDiscoveryQuestion = prevWasQuestion && /(tell me|how|what|who|where|when|do you|have you|are you)/i.test(contextWindow[contextIndex - 1]?.text || '')
+    
+    if (isCasualRapport || (isJustListing && isDiscoveryQuestion)) {
+      return false
+    }
+    
+    // Only match if it contains explicit objection language
+    const hasObjectionLanguage = /(need|have|must|should|can't|won't|can't decide|not my decision|speak to|ask|check|discuss|approval|permission|talk it over)/i.test(currentText)
+    if (!hasObjectionLanguage) return false
+  }
+
   return true
 }
 
@@ -157,14 +181,16 @@ const OBJECTION_PATTERNS: Record<ObjectionType, {
     patterns: [
       /speak to my (spouse|husband|wife|partner)/i,
       /not my decision/i,
-      /need to ask/i,
+      /need to ask (my|the) (spouse|husband|wife|partner)/i,
       /can't decide/i,
-      /talk it over/i,
-      /need approval/i
+      /talk it over (with|to)/i,
+      /need approval/i,
+      /have to (ask|check with|discuss with) (my|the) (spouse|husband|wife|partner)/i,
+      /(spouse|husband|wife|partner) (needs|has) to (decide|approve|agree)/i
     ],
     severity: 'medium',
     suggestedApproach: 'Get commitment for follow-up or include decision maker',
-    requiresContext: false
+    requiresContext: true
   },
   comparison: {
     patterns: [
@@ -708,6 +734,26 @@ export function detectObjection(
   subCategory?: ObjectionSubCategory
   confidence?: number
 } | null {
+  const lowerText = text.toLowerCase()
+  
+  // Pre-filter: Exclude casual rapport-building statements that mention family
+  // These are common false positives for authority objections
+  const isCasualRapport = 
+    // Simple affirmative responses with family mentions
+    (/^(yeah|yes|yep|uh huh|mm|hmm|okay|sure|alright|well|so|and|or)/i.test(text.trim()) &&
+     /(wife|husband|spouse|partner|kids|children|dog|pet|family)/i.test(lowerText) &&
+     !/(need|have|must|should|can't|won't|can't decide|not my decision|speak to|ask|check|discuss|approval|permission|talk it over)/i.test(lowerText)) ||
+    // Just listing family members in response to discovery questions
+    (contextWindow && contextIndex !== undefined && contextIndex > 0 &&
+     contextWindow[contextIndex - 1]?.text?.trim().endsWith('?') &&
+     /(tell me|how|what|who|where|when|do you|have you|are you)/i.test(contextWindow[contextIndex - 1]?.text || '') &&
+     /(wife|husband|spouse|partner|kids|children|dog|pet|family)/i.test(lowerText) &&
+     !/(need|have|must|should|can't|won't|can't decide|not my decision|speak to|ask|check|discuss|approval|permission|talk it over)/i.test(lowerText))
+  
+  if (isCasualRapport) {
+    return null
+  }
+  
   for (const [type, config] of Object.entries(OBJECTION_PATTERNS)) {
     for (const pattern of config.patterns) {
       let matches = false

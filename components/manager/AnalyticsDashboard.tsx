@@ -394,7 +394,7 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
   return (
     <div className="space-y-8">
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[
           { 
             label: 'Total Earned', 
@@ -419,18 +419,6 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             textColor: 'text-gray-300',
             iconColor: 'text-gray-400',
             subtitle: 'Training sessions completed'
-          },
-          { 
-            label: 'Team Members', 
-            value: displayTeamStats.totalReps.toString(), 
-            change: '', 
-            changeValue: 0,
-            icon: Users,
-            bgColor: '#1a1a1a',
-            borderColor: '#2a2a2a',
-            textColor: 'text-gray-300',
-            iconColor: 'text-gray-400',
-            subtitle: 'Team members'
           },
           { 
             label: 'Team Average', 

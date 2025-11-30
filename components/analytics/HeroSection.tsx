@@ -458,7 +458,7 @@ export function HeroSection({
       </div>
 
       {/* Session Highlight / Win Callout */}
-      {feedback?.strengths && feedback.strengths.length > 0 && (
+      {(feedback?.strengths && feedback.strengths.length > 0) || (session?.analytics?.session_highlight) ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -470,12 +470,12 @@ export function HeroSection({
             <div className="flex-1">
               <div className="text-sm font-semibold text-emerald-400 mb-2 uppercase tracking-wide">Session Highlight</div>
               <p className="text-base text-white leading-relaxed font-sans">
-                {feedback.strengths[0]}
+                {session?.analytics?.session_highlight || feedback?.strengths?.[0] || 'Good engagement with the homeowner'}
               </p>
             </div>
           </div>
         </motion.div>
-      )}
+      ) : null}
     </motion.div>
   )
 }

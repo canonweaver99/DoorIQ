@@ -92,16 +92,24 @@ async function performDeepAnalysis(data: {
   // Limit key moments to top 2 for faster processing
   const topKeyMoments = keyMoments.slice(0, 2)
   
-  // Format transcript excerpt for analysis (last 30 lines for context)
-  const transcriptExcerpt = transcript.slice(-30).map((entry: any) => {
+  // Format full transcript for comprehensive analysis (original method uses full transcript)
+  // Include last 50 lines for better context, but also include key sections
+  const fullTranscript = transcript.map((entry: any, index: number) => {
+    const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'rep' : 'customer'
+    const text = entry.text || entry.message || ''
+    return `[${index}] ${speaker}: ${text}`
+  }).join('\n')
+  
+  // Also get last 30 lines for recent context
+  const recentExcerpt = transcript.slice(-30).map((entry: any) => {
     const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'rep' : 'customer'
     const text = entry.text || entry.message || ''
     return `${speaker}: ${text}`
   }).join('\n')
   
-  const prompt = `Sales coach analyzing door-to-door sales conversation. Return JSON.
+  const prompt = `You are an expert door-to-door sales coach analyzing a sales conversation. Return ONLY valid JSON.
 
-Context:
+CONTEXT:
 - User avg score: ${userHistory?.averageScore || 'N/A'}
 - Instant estimated score: ${instantMetrics?.estimatedScore || 'N/A'}
 - Key moments: ${topKeyMoments.length}
@@ -111,28 +119,60 @@ Context:
 - Close attempts: ${instantMetrics?.closeAttempts || 0}
 - Duration: ${Math.round(durationSeconds / 60)} minutes
 
-Key moments:
+KEY MOMENTS:
 ${topKeyMoments.map((m, i) => `${i + 1}. ${m.type}: "${m.transcript.slice(0, 60)}"`).join('\n')}
 
-Recent conversation excerpt:
-${transcriptExcerpt}
+FULL CONVERSATION TRANSCRIPT:
+${fullTranscript}
 
-SCORING RULES:
-- If sale_closed=true AND objections were handled well: overall score should be 90+
-- If sale_closed=true: closing score should be 90+, objectionHandling should reflect how well objections were addressed
-- If objections were handled effectively: objectionHandling should be 85+
-- Overall score = average of rapport, discovery, objectionHandling, closing (weighted equally)
+SCORING RULES (0-100):
+- Overall = average of rapport, discovery, objectionHandling, closing (weighted equally)
+- Rapport = connection and trust building
+- Discovery = quality of questions asked and listening
+- ObjectionHandling = how well objections were addressed (85+ if handled effectively)
+- Closing = commitment level (90-100=sale, 75-89=appointment, 60-74=trial, 40-59=weak, 0-39=none)
+- If sale_closed=true AND objections handled well: overall should be 90+
+- If sale_closed=true: closing score should be 90+
 
-SALE DETECTION:
-- sale_closed=true ONLY if customer committed to PAID service (not just appointment)
-- Look for: payment agreement, contract signing, "I'll take it", "let's do it", commitment to start service
-- return_appointment=true if scheduled follow-up but no sale
+SALE DETECTION (CRITICAL - Use ORIGINAL comprehensive method):
+✅ sale_closed=true if ANY of these occur:
+1. STRONG BUYING SIGNALS (soft closes count as sales):
+   - "sounds good", "that works", "I'm interested", "let's do it", "I'll take it"
+   - "count me in", "I'm ready", "when can you start", "what's next", "how do I sign up"
+   - "that makes sense", "I like that", "we need that", "definitely need"
+   - "yeah, that sounds good", "okay, let's do it", "sure, why not", "works for me"
+   - "that's reasonable", "I can do that", "I'm okay with that"
+   - Asking about next steps: "what's included", "how does it work", "when can we start"
+   - Agreement after price discussion or objection handling
 
-EARNINGS CALCULATION (if sale_closed=true):
-- Extract deal value from conversation (price mentioned × contract length)
-- Commission: 30% of total contract value
-- Bonuses: quick_close ($25 if <15min), upsell ($50), retention ($30), same_day_start ($20), referral ($25), perfect_pitch ($50 if overall>=90)
+2. HARD COMMITMENTS:
+   - Payment agreement, contract signing, commitment to start service
+   - "let's get started", "I'm ready to sign", "when can you come back"
+   - Explicit "yes" to service after pricing/objection discussion
+
+❌ NOT a sale:
+   - "I'll think about it" without commitment
+   - Just scheduling inspection/callback without service commitment
+   - "maybe", "possibly", "I'll consider" without follow-up commitment
+
+- return_appointment=true if scheduled follow-up but no sale commitment
+- IMPORTANT: Soft closes and buying signals AFTER objection handling count as sales - don't require explicit payment mention
+
+EARNINGS CALCULATION (ORIGINAL METHOD - if sale_closed=true):
+- Extract deal value from conversation:
+  * Look for price mentioned ($99/month, $1200/year, $299 initial + $89/month, etc.)
+  * Determine contract length (monthly, quarterly, annual, multi-year)
+  * Calculate total_contract_value: one-time = that value, monthly = price × contract_length (or × 12 if no length), annual = annual price × years
+- Commission: 30% of total_contract_value
+- Bonuses (add to commission):
+  * quick_close: $25 if closed in under 15 minutes
+  * upsell: $50 if sold premium/additional services beyond basic
+  * retention: $30 if secured annual or multi-year contract (not just monthly)
+  * same_day_start: $20 if customer agreed to start today or tomorrow
+  * referral_secured: $25 if rep got referral/neighbor recommendation
+  * perfect_pitch: $50 if overall_score >= 90
 - total_earned = commission + bonuses
+- virtual_earnings = total_earned
 
 Return JSON:
 {
@@ -170,7 +210,17 @@ Return JSON:
     "start_date": string
   },
   "coachingPlan": {"immediateFixes": [{"issue": "i", "practiceScenario": "s"}], "rolePlayScenarios": [{"scenario": "s", "focus": "f"}]},
-  "feedback": {"strengths": ["s1"], "improvements": ["i1"], "specific_tips": ["t1"]}
+  "feedback": {
+    "strengths": ["s1 with specific quote from conversation"],
+    "improvements": ["i1"],
+    "specific_tips": ["t1"]
+  },
+  "session_highlight": "One specific highlight with actual quote from conversation (1 line max, include quote)"
+}
+
+IMPORTANT FOR FEEDBACK:
+- strengths: Include specific quotes from conversation (e.g., "Great rapport when you said 'Tell me about your family' - customer opened up")
+- session_highlight: MUST include actual quote from conversation, be specific (e.g., "Your objection handling was excellent when customer said 'too expensive' and you responded 'I understand - let me show you the value'")
 }`
 
   try {
@@ -215,7 +265,8 @@ Return JSON:
         strengths: parsed.topStrengths || [],
         improvements: parsed.topImprovements || [],
         specific_tips: []
-      }
+      },
+      sessionHighlight: parsed.session_highlight || parsed.feedback?.strengths?.[0] || ''
     }
   } catch (error: any) {
     logger.error('Error performing deep analysis', error)
@@ -428,6 +479,7 @@ export async function POST(req: NextRequest) {
         improvements: deepAnalysis.topImprovements || [],
         specific_tips: []
       },
+      session_highlight: deepAnalysis.sessionHighlight || deepAnalysis.feedback?.strengths?.[0] || '',
       comparative_performance: comparativePerformance,
       improvement_trends: improvementTrends,
       final_scores: finalScores,

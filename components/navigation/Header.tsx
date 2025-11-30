@@ -360,8 +360,8 @@ function HeaderContent() {
       { name: 'Home', href: '/', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
       { name: 'Sessions', href: '/sessions', icon: FileText },
-      // Dashboard only shows for reps, NOT for managers or admins
-      ...(userRole === 'rep' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
+      // Dashboard shows for reps and admins (admins can view their own dashboard)
+      ...(userRole === 'rep' || userRole === 'admin' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
       ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),
       // Only show Pricing if user doesn't have an active subscription (admins handled separately)
       ...(!hasActiveSubscription && userRole !== 'admin' ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),

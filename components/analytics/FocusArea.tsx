@@ -1,8 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Target, ArrowRight } from 'lucide-react'
+import { Target, ArrowRight, BookOpen } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface FocusAreaProps {
   currentScores: {
@@ -32,6 +33,28 @@ const skillRecommendations: Record<string, { drill: string; persona?: string }> 
     drill: 'Work on assumptive closing language',
     persona: 'Think About It Tina'
   }
+}
+
+// Agent image mapping
+const agentImageMap: Record<string, string> = {
+  'Average Austin': '/Austin Boss.png',
+  'No Problem Nancy': '/No Problem Nancy Black.png',
+  'Already Got It Alan': '/Already got it Alan landscape.png',
+  'Not Interested Nick': '/Not Interested Nick.png',
+  'DIY Dave': '/DIY DAVE.png',
+  'Too Expensive Tim': '/Too Expensive Tim.png',
+  'Spouse Check Susan': '/Spouse Check Susan.png',
+  'Busy Beth': '/Busy Beth.png',
+  'Renter Randy': '/Renter Randy.png',
+  'Skeptical Sam': '/Skeptical Sam.png',
+  'Just Treated Jerry': '/Just Treated Jerry.png',
+  'Think About It Tina': '/Think About It Tina.png',
+  'Veteran Victor': '/Veteran Victor Landcape.png',
+  'Tag Team Tanya & Tom': '/tanya and tom.png'
+}
+
+function getAgentImage(agentName: string): string {
+  return agentImageMap[agentName] || '/agents/default.png'
 }
 
 export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
@@ -132,22 +155,41 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
               </span>
             </div>
             {recommendation.persona && (
-              <div className="flex items-start gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-amber-400 font-bold">→</span>
-                <span className="text-gray-200 font-sans">
-                  <span className="font-semibold">Practice with:</span> {recommendation.persona}
+                <span className="text-gray-200 font-sans flex items-center gap-2">
+                  <span className="font-semibold">Practice with:</span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-amber-500/40 flex-shrink-0">
+                      <Image
+                        src={getAgentImage(recommendation.persona)}
+                        alt={recommendation.persona}
+                        fill
+                        className="object-cover"
+                        sizes="32px"
+                      />
+                    </div>
+                    <span>{recommendation.persona}</span>
+                  </div>
                 </span>
               </div>
             )}
           </div>
           
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-3">
             <Link
               href="/trainer"
               className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-lg text-amber-300 font-medium transition-colors text-sm font-sans"
             >
               Start Practice Session
               <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/learning"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/50 rounded-lg text-gray-300 font-medium transition-colors text-sm font-sans"
+            >
+              <BookOpen className="w-4 h-4" />
+              Learn More
             </Link>
           </div>
         </div>

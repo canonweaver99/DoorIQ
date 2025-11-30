@@ -17,7 +17,7 @@ interface InstantInsightsGridProps {
     techniquesUsed?: string[]
   }
   userName?: string
-  transcript?: Array<{ speaker: string; text: string }>
+  transcript?: Array<{ speaker: string; text: string; id?: string; timestamp?: Date | string }>
   voiceAnalysis?: {
     avgWPM?: number
     wpmTimeline?: Array<{ time: number; value: number }>
@@ -180,17 +180,21 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
         const firstEntry = userEntries[0]
         const lastEntry = userEntries[userEntries.length - 1]
         
-        const firstTime = firstEntry.timestamp instanceof Date 
-          ? firstEntry.timestamp.getTime()
-          : typeof firstEntry.timestamp === 'string'
-            ? new Date(firstEntry.timestamp).getTime()
-            : Date.now()
+        const firstTime = firstEntry.timestamp 
+          ? (firstEntry.timestamp instanceof Date 
+              ? firstEntry.timestamp.getTime()
+              : typeof firstEntry.timestamp === 'string'
+                ? new Date(firstEntry.timestamp).getTime()
+                : Date.now())
+          : Date.now()
         
-        const lastTime = lastEntry.timestamp instanceof Date
-          ? lastEntry.timestamp.getTime()
-          : typeof lastEntry.timestamp === 'string'
-            ? new Date(lastEntry.timestamp).getTime()
-            : Date.now()
+        const lastTime = lastEntry.timestamp
+          ? (lastEntry.timestamp instanceof Date
+              ? lastEntry.timestamp.getTime()
+              : typeof lastEntry.timestamp === 'string'
+                ? new Date(lastEntry.timestamp).getTime()
+                : Date.now())
+          : Date.now()
         
         const durationMs = lastTime - firstTime
         const durationMinutes = Math.max(0.1, durationMs / 60000) // At least 0.1 minutes (6 seconds) to avoid division issues
@@ -228,7 +232,14 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
         objectionTypes[objection.type] = (objectionTypes[objection.type] || 0) + 1
         
         // Assess handling quality using enhanced analyzer
-        const handling = assessObjectionHandling(index, transcript)
+        // Convert to TranscriptEntry format for assessObjectionHandling
+        const transcriptEntries = transcript.map((entry: any, idx: number) => ({
+          id: entry.id || idx.toString(),
+          speaker: entry.speaker,
+          text: entry.text || '',
+          timestamp: entry.timestamp ? (entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp)) : new Date()
+        }))
+        const handling = assessObjectionHandling(index, transcriptEntries)
         if (handling.quality === 'good' || handling.quality === 'excellent' || handling.responseText) {
           objectionsHandled++
         }
@@ -286,15 +297,35 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
   
   // Calculate techniques used from transcript or use provided data
   let techniquesUsed: string[] = []
+  const detailedTechniques: Array<{
+    id: string
+    name: string
+    text: string
+    timestamp?: Date | string
+  }> = []
+  
   if (metrics.techniquesUsed && Array.isArray(metrics.techniquesUsed)) {
     techniquesUsed = metrics.techniquesUsed
   } else if (transcript && Array.isArray(transcript)) {
     const techniquesSet = new Set<string>()
-    transcript.forEach((entry: any) => {
+    const processedTechniques = new Map<string, boolean>()
+    
+    transcript.forEach((entry: any, index: number) => {
       if (entry.speaker === 'user' || entry.speaker === 'rep') {
         const technique = detectTechnique(entry.text || '')
         if (technique) {
-          techniquesSet.add(technique)
+          const techniqueKey = `${technique}-${index}`
+          if (!processedTechniques.has(techniqueKey)) {
+            techniquesSet.add(technique)
+            processedTechniques.set(techniqueKey, true)
+            
+            detailedTechniques.push({
+              id: entry.id || index.toString(),
+              name: technique,
+              text: entry.text || '',
+              timestamp: entry.timestamp
+            })
+          }
         }
       }
     })
@@ -335,23 +366,23 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex items-center gap-3">
-                <Mic className="w-6 h-6 text-blue-400" />
+                <Mic className="w-7 h-7 text-blue-400" />
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base font-semibold text-white font-space">Speaking Pace</span>
+                    <span className="text-lg font-semibold text-white font-space">Speaking Pace</span>
                     <MetricTooltip content="Words Per Minute (WPM) measures your speaking pace. The target of 150 WPM ensures you maintain engagement while allowing customers to process information.">
-                      <Info className="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors" />
+                      <Info className="w-5 h-5 text-gray-400 hover:text-blue-400 transition-colors" />
                     </MetricTooltip>
                   </div>
-                  <div className="text-xs text-gray-400 font-sans">Current pace vs. target</div>
+                  <div className="text-sm text-gray-400 font-sans">Current pace vs. target</div>
                 </div>
               </div>
             </div>
             
             <div className="flex items-center gap-6">
               <div className="text-right">
-                <div className="text-3xl font-bold text-white mb-1 font-space">{wpm}</div>
-                <div className="text-sm text-gray-300 font-sans">WPM</div>
+                <div className="text-4xl font-bold text-white mb-1 font-space">{wpm}</div>
+                <div className="text-base text-gray-300 font-sans">WPM</div>
               </div>
               
               <div className="w-20 h-20">
@@ -365,9 +396,9 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
               </div>
               
               <div className="text-right min-w-[120px]">
-                <div className={cn("text-lg font-bold mb-1 font-space", wpmStatus.color)}>{wpmStatus.label}</div>
-                <div className="text-lg font-bold text-white font-space">Target 150 WPM</div>
-                <div className="text-xs text-gray-500 font-sans mt-1">
+                <div className={cn("text-xl font-bold mb-1 font-space", wpmStatus.color)}>{wpmStatus.label}</div>
+                <div className="text-xl font-bold text-white font-space">Target 150 WPM</div>
+                <div className="text-sm text-gray-500 font-sans mt-1">
                   {wpm < 140 ? 'Try speaking faster' : wpm > 160 ? 'Slow down slightly' : 'Optimal pace'}
                 </div>
               </div>
@@ -380,15 +411,15 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
           <div className="flex items-center justify-between gap-6">
             {/* Left Side: Icon + Title + Description */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              <MessageSquare className="w-6 h-6 text-purple-400 flex-shrink-0" />
+              <MessageSquare className="w-7 h-7 text-purple-400 flex-shrink-0" />
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base font-semibold text-white font-space">Time-Talk Ratio</span>
+                  <span className="text-lg font-semibold text-white font-space">Time-Talk Ratio</span>
                   <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer. Target is 60% to maintain engagement while allowing discovery.">
-                    <Info className="w-4 h-4 text-gray-400 hover:text-purple-400 transition-colors" />
+                    <Info className="w-5 h-5 text-gray-400 hover:text-purple-400 transition-colors" />
                   </MetricTooltip>
                 </div>
-                <div className="text-xs text-gray-400 font-sans">Your speaking time vs. customer</div>
+                <div className="text-sm text-gray-400 font-sans">Your speaking time vs. customer</div>
               </div>
             </div>
             
@@ -423,7 +454,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                     <div className="absolute left-[70%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
                   </div>
                 </div>
-                <div className="flex justify-between text-xs text-gray-400 font-sans">
+                <div className="flex justify-between text-sm text-gray-400 font-sans">
                   <span>0%</span>
                   <span className="text-slate-500">Target 60%</span>
                   <span>100%</span>
@@ -434,149 +465,166 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
             {/* Right Side: Metric + Target + Sparkline + Coaching */}
             <div className="text-right min-w-[140px] flex-shrink-0">
               {/* Primary Metric */}
-              <div className="text-4xl font-bold text-white mb-2 font-space">
+              <div className="text-5xl font-bold text-white mb-2 font-space">
                 <span className={balanceStatus.color}>{balance}%</span>
               </div>
               
               {/* Target Info */}
-              <div className="text-sm text-gray-400 font-sans mb-3">Target: 60%</div>
+              <div className="text-base text-gray-400 font-sans mb-3">Target: 60%</div>
               
               {/* Coaching Tip */}
-              <div className={cn("text-sm font-bold font-space", balanceStatus.color)}>
+              <div className={cn("text-base font-bold font-space", balanceStatus.color)}>
                 {balanceStatus.label}
               </div>
             </div>
           </div>
         </div>
         
-        {/* Objections - Enhanced Card with Details */}
-        <div className="rounded-xl p-5 border-2 border-amber-500/40 bg-amber-500/20">
-          <div className="flex items-start justify-between mb-4">
+        {/* Objections - Enhanced Card with Details (Fixed Height with Scroll) */}
+        <div className="rounded-xl p-5 border-2 border-amber-500/40 bg-amber-500/20 h-[400px] flex flex-col">
+          <div className="flex items-start justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-amber-400" />
+              <AlertTriangle className="w-7 h-7 text-amber-400" />
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base font-semibold text-white font-space">Objections</span>
+                  <span className="text-lg font-semibold text-white font-space">Objections</span>
                   <MetricTooltip content="Objections are customer concerns or hesitations. Facing objections is normal and shows you're pushing for the sale. Handling them effectively demonstrates your ability to address concerns.">
-                    <Info className="w-4 h-4 text-gray-400 hover:text-amber-400 transition-colors" />
+                    <Info className="w-5 h-5 text-gray-400 hover:text-amber-400 transition-colors" />
                   </MetricTooltip>
                 </div>
-                <div className="text-xs text-gray-400 font-sans">Customer concerns and your responses</div>
+                <div className="text-sm text-gray-400 font-sans">Customer concerns and your responses</div>
               </div>
             </div>
             
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1 font-space">{objections}</div>
-                <div className="text-sm text-gray-300 font-sans">Faced</div>
+                <div className="text-4xl font-bold text-white mb-1 font-space">{objections}</div>
+                <div className="text-base text-gray-300 font-sans">Faced</div>
               </div>
               
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-400 mb-1 font-space">{objectionsHandled}</div>
-                <div className="text-sm text-gray-300 font-sans">Handled</div>
+                <div className="text-4xl font-bold text-green-400 mb-1 font-space">{objectionsHandled}</div>
+                <div className="text-base text-gray-300 font-sans">Handled</div>
               </div>
               
               <div className="text-center min-w-[120px]">
-                <div className="text-2xl font-bold text-white mb-1 font-space">
+                <div className="text-3xl font-bold text-white mb-1 font-space">
                   {objections > 0 ? `${objectionRate}%` : 'N/A'}
                 </div>
-                <div className="text-sm text-gray-300 font-sans">Success Rate</div>
+                <div className="text-base text-gray-300 font-sans">Success Rate</div>
               </div>
             </div>
           </div>
           
-          {/* Detailed Objections List */}
-          {detailedObjections.length > 0 ? (
-            <div className="space-y-3 mt-4 pt-4 border-t border-amber-500/30">
-              {detailedObjections.slice(0, 3).map((objection) => {
-                const qualityColor = getQualityColor(objection.quality)
-                return (
-                  <div key={objection.id} className="bg-slate-900/50 rounded-lg p-3 border border-amber-500/20">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-semibold text-white font-space">
-                            {formatObjectionType(objection.type)}
-                          </span>
-                          <span className={cn("text-xs font-medium", qualityColor)}>
-                            {getQualityLabel(objection.quality)}
-                          </span>
-                        </div>
-                        <div className="text-xs text-slate-300 font-sans italic mb-2">
-                          "{objection.text.length > 80 ? objection.text.substring(0, 80) + '...' : objection.text}"
-                        </div>
-                        {objection.responseText && (
-                          <div className="text-xs text-emerald-300 font-sans mt-1">
-                            <span className="text-emerald-400 font-medium">Your response: </span>
-                            {objection.responseText.length > 100 ? objection.responseText.substring(0, 100) + '...' : objection.responseText}
+          {/* Detailed Objections List - Scrollable */}
+          <div className="flex-1 overflow-y-auto mt-4 pt-4 border-t border-amber-500/30 min-h-0">
+            {detailedObjections.length > 0 ? (
+              <div className="space-y-3 pr-2">
+                {detailedObjections.map((objection) => {
+                  const qualityColor = getQualityColor(objection.quality)
+                  return (
+                    <div key={objection.id} className="bg-slate-900/50 rounded-lg p-3 border border-amber-500/20">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-base font-semibold text-white font-space">
+                              {formatObjectionType(objection.type)}
+                            </span>
+                            <span className={cn("text-sm font-medium", qualityColor)}>
+                              {getQualityLabel(objection.quality)}
+                            </span>
                           </div>
-                        )}
+                          <div className="text-sm text-slate-300 font-sans italic mb-2">
+                            "{objection.text.length > 80 ? objection.text.substring(0, 80) + '...' : objection.text}"
+                          </div>
+                          {objection.responseText && (
+                            <div className="text-sm text-emerald-300 font-sans mt-1">
+                              <span className="text-emerald-400 font-medium">Your response: </span>
+                              {objection.responseText.length > 100 ? objection.responseText.substring(0, 100) + '...' : objection.responseText}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-              {detailedObjections.length > 3 && (
-                <div className="text-xs text-slate-400 font-sans text-center pt-2">
-                  +{detailedObjections.length - 3} more objection{detailedObjections.length - 3 !== 1 ? 's' : ''}
-                </div>
-              )}
-            </div>
-          ) : Object.keys(objectionTypes).length > 0 ? (
-            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-amber-500/30">
-              {Object.entries(objectionTypes).map(([type, count]) => (
-                <span key={type} className="px-3 py-1.5 text-sm bg-amber-500/30 text-amber-300 rounded-lg border border-amber-500/40 font-medium">
-                  {formatObjectionType(type)}: {count}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <div className="text-sm text-slate-400 font-sans mt-4 pt-4 border-t border-amber-500/30 text-center">
-              No objections detected
-            </div>
-          )}
+                  )
+                })}
+              </div>
+            ) : Object.keys(objectionTypes).length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(objectionTypes).map(([type, count]) => (
+                  <span key={type} className="px-3 py-1.5 text-sm bg-amber-500/30 text-amber-300 rounded-lg border border-amber-500/40 font-medium">
+                    {formatObjectionType(type)}: {count}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-400 font-sans text-center">
+                No objections detected
+              </div>
+            )}
+          </div>
         </div>
         
-        {/* Techniques Used - Horizontal Card */}
-        <div className="rounded-xl p-5 border-2 border-emerald-500/40 bg-emerald-500/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="flex items-center gap-3">
-                <Book className="w-6 h-6 text-emerald-400" />
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base font-semibold text-white font-space">Sales Techniques</span>
-                    <MetricTooltip content="Techniques Used shows the sales techniques you applied during the conversation. Using multiple techniques demonstrates versatility and helps build rapport, handle objections, and close deals effectively.">
-                      <Info className="w-4 h-4 text-gray-400 hover:text-emerald-400 transition-colors" />
-                    </MetricTooltip>
-                  </div>
-                  <div className="text-xs text-gray-400 font-sans">Techniques applied during conversation</div>
+        {/* Sales Techniques - Enhanced Card with Details (Fixed Height with Scroll) */}
+        <div className="rounded-xl p-5 border-2 border-emerald-500/40 bg-emerald-500/20 h-[400px] flex flex-col">
+          <div className="flex items-start justify-between mb-4 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <Book className="w-7 h-7 text-emerald-400" />
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg font-semibold text-white font-space">Sales Techniques</span>
+                  <MetricTooltip content="Techniques Used shows the sales techniques you applied during the conversation. Using multiple techniques demonstrates versatility and helps build rapport, handle objections, and close deals effectively.">
+                    <Info className="w-5 h-5 text-gray-400 hover:text-emerald-400 transition-colors" />
+                  </MetricTooltip>
                 </div>
+                <div className="text-sm text-gray-400 font-sans">Techniques applied during conversation</div>
               </div>
             </div>
             
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1 font-space">{techniquesUsed.length}</div>
-                <div className="text-sm text-gray-300 font-sans">Total Used</div>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 max-w-[400px]">
-                {techniquesUsed.length > 0 ? (
-                  techniquesUsed.map((technique, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1.5 text-sm font-medium bg-emerald-500/30 text-emerald-300 rounded-lg border border-emerald-500/50 flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      {technique}
-                    </span>
-                  ))
-                ) : (
-                  <span className="px-3 py-1.5 text-sm text-gray-400 font-sans italic">No techniques detected</span>
-                )}
-              </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-white mb-1 font-space">{techniquesUsed.length}</div>
+              <div className="text-base text-gray-300 font-sans">Total Used</div>
             </div>
+          </div>
+          
+          {/* Detailed Techniques List - Scrollable */}
+          <div className="flex-1 overflow-y-auto mt-4 pt-4 border-t border-emerald-500/30 min-h-0">
+            {detailedTechniques.length > 0 ? (
+              <div className="space-y-3 pr-2">
+                {detailedTechniques.map((technique) => (
+                  <div key={technique.id} className="bg-slate-900/50 rounded-lg p-3 border border-emerald-500/20">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                          <span className="text-base font-semibold text-white font-space">
+                            {technique.name}
+                          </span>
+                        </div>
+                        <div className="text-sm text-slate-300 font-sans italic mt-1">
+                          "{technique.text.length > 100 ? technique.text.substring(0, 100) + '...' : technique.text}"
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : techniquesUsed.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {techniquesUsed.map((technique, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1.5 text-sm font-medium bg-emerald-500/30 text-emerald-300 rounded-lg border border-emerald-500/40"
+                  >
+                    {technique}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-400 font-sans text-center">
+                No techniques detected
+              </div>
+            )}
           </div>
         </div>
       </div>
