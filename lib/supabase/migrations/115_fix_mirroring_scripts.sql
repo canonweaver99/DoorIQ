@@ -16,32 +16,36 @@ SET content = REGEXP_REPLACE(
     updated_at = NOW()
 WHERE slug = 'mirroring';
 
--- Then add the cleaned up version - just a few examples like the user showed
+-- Then add the cleaned up version - simple format like Example Scripts
 UPDATE learning_modules
 SET content = content || '
 
-## Sample Scripts for Different Energy Levels
-
-**Rushed Customer:**
+## Example Scripts
 
 **Pest Control:**
 <span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I know you''re busy. Let me make this quick - 30 seconds?"
 <span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I can see you''re in a hurry. Quick question?"
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I''ll be fast. Are you dealing with bugs?"
 
 **Solar:**
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I know you''re busy. Let me make this quick - 30 seconds?"
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I can see you''re in a hurry. Quick question?"
 <span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I''ll be fast. What are you paying for electricity?"
 
-**Friendly Customer:**
+**Internet:**
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I know you''re busy. Let me make this quick - 30 seconds?"
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I can see you''re in a hurry. Quick question?"
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I''ll be fast. Are you getting the speeds you''re paying for?"
 
-**Pest Control:**
-<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I appreciate that! Let me show you something I think you''ll really like."
-<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "You seem friendly! Want to see what we do?"
-<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I love your attitude! Let me show you our treatment."
+**Security:**
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I know you''re busy. Let me make this quick - 30 seconds?"
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I can see you''re in a hurry. Quick question?"
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I''ll be fast. Do you have a security system?"
 
-**Solar:**
-<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I appreciate that! Let me show you something I think you''ll really like."
-<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "You seem friendly! Want to see the numbers?"
-<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I love your attitude! Let me show you the system."',
+**Roofing:**
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I know you''re busy. Let me make this quick - 30 seconds?"
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I can see you''re in a hurry. Quick question?"
+<span style="color: #a855f7; font-weight: bold;">|</span> **Rep:** "I''ll be fast. Did you get any damage from that last storm?"',
     updated_at = NOW()
 WHERE slug = 'mirroring';
 
