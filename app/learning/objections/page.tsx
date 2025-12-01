@@ -1,9 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { AlertCircle, Sparkles } from 'lucide-react'
+import { AlertCircle, Sparkles, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { ObjectionCard } from '@/components/learning/ObjectionCard'
-import { LearningNavigation } from '@/components/learning/LearningNavigation'
 import { useObjections } from '@/hooks/learning/useObjections'
 
 export default function ObjectionsPage() {
@@ -43,12 +43,18 @@ export default function ObjectionsPage() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
+          <Link
+            href="/learning"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors font-sans"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Learning Center
+          </Link>
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle className="w-6 h-6 text-red-400" />
             <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">Objection Handling</h1>
           </div>
           <p className="text-slate-400 font-sans mb-4">Master the art of turning "no" into "yes"</p>
-          <LearningNavigation currentPage="objections" />
         </motion.div>
 
         {/* Objections Grid */}
