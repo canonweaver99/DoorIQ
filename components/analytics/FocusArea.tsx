@@ -4,6 +4,8 @@ import { motion } from 'framer-motion'
 import { Target, ArrowRight, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useModules } from '@/hooks/learning/useModules'
+import { ModuleCategory } from '@/lib/learning/types'
 
 interface FocusAreaProps {
   currentScores: {
@@ -57,6 +59,14 @@ function getAgentImage(agentName: string): string {
   return agentImageMap[agentName] || '/agents/default.png'
 }
 
+// Map skill areas to module categories
+const skillToCategoryMap: Record<string, ModuleCategory> = {
+  rapport: 'approach',
+  discovery: 'pitch',
+  objection_handling: 'objections',
+  closing: 'close'
+}
+
 export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
   // Calculate average of other skills for each skill
   const calculateOtherAverage = (excludeKey: string) => {
@@ -86,6 +96,19 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
   if (!focusSkill || focusSkill.gap < 10) {
     return null
   }
+
+  // Get the module category for the focus skill
+  const moduleCategory = skillToCategoryMap[focusSkill.skill]
+  
+  // Fetch modules for the relevant category (only if category exists)
+  const { modules, loading: modulesLoading } = useModules({ 
+    category: moduleCategory || undefined
+  })
+  
+  // Get the first module (lowest display_order) as the recommended lesson
+  const recommendedModule = modules.length > 0 
+    ? modules.sort((a, b) => a.display_order - b.display_order)[0]
+    : null
 
   const skillLabels: Record<string, string> = {
     rapport: 'Rapport Building',
@@ -184,13 +207,28 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
               Start Practice Session
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
-              href="/learning"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/50 rounded-lg text-gray-300 font-medium transition-colors text-sm font-sans"
-            >
-              <BookOpen className="w-4 h-4" />
-              Learn More
-            </Link>
+            {recommendedModule ? (
+              <Link
+                href={`/learning/modules/${recommendedModule.slug}`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/50 rounded-lg text-gray-300 font-medium transition-colors text-sm font-sans"
+              >
+                <BookOpen className="w-4 h-4" />
+                Review Lesson
+              </Link>
+            ) : modulesLoading ? (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-gray-400 text-sm font-sans">
+                <BookOpen className="w-4 h-4" />
+                Loading...
+              </div>
+            ) : (
+              <Link
+                href="/learning"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/50 rounded-lg text-gray-300 font-medium transition-colors text-sm font-sans"
+              >
+                <BookOpen className="w-4 h-4" />
+                Learn More
+              </Link>
+            )}
           </div>
         </div>
       </div>
