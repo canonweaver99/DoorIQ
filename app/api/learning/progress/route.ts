@@ -138,3 +138,44 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createServerSupabaseClient()
+    
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Delete all progress for the current user
+    const { error: deleteError } = await supabase
+      .from('user_module_progress')
+      .delete()
+      .eq('user_id', user.id)
+
+    if (deleteError) {
+      console.error('Error deleting progress:', deleteError)
+      return NextResponse.json(
+        { error: 'Failed to reset progress' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      message: 'All module progress has been reset'
+    })
+  } catch (error: any) {
+    console.error('Unexpected error:', error)
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+
