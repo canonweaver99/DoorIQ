@@ -61,7 +61,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
   const agentImageMap: Record<string, string> = {
     'Average Austin': '/Austin Boss.png',
     'No Problem Nancy': '/No Problem Nancy Black.png',
-    'Already Got It Alan': '/Already got it Alan landscape.png',
+    'Switchover Steve': '/Already got it Alan landscape.png',
     'Not Interested Nick': '/Not Interested Nick.png',
     'DIY Dave': '/DIY DAVE.png',
     'Too Expensive Tim': '/Too Expensive Tim.png',
@@ -170,7 +170,7 @@ function TrainerPageContent() {
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
-    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Already Got It Alan' || agentName === 'Think About It Tina' || agentName === 'Too Expensive Tim' || agentName === 'Skeptical Sam' || agentName === 'Renter Randy' || agentName === 'DIY Dave' || agentName === 'Busy Beth' || agentName === 'Not Interested Nick' || agentName === 'Spouse Check Susan'
+    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Switchover Steve' || agentName === 'Think About It Tina' || agentName === 'Too Expensive Tim' || agentName === 'Skeptical Sam' || agentName === 'Renter Randy' || agentName === 'DIY Dave' || agentName === 'Busy Beth' || agentName === 'Not Interested Nick' || agentName === 'Spouse Check Susan'
   }
   
   // Helper function to get video paths for an agent
@@ -210,7 +210,7 @@ function TrainerPageContent() {
         opening: '/just-treated-jerry-opening-door.mp4'
       }
     }
-    if (agentName === 'Already Got It Alan') {
+    if (agentName === 'Switchover Steve') {
       return {
         loop: '/already-got-it-alan-loop.mp4',
         closing: '/already-got-it-alan-closing-door.mp4',

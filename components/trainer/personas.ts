@@ -1,7 +1,7 @@
 export const ALLOWED_AGENT_ORDER = [
   'Average Austin',
   'No Problem Nancy',
-  'Already Got It Alan',
+  'Switchover Steve',
   'Not Interested Nick',
   'DIY Dave',
   'Too Expensive Tim',
@@ -140,7 +140,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       elevenAgentId: 'agent_0101k6dvb96zejkv35ncf1zkj88m',
     },
   },
-  'Already Got It Alan': {
+  'Switchover Steve': {
     bubble: {
       subtitle: 'Current Customer',
       description: 'Has already been serviced. Practice Competitive positioning.',

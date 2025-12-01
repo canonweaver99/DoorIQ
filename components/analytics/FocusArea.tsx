@@ -39,7 +39,7 @@ const skillRecommendations: Record<string, { drill: string; persona?: string }> 
 const agentImageMap: Record<string, string> = {
   'Average Austin': '/Austin Boss.png',
   'No Problem Nancy': '/No Problem Nancy Black.png',
-  'Already Got It Alan': '/Already got it Alan landscape.png',
+  'Switchover Steve': '/Already got it Alan landscape.png',
   'Not Interested Nick': '/Not Interested Nick.png',
   'DIY Dave': '/DIY DAVE.png',
   'Too Expensive Tim': '/Too Expensive Tim.png',
