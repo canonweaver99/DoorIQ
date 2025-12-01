@@ -67,11 +67,19 @@ export async function GET(request: NextRequest) {
       })) || []
     }
 
-    // Check if cache-busting parameter is present (for immediate updates)
-    const cacheBust = url.searchParams.get('_t')
-    const cacheHeaders = cacheBust 
-      ? { 'Cache-Control': 'no-cache, no-store, must-revalidate' } // Bypass cache if cache-busting
-      : { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } // Normal cache
+    // Always bypass cache for authenticated users to ensure fresh progress data
+    // Cache only for unauthenticated users (public content)
+    const cacheHeaders = user
+      ? { 
+          'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      : { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' }
+
+    // Log for debugging
+    console.log('📚 API: Returning', modulesWithProgress.length, 'modules for user:', user?.email || 'anonymous')
+    console.log('📊 API: Modules with completed progress:', modulesWithProgress.filter(m => m.progress?.completed_at).length)
 
     return NextResponse.json(
       { modules: modulesWithProgress },

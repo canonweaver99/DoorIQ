@@ -18,20 +18,32 @@ export function useModules(options: UseModulesOptions = {}) {
         setLoading(true)
         setError(null)
 
+        // Force fresh fetch with multiple cache-busting strategies
+        const timestamp = Date.now()
+        const random = Math.random().toString(36).substring(7)
         const url = options.category
-          ? `/api/learning/modules?category=${options.category}&_t=${Date.now()}`
-          : `/api/learning/modules?_t=${Date.now()}`
+          ? `/api/learning/modules?category=${options.category}&_t=${timestamp}&_r=${random}`
+          : `/api/learning/modules?_t=${timestamp}&_r=${random}`
 
         const response = await fetch(url, {
-          cache: 'no-store', // Bypass cache to get fresh data
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
         })
         if (!response.ok) {
           throw new Error('Failed to fetch modules')
         }
 
         const data = await response.json()
+        // Log for debugging
+        console.log('📚 Fetched modules:', data.modules?.length, 'modules')
+        console.log('📊 Modules with progress:', data.modules?.filter(m => m.progress?.completed_at).length)
+        
         setModules(data.modules || [])
       } catch (err) {
+        console.error('❌ Error fetching modules:', err)
         setError(err instanceof Error ? err : new Error('Unknown error'))
       } finally {
         setLoading(false)

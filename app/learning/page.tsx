@@ -231,12 +231,29 @@ export default function LearningPage() {
             
             if (card.id !== 'getting-started' && card.id !== 'objections') {
               const categoryModules = modules.filter(m => m.category === card.id)
-              const completed = categoryModules.filter(m => m.progress?.completed_at !== null).length
+              // Only count as completed if progress exists AND completed_at is not null
+              const completed = categoryModules.filter(m => {
+                const hasProgress = m.progress !== null && m.progress !== undefined
+                const isCompleted = m.progress?.completed_at !== null && m.progress?.completed_at !== undefined
+                return hasProgress && isCompleted
+              }).length
               const total = categoryModules.length
               if (total > 0) {
                 progress = { completed, total }
                 isCompleted = completed === total && total > 0
                 progressPercentage = (completed / total) * 100
+              }
+              // Debug logging
+              if (card.id === 'approach') {
+                console.log('🔍 APPROACH card debug:', {
+                  totalModules: total,
+                  completedModules: completed,
+                  modules: categoryModules.map(m => ({
+                    title: m.title,
+                    hasProgress: m.progress !== null,
+                    completedAt: m.progress?.completed_at
+                  }))
+                })
               }
             } else {
               // For getting-started and objections, default to 0%
