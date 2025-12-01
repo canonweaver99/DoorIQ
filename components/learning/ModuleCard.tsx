@@ -144,7 +144,8 @@ const moduleIcons: Record<string, typeof Footprints> = {
 
 export function ModuleCard({ module, delay = 0, isLast = false, displayNumber }: ModuleCardProps) {
   const categoryColors = getCategoryColors(module.category)
-  const isCompleted = module.progress?.completed_at !== null
+  // Only completed if progress exists AND completed_at is not null
+  const isCompleted = module.progress !== null && module.progress !== undefined && module.progress.completed_at !== null
   const timeSpent = module.progress?.time_spent_seconds || 0
   const isInProgress = timeSpent > 0 && !isCompleted
   
