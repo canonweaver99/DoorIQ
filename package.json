@@ -70,6 +70,7 @@
     "react-is": "^19.2.0",
     "react-markdown": "^9.1.0",
     "recharts": "^3.2.1",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.2.0-canary.3",
     "shadcn": "^3.4.0",

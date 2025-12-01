@@ -323,12 +323,12 @@ export default function LearningPage() {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl font-bold text-white mb-2 font-space leading-tight uppercase">
+                    <h3 className="text-2xl font-bold text-white mb-2 font-space leading-tight uppercase">
                       {card.title}
                     </h3>
 
                     {/* Subtitle */}
-                    <p className="text-white text-base mb-4 font-sans flex-1 leading-relaxed">
+                    <p className="text-white text-xl font-bold mb-4 font-space flex-1 leading-tight uppercase">
                       {card.subtitle}
                     </p>
 

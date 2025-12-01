@@ -125,12 +125,6 @@ export function ObjectionCard({ objection, delay = 0, isLast = false, displayNum
             </button>
           </div>
 
-          {/* Completion Overlay */}
-          {isCompleted && (
-            <div className="absolute top-3 right-3">
-              <CheckCircle2 className="w-7 h-7 text-green-400" />
-            </div>
-          )}
         </motion.div>
       </Link>
       

@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CheckCircle2, Clock } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 import { ModuleWithProgress } from '@/lib/learning/types'
 import { MarkdownContent } from './MarkdownContent'
 import { ProgressIndicator } from './ProgressIndicator'
 import { ModuleNavigation } from './ModuleNavigation'
-import { RelatedModules } from './RelatedModules'
 import { PracticeChallenge } from './PracticeChallenge'
 import { useModuleProgress } from '@/hooks/learning/useModuleProgress'
 import { useModules } from '@/hooks/learning/useModules'
@@ -19,11 +18,21 @@ interface ModuleDetailProps {
 
 export function ModuleDetail({ module, allModules: providedModules }: ModuleDetailProps) {
   const [timeSpent, setTimeSpent] = useState(0)
-  const [isCompleted, setIsCompleted] = useState(module.progress?.completed_at !== null)
+  // Use same logic as ModuleCard: only completed if progress exists AND completed_at is not null
+  const [isCompleted, setIsCompleted] = useState(
+    module.progress !== null && module.progress !== undefined && module.progress.completed_at !== null
+  )
   const { markComplete, loading: progressLoading } = useModuleProgress()
   const { modules: fetchedModules } = useModules()
   
   const allModules = providedModules || fetchedModules
+
+  // Update completion status when module prop changes
+  useEffect(() => {
+    setIsCompleted(
+      module.progress !== null && module.progress !== undefined && module.progress.completed_at !== null
+    )
+  }, [module.progress?.completed_at])
 
   // Track time spent reading
   useEffect(() => {
@@ -51,26 +60,25 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex-1">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 font-space">
+      {/* Content Card with Title and Progress */}
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 sm:p-8 mb-6 shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+        {/* Title and Progress Bar */}
+        <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">
               {module.title}
             </h1>
-            <ProgressIndicator
-              completed={isCompleted}
-              timeSpent={timeSpent}
-              estimatedMinutes={module.estimated_minutes}
-            />
           </div>
+          <ProgressIndicator
+            completed={isCompleted}
+            timeSpent={timeSpent}
+            estimatedMinutes={module.estimated_minutes}
+          />
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 sm:p-8 mb-6 shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+        {/* Content */}
         {module.content ? (
-          <MarkdownContent content={module.content} />
+          <MarkdownContent content={module.content} moduleTitle={module.title} />
         ) : (
           <div className="text-center py-12">
             <p className="text-slate-400 font-sans">Content coming soon...</p>
@@ -79,15 +87,7 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
       </div>
 
       {/* Practice Challenge */}
-      <PracticeChallenge moduleSlug={module.slug} moduleTitle={module.title} />
-
-      {/* Actions */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2 text-slate-400 text-sm font-sans">
-          <Clock className="w-4 h-4" />
-          <span>Reading time: {module.estimated_minutes} min</span>
-        </div>
-      </div>
+      <PracticeChallenge moduleSlug={module.slug} moduleTitle={module.title} moduleCategory={module.category} />
 
       {/* Completed Button at Bottom */}
       <div className="flex justify-center mt-8 mb-6">
@@ -111,10 +111,7 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
 
       {/* Navigation */}
       {allModules && allModules.length > 0 && (
-        <>
-          <ModuleNavigation currentModule={module} allModules={allModules} />
-          <RelatedModules currentModule={module} allModules={allModules} />
-        </>
+        <ModuleNavigation currentModule={module} allModules={allModules} />
       )}
     </div>
   )
