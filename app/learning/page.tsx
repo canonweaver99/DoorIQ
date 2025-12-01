@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Rocket, DoorOpen, Megaphone, Shield, Handshake, MessageSquare, Lock, ArrowRight } from 'lucide-react'
+import { Rocket, Footprints, TrendingUp, ShieldCheck, Trophy, Radio, Lock, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useFeatureAccess } from '@/hooks/useSubscription'
@@ -16,57 +16,67 @@ interface CategoryCard {
   subtitle: string
   icon: typeof Rocket
   href: string
-  color: string
+  gradient: string
+  accentColor: string
+  badge?: string
 }
 
 const categoryCards: CategoryCard[] = [
   {
     id: 'getting-started',
     title: 'New to DoorIQ?',
-    subtitle: 'Start here — learn how to use the platform',
+    subtitle: 'Your journey starts here',
     icon: Rocket,
     href: '/learning/getting-started',
-    color: 'from-purple-500/20 to-pink-500/20'
+    gradient: 'from-purple-900 via-purple-950 to-black',
+    accentColor: 'purple',
+    badge: 'Start'
   },
   {
     id: 'approach',
     title: 'Approach',
-    subtitle: 'Make a great first impression',
-    icon: DoorOpen,
+    subtitle: 'Own the first 5 seconds',
+    icon: Footprints,
     href: '/learning/modules?category=approach',
-    color: 'from-blue-500/20 to-cyan-500/20'
+    gradient: 'from-teal-900 via-slate-900 to-slate-950',
+    accentColor: 'teal'
   },
   {
     id: 'pitch',
     title: 'Pitch',
-    subtitle: 'Build value before price',
-    icon: Megaphone,
+    subtitle: 'Build value, win trust',
+    icon: TrendingUp,
     href: '/learning/modules?category=pitch',
-    color: 'from-purple-500/20 to-indigo-500/20'
+    gradient: 'from-amber-900 via-orange-950 to-black',
+    accentColor: 'orange'
   },
   {
     id: 'objections',
     title: 'Objection Handling',
-    subtitle: 'Turn "no" into "yes"',
-    icon: Shield,
+    subtitle: 'Turn no into yes',
+    icon: ShieldCheck,
     href: '/learning/objections',
-    color: 'from-red-500/20 to-orange-500/20'
+    gradient: 'from-red-900 via-slate-900 to-slate-950',
+    accentColor: 'red',
+    badge: 'Most Popular'
   },
   {
     id: 'close',
     title: 'Closing',
-    subtitle: 'Ask for the commitment',
-    icon: Handshake,
+    subtitle: 'Seal the deal',
+    icon: Trophy,
     href: '/learning/modules?category=close',
-    color: 'from-green-500/20 to-emerald-500/20'
+    gradient: 'from-green-900 via-emerald-950 to-black',
+    accentColor: 'green'
   },
   {
     id: 'communication',
     title: 'Communication',
-    subtitle: 'Master verbal and non-verbal skills',
-    icon: MessageSquare,
+    subtitle: 'Master the unspoken',
+    icon: Radio,
     href: '/learning/modules?category=communication',
-    color: 'from-indigo-500/20 to-purple-500/20'
+    gradient: 'from-blue-900 via-purple-950 to-black',
+    accentColor: 'blue'
   }
 ]
 
@@ -163,57 +173,157 @@ export default function LearningPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
           {categoryCards.map((card, index) => {
             const Icon = card.icon
             
             // Calculate progress for category cards (except getting-started)
             let progress = null
+            let isCompleted = false
             if (card.id !== 'getting-started' && card.id !== 'objections') {
               const categoryModules = modules.filter(m => m.category === card.id)
               const completed = categoryModules.filter(m => m.progress?.completed_at !== null).length
               const total = categoryModules.length
               if (total > 0) {
                 progress = { completed, total }
+                isCompleted = completed === total && total > 0
               }
             }
+            
+            // Get accent color classes and hover styles
+            const getHoverBorderClass = (color: string) => {
+              const map: Record<string, string> = {
+                purple: 'hover:border-purple-500/50',
+                teal: 'hover:border-teal-500/50',
+                orange: 'hover:border-orange-500/50',
+                red: 'hover:border-red-500/50',
+                green: 'hover:border-green-500/50',
+                blue: 'hover:border-blue-500/50'
+              }
+              return map[color] || 'hover:border-purple-500/50'
+            }
+            
+            const getProgressGradient = (color: string) => {
+              const map: Record<string, string> = {
+                purple: 'bg-gradient-to-r from-purple-500 to-purple-600',
+                teal: 'bg-gradient-to-r from-teal-500 to-teal-600',
+                orange: 'bg-gradient-to-r from-orange-500 to-orange-600',
+                red: 'bg-gradient-to-r from-red-500 to-red-600',
+                green: 'bg-gradient-to-r from-green-500 to-green-600',
+                blue: 'bg-gradient-to-r from-blue-500 to-blue-600'
+              }
+              return map[color] || 'bg-gradient-to-r from-purple-500 to-purple-600'
+            }
+            
+            const getHoverGlowStyle = (color: string) => {
+              const map: Record<string, string> = {
+                purple: 'bg-gradient-to-br from-purple-500/5 to-transparent',
+                teal: 'bg-gradient-to-br from-teal-500/5 to-transparent',
+                orange: 'bg-gradient-to-br from-orange-500/5 to-transparent',
+                red: 'bg-gradient-to-br from-red-500/5 to-transparent',
+                green: 'bg-gradient-to-br from-green-500/5 to-transparent',
+                blue: 'bg-gradient-to-br from-blue-500/5 to-transparent'
+              }
+              return map[color] || 'bg-gradient-to-br from-purple-500/5 to-transparent'
+            }
+            
+            const getProgressGlowStyle = (color: string) => {
+              const map: Record<string, string> = {
+                purple: 'shadow-[0_0_12px_rgba(139,92,246,0.5)]',
+                teal: 'shadow-[0_0_12px_rgba(20,184,166,0.5)]',
+                orange: 'shadow-[0_0_12px_rgba(249,115,22,0.5)]',
+                red: 'shadow-[0_0_12px_rgba(239,68,68,0.5)]',
+                green: 'shadow-[0_0_12px_rgba(34,197,94,0.5)]',
+                blue: 'shadow-[0_0_12px_rgba(59,130,246,0.5)]'
+              }
+              return map[color] || 'shadow-[0_0_12px_rgba(139,92,246,0.5)]'
+            }
                 
-                return (
-                  <motion.div
+            return (
+              <motion.div
                 key={card.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 * index }}
-                whileHover={{ scale: 1.02, y: -4 }}
+                whileHover={{ scale: 1.03, y: -6 }}
+                className="group"
               >
                 <Link href={card.href}>
-                  <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300 cursor-pointer h-full flex flex-col shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
-                    {/* Icon */}
-                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-4`}>
-                      <Icon className="w-6 h-6 text-white" />
+                  <div className={`
+                    relative bg-gradient-to-br ${card.gradient}
+                    border border-[#2a2a2a] rounded-xl p-8
+                    transition-all duration-300 cursor-pointer
+                    h-full flex flex-col min-h-[320px]
+                    shadow-[0_8px_32px_rgba(0,0,0,0.6)]
+                    ${getHoverBorderClass(card.accentColor)}
+                    hover:shadow-[0_12px_48px_rgba(0,0,0,0.8)]
+                    overflow-hidden
+                  `}>
+                    {/* Badge */}
+                    {card.badge && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <span className={`
+                          px-3 py-1 rounded-full text-xs font-bold
+                          ${card.badge === 'Start' ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gradient-to-r from-red-500 to-orange-500'}
+                          text-white shadow-lg
+                          flex items-center gap-1
+                        `}>
+                          {card.badge === 'Start' && <Sparkles className="w-3 h-3" />}
+                          {card.badge}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Completion Badge */}
+                    {isCompleted && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center shadow-lg">
+                          <CheckCircle2 className="w-6 h-6 text-white" />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Large Icon */}
+                    <div className="mb-6 flex items-center justify-center">
+                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
+                        <Icon className="w-12 h-12 text-white drop-shadow-lg" />
+                      </div>
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl font-bold text-white mb-2 font-space">
+                    <h3 className="text-2xl font-bold text-white mb-3 font-space leading-tight">
                       {card.title}
                     </h3>
 
                     {/* Subtitle */}
-                    <p className="text-slate-400 text-sm mb-4 font-sans flex-1">
+                    <p className="text-[#888] text-sm mb-6 font-sans flex-1 leading-relaxed">
                       {card.subtitle}
                     </p>
 
                     {/* Progress Indicator */}
                     {progress && (
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-[#2a2a2a]">
-                        <span className="text-xs text-slate-500 font-sans">
-                          {progress.completed}/{progress.total} completed
-                        </span>
-                        <div className="w-24 bg-slate-800 rounded-full h-1.5">
-                          <div
-                            className="bg-purple-600 h-1.5 rounded-full transition-all duration-500"
-                            style={{ width: `${(progress.completed / progress.total) * 100}%` }}
+                      <div className="mt-auto pt-6 border-t border-white/10">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-[#888] font-sans font-medium">
+                            {progress.completed}/{progress.total} completed
+                          </span>
+                          {isCompleted && (
+                            <span className="text-xs text-green-400 font-semibold font-sans">
+                              Complete
+                            </span>
+                          )}
+                        </div>
+                        <div className="w-full bg-slate-900/50 rounded-full h-2 overflow-hidden backdrop-blur-sm">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(progress.completed / progress.total) * 100}%` }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                            className={`
+                              ${getProgressGradient(card.accentColor)} h-2 rounded-full
+                              ${progress.completed > 0 ? getProgressGlowStyle(card.accentColor) : ''}
+                              transition-all duration-500
+                            `}
                           />
                         </div>
                       </div>
@@ -221,15 +331,24 @@ export default function LearningPage() {
                     
                     {/* Arrow for cards without progress */}
                     {!progress && (
-                      <div className="flex items-center justify-end mt-auto pt-4 border-t border-[#2a2a2a]">
-                        <ArrowRight className="w-4 h-4 text-slate-500" />
+                      <div className="flex items-center justify-end mt-auto pt-6 border-t border-white/10">
+                        <motion.div
+                          initial={{ x: 0 }}
+                          whileHover={{ x: 4 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ArrowRight className="w-5 h-5 text-[#888] group-hover:text-white transition-colors" />
+                        </motion.div>
                       </div>
-                      )}
-                    </div>
+                    )}
+                    
+                    {/* Hover Glow Effect */}
+                    <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${getHoverGlowStyle(card.accentColor)}`} />
+                  </div>
                 </Link>
-                  </motion.div>
-                )
-              })}
+              </motion.div>
+            )
+          })}
         </motion.div>
       </div>
     </div>
