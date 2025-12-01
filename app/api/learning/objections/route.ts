@@ -42,12 +42,17 @@ export async function GET(request: NextRequest) {
       progress: progressMap[obj.id] || null
     }))
 
+    // Check if cache-busting parameter is present
+    const url = new URL(request.url)
+    const cacheBust = url.searchParams.get('_t')
+    const cacheHeaders = cacheBust 
+      ? { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      : { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' }
+
     return NextResponse.json(
       { objections: objectionsWithProgress },
       {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        },
+        headers: cacheHeaders,
       }
     )
   } catch (error: any) {

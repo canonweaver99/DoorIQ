@@ -19,10 +19,12 @@ export function useModules(options: UseModulesOptions = {}) {
         setError(null)
 
         const url = options.category
-          ? `/api/learning/modules?category=${options.category}`
-          : '/api/learning/modules'
+          ? `/api/learning/modules?category=${options.category}&_t=${Date.now()}`
+          : `/api/learning/modules?_t=${Date.now()}`
 
-        const response = await fetch(url)
+        const response = await fetch(url, {
+          cache: 'no-store', // Bypass cache to get fresh data
+        })
         if (!response.ok) {
           throw new Error('Failed to fetch modules')
         }

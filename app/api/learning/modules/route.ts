@@ -67,12 +67,16 @@ export async function GET(request: NextRequest) {
       })) || []
     }
 
+    // Check if cache-busting parameter is present (for immediate updates)
+    const cacheBust = url.searchParams.get('_t')
+    const cacheHeaders = cacheBust 
+      ? { 'Cache-Control': 'no-cache, no-store, must-revalidate' } // Bypass cache if cache-busting
+      : { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } // Normal cache
+
     return NextResponse.json(
       { modules: modulesWithProgress },
       {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        },
+        headers: cacheHeaders,
       }
     )
   } catch (error: any) {

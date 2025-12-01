@@ -14,7 +14,9 @@ export function useObjections() {
         setLoading(true)
         setError(null)
 
-        const response = await fetch('/api/learning/objections')
+        const response = await fetch(`/api/learning/objections?_t=${Date.now()}`, {
+          cache: 'no-store', // Bypass cache to get fresh data
+        })
         if (!response.ok) {
           throw new Error('Failed to fetch objections')
         }
