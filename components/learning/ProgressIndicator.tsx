@@ -48,15 +48,10 @@ export function ProgressIndicator({
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      {getStatusIcon()}
+      {!completed && getStatusIcon()}
       <span className={cn('text-sm font-medium px-2 py-1 rounded border', getStatusColor())}>
         {getStatusText()}
       </span>
-      {estimatedMinutes > 0 && (
-        <span className="text-xs text-slate-400 font-sans">
-          {estimatedMinutes} min read
-        </span>
-      )}
     </div>
   )
 }

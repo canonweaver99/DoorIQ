@@ -41,3 +41,4 @@ Isolate the real concern: "Totally fair—what specifically do you want to think
 
 Next time someone says they need to think about it, don't accept it. Instead, ask: "What specifically do you want to think over? Is it the price, the service, or something else?" Once you know the real concern, address it, then create soft urgency. Don't leave without clarity.
 
+

@@ -31,8 +31,24 @@ export async function GET(
       )
     }
 
+    // Fetch user progress if authenticated
+    let progress = null
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_objection_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('objection_id', objection.id)
+        .single()
+
+      if (!progressError && progressData) {
+        progress = progressData
+      }
+    }
+
     return NextResponse.json(
-      { objection },
+      { objection: { ...objection, progress } },
       {
         headers: {
           'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
@@ -47,4 +63,5 @@ export async function GET(
     )
   }
 }
+
 

@@ -20,8 +20,30 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Fetch user progress if authenticated
+    let progressMap: Record<string, any> = {}
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: progressData } = await supabase
+        .from('user_objection_progress')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (progressData) {
+        progressData.forEach(progress => {
+          progressMap[progress.objection_id] = progress
+        })
+      }
+    }
+
+    // Attach progress to each objection
+    const objectionsWithProgress = (objections || []).map(obj => ({
+      ...obj,
+      progress: progressMap[obj.id] || null
+    }))
+
     return NextResponse.json(
-      { objections: objections || [] },
+      { objections: objectionsWithProgress },
       {
         headers: {
           'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
@@ -36,4 +58,5 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
 

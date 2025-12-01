@@ -35,3 +35,4 @@ Respect first: "I totally get wanting to handle it yourself." Then show the gap:
 
 Next time someone says they do it themselves, don't make them feel dumb. Instead, respect their effort, then ask: "How often do you have to redo it?" Then show them that for the same money, they get professional service with a guarantee. Make professional feel like the obvious upgrade.
 
+

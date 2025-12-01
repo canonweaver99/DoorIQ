@@ -50,35 +50,29 @@ export default function ObjectionsPage() {
             <ArrowLeft className="w-4 h-4" />
             Back to Learning Center
           </Link>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-center gap-2 mb-2">
             <AlertCircle className="w-6 h-6 text-red-400" />
-            <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">Objection Handling</h1>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white font-space uppercase">Objection Handling</h1>
           </div>
-          <p className="text-slate-400 font-sans mb-4">Master the art of turning "no" into "yes"</p>
+          <p className="text-white text-lg font-sans mb-4 text-center">Master the art of turning "no" into "yes"</p>
         </motion.div>
 
-        {/* Objections Grid */}
+        {/* Objections List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
+          className="max-w-6xl mx-auto space-y-0"
         >
-          <div className="flex items-center gap-2 mb-6">
-            <Sparkles className="w-5 h-5 text-red-400" />
-            <h2 className="text-2xl font-bold text-white font-space">Common Objections</h2>
-          </div>
-          <p className="text-slate-400 mb-6 font-sans">
-            Learn how to handle the most common objections you'll face in D2D sales. Each objection includes frameworks, example scripts, and actionable tactics.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {objections.map((objection, idx) => (
-              <ObjectionCard
-                key={objection.id}
-                objection={objection}
-                delay={0.1 * idx}
-              />
-            ))}
-          </div>
+          {objections.map((objection, idx) => (
+            <ObjectionCard
+              key={objection.id}
+              objection={objection}
+              delay={0.05 * idx}
+              isLast={idx === objections.length - 1}
+              displayNumber={idx + 1}
+            />
+          ))}
         </motion.div>
 
         {objections.length === 0 && (

@@ -37,3 +37,4 @@ Don't talk about cost—talk about investment. Break it down to something relata
 
 Next time you hear a price objection, don't defend. Instead, ask: "What are you currently spending on [related problem/service]?" Then break your price down to a daily or monthly cost and compare. Watch how many more people see the value.
 
+

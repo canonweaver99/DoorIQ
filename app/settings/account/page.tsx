@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, LogIn, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ProfileInformation } from '@/components/settings/ProfileInformation'
 import { EmailPreferences } from '@/components/settings/EmailPreferences'
 import { AccountPreferences } from '@/components/settings/AccountPreferences'
 import { useToast } from '@/components/ui/toast'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 export default function AccountSettingsPage() {
   const supabase = createClient()
@@ -30,7 +32,7 @@ export default function AccountSettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        showToast({ type: 'error', title: 'Not authenticated' })
+        setLoading(false)
         return
       }
 
@@ -120,8 +122,38 @@ export default function AccountSettingsPage() {
 
   if (!userId) {
     return (
-      <div className="text-center py-12">
-        <p className="text-[#a0a0a0] font-sans">Unable to load account data</p>
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8 max-w-md w-full text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-center">
+              <UserPlus className="w-8 h-8 text-[#00d4aa]" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2 font-space">Sign in to view your account</h3>
+            <p className="text-sm text-[#a0a0a0] font-sans">
+              Please sign in or create an account to access your account settings and preferences.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link href="/auth/login" className="flex-1">
+              <Button 
+                variant="brand" 
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/auth/signup" className="flex-1">
+              <Button 
+                variant="default" 
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Sign Up
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     )
   }

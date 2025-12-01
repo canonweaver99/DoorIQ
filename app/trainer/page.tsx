@@ -497,13 +497,21 @@ function TrainerPageContent() {
         .eq('is_active', true)
         .order('name', { ascending: true })
 
+      // Filter out Tanya & Tom (temporarily disabled)
+      const availableAgents = agents?.filter((agent: Agent) => agent.name !== 'Tag Team Tanya & Tom') || []
+
       if (agentParam) {
-        const match = agents?.find((agent: Agent) => agent.eleven_agent_id === agentParam)
+        const match = availableAgents.find((agent: Agent) => agent.eleven_agent_id === agentParam)
+        // If trying to select Tanya & Tom, redirect to select-homeowner page
+        if (!match && agents?.find((agent: Agent) => agent.eleven_agent_id === agentParam && agent.name === 'Tag Team Tanya & Tom')) {
+          router.push('/trainer/select-homeowner')
+          return
+        }
         console.log('🔍 Selected agent by param:', match)
-        setSelectedAgent(match || agents?.[0] || null)
+        setSelectedAgent(match || availableAgents?.[0] || null)
       } else {
-        console.log('🔍 Selected first agent:', agents?.[0])
-        setSelectedAgent(agents?.[0] || null)
+        console.log('🔍 Selected first agent:', availableAgents?.[0])
+        setSelectedAgent(availableAgents?.[0] || null)
       }
     } catch (error) {
       logger.error('Error fetching agents', error)
@@ -603,6 +611,13 @@ function TrainerPageContent() {
   const startSession = async (skipCreditCheck = false) => {
     if (!selectedAgent?.eleven_agent_id) {
       alert('Please select an agent first')
+      return
+    }
+
+    // Prevent starting session with Tanya & Tom (temporarily disabled)
+    if (selectedAgent.name === 'Tag Team Tanya & Tom') {
+      alert('Tag Team Tanya & Tom is coming soon! Please select another agent.')
+      router.push('/trainer/select-homeowner')
       return
     }
 
@@ -804,18 +819,11 @@ function TrainerPageContent() {
     }
   }
 
-  // Handle door closing video completion - redirect to loading page to wait for grading
-  const handleDoorVideoComplete = useCallback(() => {
-    console.log('🎬 Door closing video completed, redirecting to loading page')
-    setSessionState('complete')
-    
-    if (sessionId) {
-      // Redirect to loading page - it will wait for grading to complete
-      window.location.href = `/trainer/loading/${sessionId}`
-    } else {
-      router.push('/trainer')
-    }
-  }, [sessionId, router])
+  // Handle door closing video completion - will be defined after endSession and triggerGradingAfterDoorClose
+  // Placeholder - will be redefined later
+  let handleDoorVideoComplete: () => void = () => {
+    console.log('⚠️ handleDoorVideoComplete called before initialization')
+  }
 
   // Trigger grading after ensuring transcript is saved
   const triggerGradingAfterDoorClose = useCallback(async (sessionId: string) => {
@@ -1061,168 +1069,22 @@ function TrainerPageContent() {
       hasVideoRef: !!agentVideoRef.current
     })
     
-    // Ensure door close animation state is set
-    if (!showDoorCloseAnimation) {
-      setShowDoorCloseAnimation(true)
-    }
-    
-    // Check if this agent has video animations - if so, wait for loop to reach beginning, then play closing door video
+    // Check if this agent has video animations
     const hasVideos = agentHasVideos(selectedAgent?.name)
     console.log('🎬 Agent has videos:', hasVideos, 'for agent:', selectedAgent?.name)
     
+    // Set session state to door-closing to trigger DoorClosingVideo component for agents with videos
     if (hasVideos) {
-      const agentName = selectedAgent?.name || 'Unknown'
-      console.log(`🎬 Agent has video animations, preparing door closing sequence for ${agentName}...`)
-      
-      // Wait for loop video to reach its beginning before switching to closing animation
-      if (videoMode === 'loop' && agentVideoRef.current) {
-        const video = agentVideoRef.current
-        const duration = loopVideoDurationRef.current || video.duration || 0
-        
-        if (duration > 0) {
-          // Calculate how long until the loop reaches the beginning
-          const currentTime = video.currentTime
-          const timeUntilLoopStart = duration - currentTime
-          
-          console.log(`🎬 Loop video position: ${currentTime.toFixed(2)}s / ${duration.toFixed(2)}s`)
-          console.log(`🎬 Waiting ${timeUntilLoopStart.toFixed(2)}s for loop to reach beginning...`)
-          
-          // Wait for the loop to complete and reach the beginning
-          await new Promise<void>((resolve) => {
-            const checkLoopPosition = () => {
-              const video = agentVideoRef.current
-              if (!video) {
-                resolve()
-                return
-              }
-              
-              // Check if we're at or near the beginning of the loop (within 0.1 seconds)
-              if (video.currentTime < 0.1) {
-                console.log('🎬 Loop has reached the beginning!')
-                resolve()
-              } else {
-                // Check again in 50ms
-                setTimeout(checkLoopPosition, 50)
-              }
-            }
-            
-            // Start checking after calculated time (with a small buffer)
-            setTimeout(checkLoopPosition, Math.max(0, (timeUntilLoopStart - 0.2) * 1000))
-            
-            // Fallback timeout (max wait 5 seconds)
-            setTimeout(() => {
-              console.log('⏰ Loop wait timeout, proceeding with door close')
-              resolve()
-            }, 5000)
-          })
-        }
-      }
-      
-      console.log(`🎬 Switching to closing door video for ${agentName}...`)
-      
-      // Get the closing video path to verify it exists
-      const videoPaths = getAgentVideoPaths(agentName)
-      const closingVideoPath = videoPaths?.closing
-      
-      if (!closingVideoPath) {
-        console.warn('⚠️ No closing video path found, skipping video animation')
-      } else {
-        // Switch to closing door video - React will re-render with new src
-        setVideoMode('closing')
-        
-        // Wait for React to update and video element to be ready
-        // Also wait for video source to actually change
-        await new Promise<void>((resolve) => {
-          let attempts = 0
-          const maxAttempts = 20 // 2 seconds max wait
-          
-          const checkVideoReady = () => {
-            const video = agentVideoRef.current
-            attempts++
-            
-            if (!video) {
-              if (attempts >= maxAttempts) {
-                console.warn('⚠️ Video ref not available after waiting, proceeding anyway')
-                resolve()
-                return
-              }
-              setTimeout(checkVideoReady, 100)
-              return
-            }
-            
-            // Check if video source has changed to closing video
-            const currentSrc = video.src || video.currentSrc || ''
-            const closingVideoFileName = closingVideoPath.split('/').pop() || ''
-            
-            // Check if src matches (allowing for URL encoding differences)
-            const srcMatches = currentSrc.includes(closingVideoFileName) || 
-                              currentSrc.includes(encodeURIComponent(closingVideoFileName))
-            
-            if (srcMatches || video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-              console.log('🎬 Closing video is ready, src:', currentSrc)
-              resolve()
-            } else if (attempts >= maxAttempts) {
-              console.warn('⚠️ Video source not updated after waiting, proceeding anyway')
-              resolve()
-            } else {
-              setTimeout(checkVideoReady, 100)
-            }
-          }
-          
-          // Start checking after a brief delay to allow React to render
-          setTimeout(checkVideoReady, 100)
-        })
-        
-        // Wait for closing door video to finish before ending session
-        await new Promise<void>((resolve) => {
-          const video = agentVideoRef.current
-          if (!video) {
-            console.warn('⚠️ Video ref not available, proceeding anyway')
-            resolve()
-            return
-          }
-          
-          // Ensure video is playing
-          const playPromise = video.play().catch((err) => {
-            console.warn('Video play failed:', err)
-            // If play fails, still wait a bit in case it recovers
-            setTimeout(() => resolve(), 2000)
-          })
-          
-          const handleVideoEnd = async () => {
-            console.log(`🎬 Closing door video finished for ${agentName}`)
-            video.removeEventListener('ended', handleVideoEnd)
-            video.removeEventListener('error', handleVideoError)
-            resolve()
-          }
-          
-          const handleVideoError = (e: any) => {
-            console.error('❌ Closing video error:', e)
-            video.removeEventListener('ended', handleVideoEnd)
-            video.removeEventListener('error', handleVideoError)
-            // Still resolve after a delay to not block the session end
-            setTimeout(() => resolve(), 1000)
-          }
-          
-          // Check if video already ended (edge case)
-          if (video.ended) {
-            console.log('🎬 Video already ended')
-            resolve()
-            return
-          }
-          
-          video.addEventListener('ended', handleVideoEnd)
-          video.addEventListener('error', handleVideoError)
-          
-          // Fallback timeout in case video doesn't fire ended event
-          setTimeout(() => {
-            console.log('⏰ Closing door video timeout, proceeding anyway')
-            video.removeEventListener('ended', handleVideoEnd)
-            video.removeEventListener('error', handleVideoError)
-            resolve()
-          }, 10000) // 10 second timeout
-        })
-      }
+      setSessionState('door-closing')
+      // DoorClosingVideo component will handle video playback
+      // The handleDoorVideoComplete callback will handle ending session and triggering grading
+      // So we can return early here
+      return
+    }
+    
+    // For agents without videos, ensure door close animation state is set
+    if (!hasVideos && !showDoorCloseAnimation) {
+      setShowDoorCloseAnimation(true)
     }
     
     // CRITICAL: Capture transcript state BEFORE setting session inactive
@@ -1261,6 +1123,40 @@ function TrainerPageContent() {
       setSessionActive(false)
     }, 100)
   }, [selectedAgent?.name, videoMode, endSession, sessionId, transcript, showDoorCloseAnimation])
+  
+  // Define handleDoorVideoComplete after endSession and triggerGradingAfterDoorClose are available
+  handleDoorVideoComplete = useCallback(async () => {
+    console.log('🎬 Door closing video completed')
+    setSessionState('complete')
+    
+    if (!sessionId) {
+      router.push('/trainer')
+      return
+    }
+    
+    // Capture transcript state before ending session
+    const currentTranscript = transcript
+    console.log('🔚 Door closing video complete, preparing to end session and start grading...', {
+      transcriptLength: currentTranscript.length,
+      sessionId
+    })
+    
+    try {
+      // End the session first (saves transcript and voice analysis)
+      await endSession('Conversation ended', true) // skipRedirect = true
+      
+      // After session is saved, trigger grading automatically
+      console.log('🎯 Starting automatic grading after door close video...')
+      await triggerGradingAfterDoorClose(sessionId)
+      
+      // Redirect to loading page - it will wait for grading to complete
+      window.location.href = `/trainer/loading/${sessionId}`
+    } catch (error) {
+      console.error('❌ Error in endSession or grading from handleDoorVideoComplete:', error)
+      // Fallback: redirect to loading page which will trigger grading
+      window.location.href = `/trainer/loading/${sessionId}`
+    }
+  }, [sessionId, router, transcript, endSession, triggerGradingAfterDoorClose])
 
   // Direct state-based call end handler - triggers door closing sequence
   const handleCallEnd = useCallback((reason: string) => {

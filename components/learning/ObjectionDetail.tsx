@@ -1,15 +1,46 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { CheckCircle2 } from 'lucide-react'
 import { MarkdownContent } from './MarkdownContent'
 import { LearningObjection } from '@/lib/learning/types'
+import { useObjectionProgress } from '@/hooks/learning/useObjectionProgress'
+import { cn } from '@/lib/utils'
 
 interface ObjectionDetailProps {
-  objection: LearningObjection
+  objection: LearningObjection & { progress?: { completed_at: string | null } | null }
 }
 
 export function ObjectionDetail({ objection }: ObjectionDetailProps) {
   // The description field contains the full markdown content
   const markdownContent = objection.description || ''
+  const [timeSpent, setTimeSpent] = useState(0)
+  const [isCompleted, setIsCompleted] = useState(objection.progress?.completed_at !== null)
+  const { markComplete, loading: progressLoading } = useObjectionProgress()
+
+  // Track time spent reading
+  useEffect(() => {
+    if (isCompleted) return
+
+    const startTime = Date.now()
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000)
+      setTimeSpent(elapsed)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [isCompleted])
+
+  const handleMarkComplete = async () => {
+    try {
+      await markComplete(objection.id, timeSpent)
+      setIsCompleted(true)
+      // Refresh the page to update progress everywhere
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to mark objection as complete:', error)
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -71,6 +102,26 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
           ))}
         </div>
       )}
+
+      {/* Completed Button at Bottom */}
+      <div className="flex justify-center mt-8 mb-6">
+        <button
+          onClick={handleMarkComplete}
+          disabled={progressLoading}
+          className={cn(
+            'flex items-center gap-2 px-8 py-4 rounded-lg font-semibold text-lg',
+            isCompleted 
+              ? 'bg-green-600 hover:bg-green-700 text-white' 
+              : 'bg-purple-600 hover:bg-purple-700 text-white',
+            'transition-colors duration-200',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            'font-space'
+          )}
+        >
+          <CheckCircle2 className="w-6 h-6" />
+          {isCompleted ? 'Completed' : 'Mark as Completed'}
+        </button>
+      </div>
     </div>
   )
 }

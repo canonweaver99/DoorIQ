@@ -84,30 +84,32 @@ function ModulesPageContent() {
             <ArrowLeft className="w-4 h-4" />
             Back to Learning Center
           </Link>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-center gap-2 mb-2">
             <BookOpen className="w-6 h-6 text-purple-400" />
-            <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">
+            <h1 className="text-4xl sm:text-5xl font-bold text-white font-space uppercase">
               {selectedCategory ? categoryLabels[selectedCategory] : 'Learning Modules'}
             </h1>
           </div>
-          <p className="text-slate-400 font-sans mb-4">
+          <p className="text-white text-lg font-sans mb-4 text-center">
             {selectedCategory ? categoryDescriptions[selectedCategory] : 'Master the fundamentals of D2D sales'}
           </p>
         </motion.div>
 
-        {/* Modules Grid */}
+        {/* Modules List */}
         {filteredModules.length > 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="max-w-6xl mx-auto space-y-0"
           >
             {filteredModules.map((module, idx) => (
               <ModuleCard
                 key={module.id}
                 module={module}
-                delay={0.1 * idx}
+                delay={0.05 * idx}
+                isLast={idx === filteredModules.length - 1}
+                displayNumber={idx + 1}
               />
             ))}
           </motion.div>

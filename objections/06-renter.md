@@ -37,3 +37,4 @@ Qualify quickly: "Do you handle any of the home services, or does the landlord?"
 
 Next time someone says they're renting, don't give up immediately. Instead, qualify: "Do you handle any of the home services, or does the landlord?" If they handle services, pivot to value. If not, pivot to landlord contact or know when to walk. Don't waste time on someone who can't decide.
 
+

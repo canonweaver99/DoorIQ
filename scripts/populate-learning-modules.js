@@ -60,14 +60,6 @@ const modules = [
     contentFile: 'modules/approach/06-transition.md',
   },
   {
-    slug: 'establishing-legitimacy',
-    title: 'Establishing Legitimacy Fast',
-    category: 'pitch',
-    display_order: 7,
-    estimated_minutes: 3,
-    contentFile: 'modules/pitch/01-establishing-legitimacy.md',
-  },
-  {
     slug: 'value-before-price',
     title: 'Building Value Before Price',
     category: 'pitch',
@@ -114,14 +106,6 @@ const modules = [
     display_order: 13,
     estimated_minutes: 3,
     contentFile: 'modules/03-overcome.md',
-  },
-  {
-    slug: 'fear-of-closing',
-    title: 'Why Reps Fear Closing (And Why Customers Expect It)',
-    category: 'close',
-    display_order: 14,
-    estimated_minutes: 2,
-    contentFile: 'modules/closing/01-fear-of-closing.md',
   },
   {
     slug: 'soft-vs-hard',
@@ -173,7 +157,7 @@ const modules = [
   },
   {
     slug: 'eye-contact',
-    title: 'Eye Contact — Look, Don't Stare',
+    title: 'Eye Contact — Look, Don\'t Stare',
     category: 'communication',
     display_order: 21,
     estimated_minutes: 2,
@@ -181,7 +165,7 @@ const modules = [
   },
   {
     slug: 'paraverbals',
-    title: 'Paraverbals — It's Not What You Say, It's How You Say It',
+    title: 'Paraverbals — It\'s Not What You Say, It\'s How You Say It',
     category: 'communication',
     display_order: 22,
     estimated_minutes: 3,
@@ -189,7 +173,7 @@ const modules = [
   },
   {
     slug: 'body-language',
-    title: 'Body Language — What You're Saying Without Words',
+    title: 'Body Language — What You\'re Saying Without Words',
     category: 'communication',
     display_order: 23,
     estimated_minutes: 3,

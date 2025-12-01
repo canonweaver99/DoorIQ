@@ -204,12 +204,15 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             const isLocked = false
             const isMastered = completedSessions.length >= 5 && bestScore && bestScore >= 80
             
+            // Temporarily disable Tanya & Tom
+            const isComingSoon = agent.name === 'Tag Team Tanya & Tom'
+            
             return {
               ...mapAgentToDisplay(agent as AgentRow, index),
               sessionCount: agentSessions.length,
               bestScore,
               avgDuration,
-              isLocked,
+              isLocked: isLocked || isComingSoon, // Treat coming soon as locked
               isMastered
             }
           })
@@ -219,7 +222,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           // Determine suggested agent based on user analytics
           const unplayedAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.sessionCount || a.sessionCount === 0)
           const lowScoreAgents = hydrated.filter((a: HomeownerAgentDisplay) => a.bestScore && a.bestScore < 70).sort((a: HomeownerAgentDisplay, b: HomeownerAgentDisplay) => (a.bestScore || 0) - (b.bestScore || 0))
-          const availableAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.isLocked)
+          const availableAgents = hydrated.filter((a: HomeownerAgentDisplay) => !a.isLocked && a.name !== 'Tag Team Tanya & Tom')
           
           if (lowScoreAgents.length > 0) {
             // Suggest the agent with lowest score for improvement
@@ -265,11 +268,19 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
   const handleRandomAgent = () => {
     if (agents.length === 0) return
-    const randomAgent = agents[Math.floor(Math.random() * agents.length)]
+    // Filter out Tanya & Tom from random selection
+    const availableAgents = agents.filter(a => a.name !== 'Tag Team Tanya & Tom' && !a.isLocked)
+    if (availableAgents.length === 0) return
+    const randomAgent = availableAgents[Math.floor(Math.random() * availableAgents.length)]
     handleSelectAgent(randomAgent.agentId, randomAgent.name)
   }
 
   const handleSelectAgent = async (agentId: string, agentName: string) => {
+    // Temporarily disable Tanya & Tom
+    if (agentName === 'Tag Team Tanya & Tom') {
+      return // Prevent selection
+    }
+    
     // Check if user is logged in first
     const { data: { user } } = await supabase.auth.getUser()
     
@@ -582,13 +593,13 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                     className={cn(
                       "flex-shrink-0 w-[300px] snap-center",
-                      agent.isLocked ? "opacity-40 grayscale cursor-not-allowed" : "cursor-pointer"
+                      agent.isLocked || agent.name === 'Tag Team Tanya & Tom' ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
                     )}
                     role="button"
                     tabIndex={agent.isLocked ? -1 : 0}
-                    onClick={() => !agent.isLocked && handleSelectAgent(agent.agentId, agent.name)}
+                    onClick={() => !agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && handleSelectAgent(agent.agentId, agent.name)}
                     onKeyDown={(e) => {
-                      if (agent.isLocked) return
+                      if (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') return
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
                         handleSelectAgent(agent.agentId, agent.name)
@@ -607,11 +618,11 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     >
                     {/* Mobile Agent Card Content - reuse the same structure */}
                     <motion.button
-                      whileHover={!agent.isLocked ? { scale: 1.05 } : {}}
-                      whileTap={!agent.isLocked ? { scale: 0.95 } : {}}
-                      disabled={agent.isLocked}
+                whileHover={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 1.05 } : {}}
+                whileTap={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 0.95 } : {}}
+                      disabled={agent.isLocked || agent.name === 'Tag Team Tanya & Tom'}
                       tabIndex={-1}
-                      className={cn("relative mb-3 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
+                      className={cn("relative mb-3 focus:outline-none group", (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') && "cursor-not-allowed")}
                     >
                       <div className="relative h-40 w-40 mx-auto">
                         {/* Concentric circles */}
@@ -711,8 +722,17 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </div>
                     )}
                     
+                    {/* Coming Soon Badge - Mobile */}
+                    {agent.name === 'Tag Team Tanya & Tom' && (
+                      <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-xl flex items-center justify-center border-2 border-purple-500/50">
+                        <div className="bg-gradient-to-r from-purple-500/30 to-pink-500/30 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-purple-500/50 shadow-lg">
+                          <span className="text-sm text-purple-200 font-semibold font-space">🚧 Coming Soon</span>
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Locked Badge - Mobile */}
-                    {agent.isLocked && (
+                    {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
                       <div className="absolute top-2 right-2 z-20 bg-slate-800/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-700 shadow-lg">
                         <span className="text-xs text-foreground/80 dark:text-slate-300 font-space">🔒 Locked</span>
                       </div>
@@ -772,13 +792,13 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 transition={{ duration: 0.5, delay: index * 0.05 }}
                 className={cn(
                   "select-none focus:outline-none",
-                  agent.isLocked ? "opacity-50 grayscale cursor-not-allowed" : "cursor-pointer"
+                  agent.isLocked || agent.name === 'Tag Team Tanya & Tom' ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
                 )}
                 role="button"
                 tabIndex={agent.isLocked ? -1 : 0}
-                onClick={() => !agent.isLocked && handleSelectAgent(agent.agentId, agent.name)}
+                onClick={() => !agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && handleSelectAgent(agent.agentId, agent.name)}
                 onKeyDown={(e) => {
-                  if (agent.isLocked) return
+                  if (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') return
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
                     handleSelectAgent(agent.agentId, agent.name)
@@ -797,8 +817,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 >
                 {/* Animated Bubble */}
                 <motion.button
-                  whileHover={!agent.isLocked ? { scale: 1.05 } : {}}
-                  whileTap={!agent.isLocked ? { scale: 0.95 } : {}}
+                  whileHover={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 1.05 } : {}}
+                  whileTap={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 0.95 } : {}}
                   disabled={agent.isLocked}
                   tabIndex={-1}
                   className={cn("relative mb-3 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
@@ -941,8 +961,17 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </div>
                 )}
                 
+                {/* Coming Soon Badge */}
+                {agent.name === 'Tag Team Tanya & Tom' && (
+                  <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-xl flex items-center justify-center border-2 border-purple-500/50">
+                    <div className="bg-gradient-to-r from-purple-500/30 to-pink-500/30 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-purple-500/50 shadow-lg">
+                      <span className="text-sm text-purple-200 font-semibold font-space">🚧 Coming Soon</span>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Locked Badge */}
-                {agent.isLocked && (
+                {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
                   <div className="absolute top-2 right-2 z-20 bg-slate-800/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-700 shadow-lg">
                     <span className="text-xs text-foreground/80 dark:text-slate-300 font-space">🔒 Locked</span>
                   </div>

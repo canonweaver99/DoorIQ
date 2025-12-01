@@ -37,3 +37,4 @@ Validate the decision-making process: "Of course, you have to do what's best for
 
 Next time someone says they need to check with their spouse, don't just leave. Ask: "If they were here right now and loved it, would you move forward?" If yes, create urgency or set a hard callback time. If no, find out what the real concern is.
 
+

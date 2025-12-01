@@ -40,6 +40,10 @@ export default function SelectHomeownerScreen() {
   }
 
   const handleSelectAgent = (agent: Agent) => {
+    // Temporarily disable Tanya & Tom
+    if (agent.name === 'Tag Team Tanya & Tom') {
+      return // Prevent selection
+    }
     router.push(`/trainer/new?agent=${agent.eleven_agent_id}`)
   }
 
@@ -66,25 +70,34 @@ export default function SelectHomeownerScreen() {
             <Text style={styles.emptyStateText}>No agents available</Text>
           </View>
         ) : (
-          agents.map((agent) => (
-            <TouchableOpacity
-              key={agent.id}
-              style={styles.agentCard}
-              onPress={() => handleSelectAgent(agent)}
-            >
-              <View style={styles.agentImageContainer}>
-                <View style={styles.agentImagePlaceholder}>
-                  <Text style={styles.agentImageText}>{agent.name.charAt(0)}</Text>
+          agents.map((agent) => {
+            const isComingSoon = agent.name === 'Tag Team Tanya & Tom'
+            return (
+              <TouchableOpacity
+                key={agent.id}
+                style={[styles.agentCard, isComingSoon && styles.comingSoonCard]}
+                onPress={() => handleSelectAgent(agent)}
+                disabled={isComingSoon}
+              >
+                <View style={styles.agentImageContainer}>
+                  <View style={[styles.agentImagePlaceholder, isComingSoon && styles.comingSoonImage]}>
+                    <Text style={styles.agentImageText}>{agent.name.charAt(0)}</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.agentInfo}>
-                <Text style={styles.agentName}>{agent.name}</Text>
-                {agent.persona && (
-                  <Text style={styles.agentPersona}>{agent.persona}</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))
+                <View style={styles.agentInfo}>
+                  <Text style={styles.agentName}>{agent.name}</Text>
+                  {agent.persona && (
+                    <Text style={styles.agentPersona}>{agent.persona}</Text>
+                  )}
+                  {isComingSoon && (
+                    <View style={styles.comingSoonBadge}>
+                      <Text style={styles.comingSoonText}>🚧 Coming Soon</Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            )
+          })
         )}
       </ScrollView>
       <MobileNavMenu />
@@ -172,5 +185,26 @@ const styles = StyleSheet.create({
   agentPersona: {
     fontSize: 14,
     color: '#888',
+  },
+  comingSoonCard: {
+    opacity: 0.6,
+  },
+  comingSoonImage: {
+    opacity: 0.5,
+  },
+  comingSoonBadge: {
+    marginTop: 8,
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.5)',
+    alignSelf: 'flex-start',
+  },
+  comingSoonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#a78bfa',
   },
 })

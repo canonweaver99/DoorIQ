@@ -37,3 +37,4 @@ Equalize first: "I'm sure they do a good job." Then differentiate: "Here's what 
 
 Next time someone says they already have a service, don't bash it. Instead, ask how long they've been with them, then say: "I do everything they do, plus..." and list one specific differentiator. Make switching feel like an upgrade.
 
+
