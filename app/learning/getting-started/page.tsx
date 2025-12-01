@@ -116,7 +116,7 @@ export default function GettingStartedPage() {
         >
           <Link
             href="/learning"
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors font-sans"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-slate-600/50 rounded-lg text-white mb-4 transition-all duration-200 font-sans"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Learning Center
