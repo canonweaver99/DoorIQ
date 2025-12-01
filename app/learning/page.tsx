@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Video, Play, Trash2, Sparkles, Lock } from 'lucide-react'
+import { Video, Play, Trash2, Sparkles, Lock, BookOpen, AlertCircle } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useFeatureAccess } from '@/hooks/useSubscription'
 import { FEATURES } from '@/lib/subscription/feature-keys'
 import { useRouter } from 'next/navigation'
+import { ProgressSummary } from '@/components/learning/ProgressSummary'
+import { ContinueLearning } from '@/components/learning/ContinueLearning'
 
 interface InstructionalVideo {
   id: string
@@ -452,7 +455,59 @@ export default function LearningPage() {
           className="mb-8"
         >
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-space">Learning Center</h1>
-          <p className="text-slate-400 font-sans">Learn how to get the most out of DoorIQ</p>
+          <p className="text-slate-400 font-sans mb-6">Learn how to get the most out of DoorIQ</p>
+          
+          {/* Quick Links to Learning Modules */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+            >
+              <Link
+                href="/learning/modules"
+                className="block bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <BookOpen className="w-6 h-6 text-purple-400" />
+                  <h3 className="text-xl font-bold text-white font-space">Learning Modules</h3>
+                </div>
+                <p className="text-slate-400 text-sm font-sans">
+                  Master the fundamentals of D2D sales with structured lessons on approach, pitch, overcoming objections, and closing.
+                </p>
+              </Link>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+            >
+              <Link
+                href="/learning/objections"
+                className="block bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 hover:border-red-500/50 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <AlertCircle className="w-6 h-6 text-red-400" />
+                  <h3 className="text-xl font-bold text-white font-space">Objection Handling</h3>
+                </div>
+                <p className="text-slate-400 text-sm font-sans">
+                  Learn how to handle common objections like price, DIY, spouse checks, and more with proven frameworks and scripts.
+                </p>
+              </Link>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Learning Modules Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="mb-12 grid grid-cols-1 lg:grid-cols-2 gap-6"
+        >
+          <ContinueLearning />
+          <ProgressSummary />
         </motion.div>
 
         {/* Instructional Videos Section */}

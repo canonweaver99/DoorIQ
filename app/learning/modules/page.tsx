@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpen, Sparkles } from 'lucide-react'
 import { ModuleCard } from '@/components/learning/ModuleCard'
+import { LearningNavigation } from '@/components/learning/LearningNavigation'
 import { useModules } from '@/hooks/learning/useModules'
 import { ModuleCategory } from '@/lib/learning/types'
 
@@ -28,15 +29,28 @@ const categoryDescriptions: Record<ModuleCategory, string> = {
 export default function ModulesPage() {
   const { modules, loading, error } = useModules()
   const [selectedCategory, setSelectedCategory] = useState<ModuleCategory | 'all'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'in-progress' | 'not-started'>('all')
+
+  // Filter modules by status
+  const filteredModules = modules.filter((module) => {
+    if (filterStatus === 'all') return true
+    const isCompleted = module.progress?.completed_at !== null
+    const isInProgress = module.progress?.time_spent_seconds > 0 && !isCompleted
+    
+    if (filterStatus === 'completed') return isCompleted
+    if (filterStatus === 'in-progress') return isInProgress
+    if (filterStatus === 'not-started') return !isCompleted && !isInProgress
+    return true
+  })
 
   // Group modules by category
-  const modulesByCategory = modules.reduce((acc, module) => {
+  const modulesByCategory = filteredModules.reduce((acc, module) => {
     if (!acc[module.category]) {
       acc[module.category] = []
     }
     acc[module.category].push(module)
     return acc
-  }, {} as Record<ModuleCategory, typeof modules>)
+  }, {} as Record<ModuleCategory, typeof filteredModules>)
 
   // Filter modules by selected category
   const filteredCategories = selectedCategory === 'all'
@@ -81,40 +95,65 @@ export default function ModulesPage() {
             <BookOpen className="w-6 h-6 text-purple-400" />
             <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">Learning Modules</h1>
           </div>
-          <p className="text-slate-400 font-sans">Master the fundamentals of D2D sales</p>
+          <p className="text-slate-400 font-sans mb-4">Master the fundamentals of D2D sales</p>
+          <LearningNavigation currentPage="modules" />
         </motion.div>
 
-        {/* Category Filter */}
+        {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="mb-8"
+          className="mb-8 space-y-4"
         >
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors font-space ${
-                selectedCategory === 'all'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-              All Modules
-            </button>
-            {categoryOrder.map((category) => (
+          {/* Category Filter */}
+          <div>
+            <p className="text-sm text-slate-400 mb-2 font-sans">Filter by Category</p>
+            <div className="flex flex-wrap gap-2">
               <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => setSelectedCategory('all')}
                 className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors font-space ${
-                  selectedCategory === category
+                  selectedCategory === 'all'
                     ? 'bg-purple-600 text-white'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
-                {categoryLabels[category]}
+                All Modules
               </button>
-            ))}
+              {categoryOrder.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors font-space ${
+                    selectedCategory === category
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {categoryLabels[category]}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Status Filter */}
+          <div>
+            <p className="text-sm text-slate-400 mb-2 font-sans">Filter by Status</p>
+            <div className="flex flex-wrap gap-2">
+              {(['all', 'completed', 'in-progress', 'not-started'] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status)}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors font-space ${
+                    filterStatus === status
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {status === 'all' ? 'All Status' : status === 'in-progress' ? 'In Progress' : status === 'not-started' ? 'Not Started' : 'Completed'}
+                </button>
+              ))}
+            </div>
           </div>
         </motion.div>
 
@@ -154,10 +193,14 @@ export default function ModulesPage() {
           })}
         </div>
 
-        {modules.length === 0 && (
+        {filteredModules.length === 0 && (
           <div className="text-center py-20">
             <BookOpen className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400 font-sans">No modules available yet.</p>
+            <p className="text-slate-400 font-sans">
+              {modules.length === 0
+                ? 'No modules available yet.'
+                : 'No modules match your current filters.'}
+            </p>
           </div>
         )}
       </div>

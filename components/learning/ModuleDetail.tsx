@@ -6,6 +6,7 @@ import { ModuleWithProgress } from '@/lib/learning/types'
 import { MarkdownContent } from './MarkdownContent'
 import { ProgressIndicator } from './ProgressIndicator'
 import { ModuleNavigation } from './ModuleNavigation'
+import { RelatedModules } from './RelatedModules'
 import { useModuleProgress } from '@/hooks/learning/useModuleProgress'
 import { useModules } from '@/hooks/learning/useModules'
 import { cn } from '@/lib/utils'
@@ -106,7 +107,10 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
 
       {/* Navigation */}
       {allModules && allModules.length > 0 && (
-        <ModuleNavigation currentModule={module} allModules={allModules} />
+        <>
+          <ModuleNavigation currentModule={module} allModules={allModules} />
+          <RelatedModules currentModule={module} allModules={allModules} />
+        </>
       )}
     </div>
   )
