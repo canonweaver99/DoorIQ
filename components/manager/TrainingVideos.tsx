@@ -36,6 +36,7 @@ export default function TrainingVideos() {
   const [teamVideos, setTeamVideos] = useState<TeamVideo[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'instructional' | 'team'>('instructional')
+  const [managerTeamId, setManagerTeamId] = useState<string | null>(null)
   
   // Upload form state
   const [uploading, setUploading] = useState(false)
@@ -51,8 +52,28 @@ export default function TrainingVideos() {
   const videoPreviewRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
+    fetchManagerTeamId()
     fetchData()
   }, [])
+
+  const fetchManagerTeamId = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('team_id')
+          .eq('id', user.id)
+          .single()
+        
+        if (userProfile?.team_id) {
+          setManagerTeamId(userProfile.team_id)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching manager team ID:', error)
+    }
+  }
 
   // Cleanup video preview URL on unmount
   useEffect(() => {
@@ -213,6 +234,10 @@ export default function TrainingVideos() {
 
       if (activeTab === 'instructional') {
         formData.append('display_order', displayOrder.toString())
+        // Pass team_id for managers so videos are scoped to their team
+        if (managerTeamId) {
+          formData.append('team_id', managerTeamId)
+        }
       }
 
       const response = await fetch(endpoint, {
@@ -494,9 +519,14 @@ export default function TrainingVideos() {
       {videos.length === 0 ? (
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-12 text-center">
           <Video className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400 font-sans">
+          <p className="text-slate-400 font-sans mb-3">
             No {activeTab === 'instructional' ? 'instructional' : 'team'} videos uploaded yet.
           </p>
+          {activeTab === 'instructional' && (
+            <p className="text-sm text-slate-500 font-sans max-w-md mx-auto">
+              When you upload instructional videos here, they will automatically appear as new modules for your reps in their Learning Center. Your team members will be able to access and watch these training videos to improve their skills.
+            </p>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -60,23 +60,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify user is admin
+    // Verify user is admin or manager
     const { data: userProfile } = await supabase
       .from('users')
-      .select('role')
+      .select('role, team_id')
       .eq('id', user.id)
       .single()
 
-    if (userProfile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Only admins can upload instructional videos' }, { status: 403 })
+    if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
+      return NextResponse.json({ error: 'Only admins and managers can upload instructional videos' }, { status: 403 })
     }
 
     const formData = await request.formData()
     const file = formData.get('file') as File
     const title = formData.get('title') as string
     const description = formData.get('description') as string | null
-    const teamId = formData.get('team_id') as string | null
+    let teamId = formData.get('team_id') as string | null
     const displayOrder = formData.get('display_order') as string | null
+
+    // If manager is uploading, use their team_id (unless admin explicitly sets a different team_id)
+    if (userProfile.role === 'manager' && userProfile.team_id) {
+      // Managers can only upload for their own team
+      teamId = userProfile.team_id
+    } else if (userProfile.role === 'admin') {
+      // Admins can upload for any team or company-wide (team_id = null)
+      // Use the provided team_id or null for company-wide
+      teamId = teamId && teamId !== 'null' ? teamId : null
+    }
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
