@@ -6,8 +6,17 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import { ModuleDetail } from '@/components/learning/ModuleDetail'
-import { ModuleWithProgress } from '@/lib/learning/types'
+import { ModuleWithProgress, ModuleCategory } from '@/lib/learning/types'
 import { useModules } from '@/hooks/learning/useModules'
+
+const categoryLabels: Record<ModuleCategory, string> = {
+  approach: 'Approach',
+  pitch: 'Pitch',
+  overcome: 'Overcome',
+  close: 'Close',
+  objections: 'Objections',
+  communication: 'Communication',
+}
 
 export default function ModuleDetailPage() {
   const params = useParams()
@@ -90,11 +99,11 @@ export default function ModuleDetailPage() {
           className="mb-6"
         >
           <Link
-            href="/learning/modules"
+            href={module.category ? `/learning/modules?category=${module.category}` : '/learning'}
             className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-sans"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Modules</span>
+            <span>Back to {module.category ? categoryLabels[module.category] : 'Learning Center'}</span>
           </Link>
         </motion.div>
 

@@ -6,7 +6,6 @@ import { motion } from 'framer-motion'
 import { BookOpen, Sparkles, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { ModuleCard } from '@/components/learning/ModuleCard'
-import { LearningNavigation } from '@/components/learning/LearningNavigation'
 import { useModules } from '@/hooks/learning/useModules'
 import { ModuleCategory } from '@/lib/learning/types'
 
@@ -94,7 +93,6 @@ function ModulesPageContent() {
           <p className="text-slate-400 font-sans mb-4">
             {selectedCategory ? categoryDescriptions[selectedCategory] : 'Master the fundamentals of D2D sales'}
           </p>
-          <LearningNavigation currentPage="modules" />
         </motion.div>
 
         {/* Modules Grid */}
