@@ -12,6 +12,7 @@ const categoryLabels: Record<ModuleCategory, string> = {
   overcome: 'Overcome',
   close: 'Close',
   objections: 'Objections',
+  communication: 'Communication',
 }
 
 export function ProgressSummary() {
@@ -127,4 +128,5 @@ export function ProgressSummary() {
     </motion.div>
   )
 }
+
 

@@ -37,6 +37,11 @@ const categoryColors: Record<string, { bg: string; border: string; text: string 
     bg: 'bg-red-500/10',
     border: 'border-red-500/30',
     text: 'text-red-400'
+  },
+  communication: {
+    bg: 'bg-indigo-500/10',
+    border: 'border-indigo-500/30',
+    text: 'text-indigo-400'
   }
 }
 
@@ -45,7 +50,8 @@ const categoryLabels: Record<string, string> = {
   pitch: 'Pitch',
   overcome: 'Overcome',
   close: 'Close',
-  objections: 'Objections'
+  objections: 'Objections',
+  communication: 'Communication'
 }
 
 export function ModuleCard({ module, delay = 0 }: ModuleCardProps) {
@@ -105,4 +111,5 @@ export function ModuleCard({ module, delay = 0 }: ModuleCardProps) {
     </Link>
   )
 }
+
 

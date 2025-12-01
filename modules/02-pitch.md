@@ -69,3 +69,4 @@ Each statement focuses on a specific benefit they can relate to. Not generic "we
 
 Before your next pitch, write down three benefits (not features) of your product. Practice explaining each one in one sentence. Use those three sentences in your next conversation and watch how much more engaged they become.
 
+

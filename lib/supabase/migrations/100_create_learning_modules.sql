@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS learning_modules (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   title TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('approach', 'pitch', 'overcome', 'close', 'objections')),
+  category TEXT NOT NULL CHECK (category IN ('approach', 'pitch', 'overcome', 'close', 'objections', 'communication')),
   display_order INTEGER NOT NULL,
   estimated_minutes INTEGER DEFAULT 5,
   content TEXT DEFAULT '',
@@ -131,4 +131,5 @@ CREATE POLICY "Admins can manage all objections"
 CREATE POLICY "Anyone can read published objections"
   ON learning_objections FOR SELECT
   USING (true);
+
 

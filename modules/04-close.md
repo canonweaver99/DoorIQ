@@ -93,3 +93,4 @@ Each example uses assumptive language ("when," "once") and ends with a soft clos
 
 On your next five doors, use assumptive language from the start. Say "when" instead of "if," "your" instead of "the," and "we'll" instead of "you could." Then, before you leave any door, ask for the close three times. Watch how many more sales you get.
 
+

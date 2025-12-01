@@ -43,6 +43,46 @@ const modules = [
     estimated_minutes: 2,
     contentFile: 'modules/04-close.md',
   },
+  {
+    slug: 'mirroring',
+    title: 'Mirroring: Building Instant Rapport',
+    category: 'communication',
+    display_order: 5,
+    estimated_minutes: 3,
+    contentFile: 'modules/05-mirroring.md',
+  },
+  {
+    slug: 'tone',
+    title: 'Tone: How You Say It Matters More Than What You Say',
+    category: 'communication',
+    display_order: 6,
+    estimated_minutes: 3,
+    contentFile: 'modules/06-tone.md',
+  },
+  {
+    slug: 'paraverbals',
+    title: 'Paraverbals: The Hidden Language of Sales',
+    category: 'communication',
+    display_order: 7,
+    estimated_minutes: 3,
+    contentFile: 'modules/07-paraverbals.md',
+  },
+  {
+    slug: 'eye-contact',
+    title: 'Eye Contact: The Window to Trust',
+    category: 'communication',
+    display_order: 8,
+    estimated_minutes: 3,
+    contentFile: 'modules/08-eye-contact.md',
+  },
+  {
+    slug: 'energy-matching',
+    title: 'Energy Matching: Finding Their Frequency',
+    category: 'communication',
+    display_order: 9,
+    estimated_minutes: 3,
+    contentFile: 'modules/09-energy-matching.md',
+  },
 ]
 
 // Objection data mapping
@@ -175,4 +215,5 @@ const outputPath = path.join(process.cwd(), 'lib/supabase/migrations/101_populat
 fs.writeFileSync(outputPath, sql)
 console.log(`✅ Generated SQL migration file: ${outputPath}`)
 console.log(`📝 Review the file and run it in your Supabase SQL editor`)
+
 

@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { BookOpen, Sparkles } from 'lucide-react'
+import { BookOpen, Sparkles, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { ModuleCard } from '@/components/learning/ModuleCard'
 import { LearningNavigation } from '@/components/learning/LearningNavigation'
 import { useModules } from '@/hooks/learning/useModules'
 import { ModuleCategory } from '@/lib/learning/types'
 
-const categoryOrder: ModuleCategory[] = ['approach', 'pitch', 'overcome', 'close', 'objections']
+const categoryOrder: ModuleCategory[] = ['approach', 'pitch', 'overcome', 'close', 'objections', 'communication']
 
 const categoryLabels: Record<ModuleCategory, string> = {
   approach: 'Approach',
@@ -16,6 +17,7 @@ const categoryLabels: Record<ModuleCategory, string> = {
   overcome: 'Overcome',
   close: 'Close',
   objections: 'Objections',
+  communication: 'Communication',
 }
 
 const categoryDescriptions: Record<ModuleCategory, string> = {
@@ -24,38 +26,22 @@ const categoryDescriptions: Record<ModuleCategory, string> = {
   overcome: 'Handle objections and turn "no" into "yes"',
   close: 'Perfect your closing techniques and seal the deal',
   objections: 'Specific strategies for common objections',
+  communication: 'Master verbal and non-verbal communication skills',
 }
 
 export default function ModulesPage() {
-  const { modules, loading, error } = useModules()
-  const [selectedCategory, setSelectedCategory] = useState<ModuleCategory | 'all'>('all')
-  const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'in-progress' | 'not-started'>('all')
+  const searchParams = useSearchParams()
+  const categoryParam = searchParams.get('category') as ModuleCategory | null
+  const selectedCategory = categoryParam && categoryOrder.includes(categoryParam) ? categoryParam : null
+  
+  const { modules, loading, error } = useModules(
+    selectedCategory ? { category: selectedCategory } : {}
+  )
 
-  // Filter modules by status
-  const filteredModules = modules.filter((module) => {
-    if (filterStatus === 'all') return true
-    const isCompleted = module.progress?.completed_at !== null
-    const isInProgress = module.progress?.time_spent_seconds > 0 && !isCompleted
-    
-    if (filterStatus === 'completed') return isCompleted
-    if (filterStatus === 'in-progress') return isInProgress
-    if (filterStatus === 'not-started') return !isCompleted && !isInProgress
-    return true
-  })
-
-  // Group modules by category
-  const modulesByCategory = filteredModules.reduce((acc, module) => {
-    if (!acc[module.category]) {
-      acc[module.category] = []
-    }
-    acc[module.category].push(module)
-    return acc
-  }, {} as Record<ModuleCategory, typeof filteredModules>)
-
-  // Filter modules by selected category
-  const filteredCategories = selectedCategory === 'all'
-    ? categoryOrder.filter(cat => modulesByCategory[cat]?.length > 0)
-    : [selectedCategory]
+  // Filter modules by category if selected
+  const filteredModules = selectedCategory
+    ? modules.filter(m => m.category === selectedCategory)
+    : modules
 
   if (loading) {
     return (
@@ -91,115 +77,48 @@ export default function ModulesPage() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
+          <Link
+            href="/learning"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors font-sans"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Learning Center
+          </Link>
           <div className="flex items-center gap-2 mb-2">
             <BookOpen className="w-6 h-6 text-purple-400" />
-            <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">Learning Modules</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">
+              {selectedCategory ? categoryLabels[selectedCategory] : 'Learning Modules'}
+            </h1>
           </div>
-          <p className="text-slate-400 font-sans mb-4">Master the fundamentals of D2D sales</p>
+          <p className="text-slate-400 font-sans mb-4">
+            {selectedCategory ? categoryDescriptions[selectedCategory] : 'Master the fundamentals of D2D sales'}
+          </p>
           <LearningNavigation currentPage="modules" />
         </motion.div>
 
-        {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="mb-8 space-y-4"
-        >
-          {/* Category Filter */}
-          <div>
-            <p className="text-sm text-slate-400 mb-2 font-sans">Filter by Category</p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedCategory('all')}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors font-space ${
-                  selectedCategory === 'all'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                All Modules
-              </button>
-              {categoryOrder.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors font-space ${
-                    selectedCategory === category
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  {categoryLabels[category]}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Status Filter */}
-          <div>
-            <p className="text-sm text-slate-400 mb-2 font-sans">Filter by Status</p>
-            <div className="flex flex-wrap gap-2">
-              {(['all', 'completed', 'in-progress', 'not-started'] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors font-space ${
-                    filterStatus === status
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                >
-                  {status === 'all' ? 'All Status' : status === 'in-progress' ? 'In Progress' : status === 'not-started' ? 'Not Started' : 'Completed'}
-                </button>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Modules by Category */}
-        <div className="space-y-12">
-          {filteredCategories.map((category, categoryIdx) => {
-            const categoryModules = modulesByCategory[category] || []
-            if (categoryModules.length === 0) return null
-
-            return (
-              <motion.div
-                key={category}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 + categoryIdx * 0.1 }}
-              >
-                <div className="flex items-center gap-2 mb-6">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
-                  <h2 className="text-2xl font-bold text-white font-space">
-                    {categoryLabels[category]}
-                  </h2>
-                </div>
-                <p className="text-slate-400 mb-6 font-sans">
-                  {categoryDescriptions[category]}
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categoryModules.map((module, idx) => (
-                    <ModuleCard
-                      key={module.id}
-                      module={module}
-                      delay={0.1 * idx}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
-
-        {filteredModules.length === 0 && (
+        {/* Modules Grid */}
+        {filteredModules.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {filteredModules.map((module, idx) => (
+              <ModuleCard
+                key={module.id}
+                module={module}
+                delay={0.1 * idx}
+              />
+            ))}
+          </motion.div>
+        ) : (
           <div className="text-center py-20">
             <BookOpen className="w-16 h-16 text-slate-600 mx-auto mb-4" />
             <p className="text-slate-400 font-sans">
-              {modules.length === 0
-                ? 'No modules available yet.'
-                : 'No modules match your current filters.'}
+              {selectedCategory
+                ? `No ${categoryLabels[selectedCategory]} modules available yet.`
+                : 'No modules available yet.'}
             </p>
           </div>
         )}

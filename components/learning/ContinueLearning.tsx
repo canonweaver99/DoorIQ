@@ -40,6 +40,7 @@ export function ContinueLearning() {
           overcome: 3,
           close: 4,
           objections: 5,
+          communication: 6,
         }
         const categoryDiff = (categoryOrder[a.category] || 99) - (categoryOrder[b.category] || 99)
         if (categoryDiff !== 0) return categoryDiff

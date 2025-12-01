@@ -51,3 +51,4 @@ Once you've broken the pattern and they're listening, transition naturally. "Act
 
 On your next 10 doors, don't mention your product or company name until they ask. Start with a question about their situation, acknowledge their time, and see how many more conversations you get. The difference will shock you.
 
+

@@ -1,4 +1,4 @@
-export type ModuleCategory = 'approach' | 'pitch' | 'overcome' | 'close' | 'objections'
+export type ModuleCategory = 'approach' | 'pitch' | 'overcome' | 'close' | 'objections' | 'communication'
 
 export interface LearningModule {
   id: string
@@ -49,4 +49,5 @@ export interface ModuleProgressUpdate {
   completed_at?: string | null
   time_spent_seconds?: number
 }
+
 

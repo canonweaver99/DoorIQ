@@ -3,18 +3,20 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Database, BarChart3, Settings, UserCog, BookOpen } from 'lucide-react'
+import { Users, Database, BarChart3, Settings, UserCog, BookOpen, Video } from 'lucide-react'
 import RepManagement from '@/components/manager/RepManagement'
 import KnowledgeBase from '@/components/manager/KnowledgeBase'
 import AnalyticsDashboard from '@/components/manager/AnalyticsDashboard'
 import ManagerSettings from '@/components/manager/ManagerSettings'
+import TrainingVideos from '@/components/manager/TrainingVideos'
 
-type Tab = 'reps' | 'knowledge' | 'analytics' | 'settings'
+type Tab = 'reps' | 'knowledge' | 'analytics' | 'settings' | 'videos'
 
 const tabs = [
   { id: 'analytics' as Tab, name: 'Analytics', icon: BarChart3 },
   { id: 'reps' as Tab, name: 'Rep Management', icon: UserCog },
   { id: 'knowledge' as Tab, name: 'Knowledge Base', icon: Database },
+  { id: 'videos' as Tab, name: 'Training Videos', icon: Video },
   { id: 'settings' as Tab, name: 'Settings', icon: Settings },
 ]
 
@@ -47,6 +49,8 @@ function ManagerPageContent() {
         return <KnowledgeBase />
       case 'analytics':
         return <AnalyticsDashboard timePeriod={timePeriod} />
+      case 'videos':
+        return <TrainingVideos />
       case 'settings':
         return <ManagerSettings />
       default:

@@ -93,3 +93,4 @@ Instead, reframe it. "So price is a concern?" or "So you want to make sure you'r
 
 Next time you hear an objection, don't repeat it. Instead, acknowledge it with "Of course," then add one piece of information that addresses their concern, then ask for the close. Practice this three-step process on your next five objections.
 
+

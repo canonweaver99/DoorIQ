@@ -58,3 +58,4 @@ export function ObjectionCard({ objection, delay = 0 }: ObjectionCardProps) {
   )
 }
 
+
