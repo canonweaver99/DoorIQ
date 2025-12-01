@@ -5,13 +5,33 @@ import { useParams, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
-import { HeroSection } from '@/components/analytics/HeroSection'
-import { InstantInsightsGrid } from '@/components/analytics/InstantInsightsGrid'
-import { CriticalMomentsTimeline } from '@/components/analytics/CriticalMomentsTimeline'
-import { AICoachingInsights } from '@/components/analytics/AICoachingInsights'
-import { ElevenLabsSpeechMetrics } from '@/components/analytics/ElevenLabsSpeechMetrics'
-import { FocusArea } from '@/components/analytics/FocusArea'
-import { ConversationFlow } from '@/components/analytics/ConversationFlow'
+import dynamic from 'next/dynamic'
+
+// Dynamically import heavy analytics components to reduce initial bundle size
+const HeroSection = dynamic(() => import('@/components/analytics/HeroSection').then(mod => ({ default: mod.HeroSection })), {
+  loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
+  ssr: false
+})
+const InstantInsightsGrid = dynamic(() => import('@/components/analytics/InstantInsightsGrid').then(mod => ({ default: mod.InstantInsightsGrid })), {
+  loading: () => <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />,
+  ssr: false
+})
+const CriticalMomentsTimeline = dynamic(() => import('@/components/analytics/CriticalMomentsTimeline').then(mod => ({ default: mod.CriticalMomentsTimeline })), {
+  loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
+  ssr: false
+})
+const ElevenLabsSpeechMetrics = dynamic(() => import('@/components/analytics/ElevenLabsSpeechMetrics').then(mod => ({ default: mod.ElevenLabsSpeechMetrics })), {
+  loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
+  ssr: false
+})
+const FocusArea = dynamic(() => import('@/components/analytics/FocusArea').then(mod => ({ default: mod.FocusArea })), {
+  loading: () => <div className="h-48 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />,
+  ssr: false
+})
+const ConversationFlow = dynamic(() => import('@/components/analytics/ConversationFlow').then(mod => ({ default: mod.ConversationFlow })), {
+  loading: () => <div className="h-96 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
+  ssr: false
+})
 
 interface SessionData {
   id: string

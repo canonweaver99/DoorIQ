@@ -1,9 +1,22 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea, Label } from 'recharts'
+import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { Activity, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+
+// Dynamically import recharts to reduce initial bundle size
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
+const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false })
+const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
+const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false })
+const ReferenceLine = dynamic(() => import('recharts').then(mod => mod.ReferenceLine), { ssr: false })
+const ReferenceArea = dynamic(() => import('recharts').then(mod => mod.ReferenceArea), { ssr: false })
+const Label = dynamic(() => import('recharts').then(mod => mod.Label), { ssr: false })
 
 interface PerformanceChartProps {
   data: Array<{
@@ -119,7 +132,8 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
 
       {/* Chart */}
       <div className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
+        {typeof window !== 'undefined' && (
+          <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
             <defs>
               {metrics.map(metric => (
@@ -172,7 +186,13 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
               )
             ))}
           </LineChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        )}
+        {typeof window === 'undefined' && (
+          <div className="h-full flex items-center justify-center text-slate-400">
+            Loading chart...
+          </div>
+        )}
       </div>
     </motion.div>
   )

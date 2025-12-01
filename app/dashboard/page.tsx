@@ -37,6 +37,7 @@ import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 import Link from 'next/link'
 import Image from 'next/image'
+// Dynamically import recharts to reduce initial bundle size
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import dynamic from 'next/dynamic'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
