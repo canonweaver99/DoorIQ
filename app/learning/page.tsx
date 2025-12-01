@@ -80,6 +80,49 @@ const categoryCards: CategoryCard[] = [
   }
 ]
 
+// Map card IDs to dashboard colors
+const getCardColors = (cardId: string) => {
+  const colorMap: Record<string, { bg: string; border: string; glow: string; textColor: string }> = {
+    'getting-started': {
+      bg: '#2a1a3a',
+      border: '#4a2a6a',
+      glow: 'rgba(138, 43, 226, 0.1)',
+      textColor: 'text-purple-200'
+    },
+    'approach': {
+      bg: '#1a3a2a',
+      border: '#2a6a4a',
+      glow: 'rgba(16, 185, 129, 0.1)',
+      textColor: 'text-emerald-200'
+    },
+    'pitch': {
+      bg: '#1a2a3a',
+      border: '#2a4a6a',
+      glow: 'rgba(59, 130, 246, 0.1)',
+      textColor: 'text-blue-200'
+    },
+    'objections': {
+      bg: '#3a2a1a',
+      border: '#6a4a2a',
+      glow: 'rgba(245, 158, 11, 0.1)',
+      textColor: 'text-amber-200'
+    },
+    'close': {
+      bg: '#3a1a2a',
+      border: '#6a2a4a',
+      glow: 'rgba(236, 72, 153, 0.1)',
+      textColor: 'text-pink-200'
+    },
+    'communication': {
+      bg: '#1a2a3a',
+      border: '#2a4a6a',
+      glow: 'rgba(59, 130, 246, 0.1)',
+      textColor: 'text-blue-200'
+    }
+  }
+  return colorMap[cardId] || colorMap['getting-started']
+}
+
 export default function LearningPage() {
   const router = useRouter()
   const { hasAccess, loading: accessLoading } = useFeatureAccess(FEATURES.LEARNING_PAGE)
@@ -191,75 +234,26 @@ export default function LearningPage() {
               }
             }
             
-            // Get accent color classes and hover styles
-            const getHoverBorderClass = (color: string) => {
-              const map: Record<string, string> = {
-                purple: 'hover:border-purple-500/50',
-                teal: 'hover:border-teal-500/50',
-                orange: 'hover:border-orange-500/50',
-                red: 'hover:border-red-500/50',
-                green: 'hover:border-green-500/50',
-                blue: 'hover:border-blue-500/50'
-              }
-              return map[color] || 'hover:border-purple-500/50'
-            }
+            const cardColors = getCardColors(card.id)
+            const hasProgress = progress && progress.completed > 0
+            const buttonText = isCompleted ? 'Review' : hasProgress ? 'Continue' : 'Get Started'
             
-            const getProgressGradient = (color: string) => {
-              const map: Record<string, string> = {
-                purple: 'bg-gradient-to-r from-purple-500 to-purple-600',
-                teal: 'bg-gradient-to-r from-teal-500 to-teal-600',
-                orange: 'bg-gradient-to-r from-orange-500 to-orange-600',
-                red: 'bg-gradient-to-r from-red-500 to-red-600',
-                green: 'bg-gradient-to-r from-green-500 to-green-600',
-                blue: 'bg-gradient-to-r from-blue-500 to-blue-600'
-              }
-              return map[color] || 'bg-gradient-to-r from-purple-500 to-purple-600'
-            }
-            
-            const getHoverGlowStyle = (color: string) => {
-              const map: Record<string, string> = {
-                purple: 'bg-gradient-to-br from-purple-500/5 to-transparent',
-                teal: 'bg-gradient-to-br from-teal-500/5 to-transparent',
-                orange: 'bg-gradient-to-br from-orange-500/5 to-transparent',
-                red: 'bg-gradient-to-br from-red-500/5 to-transparent',
-                green: 'bg-gradient-to-br from-green-500/5 to-transparent',
-                blue: 'bg-gradient-to-br from-blue-500/5 to-transparent'
-              }
-              return map[color] || 'bg-gradient-to-br from-purple-500/5 to-transparent'
-            }
-            
-            const getProgressGlowStyle = (color: string) => {
-              const map: Record<string, string> = {
-                purple: 'shadow-[0_0_12px_rgba(139,92,246,0.5)]',
-                teal: 'shadow-[0_0_12px_rgba(20,184,166,0.5)]',
-                orange: 'shadow-[0_0_12px_rgba(249,115,22,0.5)]',
-                red: 'shadow-[0_0_12px_rgba(239,68,68,0.5)]',
-                green: 'shadow-[0_0_12px_rgba(34,197,94,0.5)]',
-                blue: 'shadow-[0_0_12px_rgba(59,130,246,0.5)]'
-              }
-              return map[color] || 'shadow-[0_0_12px_rgba(139,92,246,0.5)]'
-            }
-                
             return (
               <motion.div
                 key={card.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 * index }}
-                whileHover={{ scale: 1.03, y: -6 }}
-                className="group"
               >
                 <Link href={card.href}>
-                  <div className={`
-                    relative bg-gradient-to-br ${card.gradient}
-                    border border-[#2a2a2a] rounded-xl p-8
-                    transition-all duration-300 cursor-pointer
-                    h-full flex flex-col min-h-[320px]
-                    shadow-[0_8px_32px_rgba(0,0,0,0.6)]
-                    ${getHoverBorderClass(card.accentColor)}
-                    hover:shadow-[0_12px_48px_rgba(0,0,0,0.8)]
-                    overflow-hidden
-                  `}>
+                  <div 
+                    className="relative rounded-xl p-8 h-full flex flex-col min-h-[320px] overflow-hidden"
+                    style={{
+                      backgroundColor: cardColors.bg,
+                      border: `2px solid ${cardColors.border}`,
+                      boxShadow: `inset 0 0 20px ${cardColors.glow}, 0 4px 16px rgba(0, 0, 0, 0.4)`
+                    }}
+                  >
                     {/* Badge */}
                     {card.badge && (
                       <div className="absolute top-4 right-4 z-10">
@@ -286,7 +280,7 @@ export default function LearningPage() {
                     
                     {/* Large Icon */}
                     <div className="mb-6 flex items-center justify-center">
-                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm flex items-center justify-center border border-white/10">
                         <Icon className="w-12 h-12 text-white drop-shadow-lg" />
                       </div>
                     </div>
@@ -303,9 +297,9 @@ export default function LearningPage() {
 
                     {/* Progress Indicator */}
                     {progress && (
-                      <div className="mt-auto pt-6 border-t border-white/10">
+                      <div className="mt-auto pt-4 mb-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-[#888] font-sans font-medium">
+                          <span className="text-xs text-slate-400 font-sans font-medium">
                             {progress.completed}/{progress.total} completed
                           </span>
                           {isCompleted && (
@@ -319,31 +313,28 @@ export default function LearningPage() {
                             initial={{ width: 0 }}
                             animate={{ width: `${(progress.completed / progress.total) * 100}%` }}
                             transition={{ duration: 0.8, delay: 0.2 }}
-                            className={`
-                              ${getProgressGradient(card.accentColor)} h-2 rounded-full
-                              ${progress.completed > 0 ? getProgressGlowStyle(card.accentColor) : ''}
-                              transition-all duration-500
-                            `}
+                            className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600"
+                            style={{
+                              backgroundColor: cardColors.border,
+                            }}
                           />
                         </div>
                       </div>
                     )}
                     
-                    {/* Arrow for cards without progress */}
-                    {!progress && (
-                      <div className="flex items-center justify-end mt-auto pt-6 border-t border-white/10">
-                        <motion.div
-                          initial={{ x: 0 }}
-                          whileHover={{ x: 4 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <ArrowRight className="w-5 h-5 text-[#888] group-hover:text-white transition-colors" />
-                        </motion.div>
+                    {/* Get Started/Continue Button */}
+                    <div className="mt-auto pt-4 border-t border-white/10">
+                      <div
+                        className="w-full py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                        style={{
+                          backgroundColor: cardColors.border,
+                          color: 'white'
+                        }}
+                      >
+                        {buttonText}
+                        <ArrowRight className="w-4 h-4" />
                       </div>
-                    )}
-                    
-                    {/* Hover Glow Effect */}
-                    <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${getHoverGlowStyle(card.accentColor)}`} />
+                    </div>
                   </div>
                 </Link>
               </motion.div>

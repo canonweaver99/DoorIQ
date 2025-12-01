@@ -42,8 +42,6 @@ import dynamic from 'next/dynamic'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { format } from 'date-fns'
 
-// Dynamic import for CircularProgress
-const CircularProgress = dynamic(() => import('@/components/ui/CircularProgress'), { ssr: false })
 
 // Helper to get cutout bubble image (no background)
 const getAgentBubbleImage = (agentName: string | null): string => {
@@ -1512,13 +1510,7 @@ function OverviewTabContent() {
             className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
           >
             <Target className="w-8 h-8 text-purple-400 mb-3" />
-            <div className="flex items-center justify-center mb-2">
-              <CircularProgress 
-                percentage={summaryStats.averageScore || 0}
-                size={70}
-                strokeWidth={6}
-              />
-            </div>
+            <p className="text-2xl font-bold text-white mb-2">{summaryStats.averageScore || 0}%</p>
             <p className="text-sm text-slate-400">Average Score</p>
           </motion.div>
 
@@ -1529,13 +1521,7 @@ function OverviewTabContent() {
             className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
           >
             <Award className="w-8 h-8 text-yellow-400 mb-3" />
-            <div className="flex items-center justify-center mb-2">
-              <CircularProgress 
-                percentage={summaryStats.bestScore || 0}
-                size={70}
-                strokeWidth={6}
-              />
-            </div>
+            <p className="text-2xl font-bold text-white mb-2">{summaryStats.bestScore || 0}%</p>
             <p className="text-sm text-slate-400">Best Score</p>
           </motion.div>
 
@@ -1557,13 +1543,7 @@ function OverviewTabContent() {
             className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
           >
             <Target className="w-8 h-8 text-emerald-400 mb-3" />
-            <div className="flex items-center justify-center mb-2">
-              <CircularProgress 
-                percentage={summaryStats.closePercentage || 0}
-                size={70}
-                strokeWidth={6}
-              />
-            </div>
+            <p className="text-2xl font-bold text-white mb-2">{summaryStats.closePercentage || 0}%</p>
             <p className="text-sm text-slate-400">Close %</p>
           </motion.div>
         </div>
@@ -2256,13 +2236,11 @@ function OverviewTabContent() {
                         </p>
                       </div>
                       
-                      {/* Overall Score - Responsive Circular Progress */}
+                      {/* Overall Score - Text Percentage */}
                       <div className="text-right">
-                        <CircularProgress 
-                          percentage={session.overall_score || 0}
-                          size={circleSize}
-                          strokeWidth={6}
-                        />
+                        <p className="text-xl sm:text-2xl font-bold text-white tabular-nums">
+                          {session.overall_score || 0}%
+                        </p>
                       </div>
                       
                       <Link
