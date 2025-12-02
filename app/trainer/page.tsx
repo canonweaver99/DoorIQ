@@ -246,26 +246,27 @@ function TrainerPageContent() {
   }, [sessionActive, showDoorCloseAnimation, videoMode, sessionState])
   
   // Auto-end detection: triggers when USER says goodbye (not agent)
-  useConversationEndDetection({
-    onConversationEnd: () => {
-      console.log('🚪 User goodbye detected - triggering door closing sequence')
-      if (handleCallEndRef.current) {
-        handleCallEndRef.current('User said goodbye')
-      } else if (handleDoorClosingSequenceRef.current) {
-        // Fallback: call handleDoorClosingSequence directly if handleCallEnd not available
-        console.log('🚪 Using handleDoorClosingSequence directly as fallback')
-        handleDoorClosingSequenceRef.current('User said goodbye').catch(err => {
-          console.error('❌ Error in handleDoorClosingSequence:', err)
-        })
-      } else {
-        console.warn('⚠️ Neither handleCallEnd nor handleDoorClosingSequence initialized yet')
-      }
-    },
-    transcript,
-    sessionStartTime: sessionStartTimeRef.current,
-    sessionActive,
-    enabled: sessionActive // Only enabled when session is active
-  })
+  // AUTO-END DISABLED - Manual session ending only per user request
+  // useConversationEndDetection({
+  //   onConversationEnd: () => {
+  //     console.log('🚪 User goodbye detected - triggering door closing sequence')
+  //     if (handleCallEndRef.current) {
+  //       handleCallEndRef.current('User said goodbye')
+  //     } else if (handleDoorClosingSequenceRef.current) {
+  //       // Fallback: call handleDoorClosingSequence directly if handleCallEnd not available
+  //       console.log('🚪 Using handleDoorClosingSequence directly as fallback')
+  //       handleDoorClosingSequenceRef.current('User said goodbye').catch(err => {
+  //         console.error('❌ Error in handleDoorClosingSequence:', err)
+  //       })
+  //     } else {
+  //       console.warn('⚠️ Neither handleCallEnd nor handleDoorClosingSequence initialized yet')
+  //     }
+  //   },
+  //   transcript,
+  //   sessionStartTime: sessionStartTimeRef.current,
+  //   sessionActive,
+  //   enabled: sessionActive // Only enabled when session is active
+  // })
   
   // Only use transcript feedback items (no voice feedback during live session)
   const feedbackItems = transcriptFeedbackItems
@@ -1825,7 +1826,7 @@ function TrainerPageContent() {
                             style={{ objectFit: 'cover', objectPosition: 'center center' }}
                             autoPlay
                             muted
-                            loop={videoMode === 'loop'}
+                            loop={false}
                             playsInline
                             // @ts-ignore - webkit-playsinline is needed for older iOS Safari
                             webkit-playsinline="true"
@@ -1837,8 +1838,8 @@ function TrainerPageContent() {
                             onLoadedData={() => {
                               if (agentVideoRef.current) {
                                 console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
-                                // Ensure loop is set correctly
-                                agentVideoRef.current.loop = videoMode === 'loop'
+                                // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
+                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation && videoMode !== 'closing')
                                 // CRITICAL: Exit fullscreen if somehow entered
                                 if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
                                   document.exitFullscreen().catch(() => {})
@@ -1850,8 +1851,8 @@ function TrainerPageContent() {
                             }}
                             onCanPlay={() => {
                               if (agentVideoRef.current) {
-                                // Ensure loop is set correctly
-                                agentVideoRef.current.loop = videoMode === 'loop'
+                                // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
+                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation && videoMode !== 'closing')
                                 // CRITICAL: Exit fullscreen if somehow entered
                                 if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
                                   document.exitFullscreen().catch(() => {})
@@ -1876,8 +1877,8 @@ function TrainerPageContent() {
                                     }
                                   })
                                 }
-                                // Ensure loop is correct based on mode
-                                agentVideoRef.current.loop = videoMode === 'loop'
+                                // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
+                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation && videoMode !== 'closing')
                               }
                             }}
                             onEnded={() => {
