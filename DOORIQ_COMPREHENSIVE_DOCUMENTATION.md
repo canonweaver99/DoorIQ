@@ -278,7 +278,7 @@ DoorIQ uses a **per-rep, per-month** pricing model with three tiers based on tea
   - Team leaderboard
   - Basic analytics & reporting
   - Manager dashboard
-  - **NO Learning page** (Custom Sales Playbook)
+  - **Basic sales playbook** (Learning page)
 
 #### 2. **TEAM Plan** ⭐ Most Popular
 - **Price**: $69/month per rep

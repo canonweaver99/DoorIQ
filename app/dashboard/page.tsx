@@ -1575,12 +1575,12 @@ function OverviewTabContent() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
                 dataKey="session" 
-                stroke="#6B7280"
-                tick={{ fill: '#6B7280', fontSize: 11 }}
+                stroke="#ffffff"
+                tick={{ fill: '#ffffff', fontSize: 14, fontWeight: 500 }}
               />
               <YAxis 
-                stroke="#6B7280"
-                tick={{ fill: '#6B7280', fontSize: 11 }}
+                stroke="#ffffff"
+                tick={{ fill: '#ffffff', fontSize: 14, fontWeight: 500 }}
                 domain={[0, 100]}
               />
               <Tooltip 
@@ -1595,8 +1595,8 @@ function OverviewTabContent() {
                 type="monotone" 
                 dataKey="score" 
                 stroke="#a855f7" 
-                strokeWidth={2}
-                dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
+                strokeWidth={4}
+                dot={{ fill: '#a855f7', strokeWidth: 3, r: 5 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -1615,12 +1615,12 @@ function OverviewTabContent() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
                 dataKey="session" 
-                stroke="#6B7280"
-                tick={{ fill: '#6B7280', fontSize: 11 }}
+                stroke="#ffffff"
+                tick={{ fill: '#ffffff', fontSize: 14, fontWeight: 500 }}
               />
               <YAxis 
-                stroke="#6B7280"
-                tick={{ fill: '#6B7280', fontSize: 11 }}
+                stroke="#ffffff"
+                tick={{ fill: '#ffffff', fontSize: 14, fontWeight: 500 }}
               />
               <Tooltip 
                 contentStyle={{
@@ -1635,8 +1635,8 @@ function OverviewTabContent() {
                 type="monotone" 
                 dataKey="earnings" 
                 stroke="#10b981" 
-                strokeWidth={2}
-                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                strokeWidth={4}
+                dot={{ fill: '#10b981', strokeWidth: 3, r: 5 }}
               />
             </LineChart>
           </ResponsiveContainer>

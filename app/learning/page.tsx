@@ -155,10 +155,10 @@ export default function LearningPage() {
         <div className="max-w-[1800px] mx-auto">
           <div className="flex flex-col items-center justify-center py-20">
             <Lock className="w-16 h-16 text-purple-400 mb-6" />
-            <h2 className="text-3xl font-bold text-white mb-4 font-space">Custom Sales Playbook Unavailable</h2>
+            <h2 className="text-3xl font-bold text-white mb-4 font-space">Sales Playbook Unavailable</h2>
             <p className="text-slate-400 text-center max-w-md mb-8 font-sans">
-              The Learning page with Custom Sales Playbook is only available for Team and Enterprise plans. 
-              Upgrade to Team plan to access this feature.
+              The Learning page with Sales Playbook is only available for Starter, Team, and Enterprise plans. 
+              Please ensure you have an active subscription.
             </p>
             <button
               onClick={() => router.push('/pricing')}

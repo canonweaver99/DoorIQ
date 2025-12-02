@@ -563,6 +563,7 @@ function BillingSettingsPage() {
                 'Team leaderboard',
                 'Basic analytics & reporting',
                 'Manager dashboard',
+                'Basic sales playbook',
               ]}
               onSelect={() => router.push('/pricing')}
             />

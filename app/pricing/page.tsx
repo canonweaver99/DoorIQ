@@ -60,7 +60,8 @@ function PricingPageContent() {
         'All AI personas',
         'Team leaderboard',
         'Basic analytics & reporting',
-        'Manager dashboard'
+        'Manager dashboard',
+        'Basic sales playbook'
       ],
       why: 'Perfect for small teams getting started. Low commitment, easy yes. Gets teams in the door and seeing results fast.',
       popular: false,

@@ -264,7 +264,7 @@ User continues with full access
 - All 12 AI training agents
 - Dashboard & analytics for reps
 - Manager panel for managers
-- **NO Learning page** (Custom Sales Playbook)
+- **Basic sales playbook** (Learning page)
 
 ### Team Plan (21-100 reps)
 - **14-day FREE trial** (no card charge)
