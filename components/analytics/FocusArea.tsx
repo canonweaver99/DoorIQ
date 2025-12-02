@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Target, ArrowRight, BookOpen } from 'lucide-react'
+import { ArrowRight, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useModules } from '@/hooks/learning/useModules'
@@ -110,23 +110,9 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
     ? modules.sort((a, b) => a.display_order - b.display_order)[0]
     : null
 
-  const skillLabels: Record<string, string> = {
-    rapport: 'Rapport Building',
-    discovery: 'Discovery',
-    objection_handling: 'Objection Handling',
-    closing: 'Closing Technique'
-  }
-
   const recommendation = skillRecommendations[focusSkill.skill] || {
     drill: 'Practice this skill area',
     persona: undefined
-  }
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-400'
-    if (score >= 60) return 'text-blue-400'
-    if (score >= 40) return 'text-yellow-400'
-    return 'text-red-400'
   }
 
   return (
@@ -136,101 +122,73 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
       transition={{ duration: 0.5, delay: 0.3 }}
       className="bg-gradient-to-br from-amber-900/30 to-yellow-900/20 backdrop-blur-xl border-2 border-amber-500/40 rounded-3xl p-6 mb-8"
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-shrink-0">
-          <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center border-2 border-amber-500/40">
-            <Target className="w-6 h-6 text-amber-400" />
-          </div>
-        </div>
-        
-        <div className="flex-1">
-          <h3 className="text-xl font-bold text-white mb-2 font-space flex items-center gap-2">
-            <span>🎯</span>
-            <span>Your Opportunity</span>
-          </h3>
-          
-          <p className="text-gray-300 mb-4 font-sans">
-            <span className="font-semibold text-white">{skillLabels[focusSkill.skill]}</span> is{' '}
-            <span className="font-bold text-amber-400">{Math.round(focusSkill.gap)} points</span> below your other skills
-            ({Math.round(focusSkill.score)}% vs {Math.round(focusSkill.otherAvg)}% average).
-          </p>
-          
-          <div className="bg-slate-900/50 rounded-xl p-4 mb-4 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-400 font-sans">Current Score</span>
-              <span className={`text-lg font-bold font-space ${getScoreColor(focusSkill.score)}`}>
-                {Math.round(focusSkill.score)}%
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-400 font-sans">Other Skills Avg</span>
-              <span className="text-lg font-bold text-white font-space">
-                {Math.round(focusSkill.otherAvg)}%
-              </span>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-start gap-2">
-              <span className="text-amber-400 font-bold">→</span>
-              <span className="text-gray-200 font-sans">
-                <span className="font-semibold">Try:</span> {recommendation.drill}
-              </span>
-            </div>
-            {recommendation.persona && (
-              <div className="flex items-center gap-3">
-                <span className="text-amber-400 font-bold">→</span>
-                <span className="text-gray-200 font-sans flex items-center gap-2">
-                  <span className="font-semibold">Practice with:</span>
-                  <div className="flex items-center gap-2">
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-amber-500/40 flex-shrink-0">
-                      <Image
-                        src={getAgentImage(recommendation.persona)}
-                        alt={recommendation.persona}
-                        fill
-                        className="object-cover"
-                        sizes="32px"
-                      />
-                    </div>
-                    <span>{recommendation.persona}</span>
-                  </div>
-                </span>
+      <h3 className="text-xl font-bold text-white mb-6 font-space flex items-center gap-2">
+        <span>🎯</span>
+        <span>Your Opportunity</span>
+      </h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Lesson Recommendation Card */}
+        {recommendedModule ? (
+          <Link
+            href={`/learning/modules/${recommendedModule.slug}`}
+            className="group bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/50 hover:border-amber-500/40 rounded-xl p-5 transition-all duration-200"
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <div className="p-2 bg-amber-500/20 rounded-lg group-hover:bg-amber-500/30 transition-colors">
+                <BookOpen className="w-5 h-5 text-amber-400" />
               </div>
-            )}
-          </div>
-          
-          <div className="mt-4 flex items-center gap-3">
-            <Link
-              href="/trainer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-lg text-amber-300 font-medium transition-colors text-sm font-sans"
-            >
-              Start Practice Session
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            {recommendedModule ? (
-              <Link
-                href={`/learning/modules/${recommendedModule.slug}`}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/50 rounded-lg text-gray-300 font-medium transition-colors text-sm font-sans"
-              >
-                <BookOpen className="w-4 h-4" />
-                Review Lesson
-              </Link>
-            ) : modulesLoading ? (
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-gray-400 text-sm font-sans">
-                <BookOpen className="w-4 h-4" />
-                Loading...
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold text-amber-400 mb-1 font-space uppercase tracking-wide">Recommended Lesson</h4>
+                <p className="text-base font-bold text-white font-space line-clamp-2">{recommendedModule.title}</p>
               </div>
-            ) : (
-              <Link
-                href="/learning"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/50 rounded-lg text-gray-300 font-medium transition-colors text-sm font-sans"
-              >
-                <BookOpen className="w-4 h-4" />
-                Learn More
-              </Link>
-            )}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-300 font-sans">
+              <span>Review lesson</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+        ) : modulesLoading ? (
+          <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-500/20 rounded-lg">
+                <BookOpen className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-amber-400 mb-1 font-space uppercase tracking-wide">Recommended Lesson</h4>
+                <p className="text-sm text-gray-400 font-sans">Loading...</p>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : null}
+
+        {/* Practice Agent Card */}
+        {recommendation.persona && (
+          <Link
+            href="/trainer"
+            className="group bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/50 hover:border-amber-500/40 rounded-xl p-5 transition-all duration-200"
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500/40 flex-shrink-0 group-hover:border-amber-500/60 transition-colors">
+                <Image
+                  src={getAgentImage(recommendation.persona)}
+                  alt={recommendation.persona}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold text-amber-400 mb-1 font-space uppercase tracking-wide">Practice Next</h4>
+                <p className="text-base font-bold text-white font-space">{recommendation.persona}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-300 font-sans">
+              <span>Start practice session</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+        )}
       </div>
     </motion.div>
   )

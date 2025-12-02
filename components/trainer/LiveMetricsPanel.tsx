@@ -1016,13 +1016,14 @@ function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCar
         </div>
       </div>
       
-      {/* Content - Pushed to bottom */}
-      <div className="mt-auto pt-1 flex-shrink-0 min-h-0 overflow-hidden">
+      {/* Content - Fixed height with scroll */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {objections.length === 0 ? (
           <div className="text-sm sm:text-base text-slate-400 font-space leading-tight">No objections detected</div>
         ) : (
-          <>
-            {objections.slice(0, isExpanded ? undefined : 2).map((objection) => {
+          <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+            <div className="space-y-2">
+              {objections.slice(0, isExpanded ? undefined : 2).map((objection) => {
               const qualityColor = objection.quality === 'excellent' || objection.quality === 'good' 
                 ? 'text-emerald-400' 
                 : objection.quality === 'poor' 
@@ -1051,30 +1052,31 @@ function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCar
                   </div>
                 </div>
               )
-            })}
-            
-            {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-2 pt-2 border-t border-slate-700/50"
-              >
-                <div className="text-xs sm:text-sm text-slate-400 font-space font-medium mb-1.5 leading-tight">Quick Tips:</div>
-                {Array.from(new Set(objections.map(o => o.type))).map((type) => (
-                  <div key={type} className="text-xs sm:text-sm text-slate-300 font-space mb-1 leading-tight">
-                    ↳ {formatObjectionType(type)}: {getObjectionCoachingTips(type)}
-                  </div>
-                ))}
-              </motion.div>
-            )}
-            
-            {objections.length > 2 && !isExpanded && (
-              <div className="text-xs sm:text-sm text-slate-400 font-space mt-1.5 leading-tight">
-                Click to see all {objections.length} objections...
-              </div>
-            )}
-          </>
+              })}
+              
+              {isExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-2 pt-2 border-t border-slate-700/50"
+                >
+                  <div className="text-xs sm:text-sm text-slate-400 font-space font-medium mb-1.5 leading-tight">Quick Tips:</div>
+                  {Array.from(new Set(objections.map(o => o.type))).map((type) => (
+                    <div key={type} className="text-xs sm:text-sm text-slate-300 font-space mb-1 leading-tight">
+                      ↳ {formatObjectionType(type)}: {getObjectionCoachingTips(type)}
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+              
+              {objections.length > 2 && !isExpanded && (
+                <div className="text-xs sm:text-sm text-slate-400 font-space mt-1.5 leading-tight">
+                  Click to see all {objections.length} objections...
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </motion.div>

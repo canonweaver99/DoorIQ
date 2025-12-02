@@ -51,11 +51,41 @@ function identifyConversationSegments(transcript: any[]): ConversationSegment[] 
       /can't afford|maybe later|not right now/i
     ],
     close_attempt: [
+      // Original patterns
       /so what I can do|here's what I propose|let me offer/i,
       /if I could|would you be interested/i,
       /let's get you (started|scheduled)/i,
       /ready to (start|begin)/i,
-      /can we schedule/i
+      /can we schedule/i,
+      // Hard closes - collecting information
+      /what is your name|what's your name/i,
+      /what is your phone|what's your phone/i,
+      /what is your email|what's your email/i,
+      /what is.*address|what's.*address/i,
+      /anything else.*special notes/i,
+      /are you using.*credit.*debit|credit or debit/i,
+      /payment method|how would you like to pay/i,
+      // Urgency closes
+      /best time to (service|treat)/i,
+      /bug activity.*going to get worse/i,
+      /never have a bug issue/i,
+      // Option closes
+      /do you want.*front yard.*back yard|front yard or back yard/i,
+      /would you like.*park/i,
+      /does morning.*evening work|morning or evening/i,
+      /which.*would you/i,
+      // Responsibility closes
+      /can you make sure.*dog|put your dog away/i,
+      /can you open the garage/i,
+      /gate.*unlocked/i,
+      // Sincerity/Pride closes
+      /let me prove.*love|give me.*honest try/i,
+      /give me a shot|give me a chance/i,
+      /take.*pride in my work/i,
+      // Bandwagon closes
+      /if I can get you done.*neighbor|your neighbor.*how does that sound/i,
+      // Light bulb closes
+      /you're going to be here.*today|you'll be here.*right/i
     ],
     discovery: [
       /tell me about|how long have you|what kind of/i,

@@ -51,6 +51,7 @@ function analyzeTranscriptPatterns(transcript: any[]) {
       /don't need/i
     ],
     closeAttempts: [
+      // Original patterns
       /let's get you (started|scheduled)/i,
       /I can offer/i,
       /special pricing/i,
@@ -60,7 +61,50 @@ function analyzeTranscriptPatterns(transcript: any[]) {
       /can we schedule/i,
       /would you like to/i,
       /let's set up/i,
-      /when can we/i
+      /when can we/i,
+      // Hard closes - collecting information
+      /what is your name/i,
+      /what's your name/i,
+      /what is your phone/i,
+      /what's your phone/i,
+      /what is your email/i,
+      /what's your email/i,
+      /what is.*address/i,
+      /what's.*address/i,
+      /what is your house number/i,
+      /anything else.*special notes/i,
+      /are you using.*credit.*debit/i,
+      /credit or debit/i,
+      /payment method/i,
+      /how would you like to pay/i,
+      // Urgency closes
+      /best time to (service|treat)/i,
+      /bug activity.*going to get worse/i,
+      /never have a bug issue/i,
+      // Option closes
+      /do you want.*front yard.*back yard/i,
+      /front yard or back yard/i,
+      /would you like.*park/i,
+      /does morning.*evening work/i,
+      /morning or evening/i,
+      /which.*would you/i,
+      // Responsibility closes
+      /can you make sure.*dog/i,
+      /put your dog away/i,
+      /can you open the garage/i,
+      /gate.*unlocked/i,
+      // Sincerity/Pride closes
+      /let me prove.*love/i,
+      /give me.*honest try/i,
+      /give me a shot/i,
+      /give me a chance/i,
+      /take.*pride in my work/i,
+      // Bandwagon closes
+      /if I can get you done.*neighbor/i,
+      /your neighbor.*how does that sound/i,
+      // Light bulb closes
+      /you're going to be here.*today/i,
+      /you'll be here.*right/i
     ],
     safetyKeywords: [
       /pets?/i,

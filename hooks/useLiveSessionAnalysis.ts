@@ -97,6 +97,17 @@ const TECHNIQUE_PATTERNS = {
   ],
   patternInterrupt: [
     'before you say no', 'I know what you\'re thinking', 'hear me out', 'quick question'
+  ],
+  assumptiveLanguage: [
+    'when we', 'when my', 'when our', 'when you\'re',
+    'once we', 'once you', 'once it',
+    'after we', 'after the first', 'after installation',
+    'you\'re going to love', 'you\'ll love', 'you will notice',
+    'let\'s get', 'let\'s set', 'let\'s schedule',
+    'we\'ll have', 'we will',
+    'what you\'re going to love', 'best phone', 'best email',
+    'confirmation', 'my guy comes', 'first treatment',
+    'you\'ll notice', 'never deal with', 'peace of mind'
   ]
 }
 

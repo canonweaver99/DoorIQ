@@ -34,7 +34,7 @@ type ObjectionSubCategory =
   | null
 type HandlingQuality = 'poor' | 'adequate' | 'good' | 'excellent'
 type MicroCommitmentLevel = 'minimal' | 'moderate' | 'strong' | 'buying'
-type CloseAttemptType = 'soft' | 'hard' | 'assumptive' | 'urgency'
+type CloseAttemptType = 'soft' | 'hard' | 'assumptive' | 'urgency' | 'option' | 'responsibility' | 'sincerity' | 'pride' | 'bandwagon' | 'light_bulb'
 type ObjectionTiming = 'early' | 'mid' | 'late'
 type BuyingTemperatureTrend = 'warming_up' | 'cooling_off' | 'stable'
 
@@ -549,6 +549,58 @@ export const TECHNIQUE_PATTERNS = {
     /before you decide/i,
     /hold on/i,
     /wait a second/i
+  ],
+  assumptiveLanguage: [
+    // "When" statements (not "if")
+    /when (we|my|our|you)/i,
+    /when (we get|we start|we set|we install|we begin|we're)/i,
+    /when (my tech|my guy|our tech|our guy|the tech|the installer)/i,
+    /when (you're|you are)/i,
+    /when (the|your) (tech|guy|installer|crew|team)/i,
+    // "Once" statements
+    /once (we|you|it|they)/i,
+    /once (we get|we start|we set|we install|we begin|we're)/i,
+    /once (you're|you are|it's|they're)/i,
+    /once (the|your) (tech|guy|installer|crew|team)/i,
+    // "After" statements
+    /after (we|you|it|they|installation|treatment|service)/i,
+    /after (we get|we start|we set|we install|we begin|we're)/i,
+    /after (the|your) (first|installation|treatment|service)/i,
+    // "You're going to" statements
+    /you're going to (love|notice|see|get|have|feel)/i,
+    /you'll (love|notice|see|get|have|feel)/i,
+    /you will (love|notice|see|get|have|feel)/i,
+    // "Let's" statements (assuming action)
+    /let's (get|set|schedule|start|begin)/i,
+    /let's get (you|this)/i,
+    /let's set (you|this|it)/i,
+    /let's schedule/i,
+    // "We'll" statements
+    /we'll (have|get|set|do|start|begin)/i,
+    /we will (have|get|set|do|start|begin)/i,
+    // Specific assumptive phrases
+    /what you're going to love/i,
+    /what you'll love/i,
+    /best (phone|email|address|number) for/i,
+    /best (phone|email|address|number) to/i,
+    /what's the best (phone|email|address|number)/i,
+    /confirmation (email|phone|number)/i,
+    /we'll have (someone|a tech|the tech)/i,
+    /(someone|a tech|the tech) (will|is going to) (come|be)/i,
+    // Industry-specific assumptive language
+    /(my|our|the) (guy|tech|installer|crew) (comes|comes out|gets here|arrives)/i,
+    /(my|our|the) (guy|tech|installer|crew) (is going to|will)/i,
+    /first treatment/i,
+    /first (service|installation|visit)/i,
+    /after the first/i,
+    /within (48 hours|24 hours|a day|days)/i,
+    /you'll notice (a difference|the difference|it)/i,
+    /you're going to notice/i,
+    /never (deal|have|worry) (with|about)/i,
+    /peace of mind/i,
+    /sleep better/i,
+    /monitor (everything|from)/i,
+    /app to (monitor|watch)/i
   ]
 }
 
@@ -606,7 +658,25 @@ const CLOSE_PATTERNS: Record<CloseAttemptType, RegExp[]> = {
     /I'll set you up/i,
     /here's what we'll do/i,
     /I'm going to/i,
-    /we're going to/i
+    /we're going to/i,
+    // Hard closes - collecting agreement information
+    /what is your name/i,
+    /what's your name/i,
+    /what is your phone number/i,
+    /what's your phone/i,
+    /what is your email/i,
+    /what's your email/i,
+    /what is a good address/i,
+    /what's a good address/i,
+    /what is your house number/i,
+    /what's your house number/i,
+    /anything else.*special notes/i,
+    /special notes/i,
+    /are you using a credit/i,
+    /are you using a debit/i,
+    /credit or debit/i,
+    /payment method/i,
+    /how would you like to pay/i
   ],
   assumptive: [
     /when we start/i,
@@ -622,7 +692,65 @@ const CLOSE_PATTERNS: Record<CloseAttemptType, RegExp[]> = {
     /this week/i,
     /expires/i,
     /last chance/i,
-    /while I'm here/i
+    /while I'm here/i,
+    // Urgency Close patterns
+    /best time to service/i,
+    /best time to treat/i,
+    /bug activity.*going to get worse/i,
+    /never have a bug issue/i
+  ],
+  option: [
+    // Option Close - giving choices
+    /do you want.*front yard.*back yard/i,
+    /front yard or back yard/i,
+    /would you like.*park.*front.*driveway/i,
+    /park out front.*driveway/i,
+    /does morning.*evening work/i,
+    /morning or evening/i,
+    /would you prefer/i,
+    /do you want.*or/i,
+    /which.*would you/i
+  ],
+  responsibility: [
+    // Responsibility Close - asking for action
+    /can you make sure.*dog away/i,
+    /put your dog away/i,
+    /can you open the garage/i,
+    /open the garage door/i,
+    /can you make sure.*gate.*unlocked/i,
+    /gate is unlocked/i,
+    /can you make sure/i,
+    /make sure.*when.*gets here/i
+  ],
+  sincerity: [
+    // Sincerity Close - last resort
+    /let me prove.*love what I do/i,
+    /give me an honest try/i,
+    /I know you're going to love/i,
+    /give me a shot/i,
+    /give me a chance/i,
+    /prove to you/i
+  ],
+  pride: [
+    // Pride Close
+    /take.*pride in my work/i,
+    /let me prove it to you/i,
+    /give me a chance/i,
+    /prove it to you/i
+  ],
+  bandwagon: [
+    // Bandwagon Close
+    /if I can get you done.*neighbor/i,
+    /your neighbor.*across the street/i,
+    /help me out.*how does that sound/i,
+    /neighbor.*how does that sound/i
+  ],
+  light_bulb: [
+    // Light Bulb Close - mid-pitch recapture
+    /you're going to be here.*today/i,
+    /you're going to be here.*right/i,
+    /you'll be here.*right/i,
+    /you'll be here.*today/i
   ]
 }
 
@@ -801,6 +929,7 @@ export function detectTechnique(text: string): string | null {
           .replace(/Price Reframe/i, 'Price Reframe')
           .replace(/Third Party Story/i, 'Third-Party Story')
           .replace(/Pattern Interrupt/i, 'Pattern Interrupt')
+          .replace(/Assumptive Language/i, 'Assumptive Language')
         return displayName
       }
     }
@@ -1110,10 +1239,16 @@ export function assessObjectionHandling(
   const hasMultipleSignals = resolutionSignals.length >= 2
   const hasExplicitAcceptance = resolutionSignals.some(s => s.includes('Explicit acceptance') || s.includes('Strong agreement'))
   const hasBuyingSignal = resolutionSignals.some(s => s.includes('Buying signal') || s.includes('buying signal'))
+  const hasDirectAddress = resolutionSignals.some(s => s.includes('directly addressed'))
+  
+  // More lenient handling detection - if rep responded and addressed the objection, consider it handled
+  // Also check if rep used addressing language patterns even without explicit positive signals
+  const repAddressedObjection = repResponses.length > 0 && (hasDirectAddress || techniqueUsed || positiveCount > 0)
   
   // Resolution is more confident if we have multiple positive signals
-  const wasHandled = techniqueUsed || hasExplicitAcceptance || (positiveCount > negativeCount && positiveCount >= 2)
-  const isResolved = wasHandled && !negativeCount && (hasExplicitAcceptance || hasBuyingSignal || hasMultipleSignals)
+  // Lower threshold: handled if rep responded AND (has positive signals OR addressed directly OR used technique)
+  const wasHandled = repAddressedObjection && (techniqueUsed || hasExplicitAcceptance || hasDirectAddress || positiveCount > negativeCount || positiveCount >= 1)
+  const isResolved = wasHandled && !negativeCount && (hasExplicitAcceptance || hasBuyingSignal || hasMultipleSignals || (positiveCount >= 2 && negativeCount === 0))
   
   let quality: HandlingQuality | null = null
   if (wasHandled) {
@@ -1244,9 +1379,6 @@ export function generateConciseFeedback(
       if (subCategory && subCategoryMap[subCategory]) {
         message += ` - ${subCategoryMap[subCategory]}`
       }
-      if (confidence !== undefined && confidence < 0.7) {
-        message += ' [Low confidence]'
-      }
       return message
     }
 
@@ -1284,7 +1416,13 @@ export function generateConciseFeedback(
         soft: 'Soft close attempted',
         hard: 'Hard close attempted',
         assumptive: 'Assumptive close used',
-        urgency: 'Urgency close used'
+        urgency: 'Urgency close used',
+        option: 'Option close used',
+        responsibility: 'Responsibility close used',
+        sincerity: 'Sincerity close used',
+        pride: 'Pride close used',
+        bandwagon: 'Bandwagon close used',
+        light_bulb: 'Light bulb close used'
       }
       return typeMap[closeType] || 'Close attempted'
     }

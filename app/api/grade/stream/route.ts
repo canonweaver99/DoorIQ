@@ -445,7 +445,24 @@ SCORING (0-100): Overall=avg, Rapport=connection, Discovery=questions, Objection
 
 TIMELINE: Pick 2 moments at 50% and 90% of conversation. Use timestamps from transcript.
 
-EARNINGS: sale_closed=true ONLY if PAID service committed. return_appointment=true if scheduled. Commission=0.30. virtual_earnings=total_contract_value×0.30.
+SALE DETECTION (CRITICAL):
+✅ sale_closed=true if ANY of these occur:
+1. STRONG BUYING SIGNALS: "sounds good", "that works", "I'm interested", "let's do it", "I'll take it", "count me in", "I'm ready", "when can you start", "what's next", "how do I sign up", "that makes sense", "I like that", "we need that", "definitely need", agreement after price discussion
+2. HARD COMMITMENTS: Payment agreement, contract signing, "let's get started", "I'm ready to sign", explicit "yes" to service
+3. APPOINTMENT SCHEDULING WITH SPECIFIC TIME/DATE (counts as sale):
+   - "I'm coming back", "I'll come back", "coming back tomorrow", "coming back at [time]"
+   - "see you tomorrow", "see you at [time]", "I'll see you", "see you then"
+   - Specific time commitments: "at 9am", "at 2pm", "tomorrow morning", "tomorrow afternoon"
+   - "I'll be here", "I'll be ready", "come back [day/time]"
+   - Examples: "coming back tmw at 9am", "I'll see you tomorrow at 2", "come back Friday morning"
+   - If customer commits to specific return time/date after service discussion = SALE
+
+❌ NOT a sale: "I'll think about it" without commitment, vague "sometime" or "later" without specific time, "maybe" without follow-up
+
+- return_appointment=true ONLY if scheduled follow-up but NO specific time/date commitment AND no sale commitment
+- IMPORTANT: If customer commits to specific return time/date after service discussion, that IS a sale (sale_closed=true)
+
+EARNINGS: sale_closed=true if PAID service committed OR specific appointment scheduled. return_appointment=true if vague follow-up scheduled. Commission=0.30. virtual_earnings=total_contract_value×0.30.
 
 FILLER WORDS: Use pre-computed count (${precomputedFillerCount}). Count only "um", "uh", "uhh", "erm", "err", "hmm". Never count "like".
 

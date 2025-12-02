@@ -150,12 +150,22 @@ SALE DETECTION (CRITICAL - Use ORIGINAL comprehensive method):
    - "let's get started", "I'm ready to sign", "when can you come back"
    - Explicit "yes" to service after pricing/objection discussion
 
+3. APPOINTMENT SCHEDULING (counts as sale if specific time/date mentioned):
+   - "I'm coming back", "I'll come back", "coming back tomorrow", "coming back at [time]"
+   - "see you tomorrow", "see you at [time]", "I'll see you", "see you then"
+   - Specific time commitments: "at 9am", "at 2pm", "tomorrow morning", "tomorrow afternoon"
+   - "I'll be here", "I'll be ready", "come back [day/time]"
+   - Any commitment with specific day/time after discussing service = SALE
+   - Examples: "coming back tmw at 9am", "I'll see you tomorrow at 2", "come back Friday morning"
+
 ❌ NOT a sale:
    - "I'll think about it" without commitment
-   - Just scheduling inspection/callback without service commitment
+   - Just scheduling inspection/callback without service commitment AND no specific time
    - "maybe", "possibly", "I'll consider" without follow-up commitment
+   - Vague "sometime" or "later" without specific time/date
 
-- return_appointment=true if scheduled follow-up but no sale commitment
+- return_appointment=true ONLY if scheduled follow-up but NO specific time/date commitment AND no sale commitment
+- IMPORTANT: If customer commits to specific return time/date after service discussion, that IS a sale (sale_closed=true)
 - IMPORTANT: Soft closes and buying signals AFTER objection handling count as sales - don't require explicit payment mention
 
 EARNINGS CALCULATION (ORIGINAL METHOD - if sale_closed=true):

@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Database, BarChart3, Settings, UserCog, BookOpen, Video } from 'lucide-react'
 import RepManagement from '@/components/manager/RepManagement'
 import KnowledgeBase from '@/components/manager/KnowledgeBase'
 import AnalyticsDashboard from '@/components/manager/AnalyticsDashboard'
-import ManagerSettings from '@/components/manager/ManagerSettings'
 import TrainingVideos from '@/components/manager/TrainingVideos'
 
 type Tab = 'reps' | 'knowledge' | 'analytics' | 'settings' | 'videos'
@@ -22,24 +21,41 @@ const tabs = [
 
 function ManagerPageContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [timePeriod, setTimePeriod] = useState('30')
   
   // Initialize activeTab from URL parameter using lazy initializer to match server render
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tabParam = searchParams.get('tab') as Tab | null
-    if (tabParam && tabs.some(tab => tab.id === tabParam)) {
+    if (tabParam && tabs.some(tab => tab.id === tabParam) && tabParam !== 'settings') {
       return tabParam
     }
     return 'analytics'
   })
 
-  // Update active tab when URL parameter changes
+  // Handle settings tab redirect and update active tab when URL parameter changes
   useEffect(() => {
     const tabParam = searchParams.get('tab') as Tab | null
-    if (tabParam && tabs.some(tab => tab.id === tabParam) && tabParam !== activeTab) {
-      setActiveTab(tabParam)
+    if (tabParam && tabs.some(tab => tab.id === tabParam)) {
+      // Redirect settings tab to actual settings page
+      if (tabParam === 'settings') {
+        router.push('/settings')
+        return
+      }
+      if (tabParam !== activeTab) {
+        setActiveTab(tabParam)
+      }
     }
-  }, [searchParams, activeTab])
+  }, [searchParams, activeTab, router])
+
+  const handleTabClick = (tabId: Tab) => {
+    // Redirect settings tab to actual settings page
+    if (tabId === 'settings') {
+      router.push('/settings')
+      return
+    }
+    setActiveTab(tabId)
+  }
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -51,8 +67,6 @@ function ManagerPageContent() {
         return <AnalyticsDashboard timePeriod={timePeriod} />
       case 'videos':
         return <TrainingVideos />
-      case 'settings':
-        return <ManagerSettings />
       default:
         return <AnalyticsDashboard timePeriod={timePeriod} />
     }
@@ -93,7 +107,7 @@ function ManagerPageContent() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => handleTabClick(tab.id)}
                     className={`relative flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 font-space ${
                       isActive
                         ? 'text-white bg-[#1a1a1a]'
