@@ -257,7 +257,52 @@ function calculateTranscriptSentiment(transcript: TranscriptEntry[], sessionDura
   })
   const buyingSignalBonus = Math.min(15, recentBuyingSignals * 5)
   
-  const finalScore = baseScore + progressionBonus + buyingSignalBonus
+  // CRITICAL: Apply objection penalties - sentiment should go DOWN when objections occur
+  let objectionPenalty = 0
+  const allHomeownerEntries = transcript.filter(e => e.speaker === 'homeowner')
+  
+  // Detect all objections and apply penalties based on severity
+  allHomeownerEntries.forEach((entry, index) => {
+    // Find the actual index in the full transcript
+    const transcriptIndex = transcript.findIndex(e => e === entry)
+    const objection = detectObjection(entry.text, transcript, transcriptIndex >= 0 ? transcriptIndex : undefined)
+    
+    if (objection) {
+      // Apply penalty based on severity
+      // More recent objections have higher impact
+      const isRecent = index >= allHomeownerEntries.length - recentWindow
+      const severityMultiplier = isRecent ? 1.0 : 0.5 // Recent objections count more
+      
+      let penalty = 0
+      switch (objection.severity) {
+        case 'critical':
+          penalty = 20 * severityMultiplier
+          break
+        case 'high':
+          penalty = 15 * severityMultiplier
+          break
+        case 'medium':
+          penalty = 10 * severityMultiplier
+          break
+        case 'low':
+          penalty = 5 * severityMultiplier
+          break
+      }
+      
+      // Check if objection was resolved - if so, reduce penalty by 50%
+      if (transcriptIndex >= 0) {
+        const assessment = assessObjectionHandling(transcriptIndex, transcript, objection.type)
+        if (assessment.isResolved || assessment.wasHandled) {
+          penalty = penalty * 0.5 // Reduce penalty if handled (still penalize, but less)
+        }
+      }
+      
+      objectionPenalty += penalty
+    }
+  })
+  
+  // Apply objection penalty (subtract from score)
+  const finalScore = baseScore + progressionBonus + buyingSignalBonus - objectionPenalty
   
   return Math.round(Math.max(0, Math.min(100, finalScore)))
 }
