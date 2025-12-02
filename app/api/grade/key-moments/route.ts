@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 20000,
-  maxRetries: 2
+  timeout: 15000, // Reduced from 20s to 15s for faster failure detection
+  maxRetries: 1 // Reduced from 2 to 1 to prevent long retry delays
 })
 
 interface KeyMoment {

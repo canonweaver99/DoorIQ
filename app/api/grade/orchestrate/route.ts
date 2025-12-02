@@ -13,50 +13,34 @@ function detectInappropriateLanguage(transcript: any[]): boolean {
   try {
     if (!Array.isArray(transcript) || transcript.length === 0) return false
     
-    // Comprehensive list of inappropriate words/phrases
+    // Comprehensive list of inappropriate words/phrases (only truly offensive/profane)
+    // Removed words that could be legitimate: "gay", "homo", "sex", "ass" (as in donkey), "stupid", "dumb", "idiot", "moron", "kill", "murder", "hate", "fart", "pop"
     const inappropriatePatterns = [
-    /\bn[i1]gg?[e3]r\b/i,
-    /\bf[a4]gg?[o0]t\b/i,
-    /\bc[o0]ck\b/i,
-    /\bp[u3]ssy\b/i,
-    /\ba[s5]s\b/i,
-    /\bsh[i1]t\b/i,
-    /\bf[u3]ck\b/i,
-    /\bd[i1]ck\b/i,
-    /\bt[i1]ts?\b/i,
-    /\bb[i1]tch\b/i,
-    /\bwh[o0]re\b/i,
-    /\bsl[u3]t\b/i,
-    /\bc[u3]nt\b/i,
-    /\btw[a4]t\b/i,
-    /\bp[o0]rn\b/i,
-    /\bs[e3]x\b/i,
-    /\br[a4]p[e3]\b/i,
-    /\bk[i1]ll\b/i,
-    /\bm[u3]rd[e3]r\b/i,
-    /\bh[a4]t[e3]\b/i,
-    /\bk[i1]ll\s+y[o0]u\b/i,
-    /\bf[u3]ck\s+y[o0]u\b/i,
-    /\bg[o0]\s+t[o0]\s+h[e3]ll\b/i,
-    /\bd[i1][e3]\b/i,
-    /\bs[u3]ck\b/i,
-    /\bl[i1]ck\b/i,
-    /\bbl[o0]w\s+j[o0]b\b/i,
-    /\bh[o0]m[o0]\b/i,
-    /\bg[a4]y\b/i,
-    /\br[e3]t[a4]rd\b/i,
-    /\bm[o0]r[o0]n\b/i,
-    /\bi[d4]i[o0]t\b/i,
-    /\bst[u3]p[i1]d\b/i,
-    /\bd[u3]mb\b/i,
-    /\bf[a4]rt\b/i,
-    /\bp[o0][o0]p\b/i,
-    /\bp[i1]ss\b/i,
-    /\bp[i1]ss\s+[o0]ff\b/i,
-    /\bg[o0]\s+f[u3]ck\s+y[o0]urs[e3]lf\b/i,
-    /\bsh[u3]t\s+u[p3]\b/i,
-    /\bsh[u3]t\s+th[e3]\s+f[u3]ck\s+u[p3]\b/i
-  ]
+      /\bn[i1]gg?[e3]r\b/i,  // Racial slur
+      /\bf[a4]gg?[o0]t\b/i,  // Homophobic slur
+      /\bp[u3]ssy\b/i,       // Profanity
+      /\bf[u3]ck\b/i,        // Profanity
+      /\bsh[i1]t\b/i,        // Profanity
+      /\bb[i1]tch\b/i,       // Profanity
+      /\bwh[o0]re\b/i,       // Profanity
+      /\bsl[u3]t\b/i,        // Profanity
+      /\bc[u3]nt\b/i,        // Profanity
+      /\bc[o0]ck\b/i,        // Profanity (when used as slang)
+      /\bd[i1]ck\b/i,        // Profanity
+      /\bt[i1]ts?\b/i,       // Profanity
+      /\btw[a4]t\b/i,        // Profanity
+      /\bp[o0]rn\b/i,        // Profanity
+      /\br[a4]p[e3]\b/i,     // Violence
+      /\bk[i1]ll\s+y[o0]u\b/i, // Threat
+      /\bf[u3]ck\s+y[o0]u\b/i, // Profanity
+      /\bd[i1][e3]\b/i,      // Threat
+      /\bbl[o0]w\s+j[o0]b\b/i, // Profanity
+      /\br[e3]t[a4]rd\b/i,   // Slur
+      /\bp[i1]ss\s+[o0]ff\b/i, // Profanity
+      /\bg[o0]\s+f[u3]ck\s+y[o0]urs[e3]lf\b/i, // Profanity
+      /\bsh[u3]t\s+u[p3]\b/i, // Profanity
+      /\bsh[u3]t\s+th[e3]\s+f[u3]ck\s+u[p3]\b/i // Profanity
+    ]
   
     // Check all transcript entries for inappropriate language
     for (const entry of transcript) {
@@ -230,7 +214,9 @@ export async function POST(req: NextRequest) {
           })
       }
       
-      const instantResponse = await fetch(`${req.nextUrl.origin}/api/grade/instant`, {
+      // Add timeout wrapper to prevent hanging on connection issues
+      logger.info('📡 Calling Phase 1 endpoint', { sessionId, url: `${req.nextUrl.origin}/api/grade/instant` })
+      const instantFetchPromise = fetch(`${req.nextUrl.origin}/api/grade/instant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -241,6 +227,13 @@ export async function POST(req: NextRequest) {
           elevenLabsConversationId: conversationId
         })
       })
+      
+      const instantTimeoutPromise = new Promise<Response>((_, reject) => {
+        setTimeout(() => reject(new Error('Phase 1 timeout after 10 seconds')), 10000)
+      })
+      
+      const instantResponse = await Promise.race([instantFetchPromise, instantTimeoutPromise])
+      logger.info('📡 Phase 1 endpoint responded', { sessionId, status: instantResponse.status, timeElapsed: Date.now() - instantStart })
       
       if (instantResponse.ok) {
         const instantData = await instantResponse.json()
@@ -262,11 +255,20 @@ export async function POST(req: NextRequest) {
         // Continue to next phase even if instant fails
       }
     } catch (error: any) {
-      logger.error('Phase 1 error', { sessionId, error: error.message })
+      const errorMessage = error.message || 'Unknown error'
+      const isTimeout = errorMessage.includes('timeout')
+      logger.error('Phase 1 error', { 
+        sessionId, 
+        error: errorMessage,
+        isTimeout,
+        timeElapsed: Date.now() - startTime
+      })
       results.phases.instant = {
-        status: 'error',
-        error: error.message
+        status: isTimeout ? 'timeout' : 'error',
+        error: errorMessage,
+        timeElapsed: Date.now() - instantStart
       }
+      // Continue to next phase even if instant fails
     }
     
     // Phase 2: Key Moments Detection (2-5s)
@@ -277,7 +279,9 @@ export async function POST(req: NextRequest) {
       // Get instant metrics for context
       const instantMetrics = results.phases.instant?.metrics || session.instant_metrics
       
-      const momentsResponse = await fetch(`${req.nextUrl.origin}/api/grade/key-moments`, {
+      // Add timeout wrapper to prevent hanging on connection issues
+      logger.info('📡 Calling Phase 2 endpoint', { sessionId, url: `${req.nextUrl.origin}/api/grade/key-moments` })
+      const momentsFetchPromise = fetch(`${req.nextUrl.origin}/api/grade/key-moments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -288,6 +292,13 @@ export async function POST(req: NextRequest) {
           instantMetrics
         })
       })
+      
+      const momentsTimeoutPromise = new Promise<Response>((_, reject) => {
+        setTimeout(() => reject(new Error('Phase 2 timeout after 30 seconds')), 30000)
+      })
+      
+      const momentsResponse = await Promise.race([momentsFetchPromise, momentsTimeoutPromise])
+      logger.info('📡 Phase 2 endpoint responded', { sessionId, status: momentsResponse.status, timeElapsed: Date.now() - momentsStart })
       
       if (momentsResponse.ok) {
         const momentsData = await momentsResponse.json()
@@ -309,11 +320,20 @@ export async function POST(req: NextRequest) {
         // Continue to next phase even if key moments fails
       }
     } catch (error: any) {
-      logger.error('Phase 2 error', { sessionId, error: error.message })
+      const errorMessage = error.message || 'Unknown error'
+      const isTimeout = errorMessage.includes('timeout')
+      logger.error('Phase 2 error', { 
+        sessionId, 
+        error: errorMessage,
+        isTimeout,
+        timeElapsed: Date.now() - startTime
+      })
       results.phases.keyMoments = {
-        status: 'error',
-        error: error.message
+        status: isTimeout ? 'timeout' : 'error',
+        error: errorMessage,
+        timeElapsed: Date.now() - momentsStart
       }
+      // Continue even if key moments fails - user can still see instant metrics
     }
     
     // Phase 3: Deep Analysis (5-15s, fire and forget)
