@@ -256,62 +256,96 @@ function calculateBuyingSignalsScore(transcript: TranscriptEntry[]): number {
   return Math.min(100, Math.round(score))
 }
 
-// Calculate positive language score with weighted patterns
+// Calculate positive language score with weighted patterns - NOW ANALYZES BOTH SIDES
 function calculatePositiveLanguageScore(transcript: TranscriptEntry[]): number {
   if (!transcript || transcript.length === 0) return 50 // Start neutral
 
+  // Analyze BOTH sides
   const homeownerEntries = transcript.filter(e => e.speaker === 'homeowner')
-  if (homeownerEntries.length === 0) return 50
+  const userEntries = transcript.filter(e => e.speaker === 'user' || e.speaker === 'rep')
+  const allEntries = [...homeownerEntries, ...userEntries].sort((a, b) => 
+    a.timestamp.getTime() - b.timestamp.getTime()
+  )
+  
+  if (allEntries.length === 0) return 50
 
   let positiveScore = 0
   let negativeScore = 0
-  const recentWindow = Math.max(1, Math.floor(homeownerEntries.length * 0.4))
+  const recentWindow = Math.max(1, Math.floor(allEntries.length * 0.4))
 
-  homeownerEntries.forEach((entry, index) => {
-    const isRecent = index >= homeownerEntries.length - recentWindow
+  allEntries.forEach((entry, index) => {
+    const isHomeowner = entry.speaker === 'homeowner'
+    const isUser = entry.speaker === 'user' || entry.speaker === 'rep'
+    const isRecent = index >= allEntries.length - recentWindow
     const recencyMultiplier = isRecent ? 1.3 : 1.0
     
-    // Rapport signals (+8 points)
-    RAPPORT_SIGNALS.forEach(pattern => {
-      if (pattern.test(entry.text)) {
-        positiveScore += 8 * recencyMultiplier
-      }
-    })
+    // HOMEOWNER signals
+    if (isHomeowner) {
+      // Rapport signals (+8 points)
+      RAPPORT_SIGNALS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          positiveScore += 8 * recencyMultiplier
+        }
+      })
+      
+      // Soft positive (+4 points)
+      SOFT_POSITIVE_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          positiveScore += 4 * recencyMultiplier
+        }
+      })
+      
+      // Questions indicate engagement (+3 points)
+      QUESTION_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          positiveScore += 3 * recencyMultiplier
+        }
+      })
+      
+      // Strong negative (-15 points)
+      STRONG_NEGATIVE_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          negativeScore += 15 * recencyMultiplier
+        }
+      })
+      
+      // Moderate negative (-8 points)
+      MODERATE_NEGATIVE_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          negativeScore += 8 * recencyMultiplier
+        }
+      })
+      
+      // Hesitation (-4 points)
+      HESITATION_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          negativeScore += 4 * recencyMultiplier
+        }
+      })
+    }
     
-    // Soft positive (+4 points)
-    SOFT_POSITIVE_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) {
-        positiveScore += 4 * recencyMultiplier
-      }
-    })
-    
-    // Questions indicate engagement (+3 points)
-    QUESTION_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) {
-        positiveScore += 3 * recencyMultiplier
-      }
-    })
-    
-    // Strong negative (-15 points)
-    STRONG_NEGATIVE_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) {
-        negativeScore += 15 * recencyMultiplier
-      }
-    })
-    
-    // Moderate negative (-8 points)
-    MODERATE_NEGATIVE_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) {
-        negativeScore += 8 * recencyMultiplier
-      }
-    })
-    
-    // Hesitation (-4 points)
-    HESITATION_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) {
-        negativeScore += 4 * recencyMultiplier
-      }
-    })
+    // USER/REP signals - negative language from user hurts sentiment
+    if (isUser) {
+      // Positive signals (less weight)
+      RAPPORT_SIGNALS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          += 4 * recencyMultiplier
+        }
+      })
+      
+      // Negative signals (HIGH penalty for user being negative)
+      STRONG_NEGATIVE_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          negativeScore += 20 * recencyMultiplier // Higher penalty for user
+        }
+      })
+      
+      MODERATE_NEGATIVE_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) {
+          negativeScore += 12 * recencyMultiplier
+        }
+      })
+    }
   })
 
   // Calculate net score: 50 (neutral) + positive - negative
