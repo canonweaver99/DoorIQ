@@ -10,10 +10,11 @@ export const dynamic = 'force-dynamic'
  * Returns true if inappropriate language is detected
  */
 function detectInappropriateLanguage(transcript: any[]): boolean {
-  if (!Array.isArray(transcript) || transcript.length === 0) return false
-  
-  // Comprehensive list of inappropriate words/phrases
-  const inappropriatePatterns = [
+  try {
+    if (!Array.isArray(transcript) || transcript.length === 0) return false
+    
+    // Comprehensive list of inappropriate words/phrases
+    const inappropriatePatterns = [
     /\bn[i1]gg?[e3]r\b/i,
     /\bf[a4]gg?[o0]t\b/i,
     /\bc[o0]ck\b/i,
@@ -57,25 +58,38 @@ function detectInappropriateLanguage(transcript: any[]): boolean {
     /\bsh[u3]t\s+th[e3]\s+f[u3]ck\s+u[p3]\b/i
   ]
   
-  // Check all transcript entries for inappropriate language
-  for (const entry of transcript) {
-    const text = (entry.text || entry.message || '').toLowerCase()
-    if (!text) continue
-    
-    // Check against all patterns
-    for (const pattern of inappropriatePatterns) {
-      if (pattern.test(text)) {
-        logger.warn('🚫 Inappropriate language detected', { 
-          pattern: pattern.toString(), 
-          text: text.substring(0, 50),
-          speaker: entry.speaker 
-        })
-        return true
+    // Check all transcript entries for inappropriate language
+    for (const entry of transcript) {
+      if (!entry || typeof entry !== 'object') continue
+      
+      const text = (entry.text || entry.message || '').toLowerCase()
+      if (!text || typeof text !== 'string') continue
+      
+      // Check against all patterns
+      for (const pattern of inappropriatePatterns) {
+        try {
+          if (pattern.test(text)) {
+            logger.warn('🚫 Inappropriate language detected', { 
+              pattern: pattern.toString(), 
+              text: text.substring(0, 50),
+              speaker: entry.speaker 
+            })
+            return true
+          }
+        } catch (patternError) {
+          // Skip invalid patterns
+          logger.warn('Pattern error in inappropriate language detection', { error: patternError })
+          continue
+        }
       }
     }
+    
+    return false
+  } catch (error) {
+    // If detection fails, log but don't block grading
+    logger.error('Error in inappropriate language detection', { error })
+    return false
   }
-  
-  return false
 }
 
 /**
