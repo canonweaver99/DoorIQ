@@ -980,9 +980,23 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             wasHandled: true
           })
           
-          // Add resolution signals to message if available (only if no parentheses already exist)
+          // Add concise resolution signals to message if available (only if no parentheses already exist)
           if (handling.resolutionSignals && handling.resolutionSignals.length > 0 && !message.includes('(')) {
-            message += ` (${handling.resolutionSignals.slice(0, 2).join(', ')})`
+            // Extract technique name if present (simplify "Technique used: X" to just "X")
+            const techniqueSignal = handling.resolutionSignals.find(s => s.includes('Technique used:'))
+            const techniqueName = techniqueSignal 
+              ? techniqueSignal.replace('Technique used:', '').trim()
+              : null
+            
+            // Build concise message - only include technique if present
+            if (techniqueName) {
+              message += ` (${techniqueName})`
+            } else if (handling.resolutionSignals.length > 0) {
+              // Fallback: use first signal but truncate if too long
+              const firstSignal = handling.resolutionSignals[0]
+              const truncated = firstSignal.length > 30 ? firstSignal.substring(0, 27) + '...' : firstSignal
+              message += ` (${truncated})`
+            }
           }
           
           addFeedbackItem(

@@ -194,7 +194,7 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
             <span className="text-[10px] sm:text-xs text-slate-300 font-space font-medium">{formatTime(item.timestamp)}</span>
           </div>
           <p className="text-xs sm:text-sm text-white leading-relaxed break-words font-space font-medium line-clamp-2 overflow-hidden">
-            {item.message}
+            {item.message.length > 120 ? `${item.message.substring(0, 117)}...` : item.message}
           </p>
         </div>
       </div>

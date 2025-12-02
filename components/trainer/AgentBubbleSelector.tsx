@@ -370,7 +370,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         borderColor = 'border-red-500/40'
         break
     }
-    return { border: borderColor, bg: 'bg-[#1a1a1a]' }
+    return { border: borderColor, bg: 'bg-black' }
   }
 
   return (

@@ -403,7 +403,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "bg-slate-900 rounded-md sm:rounded-lg pt-3 sm:pt-4 px-2.5 sm:px-4 pb-3 sm:pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col cursor-pointer relative touch-manipulation",
+        "bg-slate-900 rounded-md sm:rounded-lg pt-3 sm:pt-4 px-2.5 sm:px-4 pb-3 sm:pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col cursor-pointer relative touch-manipulation w-full",
         colors.border,
         className
       )}
@@ -965,14 +965,14 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
   const talkTimeColors = getTalkTimeColor()
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-2.5 h-full items-stretch">
+    <div className="flex flex-col gap-2 sm:gap-2.5 h-full">
       {/* Talk Time Card - With Dynamic Bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "bg-slate-900 rounded-md sm:rounded-lg pt-3 sm:pt-4 px-2.5 sm:px-4 pb-3 sm:pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group h-full flex flex-col relative",
+          "bg-slate-900 rounded-md sm:rounded-lg pt-3 sm:pt-4 px-2.5 sm:px-4 pb-3 sm:pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col relative w-full",
           talkTimeColors.border
         )}
       >
@@ -1052,13 +1052,9 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
       </motion.div>
       
       {/* Sentiment Card */}
-      <SentimentCard sentimentScore={sentimentScoreData} />
-      
-      {/* Objections Card */}
-      <EnhancedObjectionsCard objections={objections} />
-      
-      {/* Techniques Card */}
-      <EnhancedTechniquesCard techniquesUsed={techniquesUsed} />
+      <div className="w-full">
+        <SentimentCard sentimentScore={sentimentScoreData} />
+      </div>
     </div>
   )
 }
