@@ -225,6 +225,7 @@ async function handleConversationCompleted(data: any) {
  */
 async function analyzeConversation(conversationId: string, sessionId: string) {
   const supabase = await createServiceSupabaseClient()
+  let session: any = null
   
   try {
     logger.info('Starting async speech analysis', { conversation_id: conversationId, session_id: sessionId })
@@ -238,11 +239,20 @@ async function analyzeConversation(conversationId: string, sessionId: string) {
     
     if (convError || !conversation) {
       logger.error('Conversation not found for analysis', { conversation_id: conversationId, error: convError })
+      // Mark speech grading as failed
+      await supabase
+        .from('live_sessions')
+        .update({
+          analytics: {
+            speech_grading_error: 'Conversation data not found for analysis'
+          }
+        })
+        .eq('id', sessionId)
       return
     }
     
     // Fetch session data for additional context
-    const { data: session, error: sessionError } = await supabase
+    const { data: sessionData, error: sessionError } = await supabase
       .from('live_sessions')
       .select('analytics, duration_seconds')
       .eq('id', sessionId)
@@ -250,6 +260,8 @@ async function analyzeConversation(conversationId: string, sessionId: string) {
     
     if (sessionError) {
       logger.warn('Session not found for analysis', { session_id: sessionId, error: sessionError })
+    } else {
+      session = sessionData
     }
     
     // Extract speech metrics from transcript and analysis
@@ -300,6 +312,16 @@ async function analyzeConversation(conversationId: string, sessionId: string) {
     
     if (insertError) {
       logger.error('Error storing speech analysis', { session_id: sessionId, error: insertError })
+      // Mark speech grading as failed in session analytics
+      await supabase
+        .from('live_sessions')
+        .update({
+          analytics: {
+            ...(session?.analytics || {}),
+            speech_grading_error: 'Failed to store speech analysis data'
+          }
+        })
+        .eq('id', sessionId)
     } else {
       logger.info('Speech analysis completed', { 
         conversation_id: conversationId, 
@@ -310,6 +332,20 @@ async function analyzeConversation(conversationId: string, sessionId: string) {
     }
   } catch (error: any) {
     logger.error('Error in analyzeConversation', { conversation_id: conversationId, session_id: sessionId, error })
+    // Mark speech grading as failed in session analytics
+    try {
+      await supabase
+        .from('live_sessions')
+        .update({
+          analytics: {
+            ...(session?.analytics || {}),
+            speech_grading_error: error?.message || 'Speech analysis processing failed'
+          }
+        })
+        .eq('id', sessionId)
+    } catch (updateError) {
+      logger.error('Failed to update session with speech grading error', updateError)
+    }
     // Don't throw - this is async and shouldn't block webhook response
   }
 }

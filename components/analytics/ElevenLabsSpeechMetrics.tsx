@@ -26,6 +26,7 @@ interface ElevenLabsSpeechMetricsProps {
   instantMetrics?: any
   transcript?: any[]
   durationSeconds?: number
+  speechGradingError?: boolean | string // Track if ElevenLabs speech grading failed
 }
 
 export function ElevenLabsSpeechMetrics({ 
@@ -33,7 +34,8 @@ export function ElevenLabsSpeechMetrics({
   voiceAnalysis,
   instantMetrics,
   transcript,
-  durationSeconds
+  durationSeconds,
+  speechGradingError
 }: ElevenLabsSpeechMetricsProps) {
   // Calculate metrics from available data sources (voice_analysis, instant_metrics, or transcript)
   
@@ -130,6 +132,9 @@ export function ElevenLabsSpeechMetrics({
     }
   }
   
+  // Check if ElevenLabs speech grading failed
+  const hasGradingError = speechGradingError === true || typeof speechGradingError === 'string'
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -144,6 +149,23 @@ export function ElevenLabsSpeechMetrics({
           Powered by ElevenLabs
         </span>
       </div>
+      
+      {/* Error message if ElevenLabs speech grading failed */}
+      {hasGradingError && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+          <div className="flex items-start gap-3">
+            <div className="text-red-400 text-xl">⚠️</div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-400 mb-1 font-space">Speech Analysis Unavailable</h3>
+              <p className="text-sm text-red-300/90 font-sans">
+                {typeof speechGradingError === 'string' 
+                  ? speechGradingError 
+                  : 'ElevenLabs speech grading failed to process this session. Basic metrics are shown below using transcript analysis.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
         {/* Energy Level */}

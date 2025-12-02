@@ -402,9 +402,17 @@ export async function POST(req: NextRequest) {
     
     // Step 4: Fetch ElevenLabs conversation data (parallel if conversation ID exists)
     const conversationId = elevenLabsConversationId || session.elevenlabs_conversation_id
-    const elevenLabsData = conversationId 
-      ? await fetchElevenLabsMetrics(conversationId, supabase)
-      : null
+    let elevenLabsData = null
+    let speechGradingError = false
+    
+    if (conversationId) {
+      elevenLabsData = await fetchElevenLabsMetrics(conversationId, supabase)
+      // If we expected ElevenLabs data but got null, mark as error
+      if (!elevenLabsData && conversationId) {
+        speechGradingError = true
+        logger.warn('ElevenLabs speech grading failed - no metrics returned', { sessionId, conversationId })
+      }
+    }
     
     // Step 5: Calculate instant scores
     const scores = calculateInstantScores({
@@ -441,18 +449,28 @@ export async function POST(req: NextRequest) {
     }
     
     // Step 6: Save instantly
+    const updateData: any = {
+      instant_metrics: instantMetrics,
+      grading_status: 'instant_complete',
+      overall_score: scores.estimatedScore, // 70-90% accurate estimate
+      grading_version: '2.0',
+      ...(conversationId && !session.elevenlabs_conversation_id ? {
+        elevenlabs_conversation_id: conversationId,
+        elevenlabs_metrics: elevenLabsData
+      } : {})
+    }
+    
+    // Store speech grading error if it failed
+    if (speechGradingError) {
+      updateData.analytics = {
+        ...session.analytics,
+        speech_grading_error: true
+      }
+    }
+    
     const { error: updateError } = await supabase
       .from('live_sessions')
-      .update({
-        instant_metrics: instantMetrics,
-        grading_status: 'instant_complete',
-        overall_score: scores.estimatedScore, // 70-90% accurate estimate
-        grading_version: '2.0',
-        ...(conversationId && !session.elevenlabs_conversation_id ? {
-          elevenlabs_conversation_id: conversationId,
-          elevenlabs_metrics: elevenLabsData
-        } : {})
-      })
+      .update(updateData)
       .eq('id', sessionId)
     
     if (updateError) {

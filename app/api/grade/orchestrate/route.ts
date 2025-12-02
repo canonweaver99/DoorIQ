@@ -68,10 +68,33 @@ export async function POST(req: NextRequest) {
           .then(async (syncResponse) => {
             if (syncResponse.ok) {
               logger.info('Successfully synced ElevenLabs metrics', { sessionId })
+            } else {
+              // Track failure in session analytics
+              const errorData = await syncResponse.json().catch(() => ({ error: 'Unknown error' }))
+              logger.warn('Failed to sync ElevenLabs metrics', { sessionId, error: errorData })
+              await supabase
+                .from('live_sessions')
+                .update({
+                  analytics: {
+                    ...session.analytics,
+                    speech_grading_error: true
+                  }
+                })
+                .eq('id', sessionId)
             }
           })
-          .catch((syncError) => {
+          .catch(async (syncError) => {
             logger.warn('Failed to sync ElevenLabs metrics (non-blocking)', { sessionId, error: syncError })
+            // Track failure in session analytics
+            await supabase
+              .from('live_sessions')
+              .update({
+                analytics: {
+                  ...session.analytics,
+                  speech_grading_error: true
+                }
+              })
+              .eq('id', sessionId)
           })
       }
       

@@ -568,6 +568,7 @@ export default function AnalyticsPage() {
             instantMetrics={session.instant_metrics}
             transcript={session.full_transcript}
             durationSeconds={session.duration_seconds}
+            speechGradingError={session.analytics?.speech_grading_error}
           />
         ) : (
           <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
