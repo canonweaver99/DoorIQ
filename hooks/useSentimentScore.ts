@@ -327,7 +327,7 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const sessionStartTimeRef = useRef<number>(sessionStartTime || Date.now())
   const smoothedScoreRef = useRef<number>(startingSentiment) // Start based on agent personality
-  const SMOOTHING_ALPHA = 0.7 // Exponential smoothing factor
+  const SMOOTHING_ALPHA = 0.3 // Exponential smoothing factor (lower = more responsive to changes)
 
   // Update session start time if provided
   useEffect(() => {
@@ -409,6 +409,19 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
       setIsLoading(false)
     }
   }, [enabled, transcript, calculateTranscriptSentimentScore, startingSentiment, onScoreUpdate])
+
+  // Recalculate immediately when transcript changes (new entries added)
+  const previousTranscriptLengthRef = useRef<number>(0)
+  useEffect(() => {
+    if (enabled && transcript.length > previousTranscriptLengthRef.current) {
+      // Transcript has new entries, recalculate immediately
+      previousTranscriptLengthRef.current = transcript.length
+      calculateScore()
+    } else if (transcript.length !== previousTranscriptLengthRef.current) {
+      // Update ref even if length decreased (session reset)
+      previousTranscriptLengthRef.current = transcript.length
+    }
+  }, [enabled, transcript, calculateScore]) // Watch transcript array directly
 
   // Start analysis loop
   useEffect(() => {

@@ -282,22 +282,28 @@ export function InteractiveDemoSection() {
               >
                 <motion.div
                   onClick={() => handleStepClick(index)}
-                  className={`cursor-pointer rounded-lg sm:rounded-xl border transition-all duration-300 ${
+                  className={`cursor-pointer rounded-lg sm:rounded-xl border-2 transition-all duration-300 p-4 sm:p-5 lg:p-6 ${
                     activeStep === index 
-                      ? 'border-purple-500/50 bg-black/70 backdrop-blur-sm p-4 sm:p-5 lg:p-6 scale-[1.02]' 
-                      : 'border-purple-500/30 bg-black/50 backdrop-blur-sm p-3 sm:p-4 hover:border-purple-400/40 hover:bg-black/60 opacity-80 hover:opacity-90'
+                      ? 'scale-[1.02]' 
+                      : 'opacity-80 hover:opacity-90'
                   }`}
+                  style={{
+                    backgroundColor: activeStep === index ? '#1a1a1a' : '#1a1a1a',
+                    borderColor: activeStep === index ? '#3a3a3a' : '#2a2a2a',
+                    boxShadow: activeStep === index 
+                      ? 'inset 0 0 20px rgba(148, 163, 184, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)' 
+                      : 'inset 0 0 20px rgba(148, 163, 184, 0.05), 0 4px 16px rgba(0, 0, 0, 0.4)'
+                  }}
                   whileHover={{ scale: activeStep === index ? 1.02 : 1.01 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="flex items-start gap-3 sm:gap-4">
                     <div className={`flex-shrink-0 rounded-lg flex items-center justify-center transition-all duration-300 ${
                       activeStep === index ? 'w-10 h-10 sm:w-12 sm:h-12' : 'w-8 h-8 sm:w-10 sm:h-10'
-                    } ${
-                      activeStep === index 
-                        ? 'bg-purple-500/30' 
-                        : 'bg-purple-500/20'
-                    }`}>
+                    }`}
+                    style={{
+                      backgroundColor: '#3a3a3a'
+                    }}>
                       {step.icon === 'play' && <Play className={`transition-all duration-300 ${
                         activeStep === index ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-4 h-4'
                       } text-purple-400`} />}

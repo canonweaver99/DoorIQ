@@ -44,20 +44,18 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="px-3 py-1 rounded text-sm font-semibold border bg-red-500/10 border-red-500/30 text-red-400">
-            Objection Handling
-          </span>
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 font-space">
-          {objection.name}
-        </h1>
-      </div>
-
-      {/* Content - Full markdown from description field */}
+      {/* Content Card with Title */}
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 sm:p-8 mb-6 shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+        {/* Title */}
+        <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">
+              {objection.name}
+            </h1>
+          </div>
+        </div>
+
+        {/* Content - Full markdown from description field */}
         {markdownContent ? (
           <MarkdownContent content={markdownContent} />
         ) : (
