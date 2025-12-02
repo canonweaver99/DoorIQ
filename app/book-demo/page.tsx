@@ -209,8 +209,8 @@ export default function BookDemoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="w-[80%] max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -221,54 +221,60 @@ export default function BookDemoPage() {
           </h1>
         </motion.div>
 
-        <motion.form
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          onSubmit={handleSubmit}
-          className="space-y-6"
+          className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-8 sm:p-10 lg:p-12 border border-slate-700/50 shadow-2xl"
         >
-          {/* First Name */}
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-white mb-2">
-              First Name*
-            </label>
-            <input
-              type="text"
-              id="firstName"
-              value={formData.firstName}
-              onChange={(e) => {
-                setFormData({ ...formData, firstName: e.target.value })
-                if (errors.firstName) setErrors({ ...errors, firstName: undefined })
-              }}
-              placeholder="e.g. Alex"
-              className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-slate-500"
-            />
-            {errors.firstName && (
-              <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
-            )}
-          </div>
+          <motion.form
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* First Name and Last Name - Same Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* First Name */}
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-white mb-2">
+                  First Name*
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={(e) => {
+                    setFormData({ ...formData, firstName: e.target.value })
+                    if (errors.firstName) setErrors({ ...errors, firstName: undefined })
+                  }}
+                  placeholder="e.g. Alex"
+                  className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-slate-500"
+                />
+                {errors.firstName && (
+                  <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
+                )}
+              </div>
 
-          {/* Last Name */}
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-white mb-2">
-              Last Name*
-            </label>
-            <input
-              type="text"
-              id="lastName"
-              value={formData.lastName}
-              onChange={(e) => {
-                setFormData({ ...formData, lastName: e.target.value })
-                if (errors.lastName) setErrors({ ...errors, lastName: undefined })
-              }}
-              placeholder="e.g. Hormozi"
-              className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-slate-500"
-            />
-            {errors.lastName && (
-              <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
-            )}
-          </div>
+              {/* Last Name */}
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-white mb-2">
+                  Last Name*
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) => {
+                    setFormData({ ...formData, lastName: e.target.value })
+                    if (errors.lastName) setErrors({ ...errors, lastName: undefined })
+                  }}
+                  placeholder="e.g. Hormozi"
+                  className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-slate-500"
+                />
+                {errors.lastName && (
+                  <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
+                )}
+              </div>
+            </div>
 
           {/* Work Email */}
           <div>
@@ -447,22 +453,23 @@ export default function BookDemoPage() {
             </div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Submitting...</span>
-              </>
-            ) : (
-              <span>SUBMIT</span>
-            )}
-          </button>
-        </motion.form>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                <span>SUBMIT</span>
+              )}
+            </button>
+          </motion.form>
+        </motion.div>
       </div>
     </div>
   )
