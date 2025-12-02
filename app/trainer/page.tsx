@@ -1839,7 +1839,7 @@ function TrainerPageContent() {
                               if (agentVideoRef.current) {
                                 console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
                                 // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
-                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation && videoMode !== 'closing')
+                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
                                 // CRITICAL: Exit fullscreen if somehow entered
                                 if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
                                   document.exitFullscreen().catch(() => {})
@@ -1852,7 +1852,7 @@ function TrainerPageContent() {
                             onCanPlay={() => {
                               if (agentVideoRef.current) {
                                 // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
-                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation && videoMode !== 'closing')
+                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
                                 // CRITICAL: Exit fullscreen if somehow entered
                                 if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
                                   document.exitFullscreen().catch(() => {})
@@ -1878,7 +1878,7 @@ function TrainerPageContent() {
                                   })
                                 }
                                 // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
-                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation && videoMode !== 'closing')
+                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
                               }
                             }}
                             onEnded={() => {
