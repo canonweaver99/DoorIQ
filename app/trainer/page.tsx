@@ -21,7 +21,8 @@ import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { LiveTranscript } from '@/components/trainer/LiveTranscript'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
-import DoorClosingVideo from '@/components/trainer/DoorClosingVideo'
+// DoorClosingVideo import removed - component disabled due to fullscreen loop glitch
+// import DoorClosingVideo from '@/components/trainer/DoorClosingVideo'
 import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 
 // Dynamic imports for heavy components - only load when needed
@@ -1266,88 +1267,44 @@ function TrainerPageContent() {
   }, [sessionId, duration, transcript, router, sessionActive, sessionState])
 
   // Shared function to handle door closing sequence and end session
+  // DOOR CLOSING VIDEO COMPLETELY REMOVED - Was causing fullscreen loop glitch
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
-    console.log('🚪 Starting door closing sequence:', reason)
-    console.log('🚪 Door closing sequence context:', {
-      reason,
-      selectedAgent: selectedAgent?.name,
-      videoMode,
-      sessionActive,
-      showDoorCloseAnimation,
-      hasVideoRef: !!agentVideoRef.current
-    })
+    console.log('🚪 Ending session directly (door closing video disabled):', reason)
     
-    // Check if this agent has video animations
-    const hasVideos = agentHasVideos(selectedAgent?.name)
-    console.log('🎬 Agent has videos:', hasVideos, 'for agent:', selectedAgent?.name)
-    
-    // Set session state to door-closing to trigger DoorClosingVideo component for agents with videos
-    if (hasVideos) {
-      console.log('🎬 Agent has videos, setting sessionState to door-closing for:', selectedAgent?.name)
-      
-      // CRITICAL: Stop the main video BEFORE transitioning to door-closing state
-      // This prevents iOS Safari from auto-fullscreening when the video element is removed
-      if (agentVideoRef.current) {
-        console.log('🎬 Stopping main video before transition')
-        agentVideoRef.current.pause()
-        agentVideoRef.current.src = '' // Clear source to fully stop
-        agentVideoRef.current.load() // Reset the video element
-      }
-      
-      // Small delay to ensure video is fully stopped before state change
-      setTimeout(() => {
-        setSessionState('door-closing')
-      }, 50)
-      
-      // IMPORTANT: Keep sessionActive true so the video component can mount and play
-      // DoorClosingVideo component will handle video playback
-      // The handleDoorVideoComplete callback will handle ending session and triggering grading
-      // So we can return early here - DO NOT call endSession yet
-      console.log('🎬 Waiting for door closing video to complete before ending session')
-      return
-    }
-    
-    // For agents without videos, ensure door close animation state is set
-    if (!hasVideos && !showDoorCloseAnimation) {
-      setShowDoorCloseAnimation(true)
+    // Stop any playing video immediately
+    if (agentVideoRef.current) {
+      console.log('🎬 Stopping video before ending session')
+      agentVideoRef.current.pause()
+      agentVideoRef.current.src = ''
+      agentVideoRef.current.load()
+      agentVideoRef.current.loop = false // Ensure no looping
     }
     
     // CRITICAL: Capture transcript state BEFORE setting session inactive
-    // This ensures we have the transcript even if state gets cleared
     const currentTranscript = transcript
-    console.log('🔚 Door closing sequence complete, preparing to end session and start grading...', {
+    console.log('🔚 Ending session directly:', {
       transcriptLength: currentTranscript.length,
       reason,
       sessionId
     })
     
-    // IMPORTANT: Don't set sessionActive to false until AFTER the closing video has played
-    // This ensures the video element stays mounted and can play the closing animation
-    // The video will be hidden/unmounted when endSession is called
-    
-    // End the session first (saves transcript and voice analysis)
+    // End the session directly (saves transcript and voice analysis)
     // Pass skipRedirect=true so we can trigger grading before redirecting
-    console.log('🔚 Calling endSession after door closing sequence...')
+    console.log('🔚 Calling endSession...')
     try {
       await endSession(reason, true) // skipRedirect = true
       
       // After session is saved, trigger grading automatically
-      console.log('🎯 Starting automatic grading after door close video...')
+      console.log('🎯 Starting automatic grading...')
       await triggerGradingAfterDoorClose(sessionId!)
     } catch (error) {
-      console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
+      console.error('❌ Error in endSession or grading:', error)
       // Fallback: redirect to loading page which will trigger grading
       if (sessionId) {
         window.location.href = `/trainer/loading/${sessionId}`
       }
     }
-    
-    // Set session inactive AFTER endSession is called (which will handle cleanup)
-    // This ensures the closing video can finish playing
-    setTimeout(() => {
-      setSessionActive(false)
-    }, 100)
-  }, [selectedAgent?.name, videoMode, endSession, sessionId, transcript, showDoorCloseAnimation])
+  }, [endSession, sessionId, transcript])
   
   // Define handleDoorVideoComplete after endSession and triggerGradingAfterDoorClose are available
   handleDoorVideoComplete = useCallback(async () => {
@@ -1746,17 +1703,17 @@ function TrainerPageContent() {
     }
   }
 
-  // Show door closing video when in door-closing state
-  if (sessionState === 'door-closing') {
-    return (
-      <DoorClosingVideo
-        agentId={selectedAgent?.eleven_agent_id || ''}
-        agentName={selectedAgent?.name || null}
-        onComplete={handleDoorVideoComplete}
-        getAgentVideoPaths={getAgentVideoPaths}
-      />
-    )
-  }
+  // DOOR CLOSING VIDEO DISABLED - Was causing fullscreen loop glitch
+  // if (sessionState === 'door-closing') {
+  //   return (
+  //     <DoorClosingVideo
+  //       agentId={selectedAgent?.eleven_agent_id || ''}
+  //       agentName={selectedAgent?.name || null}
+  //       onComplete={handleDoorVideoComplete}
+  //       getAgentVideoPaths={getAgentVideoPaths}
+  //     />
+  //   )
+  // }
 
   return (
     <motion.div
