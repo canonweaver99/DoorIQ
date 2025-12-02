@@ -1,17 +1,22 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Mic, AlertTriangle, Book, Flame, Info, CheckCircle2, Circle } from 'lucide-react'
+import { Mic, AlertTriangle, Book, TrendingUp, Info, CheckCircle2, Circle } from 'lucide-react'
 import { LiveSessionMetrics, TranscriptEntry, VoiceAnalysisData } from '@/lib/trainer/types'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useState, useMemo } from 'react'
 import { detectObjection, assessObjectionHandling, getObjectionApproach } from '@/lib/trainer/enhancedPatternAnalyzer'
+import { useSentimentScore } from '@/hooks/useSentimentScore'
+import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 
 interface LiveMetricsPanelProps {
   metrics: LiveSessionMetrics
   getVoiceAnalysisData?: () => VoiceAnalysisData | null
   transcript?: TranscriptEntry[]
+  sessionId?: string | null
+  sessionActive?: boolean
+  agentName?: string | null
 }
 
 interface MetricCardProps {
@@ -160,20 +165,16 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
   )
 }
 
-// Energy calculation helper functions
-interface EnergyBreakdown {
-  wpm: number // 0-100 normalized
-  pitchVariation: number // 0-100 normalized
-  volumeLevel: number // 0-100 normalized (changed from volumeConsistency)
-  speakingRatio: number // 0-100 normalized (new metric)
-  pausePattern: number // 0-100 normalized (deprecated, kept for compatibility)
-  vocalFry: number // 0-100 normalized (deprecated, kept for compatibility)
-}
-
-interface EnergyScore {
+// Sentiment score interface
+interface SentimentScore {
   score: number // 0-100
-  breakdown: EnergyBreakdown
-  status: 'Low Energy' | 'Balanced' | 'High Energy'
+  level: 'low' | 'building' | 'positive'
+  factors: {
+    elevenLabsSentiment: number
+    buyingSignals: number
+    objectionResolution: number
+    positiveLanguage: number
+  }
 }
 
 // Normalize WPM to 0-100 scale (ideal: 140-160 WPM)
@@ -345,69 +346,21 @@ function detectVocalFryUpspeak(voiceAnalysisData: VoiceAnalysisData | null): num
   return 75
 }
 
-// Calculate overall energy score - matches useEnergyScore hook implementation
-function calculateEnergyScore(
-  wpm: number,
-  pitchVariation: number,
-  volumeLevel: number,  // Changed from volumeConsistency
-  speakingRatio: number = 0  // New parameter, default to 0 if not provided
-): EnergyScore {
-  // Ensure all values are valid numbers
-  const safeWPM = isNaN(wpm) || wpm < 0 ? 0 : wpm
-  const safePitchVariation = isNaN(pitchVariation) || pitchVariation < 0 ? 0 : pitchVariation
-  const safeVolumeLevel = isNaN(volumeLevel) || volumeLevel < 0 ? 0 : Math.max(0, Math.min(100, volumeLevel))
-  const safeSpeakingRatio = isNaN(speakingRatio) || speakingRatio < 0 ? 0 : Math.max(0, Math.min(100, speakingRatio))
-  
-  const normalizedWPM = normalizeWPM(safeWPM)
-  const normalizedPitch = normalizePitchVariation(safePitchVariation)
-  
-  const breakdown: EnergyBreakdown = {
-    wpm: normalizedWPM,
-    pitchVariation: normalizedPitch,
-    volumeLevel: safeVolumeLevel,
-    speakingRatio: safeSpeakingRatio,
-    pausePattern: 75, // Deprecated (not used in calculation)
-    vocalFry: 75 // Deprecated (not used in calculation)
-  }
-  
-  // Weighted combination matching useEnergyScore hook weights
-  // WPM: 35%, Pitch Variation: 30%, Volume Level: 20%, Speaking Ratio: 15%
-  const score = Math.round(
-    (normalizedWPM * 0.35) +
-    (normalizedPitch * 0.30) +
-    (safeVolumeLevel * 0.20) +
-    (safeSpeakingRatio * 0.15)
-  )
-  
-  // Clamp score to 0-100
-  const clampedScore = Math.max(0, Math.min(100, score))
-  
-  let status: 'Low Energy' | 'Balanced' | 'High Energy'
-  if (clampedScore < 40) {
-    status = 'Low Energy'
-  } else if (clampedScore >= 40 && clampedScore < 70) {
-    status = 'Balanced'
-  } else {
-    status = 'High Energy'
-  }
-  
-  return { score: clampedScore, breakdown, status }
-}
 
-// Energy Card Component
-interface EnergyCardProps {
-  energyScore: EnergyScore
+// Sentiment Card Component
+interface SentimentCardProps {
+  sentimentScore: SentimentScore
   className?: string
 }
 
-function EnergyCard({ energyScore, className }: EnergyCardProps) {
+function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
-  const { score, breakdown, status } = energyScore
+  const { score, level, factors } = sentimentScore
   
-  // Determine color based on score
+  // Determine color based on sentiment level
   const getColorClasses = () => {
-    if (score < 40) {
+    if (level === 'low') {
       return {
         progress: 'from-orange-500 to-red-500',
         border: 'border-orange-500/60',
@@ -415,21 +368,21 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
         bg: 'bg-orange-500/20',
         hover: 'group-hover:bg-orange-500/30'
       }
-    } else if (score >= 40 && score < 70) {
+    } else if (level === 'building') {
+      return {
+        progress: 'from-yellow-500 to-amber-500',
+        border: 'border-yellow-500/60',
+        icon: 'text-yellow-400',
+        bg: 'bg-yellow-500/20',
+        hover: 'group-hover:bg-yellow-500/30'
+      }
+    } else {
       return {
         progress: 'from-emerald-500 to-green-500',
         border: 'border-emerald-500/60',
         icon: 'text-emerald-400',
         bg: 'bg-emerald-500/20',
         hover: 'group-hover:bg-emerald-500/30'
-      }
-    } else {
-      return {
-        progress: 'from-blue-500 to-indigo-500',
-        border: 'border-blue-500/60',
-        icon: 'text-blue-400',
-        bg: 'bg-blue-500/20',
-        hover: 'group-hover:bg-blue-500/30'
       }
     }
   }
@@ -441,6 +394,8 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
     const filled = Math.round((value / 100) * 5)
     return '●'.repeat(filled) + '○'.repeat(5 - filled)
   }
+  
+  const statusLabel = level === 'low' ? 'Low Sentiment' : level === 'building' ? 'Building' : 'Positive'
   
   return (
     <motion.div
@@ -457,13 +412,13 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
       {/* Header: Icon + Title + Percentage */}
       <div className="flex items-start gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-shrink-0">
         <div className={cn("p-1 sm:p-1.5 rounded-md transition-colors flex-shrink-0", colors.bg, colors.hover)}>
-          <Flame className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5", colors.icon)} />
+          <TrendingUp className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5", colors.icon)} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-1.5 sm:gap-2">
             <div className="flex items-center gap-1 sm:gap-1.5">
               <div className="text-xs sm:text-sm lg:text-base font-semibold text-white font-space leading-tight">
-                Vocal Energy
+                Sale Sentiment
               </div>
               <button
                 onClick={(e) => {
@@ -471,7 +426,7 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
                   setShowInfo(!showInfo)
                 }}
                 className="p-0.5 hover:bg-slate-700/50 rounded transition-colors flex-shrink-0 touch-manipulation"
-                aria-label="Show energy calculation info"
+                aria-label="Show sentiment calculation info"
               >
                 <Info className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 hover:text-slate-200" />
               </button>
@@ -483,7 +438,7 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
             </div>
           </div>
           <div className="text-xs sm:text-sm lg:text-base text-slate-400 font-space mt-0.5">
-            {status}
+            {statusLabel}
           </div>
         </div>
       </div>
@@ -493,9 +448,9 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
         <div className="relative h-1.5 sm:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-0.5 sm:mb-1">
           {/* Background zones */}
           <div className="absolute inset-0 flex">
-            <div className="w-[40%] bg-orange-500/20" />
-            <div className="w-[30%] bg-emerald-500/20" />
-            <div className="flex-1 bg-blue-500/20" />
+            <div className="w-[30%] bg-orange-500/20" />
+            <div className="w-[30%] bg-yellow-500/20" />
+            <div className="flex-1 bg-emerald-500/20" />
           </div>
           
           {/* Progress fill */}
@@ -508,8 +463,8 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
           
           {/* Zone markers */}
           <div className="absolute inset-0 flex items-center">
-            <div className="absolute left-[40%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-            <div className="absolute left-[70%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+            <div className="absolute left-[30%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+            <div className="absolute left-[60%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
           </div>
           
           {/* Current position indicator */}
@@ -522,24 +477,24 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
         {/* Scale labels */}
         <div className="flex justify-between text-[10px] sm:text-xs text-slate-400 font-space font-medium mb-0.5 leading-tight">
           <span>Low</span>
-          <span className="hidden xs:inline">Balanced</span>
-          <span className="xs:hidden">Bal.</span>
-          <span>High</span>
+          <span className="hidden xs:inline">Building</span>
+          <span className="xs:hidden">Build</span>
+          <span>Positive</span>
         </div>
         
         {/* Percentage markers */}
         <div className="flex justify-between text-[9px] sm:text-xs text-slate-500 font-space font-medium mb-0.5 leading-tight">
           <span>0%</span>
-          <span className="hidden sm:inline">40%</span>
-          <span className="hidden sm:inline">70%</span>
+          <span className="hidden sm:inline">30%</span>
+          <span className="hidden sm:inline">60%</span>
           <span>100%</span>
         </div>
       </div>
       
       {/* Current and ideal range - Bottom corners */}
       <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-slate-300 font-space font-medium">
-        <span className="truncate">Current: {status}</span>
-        <span className="truncate ml-1 sm:ml-2">Ideal: 60-75%</span>
+        <span className="truncate">Current: {statusLabel}</span>
+        <span className="truncate ml-1 sm:ml-2">Goal: 60%+</span>
       </div>
       
       {/* Expanded breakdown */}
@@ -550,23 +505,23 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
           exit={{ opacity: 0, height: 0 }}
           className="mt-2 pt-2 border-t border-slate-700/50"
         >
-          <div className="text-xs text-slate-400 font-space font-medium mb-2">What feeds into Energy:</div>
+          <div className="text-xs text-slate-400 font-space font-medium mb-2">What feeds into Sentiment:</div>
           <div className="space-y-1.5 text-xs text-slate-300 font-space">
             <div className="flex justify-between items-center">
-              <span>Speed (WPM):</span>
-              <span className="font-mono">{scoreToDots(breakdown.wpm)}</span>
+              <span>ElevenLabs Sentiment:</span>
+              <span className="font-mono">{scoreToDots(factors.elevenLabsSentiment)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span>Pitch Variation:</span>
-              <span className="font-mono">{scoreToDots(breakdown.pitchVariation)}</span>
+              <span>Buying Signals:</span>
+              <span className="font-mono">{scoreToDots(factors.buyingSignals)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span>Volume Level:</span>
-              <span className="font-mono">{scoreToDots(breakdown.volumeLevel)}</span>
+              <span>Objection Resolution:</span>
+              <span className="font-mono">{scoreToDots(factors.objectionResolution)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span>Speaking Ratio:</span>
-              <span className="font-mono">{scoreToDots(breakdown.speakingRatio)}</span>
+              <span>Positive Language:</span>
+              <span className="font-mono">{scoreToDots(factors.positiveLanguage)}</span>
             </div>
           </div>
         </motion.div>
@@ -589,7 +544,7 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
             className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white font-space">Energy Score Calculation</h3>
+              <h3 className="text-lg font-semibold text-white font-space">Sentiment Score Calculation</h3>
               <button
                 onClick={() => setShowInfo(false)}
                 className="text-slate-400 hover:text-white transition-colors"
@@ -598,34 +553,37 @@ function EnergyCard({ energyScore, className }: EnergyCardProps) {
               </button>
             </div>
             <div className="space-y-3 text-sm text-slate-300 font-space">
-              <div className="text-slate-400 mb-3">The Energy score is calculated from 3 weighted factors:</div>
+              <div className="text-slate-400 mb-3">The Sentiment score tracks how the customer feels about the sale. It starts low and builds over time:</div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <span>Words Per Minute (WPM)</span>
-                  <span className="font-semibold text-white">35%</span>
+                  <span>ElevenLabs Sentiment</span>
+                  <span className="font-semibold text-white">40%</span>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">Speed/pace of speech (calculated from actual speaking time)</div>
+                <div className="text-xs text-slate-400 pl-2">AI analysis of customer sentiment from conversation</div>
                 
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <span>Pitch Variation</span>
+                  <span>Buying Signals</span>
                   <span className="font-semibold text-white">30%</span>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">Monotone vs dynamic/enthusiastic</div>
+                <div className="text-xs text-slate-400 pl-2">Positive buying signals detected (e.g., "sounds good", "I'm interested")</div>
                 
-                <div className="flex justify-between items-center py-1">
-                  <span>Volume Level</span>
+                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                  <span>Objection Resolution</span>
                   <span className="font-semibold text-white">20%</span>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">How loud you're speaking</div>
+                <div className="text-xs text-slate-400 pl-2">How well objections were handled and resolved</div>
                 
                 <div className="flex justify-between items-center py-1">
-                  <span>Speaking Ratio</span>
-                  <span className="font-semibold text-white">15%</span>
+                  <span>Positive Language</span>
+                  <span className="font-semibold text-white">10%</span>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">% of time speaking vs silent</div>
+                <div className="text-xs text-slate-400 pl-2">Overall positive vs negative language patterns</div>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
-                Formula: (WPM × 0.4) + (Pitch × 0.35) + (Volume × 0.25)
+                <div className="mb-2">Time Progression:</div>
+                <div className="pl-2">• First 30s: 0-30% of base score</div>
+                <div className="pl-2">• 30s-2min: 30-70% of base score</div>
+                <div className="pl-2">• 2min+: 70-100% of base score</div>
               </div>
             </div>
           </motion.div>
@@ -732,258 +690,6 @@ interface EnhancedObjectionsCardProps {
   className?: string
 }
 
-// Energy Metrics Cards - Showing all metrics that determine energy score
-interface EnergyMetricsCard1Props {
-  energyScore: EnergyScore
-  rawValues: {
-    wpm: number
-    pitchVariation: number
-    volumeLevel: number  // Changed from volumeConsistency
-    speakingRatio: number  // New metric
-  }
-  className?: string
-}
-
-function EnergyMetricsCard1({ energyScore, rawValues, className }: EnergyMetricsCard1Props) {
-  const { breakdown } = energyScore
-  // Updated weights to match useEnergyScore hook implementation
-  const weights = { 
-    wpm: 0.35,              // 35% - Speaking pace
-    pitchVariation: 0.30,   // 30% - Vocal dynamics
-    volumeLevel: 0.20,      // 20% - How loud (RMS)
-    speakingRatio: 0.15     // 15% - % of time speaking vs silent
-  }
-  
-  const contributions = {
-    wpm: breakdown.wpm * weights.wpm,
-    pitchVariation: breakdown.pitchVariation * weights.pitchVariation,
-    volumeLevel: breakdown.volumeLevel * weights.volumeLevel,
-    speakingRatio: breakdown.speakingRatio * weights.speakingRatio
-  }
-  
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={cn(
-        "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] border-blue-500/60 shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 flex flex-col h-full",
-        className
-      )}
-    >
-      <div className="flex items-start gap-2 mb-3 flex-shrink-0">
-        <div className="p-1.5 rounded-md transition-colors bg-blue-500/20 flex-shrink-0">
-          <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
-            Energy Metrics
-          </div>
-        </div>
-      </div>
-      
-      <div className="space-y-3 flex-1">
-        {/* WPM */}
-        <div className="bg-slate-800/50 rounded-md p-2.5 border border-slate-700/50">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-400 font-space">WPM</span>
-            <span className="text-xs text-slate-500 font-mono">{(weights.wpm * 100).toFixed(0)}%</span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-lg font-bold text-white font-space">{rawValues.wpm.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Raw</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-blue-400 font-space">{breakdown.wpm.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Normalized</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.wpm.toFixed(1)}</div>
-              <div className="text-xs text-slate-400 font-space">Contribution</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Pitch Variation */}
-        <div className="bg-slate-800/50 rounded-md p-2.5 border border-slate-700/50">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-400 font-space">Pitch Variation</span>
-            <span className="text-xs text-slate-500 font-mono">{(weights.pitchVariation * 100).toFixed(0)}%</span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-lg font-bold text-white font-space">{rawValues.pitchVariation.toFixed(1)}%</div>
-              <div className="text-xs text-slate-400 font-space">Raw</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-blue-400 font-space">{breakdown.pitchVariation.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Normalized</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.pitchVariation.toFixed(1)}</div>
-              <div className="text-xs text-slate-400 font-space">Contribution</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Volume Level */}
-        <div className="bg-slate-800/50 rounded-md p-2.5 border border-slate-700/50">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-400 font-space">Volume Level</span>
-            <span className="text-xs text-slate-500 font-mono">{(weights.volumeLevel * 100).toFixed(0)}%</span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-lg font-bold text-white font-space">{rawValues.volumeLevel.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Raw</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-blue-400 font-space">{breakdown.volumeLevel.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Normalized</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.volumeLevel.toFixed(1)}</div>
-              <div className="text-xs text-slate-400 font-space">Contribution</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Speaking Ratio */}
-        <div className="bg-slate-800/50 rounded-md p-2.5 border border-slate-700/50">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-400 font-space">Speaking Ratio</span>
-            <span className="text-xs text-slate-500 font-mono">{(weights.speakingRatio * 100).toFixed(0)}%</span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-lg font-bold text-white font-space">{rawValues.speakingRatio.toFixed(0)}%</div>
-              <div className="text-xs text-slate-400 font-space">Raw</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-blue-400 font-space">{breakdown.speakingRatio.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Normalized</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.speakingRatio.toFixed(1)}</div>
-              <div className="text-xs text-slate-400 font-space">Contribution</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Total Contribution */}
-        <div className="bg-emerald-500/10 rounded-md p-2.5 border border-emerald-500/30 mt-4">
-          <div className="text-xs text-slate-400 font-space mb-1">Total Contribution</div>
-          <div className="text-2xl font-bold text-emerald-400 font-space">
-            {(contributions.wpm + contributions.pitchVariation + contributions.volumeLevel + contributions.speakingRatio).toFixed(1)}
-          </div>
-          <div className="text-xs text-slate-500 font-space mt-1">
-            Out of {energyScore.score.toFixed(0)} total energy score
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-interface EnergyMetricsCard2Props {
-  energyScore: EnergyScore
-  rawValues: {
-    pausePattern: number
-    vocalFry: number
-  }
-  className?: string
-}
-
-function EnergyMetricsCard2({ energyScore, rawValues, className }: EnergyMetricsCard2Props) {
-  const { breakdown } = energyScore
-  const weights = { pausePattern: 0.15, vocalFry: 0.1 }
-  
-  const contributions = {
-    pausePattern: breakdown.pausePattern * weights.pausePattern,
-    vocalFry: breakdown.vocalFry * weights.vocalFry
-  }
-  
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={cn(
-        "bg-slate-900 rounded-lg pt-4 px-4 pb-4 border-[2px] border-purple-500/60 shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 flex flex-col h-full",
-        className
-      )}
-    >
-      <div className="flex items-start gap-2 mb-3 flex-shrink-0">
-        <div className="p-1.5 rounded-md transition-colors bg-purple-500/20 flex-shrink-0">
-          <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
-            Energy Metrics (2/2)
-          </div>
-        </div>
-      </div>
-      
-      <div className="space-y-3 flex-1">
-        {/* Pause Pattern */}
-        <div className="bg-slate-800/50 rounded-md p-2.5 border border-slate-700/50">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-400 font-space">Pause Pattern</span>
-            <span className="text-xs text-slate-500 font-mono">{(weights.pausePattern * 100).toFixed(0)}%</span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-lg font-bold text-white font-space">{rawValues.pausePattern.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Raw</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-purple-400 font-space">{breakdown.pausePattern.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Normalized</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.pausePattern.toFixed(1)}</div>
-              <div className="text-xs text-slate-400 font-space">Contribution</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Vocal Fry */}
-        <div className="bg-slate-800/50 rounded-md p-2.5 border border-slate-700/50">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-400 font-space">Vocal Fry</span>
-            <span className="text-xs text-slate-500 font-mono">{(weights.vocalFry * 100).toFixed(0)}%</span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-lg font-bold text-white font-space">{rawValues.vocalFry.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Raw</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-purple-400 font-space">{breakdown.vocalFry.toFixed(0)}</div>
-              <div className="text-xs text-slate-400 font-space">Normalized</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-emerald-400 font-space">{contributions.vocalFry.toFixed(1)}</div>
-              <div className="text-xs text-slate-400 font-space">Contribution</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Total Contribution */}
-        <div className="bg-emerald-500/10 rounded-md p-2.5 border border-emerald-500/30 mt-4">
-          <div className="text-xs text-slate-400 font-space mb-1">Total Contribution</div>
-          <div className="text-2xl font-bold text-emerald-400 font-space">
-            {(contributions.pausePattern + contributions.vocalFry).toFixed(1)}
-          </div>
-          <div className="text-xs text-slate-500 font-space mt-1">
-            Out of {energyScore.score.toFixed(0)} total energy score
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
 
 function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -1142,7 +848,34 @@ function EnhancedTechniquesCard({ techniquesUsed, className }: EnhancedTechnique
   )
 }
 
-export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [] }: LiveMetricsPanelProps) {
+// Get starting sentiment score based on agent personality
+function getStartingSentimentFromAgent(agentName: string | null | undefined): number {
+  if (!agentName) return 5 // Default if no agent
+  
+  const personaMeta = PERSONA_METADATA[agentName as AllowedAgentName]
+  if (!personaMeta) return 5 // Default if agent not found
+  
+  // Special case: Not Interested Nick starts at 5% (most dismissive)
+  if (agentName === 'Not Interested Nick') {
+    return 5
+  }
+  
+  // Use the persona's startingScore as baseline sentiment (0-100 scale)
+  // Convert to sentiment percentage: startingScore represents initial rapport/trust
+  // Lower startingScore = more skeptical = lower starting sentiment
+  const startingScore = personaMeta.card.startingScore || 50
+  
+  // Map startingScore (typically 30-60) to starting sentiment (5-25%)
+  // This ensures sentiment starts low but varies by personality
+  // Easy agents (60) start at ~25%, Hard agents (40) start at ~10%
+  // Formula: 5 + ((startingScore - 30) / 30) * 20
+  // This maps: 30 → 5%, 40 → ~12%, 50 → ~18%, 60 → 25%
+  const startingSentiment = 5 + ((startingScore - 30) / 30) * 20
+  
+  return Math.round(Math.max(5, Math.min(25, startingSentiment)))
+}
+
+export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [], sessionId, sessionActive = false, agentName }: LiveMetricsPanelProps) {
   const { talkTimeRatio, wordsPerMinute, objectionCount, techniquesUsed, voiceMetrics } = metrics
   
   // Extract objections from transcript
@@ -1163,41 +896,42 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
 
   const talkTimeStatus = getTalkTimeStatus()
 
-  // Calculate energy score
-  const voiceAnalysisData = getVoiceAnalysisData?.() || null
-  const pitchVariation = voiceMetrics?.pitchVariation || voiceAnalysisData?.pitchVariation || 0
-  const volumeLevel = calculateVolumeLevel(voiceAnalysisData)
-  const speakingRatio = calculateSpeakingRatio(voiceAnalysisData, transcript)
-  
-  // Estimate session duration from transcript or use a default
-  let sessionDurationSeconds = 60 // Default 1 minute if no transcript
-  if (transcript.length > 1) {
-    try {
-      const firstTime = transcript[0].timestamp instanceof Date 
-        ? transcript[0].timestamp.getTime()
-        : typeof transcript[0].timestamp === 'string'
-          ? new Date(transcript[0].timestamp).getTime()
-          : Date.now()
-      const lastTime = transcript[transcript.length - 1].timestamp instanceof Date
-        ? transcript[transcript.length - 1].timestamp.getTime()
-        : typeof transcript[transcript.length - 1].timestamp === 'string'
-          ? new Date(transcript[transcript.length - 1].timestamp).getTime()
-          : Date.now()
-      const duration = (lastTime - firstTime) / 1000
-      sessionDurationSeconds = Math.max(1, duration) // Ensure at least 1 second
-    } catch (e) {
-      // Fallback to default
-      sessionDurationSeconds = 60
+  // Calculate session start time from transcript
+  const sessionStartTime = useMemo(() => {
+    if (transcript.length > 0) {
+      try {
+        const firstTime = transcript[0].timestamp instanceof Date 
+          ? transcript[0].timestamp.getTime()
+          : typeof transcript[0].timestamp === 'string'
+            ? new Date(transcript[0].timestamp).getTime()
+            : Date.now()
+        return firstTime
+      } catch (e) {
+        return Date.now()
+      }
     }
+    return Date.now()
+  }, [transcript])
+
+  // Get starting sentiment based on agent personality
+  const startingSentiment = useMemo(() => getStartingSentimentFromAgent(agentName), [agentName])
+
+  // Use sentiment score hook
+  const { sentimentScore, sentimentLevel, factors } = useSentimentScore({
+    sessionId,
+    enabled: sessionActive,
+    transcript,
+    sessionStartTime,
+    updateInterval: 2000,
+    startingSentiment
+  })
+
+  // Create sentiment score object for SentimentCard
+  const sentimentScoreData: SentimentScore = {
+    score: sentimentScore,
+    level: sentimentLevel,
+    factors
   }
-  
-  // Calculate energy score - matches useEnergyScore hook implementation
-  const energyScore = calculateEnergyScore(
-    wordsPerMinute,
-    pitchVariation,
-    volumeLevel,
-    speakingRatio
-  )
 
   // Determine talk time color based on ratio
   const getTalkTimeColor = () => {
@@ -1317,8 +1051,8 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
         </div>
       </motion.div>
       
-      {/* Energy Card */}
-      <EnergyCard energyScore={energyScore} />
+      {/* Sentiment Card */}
+      <SentimentCard sentimentScore={sentimentScoreData} />
       
       {/* Objections Card */}
       <EnhancedObjectionsCard objections={objections} />

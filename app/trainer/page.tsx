@@ -1729,6 +1729,9 @@ function TrainerPageContent() {
                 metrics={metrics} 
                 getVoiceAnalysisData={getVoiceAnalysisData}
                 transcript={transcript}
+                sessionId={sessionId}
+                sessionActive={sessionActive}
+                agentName={selectedAgent?.name}
               />
             </div>
           </div>

@@ -23,32 +23,19 @@ function calculateSpeechScore(data: VoiceAnalysisData): number {
   // Variety (25%): 100 if >20% pitch variation, scale down linearly
   const varietyScore = Math.min(100, (data.pitchVariation / 20) * 100)
   
-  // Energy (25%): Based on pace, pitch variation, filler words, and pauses
-  // Higher energy = faster pace (but not too fast), more pitch variation, fewer fillers, fewer pauses
-  let energyScore = 100
+  // Sentiment (25%): Based on conversation quality indicators
+  // Note: Actual sentiment should come from session data, this is an estimate
+  let sentimentScore = 100
   
-  // Pace contribution (40% of energy score)
-  let paceEnergy = 100
-  if (data.avgWPM < 120) {
-    paceEnergy = Math.max(40, 100 - (120 - data.avgWPM) * 1.5) // Too slow = low energy
-  } else if (data.avgWPM >= 140 && data.avgWPM <= 160) {
-    paceEnergy = 100 // Ideal pace = high energy
-  } else if (data.avgWPM > 180) {
-    paceEnergy = Math.max(60, 100 - (data.avgWPM - 180) * 1) // Too fast = slightly lower energy
-  }
+  // Filler words penalty (indicates less engagement)
+  const fillerPenalty = Math.min(30, data.fillerWordsPerMinute * 10) // More fillers = lower sentiment
   
-  // Pitch variation contribution (30% of energy score)
-  const pitchEnergy = Math.min(100, (data.pitchVariation / 20) * 100) // More variation = more energy
+  // Pause penalty (indicates hesitation or lack of confidence)
+  const pausePenalty = Math.min(20, data.longPausesCount * 4) // More pauses = lower sentiment
   
-  // Filler words penalty (20% of energy score)
-  const fillerPenalty = Math.min(30, data.fillerWordsPerMinute * 10) // More fillers = less energy
-  
-  // Pause penalty (10% of energy score)
-  const pausePenalty = Math.min(20, data.longPausesCount * 4) // More pauses = less energy
-  
-  // Combine all factors
-  energyScore = (paceEnergy * 0.4) + (pitchEnergy * 0.3) + (100 - fillerPenalty) * 0.2 + (100 - pausePenalty) * 0.1
-  energyScore = Math.max(0, Math.min(100, energyScore))
+  // Estimate sentiment from speech quality (fewer fillers and pauses = better sentiment)
+  sentimentScore = 100 - fillerPenalty - pausePenalty
+  sentimentScore = Math.max(0, Math.min(100, sentimentScore))
   
   // Clarity (25%): Deduct 5 points per filler word per minute, 3 points per long pause
   let clarityScore = 100
@@ -58,7 +45,7 @@ function calculateSpeechScore(data: VoiceAnalysisData): number {
   clarityScore = Math.max(0, clarityScore)
   
   // Weighted average
-  const overallScore = (paceScore * 0.25) + (varietyScore * 0.25) + (energyScore * 0.25) + (clarityScore * 0.25)
+  const overallScore = (paceScore * 0.25) + (varietyScore * 0.25) + (sentimentScore * 0.25) + (clarityScore * 0.25)
   
   return Math.round(overallScore)
 }
@@ -115,43 +102,27 @@ function MetricCard({
   )
 }
 
-// Calculate energy rating based on speech metrics
-function calculateEnergyRating(data: VoiceAnalysisData): { score: number; label: string; description: string } {
-  // Pace contribution
-  let paceEnergy = 100
-  if (data.avgWPM < 120) {
-    paceEnergy = Math.max(40, 100 - (120 - data.avgWPM) * 1.5)
-  } else if (data.avgWPM >= 140 && data.avgWPM <= 160) {
-    paceEnergy = 100
-  } else if (data.avgWPM > 180) {
-    paceEnergy = Math.max(60, 100 - (data.avgWPM - 180) * 1)
-  }
-  
-  // Pitch variation contribution
-  const pitchEnergy = Math.min(100, (data.pitchVariation / 20) * 100)
-  
-  // Filler words penalty
+// Calculate sentiment rating based on speech metrics
+// Note: This is an estimate - actual sentiment should come from session analytics
+function calculateSentimentRating(data: VoiceAnalysisData): { score: number; label: string; description: string } {
+  // Estimate sentiment from conversation quality indicators
+  // Fewer fillers and pauses = better sentiment (more engaged conversation)
   const fillerPenalty = Math.min(30, data.fillerWordsPerMinute * 10)
-  
-  // Pause penalty
   const pausePenalty = Math.min(20, data.longPausesCount * 4)
   
-  // Combine all factors
-  const energyScore = Math.max(0, Math.min(100, 
-    (paceEnergy * 0.4) + (pitchEnergy * 0.3) + (100 - fillerPenalty) * 0.2 + (100 - pausePenalty) * 0.1
-  ))
+  const sentimentScore = Math.max(0, Math.min(100, 100 - fillerPenalty - pausePenalty))
   
-  let label = 'High'
-  let description = 'Excellent energy and enthusiasm'
-  if (energyScore < 60) {
+  let label = 'Positive'
+  let description = 'Strong positive sentiment toward the sale'
+  if (sentimentScore < 30) {
     label = 'Low'
-    description = 'Needs more energy and enthusiasm'
-  } else if (energyScore < 80) {
-    label = 'Medium'
-    description = 'Good energy with room for improvement'
+    description = 'Sentiment needs improvement - focus on building rapport'
+  } else if (sentimentScore < 60) {
+    label = 'Building'
+    description = 'Sentiment is building - continue engaging the customer'
   }
   
-  return { score: Math.round(energyScore), label, description }
+  return { score: Math.round(sentimentScore), label, description }
 }
 
 export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }: SpeechQualitySectionProps) {
@@ -175,14 +146,14 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
     clarityScore -= voiceAnalysis.fillerWordsPerMinute * 5
     clarityScore = Math.max(0, clarityScore)
     
-    // Calculate energy from available metrics
-    const energyRating = calculateEnergyRating(voiceAnalysis)
+    // Calculate sentiment from available metrics
+    const sentimentRating = calculateSentimentRating(voiceAnalysis)
     
-    // Weighted average (pace 33%, clarity 33%, energy 34%)
-    return Math.round((paceScore * 0.33) + (clarityScore * 0.33) + (energyRating.score * 0.34))
+    // Weighted average (pace 33%, clarity 33%, sentiment 34%)
+    return Math.round((paceScore * 0.33) + (clarityScore * 0.33) + (sentimentRating.score * 0.34))
   }, [voiceAnalysis, hasPitchData])
   
-  const energyRating = useMemo(() => calculateEnergyRating(voiceAnalysis), [voiceAnalysis])
+  const sentimentRating = useMemo(() => calculateSentimentRating(voiceAnalysis), [voiceAnalysis])
   
   const scoreColorHex = useMemo(() => getScoreColorHex(overallScore), [overallScore])
   
@@ -236,8 +207,8 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
           <p className="text-sm text-gray-300 mb-4">{getScoreMessage(overallScore)}</p>
           <div className="text-sm text-gray-400">
             {hasPitchData 
-              ? 'Based on Pace • Variety • Energy • Clarity'
-              : 'Based on Pace • Energy • Clarity'}
+              ? 'Based on Pace • Variety • Sentiment • Clarity'
+              : 'Based on Pace • Sentiment • Clarity'}
           </div>
         </motion.div>
 
@@ -287,18 +258,18 @@ export default function SpeechQualitySection({ voiceAnalysis, durationSeconds }:
             />
           )}
 
-          {/* Energy Rating */}
+          {/* Sentiment Rating */}
           <MetricCard
             icon={Zap}
-            title="Energy"
-            value={energyRating.label}
-            description={`${energyRating.score}/100 • ${energyRating.description}`}
+            title="Sale Sentiment"
+            value={sentimentRating.label}
+            description={`${sentimentRating.score}/100 • ${sentimentRating.description}`}
             feedback={
-              energyRating.score >= 80
-                ? 'Excellent energy and enthusiasm throughout'
-                : energyRating.score >= 60
-                ? 'Good energy, try to maintain enthusiasm'
-                : 'Increase your energy level to sound more engaging'
+              sentimentRating.score >= 60
+                ? 'Strong positive sentiment - customer is engaged'
+                : sentimentRating.score >= 30
+                ? 'Sentiment building - continue building rapport'
+                : 'Focus on improving customer sentiment and engagement'
             }
             colorHex="#10b981"
             delay={0.4}
