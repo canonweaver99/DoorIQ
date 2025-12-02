@@ -37,10 +37,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
       setError('Please select an improvement area for the AI agent')
       return
     }
-    if (!feedbackText.trim()) {
-      setError('Please provide feedback text')
-      return
-    }
+    // Feedback text is optional, no validation needed
 
     setIsSubmitting(true)
     setError(null)
@@ -53,7 +50,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
           sessionId,
           rating,
           improvementArea,
-          feedbackText: feedbackText.trim()
+          feedbackText: feedbackText.trim() || null
         })
       })
 
@@ -155,16 +152,15 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
           {/* Text Feedback Section */}
           <div>
             <label htmlFor="feedback-text" className="block text-sm font-semibold text-slate-300 mb-3 font-space">
-              Additional feedback
+              Additional feedback <span className="text-slate-500 font-normal">(optional)</span>
             </label>
             <textarea
               id="feedback-text"
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="Tell us more about your session experience and how the AI agent performed..."
+              placeholder="Tell us more about your session experience and how the AI agent performed... (optional)"
               rows={5}
               className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none font-sans"
-              required
             />
           </div>
 
@@ -182,7 +178,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isSubmitting || !rating || !improvementArea || !feedbackText.trim()}
+            disabled={isSubmitting || !rating || !improvementArea}
             className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space"
           >
             {isSubmitting ? (

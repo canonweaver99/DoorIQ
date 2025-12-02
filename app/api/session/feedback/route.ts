@@ -7,12 +7,15 @@ export async function POST(request: NextRequest) {
     const { sessionId, rating, improvementArea, feedbackText } = await request.json()
 
     // Validate input
-    if (!sessionId || !rating || !improvementArea || !feedbackText) {
+    if (!sessionId || !rating || !improvementArea) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: sessionId, rating, and improvementArea are required' },
         { status: 400 }
       )
     }
+    
+    // Feedback text is optional
+    const feedbackTextValue = feedbackText?.trim() || null
 
     if (rating < 1 || rating > 10) {
       return NextResponse.json(
@@ -70,7 +73,7 @@ export async function POST(request: NextRequest) {
       .update({
         user_feedback_rating: rating,
         user_feedback_improvement_area: improvementArea,
-        user_feedback_text: feedbackText,
+        user_feedback_text: feedbackTextValue,
         user_feedback_submitted_at: new Date().toISOString()
       })
       .eq('id', sessionId)
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
       agentName: session.agent_name || 'Unknown',
       rating,
       improvementArea,
-      feedbackText,
+      feedbackText: feedbackTextValue || '',
       overallScore: session.overall_score
     }).catch((error) => {
       // Log error but don't fail the request
@@ -208,10 +211,17 @@ async function sendFeedbackEmail({
               <div class="info-value">${improvementArea}</div>
             </div>
             
+            ${feedbackText ? `
             <div class="info-row">
               <div class="info-label">Feedback</div>
               <div class="feedback-text">${feedbackText}</div>
             </div>
+            ` : `
+            <div class="info-row">
+              <div class="info-label">Feedback</div>
+              <div class="info-value" style="color: #9ca3af; font-style: italic;">No additional feedback provided</div>
+            </div>
+            `}
             
             <div style="text-align: center; margin-top: 30px;">
               <a href="${sessionUrl}" class="button">View Session Analytics</a>
