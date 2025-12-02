@@ -39,13 +39,27 @@ export default function DoorClosingVideo({
 
     console.log('🎬 DoorClosingVideo: Setting up video for:', agentName, 'Path:', closingVideoPath)
 
+    // Explicitly prevent looping
+    video.loop = false
+    
     // Set video source
     video.src = closingVideoPath
     video.load()
 
+    // Track if video has ended to prevent multiple calls
+    let hasEnded = false
+
     // Handle video ended
     const handleEnded = () => {
+      if (hasEnded) {
+        console.log('⚠️ Door closing video ended handler called multiple times, ignoring')
+        return
+      }
+      hasEnded = true
       console.log('🎬 Door closing video ended for:', agentName)
+      // Stop the video explicitly
+      video.pause()
+      video.currentTime = video.duration
       // Wait 500ms then call onComplete
       setTimeout(() => {
         onComplete()
@@ -74,6 +88,12 @@ export default function DoorClosingVideo({
     // Handle video loaded and ready to play
     const handleCanPlay = () => {
       console.log('✅ Door closing video can play for:', agentName)
+      // Ensure loop is disabled
+      video.loop = false
+      // Prevent fullscreen
+      if (video.requestFullscreen) {
+        video.removeEventListener('fullscreenchange', () => {})
+      }
       // Try to play the video once it's ready
       const playPromise = video.play()
       if (playPromise !== undefined) {
@@ -115,7 +135,21 @@ export default function DoorClosingVideo({
     video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('loadedmetadata', handleLoadedMetadata)
 
+    // Prevent fullscreen on double-click or other events
+    const preventFullscreen = (e: Event) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (document.fullscreenElement === video) {
+        document.exitFullscreen().catch(() => {})
+      }
+    }
+    video.addEventListener('dblclick', preventFullscreen)
+    video.addEventListener('webkitbeginfullscreen', preventFullscreen)
+    video.addEventListener('webkitendfullscreen', preventFullscreen)
+    
     // Also try to play immediately (in case canplay already fired)
+    // Ensure loop is disabled before playing
+    video.loop = false
     const playPromise = video.play()
     if (playPromise !== undefined) {
       playPromise
@@ -129,10 +163,18 @@ export default function DoorClosingVideo({
     }
 
     return () => {
+      // Clean up event listeners
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('error', handleError)
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      video.removeEventListener('dblclick', preventFullscreen)
+      video.removeEventListener('webkitbeginfullscreen', preventFullscreen)
+      video.removeEventListener('webkitendfullscreen', preventFullscreen)
+      // Stop and reset video
+      video.pause()
+      video.currentTime = 0
+      video.loop = false
     }
   }, [closingVideoPath, onComplete, agentName])
 
@@ -149,6 +191,9 @@ export default function DoorClosingVideo({
           autoPlay
           playsInline
           muted={false}
+          loop={false}
+          disablePictureInPicture
+          controlsList="nodownload nofullscreen noremoteplayback"
         />
       ) : (
         <div className="w-full h-full bg-black flex items-center justify-center">
