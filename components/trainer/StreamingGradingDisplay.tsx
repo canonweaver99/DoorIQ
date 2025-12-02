@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Loader2, TrendingUp, MessageSquare, Target, Lightbulb, Zap, Wifi, WifiOff } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import SessionFeedbackForm from './SessionFeedbackForm'
 
 interface StreamingSection {
   session_summary?: any
@@ -85,6 +86,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   const [retryCount, setRetryCount] = useState(0)
   const [startTime] = useState(Date.now())
   const [elapsedTime, setElapsedTime] = useState(0)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean | null>(null)
+  const [checkingFeedback, setCheckingFeedback] = useState(false)
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -307,6 +310,14 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               if (sessionResponse.ok) {
                 const session = await sessionResponse.json()
                 
+                // Check if feedback has been submitted (if grading is complete)
+                if ((session.grading_status === 'complete' || session.grading_status === 'completed' || 
+                     (session.overall_score && session.instant_metrics)) && 
+                    feedbackSubmitted === null && !checkingFeedback) {
+                  const hasFeedback = !!(session.user_feedback_submitted_at)
+                  setFeedbackSubmitted(hasFeedback)
+                }
+                
                 // Track section completion based on available data - batch updates
                 // IMPORTANT: Sections must complete in sequential order
                 const newCompletedSections = new Set(completedSections)
@@ -417,12 +428,29 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                     coaching_plan: session.analytics?.coaching_plan || {}
                   }))
                   
-                  setTimeout(() => {
-                    if (currentSessionId === sessionId) {
-                      onComplete()
+                  // Check if feedback has been submitted (only check once)
+                  if (!checkingFeedback && feedbackSubmitted === null) {
+                    setCheckingFeedback(true)
+                    const hasFeedback = !!(session.user_feedback_submitted_at)
+                    setFeedbackSubmitted(hasFeedback)
+                    setCheckingFeedback(false)
+                    
+                    // If feedback already submitted, proceed to analytics after a delay
+                    if (hasFeedback) {
+                      setTimeout(() => {
+                        if (currentSessionId === sessionId) {
+                          onComplete()
+                        }
+                      }, 1500)
+                      return
                     }
-                  }, 1500)
-                  return
+                    // If no feedback, show feedback form (handled in render) - don't return here
+                  }
+                  
+                  // Continue polling if feedback not submitted yet
+                  if (feedbackSubmitted === false) {
+                    return // Stop polling, form will be shown
+                  }
                 }
                 
                 // Update status based on grading_status and section progress
@@ -566,6 +594,30 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
     const percentage = Math.round((completed / total) * 100)
     // Cap at 100% to prevent showing more than 100%
     return Math.min(percentage, 100)
+  }
+
+  // Show feedback form if grading is complete and feedback hasn't been submitted
+  if (isComplete && feedbackSubmitted === false) {
+    return (
+      <ErrorBoundary
+        onError={(error, errorInfo) => {
+          console.error('StreamingGradingDisplay error:', error, errorInfo)
+        }}
+      >
+        <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-3 sm:p-4 lg:p-6">
+          <SessionFeedbackForm 
+            sessionId={sessionId} 
+            onFeedbackComplete={() => {
+              setFeedbackSubmitted(true)
+              // Small delay before redirecting
+              setTimeout(() => {
+                onComplete()
+              }, 500)
+            }}
+          />
+        </div>
+      </ErrorBoundary>
+    )
   }
 
   return (

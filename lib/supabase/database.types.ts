@@ -133,6 +133,10 @@ export interface Database {
           analytics: Json | null
           device_info: Json | null
           conversation_metadata: Json | null
+          user_feedback_rating: number | null
+          user_feedback_improvement_area: string | null
+          user_feedback_text: string | null
+          user_feedback_submitted_at: string | null
         }
         Insert: {
           id?: string
@@ -205,6 +209,10 @@ export interface Database {
           analytics?: Json | null
           device_info?: Json | null
           conversation_metadata?: Json | null
+          user_feedback_rating?: number | null
+          user_feedback_improvement_area?: string | null
+          user_feedback_text?: string | null
+          user_feedback_submitted_at?: string | null
         }
         Update: {
           id?: string
@@ -277,6 +285,10 @@ export interface Database {
           analytics?: Json | null
           device_info?: Json | null
           conversation_metadata?: Json | null
+          user_feedback_rating?: number | null
+          user_feedback_improvement_area?: string | null
+          user_feedback_text?: string | null
+          user_feedback_submitted_at?: string | null
         }
       }
       session_events: {
