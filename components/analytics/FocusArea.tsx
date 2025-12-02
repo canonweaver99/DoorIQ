@@ -92,29 +92,43 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
   skillGaps.sort((a, b) => b.gap - a.gap)
   const focusSkill = skillGaps[0]
 
-  // Only show if gap is significant (at least 10 points)
-  if (!focusSkill || focusSkill.gap < 10) {
-    return null
-  }
+  // Determine if we have a significant gap
+  const hasSignificantGap = focusSkill && focusSkill.gap >= 10
 
-  // Get the module category for the focus skill
-  const moduleCategory = skillToCategoryMap[focusSkill.skill]
+  // Get the module category for the focus skill (if we have one)
+  const moduleCategory = hasSignificantGap && focusSkill ? skillToCategoryMap[focusSkill.skill] : undefined
   
-  // Fetch modules for the relevant category (only if category exists)
-  const { modules, loading: modulesLoading } = useModules({ 
+  // Fetch modules for the relevant category (fallback to all modules if no category)
+  const { modules: categoryModules, loading: categoryLoading } = useModules({ 
     category: moduleCategory || undefined
   })
   
+  // Also fetch all modules as fallback to ensure we always have a recommendation
+  const { modules: allModules, loading: allModulesLoading } = useModules({})
+  
+  // Determine which modules to use and loading state
+  const modules = categoryModules.length > 0 ? categoryModules : allModules
+  const modulesLoading = categoryLoading || allModulesLoading
+  
   // Get the first module (lowest display_order) as the recommended lesson
+  // ALWAYS show a lesson if any modules exist
   const recommendedModule = modules.length > 0 
     ? modules.sort((a, b) => a.display_order - b.display_order)[0]
     : null
 
-  const recommendation = skillRecommendations[focusSkill.skill] || {
-    drill: 'Practice this skill area',
-    persona: undefined
-  }
+  // Get recommendation based on focus skill, or use a default
+  const recommendation = hasSignificantGap && focusSkill
+    ? (skillRecommendations[focusSkill.skill] || {
+        drill: 'Practice this skill area',
+        persona: undefined
+      })
+    : {
+        drill: 'Continue improving your sales skills',
+        persona: undefined
+      }
 
+  // Always show the component - never return null
+  // Always show a lesson recommendation if modules are available
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -124,12 +138,24 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
     >
       <h3 className="text-xl font-bold text-white mb-6 font-space flex items-center gap-2">
         <span>🎯</span>
-        <span>Your Opportunity</span>
+        <span>{hasSignificantGap ? 'Your Opportunity' : 'Recommended Training'}</span>
       </h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Lesson Recommendation Card */}
-        {recommendedModule ? (
+        {/* Lesson Recommendation Card - ALWAYS show if modules exist or loading */}
+        {modulesLoading ? (
+          <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-500/20 rounded-lg">
+                <BookOpen className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-amber-400 mb-1 font-space uppercase tracking-wide">Recommended Lesson</h4>
+                <p className="text-sm text-gray-400 font-sans">Loading...</p>
+              </div>
+            </div>
+          </div>
+        ) : recommendedModule ? (
           <Link
             href={`/learning/modules/${recommendedModule.slug}`}
             className="group bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/50 hover:border-amber-500/40 rounded-xl p-5 transition-all duration-200"
@@ -148,19 +174,27 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
-        ) : modulesLoading ? (
-          <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl p-5">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-amber-500/20 rounded-lg">
+        ) : (
+          // Fallback: Show link to learning page if no modules found
+          <Link
+            href="/learning"
+            className="group bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/50 hover:border-amber-500/40 rounded-xl p-5 transition-all duration-200"
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <div className="p-2 bg-amber-500/20 rounded-lg group-hover:bg-amber-500/30 transition-colors">
                 <BookOpen className="w-5 h-5 text-amber-400" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-semibold text-amber-400 mb-1 font-space uppercase tracking-wide">Recommended Lesson</h4>
-                <p className="text-sm text-gray-400 font-sans">Loading...</p>
+                <p className="text-base font-bold text-white font-space line-clamp-2">Explore Training Modules</p>
               </div>
             </div>
-          </div>
-        ) : null}
+            <div className="flex items-center gap-2 text-sm text-gray-300 font-sans">
+              <span>View all lessons</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+        )}
 
         {/* Practice Agent Card */}
         {recommendation.persona && (
