@@ -707,7 +707,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             addFeedbackItem(
               'objection_detected',
               message,
-              objection.severity === 'critical' || isStacked ? 'needs_improvement' : 'neutral',
+              'needs_improvement', // Objections are always red - they need to be handled
               { 
                 objectionType: objectionType as any,
                 handlingQuality: undefined

@@ -44,116 +44,279 @@ interface UseSentimentScoreReturn {
   isActive: boolean
 }
 
-// Buying signal patterns (from enhancedPatternAnalyzer)
-const BUYING_SIGNAL_PATTERNS = [
-  /sounds good/i,
-  /that works/i,
-  /I'm interested/i,
+// Strong buying signal patterns - HIGH impact (+15-20 points each)
+const STRONG_BUYING_SIGNALS = [
   /let's do it/i,
   /count me in/i,
   /I'm ready/i,
   /when can you start/i,
-  /what's next/i,
   /how do I sign up/i,
-  /that makes sense/i,
-  /I like that/i,
   /we need that/i,
   /definitely need/i,
-  /that's reasonable/i,
   /I can do that/i,
-  /I'm okay with that/i,
-  /what's included/i,
-  /how does it work/i,
   /when can we start/i,
   /coming back (tomorrow|today|at|on)/i,
   /I'll see you/i,
   /see you (tomorrow|then|at)/i,
   /I'll be here/i,
-  /I'll be ready/i
+  /I'll be ready/i,
+  /let's schedule/i,
+  /sign me up/i,
+  /I want to move forward/i,
+  /let's get started/i,
+  /I'm sold/i,
+  /you've convinced me/i,
+  /where do I sign/i,
+  /what do you need from me/i,
+  /I'll take it/i,
+  /we'll do it/i
 ]
 
-// Positive language patterns
-const POSITIVE_LANGUAGE_PATTERNS = [
+// Moderate buying signals - MEDIUM impact (+8-12 points each)
+const MODERATE_BUYING_SIGNALS = [
+  /sounds good/i,
+  /that works/i,
+  /I'm interested/i,
+  /that makes sense/i,
+  /I like that/i,
+  /that's reasonable/i,
+  /I'm okay with that/i,
+  /what's included/i,
+  /how does it work/i,
+  /what's the process/i,
+  /how long does it take/i,
+  /what do you recommend/i,
+  /that's not bad/i,
+  /I could see that/i,
+  /that might work/i,
+  /we've been thinking about/i,
+  /we've been meaning to/i
+]
+
+// Engagement signals - Shows they're listening and interested (+5-8 points)
+const ENGAGEMENT_SIGNALS = [
+  /tell me more/i,
+  /go on/i,
+  /interesting/i,
+  /really\?/i,
+  /oh yeah\?/i,
+  /is that right/i,
+  /how so/i,
+  /what do you mean/i,
+  /can you explain/i,
+  /I didn't know that/i,
+  /that's new to me/i,
+  /huh/i,
+  /hmm/i,
+  /okay/i,
+  /I see/i,
+  /right/i,
+  /uh huh/i,
+  /yeah/i,
+  /sure/i
+]
+
+// Rapport building signals - Conversation is going well (+5-10 points)
+const RAPPORT_SIGNALS = [
   /that's great/i,
   /that's good/i,
   /I understand/i,
-  /I see/i,
-  /that makes sense/i,
   /you're right/i,
   /fair enough/i,
   /I hear you/i,
   /good point/i,
-  /tell me more/i,
-  /interesting/i,
   /that's helpful/i,
   /good to know/i,
-  /I like that/i,
-  /that sounds/i
+  /I appreciate/i,
+  /thanks for/i,
+  /that's nice/i,
+  /you seem/i,
+  /I trust/i,
+  /you know what you're doing/i,
+  /you're being honest/i,
+  /I like your/i,
+  /ha ha/i,
+  /haha/i,
+  /lol/i,
+  /that's funny/i,
+  /\*laughs\*/i,
+  /\*chuckles\*/i
 ]
 
-// Negative language patterns
-const NEGATIVE_LANGUAGE_PATTERNS = [
+// Soft positive language - Mild positive indicators (+3-5 points)
+const SOFT_POSITIVE_PATTERNS = [
+  /that sounds/i,
+  /maybe/i,
+  /possibly/i,
+  /we might/i,
+  /I guess/i,
+  /I suppose/i,
+  /not terrible/i,
+  /could be worse/i,
+  /alright/i,
+  /fine/i
+]
+
+// Strong negative language - HIGH negative impact (-15-20 points)
+const STRONG_NEGATIVE_PATTERNS = [
   /not interested/i,
   /don't want/i,
-  /can't afford/i,
-  /too expensive/i,
   /no thanks/i,
   /not for me/i,
   /don't need/i,
-  /maybe later/i,
-  /I'll think about it/i,
-  /not right now/i
+  /leave me alone/i,
+  /go away/i,
+  /get out/i,
+  /I said no/i,
+  /stop/i,
+  /don't call/i,
+  /don't come back/i,
+  /waste of time/i,
+  /scam/i,
+  /rip off/i,
+  /too pushy/i,
+  /I'm done/i,
+  /goodbye/i,
+  /have a good day/i  // Dismissive goodbye
 ]
 
-// Calculate buying signals score from transcript
+// Moderate negative language - MEDIUM negative impact (-8-12 points)
+const MODERATE_NEGATIVE_PATTERNS = [
+  /can't afford/i,
+  /too expensive/i,
+  /maybe later/i,
+  /I'll think about it/i,
+  /not right now/i,
+  /bad timing/i,
+  /not a good time/i,
+  /busy right now/i,
+  /call back later/i,
+  /I don't know/i,
+  /I'm not sure/i,
+  /need to talk to/i,
+  /my (spouse|wife|husband|partner)/i,
+  /we'll see/i,
+  /let me think/i
+]
+
+// Hesitation signals - Mild negative (-3-5 points)
+const HESITATION_PATTERNS = [
+  /umm/i,
+  /well\.\.\./i,
+  /I don't know if/i,
+  /that's a lot/i,
+  /seems like a lot/i,
+  /kind of expensive/i,
+  /a bit much/i,
+  /not sure about/i
+]
+
+// Question patterns - Indicates engagement (neutral to positive)
+const QUESTION_PATTERNS = [
+  /\?$/,  // Ends with question mark
+  /^(what|how|why|when|where|who|which|can|could|would|will|do|does|is|are)/i
+]
+
+// Calculate buying signals score from transcript with weighted signals
 function calculateBuyingSignalsScore(transcript: TranscriptEntry[]): number {
   if (!transcript || transcript.length === 0) return 0
 
   const homeownerEntries = transcript.filter(e => e.speaker === 'homeowner')
   if (homeownerEntries.length === 0) return 0
 
-  let signalCount = 0
-  homeownerEntries.forEach(entry => {
-    BUYING_SIGNAL_PATTERNS.forEach(pattern => {
+  let score = 0
+  const recentWindow = Math.max(1, Math.floor(homeownerEntries.length * 0.4)) // Last 40%
+  
+  homeownerEntries.forEach((entry, index) => {
+    const isRecent = index >= homeownerEntries.length - recentWindow
+    const recencyMultiplier = isRecent ? 1.5 : 1.0 // Recent signals count more
+    
+    // Strong buying signals (+18 points each)
+    STRONG_BUYING_SIGNALS.forEach(pattern => {
       if (pattern.test(entry.text)) {
-        signalCount++
+        score += 18 * recencyMultiplier
+      }
+    })
+    
+    // Moderate buying signals (+10 points each)
+    MODERATE_BUYING_SIGNALS.forEach(pattern => {
+      if (pattern.test(entry.text)) {
+        score += 10 * recencyMultiplier
+      }
+    })
+    
+    // Engagement signals (+6 points each)
+    ENGAGEMENT_SIGNALS.forEach(pattern => {
+      if (pattern.test(entry.text)) {
+        score += 6 * recencyMultiplier
       }
     })
   })
 
-  // Each buying signal adds 15 points, max 100
-  return Math.min(100, signalCount * 15)
+  return Math.min(100, Math.round(score))
 }
 
-// Calculate positive language score
+// Calculate positive language score with weighted patterns
 function calculatePositiveLanguageScore(transcript: TranscriptEntry[]): number {
-  if (!transcript || transcript.length === 0) return 0
+  if (!transcript || transcript.length === 0) return 50 // Start neutral
 
   const homeownerEntries = transcript.filter(e => e.speaker === 'homeowner')
-  if (homeownerEntries.length === 0) return 0
+  if (homeownerEntries.length === 0) return 50
 
-  let positiveCount = 0
-  let negativeCount = 0
+  let positiveScore = 0
+  let negativeScore = 0
+  const recentWindow = Math.max(1, Math.floor(homeownerEntries.length * 0.4))
 
-  homeownerEntries.forEach(entry => {
-    POSITIVE_LANGUAGE_PATTERNS.forEach(pattern => {
+  homeownerEntries.forEach((entry, index) => {
+    const isRecent = index >= homeownerEntries.length - recentWindow
+    const recencyMultiplier = isRecent ? 1.3 : 1.0
+    
+    // Rapport signals (+8 points)
+    RAPPORT_SIGNALS.forEach(pattern => {
       if (pattern.test(entry.text)) {
-        positiveCount++
+        positiveScore += 8 * recencyMultiplier
       }
     })
-    NEGATIVE_LANGUAGE_PATTERNS.forEach(pattern => {
+    
+    // Soft positive (+4 points)
+    SOFT_POSITIVE_PATTERNS.forEach(pattern => {
       if (pattern.test(entry.text)) {
-        negativeCount++
+        positiveScore += 4 * recencyMultiplier
+      }
+    })
+    
+    // Questions indicate engagement (+3 points)
+    QUESTION_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) {
+        positiveScore += 3 * recencyMultiplier
+      }
+    })
+    
+    // Strong negative (-15 points)
+    STRONG_NEGATIVE_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) {
+        negativeScore += 15 * recencyMultiplier
+      }
+    })
+    
+    // Moderate negative (-8 points)
+    MODERATE_NEGATIVE_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) {
+        negativeScore += 8 * recencyMultiplier
+      }
+    })
+    
+    // Hesitation (-4 points)
+    HESITATION_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) {
+        negativeScore += 4 * recencyMultiplier
       }
     })
   })
 
-  // Calculate ratio: positive / (positive + negative)
-  const total = positiveCount + negativeCount
-  if (total === 0) return 50 // Neutral if no patterns detected
-
-  const ratio = positiveCount / total
-  return Math.round(ratio * 100)
+  // Calculate net score: 50 (neutral) + positive - negative
+  const netScore = 50 + positiveScore - negativeScore
+  return Math.round(Math.max(0, Math.min(100, netScore)))
 }
 
 // Calculate objection resolution score
@@ -186,128 +349,151 @@ function calculateObjectionResolutionScore(transcript: TranscriptEntry[]): numbe
   return Math.round(resolutionRate * 100)
 }
 
-// Calculate sentiment from transcript progression over time
+// Calculate sentiment from transcript progression over time - IMPROVED VERSION
 function calculateTranscriptSentiment(transcript: TranscriptEntry[], sessionDurationSeconds: number): number {
   if (!transcript || transcript.length === 0) return 50 // Neutral baseline
   
   const homeownerEntries = transcript.filter(e => e.speaker === 'homeowner')
   if (homeownerEntries.length === 0) return 50
   
-  // Analyze sentiment progression: early entries vs recent entries
+  // More granular windows for better responsiveness
   const totalEntries = homeownerEntries.length
-  const earlyWindow = Math.max(1, Math.floor(totalEntries * 0.3)) // First 30% of entries
-  const recentWindow = Math.max(1, Math.floor(totalEntries * 0.3)) // Last 30% of entries
+  const recentWindow = Math.max(1, Math.floor(totalEntries * 0.35)) // Last 35%
+  const middleStart = Math.max(1, Math.floor(totalEntries * 0.3))
+  const middleEnd = Math.max(middleStart + 1, totalEntries - recentWindow)
   
-  const earlyEntries = homeownerEntries.slice(0, earlyWindow)
+  const earlyEntries = homeownerEntries.slice(0, middleStart)
+  const middleEntries = homeownerEntries.slice(middleStart, middleEnd)
   const recentEntries = homeownerEntries.slice(-recentWindow)
   
-  // Calculate sentiment for early vs recent
-  let earlyPositive = 0
-  let earlyNegative = 0
-  let recentPositive = 0
-  let recentNegative = 0
-  
-  earlyEntries.forEach(entry => {
-    POSITIVE_LANGUAGE_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) earlyPositive++
+  // Calculate weighted scores for each window
+  const calculateWindowScore = (entries: TranscriptEntry[]): number => {
+    let positive = 0
+    let negative = 0
+    
+    entries.forEach(entry => {
+      // Strong buying signals
+      STRONG_BUYING_SIGNALS.forEach(pattern => {
+        if (pattern.test(entry.text)) positive += 20
+      })
+      // Moderate buying signals
+      MODERATE_BUYING_SIGNALS.forEach(pattern => {
+        if (pattern.test(entry.text)) positive += 12
+      })
+      // Engagement signals
+      ENGAGEMENT_SIGNALS.forEach(pattern => {
+        if (pattern.test(entry.text)) positive += 6
+      })
+      // Rapport signals
+      RAPPORT_SIGNALS.forEach(pattern => {
+        if (pattern.test(entry.text)) positive += 8
+      })
+      // Soft positive
+      SOFT_POSITIVE_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) positive += 4
+      })
+      // Strong negative
+      STRONG_NEGATIVE_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) negative += 18
+      })
+      // Moderate negative
+      MODERATE_NEGATIVE_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) negative += 10
+      })
+      // Hesitation
+      HESITATION_PATTERNS.forEach(pattern => {
+        if (pattern.test(entry.text)) negative += 4
+      })
     })
-    NEGATIVE_LANGUAGE_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) earlyNegative++
-    })
-  })
+    
+    // Normalize to 0-100 scale
+    const total = positive + negative
+    if (total === 0) return 50
+    return Math.round((positive / total) * 100)
+  }
   
-  recentEntries.forEach(entry => {
-    POSITIVE_LANGUAGE_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) recentPositive++
-    })
-    NEGATIVE_LANGUAGE_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) recentNegative++
-    })
-  })
+  const earlyScore = earlyEntries.length > 0 ? calculateWindowScore(earlyEntries) : 50
+  const middleScore = middleEntries.length > 0 ? calculateWindowScore(middleEntries) : earlyScore
+  const recentScore = recentEntries.length > 0 ? calculateWindowScore(recentEntries) : middleScore
   
-  // Calculate early sentiment (0-100)
-  const earlyTotal = earlyPositive + earlyNegative
-  const earlySentiment = earlyTotal > 0 
-    ? (earlyPositive / earlyTotal) * 100 
-    : 50
+  // Calculate progression trend
+  const earlyToMiddle = middleScore - earlyScore
+  const middleToRecent = recentScore - middleScore
+  const overallTrend = recentScore - earlyScore
   
-  // Calculate recent sentiment (0-100)
-  const recentTotal = recentPositive + recentNegative
-  const recentSentiment = recentTotal > 0 
-    ? (recentPositive / recentTotal) * 100 
-    : 50
+  // Base score: heavily weighted towards recent (60% recent, 25% middle, 15% early)
+  const baseScore = (earlyScore * 0.15) + (middleScore * 0.25) + (recentScore * 0.60)
   
-  // If we have progression data, show improvement
-  // If recent sentiment is higher than early, that's positive progression
-  const sentimentProgression = recentSentiment - earlySentiment
+  // Progression bonus/penalty
+  let progressionModifier = 0
+  if (overallTrend > 0) {
+    // Improving: bonus up to +15 points
+    progressionModifier = Math.min(15, overallTrend * 0.3)
+  } else if (overallTrend < 0) {
+    // Declining: penalty up to -10 points
+    progressionModifier = Math.max(-10, overallTrend * 0.2)
+  }
   
-  // Base score: average of recent sentiment, adjusted by progression
-  // Recent sentiment is weighted more heavily
-  const baseScore = (earlySentiment * 0.3) + (recentSentiment * 0.7)
-  
-  // Add progression bonus (up to +20 points for improvement)
-  const progressionBonus = Math.max(0, Math.min(20, sentimentProgression * 2))
-  
-  // Also factor in buying signals in recent entries
-  let recentBuyingSignals = 0
-  recentEntries.forEach(entry => {
-    BUYING_SIGNAL_PATTERNS.forEach(pattern => {
-      if (pattern.test(entry.text)) recentBuyingSignals++
-    })
-  })
-  const buyingSignalBonus = Math.min(15, recentBuyingSignals * 5)
+  // Momentum bonus: if recent trend is positive, extra bonus
+  if (middleToRecent > 10) {
+    progressionModifier += Math.min(8, middleToRecent * 0.2)
+  }
   
   // CRITICAL: Apply objection penalties - sentiment should go DOWN when objections occur
   let objectionPenalty = 0
-  const allHomeownerEntries = transcript.filter(e => e.speaker === 'homeowner')
   
-  // Detect all objections and apply penalties based on severity
-  allHomeownerEntries.forEach((entry, index) => {
-    // Find the actual index in the full transcript
+  // Detect all objections and apply penalties based on severity and recency
+  homeownerEntries.forEach((entry, index) => {
     const transcriptIndex = transcript.findIndex(e => e === entry)
     const objection = detectObjection(entry.text, transcript, transcriptIndex >= 0 ? transcriptIndex : undefined)
     
     if (objection) {
-      // Apply penalty based on severity
-      // More recent objections have higher impact
-      const isRecent = index >= allHomeownerEntries.length - recentWindow
-      const severityMultiplier = isRecent ? 1.0 : 0.5 // Recent objections count more
+      // Recency multiplier: recent objections hurt more
+      const isRecent = index >= homeownerEntries.length - recentWindow
+      const isMiddle = index >= middleStart && index < middleEnd
+      const recencyMultiplier = isRecent ? 1.2 : (isMiddle ? 0.8 : 0.5)
       
       let penalty = 0
       switch (objection.severity) {
-        case 'critical':
-          penalty = 20 * severityMultiplier
-          break
-        case 'high':
-          penalty = 15 * severityMultiplier
-          break
-        case 'medium':
-          penalty = 10 * severityMultiplier
-          break
-        case 'low':
-          penalty = 5 * severityMultiplier
-          break
+        case 'critical': penalty = 22; break
+        case 'high': penalty = 16; break
+        case 'medium': penalty = 10; break
+        case 'low': penalty = 5; break
       }
       
-      // Check if objection was resolved - if so, reduce penalty by 50%
+      penalty *= recencyMultiplier
+      
+      // Check if objection was resolved - recovery if handled well
       if (transcriptIndex >= 0) {
         const assessment = assessObjectionHandling(transcriptIndex, transcript, objection.type)
-        if (assessment.isResolved || assessment.wasHandled) {
-          penalty = penalty * 0.5 // Reduce penalty if handled (still penalize, but less)
+        if (assessment.isResolved) {
+          // Fully resolved: 70% recovery
+          penalty *= 0.3
+        } else if (assessment.wasHandled && assessment.quality === 'excellent') {
+          // Handled excellently: 60% recovery
+          penalty *= 0.4
+        } else if (assessment.wasHandled && assessment.quality === 'good') {
+          // Handled well: 50% recovery
+          penalty *= 0.5
+        } else if (assessment.wasHandled) {
+          // Handled adequately: 30% recovery
+          penalty *= 0.7
         }
+        // If not handled, full penalty applies
       }
       
       objectionPenalty += penalty
     }
   })
   
-  // Apply objection penalty (subtract from score)
-  const finalScore = baseScore + progressionBonus + buyingSignalBonus - objectionPenalty
+  // Calculate final score
+  const finalScore = baseScore + progressionModifier - objectionPenalty
   
   return Math.round(Math.max(0, Math.min(100, finalScore)))
 }
 
-  // Calculate sentiment score with progression (starts low, builds over time)
+// Calculate sentiment score with progression (starts low, builds over time)
+// IMPROVED: More responsive to conversation dynamics
 function calculateSentimentScore(
   transcriptSentiment: number,
   buyingSignals: number,
@@ -316,32 +502,47 @@ function calculateSentimentScore(
   sessionDurationSeconds: number,
   startingSentiment: number = 5
 ): number {
-  // Base score from factors (weighted) - removed ElevenLabs dependency
-  // Transcript Sentiment: 50%, Buying Signals: 25%, Objection Resolution: 15%, Positive Language: 10%
+  // Base score from factors (weighted) - IMPROVED weighting
+  // Transcript Sentiment: 45% (most comprehensive)
+  // Buying Signals: 30% (strong indicator of success)
+  // Positive Language: 15% (rapport indicator)
+  // Objection Resolution: 10% (quality indicator)
   const baseScore = 
-    (transcriptSentiment * 0.50) +
-    (buyingSignals * 0.25) +
-    (objectionResolution * 0.15) +
-    (positiveLanguage * 0.10)
+    (transcriptSentiment * 0.45) +
+    (buyingSignals * 0.30) +
+    (positiveLanguage * 0.15) +
+    (objectionResolution * 0.10)
 
-  // Apply time progression: starts at agent's baseline, builds over time
-  // More aggressive progression so sentiment builds faster
-  // First 15 seconds: startingSentiment to startingSentiment + 30% of base score
-  // 15-60 seconds: startingSentiment + 30% to startingSentiment + 70% of base score
-  // 60+ seconds: startingSentiment + 70% to startingSentiment + 100% of base score
-  let timeMultiplier = 0.3 // Start at 30% of base score above starting sentiment
+  // IMPROVED time progression: faster ramp-up, more responsive
+  // First 10 seconds: 40% of base score (faster start)
+  // 10-30 seconds: 40-70% of base score
+  // 30-90 seconds: 70-90% of base score
+  // 90+ seconds: 90-100% of base score
+  let timeMultiplier = 0.4 // Start at 40% for faster response
   
-  if (sessionDurationSeconds > 60) {
-    timeMultiplier = 0.7 + (Math.min(1, (sessionDurationSeconds - 60) / 120) * 0.3) // 70-100% after 1 minute
-  } else if (sessionDurationSeconds > 15) {
-    timeMultiplier = 0.3 + ((sessionDurationSeconds - 15) / 45 * 0.4) // 30-70% between 15s-1min
+  if (sessionDurationSeconds > 90) {
+    timeMultiplier = 0.9 + (Math.min(1, (sessionDurationSeconds - 90) / 60) * 0.1) // 90-100%
+  } else if (sessionDurationSeconds > 30) {
+    timeMultiplier = 0.7 + ((sessionDurationSeconds - 30) / 60 * 0.2) // 70-90%
+  } else if (sessionDurationSeconds > 10) {
+    timeMultiplier = 0.4 + ((sessionDurationSeconds - 10) / 20 * 0.3) // 40-70%
   } else {
-    timeMultiplier = (sessionDurationSeconds / 15) * 0.3 // 0-30% in first 15 seconds
+    timeMultiplier = 0.2 + (sessionDurationSeconds / 10 * 0.2) // 20-40% in first 10 seconds
   }
 
   // Calculate score: starting sentiment + (base score * time multiplier)
   const progressionScore = baseScore * timeMultiplier
-  const finalScore = startingSentiment + progressionScore
+  let finalScore = startingSentiment + progressionScore
+
+  // BONUS: If buying signals are high (>50), add extra boost
+  if (buyingSignals > 50) {
+    finalScore += (buyingSignals - 50) * 0.15 // Up to +7.5 bonus
+  }
+
+  // PENALTY: If objection resolution is low (<50), apply penalty
+  if (objectionResolution < 50) {
+    finalScore -= (50 - objectionResolution) * 0.1 // Up to -5 penalty
+  }
 
   return Math.round(Math.max(0, Math.min(100, finalScore)))
 }
@@ -372,7 +573,7 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const sessionStartTimeRef = useRef<number>(sessionStartTime || Date.now())
   const smoothedScoreRef = useRef<number>(startingSentiment) // Start based on agent personality
-  const SMOOTHING_ALPHA = 0.3 // Exponential smoothing factor (lower = more responsive to changes)
+  const SMOOTHING_ALPHA = 0.2 // Exponential smoothing factor (lower = more responsive to changes)
 
   // Update session start time if provided
   useEffect(() => {
