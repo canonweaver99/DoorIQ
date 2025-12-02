@@ -329,7 +329,7 @@ function calculatePositiveLanguageScore(transcript: TranscriptEntry[]): number {
       // Positive signals (less weight)
       RAPPORT_SIGNALS.forEach(pattern => {
         if (pattern.test(entry.text)) {
-          += 4 * recencyMultiplier
+          positiveScore += 4 * recencyMultiplier
         }
       })
       
