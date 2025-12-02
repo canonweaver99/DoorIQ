@@ -430,23 +430,6 @@ export function HeroSection({
                             }
                             return null
                           })()}
-                          
-                          {/* What to try */}
-                          <div className="pt-4 border-t border-red-500/30">
-                            <div className="text-lg font-bold text-amber-300 mb-3">What to try:</div>
-                            <p className="text-base text-white font-medium leading-relaxed">
-                              {(() => {
-                                const closeAttempts = instantMetrics?.closeAttempts || 0
-                                if (closeAttempts === 0) {
-                                  return "Use assumptive close language earlier in the conversation. Try phrases like 'When we get started...' or 'Once you see the results...'"
-                                }
-                                if (currentScores?.closing && currentScores.closing < 50) {
-                                  return "Practice trial closes throughout the conversation to gauge interest before attempting the final close."
-                                }
-                                return "Review the key moments below to identify where you lost momentum and practice recovery techniques."
-                              })()}
-                            </p>
-                          </div>
                         </div>
                       )}
                     </div>

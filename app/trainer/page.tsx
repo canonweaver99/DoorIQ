@@ -1075,10 +1075,13 @@ function TrainerPageContent() {
     
     // Set session state to door-closing to trigger DoorClosingVideo component for agents with videos
     if (hasVideos) {
+      console.log('🎬 Agent has videos, setting sessionState to door-closing for:', selectedAgent?.name)
       setSessionState('door-closing')
+      // IMPORTANT: Keep sessionActive true so the video component can mount and play
       // DoorClosingVideo component will handle video playback
       // The handleDoorVideoComplete callback will handle ending session and triggering grading
-      // So we can return early here
+      // So we can return early here - DO NOT call endSession yet
+      console.log('🎬 Waiting for door closing video to complete before ending session')
       return
     }
     

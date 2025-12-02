@@ -16,11 +16,13 @@ export async function POST(req: NextRequest) {
   
   try {
     const { sessionId, transcript, elevenLabsConversationId } = await req.json()
+    logger.info('🎯 Grading orchestration started', { sessionId, timestamp: new Date().toISOString() })
     
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
     }
     
+    const fetchStart = Date.now()
     const supabase = await createServiceSupabaseClient()
     
     // Fetch session data
@@ -29,6 +31,8 @@ export async function POST(req: NextRequest) {
       .select('*')
       .eq('id', sessionId)
       .single()
+    
+    logger.info('⏱️ Session fetch time', { timeMs: Date.now() - fetchStart })
     
     if (sessionError || !session) {
       logger.error('Session not found for orchestration', { sessionId, error: sessionError })
@@ -48,7 +52,7 @@ export async function POST(req: NextRequest) {
     
     // Phase 1: Instant Metrics (0-2s)
     try {
-      logger.info('Starting Phase 1: Instant Metrics', { sessionId })
+      logger.info('📊 Starting Phase 1: Instant Metrics', { sessionId })
       const instantStart = Date.now()
       
       // Try to sync ElevenLabs metrics if conversation_id exists but metrics don't
@@ -93,13 +97,14 @@ export async function POST(req: NextRequest) {
       
       if (instantResponse.ok) {
         const instantData = await instantResponse.json()
+        const instantTime = Date.now() - instantStart
         results.phases.instant = {
           status: 'complete',
-          timeElapsed: Date.now() - instantStart,
+          timeElapsed: instantTime,
           metrics: instantData.metrics,
           scores: instantData.scores
         }
-        logger.info('Phase 1 completed', { sessionId, timeElapsed: Date.now() - instantStart })
+        logger.info('✅ Phase 1 completed', { sessionId, timeElapsed: `${instantTime}ms`, timeSeconds: `${(instantTime / 1000).toFixed(2)}s` })
       } else {
         const error = await instantResponse.text()
         logger.error('Phase 1 failed', { sessionId, error })
@@ -119,7 +124,7 @@ export async function POST(req: NextRequest) {
     
     // Phase 2: Key Moments Detection (2-5s)
     try {
-      logger.info('Starting Phase 2: Key Moments', { sessionId })
+      logger.info('🔍 Starting Phase 2: Key Moments', { sessionId })
       const momentsStart = Date.now()
       
       // Get instant metrics for context
@@ -139,13 +144,14 @@ export async function POST(req: NextRequest) {
       
       if (momentsResponse.ok) {
         const momentsData = await momentsResponse.json()
+        const momentsTime = Date.now() - momentsStart
         results.phases.keyMoments = {
           status: 'complete',
-          timeElapsed: Date.now() - momentsStart,
+          timeElapsed: momentsTime,
           keyMoments: momentsData.keyMoments,
           feedback: momentsData.feedback
         }
-        logger.info('Phase 2 completed', { sessionId, timeElapsed: Date.now() - momentsStart })
+        logger.info('✅ Phase 2 completed', { sessionId, timeElapsed: `${momentsTime}ms`, timeSeconds: `${(momentsTime / 1000).toFixed(2)}s` })
       } else {
         const error = await momentsResponse.text()
         logger.error('Phase 2 failed', { sessionId, error })
@@ -213,9 +219,12 @@ export async function POST(req: NextRequest) {
     results.totalTimeElapsed = totalTime
     results.status = 'orchestration_complete'
     
-    logger.info('Grading orchestration completed', {
+    logger.info('🎉 Grading orchestration completed', {
       sessionId,
       totalTime: `${totalTime}ms`,
+      totalTimeSeconds: `${(totalTime / 1000).toFixed(2)}s`,
+      phase1Time: results.phases.instant?.timeElapsed || 'N/A',
+      phase2Time: results.phases.keyMoments?.timeElapsed || 'N/A',
       phases: Object.keys(results.phases)
     })
     

@@ -23,9 +23,21 @@ export default function DoorClosingVideo({
   const videoPaths = getAgentVideoPaths(agentName)
   const closingVideoPath = videoPaths?.closing || '/austin-door-close.mp4' // Fallback to Austin's video
 
+  console.log('🎬 DoorClosingVideo component mounted:', {
+    agentId,
+    agentName,
+    videoPaths,
+    closingVideoPath
+  })
+
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
+    if (!video) {
+      console.warn('⚠️ DoorClosingVideo: video ref is null')
+      return
+    }
+
+    console.log('🎬 DoorClosingVideo: Setting up video for:', agentName, 'Path:', closingVideoPath)
 
     // Set video source
     video.src = closingVideoPath
@@ -33,7 +45,7 @@ export default function DoorClosingVideo({
 
     // Handle video ended
     const handleEnded = () => {
-      console.log('🎬 Door closing video ended')
+      console.log('🎬 Door closing video ended for:', agentName)
       // Wait 500ms then call onComplete
       setTimeout(() => {
         onComplete()
@@ -41,8 +53,15 @@ export default function DoorClosingVideo({
     }
 
     // Handle video errors
-    const handleError = () => {
-      console.error('❌ Door closing video error')
+    const handleError = (e: Event) => {
+      console.error('❌ Door closing video error for:', agentName, e)
+      const videoError = video.error
+      if (videoError) {
+        console.error('Video error details:', {
+          code: videoError.code,
+          message: videoError.message
+        })
+      }
       setVideoError(true)
       
       // Fade to black for 2 seconds then complete
@@ -52,31 +71,70 @@ export default function DoorClosingVideo({
       }, 2000)
     }
 
+    // Handle video loaded and ready to play
+    const handleCanPlay = () => {
+      console.log('✅ Door closing video can play for:', agentName)
+      // Try to play the video once it's ready
+      const playPromise = video.play()
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('✅ Door closing video started playing for:', agentName)
+          })
+          .catch((err) => {
+            console.error('❌ Failed to play door closing video for:', agentName, err)
+            // Try unmuting and playing again (browser autoplay policy)
+            video.muted = true
+            const mutedPlayPromise = video.play()
+            if (mutedPlayPromise !== undefined) {
+              mutedPlayPromise
+                .then(() => {
+                  console.log('✅ Door closing video started playing (muted) for:', agentName)
+                  video.muted = false // Unmute after starting
+                })
+                .catch((mutedErr) => {
+                  console.error('❌ Failed to play even when muted for:', agentName, mutedErr)
+                  setVideoError(true)
+                  setFadeOutStarted(true)
+                  setTimeout(() => {
+                    onComplete()
+                  }, 2000)
+                })
+            }
+          })
+      }
+    }
+
+    // Handle video loaded metadata
+    const handleLoadedMetadata = () => {
+      console.log('📹 Door closing video metadata loaded for:', agentName, 'Duration:', video.duration)
+    }
+
     video.addEventListener('ended', handleEnded)
     video.addEventListener('error', handleError)
+    video.addEventListener('canplay', handleCanPlay)
+    video.addEventListener('loadedmetadata', handleLoadedMetadata)
 
-    // Try to play the video
+    // Also try to play immediately (in case canplay already fired)
     const playPromise = video.play()
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
-          console.log('✅ Door closing video started playing')
+          console.log('✅ Door closing video started playing immediately for:', agentName)
         })
         .catch((err) => {
-          console.error('❌ Failed to play door closing video:', err)
-          setVideoError(true)
-          setFadeOutStarted(true)
-          setTimeout(() => {
-            onComplete()
-          }, 2000)
+          console.log('⏳ Door closing video not ready yet, waiting for canplay event for:', agentName)
+          // Will be handled by handleCanPlay
         })
     }
 
     return () => {
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('error', handleError)
+      video.removeEventListener('canplay', handleCanPlay)
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
     }
-  }, [closingVideoPath, onComplete])
+  }, [closingVideoPath, onComplete, agentName])
 
   return (
     <div

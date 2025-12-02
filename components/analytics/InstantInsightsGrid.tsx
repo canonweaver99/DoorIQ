@@ -356,8 +356,8 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
       className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 mb-8"
     >
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white font-space">Performance Metrics</h2>
-        <p className="text-sm text-gray-400 font-sans mt-1">Real-time insights from your session</p>
+        <h2 className="text-3xl font-extrabold text-white font-space mb-2">Performance Metrics</h2>
+        <p className="text-lg text-white font-sans font-medium mt-1">Real-time insights from your session</p>
       </div>
       
       <div className="space-y-4">
@@ -374,7 +374,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                       <Info className="w-5 h-5 text-gray-400 hover:text-blue-400 transition-colors" />
                     </MetricTooltip>
                   </div>
-                  <div className="text-sm text-gray-400 font-sans">Current pace vs. target</div>
+                  <div className="text-base text-white font-sans font-medium">Current pace vs. target</div>
                 </div>
               </div>
             </div>
@@ -382,7 +382,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
             <div className="flex items-center gap-6">
               <div className="text-right">
                 <div className="text-4xl font-bold text-white mb-1 font-space">{wpm}</div>
-                <div className="text-base text-gray-300 font-sans">WPM</div>
+                <div className="text-lg text-white font-sans font-semibold">WPM</div>
               </div>
               
               <div className="w-20 h-20">
@@ -398,7 +398,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
               <div className="text-right min-w-[120px]">
                 <div className={cn("text-xl font-bold mb-1 font-space", wpmStatus.color)}>{wpmStatus.label}</div>
                 <div className="text-xl font-bold text-white font-space">Target 150 WPM</div>
-                <div className="text-sm text-gray-500 font-sans mt-1">
+                <div className="text-base text-white font-sans font-medium mt-1">
                   {wpm < 140 ? 'Try speaking faster' : wpm > 160 ? 'Slow down slightly' : 'Optimal pace'}
                 </div>
               </div>
@@ -419,7 +419,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                     <Info className="w-5 h-5 text-gray-400 hover:text-purple-400 transition-colors" />
                   </MetricTooltip>
                 </div>
-                <div className="text-sm text-gray-400 font-sans">Your speaking time vs. customer</div>
+                <div className="text-base text-white font-sans font-medium">Your speaking time vs. customer</div>
               </div>
             </div>
             
@@ -454,9 +454,9 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                     <div className="absolute left-[70%] top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-500/60" />
                   </div>
                 </div>
-                <div className="flex justify-between text-sm text-gray-400 font-sans">
+                <div className="flex justify-between text-base text-white font-sans font-medium">
                   <span>0%</span>
-                  <span className="text-slate-500">Target 60%</span>
+                  <span className="font-bold">Target 60%</span>
                   <span>100%</span>
                 </div>
               </div>
@@ -470,7 +470,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
               </div>
               
               {/* Target Info */}
-              <div className="text-base text-gray-400 font-sans mb-3">Target: 60%</div>
+              <div className="text-lg text-white font-sans font-semibold mb-3">Target: 60%</div>
               
               {/* Coaching Tip */}
               <div className={cn("text-base font-bold font-space", balanceStatus.color)}>
@@ -480,8 +480,8 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
           </div>
         </div>
         
-        {/* Objections - Enhanced Card with Details (Fixed Height with Scroll) */}
-        <div className="rounded-xl p-5 border-2 border-amber-500/40 bg-amber-500/20 h-[400px] flex flex-col">
+        {/* Objections - Enhanced Card with Details (Dynamic Height based on content) */}
+        <div className={`rounded-xl p-5 border-2 border-amber-500/40 bg-amber-500/20 flex flex-col ${detailedObjections.length > 2 ? 'h-[400px]' : detailedObjections.length === 2 ? 'h-[320px]' : detailedObjections.length === 1 ? 'h-[240px]' : 'min-h-[180px]'}`}>
           <div className="flex items-start justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-7 h-7 text-amber-400" />
@@ -492,26 +492,26 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                     <Info className="w-5 h-5 text-gray-400 hover:text-amber-400 transition-colors" />
                   </MetricTooltip>
                 </div>
-                <div className="text-sm text-gray-400 font-sans">Customer concerns and your responses</div>
+                <div className="text-base text-white font-sans font-medium">Customer concerns and your responses</div>
               </div>
             </div>
             
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-4xl font-bold text-white mb-1 font-space">{objections}</div>
-                <div className="text-base text-gray-300 font-sans">Faced</div>
+                <div className="text-lg text-white font-sans font-semibold">Faced</div>
               </div>
               
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-400 mb-1 font-space">{objectionsHandled}</div>
-                <div className="text-base text-gray-300 font-sans">Handled</div>
+                <div className="text-lg text-white font-sans font-semibold">Handled</div>
               </div>
               
               <div className="text-center min-w-[120px]">
                 <div className="text-3xl font-bold text-white mb-1 font-space">
                   {objections > 0 ? `${objectionRate}%` : 'N/A'}
                 </div>
-                <div className="text-base text-gray-300 font-sans">Success Rate</div>
+                <div className="text-lg text-white font-sans font-semibold">Success Rate</div>
               </div>
             </div>
           </div>
@@ -534,12 +534,12 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                               {getQualityLabel(objection.quality)}
                             </span>
                           </div>
-                          <div className="text-sm text-slate-300 font-sans italic mb-2">
+                          <div className="text-base text-white font-sans font-medium italic mb-2 leading-relaxed">
                             "{objection.text.length > 80 ? objection.text.substring(0, 80) + '...' : objection.text}"
                           </div>
                           {objection.responseText && (
-                            <div className="text-sm text-emerald-300 font-sans mt-1">
-                              <span className="text-emerald-400 font-medium">Your response: </span>
+                            <div className="text-base text-emerald-300 font-sans font-medium mt-1 leading-relaxed">
+                              <span className="text-emerald-400 font-bold">Your response: </span>
                               {objection.responseText.length > 100 ? objection.responseText.substring(0, 100) + '...' : objection.responseText}
                             </div>
                           )}
@@ -558,15 +558,15 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-slate-400 font-sans text-center">
+              <div className="text-base text-white font-sans font-medium text-center">
                 No objections detected
               </div>
             )}
           </div>
         </div>
         
-        {/* Sales Techniques - Enhanced Card with Details (Fixed Height with Scroll) */}
-        <div className="rounded-xl p-5 border-2 border-emerald-500/40 bg-emerald-500/20 h-[400px] flex flex-col">
+        {/* Sales Techniques - Enhanced Card with Details (Dynamic Height based on content) */}
+        <div className={`rounded-xl p-5 border-2 border-emerald-500/40 bg-emerald-500/20 flex flex-col ${detailedTechniques.length > 2 ? 'h-[400px]' : detailedTechniques.length === 2 ? 'h-[320px]' : detailedTechniques.length === 1 ? 'h-[240px]' : 'min-h-[180px]'}`}>
           <div className="flex items-start justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-3">
               <Book className="w-7 h-7 text-emerald-400" />
@@ -577,13 +577,13 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                     <Info className="w-5 h-5 text-gray-400 hover:text-emerald-400 transition-colors" />
                   </MetricTooltip>
                 </div>
-                <div className="text-sm text-gray-400 font-sans">Techniques applied during conversation</div>
+                <div className="text-base text-white font-sans font-medium">Techniques applied during conversation</div>
               </div>
             </div>
             
             <div className="text-center">
               <div className="text-4xl font-bold text-white mb-1 font-space">{techniquesUsed.length}</div>
-              <div className="text-base text-gray-300 font-sans">Total Used</div>
+              <div className="text-lg text-white font-sans font-semibold">Total Used</div>
             </div>
           </div>
           
@@ -601,7 +601,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                             {technique.name}
                           </span>
                         </div>
-                        <div className="text-sm text-slate-300 font-sans italic mt-1">
+                        <div className="text-base text-white font-sans font-medium italic mt-1 leading-relaxed">
                           "{technique.text.length > 100 ? technique.text.substring(0, 100) + '...' : technique.text}"
                         </div>
                       </div>
@@ -621,7 +621,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-slate-400 font-sans text-center">
+              <div className="text-base text-white font-sans font-medium text-center">
                 No techniques detected
               </div>
             )}
