@@ -1550,7 +1550,13 @@ function TrainerPageContent() {
   }, [sessionActive, sessionId, endSession, handleCallEnd])
 
   // Listen for ElevenLabs disconnect and inactivity - play door closing sound
+  // DISABLED during door closing sequence to prevent video fullscreen glitches
   useEffect(() => {
+    // Skip this entire effect if door closing sequence is active
+    if (videoMode === 'closing' || showDoorCloseAnimation || sessionState === 'door-closing') {
+      return
+    }
+    
     if (!sessionActive || typeof window === 'undefined') {
       inactivitySoundPlayedRef.current = false // Reset when session becomes inactive
       return
@@ -1560,11 +1566,14 @@ function TrainerPageContent() {
       const status = e?.detail
       console.log('📊 Connection status received:', status)
       
-      if (status === 'disconnected' && sessionActive) {
-        console.log('🔌 ElevenLabs disconnected - playing door closing sound')
-        playSound('/sounds/door_close.mp3', 0.9)
-        inactivitySoundPlayedRef.current = true
-      }
+      // REMOVED: Door closing sound and disconnect handling moved to prevent conflicts
+      // The door closing sequence is handled by handleDoorClosingSequence which properly
+      // manages video state. This handler was causing video fullscreen glitches.
+      // if (status === 'disconnected' && sessionActive) {
+      //   console.log('🔌 ElevenLabs disconnected - playing door closing sound')
+      //   playSound('/sounds/door_close.mp3', 0.9)
+      //   inactivitySoundPlayedRef.current = true
+      // }
     }
 
     const handleInactivity = (e: CustomEvent) => {
@@ -1669,7 +1678,7 @@ function TrainerPageContent() {
       window.removeEventListener('agent:reconnected', handleReconnected as EventListener)
       window.removeEventListener('agent:reconnect-failed', handleReconnectFailed as EventListener)
     }
-  }, [sessionActive])
+  }, [sessionActive, videoMode, showDoorCloseAnimation, sessionState])
 
   // Add beforeunload warning during active session
   useEffect(() => {
