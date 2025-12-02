@@ -443,12 +443,10 @@ export default function AnalyticsPage() {
           }, 2000)
         }
         
-        // Load speech metrics if available
-        if (data.elevenlabs_metrics || data.analytics?.voice_analysis) {
-          setTimeout(() => {
-            setLoadingStates(prev => ({ ...prev, speech: true }))
-          }, 2500)
-        }
+        // Always load speech metrics section (even if no data - component will handle it)
+        setTimeout(() => {
+          setLoadingStates(prev => ({ ...prev, speech: true }))
+        }, 2500)
         
         // Load conversation flow if we have scores and duration
         if (data.duration_seconds && (data.rapport_score !== null || data.discovery_score !== null || data.objection_handling_score !== null || data.close_score !== null)) {
@@ -560,7 +558,7 @@ export default function AnalyticsPage() {
           />
         )}
         
-        {/* ElevenLabs Speech Metrics - Right after Overall Performance - Always show */}
+        {/* ElevenLabs Speech Metrics - Right after Overall Performance - ALWAYS show */}
         {loadingStates.speech ? (
           <ElevenLabsSpeechMetrics
             elevenlabsMetrics={session.elevenlabs_metrics}

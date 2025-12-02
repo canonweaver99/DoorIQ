@@ -117,14 +117,15 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
     : null
 
   // Get recommendation based on focus skill, or use a default
+  // ALWAYS provide a persona recommendation - use default if none found
   const recommendation = hasSignificantGap && focusSkill
     ? (skillRecommendations[focusSkill.skill] || {
         drill: 'Practice this skill area',
-        persona: undefined
+        persona: 'Average Austin' // Default fallback agent
       })
     : {
         drill: 'Continue improving your sales skills',
-        persona: undefined
+        persona: 'Average Austin' // Always show an agent recommendation
       }
 
   // Always show the component - never return null
@@ -196,33 +197,31 @@ export function FocusArea({ currentScores, userName = 'You' }: FocusAreaProps) {
           </Link>
         )}
 
-        {/* Practice Agent Card */}
-        {recommendation.persona && (
-          <Link
-            href="/trainer"
-            className="group bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/50 hover:border-amber-500/40 rounded-xl p-5 transition-all duration-200"
-          >
-            <div className="flex items-start gap-3 mb-3">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500/40 flex-shrink-0 group-hover:border-amber-500/60 transition-colors">
-                <Image
-                  src={getAgentImage(recommendation.persona)}
-                  alt={recommendation.persona}
-                  fill
-                  className="object-cover"
-                  sizes="48px"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-amber-400 mb-1 font-space uppercase tracking-wide">Practice Next</h4>
-                <p className="text-base font-bold text-white font-space">{recommendation.persona}</p>
-              </div>
+        {/* Practice Agent Card - ALWAYS show */}
+        <Link
+          href={`/trainer?agent=${encodeURIComponent(recommendation.persona || 'Average Austin')}`}
+          className="group bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/50 hover:border-amber-500/40 rounded-xl p-5 transition-all duration-200"
+        >
+          <div className="flex items-start gap-3 mb-3">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500/40 flex-shrink-0 group-hover:border-amber-500/60 transition-colors">
+              <Image
+                src={getAgentImage(recommendation.persona || 'Average Austin')}
+                alt={recommendation.persona || 'Average Austin'}
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-300 font-sans">
-              <span>Start practice session</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-amber-400 mb-1 font-space uppercase tracking-wide">Practice Next</h4>
+              <p className="text-base font-bold text-white font-space">{recommendation.persona || 'Average Austin'}</p>
             </div>
-          </Link>
-        )}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-300 font-sans">
+            <span>Start practice session</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
       </div>
     </motion.div>
   )
