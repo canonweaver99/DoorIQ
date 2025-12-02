@@ -404,7 +404,6 @@ function TrainerPageContent() {
   const inactivitySoundPlayedRef = useRef(false) // Track if we've played sound for inactivity
   
   const sessionLimit = useSessionLimit()
-  const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
 

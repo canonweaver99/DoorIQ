@@ -86,7 +86,6 @@ export default function LoadingPage() {
             return
           }
         }
-        }
       }
     } catch (error) {
       console.error('Error checking first session in handleStreamingComplete:', error)
