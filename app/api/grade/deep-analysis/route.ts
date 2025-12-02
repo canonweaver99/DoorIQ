@@ -92,19 +92,11 @@ async function performDeepAnalysis(data: {
   // Limit key moments to top 2 for faster processing
   const topKeyMoments = keyMoments.slice(0, 2)
   
-  // Format full transcript for comprehensive analysis (original method uses full transcript)
-  // Include last 50 lines for better context, but also include key sections
+  // Format full transcript for comprehensive analysis
   const fullTranscript = transcript.map((entry: any, index: number) => {
     const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'rep' : 'customer'
     const text = entry.text || entry.message || ''
     return `[${index}] ${speaker}: ${text}`
-  }).join('\n')
-  
-  // Also get last 30 lines for recent context
-  const recentExcerpt = transcript.slice(-30).map((entry: any) => {
-    const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'rep' : 'customer'
-    const text = entry.text || entry.message || ''
-    return `${speaker}: ${text}`
   }).join('\n')
   
   const prompt = `You are an expert door-to-door sales coach analyzing a sales conversation. Return ONLY valid JSON.
@@ -134,55 +126,20 @@ SCORING RULES (0-100):
 - If sale_closed=true AND objections handled well: overall should be 90+
 - If sale_closed=true: closing score should be 90+
 
-SALE DETECTION (CRITICAL - Use ORIGINAL comprehensive method):
+SALE DETECTION (CRITICAL):
 ✅ sale_closed=true if ANY of these occur:
-1. STRONG BUYING SIGNALS (soft closes count as sales):
-   - "sounds good", "that works", "I'm interested", "let's do it", "I'll take it"
-   - "count me in", "I'm ready", "when can you start", "what's next", "how do I sign up"
-   - "that makes sense", "I like that", "we need that", "definitely need"
-   - "yeah, that sounds good", "okay, let's do it", "sure, why not", "works for me"
-   - "that's reasonable", "I can do that", "I'm okay with that"
-   - Asking about next steps: "what's included", "how does it work", "when can we start"
-   - Agreement after price discussion or objection handling
+1. STRONG BUYING SIGNALS: "sounds good", "that works", "I'm interested", "let's do it", "I'll take it", "count me in", "I'm ready", "when can you start", "what's next", "how do I sign up", "that makes sense", "I like that", "we need that", "definitely need", agreement after price discussion
+2. HARD COMMITMENTS: Payment agreement, contract signing, "let's get started", "I'm ready to sign", explicit "yes" to service
+3. APPOINTMENT SCHEDULING WITH SPECIFIC TIME/DATE: "I'm coming back", "I'll come back", "coming back tomorrow", "coming back at [time]", "see you tomorrow", "see you at [time]", specific time commitments after service discussion = SALE
 
-2. HARD COMMITMENTS:
-   - Payment agreement, contract signing, commitment to start service
-   - "let's get started", "I'm ready to sign", "when can you come back"
-   - Explicit "yes" to service after pricing/objection discussion
-
-3. APPOINTMENT SCHEDULING (counts as sale if specific time/date mentioned):
-   - "I'm coming back", "I'll come back", "coming back tomorrow", "coming back at [time]"
-   - "see you tomorrow", "see you at [time]", "I'll see you", "see you then"
-   - Specific time commitments: "at 9am", "at 2pm", "tomorrow morning", "tomorrow afternoon"
-   - "I'll be here", "I'll be ready", "come back [day/time]"
-   - Any commitment with specific day/time after discussing service = SALE
-   - Examples: "coming back tmw at 9am", "I'll see you tomorrow at 2", "come back Friday morning"
-
-❌ NOT a sale:
-   - "I'll think about it" without commitment
-   - Just scheduling inspection/callback without service commitment AND no specific time
-   - "maybe", "possibly", "I'll consider" without follow-up commitment
-   - Vague "sometime" or "later" without specific time/date
-
+❌ NOT a sale: "I'll think about it" without commitment, vague "sometime" or "later" without specific time, "maybe" without follow-up
 - return_appointment=true ONLY if scheduled follow-up but NO specific time/date commitment AND no sale commitment
-- IMPORTANT: If customer commits to specific return time/date after service discussion, that IS a sale (sale_closed=true)
-- IMPORTANT: Soft closes and buying signals AFTER objection handling count as sales - don't require explicit payment mention
 
-EARNINGS CALCULATION (ORIGINAL METHOD - if sale_closed=true):
-- Extract deal value from conversation:
-  * Look for price mentioned ($99/month, $1200/year, $299 initial + $89/month, etc.)
-  * Determine contract length (monthly, quarterly, annual, multi-year)
-  * Calculate total_contract_value: one-time = that value, monthly = price × contract_length (or × 12 if no length), annual = annual price × years
+EARNINGS CALCULATION (if sale_closed=true):
+- Extract deal value from conversation (price mentioned, contract length)
 - Commission: 30% of total_contract_value
-- Bonuses (add to commission):
-  * quick_close: $25 if closed in under 15 minutes
-  * upsell: $50 if sold premium/additional services beyond basic
-  * retention: $30 if secured annual or multi-year contract (not just monthly)
-  * same_day_start: $20 if customer agreed to start today or tomorrow
-  * referral_secured: $25 if rep got referral/neighbor recommendation
-  * perfect_pitch: $50 if overall_score >= 90
+- Bonuses: quick_close=$25 (<15min), upsell=$50, retention=$30 (annual+), same_day_start=$20, referral_secured=$25, perfect_pitch=$50 (score>=90)
 - total_earned = commission + bonuses
-- virtual_earnings = total_earned
 
 Return JSON:
 {
@@ -193,44 +150,11 @@ Return JSON:
   "sale_closed": bool,
   "return_appointment": bool,
   "virtual_earnings": number,
-  "earnings_data": {
-    "base_amount": number,
-    "closed_amount": number,
-    "commission_rate": 0.30,
-    "commission_earned": number,
-    "bonus_modifiers": {
-      "quick_close": number,
-      "upsell": number,
-      "retention": number,
-      "same_day_start": number,
-      "referral_secured": number,
-      "perfect_pitch": number
-    },
-    "total_earned": number
-  },
-  "deal_details": {
-    "product_sold": string,
-    "service_type": string,
-    "base_price": number,
-    "monthly_value": number,
-    "contract_length": number,
-    "total_contract_value": number,
-    "payment_method": string,
-    "add_ons": [],
-    "start_date": string
-  },
+  "earnings_data": {"base_amount": n, "closed_amount": n, "commission_rate": 0.30, "commission_earned": n, "bonus_modifiers": {"quick_close": n, "upsell": n, "retention": n, "same_day_start": n, "referral_secured": n, "perfect_pitch": n}, "total_earned": n},
+  "deal_details": {"product_sold": "s", "service_type": "s", "base_price": n, "monthly_value": n, "contract_length": n, "total_contract_value": n, "payment_method": "s", "add_ons": [], "start_date": "s"},
   "coachingPlan": {"immediateFixes": [{"issue": "i", "practiceScenario": "s"}], "rolePlayScenarios": [{"scenario": "s", "focus": "f"}]},
-  "feedback": {
-    "strengths": ["s1 with specific quote from conversation"],
-    "improvements": ["i1"],
-    "specific_tips": ["t1"]
-  },
+  "feedback": {"strengths": ["s1 with specific quote"], "improvements": ["i1"], "specific_tips": ["t1"]},
   "session_highlight": "One specific highlight with actual quote from conversation (1 line max, include quote)"
-}
-
-IMPORTANT FOR FEEDBACK:
-- strengths: Include specific quotes from conversation (e.g., "Great rapport when you said 'Tell me about your family' - customer opened up")
-- session_highlight: MUST include actual quote from conversation, be specific (e.g., "Your objection handling was excellent when customer said 'too expensive' and you responded 'I understand - let me show you the value'")
 }`
 
   try {

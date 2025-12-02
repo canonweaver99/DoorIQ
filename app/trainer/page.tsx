@@ -11,7 +11,8 @@ import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSessionLimit } from '@/hooks/useSubscription'
 import { useLiveSessionAnalysis } from '@/hooks/useLiveSessionAnalysis'
 import { useVoiceAnalysis } from '@/hooks/useVoiceAnalysis'
-import { useConversationEndDetection } from '@/hooks/useConversationEndDetection'
+// Temporarily disabled - auto end feature causing connection issues
+// import { useConversationEndDetection } from '@/hooks/useConversationEndDetection'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -1236,80 +1237,81 @@ function TrainerPageContent() {
     
   }, [sessionActive, sessionId, handleDoorClosingSequence])
 
+  // TEMPORARILY DISABLED - Auto end feature causing connection issues
   // Listen for agent disconnect (NOT user mic issues)
   // This triggers when ElevenLabs agent disconnects, not when user stops speaking
-  useEffect(() => {
-    if (!sessionActive || typeof window === 'undefined') return
+  // useEffect(() => {
+  //   if (!sessionActive || typeof window === 'undefined') return
 
-    const handleAgentDisconnect = (e: CustomEvent) => {
-      const disconnectData = e?.detail
-      console.log('🔌 Agent disconnect event received:', disconnectData)
-      
-      // Only trigger if we have an active session and this is a real agent disconnect
-      if (sessionActive && sessionId && disconnectData?.hasSessionId) {
-        console.log('🚪 ElevenLabs agent disconnected - triggering door closing sequence')
-        handleDoorClosingSequence('Agent disconnected')
-      }
-    }
+  //   const handleAgentDisconnect = (e: CustomEvent) => {
+  //     const disconnectData = e?.detail
+  //     console.log('🔌 Agent disconnect event received:', disconnectData)
+  //     
+  //     // Only trigger if we have an active session and this is a real agent disconnect
+  //     if (sessionActive && sessionId && disconnectData?.hasSessionId) {
+  //       console.log('🚪 ElevenLabs agent disconnected - triggering door closing sequence')
+  //       handleDoorClosingSequence('Agent disconnected')
+  //     }
+  //   }
 
-    const handleConnectionStatus = (e: CustomEvent) => {
-      const status = e?.detail
-      console.log('🔌 Connection status received:', status)
-      
-      // Only trigger on disconnect if we have an active session
-      // This is specifically for ElevenLabs agent disconnecting, not user mic issues
-      if (status === 'disconnected' && sessionActive && sessionId) {
-        console.log('🚪 ElevenLabs connection disconnected - triggering door closing sequence')
-        handleDoorClosingSequence('Connection disconnected')
-      }
-    }
+  //   const handleConnectionStatus = (e: CustomEvent) => {
+  //     const status = e?.detail
+  //     console.log('🔌 Connection status received:', status)
+  //     
+  //     // Only trigger on disconnect if we have an active session
+  //     // This is specifically for ElevenLabs agent disconnecting, not user mic issues
+  //     if (status === 'disconnected' && sessionActive && sessionId) {
+  //       console.log('🚪 ElevenLabs connection disconnected - triggering door closing sequence')
+  //       handleDoorClosingSequence('Connection disconnected')
+  //     }
+  //   }
 
-    // Handle agent inactivity - if agent stops responding for 60+ seconds, end session
-    const handleAgentInactivity = (e: CustomEvent) => {
-      const data = e?.detail
-      console.log('🔇 Agent inactivity detected:', data)
-      
-      // If agent stopped responding for 60+ seconds during active session, end it
-      if (sessionActive && sessionId && data?.secondsSinceLastMessage >= 60 && data?.agentStoppedResponding) {
-        console.log('🚪 Agent stopped responding for 60+ seconds - triggering door closing sequence')
-        handleDoorClosingSequence('Agent stopped responding')
-      }
-    }
+  //   // Handle agent inactivity - if agent stops responding for 60+ seconds, end session
+  //   const handleAgentInactivity = (e: CustomEvent) => {
+  //     const data = e?.detail
+  //     console.log('🔇 Agent inactivity detected:', data)
+  //     
+  //     // If agent stopped responding for 60+ seconds during active session, end it
+  //     if (sessionActive && sessionId && data?.secondsSinceLastMessage >= 60 && data?.agentStoppedResponding) {
+  //       console.log('🚪 Agent stopped responding for 60+ seconds - triggering door closing sequence')
+  //       handleDoorClosingSequence('Agent stopped responding')
+  //     }
+  //   }
 
-    // Handle door close request from agent (via client tool) - immediate trigger, no wait
-    const handleDoorCloseRequested = (e: CustomEvent) => {
-      const data = e?.detail
-      console.log('🚪 Agent requested door close via client tool:', data)
-      
-      if (sessionActive && sessionId && data?.intentional) {
-        // Optional: Show final message if provided
-        if (data?.finalMessage) {
-          console.log('💬 Final message from agent:', data.finalMessage)
-          // Could display this in UI or use TTS
-        }
-        
-        // Trigger door closing sequence immediately (no 60 second wait)
-        console.log('🚪 Triggering immediate door closing sequence:', data.reason)
-        handleDoorClosingSequence(data.reason || 'Agent requested door close')
-      }
-    }
+  //   // Handle door close request from agent (via client tool) - immediate trigger, no wait
+  //   const handleDoorCloseRequested = (e: CustomEvent) => {
+  //     const data = e?.detail
+  //     console.log('🚪 Agent requested door close via client tool:', data)
+  //     
+  //     if (sessionActive && sessionId && data?.intentional) {
+  //       // Optional: Show final message if provided
+  //       if (data?.finalMessage) {
+  //         console.log('💬 Final message from agent:', data.finalMessage)
+  //         // Could display this in UI or use TTS
+  //       }
+  //       
+  //       // Trigger door closing sequence immediately (no 60 second wait)
+  //       console.log('🚪 Triggering immediate door closing sequence:', data.reason)
+  //       handleDoorClosingSequence(data.reason || 'Agent requested door close')
+  //     }
+  //   }
 
-    // Listen for explicit agent disconnect event (most reliable)
-    window.addEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
-    // Also listen for connection status as backup
-    window.addEventListener('connection:status', handleConnectionStatus as EventListener)
-    // Listen for agent inactivity (agent stopped responding but connection still alive)
-    window.addEventListener('agent:inactivity', handleAgentInactivity as EventListener)
-    // Listen for door close request from agent (client tool)
-    window.addEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
-    
-    return () => {
-      window.removeEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
-      window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
-      window.removeEventListener('agent:inactivity', handleAgentInactivity as EventListener)
-      window.removeEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
-    }
-  }, [sessionActive, sessionId, handleDoorClosingSequence])
+  //   // Listen for explicit agent disconnect event (most reliable)
+  //   window.addEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
+  //   // Also listen for connection status as backup
+  //   window.addEventListener('connection:status', handleConnectionStatus as EventListener)
+  //   // Listen for agent inactivity (agent stopped responding but connection still alive)
+  //   window.addEventListener('agent:inactivity', handleAgentInactivity as EventListener)
+  //   // Listen for door close request from agent (client tool)
+  //   window.addEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
+  //   
+  //   return () => {
+  //     window.removeEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
+  //     window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
+  //     window.removeEventListener('agent:inactivity', handleAgentInactivity as EventListener)
+  //     window.removeEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
+  //   }
+  // }, [sessionActive, sessionId, handleDoorClosingSequence])
 
   // Backup listener for agent:end_call event (in case callback doesn't fire)
   useEffect(() => {
