@@ -11,8 +11,7 @@ import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSessionLimit } from '@/hooks/useSubscription'
 import { useLiveSessionAnalysis } from '@/hooks/useLiveSessionAnalysis'
 import { useVoiceAnalysis } from '@/hooks/useVoiceAnalysis'
-// Temporarily disabled - auto end feature causing connection issues
-// import { useConversationEndDetection } from '@/hooks/useConversationEndDetection'
+import { useConversationEndDetection } from '@/hooks/useConversationEndDetection'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -124,6 +123,8 @@ function TrainerPageContent() {
   const [reconnectingStatus, setReconnectingStatus] = useState<{ isReconnecting: boolean; attempt: number; maxAttempts: number } | null>(null)
   const webcamPIPRef = useRef<WebcamPIPRef | null>(null)
   const conversationRef = useRef<any>(null) // Ref to ElevenLabs conversation instance
+  const handleCallEndRef = useRef<((reason: string) => void) | null>(null) // Ref for handleCallEnd callback
+  const handleDoorClosingSequenceRef = useRef<((reason: string) => Promise<void>) | null>(null) // Ref for handleDoorClosingSequence callback
 
   // Sync camera/mic state with WebcamPIP
   useEffect(() => {
@@ -158,6 +159,110 @@ function TrainerPageContent() {
     sessionId,
     transcript,
     sessionStartTime: sessionStartTimeRef.current || undefined
+  })
+  
+  // GLOBAL FULLSCREEN PREVENTION - Monitor and exit fullscreen continuously
+  useEffect(() => {
+    if (!sessionActive && !showDoorCloseAnimation) return
+    
+    const exitFullscreen = () => {
+      if (document.fullscreenElement) {
+        console.log('🚫 Global monitor: Detected fullscreen, exiting immediately')
+        document.exitFullscreen().catch(() => {
+          // Try all browser-specific exit methods
+          if ((document as any).webkitExitFullscreen) {
+            (document as any).webkitExitFullscreen().catch(() => {})
+          }
+          if ((document as any).mozCancelFullScreen) {
+            (document as any).mozCancelFullScreen().catch(() => {})
+          }
+          if ((document as any).msExitFullscreen) {
+            (document as any).msExitFullscreen().catch(() => {})
+          }
+        })
+      }
+    }
+    
+    const handleFullscreenChange = () => {
+      exitFullscreen()
+    }
+    
+    // Monitor fullscreen changes
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+    
+    // Also monitor the video element specifically
+    if (agentVideoRef.current) {
+      const video = agentVideoRef.current
+      const videoFullscreenHandler = () => {
+        if (document.fullscreenElement === video || document.fullscreenElement) {
+          console.log('🚫 Video-specific fullscreen detected, exiting')
+          exitFullscreen()
+        }
+      }
+      
+      video.addEventListener('fullscreenchange', videoFullscreenHandler)
+      video.addEventListener('webkitfullscreenchange', videoFullscreenHandler)
+      
+      // Periodic check as backup (every 500ms)
+      const intervalId = setInterval(() => {
+        if (document.fullscreenElement === video || document.fullscreenElement) {
+          console.log('🚫 Periodic check: Fullscreen detected, exiting')
+          exitFullscreen()
+        }
+        // Also ensure loop is correct
+        if (agentVideoRef.current) {
+          if (videoMode === 'closing' || showDoorCloseAnimation) {
+            agentVideoRef.current.loop = false
+          } else if (videoMode === 'loop') {
+            agentVideoRef.current.loop = true
+          }
+        }
+      }, 500)
+      
+      return () => {
+        document.removeEventListener('fullscreenchange', handleFullscreenChange)
+        document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+        document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+        document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+        video.removeEventListener('fullscreenchange', videoFullscreenHandler)
+        video.removeEventListener('webkitfullscreenchange', videoFullscreenHandler)
+        clearInterval(intervalId)
+        exitFullscreen() // Exit on cleanup
+      }
+    }
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+      exitFullscreen()
+    }
+  }, [sessionActive, showDoorCloseAnimation, videoMode])
+  
+  // Auto-end detection: triggers when USER says goodbye (not agent)
+  useConversationEndDetection({
+    onConversationEnd: () => {
+      console.log('🚪 User goodbye detected - triggering door closing sequence')
+      if (handleCallEndRef.current) {
+        handleCallEndRef.current('User said goodbye')
+      } else if (handleDoorClosingSequenceRef.current) {
+        // Fallback: call handleDoorClosingSequence directly if handleCallEnd not available
+        console.log('🚪 Using handleDoorClosingSequence directly as fallback')
+        handleDoorClosingSequenceRef.current('User said goodbye').catch(err => {
+          console.error('❌ Error in handleDoorClosingSequence:', err)
+        })
+      } else {
+        console.warn('⚠️ Neither handleCallEnd nor handleDoorClosingSequence initialized yet')
+      }
+    },
+    transcript,
+    sessionStartTime: sessionStartTimeRef.current,
+    sessionActive,
+    enabled: sessionActive // Only enabled when session is active
   })
   
   // Only use transcript feedback items (no voice feedback during live session)
@@ -336,6 +441,55 @@ function TrainerPageContent() {
       const video = agentVideoRef.current
       console.log('🎬 Video effect running:', { videoMode, sessionActive, showDoorCloseAnimation, videoSrc: video.src })
       
+      // COMPREHENSIVE FULLSCREEN PREVENTION - Applied to ALL video modes
+      const exitFullscreen = () => {
+        if (document.fullscreenElement === video || document.fullscreenElement) {
+          console.log('🚫 Detected fullscreen, exiting immediately')
+          document.exitFullscreen().catch(() => {
+            // Try webkit-specific exit
+            if ((document as any).webkitExitFullscreen) {
+              (document as any).webkitExitFullscreen().catch(() => {})
+            }
+            if ((document as any).mozCancelFullScreen) {
+              (document as any).mozCancelFullScreen().catch(() => {})
+            }
+            if ((document as any).msExitFullscreen) {
+              (document as any).msExitFullscreen().catch(() => {})
+            }
+          })
+        }
+      }
+      
+      const preventFullscreen = (e: Event) => {
+        e.preventDefault()
+        e.stopPropagation()
+        exitFullscreen()
+      }
+      
+      // Monitor for fullscreen changes and exit immediately
+      const handleFullscreenChange = () => {
+        if (document.fullscreenElement === video || document.fullscreenElement) {
+          console.log('🚫 Fullscreen change detected, exiting')
+          exitFullscreen()
+        }
+      }
+      
+      // Add comprehensive fullscreen prevention listeners
+      video.addEventListener('fullscreenchange', handleFullscreenChange)
+      video.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+      video.addEventListener('mozfullscreenchange', handleFullscreenChange)
+      video.addEventListener('MSFullscreenChange', handleFullscreenChange)
+      video.addEventListener('dblclick', preventFullscreen)
+      video.addEventListener('webkitbeginfullscreen', preventFullscreen)
+      video.addEventListener('webkitendfullscreen', preventFullscreen)
+      video.addEventListener('enterpictureinpicture', preventFullscreen)
+      
+      // Prevent fullscreen via context menu
+      video.addEventListener('contextmenu', (e) => {
+        e.preventDefault()
+        exitFullscreen()
+      })
+      
       // If showDoorCloseAnimation is true, ensure we're in closing mode
       if (showDoorCloseAnimation && videoMode !== 'closing') {
         console.log('🎬 showDoorCloseAnimation is true, setting videoMode to closing')
@@ -343,6 +497,9 @@ function TrainerPageContent() {
       }
       
       if (videoMode === 'opening') {
+        // CRITICAL: Disable loop for opening video
+        video.loop = false
+        
         // Play opening door animation, then transition to loop
         video.play().catch((err) => {
           console.warn('Failed to play opening animation:', err)
@@ -350,6 +507,7 @@ function TrainerPageContent() {
         
         const handleOpeningEnded = () => {
           console.log('🎬 Opening animation finished, transitioning to loop')
+          video.loop = false // Ensure loop stays disabled
           setVideoMode('loop')
           if (agentVideoRef.current) {
             agentVideoRef.current.removeEventListener('ended', handleOpeningEnded)
@@ -361,6 +519,15 @@ function TrainerPageContent() {
         return () => {
           if (agentVideoRef.current) {
             agentVideoRef.current.removeEventListener('ended', handleOpeningEnded)
+            agentVideoRef.current.removeEventListener('fullscreenchange', handleFullscreenChange)
+            agentVideoRef.current.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+            agentVideoRef.current.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+            agentVideoRef.current.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+            agentVideoRef.current.removeEventListener('dblclick', preventFullscreen)
+            agentVideoRef.current.removeEventListener('webkitbeginfullscreen', preventFullscreen)
+            agentVideoRef.current.removeEventListener('webkitendfullscreen', preventFullscreen)
+            agentVideoRef.current.removeEventListener('enterpictureinpicture', preventFullscreen)
+            agentVideoRef.current.removeEventListener('contextmenu', preventFullscreen as any)
           }
         }
       } else if (videoMode === 'closing' || showDoorCloseAnimation) {
@@ -373,17 +540,8 @@ function TrainerPageContent() {
           src: video.src
         })
         
-        // CRITICAL: Disable loop for closing video
+        // CRITICAL: Disable loop for closing video IMMEDIATELY
         video.loop = false
-        
-        // Prevent fullscreen
-        const preventFullscreen = (e: Event) => {
-          e.preventDefault()
-          e.stopPropagation()
-          if (document.fullscreenElement === video) {
-            document.exitFullscreen().catch(() => {})
-          }
-        }
         
         // Handle video ended - ensure it stops and doesn't loop
         const handleClosingEnded = () => {
@@ -391,10 +549,9 @@ function TrainerPageContent() {
           video.pause()
           video.currentTime = video.duration
           video.loop = false // Ensure loop stays disabled
+          exitFullscreen() // Exit fullscreen if somehow entered
         }
         
-        video.addEventListener('dblclick', preventFullscreen)
-        video.addEventListener('webkitbeginfullscreen', preventFullscreen)
         video.addEventListener('ended', handleClosingEnded)
         
         // Force video to load if not already loaded
@@ -483,31 +640,30 @@ function TrainerPageContent() {
           video.removeEventListener('loadeddata', handleLoadedData)
           video.removeEventListener('play', handlePlay)
           video.removeEventListener('ended', handleClosingEnded)
+          video.removeEventListener('fullscreenchange', handleFullscreenChange)
+          video.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+          video.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+          video.removeEventListener('MSFullscreenChange', handleFullscreenChange)
           video.removeEventListener('dblclick', preventFullscreen)
           video.removeEventListener('webkitbeginfullscreen', preventFullscreen)
+          video.removeEventListener('webkitendfullscreen', preventFullscreen)
+          video.removeEventListener('enterpictureinpicture', preventFullscreen)
+          video.removeEventListener('contextmenu', preventFullscreen as any)
           // Ensure loop is disabled
           video.loop = false
+          exitFullscreen() // Exit fullscreen on cleanup
         }
       } else if (videoMode === 'loop') {
         // Ensure loop is enabled for loop mode
         video.loop = true
-        
-        // Prevent fullscreen on loop video too
-        const preventFullscreen = (e: Event) => {
-          e.preventDefault()
-          e.stopPropagation()
-          if (document.fullscreenElement === video) {
-            document.exitFullscreen().catch(() => {})
-          }
-        }
-        video.addEventListener('dblclick', preventFullscreen)
-        video.addEventListener('webkitbeginfullscreen', preventFullscreen)
         
         // Track when loop video starts and its duration
         const handleLoadedMetadata = () => {
           if (agentVideoRef.current) {
             loopVideoDurationRef.current = agentVideoRef.current.duration
             console.log('🎬 Loop video duration:', agentVideoRef.current.duration)
+            // Ensure loop is still enabled after metadata loads
+            agentVideoRef.current.loop = true
           }
         }
         
@@ -515,6 +671,9 @@ function TrainerPageContent() {
           if (agentVideoRef.current) {
             loopVideoStartTimeRef.current = Date.now() - (agentVideoRef.current.currentTime * 1000)
             console.log('🎬 Loop video started, tracking playback position')
+            // Ensure loop is still enabled when playing
+            agentVideoRef.current.loop = true
+            exitFullscreen() // Exit fullscreen if somehow entered
           }
         }
         
@@ -530,8 +689,15 @@ function TrainerPageContent() {
           if (agentVideoRef.current) {
             agentVideoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata)
             agentVideoRef.current.removeEventListener('play', handlePlay)
+            agentVideoRef.current.removeEventListener('fullscreenchange', handleFullscreenChange)
+            agentVideoRef.current.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+            agentVideoRef.current.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+            agentVideoRef.current.removeEventListener('MSFullscreenChange', handleFullscreenChange)
             agentVideoRef.current.removeEventListener('dblclick', preventFullscreen)
             agentVideoRef.current.removeEventListener('webkitbeginfullscreen', preventFullscreen)
+            agentVideoRef.current.removeEventListener('webkitendfullscreen', preventFullscreen)
+            agentVideoRef.current.removeEventListener('enterpictureinpicture', preventFullscreen)
+            agentVideoRef.current.removeEventListener('contextmenu', preventFullscreen as any)
           }
         }
       }
@@ -1205,6 +1371,15 @@ function TrainerPageContent() {
     console.log('🚪 handleCallEnd called - triggering door closing sequence', { reason })
     handleDoorClosingSequence(reason)
   }, [handleDoorClosingSequence])
+  
+  // Update refs when callbacks are defined
+  useEffect(() => {
+    handleCallEndRef.current = handleCallEnd
+  }, [handleCallEnd])
+  
+  useEffect(() => {
+    handleDoorClosingSequenceRef.current = handleDoorClosingSequence
+  }, [handleDoorClosingSequence])
 
   // Handler for when AI agent explicitly ends the call via end_call tool
   const handleAgentEndCall = useCallback((reason: EndCallReason) => {
@@ -1634,6 +1809,10 @@ function TrainerPageContent() {
                                 console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
                                 // Ensure loop is set correctly
                                 agentVideoRef.current.loop = videoMode === 'loop'
+                                // CRITICAL: Exit fullscreen if somehow entered
+                                if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {})
+                                }
                                 agentVideoRef.current.play().catch((err) => {
                                   console.warn('Video autoplay failed:', err)
                                 })
@@ -1643,6 +1822,10 @@ function TrainerPageContent() {
                               if (agentVideoRef.current) {
                                 // Ensure loop is set correctly
                                 agentVideoRef.current.loop = videoMode === 'loop'
+                                // CRITICAL: Exit fullscreen if somehow entered
+                                if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {})
+                                }
                                 if (showDoorCloseAnimation || videoMode === 'closing') {
                                   console.log('🎬 Video can play, forcing play for closing animation')
                                   agentVideoRef.current.loop = false // Ensure closing video doesn't loop
@@ -1652,21 +1835,56 @@ function TrainerPageContent() {
                                 }
                               }
                             }}
+                            onPlay={() => {
+                              if (agentVideoRef.current) {
+                                // CRITICAL: Exit fullscreen immediately when video plays
+                                if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                  console.log('🚫 Fullscreen detected during play, exiting')
+                                  document.exitFullscreen().catch(() => {
+                                    if ((document as any).webkitExitFullscreen) {
+                                      (document as any).webkitExitFullscreen().catch(() => {})
+                                    }
+                                  })
+                                }
+                                // Ensure loop is correct based on mode
+                                agentVideoRef.current.loop = videoMode === 'loop'
+                              }
+                            }}
                             onEnded={() => {
                               if (agentVideoRef.current && (videoMode === 'closing' || showDoorCloseAnimation)) {
                                 console.log('🎬 Closing video ended, stopping playback')
                                 agentVideoRef.current.pause()
                                 agentVideoRef.current.currentTime = agentVideoRef.current.duration
+                                agentVideoRef.current.loop = false
+                                // Exit fullscreen
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {})
+                                }
                               }
                             }}
                             onError={(e) => {
                               console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
                               e.stopPropagation()
+                              // Exit fullscreen on error
+                              if (document.fullscreenElement) {
+                                document.exitFullscreen().catch(() => {})
+                              }
                             }}
                             onDoubleClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
                               // Prevent fullscreen on double-click
+                              if (document.fullscreenElement) {
+                                document.exitFullscreen().catch(() => {
+                                  if ((document as any).webkitExitFullscreen) {
+                                    (document as any).webkitExitFullscreen().catch(() => {})
+                                  }
+                                })
+                              }
+                            }}
+                            onContextMenu={(e) => {
+                              e.preventDefault()
+                              // Exit fullscreen on context menu
                               if (document.fullscreenElement) {
                                 document.exitFullscreen().catch(() => {})
                               }

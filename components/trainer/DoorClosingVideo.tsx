@@ -135,17 +135,61 @@ export default function DoorClosingVideo({
     video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('loadedmetadata', handleLoadedMetadata)
 
-    // Prevent fullscreen on double-click or other events
+    // COMPREHENSIVE FULLSCREEN PREVENTION
+    const exitFullscreen = () => {
+      if (document.fullscreenElement === video || document.fullscreenElement) {
+        console.log('🚫 DoorClosingVideo: Detected fullscreen, exiting immediately')
+        document.exitFullscreen().catch(() => {
+          if ((document as any).webkitExitFullscreen) {
+            (document as any).webkitExitFullscreen().catch(() => {})
+          }
+          if ((document as any).mozCancelFullScreen) {
+            (document as any).mozCancelFullScreen().catch(() => {})
+          }
+          if ((document as any).msExitFullscreen) {
+            (document as any).msExitFullscreen().catch(() => {})
+          }
+        })
+      }
+    }
+    
     const preventFullscreen = (e: Event) => {
       e.preventDefault()
       e.stopPropagation()
-      if (document.fullscreenElement === video) {
-        document.exitFullscreen().catch(() => {})
-      }
+      exitFullscreen()
     }
+    
+    const handleFullscreenChange = () => {
+      exitFullscreen()
+    }
+    
+    // Add comprehensive fullscreen prevention listeners
+    video.addEventListener('fullscreenchange', handleFullscreenChange)
+    video.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    video.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    video.addEventListener('MSFullscreenChange', handleFullscreenChange)
     video.addEventListener('dblclick', preventFullscreen)
     video.addEventListener('webkitbeginfullscreen', preventFullscreen)
     video.addEventListener('webkitendfullscreen', preventFullscreen)
+    video.addEventListener('enterpictureinpicture', preventFullscreen)
+    video.addEventListener('contextmenu', (e) => {
+      e.preventDefault()
+      exitFullscreen()
+    })
+    
+    // Global document-level fullscreen monitor
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    
+    // Periodic check as backup (every 500ms)
+    const intervalId = setInterval(() => {
+      if (document.fullscreenElement === video || document.fullscreenElement) {
+        console.log('🚫 DoorClosingVideo: Periodic check detected fullscreen, exiting')
+        exitFullscreen()
+      }
+      // Ensure loop stays disabled
+      video.loop = false
+    }, 500)
     
     // Also try to play immediately (in case canplay already fired)
     // Ensure loop is disabled before playing
@@ -168,13 +212,23 @@ export default function DoorClosingVideo({
       video.removeEventListener('error', handleError)
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      video.removeEventListener('fullscreenchange', handleFullscreenChange)
+      video.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      video.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      video.removeEventListener('MSFullscreenChange', handleFullscreenChange)
       video.removeEventListener('dblclick', preventFullscreen)
       video.removeEventListener('webkitbeginfullscreen', preventFullscreen)
       video.removeEventListener('webkitendfullscreen', preventFullscreen)
+      video.removeEventListener('enterpictureinpicture', preventFullscreen)
+      video.removeEventListener('contextmenu', preventFullscreen as any)
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      clearInterval(intervalId)
       // Stop and reset video
       video.pause()
       video.currentTime = 0
       video.loop = false
+      exitFullscreen() // Exit fullscreen on cleanup
     }
   }, [closingVideoPath, onComplete, agentName])
 

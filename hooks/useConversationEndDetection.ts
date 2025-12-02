@@ -130,38 +130,75 @@ export function useConversationEndDetection({
     }
   }, [enabled, sessionActive, triggerEnd])
 
-  // Monitor transcript for goodbye phrases
+  // Monitor transcript for USER goodbye phrases (not agent)
   useEffect(() => {
     if (!enabled || !sessionActive || transcript.length === 0) {
       return
     }
 
-    // Check the last few transcript entries for goodbye phrases
+    // Check the last few transcript entries for USER goodbye phrases
+    // We want to detect when the USER says goodbye, not the agent
     const recentEntries = transcript.slice(-5) // Check last 5 entries
     
-    for (const entry of recentEntries) {
-      // Only check agent/homeowner messages (not user)
-      if (entry.speaker === 'homeowner') {
+    // Find the last USER message that contains a goodbye phrase
+    let lastUserGoodbyeEntry: TranscriptEntry | null = null
+    let lastUserGoodbyeIndex = -1
+    
+    for (let i = recentEntries.length - 1; i >= 0; i--) {
+      const entry = recentEntries[i]
+      // Only check USER messages (not homeowner/agent)
+      if (entry.speaker === 'user') {
         const text = entry.text.toLowerCase()
         
         for (const phrase of GOODBYE_PHRASES) {
           if (text.includes(phrase)) {
-            console.log(`🚪 [End Detection] Goodbye phrase detected: "${phrase}"`)
-            
-            // Clear any existing timeout
-            if (phraseDetectionTimeoutRef.current) {
-              clearTimeout(phraseDetectionTimeoutRef.current)
-            }
-            
-            // Wait 2 seconds after detection, then trigger
-            phraseDetectionTimeoutRef.current = setTimeout(() => {
-              console.log('🚪 [End Detection] Triggering end after phrase detection delay')
-              triggerEnd()
-            }, 2000)
-            
-            return // Only trigger once per check
+            lastUserGoodbyeEntry = entry
+            lastUserGoodbyeIndex = i
+            break
           }
         }
+        if (lastUserGoodbyeEntry) break
+      }
+    }
+    
+    // Only trigger if:
+    // 1. We found a user goodbye phrase
+    // 2. It's the LAST user message in the transcript (no user messages after it)
+    // 3. This ensures we don't trigger when the agent says goodbye or when user says goodbye mid-conversation
+    if (lastUserGoodbyeEntry && lastUserGoodbyeIndex >= 0) {
+      // Find the index of this goodbye entry in the full transcript
+      const lastUserGoodbyeFullIndex = transcript.findIndex(
+        entry => entry === lastUserGoodbyeEntry
+      )
+      
+      // Find the index of the last user message in the full transcript
+      let lastUserMessageIndex = -1
+      for (let i = transcript.length - 1; i >= 0; i--) {
+        if (transcript[i].speaker === 'user') {
+          lastUserMessageIndex = i
+          break
+        }
+      }
+      
+      // Only trigger if this goodbye is the last user message in the transcript
+      const isLastUserMessage = lastUserGoodbyeFullIndex >= 0 && lastUserGoodbyeFullIndex === lastUserMessageIndex
+      
+      if (isLastUserMessage) {
+        console.log(`🚪 [End Detection] User goodbye phrase detected: "${lastUserGoodbyeEntry.text}"`)
+        console.log('🚪 [End Detection] This is the last user message - triggering end sequence')
+        
+        // Clear any existing timeout
+        if (phraseDetectionTimeoutRef.current) {
+          clearTimeout(phraseDetectionTimeoutRef.current)
+        }
+        
+        // Wait 2 seconds after detection to ensure it's the final goodbye, then trigger
+        phraseDetectionTimeoutRef.current = setTimeout(() => {
+          console.log('🚪 [End Detection] Triggering end after user goodbye detection delay')
+          triggerEnd()
+        }, 2000)
+      } else {
+        console.log('🚪 [End Detection] User goodbye detected but not the last user message - ignoring')
       }
     }
   }, [transcript, enabled, sessionActive, triggerEnd])
