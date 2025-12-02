@@ -1125,8 +1125,8 @@ function EnhancedTechniquesCard({ techniquesUsed, className }: EnhancedTechnique
         </div>
       </div>
       
-      {/* Content - Pushed to bottom */}
-      <div className="mt-auto pt-1 space-y-1.5 flex-shrink-0 min-h-0 overflow-hidden">
+      {/* Content - Right under title */}
+      <div className="space-y-1.5 flex-shrink-0 min-h-0 overflow-hidden">
         {displayedTechniques.length > 0 ? (
           displayedTechniques.map((tech) => (
             <div key={tech} className="flex items-center gap-1.5 text-sm sm:text-base text-slate-300 font-space leading-tight">

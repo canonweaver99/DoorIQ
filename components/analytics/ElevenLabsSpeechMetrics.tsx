@@ -213,47 +213,17 @@ export function ElevenLabsSpeechMetrics({
         </div>
       </div>
       
-      {/* Detailed Stats Section */}
-      <div className="mt-8 max-w-md mb-6">
-        {/* Speaking Pace Card with Filler Words underneath */}
-        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-          <div className="text-base text-white font-sans font-medium mb-2">Speaking Pace</div>
-          <div className="text-3xl font-bold text-white mb-2">{wpm} WPM</div>
-          <div className="text-base text-white font-sans font-medium mb-4">
-            {wpm >= 140 && wpm <= 160 
-              ? 'Ideal range ✓' 
-              : wpm < 140 
-                ? 'Too slow' 
-                : 'Too fast'}
-          </div>
-          
-          {/* Filler Words underneath */}
-          <div className="border-t border-slate-700/50 pt-4">
-            <div className="text-base text-white font-sans font-medium mb-2">Filler Words</div>
-            <div className="text-3xl font-bold text-white mb-2">{totalFillerWords}</div>
-            <div className="text-base text-white font-sans font-medium">
-              {fillerWordsPerMinute.toFixed(1)}/min
-              {fillerWordsPerMinute < 1 
-                ? ' • Excellent ✓' 
-                : fillerWordsPerMinute < 2 
-                  ? ' • Good' 
-                  : ' • Needs work'}
-            </div>
-          </div>
-        </div>
-      </div>
-      
       {/* Voice Tip */}
       <div className="mt-6 p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl">
         <div className="text-xl font-bold text-blue-400 mb-3 font-space">💡 Voice Tip:</div>
         <div className="text-lg text-white leading-relaxed font-sans font-medium">
           {voiceAnalysis?.issues?.monotone || (paceVariety < 50 && wpm > 0)
-            ? 'Your voice lacks variety, which can make you sound less engaging. Practice varying your pace by slowing down when explaining important benefits and speeding up during transitions. Use pauses strategically after key points. Try emphasizing different words to create natural rhythm - when saying "This service protects your family," emphasize "protects" and "family". Record yourself and listen for natural variation.'
+            ? 'Your voice lacks variety, which can make you sound less engaging. Practice varying your pace by slowing down when explaining important benefits and speeding up during transitions. Use pauses strategically after key points. Try emphasizing different words to create natural rhythm. When saying "This service protects your family," emphasize "protects" and "family".'
             : voiceAnalysis?.issues?.lowEnergy || energyLevel < 60
-            ? 'Your energy level is lower than ideal. Before starting your pitch, take 3 deep breaths and do a quick warm-up. Stand up straight with your shoulders back - good posture increases vocal energy. Practice speaking with 20% more enthusiasm than feels natural. Smile while you talk - it changes your vocal tone. Vary your volume, speaking louder on key benefits and softer when building rapport.'
+            ? 'Your energy level is lower than ideal. Before starting your pitch, take 3 deep breaths and do a quick warm up. Stand up straight with your shoulders back. Good posture increases vocal energy. Practice speaking with 20% more enthusiasm than feels natural. Smile while you talk. It changes your vocal tone.'
             : fillerWordsPerMinute > 1
-            ? 'You\'re using filler words like "um" and "uh" which can undermine confidence. Practice pausing instead - a 1-2 second pause sounds thoughtful, not uncertain. Before speaking, take a moment to think. Record yourself and identify your most common filler words, then practice replacing them with pauses. Use phrases like "Let me think about that" as bridges instead of fillers.'
-            : 'You\'re maintaining good vocal variety! Continue improving by varying your pace - slow down for important benefits, speed up for transitions. Use strategic pauses after key points. Experiment with emphasizing different words to create natural rhythm. Record yourself regularly to maintain awareness of your vocal patterns.'}
+            ? 'You\'re using filler words like "um" and "uh" which can undermine confidence. Practice pausing instead. A 1 to 2 second pause sounds thoughtful, not uncertain. Before speaking, take a moment to think. Record yourself and identify your most common filler words, then practice replacing them with pauses.'
+            : 'You\'re maintaining good vocal variety! Continue improving by varying your pace. Slow down for important benefits, speed up for transitions. Use strategic pauses after key points. Experiment with emphasizing different words to create natural rhythm.'}
         </div>
       </div>
     </motion.div>

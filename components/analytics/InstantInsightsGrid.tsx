@@ -22,6 +22,8 @@ interface InstantInsightsGridProps {
     avgWPM?: number
     wpmTimeline?: Array<{ time: number; value: number }>
     volumeTimeline?: Array<{ time: number; value: number }>
+    totalFillerWords?: number
+    fillerWordsPerMinute?: number
   }
 }
 
@@ -405,6 +407,94 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
             </div>
           </div>
         </div>
+        
+        {/* Filler Words - Horizontal Card */}
+        {(() => {
+          // Calculate filler words from transcript or voiceAnalysis
+          let totalFillerWords = 0
+          let fillerWordsPerMinute = 0
+          
+          if (voiceAnalysis?.totalFillerWords !== undefined) {
+            totalFillerWords = voiceAnalysis.totalFillerWords
+            fillerWordsPerMinute = voiceAnalysis.fillerWordsPerMinute || 0
+          } else if (transcript && Array.isArray(transcript) && transcript.length > 0) {
+            const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm)\b/gi
+            const userEntries = transcript.filter((entry: any) => 
+              entry.speaker === 'user' || entry.speaker === 'rep'
+            )
+            
+            totalFillerWords = userEntries.reduce((sum: number, entry: any) => {
+              const text = entry.text || ''
+              const matches = text.match(fillerPattern)
+              return sum + (matches ? matches.length : 0)
+            }, 0)
+            
+            // Calculate duration for per-minute calculation
+            try {
+              const firstEntry = userEntries[0]
+              const lastEntry = userEntries[userEntries.length - 1]
+              const firstTime = firstEntry.timestamp 
+                ? (firstEntry.timestamp instanceof Date 
+                    ? firstEntry.timestamp.getTime()
+                    : typeof firstEntry.timestamp === 'string'
+                      ? new Date(firstEntry.timestamp).getTime()
+                      : Date.now())
+                : Date.now()
+              const lastTime = lastEntry.timestamp
+                ? (lastEntry.timestamp instanceof Date
+                    ? lastEntry.timestamp.getTime()
+                    : typeof lastEntry.timestamp === 'string'
+                      ? new Date(lastEntry.timestamp).getTime()
+                      : Date.now())
+                : Date.now()
+              const durationMinutes = Math.max(0.1, (lastTime - firstTime) / 60000)
+              fillerWordsPerMinute = durationMinutes > 0 ? (totalFillerWords / durationMinutes) : 0
+            } catch (e) {
+              fillerWordsPerMinute = 0
+            }
+          }
+          
+          const fillerStatus = fillerWordsPerMinute < 1
+            ? { label: 'Excellent ✓', color: 'text-emerald-400', borderColor: 'border-emerald-500/40', bgColor: 'bg-emerald-500/20' }
+            : fillerWordsPerMinute < 2
+            ? { label: 'Good', color: 'text-green-400', borderColor: 'border-green-500/40', bgColor: 'bg-green-500/20' }
+            : { label: 'Needs work', color: 'text-amber-400', borderColor: 'border-amber-500/40', bgColor: 'bg-amber-500/20' }
+          
+          return (
+            <div className={cn("rounded-xl p-5 border-2", fillerStatus.borderColor, fillerStatus.bgColor)}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="w-7 h-7 text-purple-400" />
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg font-semibold text-white font-space">Filler Words</span>
+                        <MetricTooltip content="Filler words like 'um' and 'uh' can undermine your confidence. Target is less than 1 per minute for excellent performance.">
+                          <Info className="w-5 h-5 text-gray-400 hover:text-purple-400 transition-colors" />
+                        </MetricTooltip>
+                      </div>
+                      <div className="text-base text-white font-sans font-medium">Words like 'um' and 'uh'</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <div className="text-4xl font-bold text-white mb-1 font-space">{totalFillerWords}</div>
+                    <div className="text-lg text-white font-sans font-semibold">Total</div>
+                  </div>
+                  
+                  <div className="text-right min-w-[140px]">
+                    <div className={cn("text-xl font-bold mb-1 font-space", fillerStatus.color)}>{fillerStatus.label}</div>
+                    <div className="text-base text-white font-sans font-medium">
+                      {fillerWordsPerMinute.toFixed(1)}/min
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
         
         {/* Time-Talk Ratio - Horizontal Card */}
         <div className={cn("rounded-xl p-5 border-2", balanceStatus.borderColor, balanceStatus.bgColor)}>

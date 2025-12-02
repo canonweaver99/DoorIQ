@@ -1497,55 +1497,65 @@ function OverviewTabContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
           >
-            <DollarSign className="w-8 h-8 text-green-400 mb-3" />
+            <div className="flex items-center gap-3">
+              <DollarSign className="w-6 h-6 text-green-400" />
+              <p className="text-sm text-slate-400 font-medium">Total Earnings</p>
+            </div>
             <p className="text-2xl font-bold text-white">${(summaryStats.totalEarnings || 0).toFixed(2)}</p>
-            <p className="text-sm text-slate-400">Total Earnings</p>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
           >
-            <Target className="w-8 h-8 text-purple-400 mb-3" />
-            <p className="text-2xl font-bold text-white mb-2">{summaryStats.averageScore || 0}%</p>
-            <p className="text-sm text-slate-400">Average Score</p>
+            <div className="flex items-center gap-3">
+              <Target className="w-6 h-6 text-purple-400" />
+              <p className="text-sm text-slate-400 font-medium">Average Score</p>
+            </div>
+            <p className="text-2xl font-bold text-white">{summaryStats.averageScore || 0}%</p>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
           >
-            <Award className="w-8 h-8 text-yellow-400 mb-3" />
-            <p className="text-2xl font-bold text-white mb-2">{summaryStats.bestScore || 0}%</p>
-            <p className="text-sm text-slate-400">Best Score</p>
+            <div className="flex items-center gap-3">
+              <Award className="w-6 h-6 text-yellow-400" />
+              <p className="text-sm text-slate-400 font-medium">Best Score</p>
+            </div>
+            <p className="text-2xl font-bold text-white">{summaryStats.bestScore || 0}%</p>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
           >
-            <Calendar className="w-8 h-8 text-blue-400 mb-3" />
+            <div className="flex items-center gap-3">
+              <Calendar className="w-6 h-6 text-blue-400" />
+              <p className="text-sm text-slate-400 font-medium">Total Sessions</p>
+            </div>
             <p className="text-2xl font-bold text-white">{summaryStats.totalSessions || 0}</p>
-            <p className="text-sm text-slate-400">Total Sessions</p>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
           >
-            <Target className="w-8 h-8 text-emerald-400 mb-3" />
-            <p className="text-2xl font-bold text-white mb-2">{summaryStats.closePercentage || 0}%</p>
-            <p className="text-sm text-slate-400">Close %</p>
+            <div className="flex items-center gap-3">
+              <Target className="w-6 h-6 text-emerald-400" />
+              <p className="text-sm text-slate-400 font-medium">Close %</p>
+            </div>
+            <p className="text-2xl font-bold text-white">{summaryStats.closePercentage || 0}%</p>
           </motion.div>
         </div>
       )}

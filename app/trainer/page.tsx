@@ -829,24 +829,11 @@ function TrainerPageContent() {
   const triggerGradingAfterDoorClose = useCallback(async (sessionId: string) => {
     console.log('🎯 Triggering automatic grading for session:', sessionId)
     
-    // Wait a moment for transcript to be saved to database
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Verify transcript exists before grading
-    try {
-      const sessionCheck = await fetch(`/api/session?id=${sessionId}`)
-      if (sessionCheck.ok) {
-        const sessionData = await sessionCheck.json()
-        if (!sessionData.full_transcript || sessionData.full_transcript.length === 0) {
-          console.warn('⚠️ No transcript found yet, waiting longer...')
-          await new Promise(resolve => setTimeout(resolve, 2000))
-        }
-      }
-    } catch (error) {
-      console.warn('⚠️ Error checking session:', error)
-    }
+    // Wait briefly for transcript to be saved to database (reduced from 2s to 1s)
+    await new Promise(resolve => setTimeout(resolve, 1000))
     
     // Fire new phased grading orchestration in background - don't wait for it
+    // The loading page will handle transcript waiting and polling
     fetch('/api/grade/orchestrate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

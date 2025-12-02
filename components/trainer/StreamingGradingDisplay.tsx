@@ -101,7 +101,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
   }, [startTime])
 
   // Check if transcript is available before starting grading
-  const waitForTranscript = useCallback(async (maxRetries = 15, retryDelay = 500): Promise<boolean> => {
+  const waitForTranscript = useCallback(async (maxRetries = 8, retryDelay = 300): Promise<boolean> => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         const response = await fetch(`/api/session?id=${sessionId}`)
@@ -133,8 +133,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       if (attempt < maxRetries - 1) {
         setStatus(`Waiting for transcript... (${attempt + 1}/${maxRetries})`)
         await new Promise(resolve => setTimeout(resolve, retryDelay))
-        // Exponential backoff: increase delay with each retry
-        retryDelay = Math.min(retryDelay * 1.5, 2000)
+        // Linear backoff: slight increase but capped at 800ms
+        retryDelay = Math.min(retryDelay + 100, 800)
       }
     }
     
@@ -297,7 +297,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         
         // Poll for completion and track section progress
         const pollForCompletion = async () => {
-          const maxPolls = 90 // 1.5 minutes max (90 polls * 1s = 90s)
+          const maxPolls = 60 // 30 seconds max (60 polls * 500ms = 30s)
           let pollCount = 0
           
           while (pollCount < maxPolls && currentSessionId === sessionId) {
@@ -393,8 +393,15 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                   }
                 }
                 
-                // Check if grading is complete (check both 'complete' and 'completed' for compatibility)
-                if (session.grading_status === 'complete' || session.grading_status === 'completed' || (session.overall_score && newCompletedSections.size >= 3)) {
+                // Check if grading is complete - proceed when Phase 1+2 are done (don't wait for Phase 3)
+                // Phase 1+2 complete when: overall_score exists AND (session_summary + scores sections OR grading_status is moments_complete)
+                const hasPhase1And2 = session.overall_score && (
+                  (newCompletedSections.has('session_summary') && newCompletedSections.has('scores')) ||
+                  session.grading_status === 'moments_complete' ||
+                  session.key_moments?.length > 0
+                )
+                
+                if (session.grading_status === 'complete' || session.grading_status === 'completed' || hasPhase1And2) {
                   setIsComplete(true)
                   setStatus('Grading complete!')
                   setCompletedSections(newCompletedSections)
@@ -433,8 +440,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             }
             
             pollCount++
-            // Poll more frequently at the start (every 500ms for first 10 polls), then every 1s
-            const pollDelay = pollCount < 10 ? 500 : 1000
+            // Poll more frequently: every 300ms for first 20 polls, then every 500ms
+            const pollDelay = pollCount < 20 ? 300 : 500
             await new Promise(resolve => setTimeout(resolve, pollDelay))
           }
           
