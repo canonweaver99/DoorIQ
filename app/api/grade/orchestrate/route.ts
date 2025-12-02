@@ -38,7 +38,7 @@ function detectInappropriateLanguage(transcript: any[]): boolean {
     /\bf[u3]ck\s+y[o0]u\b/i,
     /\bg[o0]\s+t[o0]\s+h[e3]ll\b/i,
     /\bd[i1][e3]\b/i,
-    /\bs[u3]ck\s,
+    /\bs[u3]ck\b/i,
     /\bl[i1]ck\b/i,
     /\bbl[o0]w\s+j[o0]b\b/i,
     /\bh[o0]m[o0]\b/i,
