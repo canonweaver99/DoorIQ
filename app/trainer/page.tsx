@@ -372,6 +372,30 @@ function TrainerPageContent() {
           src: video.src
         })
         
+        // CRITICAL: Disable loop for closing video
+        video.loop = false
+        
+        // Prevent fullscreen
+        const preventFullscreen = (e: Event) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (document.fullscreenElement === video) {
+            document.exitFullscreen().catch(() => {})
+          }
+        }
+        
+        // Handle video ended - ensure it stops and doesn't loop
+        const handleClosingEnded = () => {
+          console.log('🎬 Closing video ended, stopping playback')
+          video.pause()
+          video.currentTime = video.duration
+          video.loop = false // Ensure loop stays disabled
+        }
+        
+        video.addEventListener('dblclick', preventFullscreen)
+        video.addEventListener('webkitbeginfullscreen', preventFullscreen)
+        video.addEventListener('ended', handleClosingEnded)
+        
         // Force video to load if not already loaded
         if (video.readyState === 0) {
           video.load()
@@ -380,6 +404,7 @@ function TrainerPageContent() {
         // Ensure video is loaded and ready
         const handleCanPlay = () => {
           console.log('🎬 Closing video can play, starting playback')
+          video.loop = false // Ensure loop is disabled
           const playPromise = video.play()
           if (playPromise !== undefined) {
             playPromise
@@ -390,6 +415,7 @@ function TrainerPageContent() {
                 console.error('❌ Failed to play closing door animation:', err)
                 // Retry after a short delay
                 setTimeout(() => {
+                  video.loop = false
                   video.play().catch((retryErr) => {
                     console.error('❌ Retry failed:', retryErr)
                   })
@@ -402,6 +428,7 @@ function TrainerPageContent() {
         // If video is already ready, play immediately
         if (video.readyState >= 3) { // HAVE_FUTURE_DATA or higher
           console.log('🎬 Video already ready, playing immediately')
+          video.loop = false // Ensure loop is disabled
           const playPromise = video.play()
           if (playPromise !== undefined) {
             playPromise
@@ -412,6 +439,7 @@ function TrainerPageContent() {
                 console.error('❌ Failed to play closing door animation (immediate):', err)
                 // Retry after a short delay
                 setTimeout(() => {
+                  video.loop = false
                   video.play().catch((retryErr) => {
                     console.error('❌ Retry failed:', retryErr)
                   })
@@ -426,6 +454,7 @@ function TrainerPageContent() {
         // Also try to play on loadeddata as backup
         const handleLoadedData = () => {
           console.log('🎬 Closing video loaded, ensuring playback')
+          video.loop = false // Ensure loop is disabled
           const playPromise = video.play()
           if (playPromise !== undefined) {
             playPromise
@@ -443,6 +472,7 @@ function TrainerPageContent() {
         // Also listen for play event to confirm it started
         const handlePlay = () => {
           console.log('✅ Closing video is now playing')
+          video.loop = false // Ensure loop stays disabled when playing
           video.removeEventListener('play', handlePlay)
         }
         video.addEventListener('play', handlePlay)
@@ -451,8 +481,27 @@ function TrainerPageContent() {
           video.removeEventListener('canplay', handleCanPlay)
           video.removeEventListener('loadeddata', handleLoadedData)
           video.removeEventListener('play', handlePlay)
+          video.removeEventListener('ended', handleClosingEnded)
+          video.removeEventListener('dblclick', preventFullscreen)
+          video.removeEventListener('webkitbeginfullscreen', preventFullscreen)
+          // Ensure loop is disabled
+          video.loop = false
         }
       } else if (videoMode === 'loop') {
+        // Ensure loop is enabled for loop mode
+        video.loop = true
+        
+        // Prevent fullscreen on loop video too
+        const preventFullscreen = (e: Event) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (document.fullscreenElement === video) {
+            document.exitFullscreen().catch(() => {})
+          }
+        }
+        video.addEventListener('dblclick', preventFullscreen)
+        video.addEventListener('webkitbeginfullscreen', preventFullscreen)
+        
         // Track when loop video starts and its duration
         const handleLoadedMetadata = () => {
           if (agentVideoRef.current) {
@@ -480,6 +529,8 @@ function TrainerPageContent() {
           if (agentVideoRef.current) {
             agentVideoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata)
             agentVideoRef.current.removeEventListener('play', handlePlay)
+            agentVideoRef.current.removeEventListener('dblclick', preventFullscreen)
+            agentVideoRef.current.removeEventListener('webkitbeginfullscreen', preventFullscreen)
           }
         }
       }
@@ -1574,25 +1625,49 @@ function TrainerPageContent() {
                             muted
                             loop={videoMode === 'loop'}
                             playsInline
+                            disablePictureInPicture
+                            controlsList="nodownload nofullscreen noremoteplayback"
                             onLoadedData={() => {
                               if (agentVideoRef.current) {
                                 console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
+                                // Ensure loop is set correctly
+                                agentVideoRef.current.loop = videoMode === 'loop'
                                 agentVideoRef.current.play().catch((err) => {
                                   console.warn('Video autoplay failed:', err)
                                 })
                               }
                             }}
                             onCanPlay={() => {
-                              if (agentVideoRef.current && (showDoorCloseAnimation || videoMode === 'closing')) {
-                                console.log('🎬 Video can play, forcing play for closing animation')
-                                agentVideoRef.current.play().catch((err) => {
-                                  console.warn('Video force play failed:', err)
-                                })
+                              if (agentVideoRef.current) {
+                                // Ensure loop is set correctly
+                                agentVideoRef.current.loop = videoMode === 'loop'
+                                if (showDoorCloseAnimation || videoMode === 'closing') {
+                                  console.log('🎬 Video can play, forcing play for closing animation')
+                                  agentVideoRef.current.loop = false // Ensure closing video doesn't loop
+                                  agentVideoRef.current.play().catch((err) => {
+                                    console.warn('Video force play failed:', err)
+                                  })
+                                }
+                              }
+                            }}
+                            onEnded={() => {
+                              if (agentVideoRef.current && (videoMode === 'closing' || showDoorCloseAnimation)) {
+                                console.log('🎬 Closing video ended, stopping playback')
+                                agentVideoRef.current.pause()
+                                agentVideoRef.current.currentTime = agentVideoRef.current.duration
                               }
                             }}
                             onError={(e) => {
                               console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
                               e.stopPropagation()
+                            }}
+                            onDoubleClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              // Prevent fullscreen on double-click
+                              if (document.fullscreenElement) {
+                                document.exitFullscreen().catch(() => {})
+                              }
                             }}
                           />
                         )
