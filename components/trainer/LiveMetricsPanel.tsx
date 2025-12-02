@@ -170,7 +170,7 @@ interface SentimentScore {
   score: number // 0-100
   level: 'low' | 'building' | 'positive'
   factors: {
-    elevenLabsSentiment: number
+    transcriptSentiment: number
     buyingSignals: number
     objectionResolution: number
     positiveLanguage: number
@@ -508,8 +508,8 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
           <div className="text-xs text-slate-400 font-space font-medium mb-2">What feeds into Sentiment:</div>
           <div className="space-y-1.5 text-xs text-slate-300 font-space">
             <div className="flex justify-between items-center">
-              <span>ElevenLabs Sentiment:</span>
-              <span className="font-mono">{scoreToDots(factors.elevenLabsSentiment)}</span>
+              <span>Transcript Sentiment:</span>
+              <span className="font-mono">{scoreToDots(factors.transcriptSentiment)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span>Buying Signals:</span>
@@ -556,20 +556,20 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
               <div className="text-slate-400 mb-3">The Sentiment score tracks how the customer feels about the sale. It starts low and builds over time:</div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <span>ElevenLabs Sentiment</span>
-                  <span className="font-semibold text-white">40%</span>
+                  <span>Transcript Sentiment</span>
+                  <span className="font-semibold text-white">50%</span>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">AI analysis of customer sentiment from conversation</div>
+                <div className="text-xs text-slate-400 pl-2">Analysis of sentiment progression from early to recent conversation</div>
                 
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
                   <span>Buying Signals</span>
-                  <span className="font-semibold text-white">30%</span>
+                  <span className="font-semibold text-white">25%</span>
                 </div>
                 <div className="text-xs text-slate-400 pl-2">Positive buying signals detected (e.g., "sounds good", "I'm interested")</div>
                 
                 <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
                   <span>Objection Resolution</span>
-                  <span className="font-semibold text-white">20%</span>
+                  <span className="font-semibold text-white">15%</span>
                 </div>
                 <div className="text-xs text-slate-400 pl-2">How well objections were handled and resolved</div>
                 
@@ -581,9 +581,9 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
               </div>
               <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
                 <div className="mb-2">Time Progression:</div>
-                <div className="pl-2">• First 30s: 0-30% of base score</div>
-                <div className="pl-2">• 30s-2min: 30-70% of base score</div>
-                <div className="pl-2">• 2min+: 70-100% of base score</div>
+                <div className="pl-2">• First 15s: 0-30% of base score</div>
+                <div className="pl-2">• 15s-1min: 30-70% of base score</div>
+                <div className="pl-2">• 1min+: 70-100% of base score</div>
               </div>
             </div>
           </motion.div>

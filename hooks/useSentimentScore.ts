@@ -23,7 +23,7 @@ interface UseSentimentScoreOptions {
 }
 
 interface SentimentScoreFactors {
-  elevenLabsSentiment: number // 0-100 from ElevenLabs sentiment_progression
+  transcriptSentiment: number // 0-100 from transcript analysis (replaces ElevenLabs)
   buyingSignals: number // 0-100 based on buying signals detected
   objectionResolution: number // 0-100 based on objections resolved
   positiveLanguage: number // 0-100 based on positive language patterns
@@ -186,49 +186,112 @@ function calculateObjectionResolutionScore(transcript: TranscriptEntry[]): numbe
   return Math.round(resolutionRate * 100)
 }
 
-// Get latest ElevenLabs sentiment from progression array
-function getLatestSentiment(sentimentProgression: number[]): number {
-  if (!sentimentProgression || sentimentProgression.length === 0) return 0
+// Calculate sentiment from transcript progression over time
+function calculateTranscriptSentiment(transcript: TranscriptEntry[], sessionDurationSeconds: number): number {
+  if (!transcript || transcript.length === 0) return 50 // Neutral baseline
   
-  // ElevenLabs sentiment_progression is typically 0-1 scale, convert to 0-100
-  const latest = sentimentProgression[sentimentProgression.length - 1]
+  const homeownerEntries = transcript.filter(e => e.speaker === 'homeowner')
+  if (homeownerEntries.length === 0) return 50
   
-  // If already 0-100 scale, return as-is
-  if (latest > 1) return Math.min(100, Math.max(0, latest))
+  // Analyze sentiment progression: early entries vs recent entries
+  const totalEntries = homeownerEntries.length
+  const earlyWindow = Math.max(1, Math.floor(totalEntries * 0.3)) // First 30% of entries
+  const recentWindow = Math.max(1, Math.floor(totalEntries * 0.3)) // Last 30% of entries
   
-  // Convert 0-1 scale to 0-100
-  return Math.round(latest * 100)
+  const earlyEntries = homeownerEntries.slice(0, earlyWindow)
+  const recentEntries = homeownerEntries.slice(-recentWindow)
+  
+  // Calculate sentiment for early vs recent
+  let earlyPositive = 0
+  let earlyNegative = 0
+  let recentPositive = 0
+  let recentNegative = 0
+  
+  earlyEntries.forEach(entry => {
+    POSITIVE_LANGUAGE_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) earlyPositive++
+    })
+    NEGATIVE_LANGUAGE_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) earlyNegative++
+    })
+  })
+  
+  recentEntries.forEach(entry => {
+    POSITIVE_LANGUAGE_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) recentPositive++
+    })
+    NEGATIVE_LANGUAGE_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) recentNegative++
+    })
+  })
+  
+  // Calculate early sentiment (0-100)
+  const earlyTotal = earlyPositive + earlyNegative
+  const earlySentiment = earlyTotal > 0 
+    ? (earlyPositive / earlyTotal) * 100 
+    : 50
+  
+  // Calculate recent sentiment (0-100)
+  const recentTotal = recentPositive + recentNegative
+  const recentSentiment = recentTotal > 0 
+    ? (recentPositive / recentTotal) * 100 
+    : 50
+  
+  // If we have progression data, show improvement
+  // If recent sentiment is higher than early, that's positive progression
+  const sentimentProgression = recentSentiment - earlySentiment
+  
+  // Base score: average of recent sentiment, adjusted by progression
+  // Recent sentiment is weighted more heavily
+  const baseScore = (earlySentiment * 0.3) + (recentSentiment * 0.7)
+  
+  // Add progression bonus (up to +20 points for improvement)
+  const progressionBonus = Math.max(0, Math.min(20, sentimentProgression * 2))
+  
+  // Also factor in buying signals in recent entries
+  let recentBuyingSignals = 0
+  recentEntries.forEach(entry => {
+    BUYING_SIGNAL_PATTERNS.forEach(pattern => {
+      if (pattern.test(entry.text)) recentBuyingSignals++
+    })
+  })
+  const buyingSignalBonus = Math.min(15, recentBuyingSignals * 5)
+  
+  const finalScore = baseScore + progressionBonus + buyingSignalBonus
+  
+  return Math.round(Math.max(0, Math.min(100, finalScore)))
 }
 
   // Calculate sentiment score with progression (starts low, builds over time)
 function calculateSentimentScore(
-  elevenLabsSentiment: number,
+  transcriptSentiment: number,
   buyingSignals: number,
   objectionResolution: number,
   positiveLanguage: number,
   sessionDurationSeconds: number,
   startingSentiment: number = 5
 ): number {
-  // Base score from factors (weighted)
-  // ElevenLabs: 40%, Buying Signals: 30%, Objection Resolution: 20%, Positive Language: 10%
+  // Base score from factors (weighted) - removed ElevenLabs dependency
+  // Transcript Sentiment: 50%, Buying Signals: 25%, Objection Resolution: 15%, Positive Language: 10%
   const baseScore = 
-    (elevenLabsSentiment * 0.40) +
-    (buyingSignals * 0.30) +
-    (objectionResolution * 0.20) +
+    (transcriptSentiment * 0.50) +
+    (buyingSignals * 0.25) +
+    (objectionResolution * 0.15) +
     (positiveLanguage * 0.10)
 
   // Apply time progression: starts at agent's baseline, builds over time
-  // First 30 seconds: startingSentiment to startingSentiment + 20% of base score
-  // 30-120 seconds: startingSentiment + 20% to startingSentiment + 60% of base score
-  // 120+ seconds: startingSentiment + 60% to startingSentiment + 100% of base score
-  let timeMultiplier = 0.2 // Start at 20% of base score above starting sentiment
+  // More aggressive progression so sentiment builds faster
+  // First 15 seconds: startingSentiment to startingSentiment + 30% of base score
+  // 15-60 seconds: startingSentiment + 30% to startingSentiment + 70% of base score
+  // 60+ seconds: startingSentiment + 70% to startingSentiment + 100% of base score
+  let timeMultiplier = 0.3 // Start at 30% of base score above starting sentiment
   
-  if (sessionDurationSeconds > 120) {
-    timeMultiplier = 0.6 + (Math.min(1, (sessionDurationSeconds - 120) / 180) * 0.4) // 60-100% after 2 minutes
-  } else if (sessionDurationSeconds > 30) {
-    timeMultiplier = 0.2 + ((sessionDurationSeconds - 30) / 90 * 0.4) // 20-60% between 30s-2min
+  if (sessionDurationSeconds > 60) {
+    timeMultiplier = 0.7 + (Math.min(1, (sessionDurationSeconds - 60) / 120) * 0.3) // 70-100% after 1 minute
+  } else if (sessionDurationSeconds > 15) {
+    timeMultiplier = 0.3 + ((sessionDurationSeconds - 15) / 45 * 0.4) // 30-70% between 15s-1min
   } else {
-    timeMultiplier = (sessionDurationSeconds / 30) * 0.2 // 0-20% in first 30 seconds
+    timeMultiplier = (sessionDurationSeconds / 15) * 0.3 // 0-30% in first 15 seconds
   }
 
   // Calculate score: starting sentiment + (base score * time multiplier)
@@ -252,7 +315,7 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
   const [sentimentScore, setSentimentScore] = useState<number>(startingSentiment) // Start based on agent personality
   const [sentimentLevel, setSentimentLevel] = useState<'low' | 'building' | 'positive'>('low')
   const [factors, setFactors] = useState<SentimentScoreFactors>({
-    elevenLabsSentiment: 0,
+    transcriptSentiment: 50,
     buyingSignals: 0,
     objectionResolution: 100,
     positiveLanguage: 50
@@ -273,31 +336,10 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
     }
   }, [sessionStartTime])
 
-  // Fetch ElevenLabs sentiment_progression from session
-  const fetchElevenLabsSentiment = useCallback(async (): Promise<number> => {
-    if (!sessionId) return 0
-
-    try {
-      const supabase = createClient()
-      const { data, error: fetchError } = await supabase
-        .from('live_sessions')
-        .select('elevenlabs_metrics')
-        .eq('id', sessionId)
-        .single()
-
-      if (fetchError || !data) {
-        return 0
-      }
-
-      const metrics = data.elevenlabs_metrics as any
-      const sentimentProgression = metrics?.sentiment_progression || []
-
-      return getLatestSentiment(sentimentProgression)
-    } catch (err) {
-      console.error('Error fetching ElevenLabs sentiment:', err)
-      return 0
-    }
-  }, [sessionId])
+  // Calculate transcript-based sentiment (no longer depends on ElevenLabs)
+  const calculateTranscriptSentimentScore = useCallback((transcript: TranscriptEntry[], sessionDurationSeconds: number): number => {
+    return calculateTranscriptSentiment(transcript, sessionDurationSeconds)
+  }, [])
 
   // Calculate sentiment score
   const calculateScore = useCallback(async () => {
@@ -312,8 +354,8 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
       const sessionDurationMs = currentTime - sessionStartTimeRef.current
       const sessionDurationSeconds = sessionDurationMs / 1000
 
-      // Fetch ElevenLabs sentiment
-      const elevenLabsSentiment = await fetchElevenLabsSentiment()
+      // Calculate transcript-based sentiment (replaces ElevenLabs)
+      const transcriptSentiment = calculateTranscriptSentimentScore(transcript, sessionDurationSeconds)
 
       // Calculate transcript-based factors
       const buyingSignals = calculateBuyingSignalsScore(transcript)
@@ -322,7 +364,7 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
 
       // Calculate final sentiment score
       const rawScore = calculateSentimentScore(
-        elevenLabsSentiment,
+        transcriptSentiment,
         buyingSignals,
         objectionResolution,
         positiveLanguage,
@@ -351,7 +393,7 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
       setSentimentScore(finalScore)
       setSentimentLevel(level)
       setFactors({
-        elevenLabsSentiment,
+        transcriptSentiment,
         buyingSignals,
         objectionResolution,
         positiveLanguage
@@ -366,7 +408,7 @@ export function useSentimentScore(options: UseSentimentScoreOptions = {}): UseSe
     } finally {
       setIsLoading(false)
     }
-  }, [enabled, transcript, fetchElevenLabsSentiment, onScoreUpdate])
+  }, [enabled, transcript, calculateTranscriptSentimentScore, startingSentiment, onScoreUpdate])
 
   // Start analysis loop
   useEffect(() => {
