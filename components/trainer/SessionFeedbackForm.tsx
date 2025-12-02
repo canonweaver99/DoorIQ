@@ -10,11 +10,11 @@ interface SessionFeedbackFormProps {
 }
 
 const IMPROVEMENT_OPTIONS = [
-  'Rapport building',
-  'Discovery questions',
-  'Objection handling',
-  'Closing techniques',
-  'Overall confidence',
+  'Agent responses were too generic',
+  'Agent didn\'t respond naturally',
+  'Agent missed key conversation cues',
+  'Agent objections were unrealistic',
+  'Agent personality didn\'t match scenario',
   'Other'
 ]
 
@@ -34,7 +34,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
       return
     }
     if (!improvementArea) {
-      setError('Please select an area you would like to improve')
+      setError('Please select an improvement area for the AI agent')
       return
     }
     if (!feedbackText.trim()) {
@@ -84,7 +84,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
             How did your session go?
           </h2>
           <p className="text-slate-400 text-sm sm:text-base">
-            Your feedback helps us improve your training experience
+            Your feedback helps us improve the AI agent and your training experience
           </p>
         </div>
 
@@ -130,7 +130,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
           {/* Improvement Area Section */}
           <div>
             <label className="block text-sm font-semibold text-slate-300 mb-4 font-space">
-              What would you like to be improved?
+              What improvements should be made to the AI agent?
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {IMPROVEMENT_OPTIONS.map((option) => (
@@ -161,7 +161,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
               id="feedback-text"
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="Tell us more about your session experience..."
+              placeholder="Tell us more about your session experience and how the AI agent performed..."
               rows={5}
               className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none font-sans"
               required

@@ -204,7 +204,7 @@ async function sendFeedbackEmail({
             ` : ''}
             
             <div class="info-row">
-              <div class="info-label">Area to Improve</div>
+              <div class="info-label">AI Agent Improvement Area</div>
               <div class="info-value">${improvementArea}</div>
             </div>
             

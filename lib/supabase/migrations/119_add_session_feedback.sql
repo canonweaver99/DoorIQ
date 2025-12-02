@@ -14,7 +14,7 @@ WHERE user_feedback_submitted_at IS NOT NULL;
 
 -- Add comment for documentation
 COMMENT ON COLUMN live_sessions.user_feedback_rating IS 'User rating of session quality (1-10 scale)';
-COMMENT ON COLUMN live_sessions.user_feedback_improvement_area IS 'Area user wants to improve: Rapport building, Discovery questions, Objection handling, Closing techniques, Overall confidence, Other';
-COMMENT ON COLUMN live_sessions.user_feedback_text IS 'Free-form text feedback from user about the session';
+COMMENT ON COLUMN live_sessions.user_feedback_improvement_area IS 'AI agent improvement area: Agent responses were too generic, Agent didn\'t respond naturally, Agent missed key conversation cues, Agent objections were unrealistic, Agent personality didn\'t match scenario, Other';
+COMMENT ON COLUMN live_sessions.user_feedback_text IS 'Free-form text feedback from user about the session and AI agent';
 COMMENT ON COLUMN live_sessions.user_feedback_submitted_at IS 'Timestamp when user submitted feedback';
 
