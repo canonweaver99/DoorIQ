@@ -235,11 +235,10 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error')
+        // Treat timeout errors as network errors (retryable) instead of showing timeout message
         let errorType: ErrorType = 'server'
-        if (response.status >= 500) {
-          errorType = 'server'
-        } else if (response.status === 408 || response.status === 504) {
-          errorType = 'timeout'
+        if (response.status >= 500 || response.status === 408 || response.status === 504) {
+          errorType = 'network' // Treat as network error so it retries
         } else if (response.status >= 400 && response.status < 500) {
           errorType = 'server'
         }
@@ -297,10 +296,10 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         
         // Poll for completion and track section progress
         const pollForCompletion = async () => {
-          const maxPolls = 60 // 30 seconds max (60 polls * 500ms = 30s)
+          // No timeout - keep polling until completion
           let pollCount = 0
           
-          while (pollCount < maxPolls && currentSessionId === sessionId) {
+          while (currentSessionId === sessionId) {
             if (abortController.signal.aborted) break
             
             try {
@@ -440,30 +439,16 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             }
             
             pollCount++
-            // Poll more frequently: every 300ms for first 20 polls, then every 500ms
-            const pollDelay = pollCount < 20 ? 300 : 500
-            await new Promise(resolve => setTimeout(resolve, pollDelay))
-          }
-          
-          // Timeout - check one more time
-          if (currentSessionId === sessionId) {
-            const finalCheck = await fetch(`/api/session?id=${currentSessionId}`)
-            if (finalCheck.ok) {
-              const session = await finalCheck.json()
-              if (session.grading_status === 'complete' || session.overall_score) {
-                setIsComplete(true)
-                setStatus('Grading complete!')
-                setTimeout(() => {
-                  if (currentSessionId === sessionId) {
-                    onComplete()
-                  }
-                }, 1500)
-              } else {
-                setError('Grading is taking longer than expected. Please check back in a moment.')
-                setErrorType('timeout')
-                setConnectionState('failed')
-              }
+            // Poll more frequently: every 300ms for first 20 polls, then every 500ms, then every 1000ms after 60 polls
+            let pollDelay = 500
+            if (pollCount < 20) {
+              pollDelay = 300
+            } else if (pollCount < 60) {
+              pollDelay = 500
+            } else {
+              pollDelay = 1000 // Slow down after 60 polls but keep going
             }
+            await new Promise(resolve => setTimeout(resolve, pollDelay))
           }
         }
         
@@ -488,8 +473,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         
         console.error('Streaming error:', err)
         const errorMessage = err?.message || 'Unknown error occurred'
+        // Treat timeout errors as network errors (retryable) instead of showing timeout message
         const detectedErrorType: ErrorType = err?.errorType || 
-          (errorMessage.includes('timeout') || errorMessage.includes('Timeout') ? 'timeout' :
+          (errorMessage.includes('timeout') || errorMessage.includes('Timeout') ? 'network' :
           errorMessage.includes('network') || errorMessage.includes('Network') || err?.code === 'ECONNRESET' ? 'network' :
           errorMessage.includes('parse') || err?.name === 'SyntaxError' ? 'parse' :
           err?.status || err?.response ? 'server' : 'unknown')
@@ -499,8 +485,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         
         // Only set error if sessionId hasn't changed
         if (currentSessionId === sessionId) {
-          // Auto-retry logic with exponential backoff
-          if ((detectedErrorType === 'network' || detectedErrorType === 'timeout') && retryCount < MAX_RETRIES) {
+          // Auto-retry logic with exponential backoff (timeouts treated as network errors)
+          if (detectedErrorType === 'network' && retryCount < MAX_RETRIES) {
             const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount)
             setStatus(`Connection error. Retrying in ${delay / 1000}s... (${retryCount + 1}/${MAX_RETRIES})`)
             setConnectionState('retrying')
@@ -513,45 +499,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           }
           
           // If retries exhausted or non-retryable error, try fallback or show error
-          if (detectedErrorType === 'timeout' && retryCount >= MAX_RETRIES) {
-            console.log('⏱️ Streaming timed out after retries, falling back to non-streaming grading...')
-            setStatus('Switching to standard grading mode...')
-            
-            // Fallback to non-streaming grading
-            try {
-            // Retry orchestration
-            console.error('Orchestration failed, will retry')
-            const retryResponse = await fetch('/api/grade/orchestrate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId: currentSessionId }),
-                signal: abortController.signal
-              })
-              
-              if (retryResponse.ok) {
-                const result = await retryResponse.json()
-                console.log('✅ Retry grading completed')
-                setIsComplete(true)
-                setStatus('Grading complete!')
-                setTimeout(() => {
-                  if (currentSessionId === sessionId) {
-                    onComplete()
-                  }
-                }, 1500)
-                return
-              } else {
-                throw new Error(`Retry grading failed: ${retryResponse.statusText}`)
-              }
-            } catch (retryError: any) {
-              if (retryError.name === 'AbortError') {
-                return
-              }
-              setError('Grading timed out. Please try again or check back later.')
-              setErrorType('timeout')
-              setStatus('Grading timeout')
-              setConnectionState('failed')
-            }
-          } else if (errorMessage.includes('No transcript to grade')) {
+          // Removed timeout error - just keep retrying or show generic error
+          if (errorMessage.includes('No transcript to grade')) {
             setError('Transcript not ready yet. This usually means the session is still being saved. Click retry to check again.')
             setErrorType('server')
             setConnectionState('failed')
