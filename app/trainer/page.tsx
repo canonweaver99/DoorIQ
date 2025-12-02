@@ -1055,7 +1055,7 @@ function TrainerPageContent() {
     await new Promise(resolve => setTimeout(resolve, 1000))
     
     // Fire new phased grading orchestration in background - don't wait for it
-    // The loading page will handle transcript waiting and polling
+    // Grading runs in background while user provides feedback
     fetch('/api/grade/orchestrate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1064,7 +1064,7 @@ function TrainerPageContent() {
       .then(async response => {
         if (response.ok) {
           const data = await response.json().catch(() => ({}))
-          console.log('✅ Phased grading orchestration started', data.phases)
+          console.log('✅ Phased grading orchestration started in background', data.phases)
         } else {
           const errorData = await response.json().catch(() => ({}))
           console.error('❌ Grading orchestration failed:', response.status, errorData)
@@ -1074,9 +1074,9 @@ function TrainerPageContent() {
         console.error('❌ Error starting grading orchestration:', error)
       })
     
-    // Redirect to loading page - it will wait for grading to complete before showing analytics
-    console.log('🚀 Redirecting to loading page (will wait for grading to complete)')
-    window.location.href = `/trainer/loading/${sessionId}`
+    // Redirect to feedback page immediately - grading runs in background
+    console.log('🚀 Redirecting to feedback page (grading running in background)')
+    window.location.href = `/trainer/feedback/${sessionId}`
   }, [])
 
   const endSession = useCallback(async (endReason?: string, skipRedirect: boolean = false) => {
@@ -1234,11 +1234,33 @@ function TrainerPageContent() {
           console.log('⏳ Database write delay completed, proceeding with redirect')
         }
         
+        // Trigger grading in background for manual ends
+        if (!skipRedirect) {
+          // Fire grading in background - don't wait for it
+          fetch('/api/grade/orchestrate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
+          })
+            .then(async response => {
+              if (response.ok) {
+                const data = await response.json().catch(() => ({}))
+                console.log('✅ Grading orchestration started in background', data.phases)
+              } else {
+                const errorData = await response.json().catch(() => ({}))
+                console.error('❌ Grading orchestration failed:', response.status, errorData)
+              }
+            })
+            .catch(error => {
+              console.error('❌ Error starting grading orchestration:', error)
+            })
+        }
+        
         // Now redirect after save completes (unless skipRedirect is true)
         if (!skipRedirect) {
-          // For manual ends, go to loading page
-          const redirectUrl = `/trainer/loading/${sessionId}`
-          console.log('🚀 Redirecting to loading page:', redirectUrl)
+          // Redirect to feedback page - grading runs in background
+          const redirectUrl = `/trainer/feedback/${sessionId}`
+          console.log('🚀 Redirecting to feedback page:', redirectUrl)
           
           // Use window.location.href for reliable redirect (blocking)
           window.location.href = redirectUrl
