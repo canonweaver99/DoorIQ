@@ -162,8 +162,10 @@ function TrainerPageContent() {
   })
   
   // GLOBAL FULLSCREEN PREVENTION - Monitor and exit fullscreen continuously
+  // This MUST run during door-closing state to prevent iOS Safari fullscreen glitches
   useEffect(() => {
-    if (!sessionActive && !showDoorCloseAnimation) return
+    // Always run during door-closing state, active session, or door close animation
+    if (!sessionActive && !showDoorCloseAnimation && sessionState !== 'door-closing') return
     
     const exitFullscreen = () => {
       if (document.fullscreenElement) {
@@ -241,7 +243,7 @@ function TrainerPageContent() {
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
       exitFullscreen()
     }
-  }, [sessionActive, showDoorCloseAnimation, videoMode])
+  }, [sessionActive, showDoorCloseAnimation, videoMode, sessionState])
   
   // Auto-end detection: triggers when USER says goodbye (not agent)
   useConversationEndDetection({
@@ -1281,7 +1283,21 @@ function TrainerPageContent() {
     // Set session state to door-closing to trigger DoorClosingVideo component for agents with videos
     if (hasVideos) {
       console.log('🎬 Agent has videos, setting sessionState to door-closing for:', selectedAgent?.name)
-      setSessionState('door-closing')
+      
+      // CRITICAL: Stop the main video BEFORE transitioning to door-closing state
+      // This prevents iOS Safari from auto-fullscreening when the video element is removed
+      if (agentVideoRef.current) {
+        console.log('🎬 Stopping main video before transition')
+        agentVideoRef.current.pause()
+        agentVideoRef.current.src = '' // Clear source to fully stop
+        agentVideoRef.current.load() // Reset the video element
+      }
+      
+      // Small delay to ensure video is fully stopped before state change
+      setTimeout(() => {
+        setSessionState('door-closing')
+      }, 50)
+      
       // IMPORTANT: Keep sessionActive true so the video component can mount and play
       // DoorClosingVideo component will handle video playback
       // The handleDoorVideoComplete callback will handle ending session and triggering grading
@@ -1811,8 +1827,13 @@ function TrainerPageContent() {
                             muted
                             loop={videoMode === 'loop'}
                             playsInline
+                            // @ts-ignore - webkit-playsinline is needed for older iOS Safari
+                            webkit-playsinline="true"
+                            // @ts-ignore - x-webkit-airplay prevents AirPlay fullscreen
+                            x-webkit-airplay="deny"
                             disablePictureInPicture
-                            controlsList="nodownload nofullscreen noremoteplayback"
+                            controls={false}
+                            controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
                             onLoadedData={() => {
                               if (agentVideoRef.current) {
                                 console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)

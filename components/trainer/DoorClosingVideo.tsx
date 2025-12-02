@@ -244,10 +244,17 @@ export default function DoorClosingVideo({
           className="w-full h-full object-cover"
           autoPlay
           playsInline
+          // @ts-ignore - webkit-playsinline is needed for older iOS Safari
+          webkit-playsinline="true"
+          // @ts-ignore - x-webkit-airplay prevents AirPlay fullscreen
+          x-webkit-airplay="deny"
           muted={false}
           loop={false}
           disablePictureInPicture
-          controlsList="nodownload nofullscreen noremoteplayback"
+          controls={false}
+          controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+          // Prevent iOS from auto-fullscreening
+          style={{ WebkitMediaPlaybackRequiresUserAction: false } as any}
         />
       ) : (
         <div className="w-full h-full bg-black flex items-center justify-center">

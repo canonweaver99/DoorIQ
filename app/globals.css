@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CRITICAL: Prevent iOS Safari from auto-fullscreening videos */
+video {
+  -webkit-media-playback-requires-user-action: false;
+}
+
+video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+/* Prevent fullscreen on any video element */
+video:-webkit-full-screen {
+  display: none !important;
+}
+
+video:fullscreen {
+  display: none !important;
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);
