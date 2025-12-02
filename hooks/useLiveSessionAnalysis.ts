@@ -689,13 +689,14 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
               confidence: objection.confidence
             })
             
-            // Add timing and stacking info to message
+            // Add timing info to message (only one set of parentheses, no stacking)
             if (timing === 'early') {
-              message += ' (Early - possible brush-off)'
+              message += ' (possible brush-off)'
             } else if (timing === 'late') {
-              message += ' (Late - genuine concern)'
+              message += ' (genuine concern)'
             }
             
+            // Stacked info goes in brackets, not parentheses
             if (isStacked) {
               message += ' [Stacked - multiple objections]'
             }
@@ -979,8 +980,8 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
             wasHandled: true
           })
           
-          // Add resolution signals to message if available
-          if (handling.resolutionSignals && handling.resolutionSignals.length > 0) {
+          // Add resolution signals to message if available (only if no parentheses already exist)
+          if (handling.resolutionSignals && handling.resolutionSignals.length > 0 && !message.includes('(')) {
             message += ` (${handling.resolutionSignals.slice(0, 2).join(', ')})`
           }
           
