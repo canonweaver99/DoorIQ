@@ -650,7 +650,7 @@ function HeaderContent() {
               />
             </Link>
 
-            {navigation.map((item) => {
+            {navigation.filter(item => !(item as any).desktopOnly).map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
               return (

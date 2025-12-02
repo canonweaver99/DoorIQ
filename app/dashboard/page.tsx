@@ -2201,12 +2201,12 @@ function OverviewTabContent() {
                                 </div>
                               ))}
                               {/* Profile Image */}
-                              <div className="absolute inset-[2px] rounded-full overflow-hidden">
+                              <div className="absolute inset-[2px] rounded-full overflow-hidden bg-slate-800/50">
                                 <Image
                                   src={getAgentImage(session.agent_name)}
                                   alt={session.agent_name || 'Agent'}
                                   fill
-                                  className="object-cover"
+                                  className="object-contain"
                                   style={getAgentImageStyle(session.agent_name)}
                                   sizes={`${circleSize}px`}
                                   loading="lazy"
@@ -2247,11 +2247,49 @@ function OverviewTabContent() {
                         </p>
                       </div>
                       
-                      {/* Overall Score - Text Percentage */}
-                      <div className="text-right">
-                        <p className="text-xl sm:text-2xl font-bold text-white tabular-nums">
-                          {session.overall_score || 0}%
-                        </p>
+                      {/* Overall Score - Circular Percentage Bubble */}
+                      <div className="relative w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex-shrink-0">
+                        {(() => {
+                          const score = session.overall_score || 0
+                          const radius = 20
+                          const circumference = 2 * Math.PI * radius
+                          const strokeDashoffset = circumference - (score / 100) * circumference
+                          const getScoreColor = (score: number) => {
+                            if (score >= 80) return '#10b981' // emerald
+                            if (score >= 60) return '#f59e0b' // amber
+                            return '#ef4444' // red
+                          }
+                          return (
+                            <>
+                              <svg className="w-full h-full -rotate-90" viewBox="0 0 48 48">
+                                <circle
+                                  cx="24"
+                                  cy="24"
+                                  r={radius}
+                                  stroke="rgba(255,255,255,0.1)"
+                                  strokeWidth="4"
+                                  fill="none"
+                                />
+                                <circle
+                                  cx="24"
+                                  cy="24"
+                                  r={radius}
+                                  stroke={getScoreColor(score)}
+                                  strokeWidth="4"
+                                  strokeDasharray={circumference}
+                                  strokeDashoffset={strokeDashoffset}
+                                  strokeLinecap="round"
+                                  fill="none"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-[10px] sm:text-xs lg:text-sm font-bold text-white tabular-nums">
+                                  {score}%
+                                </span>
+                              </div>
+                            </>
+                          )
+                        })()}
                       </div>
                       
                       <Link
