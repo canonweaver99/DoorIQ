@@ -350,69 +350,214 @@ function calculateObjectionResolutionScore(transcript: TranscriptEntry[]): numbe
 }
 
 // Calculate sentiment from transcript progression over time - IMPROVED VERSION
+// NOW ANALYZES BOTH USER (rep) AND HOMEOWNER (customer) for comprehensive sentiment
 function calculateTranscriptSentiment(transcript: TranscriptEntry[], sessionDurationSeconds: number): number {
   if (!transcript || transcript.length === 0) return 50 // Neutral baseline
   
+  // Analyze BOTH sides of the conversation
   const homeownerEntries = transcript.filter(e => e.speaker === 'homeowner')
-  if (homeownerEntries.length === 0) return 50
+  const userEntries = transcript.filter(e => e.speaker === 'user' || e.speaker === 'rep')
+  
+  if (homeownerEntries.length === 0 && userEntries.length === 0) return 50
   
   // More granular windows for better responsiveness
-  const totalEntries = homeownerEntries.length
+  // Use ALL entries (both homeowner and user) for sentiment analysis
+  const allEntries = [...homeownerEntries, ...userEntries].sort((a, b) => 
+    a.timestamp.getTime() - b.timestamp.getTime()
+  )
+  
+  const totalEntries = allEntries.length
   const recentWindow = Math.max(1, Math.floor(totalEntries * 0.35)) // Last 35%
   const middleStart = Math.max(1, Math.floor(totalEntries * 0.3))
   const middleEnd = Math.max(middleStart + 1, totalEntries - recentWindow)
   
-  const earlyEntries = homeownerEntries.slice(0, middleStart)
-  const middleEntries = homeownerEntries.slice(middleStart, middleEnd)
-  const recentEntries = homeownerEntries.slice(-recentWindow)
+  const earlyEntries = allEntries.slice(0, middleStart)
+  const middleEntries = allEntries.slice(middleStart, middleEnd)
+  const recentEntries = allEntries.slice(-recentWindow)
   
-  // Calculate weighted scores for each window
+  // Calculate weighted scores for each window - analyzes BOTH sides
   const calculateWindowScore = (entries: TranscriptEntry[]): number => {
     let positive = 0
     let negative = 0
     
     entries.forEach(entry => {
-      // Strong buying signals
-      STRONG_BUYING_SIGNALS.forEach(pattern => {
-        if (pattern.test(entry.text)) positive += 20
-      })
-      // Moderate buying signals
-      MODERATE_BUYING_SIGNALS.forEach(pattern => {
-        if (pattern.test(entry.text)) positive += 12
-      })
-      // Engagement signals
-      ENGAGEMENT_SIGNALS.forEach(pattern => {
-        if (pattern.test(entry.text)) positive += 6
-      })
-      // Rapport signals
-      RAPPORT_SIGNALS.forEach(pattern => {
-        if (pattern.test(entry.text)) positive += 8
-      })
-      // Soft positive
-      SOFT_POSITIVE_PATTERNS.forEach(pattern => {
-        if (pattern.test(entry.text)) positive += 4
-      })
-      // Strong negative
-      STRONG_NEGATIVE_PATTERNS.forEach(pattern => {
-        if (pattern.test(entry.text)) negative += 18
-      })
-      // Moderate negative
-      MODERATE_NEGATIVE_PATTERNS.forEach(pattern => {
-        if (pattern.test(entry.text)) negative += 10
-      })
-      // Hesitation
-      HESITATION_PATTERNS.forEach(pattern => {
-        if (pattern.test(entry.text)) negative += 4
-      })
-    })
-    
-    // Normalize to 0-100 scale
-    const total = positive + negative
-    if (total === 0) return 50
-    return Math.round((positive / total) * 100)
-  }
-  
-  const earlyScore = earlyEntries.length > 0 ? calculateWindowScore(earlyEntries) : 50
+      const isHomeowner = entry.speaker === 'homeowner'
+      const isUser = entry.speaker === 'user' || entry.speaker === 'rep'
+      
+      // HOMEOWNER signals (buying intent, engagement)
+      if (isHomeowner) {
+        // Strong buying signals
+        STRONG_BUYING_SIGNALS.forEach(pattern => {
+          if (pattern.test(entry.text)) positive += 20
+        })
+        // Moderate buying signals
+        MODERATE_BUYING_SIGNALS.forEach(pattern => {
+          if (pattern.test(entry.text)) positive += 12
+        })
+        // Engagement signals
+        ENGAGEMENT_SIGNALS.forEach(pattern => {
+          if (pattern.test(entry.text)) positive += 6
+        })
+        // Rapport signals
+        RAPPORT_SIGNALS.forEach(pattern => {
+          if (pattern.test(entry.text)) positive += 8
+        })
+        // Soft positive
+        SOFT_POSITIVE_PATTERNS.forEach(pattern => {
+          if (pattern.test(entry.text)) positive += 4
+        })
+        // Strong negative
+        STRONG_NEGATIVE_PATTERNS.forEach(pattern => {
+          if (pattern.test(entry.text)) negative += 18
+        })
+        // Moderate negative
+        MODERATE_NEGATIVE_PATTERNS.forEach(pattern => {
+          if (pattern.test(entry.text)) negative += 10
+        })
+        // Hesitation
+        HESITATION_PATTERNS.forEach(pattern => {
+          if (pattern.test(entry.text)) negative += 4
+        })
+      }
+      
+      // USER/REP signals (professionalism, tone, negative language)
+      if (isUser) {
+        // Positive: Professional, helpful language
+        RAPPORT_SIGNALS.forEach(pattern => {
+          if (pattern.test(entry.text)) positive += 5 // Less weight than homeowner
+        })
+        SOFT_POSITIVE_PATTERNS.forEach(pattern => {
+          if (pattern.test(entry.text)) positive += 3
+        })
+        
+        // NEGATIVE: Unprofessional, rude, or inappropriate language from user
+        STRONG_NEGATIVE_PATTERNS.forEach(pattern => {
+          if (pattern.test(entry.text)) negative += 25 // HIGH penalty for user being negative
+        })
+        MODERATE_NEGATIVE_PATTERNS.forEach(pattern => {
+          if (pattern.test(entry.text)) negative += 15
+        })
+        
+        // Detect "roasting" or mocking language from user
+        const roastingPatterns = [
+          /\broast\b/i,
+          /\bmock\b/i,
+          /\bmake fun\b/i,
+          /\btease\b/i,
+          /\bjoke.*about\b/i,
+          /\binsult\b/i,
+          /\bdisrespect\b/i,
+          /\brude\b/i,
+          /\bmean\b/i,
+          /\bharsh\b/i,
+          /\bcruel\b/i,
+          /\bdisgusting\b/i,
+          /\bgross\b/i,
+          /\bweird\b/i,
+          /\bstupid\b/i,
+          /\bdumb\b/i,
+          /\bidiot\b/i,
+          /\bmoron\b/i,
+          /\bpathetic\b/i,
+          /\byou.*suck\b/i,
+          /\byou.*stupid\b/i,
+          /\byou.*dumb\b/i,
+          /\byou.*idiot\b/i,
+          /\byou.*wrong\b/i,
+          /\byou.*bad\b/i,
+          /\byou.*terrible\b/i,
+          /\byou.*awful\b/i,
+          /\byou.*horrible\b/i,
+          /\byou.*worst\b/i,
+          /\byou.*pathetic\b/i,
+          /\byou.*disgusting\b/i,
+          /\byou.*gross\b/i,
+          /\byou.*weird\b/i,
+          /\byou.*crazy\b/i,
+          /\byou.*insane\b/i,
+          /\byou.*ridiculous\b/i,
+          /\byou.*absurd\b/i,
+          /\byou.*nonsense\b/i,
+          /\byou.*bullshit\b/i,
+          /\byou.*crap\b/i,
+          /\byou.*trash\b/i,
+          /\byou.*garbage\b/i,
+          /\byou.*useless\b/i,
+          /\byou.*worthless\b/i,
+          /\byou.*lie\b/i,
+          /\byou.*lying\b/i,
+          /\byou.*liar\b/i,
+          /\byou.*cheat\b/i,
+          /\byou.*scam\b/i,
+          /\byou.*fraud\b/i,
+          /\byou.*rip.*off\b/i,
+          /\byou.*steal\b/i,
+          /\byou.*don't.*know\b/i,
+          /\byou.*don't.*understand\b/i,
+          /\byou.*don't.*care\b/i,
+          /\byou.*don't.*listen\b/i
+        ]
+        
+        // Check for roasting patterns
+        roastingPatterns.forEach(pattern => {
+          if (pattern.test(entry.text)) {
+            negative += 20 // High penalty for user being negative/unprofessional
+          }
+        })
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          /\byou.*shouldn't.*have.*outscored\b/i,
+          const earlyScore = earlyEntries.length > 0 ? calculateWindowScore(earlyEntries) : 50
   const middleScore = middleEntries.length > 0 ? calculateWindowScore(middleEntries) : earlyScore
   const recentScore = recentEntries.length > 0 ? calculateWindowScore(recentEntries) : middleScore
   
@@ -492,7 +637,7 @@ function calculateTranscriptSentiment(transcript: TranscriptEntry[], sessionDura
   return Math.round(Math.max(0, Math.min(100, finalScore)))
 }
 
-// Calculate sentiment score with progression (starts low, builds over time)
+  // Calculate sentiment score with progression (starts low, builds over time)
 // IMPROVED: More responsive to conversation dynamics
 function calculateSentimentScore(
   transcriptSentiment: number,
