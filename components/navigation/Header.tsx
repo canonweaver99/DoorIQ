@@ -355,6 +355,14 @@ function HeaderContent() {
     }
   }, [])
 
+  // Check if user has active subscription or is trialing (combine org and individual checks)
+  const userHasActivePlan = useMemo(() => {
+    // Check individual subscription status from hook
+    const hasIndividualSubscription = subscription.hasActiveSubscription || subscription.isTrialing
+    // Combine with organization-level subscription check
+    return hasActiveSubscription || hasIndividualSubscription
+  }, [hasActiveSubscription, subscription.hasActiveSubscription, subscription.isTrialing])
+
   const navigation = useMemo(() => {
     const navItems = [
       { name: 'Home', href: '/', icon: Home },
@@ -363,9 +371,11 @@ function HeaderContent() {
       ...(isSignedIn ? [{ name: 'Sessions', href: '/sessions', icon: FileText }] : []),
       // Dashboard shows for reps and admins (admins can view their own dashboard)
       ...(userRole === 'rep' || userRole === 'admin' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
-      ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),
-      // Only show Pricing if user doesn't have an active subscription (admins handled separately)
-      ...(!hasActiveSubscription && userRole !== 'admin' ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
+      // Learning: always show for signed-in users on mobile (no desktopOnly flag)
+      // Desktop sidebar has its own logic to check hasLearningPageAccess
+      ...(isSignedIn ? [{ name: 'Learning', href: '/learning', icon: NotebookPen }] : []),
+      // Only show Pricing if user doesn't have an active subscription or free trial (admins handled separately)
+      ...(!userHasActivePlan && userRole !== 'admin' ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
     ]
 
     if (userRole === 'manager') {
@@ -399,7 +409,7 @@ function HeaderContent() {
     }
 
     return navItems
-  }, [userRole, user?.team_id, hasLearningPageAccess, hasActiveSubscription, isSignedIn])
+  }, [userRole, user?.team_id, hasLearningPageAccess, userHasActivePlan, isSignedIn])
 
   const isManagerLike = userRole === 'manager' || userRole === 'admin'
 
