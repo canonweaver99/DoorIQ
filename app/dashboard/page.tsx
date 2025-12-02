@@ -161,6 +161,7 @@ export default function DashboardPage() {
 
 function DashboardPageContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [activeTab, setActiveTab] = useState('overview')
   const [userName, setUserName] = useState('')
@@ -220,7 +221,10 @@ function DashboardPageContent() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) return
+    if (!user) {
+      router.push('/book-demo')
+      return
+    }
     
     // Get user name and earnings
     const { data: userData } = await supabase

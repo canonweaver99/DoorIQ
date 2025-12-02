@@ -103,6 +103,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
 }
 
 function TrainerPageContent() {
+  const router = useRouter()
   const [sessionActive, setSessionActive] = useState(false)
   const [sessionState, setSessionState] = useState<'active' | 'ending' | 'door-closing' | 'complete'>('active')
   const [sessionId, setSessionId] = useState<string | null>(null)

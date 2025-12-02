@@ -182,7 +182,7 @@ export default function Home() {
           gradient: "AI-Powered Training",
         }}
         ctaSecondaryText="Book a Demo"
-        onCtaSecondaryClick={() => setIsCalendarModalOpen(true)}
+        onCtaSecondaryClick={() => router.push('/book-demo')}
         ctaTertiaryText="Try For Free"
         ctaTertiaryHref="/trainer/select-homeowner"
         bottomImage={undefined}
@@ -199,7 +199,7 @@ export default function Home() {
       <InteractiveDemoSection />
 
       {/* 3) Built for Managers Section */}
-      <ManagerPricingSection onBookDemo={() => setIsCalendarModalOpen(true)} />
+      <ManagerPricingSection onBookDemo={() => router.push('/book-demo')} />
 
       {/* 4) Meet Our Homeowners - ARCHIVED */}
       {/* <MeetHomeownersSection /> */}

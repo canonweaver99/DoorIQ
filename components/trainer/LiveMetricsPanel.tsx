@@ -437,7 +437,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
               </div>
             </div>
           </div>
-          <div className="text-xs sm:text-sm lg:text-base text-slate-400 font-space mt-0.5">
+          <div className="text-xs sm:text-sm lg:text-base text-white font-space mt-0.5">
             {statusLabel}
           </div>
         </div>
@@ -475,7 +475,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
         </div>
         
         {/* Scale labels */}
-        <div className="flex justify-between text-[10px] sm:text-xs text-slate-400 font-space font-medium mb-0.5 leading-tight">
+        <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-0.5 leading-tight">
           <span>Low</span>
           <span className="hidden xs:inline">Building</span>
           <span className="xs:hidden">Build</span>
@@ -483,7 +483,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
         </div>
         
         {/* Percentage markers */}
-        <div className="flex justify-between text-[9px] sm:text-xs text-slate-500 font-space font-medium mb-0.5 leading-tight">
+        <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-0.5 leading-tight">
           <span>0%</span>
           <span className="hidden sm:inline">30%</span>
           <span className="hidden sm:inline">60%</span>
@@ -492,7 +492,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
       </div>
       
       {/* Current and ideal range - Bottom corners */}
-      <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-slate-300 font-space font-medium">
+      <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
         <span className="truncate">Current: {statusLabel}</span>
         <span className="truncate ml-1 sm:ml-2">Goal: 60%+</span>
       </div>
@@ -505,8 +505,8 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
           exit={{ opacity: 0, height: 0 }}
           className="mt-2 pt-2 border-t border-slate-700/50"
         >
-          <div className="text-xs text-slate-400 font-space font-medium mb-2">What feeds into Sentiment:</div>
-          <div className="space-y-1.5 text-xs text-slate-300 font-space">
+          <div className="text-xs text-white font-space font-medium mb-2">What feeds into Sentiment:</div>
+          <div className="space-y-1.5 text-xs text-white font-space">
             <div className="flex justify-between items-center">
               <span>Transcript Sentiment:</span>
               <span className="font-mono">{scoreToDots(factors.transcriptSentiment)}</span>
@@ -725,7 +725,7 @@ function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCar
       {/* Content - Fixed height with scroll */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {objections.length === 0 ? (
-          <div className="text-sm sm:text-base text-slate-400 font-space leading-tight">No objections detected</div>
+          <div className="text-sm sm:text-base text-white font-space leading-tight">No objections detected</div>
         ) : (
           <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
             <div className="space-y-2">
@@ -743,7 +743,7 @@ function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCar
                       <div className="text-sm sm:text-base font-semibold text-white font-space leading-tight">
                         {formatObjectionType(objection.type)}
                       </div>
-                      <div className="text-xs sm:text-sm text-slate-300 font-space italic mt-0.5 leading-tight line-clamp-2">
+                      <div className="text-xs sm:text-sm text-white font-space italic mt-0.5 leading-tight line-clamp-2">
                         "{objection.text.length > 50 ? objection.text.substring(0, 50) + '...' : objection.text}"
                       </div>
                     </div>
@@ -767,9 +767,9 @@ function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCar
                   exit={{ opacity: 0, height: 0 }}
                   className="mt-2 pt-2 border-t border-slate-700/50"
                 >
-                  <div className="text-xs sm:text-sm text-slate-400 font-space font-medium mb-1.5 leading-tight">Quick Tips:</div>
+                  <div className="text-xs sm:text-sm text-white font-space font-medium mb-1.5 leading-tight">Quick Tips:</div>
                   {Array.from(new Set(objections.map(o => o.type))).map((type) => (
-                    <div key={type} className="text-xs sm:text-sm text-slate-300 font-space mb-1 leading-tight">
+                    <div key={type} className="text-xs sm:text-sm text-white font-space mb-1 leading-tight">
                       ↳ {formatObjectionType(type)}: {getObjectionCoachingTips(type)}
                     </div>
                   ))}
@@ -777,7 +777,7 @@ function EnhancedObjectionsCard({ objections, className }: EnhancedObjectionsCar
               )}
               
               {objections.length > 2 && !isExpanded && (
-                <div className="text-xs sm:text-sm text-slate-400 font-space mt-1.5 leading-tight">
+                <div className="text-xs sm:text-sm text-white font-space mt-1.5 leading-tight">
                   Click to see all {objections.length} objections...
                 </div>
               )}
@@ -835,13 +835,13 @@ function EnhancedTechniquesCard({ techniquesUsed, className }: EnhancedTechnique
       <div className="space-y-1.5 flex-shrink-0 min-h-0 overflow-hidden">
         {displayedTechniques.length > 0 ? (
           displayedTechniques.map((tech) => (
-            <div key={tech} className="flex items-center gap-1.5 text-sm sm:text-base text-slate-300 font-space leading-tight">
+            <div key={tech} className="flex items-center gap-1.5 text-sm sm:text-base text-white font-space leading-tight">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <span className="text-white truncate">{tech}</span>
             </div>
           ))
         ) : (
-          <div className="text-sm sm:text-base text-slate-400 font-space leading-tight">No techniques detected yet</div>
+          <div className="text-sm sm:text-base text-white font-space leading-tight">No techniques detected yet</div>
         )}
       </div>
     </motion.div>
@@ -1028,7 +1028,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
           
           {/* Scale labels */}
-          <div className="flex justify-between text-[10px] sm:text-xs text-slate-400 font-space font-medium mb-0.5 leading-tight">
+          <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-0.5 leading-tight">
             <span>Listen</span>
             <span className="hidden xs:inline">Balanced</span>
             <span className="xs:hidden">Bal.</span>
@@ -1036,7 +1036,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
           
           {/* Percentage markers */}
-          <div className="flex justify-between text-[9px] sm:text-xs text-slate-500 font-space font-medium mb-0.5 leading-tight">
+          <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-0.5 leading-tight">
             <span className="flex-shrink-0">0%</span>
             <span className="flex-shrink-0 hidden sm:inline">40%</span>
             <span className="flex-shrink-0 hidden sm:inline">60%</span>
@@ -1045,7 +1045,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
         </div>
         
         {/* Current and ideal range - Bottom corners */}
-        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-slate-300 font-space font-medium">
+        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
           <span className="whitespace-nowrap truncate">Current: {talkTimeRatio}%</span>
           <span className="whitespace-nowrap truncate">Ideal: 40-60%</span>
         </div>

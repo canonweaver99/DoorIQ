@@ -33,8 +33,67 @@ export default function LoadingPage() {
     router.push(`/analytics/${sessionId}`)
   }
 
-  const handleStreamingComplete = () => {
-    console.log('✅ Streaming grading complete, redirecting to analytics...')
+  const handleStreamingComplete = async () => {
+    console.log('✅ Streaming grading complete, checking if first session...')
+    
+    // Check if this is first completed session before redirecting
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role, onboarding_steps_completed')
+          .eq('id', user.id)
+          .single()
+
+        if (userData) {
+          const isManager = userData.role === 'manager' || userData.role === 'admin'
+          const stepsCompleted = userData.onboarding_steps_completed || {}
+          const hasInvitedTeam = stepsCompleted.invite_team === true
+
+          // Check if this is their first completed session (excluding current session)
+          const { count: completedSessionsCount } = await supabase
+            .from('live_sessions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .neq('id', sessionId)
+            .not('grading_status', 'is', null)
+            .in('grading_status', ['complete', 'completed'])
+
+          const isFirstCompletedSession = (completedSessionsCount || 0) === 0
+
+          // If manager, first completed session, and hasn't invited team yet, redirect to invite page
+          if (isManager && isFirstCompletedSession && !hasInvitedTeam) {
+            console.log('👋 Manager first completed session - redirecting to invite page')
+            router.push(`/onboarding/invite-team`)
+            return
+          }
+
+          // If first completed session, redirect to book demo
+          if (isFirstCompletedSession) {
+            console.log('👋 First completed session - redirecting to book demo')
+            // Mark first_session as complete before redirecting (if not already marked)
+            if (!stepsCompleted.first_session) {
+              await fetch('/api/onboarding/complete-step', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ step: 'first_session' }),
+              })
+            }
+            router.push(`/book-demo`)
+            return
+          }
+        }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking first session in handleStreamingComplete:', error)
+    }
+    
+    // Not first session - proceed to analytics
+    console.log('✅ Redirecting to analytics...')
     router.push(`/analytics/${sessionId}`)
   }
 
@@ -67,8 +126,9 @@ export default function LoadingPage() {
         const hasInvitedTeam = stepsCompleted.invite_team === true
 
         // Check if this is their first completed session (excluding current session)
+        // Use live_sessions table instead of sessions table
         const { count: completedSessionsCount } = await supabase
-          .from('sessions')
+          .from('live_sessions')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .neq('id', sessionId)
@@ -92,6 +152,8 @@ export default function LoadingPage() {
           return
         }
 
+        // Don't redirect here - wait for grading to complete
+        // The redirect will happen in handleStreamingComplete after grading finishes
         setCheckedFirstSession(true)
       } catch (error) {
         console.error('Error checking first session:', error)
