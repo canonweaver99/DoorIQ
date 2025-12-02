@@ -504,7 +504,16 @@ function calculateTranscriptSentiment(transcript: TranscriptEntry[], sessionDura
             negative += 20 // High penalty for user being negative/unprofessional
           }
         })
-          const earlyScore = earlyEntries.length > 0 ? calculateWindowScore(earlyEntries) : 50
+      }
+    })
+    
+    // Normalize to 0-100 scale
+    const total = positive + negative
+    if (total === 0) return 50
+    return Math.round((positive / total) * 100)
+  }
+  
+  const earlyScore = earlyEntries.length > 0 ? calculateWindowScore(earlyEntries) : 50
   const middleScore = middleEntries.length > 0 ? calculateWindowScore(middleEntries) : earlyScore
   const recentScore = recentEntries.length > 0 ? calculateWindowScore(recentEntries) : middleScore
   
