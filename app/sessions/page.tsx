@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2, Timer } from 'lucide-react'
+import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2, Timer, XCircle, AlertTriangle, ArrowRight } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -15,6 +15,7 @@ import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 
 import { format, isToday, isYesterday, startOfDay } from 'date-fns'
+import type { GradeInfo, KeyIssue } from '@/app/dashboard/types'
 
 // AnimatedGrid component matching landing page style
 const AnimatedGrid = () => (
@@ -64,6 +65,69 @@ const getAgentImage = (agentName: string | null): string => {
     return PERSONA_METADATA[agentNameTyped].bubble.image
   }
   return '/agents/default.png'
+}
+
+// Calculate grade from score
+const calculateGrade = (score: number): GradeInfo => {
+  if (score >= 90) {
+    return {
+      letter: 'A',
+      color: 'text-green-600',
+      bgColor: 'bg-green-600/20',
+      borderColor: 'border-green-600'
+    }
+  } else if (score >= 80) {
+    return {
+      letter: 'B',
+      color: 'text-green-400',
+      bgColor: 'bg-green-400/20',
+      borderColor: 'border-green-400'
+    }
+  } else if (score >= 70) {
+    return {
+      letter: 'C',
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-400/20',
+      borderColor: 'border-yellow-400'
+    }
+  } else if (score >= 60) {
+    return {
+      letter: 'D',
+      color: 'text-orange-400',
+      bgColor: 'bg-orange-400/20',
+      borderColor: 'border-orange-400'
+    }
+  } else {
+    return {
+      letter: 'F',
+      color: 'text-red-400',
+      bgColor: 'bg-red-400/20',
+      borderColor: 'border-red-400'
+    }
+  }
+}
+
+// Extract first critical issue from session
+const getFirstCriticalIssue = (session: Session): KeyIssue | null => {
+  // Check for low scores - these are critical issues
+  if (session.rapport_score && session.rapport_score < 70) {
+    return { text: 'Work on building rapport early in the conversation', severity: 'warning' }
+  }
+  if (session.objection_handling_score && session.objection_handling_score < 70) {
+    return { text: 'Practice handling common objections more confidently', severity: 'warning' }
+  }
+  const closing = session.close_effectiveness_score ?? (session as any).close_score ?? null
+  if (closing && closing < 70) {
+    return { text: 'Focus on closing techniques and asking for the sale', severity: 'error' }
+  }
+  
+  // Check for speaking pace issues (if available)
+  const analytics = (session as any).analytics
+  if (analytics?.conversation_metrics?.pace && analytics.conversation_metrics.pace > 160) {
+    return { text: `Speaking too fast (${Math.round(analytics.conversation_metrics.pace)} WPM)`, severity: 'warning' }
+  }
+  
+  return null
 }
 
 
@@ -168,33 +232,6 @@ export default function SessionsPage() {
     return 'Needs improvement'
   }
 
-  const getKeyInsights = (session: Session) => {
-    const insights = []
-    
-    // Check for low scores
-    if (session.rapport_score && session.rapport_score < 70) {
-      insights.push({ type: 'warning', text: 'Work on building rapport early in the conversation' })
-    }
-    if (session.objection_handling_score && session.objection_handling_score < 70) {
-      insights.push({ type: 'warning', text: 'Practice handling common objections more confidently' })
-    }
-    const closing = session.close_effectiveness_score ?? (session as any).close_score ?? null
-    if (closing && closing < 70) {
-      insights.push({ type: 'warning', text: 'Focus on closing techniques and asking for the sale' })
-    }
-    
-    // Check for high scores
-    const safety = session.safety_score ?? null
-    if (safety && safety >= 80) {
-      insights.push({ type: 'success', text: 'Great job addressing safety concerns!' })
-    }
-    if (session.overall_score && session.overall_score >= 80) {
-      insights.push({ type: 'success', text: 'Excellent overall performance!' })
-    }
-    
-    // Return only the first insight
-    return insights.slice(0, 1)
-  }
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -523,8 +560,20 @@ export default function SessionsPage() {
                   {/* Sessions for this day */}
                   <div className="space-y-4">
                     {dayGroup.sessions.map((session, sessionIndex) => {
-                      const insights = getKeyInsights(session)
                       const totalIndex = dayIndex * 100 + sessionIndex // Ensure unique delay values
+                      const overallScore = session.overall_score || 0
+                      const grade = calculateGrade(overallScore)
+                      const criticalIssue = getFirstCriticalIssue(session)
+                      const agentName = session.agent_name || 'Average Austin'
+                      const agentMetadata = PERSONA_METADATA[agentName as AllowedAgentName]
+                      const agentImage = agentMetadata?.bubble?.image || '/agents/default.png'
+                      const variantKey = getAgentColorVariant(agentName)
+                      const variantStyles = COLOR_VARIANTS[variantKey]
+                      const imageStyle = getAgentImageStyle(agentName as AllowedAgentName)
+                      const formattedDate = format(new Date(session.created_at), 'EEEE, MMMM d, yyyy')
+                      const formattedTime = format(new Date(session.created_at), 'h:mm a')
+                      const durationMinutes = session.duration_seconds ? Math.floor(session.duration_seconds / 60) : null
+                      const durationSecs = session.duration_seconds ? session.duration_seconds % 60 : null
                       
                       return (
                         <motion.div
@@ -532,13 +581,27 @@ export default function SessionsPage() {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: 0.4 + (dayIndex * 0.1) + (sessionIndex * 0.05) }}
-                          className="group relative bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/5 hover:border-white/20 hover:bg-white/[0.025] transition-all duration-300 shadow-xl overflow-hidden"
+                          className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
                         >
                           {/* Subtle purple glow at bottom for depth */}
                           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           
-                          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                            <div className="flex-1 flex items-start gap-4 min-w-0">
+                          <div className="relative z-10">
+                            {/* Header with date/time */}
+                            <div className="flex items-center justify-between mb-4">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <Clock className="w-4 h-4 text-white/60" />
+                                  <p className="font-space text-white/80 text-sm font-bold">
+                                    {formattedDate} at {formattedTime}
+                                  </p>
+                                </div>
+                                {durationMinutes !== null && durationSecs !== null && (
+                                  <p className="font-space text-white/60 text-xs font-semibold mt-0.5">
+                                    Duration: {durationMinutes}m {durationSecs}s
+                                  </p>
+                                )}
+                              </div>
                               {/* Delete button */}
                               <button
                                 onClick={(e) => {
@@ -546,123 +609,147 @@ export default function SessionsPage() {
                                   e.stopPropagation()
                                   openDeleteModal(session.id as string)
                                 }}
-                                className="inline-flex items-center justify-center w-9 h-9 flex-shrink-0 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20 z-10 group-hover:border-red-500/40"
+                                className="inline-flex items-center justify-center w-8 h-8 flex-shrink-0 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20 z-10 group-hover:border-red-500/40"
                                 title="Delete session"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
-                              
-                              <div className="flex-1 flex items-start gap-4 min-w-0">
-                                {/* Agent Avatar with Gradient Rings */}
-                                <div 
-                                  className="relative flex-shrink-0"
-                                  style={{ width: `${circleSize}px`, height: `${circleSize}px`, minWidth: `${circleSize}px` }}
-                                >
-                                  {(() => {
-                                    const colorVariant = getAgentColorVariant(session.agent_name)
-                                    const variantStyles = COLOR_VARIANTS[colorVariant]
-                                    return (
-                                      <>
-                                        {/* Animated gradient rings */}
-                                        {[0, 1, 2].map((i) => (
-                                          <div
-                                            key={i}
-                                            className={`absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent ${variantStyles.border[i]} ${variantStyles.gradient}`}
-                                            style={{
-                                              animation: `spin 8s linear infinite`,
-                                              opacity: 0.6 - (i * 0.15)
-                                            }}
-                                          >
-                                            <div
-                                              className={`absolute inset-0 rounded-full mix-blend-screen bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace('from-', '')}/20%,transparent_70%)]`}
-                                            />
-                                          </div>
-                                        ))}
-                                        {/* Profile Image */}
-                                        <div className="absolute inset-[2px] rounded-full overflow-hidden">
+                            </div>
+
+                            {/* Main Content Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              {/* Left: Agent Info */}
+                              <div className="flex items-center gap-3">
+                                <div className="relative h-20 w-20 md:h-24 md:w-24 flex-shrink-0">
+                                  {/* Concentric circles */}
+                                  {[0, 1, 2].map((i) => (
+                                    <motion.div
+                                      key={i}
+                                      className={`absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent ${variantStyles.border[i]} ${variantStyles.gradient}`}
+                                      animate={{
+                                        rotate: 360,
+                                        scale: [1, 1.05, 1],
+                                        opacity: [0.7, 0.9, 0.7],
+                                      }}
+                                      transition={{
+                                        rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+                                        scale: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0 },
+                                        opacity: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0 },
+                                      }}
+                                    >
+                                      <div
+                                        className={`absolute inset-0 rounded-full mix-blend-screen bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace('from-', '')}/20%,transparent_70%)]`}
+                                      />
+                                    </motion.div>
+                                  ))}
+
+                                  {/* Profile Image */}
+                                  <motion.div 
+                                    className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
+                                    animate={{
+                                      scale: [1, 1.05, 1],
+                                    }}
+                                    transition={{
+                                      duration: 4,
+                                      repeat: Infinity,
+                                      ease: "easeInOut",
+                                      delay: 0,
+                                    }}
+                                  >
+                                    <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                                      {(() => {
+                                        const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                                        let translateY = '0'
+                                        const verticalNum = parseFloat(vertical)
+                                        if (verticalNum !== 50) {
+                                          const translatePercent = ((verticalNum - 50) / 150) * 100
+                                          translateY = `${translatePercent}%`
+                                        }
+                                        const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                                        
+                                        return (
                                           <Image
-                                            src={getAgentImage(session.agent_name)}
-                                            alt={session.agent_name || 'Agent'}
+                                            src={agentImage}
+                                            alt={agentName}
                                             fill
                                             className="object-cover"
-                                            style={getAgentImageStyle(session.agent_name)}
-                                            sizes={`${circleSize}px`}
-                                            loading="lazy"
+                                            style={{
+                                              objectPosition: `${horizontal} ${vertical}`,
+                                              transform: `scale(${scaleValue}) translateY(${translateY})`,
+                                            }}
+                                            sizes="96px"
                                           />
-                                        </div>
-                                      </>
-                                    )
-                                  })()}
+                                        )
+                                      })()}
+                                    </div>
+                                  </motion.div>
                                 </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-xl md:text-2xl font-bold text-white mb-2 truncate font-space">
-                                    {session.agent_name || 'Training Session'}
-                                  </h3>
-                                  <div className="flex flex-wrap items-center gap-4 text-sm text-white/60 font-sans">
-                                    <span className="flex items-center flex-shrink-0">
-                                      <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                                      <span className="whitespace-nowrap">{format(new Date(session.created_at), 'h:mm a')}</span>
-                                    </span>
-                                    <span className="flex items-center flex-shrink-0">
-                                      <Timer className="w-4 h-4 mr-2 flex-shrink-0" />
-                                      <span className="whitespace-nowrap">{session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}</span>
-                                    </span>
+                                <div>
+                                  <p className="font-space text-white/60 text-xs uppercase tracking-wider mb-0.5 font-semibold">Practice with</p>
+                                  <p className="font-space text-white text-lg md:text-xl font-bold tracking-tight">{agentName}</p>
+                                </div>
+                              </div>
+
+                              {/* Right: Score and Grade Badge */}
+                              <div className="flex items-center justify-center md:justify-end gap-3">
+                                <div className="flex items-baseline gap-1.5">
+                                  <div className="font-space text-4xl md:text-5xl text-white font-bold tracking-tight">
+                                    {overallScore}
                                   </div>
+                                  <p className="font-space text-white/60 text-base md:text-lg font-bold">/100</p>
+                                </div>
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
+                                  <span className={`font-space text-2xl md:text-3xl font-bold tracking-tight ${grade.color}`}>
+                                    {grade.letter}
+                                  </span>
                                 </div>
                               </div>
                             </div>
-                            
-                            <div className="flex items-center gap-6 flex-shrink-0">
-                              {/* Earnings */}
-                              <div className="text-right">
-                                <p className="text-xs text-white/60 mb-1 font-space uppercase tracking-wider">Earned</p>
-                                <p className={`text-2xl md:text-3xl font-bold font-space ${
-                                  session.virtual_earnings && session.virtual_earnings > 0 
-                                    ? 'text-emerald-400' 
-                                    : 'text-white/40'
-                                }`}>
-                                  ${session.virtual_earnings ? session.virtual_earnings.toFixed(2) : '0.00'}
-                                </p>
-                              </div>
-                              
-                              {/* Overall Score */}
-                              <div className="text-right">
-                                <CircularProgress 
-                                  percentage={session.overall_score || 0}
-                                  size={circleSize}
-                                  strokeWidth={6}
-                                />
-                              </div>
-                              
-                              <Link
-                                href={`/analytics/${session.id}`}
-                                className="inline-flex items-center px-6 py-2.5 bg-white/[0.02] backdrop-blur-sm border border-white/5 text-white/80 rounded-lg hover:bg-white/[0.05] hover:text-white hover:border-white/10 transition-all font-space font-medium text-sm"
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => router.push(`/analytics/${session.id}`)}
+                                className="group/btn flex-1 bg-white text-black font-bold rounded-md text-sm md:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space"
                               >
-                                View Details
-                                <ChevronRight className="ml-2 w-4 h-4" />
-                              </Link>
+                                View Full Analysis
+                                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => router.push('/trainer')}
+                                className="group/btn flex-1 bg-white text-black font-bold rounded-md text-sm md:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space"
+                              >
+                                Practice Again
+                                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
+                              </motion.button>
                             </div>
-                          </div>
-                          
-                          {/* Key Insights */}
-                          {insights.length > 0 && (
-                            <div className="pt-4 mt-4 border-t border-white/5">
-                              <div className="space-y-2">
-                                {insights.map((insight, idx) => (
-                                  <div
-                                    key={idx}
-                                    className={`flex items-start gap-3 text-base font-medium font-space ${
-                                      insight.type === 'success' ? 'text-green-400' : 'text-amber-400'
-                                    }`}
-                                  >
-                                    <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                                    <span className="leading-relaxed">{insight.text}</span>
+
+                            {/* Critical Issue Section - Only show first one */}
+                            {criticalIssue && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="pt-4 border-t border-white/10"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="font-space text-white/90 text-sm md:text-base font-bold tracking-tight">Critical Issues:</span>
+                                  <div className="flex items-center gap-2 font-space text-white/80 text-sm md:text-base font-bold">
+                                    {criticalIssue.severity === 'error' ? (
+                                      <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                                    ) : (
+                                      <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                                    )}
+                                    <span>{criticalIssue.text}</span>
                                   </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
                         </motion.div>
                       )
                     })}
@@ -692,3 +779,4 @@ export default function SessionsPage() {
     </div>
   )
 }
+

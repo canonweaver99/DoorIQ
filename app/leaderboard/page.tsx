@@ -630,14 +630,38 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {/* Motivational Message */}
-        <div className="mt-4 text-center">
-          <div className="inline-block bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 rounded-xl px-4 py-3 shadow-xl">
-            <p className="text-sm text-white/80 drop-shadow font-space">
-              Keep practicing to climb the ranks and earn more virtual cash! 🚀
-            </p>
+        {/* Practice CTA Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-8"
+        >
+          <div className="relative bg-gradient-to-br from-purple-500/20 via-purple-600/10 to-purple-500/20 backdrop-blur-xl border-2 border-purple-500/30 rounded-xl p-6 md:p-8 shadow-xl overflow-hidden">
+            {/* Animated background glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 animate-pulse" />
+            
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-2 font-space">
+                  Ready to Climb the Ranks? 🚀
+                </h3>
+                <p className="text-white/80 text-sm md:text-base font-sans">
+                  Keep practicing to improve your skills and earn more virtual cash!
+                </p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/trainer')}
+                className="group flex-shrink-0 flex items-center gap-2 bg-white text-black font-bold rounded-lg px-6 py-3 md:px-8 md:py-4 hover:bg-white/95 transition-all font-space text-sm md:text-base shadow-lg"
+              >
+                Start Practice Session
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   )

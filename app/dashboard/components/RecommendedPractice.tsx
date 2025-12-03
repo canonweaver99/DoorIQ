@@ -148,6 +148,24 @@ const moduleIcons: Record<string, typeof Footprints> = {
   'energy-management': Zap
 }
 
+// Agent-specific quotes
+const agentQuotes: Record<AllowedAgentName, string> = {
+  'Average Austin': "Howdy Partner, what can I do for ya? Yeah I think I'm all covered on that front but thanks!",
+  'No Problem Nancy': "Oh hello! That sounds interesting, tell me more!",
+  'Switchover Steve': "Actually, we're already with another company, but I'm listening...",
+  'Not Interested Nick': "Not interested, thanks. Have a good day.",
+  'DIY Dave': "I handle all that myself, but what are you offering?",
+  'Too Expensive Tim': "How much does this cost? That seems pretty expensive to me.",
+  'Spouse Check Susan': "I'd need to check with my husband first, but what's this about?",
+  'Busy Beth': "I only have a minute here, what do you need?",
+  'Renter Randy': "I'm just renting, so I'm not sure if I can make that decision.",
+  'Skeptical Sam': "I've heard a lot of sales pitches. What makes you different?",
+  'Just Treated Jerry': "We just had pest control done last month, so we're all set.",
+  'Think About It Tina': "Hmm, let me think about this. I need to do some research first.",
+  'Veteran Victor': "I appreciate you stopping by. What service are you offering?",
+  'Tag Team Tanya & Tom': "We're both here - what can you tell us about your service?",
+}
+
 export default function RecommendedPractice() {
   const router = useRouter()
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null)
@@ -254,8 +272,8 @@ export default function RecommendedPractice() {
   const variantStyles = COLOR_VARIANTS[variantKey]
   const imageStyle = getAgentImageStyle(personaName)
 
-  // Homeowner quote
-  const homeownerQuote = "Howdy Partner, what can I do for ya? Yeah I think I'm all covered on that front but thanks!"
+  // Homeowner quote - agent-specific
+  const homeownerQuote = agentQuotes[personaName] || agentQuotes['Average Austin']
 
   return (
     <motion.div
