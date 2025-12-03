@@ -98,10 +98,10 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
     switch (card.id) {
       case 'voice':
         return (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-space text-white/80 text-base md:text-lg font-bold">Confidence</span>
                   <span className="font-space text-white font-bold text-lg md:text-xl">{voice.confidence}%</span>
@@ -154,9 +154,9 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
               </div>
             </div>
             {/* Tips and Filler Words - Side by Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               {/* Tips */}
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
                 <h4 className="font-space text-white text-base md:text-lg font-bold mb-3">Voice Quality Tips</h4>
                 <ul className="space-y-2 font-space text-base md:text-lg text-white/80 font-bold">
                   <li className="flex items-start gap-2">
@@ -213,10 +213,10 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
       
       case 'conversation':
         return (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-space text-white/80 text-base md:text-lg font-bold">Talk Ratio</span>
                   <span className="font-space text-white font-bold text-lg md:text-xl">{conversation.talkRatio}%</span>
@@ -321,10 +321,10 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
       
       case 'closing':
         return (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-space text-white/80 text-base md:text-lg font-bold">Success Rate</span>
                   <span className="font-space text-white font-bold text-3xl md:text-4xl">{closing.success}%</span>
@@ -430,10 +430,10 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
       
       case 'overall':
         return (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-space text-white/80 text-base md:text-lg font-bold">Overall Score</span>
                   <span className="font-space text-white font-bold text-2xl md:text-3xl">{overall.score}/100</span>
@@ -474,9 +474,9 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
               </div>
             </div>
             {/* Score Breakdown and Improvement Areas - Side by Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               {/* Score Breakdown */}
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
                 <h4 className="font-space text-white text-base md:text-lg font-bold mb-4">Score Breakdown</h4>
                 <div className="space-y-4 md:space-y-5">
                   <div className="flex items-center justify-between">
@@ -558,22 +558,22 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: card.delay }}
-            className={`relative rounded-lg p-6 md:p-8 overflow-hidden border-2 ${getBorderColor()} ${getBackgroundColor()}`}
+            className={`relative rounded-lg p-3 sm:p-4 md:p-6 lg:p-8 overflow-hidden border-2 ${getBorderColor()} ${getBackgroundColor()}`}
           >
             
             <div className="relative z-10">
               {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white">
-                    <Icon className="w-6 h-6 text-white" />
+              <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white">
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
                   </div>
-                  <h3 className="font-space text-2xl md:text-3xl font-bold tracking-tight text-white">{card.title}</h3>
+                  <h3 className="font-space text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-white">{card.title}</h3>
                 </div>
                 {/* Enhanced Status Badge */}
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 ${card.status.borderColor} ${card.status.bgColor}`}
+                <div className={`inline-flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg border-2 ${card.status.borderColor} ${card.status.bgColor}`}
                 >
-                  <span className={`text-xs font-space font-bold ${card.status.color}`}>
+                  <span className={`text-[10px] sm:text-xs font-space font-bold ${card.status.color}`}>
                     {card.status.text.toUpperCase()}
                   </span>
                 </div>

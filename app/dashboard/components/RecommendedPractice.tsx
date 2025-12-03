@@ -368,7 +368,7 @@ export default function RecommendedPractice() {
 
         {/* Content */}
         <div className="flex-1 flex flex-col w-full md:max-w-[60%]">
-          <div className="mb-3 sm:mb-4 flex-1 min-h-[60%] flex flex-col justify-end">
+          <div className="mb-3 sm:mb-4 flex-1 min-h-[60%] flex flex-col justify-end text-center md:text-left">
             <p className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl font-medium mb-2 sm:mb-3 italic leading-relaxed">
               "{homeownerQuote}"
             </p>
@@ -491,9 +491,9 @@ export default function RecommendedPractice() {
             transition={{ duration: 0.4, delay: 0.2 }}
             className="mt-6 pt-6 border-t border-white/10"
           >
-            <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="w-5 h-5 text-purple-400" />
-              <h4 className="text-base font-semibold text-purple-300 uppercase tracking-wide">
+            <div className="flex items-center gap-2 mb-2 sm:mb-3">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+              <h4 className="text-sm sm:text-base font-semibold text-purple-300 uppercase tracking-wide">
                 Recommended Study
               </h4>
             </div>
@@ -502,7 +502,7 @@ export default function RecommendedPractice() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
-                className="w-full rounded-lg p-7 transition-all duration-300 cursor-pointer flex items-center gap-6 relative overflow-hidden group"
+                className="w-full rounded-lg p-3 sm:p-5 md:p-7 transition-all duration-300 cursor-pointer flex items-center gap-2 sm:gap-4 md:gap-6 relative overflow-hidden group"
                 style={{
                   backgroundColor: cardColors.bg,
                   border: `2px solid ${cardColors.border}`,
@@ -510,42 +510,42 @@ export default function RecommendedPractice() {
                 }}
               >
                 {/* Lesson Number */}
-                <div className="flex-shrink-0 w-14 h-14 rounded-lg flex items-center justify-center font-bold text-xl text-white"
+                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg flex items-center justify-center font-bold text-base sm:text-lg md:text-xl text-white"
                   style={{ backgroundColor: cardColors.numberBg }}>
                   {nextModule.display_order}
                 </div>
 
                 {/* Icon */}
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center"
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center"
                     style={{ backgroundColor: cardColors.iconBg }}>
-                    <IconComponent className="w-6 h-6 text-white" />
+                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-bold text-white mb-2 font-space line-clamp-1">
+                  <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 sm:mb-2 font-space line-clamp-1">
                     {nextModule.title}
                   </h3>
                   {hookLine && (
-                    <p className="text-base text-white/85 font-sans line-clamp-1">
+                    <p className="text-xs sm:text-sm md:text-base text-white/85 font-sans line-clamp-1">
                       {hookLine}
                     </p>
                   )}
                 </div>
 
                 {/* Right side: Time, Button */}
-                <div className="flex items-center gap-4 flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0">
                   {/* Time */}
-                  <div className="flex items-center gap-1.5 text-base text-white/80 font-sans font-bold">
-                    <Clock className="w-5 h-5" />
+                  <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm md:text-base text-white/80 font-sans font-bold">
+                    <Clock className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                     <span>{nextModule.estimated_minutes} min</span>
                   </div>
 
                   {/* Button */}
                   <button
-                    className="px-5 py-2.5 rounded-lg font-semibold text-base transition-all duration-200 flex items-center gap-2 text-white group-hover:scale-105"
+                    className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 rounded-lg font-semibold text-xs sm:text-sm md:text-base transition-all duration-200 flex items-center gap-1 sm:gap-2 text-white group-hover:scale-105"
                     style={isCompleted ? {
                       backgroundColor: cardColors.numberBg,
                     } : isInProgress ? {
@@ -559,14 +559,14 @@ export default function RecommendedPractice() {
                     }}
                   >
                     {buttonText}
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                   </button>
                 </div>
 
                 {/* Completion Overlay */}
                 {isCompleted && (
-                  <div className="absolute top-3 right-3">
-                    <CheckCircle2 className="w-7 h-7 text-green-400" />
+                  <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+                    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-green-400" />
                   </div>
                 )}
               </motion.div>

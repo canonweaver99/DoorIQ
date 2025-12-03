@@ -21,7 +21,10 @@ interface TabNavigationProps {
 export default function TabNavigation({ tabs, activeTab, onChange, demoMode = false }: TabNavigationProps) {
   return (
     <div className="sticky top-0 z-20 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 mb-8">
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+      <div 
+        className="grid sm:flex sm:items-center gap-0 sm:gap-2 overflow-x-auto scrollbar-hide"
+        style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+      >
         {tabs.map((tab, index) => {
           const isActive = activeTab === tab.id
           const Icon = tab.icon
@@ -34,7 +37,7 @@ export default function TabNavigation({ tabs, activeTab, onChange, demoMode = fa
               transition={{ duration: 0.3, delay: index * 0.05 }}
               onClick={() => !tab.locked && !demoMode && onChange(tab.id)}
               disabled={tab.locked || demoMode}
-              className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+              className={`relative flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-300 ${
                 tab.locked
                   ? 'text-slate-600 cursor-not-allowed opacity-60'
                   : demoMode
@@ -45,7 +48,7 @@ export default function TabNavigation({ tabs, activeTab, onChange, demoMode = fa
               }`}
               title={tab.locked ? 'Upgrade to unlock this feature' : demoMode ? 'Demo mode - tabs for display only' : undefined}
             >
-              <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${tab.locked ? 'text-slate-600' : isActive ? 'text-purple-400' : 'text-slate-400'}`} />
+              <Icon className={`w-5 h-5 sm:w-4 sm:h-4 md:w-5 md:h-5 ${tab.locked ? 'text-slate-600' : isActive ? 'text-purple-400' : 'text-slate-400'}`} />
               <span className="hidden sm:inline">{tab.label}</span>
               {tab.locked && <Lock className="w-3 h-3 text-amber-500" />}
               

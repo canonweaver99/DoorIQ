@@ -697,7 +697,14 @@ function HeaderContent() {
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
                   <div className="p-6 pt-20 space-y-2">
-                  {publicNavigation.map((item) => {
+                  {publicNavigation
+                    .filter(item => 
+                      item.name !== 'Help' && 
+                      item.name !== 'Contact Sales' && 
+                      item.name !== 'Book Demo' && 
+                      item.name !== 'Features'
+                    )
+                    .map((item) => {
                     const Icon = item.icon
                     const active = isActive(item.href)
                     return (
