@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
-import { sendNewUserNotification } from '@/lib/email/send'
+import { sendNewUserNotification, sendWelcomeEmail } from '@/lib/email/send'
 
 export async function POST(request: NextRequest) {
   try {
@@ -236,6 +236,14 @@ export async function POST(request: NextRequest) {
       await sendNewUserNotification(email, full_name, userId, 'bulk-signup')
     } catch (emailError) {
       console.error('Warning: Failed to send notification email:', emailError)
+      // Don't fail the request
+    }
+
+    // Send welcome email to new user
+    try {
+      await sendWelcomeEmail(email, full_name)
+    } catch (emailError) {
+      console.error('Warning: Failed to send welcome email:', emailError)
       // Don't fail the request
     }
 
