@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import PerformanceDashboard from './PerformanceDashboard'
-import QuickActionsToolbar from './QuickActionsToolbar'
 import OnboardingElements from './OnboardingElements'
 import MiniLeaderboard from '@/components/dashboard/MiniLeaderboard'
 import PerformanceSnapshot from '@/components/dashboard/PerformanceSnapshot'
@@ -209,31 +208,6 @@ export default function HomepageContent() {
         <RecommendedAgents skillGaps={hasCompletedSessions ? skillGaps : []} />
       </motion.section>
 
-      {/* Performance Snapshot with Weekly Sessions (shown after first session) */}
-      {hasCompletedSessions && !isEmpty && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="bg-white/[0.02] border border-white/10 rounded-xl p-6 md:p-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
-                </div>
-                <div>
-                  <h2 className="text-white font-space font-medium text-lg md:text-xl tracking-tight">
-                    Performance Snapshot
-                  </h2>
-                  <p className="text-white/60 text-sm">Your recent average metrics</p>
-                </div>
-              </div>
-            </div>
-            <WeeklySessionsChart />
-          </div>
-        </motion.section>
-      )}
 
       {/* Performance Dashboard */}
       <motion.section
@@ -271,14 +245,6 @@ export default function HomepageContent() {
       </motion.section>
 
 
-      {/* Quick Actions Toolbar */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-      >
-        <QuickActionsToolbar />
-      </motion.section>
 
       {/* Ready to Practice? - Moved to bottom */}
       <motion.section

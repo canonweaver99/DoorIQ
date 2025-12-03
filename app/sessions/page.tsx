@@ -6,6 +6,7 @@ import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2, Timer } from 'lucide-react'
+import WeeklySessionsChart from '@/components/dashboard/WeeklySessionsChart'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -428,16 +429,19 @@ export default function SessionsPage() {
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-32">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12 flex flex-col items-center gap-4 md:gap-6"
+          className="mb-3 text-center"
         >
-          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white text-center font-light leading-[1.3]">
-            Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Training Sessions</span>
+          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
+            Training Sessions
           </h1>
-          <p className="font-sans text-xl md:text-2xl text-white/80 max-w-3xl leading-relaxed font-light">
-            Review your past sessions and track your improvement
+          <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-300 drop-shadow-md font-space">
+            Review your past sessions and{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+              track your improvement
+            </span>
           </p>
         </motion.div>
 
@@ -446,7 +450,7 @@ export default function SessionsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8"
         >
           <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-xl hover:border-white/10 transition-colors">
             <div className="flex items-center justify-between mb-3">
@@ -474,30 +478,12 @@ export default function SessionsPage() {
               <Calendar className="w-5 h-5 text-pink-400" />
             </div>
             <p className="text-4xl md:text-5xl font-bold text-white font-space mb-2">{stats.sessionsCount}</p>
-            <p className="text-sm text-white/60 font-sans">Completed this {filter === 'week' ? 'week' : filter === 'month' ? 'month' : 'period'}</p>
+            <p className="text-sm text-white/60 font-sans">Completed sessions</p>
           </div>
-        </motion.div>
 
-        {/* Filter Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex items-center justify-center gap-3 mb-8"
-        >
-          {(['week', 'month', 'all'] as const).map((period) => (
-            <button
-              key={period}
-              onClick={() => setFilter(period)}
-              className={`px-6 py-2.5 rounded-lg font-medium text-base transition-all duration-200 font-space ${
-                filter === period
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                  : 'bg-white/[0.02] backdrop-blur-sm border border-white/5 text-white/80 hover:bg-white/[0.05] hover:text-white hover:border-white/10'
-              }`}
-            >
-              {period === 'week' ? 'Past Week' : period === 'month' ? 'Past Month' : 'All Time'}
-            </button>
-          ))}
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-xl hover:border-white/10 transition-colors">
+            <WeeklySessionsChart />
+          </div>
         </motion.div>
 
         {/* Sessions List */}

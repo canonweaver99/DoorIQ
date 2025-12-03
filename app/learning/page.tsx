@@ -180,10 +180,17 @@ export default function LearningPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-8"
+          className="mb-3 text-center"
         >
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-space">Learning Center</h1>
-          <p className="text-white text-lg sm:text-xl font-sans">Master D2D sales fundamentals</p>
+          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
+            Learning Center
+          </h1>
+          <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-300 drop-shadow-md font-space">
+            Master D2D sales{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+              fundamentals
+            </span>
+          </p>
         </motion.div>
 
         {/* Continue Learning Banner */}

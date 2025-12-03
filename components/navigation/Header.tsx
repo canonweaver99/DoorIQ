@@ -123,9 +123,7 @@ function HeaderContent() {
   const sidebarButtonRef = useRef<HTMLButtonElement | null>(null)
   const [portalReady, setPortalReady] = useState(false)
   // Credit system removed - no credit display needed
-  const [showMenuOnHover, setShowMenuOnHover] = useState(false)
   const [isLiveSession, setIsLiveSession] = useState(false)
-  const [shouldHideMenu, setShouldHideMenu] = useState(false)
   const [isAuthPage, setIsAuthPage] = useState(false)
   const [isScrolledDown, setIsScrolledDown] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -155,93 +153,13 @@ function HeaderContent() {
     setIsAuthPage(onAuthPage)
   }, [pathname])
 
-    // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing - show on hover
-    // Menu should always be visible on home page (/), authenticated home page (/home), practice pages (/trainer), sessions page (/sessions), learning center (/learning), and pricing (/pricing)
-    // Admin pages and Dashboard: completely hide menu (no hover)
-    // Live session pages and grading/feedback pages: completely hide menu (no hover) - only show home button
-    useEffect(() => {
-      const isHomePage = pathname === '/' || pathname === '/home'
-      const isPracticePage = pathname?.startsWith('/trainer')
-      const isSessionsPage = pathname?.startsWith('/sessions')
-      const isLearningPage = pathname?.startsWith('/learning')
-      const isPricingPage = pathname?.startsWith('/pricing')
-      const isSignupPage = pathname?.startsWith('/team/signup')
-      const isAdminPage = pathname?.startsWith('/admin')
-      const isDashboardPage = pathname?.startsWith('/dashboard')
-    
-    // Live session page: /trainer but NOT /trainer/select-homeowner
-    const isLiveSessionPage = pathname === '/trainer' || (pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner' && !pathname?.startsWith('/trainer/upload'))
-    
-    // Grading/feedback pages
-    const isGradingPage = pathname?.startsWith('/trainer/loading/')
-    const isAnalyticsPage = pathname?.startsWith('/analytics/') && pathname !== '/analytics'
-    
-    // Settings pages
-    const isSettingsPage = pathname?.startsWith('/settings')
-    
-    // Hide menu on all pages except home page, dashboard, select-homeowner page, sessions page, learning center, and pricing
-    // Admin pages, Signup pages, Live sessions, Grading/Analytics pages, and Settings pages get special treatment - menu is completely hidden
-    const hideMenu = !isHomePage && !isDashboardPage && !isSessionsPage && !isLearningPage && !isPricingPage && pathname !== '/trainer/select-homeowner'
-    setShouldHideMenu(hideMenu || isAdminPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage || isSettingsPage) // Force hide on admin, signup, live sessions, grading, and settings pages
-    
     // Set isLiveSession for backward compatibility
-    setIsLiveSession(isLiveSessionPage)
-  }, [pathname])
+    useEffect(() => {
+      const isLiveSessionPage = pathname === '/trainer' || (pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner' && !pathname?.startsWith('/trainer/upload'))
+      setIsLiveSession(isLiveSessionPage)
+    }, [pathname])
 
-  // Handle mouse position to show menu at top when hovering on pages where it's hidden
-  useEffect(() => {
-    const isHomePage = pathname === '/' || pathname === '/home'
-    const isPracticePage = pathname?.startsWith('/trainer')
-    const isSessionsPage = pathname?.startsWith('/sessions')
-    const isLearningPage = pathname?.startsWith('/learning')
-    const isPricingPage = pathname?.startsWith('/pricing')
-    const isSignupPage = pathname?.startsWith('/team/signup')
-    const isAdminPage = pathname?.startsWith('/admin')
-    const isDashboardPage = pathname?.startsWith('/dashboard')
-    
-    // Live session page: /trainer but NOT /trainer/select-homeowner
-    const isLiveSessionPage = pathname === '/trainer' || (pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner' && !pathname?.startsWith('/trainer/upload'))
-    
-    // Grading/feedback pages
-    const isGradingPage = pathname?.startsWith('/trainer/loading/')
-    const isAnalyticsPage = pathname?.startsWith('/analytics/') && pathname !== '/analytics'
-    
-    // Settings pages: completely hide menu (no hover)
-    const isSettingsPage = pathname?.startsWith('/settings')
-    
-    // Admin pages, Signup pages, Live sessions, Grading/Analytics pages, and Settings pages: completely hide menu (no hover)
-    if (isAdminPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage || isSettingsPage) {
-      setShowMenuOnHover(false)
-      return
-    }
-    
-    // Always show menu on home page, dashboard, select-homeowner page, sessions page, learning center, and pricing
-    if (isHomePage || isDashboardPage || pathname === '/trainer/select-homeowner' || isSessionsPage || isLearningPage || isPricingPage) {
-      setShowMenuOnHover(true)
-      return
-    }
-
-    // Hide menu by default on pages that should hide it
-    if (!shouldHideMenu) {
-      setShowMenuOnHover(true) // Show menu normally on other pages
-      return
-    }
-
-    // On pages where menu should be hidden, show it only on hover
-    setShowMenuOnHover(false)
-
-    const handleMouseMove = (e: MouseEvent) => {
-      // Show menu when cursor is within top 100px of screen
-      if (e.clientY < 100) {
-        setShowMenuOnHover(true)
-      } else {
-        setShowMenuOnHover(false)
-      }
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [shouldHideMenu, pathname])
+  // Menu is now always visible - removed hover logic
 
   useEffect(() => {
     const supabase = createClient()
@@ -816,7 +734,7 @@ function HeaderContent() {
                     <motion.div
                       key="sidebar-panel"
                       ref={sidebarRef}
-                      className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-border/20 dark:border-white/10 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)]"
+                      className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-white/10 bg-black/95 backdrop-blur-xl shadow-[0_30px_120px_rgba(0,0,0,0.5)]"
                       role="menu"
                       initial={{ opacity: 0, x: 64 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -825,12 +743,12 @@ function HeaderContent() {
                     >
                       <div className="px-[19px] pt-[14px] pb-[9px] flex items-center justify-between">
                         <div>
-                          <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Navigation</p>
-                          <h2 className="mt-[5px] text-lg sm:text-xl md:text-2xl font-semibold text-foreground font-space">DoorIQ</h2>
+                          <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-white/50 font-space">Navigation</p>
+                          <h2 className="mt-[5px] text-lg sm:text-xl md:text-2xl font-semibold text-white font-space">DoorIQ</h2>
                         </div>
                         <button
                           onClick={() => setIsSidebarOpen(false)}
-                          className="rounded-full bg-background/50 dark:bg-white/10 text-foreground/70 dark:text-slate-300 p-[7px] hover:bg-background dark:hover:bg-white/20 transition"
+                          className="rounded-full bg-white/10 text-white/70 p-[7px] hover:bg-white/20 transition"
                           aria-label="Close menu"
                         >
                           <X className="w-[16.5px] h-[16.5px]" />
@@ -849,12 +767,12 @@ function HeaderContent() {
                                   router.push(item.href)
                                   setIsSidebarOpen(false)
                                 }}
-                                className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-border/10 dark:border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-foreground/80 dark:text-slate-200 transition-all hover:border-border/20 dark:hover:border-white/15 hover:bg-background/50 dark:hover:bg-white/5 font-space ${
-                                  active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/30' : ''
+                                className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:border-white/15 hover:bg-white/5 font-space ${
+                                  active ? 'bg-white/10 border-white/15' : ''
                                 }`}
                               >
                                 <span className="flex items-center gap-[12px]">
-                                  <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white shrink-0">
+                                  <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white shrink-0">
                                     <Icon className="h-[16.5px] w-[16.5px]" />
                                   </span>
                                   <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
@@ -869,7 +787,7 @@ function HeaderContent() {
                         <Link
                           href="/auth/login"
                           onClick={() => setIsSidebarOpen(false)}
-                          className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-background/50 dark:bg-white/5 px-[14px] py-[9px] text-[14px] font-medium text-foreground/80 dark:text-slate-200 transition hover:bg-background dark:hover:bg-white/10"
+                          className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-white/5 px-[14px] py-[9px] text-[14px] font-medium text-white/80 transition hover:bg-white/10"
                         >
                           <LogIn className="h-[16.5px] w-[16.5px]" />
                           <span>Log In</span>
@@ -877,7 +795,7 @@ function HeaderContent() {
                         <Link
                           href="/auth/signup"
                           onClick={() => setIsSidebarOpen(false)}
-                          className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-[14px] py-[9px] text-[14px] font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40"
+                          className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-white text-black px-[14px] py-[9px] text-[14px] font-semibold transition hover:bg-white/95"
                         >
                           <ArrowRight className="h-[16.5px] w-[16.5px]" />
                           <span>Sign Up</span>
@@ -894,30 +812,14 @@ function HeaderContent() {
 
       {/* Mini Navigation Menu - Mobile & Desktop - Only show for signed-in users */}
       {isSignedIn && !isAuthPage && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
-          (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-        }`}>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <MiniNavMenu />
         </div>
       )}
 
       {/* Full-width header - Desktop - Only show for signed-in users */}
       {isSignedIn && !isAuthPage && (
-        <header className={`hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 transition-opacity duration-300 overflow-hidden ${
-          (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-        }`}
-        onMouseEnter={() => {
-          // Show menu when hovering over it, even if it's hidden
-          if (shouldHideMenu) {
-            setShowMenuOnHover(true)
-          }
-        }}
-        onMouseLeave={() => {
-          // Hide menu when leaving hover area
-          if (shouldHideMenu) {
-            setShowMenuOnHover(false)
-          }
-        }}>
+        <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 overflow-hidden">
           {/* Animated grid pattern */}
           <motion.div
             animate={{
@@ -1067,16 +969,8 @@ function HeaderContent() {
       )}
 
       {/* Mobile header - Only show for signed-in users */}
-      {isSignedIn && (
-        <div className={`fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden transition-opacity duration-300 ${
-          isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-        }`}
-        onMouseEnter={() => {
-          // Show menu when hovering over mobile menu button
-          if (shouldHideMenu) {
-            setShowMenuOnHover(true)
-          }
-        }}>
+      {isSignedIn && !isAuthPage && (
+        <div className="fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all touch-target"
@@ -1203,12 +1097,12 @@ function HeaderContent() {
                 >
                   <div className="px-[19px] pt-[14px] pb-[9px] flex items-center justify-between">
                     <div>
-                      <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Account</p>
-                      <h2 className="mt-[5px] text-lg sm:text-xl md:text-2xl font-semibold text-foreground font-space">DoorIQ Control Center</h2>
+                      <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-white/50 font-space">Account</p>
+                      <h2 className="mt-[5px] text-lg sm:text-xl md:text-2xl font-semibold text-white font-space">DoorIQ Control Center</h2>
                     </div>
                     <button
                       onClick={() => setIsSidebarOpen(false)}
-                      className="rounded-full bg-background/50 dark:bg-white/10 text-foreground/70 dark:text-slate-300 p-[7px] hover:bg-background dark:hover:bg-white/20 transition"
+                      className="rounded-full bg-white/10 text-white/70 p-[7px] hover:bg-white/20 transition"
                       aria-label="Close account navigation"
                     >
                       <X className="w-[16.5px] h-[16.5px]" />
@@ -1216,10 +1110,10 @@ function HeaderContent() {
                   </div>
 
                   <div className="px-[19px]">
-                    <div className="rounded-xl border border-border/20 dark:border-white/10 bg-card/60 dark:bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-[14px]">
                       <div className="flex items-center gap-[12px]">
                         {profileAvatar && !avatarError ? (
-                          <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border border-purple-500/30">
+                          <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border border-white/20">
                             <img 
                               src={profileAvatar} 
                               alt={profileName}
@@ -1231,24 +1125,24 @@ function HeaderContent() {
                             />
                           </div>
                         ) : (
-                          <div className="h-[37px] w-[37px] rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-[14px] font-semibold">
+                          <div className="h-[37px] w-[37px] rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white text-[14px] font-semibold">
                             {profileInitial}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm sm:text-base font-semibold text-foreground leading-tight truncate font-space">{profileName}</p>
-                          <p className="text-xs sm:text-sm text-foreground/70 dark:text-slate-300 leading-tight truncate font-sans">{profileEmail}</p>
+                          <p className="text-sm sm:text-base font-semibold text-white leading-tight truncate font-space">{profileName}</p>
+                          <p className="text-xs sm:text-sm text-white/70 leading-tight truncate font-sans">{profileEmail}</p>
                         </div>
                       </div>
-                      <div className="mt-[12px] flex items-center justify-between text-sm sm:text-base text-foreground/70 dark:text-slate-300">
-                        <div>
-                          <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-foreground/50 dark:text-slate-400 font-space">Earnings</p>
-                          <p className="mt-[2px] text-base sm:text-lg font-semibold text-foreground font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
-                        </div>
-                        <button
-                          onClick={() => router.push('/settings')}
-                          className="inline-flex items-center gap-[5px] rounded-full border border-border/20 dark:border-white/10 bg-background/50 dark:bg-white/5 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-foreground/80 dark:text-slate-200 hover:bg-background dark:hover:bg-white/10 transition font-space"
-                        >
+                        <div className="mt-[12px] flex items-center justify-between text-sm sm:text-base text-white/70">
+                          <div>
+                            <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/50 font-space">Earnings</p>
+                            <p className="mt-[2px] text-base sm:text-lg font-semibold text-white font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
+                          </div>
+                          <button
+                            onClick={() => router.push('/settings')}
+                            className="inline-flex items-center gap-[5px] rounded-full border border-white/10 bg-white/5 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-white/80 hover:bg-white/10 transition font-space"
+                          >
                           Manage Account
                           <ArrowRight className="h-[12px] w-[12px]" />
                         </button>
@@ -1267,9 +1161,9 @@ function HeaderContent() {
                               router.push(action.href)
                               setIsSidebarOpen(false)
                             }}
-                            className="group flex flex-col items-center justify-center gap-[7px] rounded-xl border border-border/10 dark:border-white/5 bg-card/50 dark:bg-white/5 px-[9px] py-[12px] text-xs sm:text-sm text-foreground/80 dark:text-slate-200 transition hover:bg-background dark:hover:bg-white/10 hover:border-border/20 dark:hover:border-white/15 font-space"
+                            className="group flex flex-col items-center justify-center gap-[7px] rounded-xl border border-white/5 bg-white/5 px-[9px] py-[12px] text-xs sm:text-sm text-white/80 transition hover:bg-white/10 hover:border-white/15 font-space"
                           >
-                            <span className="flex h-[33px] w-[33px] items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/40 to-indigo-500/40 text-white">
+                            <span className="flex h-[33px] w-[33px] items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white">
                               <Icon className="h-[16.5px] w-[16.5px]" />
                             </span>
                             <span className="text-center leading-tight font-medium">{action.label}</span>
@@ -1303,7 +1197,7 @@ function HeaderContent() {
 
                         return (
                           <div key={section.title}>
-                            <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-foreground/50 dark:text-slate-500 mb-[7px] font-space">{section.title}</p>
+                            <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-white/50 mb-[7px] font-space">{section.title}</p>
                             <div className="space-y-[5px]">
                               {visibleItems.map((item) => {
                                 const Icon = item.icon
@@ -1314,10 +1208,10 @@ function HeaderContent() {
                                       router.push(item.href)
                                       setIsSidebarOpen(false)
                                     }}
-                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-border/10 dark:border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-foreground/80 dark:text-slate-200 transition-all hover:border-border/20 dark:hover:border-white/15 hover:bg-background/50 dark:hover:bg-white/5 font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
+                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:border-white/15 hover:bg-white/5 font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
                                   >
                                     <span className="flex items-center gap-[12px]">
-                                      <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white shrink-0">
+                                      <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white shrink-0">
                                         <Icon className="h-[16.5px] w-[16.5px]" />
                                       </span>
                                       <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
@@ -1345,7 +1239,7 @@ function HeaderContent() {
                     {isSignedIn && (
                       <button
                         onClick={handleSignOut}
-                        className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-[14px] py-[9px] text-[14px] font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-white text-black px-[14px] py-[9px] text-[14px] font-semibold transition hover:bg-white/95 disabled:cursor-not-allowed disabled:opacity-70"
                         disabled={signingOut}
                       >
                         <LogOut className="h-[16.5px] w-[16.5px]" />
