@@ -195,14 +195,14 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
 // Wrapper component for timeline cards with scroll highlight effect
 function TimelineCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: "200px" });
 
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-      transition={{ delay: index * 0.3, duration: 0.6 }}
+      transition={{ delay: index * 0.2, duration: 0.6 }}
       className={`w-full ${isInView ? 'timeline-card-highlight' : ''}`}
     >
       {children}

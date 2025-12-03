@@ -10,9 +10,19 @@ export default function Home() {
   // Handle email verification tokens from hash fragments before redirecting
   useEffect(() => {
     const handleAuthRedirect = async () => {
+      const supabase = createClient()
+      
+      // First check if user is already authenticated
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        // User is authenticated, redirect to dashboard (homepage)
+        router.replace('/dashboard')
+        return
+      }
+      
       // Check if we have auth tokens in the hash fragment
       if (typeof window === 'undefined' || !window.location.hash) {
-        // No auth tokens, redirect to landing
+        // No auth tokens and not authenticated, redirect to landing
         router.replace('/landing')
         return
       }
@@ -79,7 +89,7 @@ export default function Home() {
           
           // Clear the hash from URL and redirect to home
           window.history.replaceState(null, '', window.location.pathname)
-          router.push('/home')
+          router.push('/dashboard')
           router.refresh()
         } else {
           router.replace('/landing')

@@ -102,17 +102,23 @@ interface AgentBubbleSelectorProps {
 
 const AnimatedGrid = () => (
   <motion.div
-    className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,transparent_30%,black)]"
     animate={{
-      backgroundPosition: ["0% 0%", "100% 100%"],
+      opacity: [0.02, 0.04, 0.02],
     }}
     transition={{
-      duration: 40,
-      repeat: Number.POSITIVE_INFINITY,
-      ease: "linear",
+      duration: 8,
+      repeat: Infinity,
+      ease: "easeInOut",
     }}
+    className="absolute inset-0 pointer-events-none"
   >
-    <div className="h-full w-full [background-image:repeating-linear-gradient(100deg,#64748B_0%,#64748B_1px,transparent_1px,transparent_4%)] opacity-20 dark:opacity-15" />
+    <div
+      className="absolute inset-0"
+      style={{
+        backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+        backgroundSize: "60px 60px",
+      }}
+    />
   </motion.div>
 )
 
@@ -332,20 +338,20 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
   if (loading) {
     return (
-      <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] flex items-center justify-center">
+      <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
         <AnimatedGrid />
-        <div className="relative z-10 text-foreground font-space text-lg sm:text-xl">Loading homeowners…</div>
+        <div className="relative z-10 text-white/80 font-space text-lg sm:text-xl">Loading homeowners…</div>
       </div>
     )
   }
 
   if (!loading && agents.length === 0) {
     return (
-      <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] flex items-center justify-center">
+      <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
         <AnimatedGrid />
-        <div className="relative z-10 text-center text-foreground/80 space-y-3">
-          <p className="text-xl sm:text-2xl font-semibold font-space">No homeowner agents found</p>
-          <p className="text-base sm:text-lg text-foreground/60 max-w-sm font-sans">
+        <div className="relative z-10 text-center text-white/80 space-y-3">
+          <p className="text-xl sm:text-2xl font-light font-space">No homeowner agents found</p>
+          <p className="text-base sm:text-lg text-white/60 max-w-sm font-sans font-light">
             Add active homeowner personas in Supabase with an ElevenLabs agent ID to see them here.
           </p>
         </div>
@@ -353,42 +359,55 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     )
   }
 
-  // Map difficulty to border color, same background for all
+  // Map difficulty to border color, minimal style matching landing page
   const getCardStyle = (difficulty: DifficultyKey): { border: string; bg: string } => {
-    let borderColor = 'border-gray-700'
-    switch (difficulty) {
-      case 'Easy':
-        borderColor = 'border-green-500/40'
-        break
-      case 'Moderate':
-        borderColor = 'border-yellow-500/40'
-        break
-      case 'Hard':
-        borderColor = 'border-orange-500/40'
-        break
-      case 'Expert':
-        borderColor = 'border-red-500/40'
-        break
-    }
-    return { border: borderColor, bg: 'bg-black' }
+    return { border: 'border-white/5', bg: 'bg-white/[0.02]' }
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] flex flex-col items-center justify-center">
+    <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center">
       <AnimatedGrid />
+      
+      {/* Animated gradient orbs matching landing page */}
+      <motion.div
+        animate={{
+          x: [0, 30, 0],
+          y: [0, 20, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px] pointer-events-none"
+      />
+      <motion.div
+        animate={{
+          x: [0, -25, 0],
+          y: [0, 30, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px] pointer-events-none"
+      />
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-16 sm:pt-20 md:pt-24">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8 sm:mb-10 flex flex-col items-center gap-3 sm:gap-4"
+          className="text-center mb-12 flex flex-col items-center gap-4 md:gap-6"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] xl:text-[64px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold text-foreground">
-            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Challenge</span>
+          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white text-center font-light leading-[1.3]">
+            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Challenge</span>
           </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-foreground/70 dark:text-foreground/80 font-sans max-w-2xl">
+          <p className="font-sans text-xl md:text-2xl text-white/80 max-w-3xl leading-relaxed font-light">
             Select a homeowner to begin your training session
           </p>
         </motion.div>
@@ -398,25 +417,25 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-8 flex flex-wrap items-center justify-center gap-4 px-5 py-4 bg-card/60 dark:bg-black/40 border border-border/30 dark:border-white/20 rounded-xl backdrop-blur-md max-w-3xl mx-auto shadow-lg shadow-purple-500/5"
+          className="mb-8 flex flex-wrap items-center justify-center gap-4 px-4 py-2 bg-white/[0.02] border border-white/5 rounded-lg backdrop-blur-sm max-w-2xl mx-auto"
         >
-          <span className="text-xs sm:text-sm font-semibold text-foreground/70 dark:text-slate-300 uppercase tracking-wider font-space">Difficulty:</span>
+          <span className="text-xs sm:text-sm font-medium text-white/70 uppercase tracking-wider font-space">Difficulty:</span>
           <div className="flex flex-wrap items-center gap-4 sm:gap-5">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-400 flex-shrink-0 shadow-lg shadow-green-400/50" />
-              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-200 font-space font-medium">Easy</span>
+              <div className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-white/80 font-space font-light">Easy</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-400 flex-shrink-0 shadow-lg shadow-yellow-400/50" />
-              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-200 font-space font-medium">Moderate</span>
+              <div className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-white/80 font-space font-light">Moderate</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-400 flex-shrink-0 shadow-lg shadow-orange-400/50" />
-              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-200 font-space font-medium">Hard</span>
+              <div className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-white/80 font-space font-light">Hard</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400 flex-shrink-0 shadow-lg shadow-red-400/50" />
-              <span className="text-xs sm:text-sm text-foreground/80 dark:text-slate-200 font-space font-medium">Expert</span>
+              <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-white/80 font-space font-light">Expert</span>
             </div>
           </div>
         </motion.div>
@@ -431,10 +450,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('all')}
             className={cn(
-              "px-4 py-2 rounded-full text-sm sm:text-base font-medium transition-all font-space",
+              "px-5 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space",
               filter === 'all'
-                ? "bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 text-foreground dark:text-white border-2 border-indigo-500/40 dark:border-indigo-400/40 shadow-lg shadow-indigo-500/20"
-                : "bg-card/60 dark:bg-black/40 text-foreground/70 dark:text-slate-300 border border-border/30 dark:border-white/20 hover:bg-card dark:hover:bg-black/60 hover:border-indigo-500/30"
+                ? "bg-white/10 text-white border border-white/20"
+                : "bg-white/[0.02] text-white/80 border border-white/5 hover:bg-white/[0.05] hover:border-white/10 hover:text-white"
             )}
           >
             All
@@ -442,10 +461,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('difficulty')}
             className={cn(
-              "px-4 py-2 rounded-full text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
+              "px-5 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
               filter === 'difficulty'
-                ? "bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 text-foreground dark:text-white border-2 border-indigo-500/40 dark:border-indigo-400/40 shadow-lg shadow-indigo-500/20"
-                : "bg-card/60 dark:bg-black/40 text-foreground/70 dark:text-slate-300 border border-border/30 dark:border-white/20 hover:bg-card dark:hover:bg-black/60 hover:border-indigo-500/30"
+                ? "bg-white/10 text-white border border-white/20"
+                : "bg-white/[0.02] text-white/80 border border-white/5 hover:bg-white/[0.05] hover:border-white/10 hover:text-white"
             )}
           >
             By Difficulty
@@ -453,10 +472,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('unplayed')}
             className={cn(
-              "px-4 py-2 rounded-full text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
+              "px-5 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
               filter === 'unplayed'
-                ? "bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 text-foreground dark:text-white border-2 border-indigo-500/40 dark:border-indigo-400/40 shadow-lg shadow-indigo-500/20"
-                : "bg-card/60 dark:bg-black/40 text-foreground/70 dark:text-slate-300 border border-border/30 dark:border-white/20 hover:bg-card dark:hover:bg-black/60 hover:border-indigo-500/30"
+                ? "bg-white/10 text-white border border-white/20"
+                : "bg-white/[0.02] text-white/80 border border-white/5 hover:bg-white/[0.05] hover:border-white/10 hover:text-white"
             )}
           >
             Unplayed First
@@ -464,112 +483,29 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           <button
             onClick={() => setFilter('struggles')}
             className={cn(
-              "px-4 py-2 rounded-full text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
+              "px-5 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
               filter === 'struggles'
-                ? "bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 text-foreground dark:text-white border-2 border-indigo-500/40 dark:border-indigo-400/40 shadow-lg shadow-indigo-500/20"
-                : "bg-card/60 dark:bg-black/40 text-foreground/70 dark:text-slate-300 border border-border/30 dark:border-white/20 hover:bg-card dark:hover:bg-black/60 hover:border-indigo-500/30"
+                ? "bg-white/10 text-white border border-white/20"
+                : "bg-white/[0.02] text-white/80 border border-white/5 hover:bg-white/[0.05] hover:border-white/10 hover:text-white"
             )}
           >
             Your Struggles
           </button>
-          <div className="w-px h-6 bg-border/30 dark:bg-slate-600 hidden sm:block" />
+          <div className="w-px h-6 bg-white/10 hidden sm:block" />
           <motion.button
             type="button"
             onClick={handleRandomAgent}
             disabled={loading || agents.length === 0}
-            whileHover={loading || agents.length === 0 ? {} : { scale: 1.05 }}
+            whileHover={loading || agents.length === 0 ? {} : { scale: 1.02 }}
             whileTap={loading || agents.length === 0 ? {} : { scale: 0.98 }}
             className={cn(
-              "relative inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm sm:text-base font-bold transition-all font-space overflow-hidden",
-              "text-white",
-              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+              "px-6 py-2.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight transition-all font-space",
+              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/95'
             )}
-            style={{
-              background: loading || agents.length === 0 
-                ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)'
-                : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 25%, #ec4899 50%, #f59e0b 75%, #6366f1 100%)',
-              backgroundSize: '300% 300%',
-              boxShadow: loading || agents.length === 0
-                ? '0 10px 25px -5px rgba(99, 102, 241, 0.3), 0 0 20px rgba(139, 92, 246, 0.2)'
-                : '0 10px 30px -5px rgba(99, 102, 241, 0.4), 0 0 30px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-            }}
           >
-            {/* Animated gradient background */}
-            {!loading && agents.length > 0 && (
-              <motion.div
-                className="absolute inset-0 opacity-100"
-                animate={{
-                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 25%, #ec4899 50%, #f59e0b 75%, #6366f1 100%)',
-                  backgroundSize: '300% 300%',
-                }}
-              />
-            )}
-            
-            {/* Shimmer effect */}
-            {!loading && agents.length > 0 && (
-              <motion.div
-                className="absolute inset-0 opacity-30"
-                animate={{
-                  x: ['-100%', '200%'],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 1,
-                  ease: 'easeInOut',
-                }}
-                style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
-                  width: '50%',
-                }}
-              />
-            )}
-            
-            {/* Content */}
-            <span className="relative z-10 flex items-center gap-2">
-              <motion.span
-                animate={loading || agents.length === 0 ? {} : {
-                  rotate: [0, 15, -15, 15, -15, 0],
-                }}
-                transition={{
-                  duration: 0.5,
-                  repeat: Infinity,
-                  repeatDelay: 2,
-                  ease: 'easeInOut',
-                }}
-                className="text-lg"
-              >
-                🎲
-              </motion.span>
-              <span>Surprise Me</span>
+            <span className="flex items-center gap-2">
+              🎲 Surprise Me
             </span>
-            
-            {/* Pulsing glow effect */}
-            {!loading && agents.length > 0 && (
-              <motion.div
-                className="absolute inset-0 rounded-full blur-xl opacity-50"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.6, 0.3],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                style={{
-                  background: 'radial-gradient(circle, rgba(236, 72, 153, 0.6) 0%, transparent 70%)',
-                }}
-              />
-            )}
           </motion.button>
         </motion.div>
 
@@ -610,9 +546,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   >
                     <div
                       className={cn(
-                        "h-full flex flex-col items-center p-5 relative rounded-xl border-2",
+                        "h-full flex flex-col items-center p-6 relative rounded-lg border",
                         cardStyle.border,
                         cardStyle.bg,
+                        "hover:border-white/20 hover:bg-white/[0.03] transition-all duration-300",
                         agent.isLocked && "opacity-50"
                       )}
                     >
@@ -717,53 +654,53 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
                     {/* Suggested Badge - Mobile */}
                     {suggestedAgent === agent.name && !agent.isLocked && (
-                      <div className="absolute top-2 right-2 z-20 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-500/40 shadow-lg">
-                        <span className="text-xs text-yellow-200 font-semibold font-space">⭐ Suggested</span>
+                      <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                        <span className="text-xs text-white/90 font-medium font-space">⭐ Suggested</span>
                       </div>
                     )}
                     
                     {/* Coming Soon Badge - Mobile */}
                     {agent.name === 'Tag Team Tanya & Tom' && (
-                      <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-xl flex items-center justify-center border-2 border-purple-500/50">
-                        <div className="bg-gradient-to-r from-purple-500/30 to-pink-500/30 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-purple-500/50 shadow-lg">
-                          <span className="text-sm text-purple-200 font-semibold font-space">🚧 Coming Soon</span>
+                      <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
+                        <div className="bg-white/[0.05] backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-white/10">
+                          <span className="text-sm text-white/80 font-medium font-space">🚧 Coming Soon</span>
                         </div>
                       </div>
                     )}
                     
                     {/* Locked Badge - Mobile */}
                     {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
-                      <div className="absolute top-2 right-2 z-20 bg-slate-800/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-700 shadow-lg">
-                        <span className="text-xs text-foreground/80 dark:text-slate-300 font-space">🔒 Locked</span>
+                      <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                        <span className="text-xs text-white/70 font-space">🔒 Locked</span>
                       </div>
                     )}
                     
                     {/* Mastered Badge - Mobile */}
                     {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
-                      <div className="absolute top-2 right-2 z-20 bg-yellow-500/20 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-yellow-500/30 shadow-lg">
-                        <span className="text-xs text-yellow-300 font-space">🏆</span>
+                      <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-white/10">
+                        <span className="text-xs text-white/80 font-space">🏆</span>
                       </div>
                     )}
 
                     {/* Agent Info */}
                     <div className="text-center w-full mt-auto">
-                      <h3 className="text-lg font-bold text-foreground dark:text-white mb-2 font-space">
+                      <h3 className="text-lg font-medium text-white mb-2 font-space tracking-tight">
                         {agent.name}
                       </h3>
-                      <p className="text-sm text-foreground/70 dark:text-slate-300 mb-3 font-sans">
+                      <p className="text-sm text-white/70 mb-3 font-sans font-light">
                         {agent.subtitle}
                       </p>
                       {/* Difficulty Dot */}
                       <div className="flex items-center justify-center gap-2">
                         <div className={cn(
-                          "w-3 h-3 rounded-full flex-shrink-0 shadow-lg",
-                          agent.difficulty === 'Easy' && "bg-green-400 shadow-green-400/50",
-                          agent.difficulty === 'Moderate' && "bg-yellow-400 shadow-yellow-400/50",
-                          agent.difficulty === 'Hard' && "bg-orange-400 shadow-orange-400/50",
-                          agent.difficulty === 'Expert' && "bg-red-400 shadow-red-400/50",
-                          !agent.difficulty && "bg-gray-400"
+                          "w-2 h-2 rounded-full flex-shrink-0",
+                          agent.difficulty === 'Easy' && "bg-green-400",
+                          agent.difficulty === 'Moderate' && "bg-yellow-400",
+                          agent.difficulty === 'Hard' && "bg-orange-400",
+                          agent.difficulty === 'Expert' && "bg-red-400",
+                          !agent.difficulty && "bg-white/40"
                         )} />
-                        <span className="text-xs text-foreground/70 dark:text-slate-300 font-space font-medium">
+                        <span className="text-xs text-white/70 font-space font-light">
                           {agent.difficulty || 'Unknown'}
                         </span>
                       </div>
@@ -809,9 +746,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
               >
                 <div
                   className={cn(
-                    "h-full flex flex-col items-center p-5 relative rounded-xl border-2",
+                    "h-full flex flex-col items-center p-6 relative rounded-lg border",
                     cardStyle.border,
                     cardStyle.bg,
+                    "hover:border-white/20 hover:bg-white/[0.03] transition-all duration-300",
                     agent.isLocked && "opacity-50"
                   )}
                 >
@@ -956,31 +894,31 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
                 {/* Suggested Badge */}
                 {suggestedAgent === agent.name && !agent.isLocked && (
-                  <div className="absolute top-2 right-2 z-20 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-yellow-500/40 shadow-lg">
-                    <span className="text-xs text-yellow-200 font-semibold font-space">⭐ Suggested</span>
+                  <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                    <span className="text-xs text-white/90 font-medium font-space">⭐ Suggested</span>
                   </div>
                 )}
                 
                 {/* Coming Soon Badge */}
                 {agent.name === 'Tag Team Tanya & Tom' && (
-                  <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-xl flex items-center justify-center border-2 border-purple-500/50">
-                    <div className="bg-gradient-to-r from-purple-500/30 to-pink-500/30 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-purple-500/50 shadow-lg">
-                      <span className="text-sm text-purple-200 font-semibold font-space">🚧 Coming Soon</span>
+                  <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
+                    <div className="bg-white/[0.05] backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-white/10">
+                      <span className="text-sm text-white/80 font-medium font-space">🚧 Coming Soon</span>
                     </div>
                   </div>
                 )}
                 
                 {/* Locked Badge */}
                 {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
-                  <div className="absolute top-2 right-2 z-20 bg-slate-800/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-700 shadow-lg">
-                    <span className="text-xs text-foreground/80 dark:text-slate-300 font-space">🔒 Locked</span>
+                  <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                    <span className="text-xs text-white/70 font-space">🔒 Locked</span>
                   </div>
                 )}
                 
                 {/* Mastered Badge */}
                 {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
-                  <div className="absolute top-2 right-2 z-20 bg-yellow-500/20 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-yellow-500/30 shadow-lg">
-                    <span className="text-xs text-yellow-300 font-space">🏆</span>
+                  <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-white/10">
+                    <span className="text-xs text-white/80 font-space">🏆</span>
                   </div>
                 )}
 
@@ -993,31 +931,31 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 >
                   {/* Name and difficulty */}
                   <div className="flex items-center justify-center gap-2">
-                    <h3 className="text-lg sm:text-xl font-bold text-foreground dark:text-white tracking-tight font-space">{agent.name}</h3>
+                    <h3 className="text-lg sm:text-xl font-medium text-white tracking-tight font-space">{agent.name}</h3>
                     <div className={cn(
-                      "w-3 h-3 rounded-full flex-shrink-0 shadow-lg",
-                      agent.difficulty === 'Easy' ? 'bg-green-400 shadow-green-400/50' :
-                      agent.difficulty === 'Moderate' ? 'bg-yellow-400 shadow-yellow-400/50' :
-                      agent.difficulty === 'Hard' ? 'bg-orange-400 shadow-orange-400/50' :
-                      'bg-red-400 shadow-red-400/50'
+                      "w-2 h-2 rounded-full flex-shrink-0",
+                      agent.difficulty === 'Easy' ? 'bg-green-400' :
+                      agent.difficulty === 'Moderate' ? 'bg-yellow-400' :
+                      agent.difficulty === 'Hard' ? 'bg-orange-400' :
+                      'bg-red-400'
                     )} />
                   </div>
                   
                   {/* Combined summary */}
-                  <p className="text-sm sm:text-base text-foreground/80 dark:text-white/80 max-w-[240px] mx-auto leading-relaxed font-sans">
+                  <p className="text-sm sm:text-base text-white/80 max-w-[240px] mx-auto leading-relaxed font-sans font-light">
                     {agent.description}
                   </p>
                   
-                  {/* Stats if available - Larger and more readable */}
+                  {/* Stats if available */}
                   {agent.sessionCount && agent.sessionCount > 0 ? (
-                    <div className="text-base sm:text-lg font-bold pt-2 font-space">
-                      <span className="text-foreground/90 dark:text-white/90">{agent.sessionCount}x attempted</span>
+                    <div className="text-sm sm:text-base font-medium pt-2 font-space">
+                      <span className="text-white/90">{agent.sessionCount}x attempted</span>
                       {agent.bestScore && agent.bestScore > 0 ? (
-                        <span className="text-emerald-500 dark:text-emerald-400 ml-2 tabular-nums">• Best: {agent.bestScore}%</span>
+                        <span className="text-white/70 ml-2 tabular-nums">• Best: {agent.bestScore}%</span>
                       ) : null}
                     </div>
                   ) : (
-                    <div className="text-base sm:text-lg font-semibold text-amber-500 dark:text-amber-400/90 pt-2 font-space">
+                    <div className="text-sm sm:text-base font-light text-white/60 pt-2 font-space">
                       ✨ Not yet attempted
                     </div>
                   )}
@@ -1036,16 +974,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           transition={{ delay: 0.8 }}
           className="text-center mt-8"
         >
-          <p className="text-sm sm:text-base text-foreground/60 dark:text-slate-400 font-sans">
+          <p className="text-sm sm:text-base text-white/60 font-sans font-light">
             Hover over a card to see it glow • Click to start your session
           </p>
         </motion.div>
-      </div>
-
-      {/* Glow effects */}
-      <div className="absolute inset-0 [mask-image:radial-gradient(90%_60%_at_50%_50%,#000_30%,transparent)] pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#7C3AED/10%,transparent_70%)] blur-[120px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#EC4899/8%,transparent)] blur-[80px]" />
       </div>
     </div>
   )

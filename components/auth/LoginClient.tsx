@@ -28,7 +28,7 @@ export function LoginClient() {
       if (error) throw error
 
       // Navigate to home
-      router.push('/home')
+      router.push('/dashboard')
       router.refresh()
     } catch (error: any) {
       setError(error.message)

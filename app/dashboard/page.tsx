@@ -42,6 +42,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import dynamic from 'next/dynamic'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { format } from 'date-fns'
+import HomepageContent from './components/HomepageContent'
 
 
 // Helper to get cutout bubble image (no background)
@@ -93,6 +94,74 @@ const getScoreColor = (score: number) => {
 
 type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
+// Animated Background Component (matching landing page)
+function AnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      {/* Animated gradient orbs */}
+      <motion.div
+        animate={{
+          x: [0, 100, 0],
+          y: [0, 50, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-0 left-0 w-[800px] h-[800px] bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-transparent rounded-full blur-[120px]"
+      />
+      <motion.div
+        animate={{
+          x: [0, -80, 0],
+          y: [0, 100, 0],
+          scale: [1, 1.3, 1],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/4 right-0 w-[700px] h-[700px] bg-gradient-to-bl from-pink-500/20 via-purple-500/20 to-transparent rounded-full blur-[120px]"
+      />
+      <motion.div
+        animate={{
+          x: [0, 60, 0],
+          y: [0, -70, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-0 left-1/3 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-500/15 via-blue-500/15 to-transparent rounded-full blur-[100px]"
+      />
+      
+      {/* Mesh gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/95 to-black" />
+      
+      {/* Animated grid pattern */}
+      <motion.div
+        animate={{
+          opacity: [0.03, 0.06, 0.03],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: "60px 60px",
+        }}
+      />
+    </div>
+  )
+}
+
 // Tab Navigation Component
 interface Tab {
   id: string
@@ -109,8 +178,8 @@ interface TabNavigationProps {
 
 function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
   return (
-    <div className="mb-4 sm:mb-6 lg:mb-8 border-b border-indigo-500/30">
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pb-1 -mb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+    <div className="mb-6 sm:mb-8 lg:mb-10 border-b border-white/10">
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {tabs.map((tab, index) => {
           const isActive = activeTab === tab.id
           const Icon = tab.icon
@@ -123,22 +192,21 @@ function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
               transition={{ duration: 0.3, delay: index * 0.05 }}
               onClick={() => !tab.locked && onChange(tab.id)}
               disabled={tab.locked}
-              className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 touch-target font-sans ${
+              className={`relative flex items-center gap-2 px-5 py-2.5 text-base font-medium tracking-tight rounded-md transition-all font-sans ${
                 tab.locked
-                  ? 'text-indigo-500/30 cursor-not-allowed'
+                  ? 'text-white/30 cursor-not-allowed'
                   : isActive
-                  ? 'text-white bg-black/50'
-                  : 'text-slate-400 hover:text-white active:text-white active:bg-black/30'
+                  ? 'text-white bg-white/10'
+                  : 'text-white/80 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Icon className="w-4 h-4" />
               <span className="sm:inline">{tab.label}</span>
               
               {isActive && (
                 <motion.div
                   layoutId="activeTabBorder"
-                  className="absolute bottom-0 left-0 right-0 h-[3px] bg-indigo-500"
-                  style={{ boxShadow: '0 2px 8px rgba(99, 102, 241, 0.5)' }}
+                  className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -153,7 +221,7 @@ function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
 // Main Dashboard Component
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]" />}> 
+    <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center"><div className="text-white/80">Loading...</div></div>}> 
       <DashboardPageContent />
     </Suspense>
   )
@@ -221,8 +289,22 @@ function DashboardPageContent() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
+    // TEMPORARILY DISABLED FOR TESTING - Allow viewing without auth
+    // if (!user) {
+    //   router.push('/book-demo')
+    //   return
+    // }
+    
     if (!user) {
-      router.push('/book-demo')
+      // Set default values for unauthenticated viewing
+      setUserName('Guest')
+      setRealStats({
+        sessionsThisWeek: 0,
+        totalSessions: 0,
+        avgScore: 0,
+        teamRank: 1,
+        totalEarnings: 0
+      })
       return
     }
     
@@ -335,38 +417,44 @@ function DashboardPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] pt-16 pb-2 sm:pb-4 lg:pb-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-[1800px] mx-auto">
-        {/* Onboarding Banner */}
-        <OnboardingBanner />
-        
-        {/* Minimalist Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-4 sm:mb-6 lg:mb-8"
-        >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6">
-            {/* Left: Welcome & Time */}
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 font-space">
-                Welcome back, {userName}
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-white/70 text-xs sm:text-sm font-sans">
-                <span className="flex items-center gap-2">
-                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="break-words">{formatDate(currentTime)}</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                  {formatTime(currentTime)}
-                </span>
+    <div className="min-h-screen bg-black text-white relative">
+      {/* Animated Background */}
+      <AnimatedBackground />
+      
+      <div className="relative z-10 pt-24 pb-16 px-6 sm:px-8 lg:px-12">
+        <div className="max-w-[1800px] mx-auto">
+          {/* Onboarding Banner */}
+          <OnboardingBanner />
+          
+          {/* Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-8 sm:mb-10 lg:mb-12"
+          >
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              {/* Left: Welcome & Time */}
+              <div>
+                <h1 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white font-light tracking-tight mb-4">
+                  Welcome back,{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+                    {userName}
+                  </span>
+                </h1>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-white/70 text-sm md:text-base font-sans">
+                  <span className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span className="break-words">{formatDate(currentTime)}</span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    {formatTime(currentTime)}
+                  </span>
+                </div>
               </div>
             </div>
-
-          </div>
-        </motion.div>
+          </motion.div>
 
         {/* Tab Navigation */}
         <TabNavigation tabs={tabs} activeTab={activeTab} onChange={handleTabClick} />
@@ -381,7 +469,7 @@ function DashboardPageContent() {
             transition={{ duration: 0.3 }}
           >
           {activeTab === 'overview' && (
-            <OverviewTabContent />
+            <HomepageContent />
           )}
             {activeTab === 'upload' && (
               <UploadTabContent />
@@ -391,6 +479,7 @@ function DashboardPageContent() {
             )}
           </motion.div>
         </AnimatePresence>
+        </div>
       </div>
     </div>
   )
@@ -1293,7 +1382,7 @@ function OverviewTabContent() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 mb-8"
+          className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 hover:border-white/30 hover:bg-white/[0.03] transition-colors mb-8"
         >
           <div className="flex items-center gap-6">
             {userProfile.avatar_url ? (
@@ -1338,12 +1427,7 @@ function OverviewTabContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-lg p-5"
-          style={{ 
-            backgroundColor: '#2a1a3a',
-            border: '2px solid #4a2a6a',
-            boxShadow: 'inset 0 0 20px rgba(138, 43, 226, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
-          }}
+          className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors"
         >
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold text-purple-200 uppercase tracking-wide">Overall Score</h3>
@@ -1370,12 +1454,7 @@ function OverviewTabContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="rounded-lg p-5"
-          style={{ 
-            backgroundColor: '#1a3a2a',
-            border: '2px solid #2a6a4a',
-            boxShadow: 'inset 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
-          }}
+          className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors"
         >
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold text-emerald-200 uppercase tracking-wide">Rapport</h3>
@@ -1402,12 +1481,7 @@ function OverviewTabContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-lg p-5"
-          style={{ 
-            backgroundColor: '#1a2a3a',
-            border: '2px solid #2a4a6a',
-            boxShadow: 'inset 0 0 20px rgba(59, 130, 246, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
-          }}
+          className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors"
         >
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold text-blue-200 uppercase tracking-wide">Discovery</h3>
@@ -1434,12 +1508,7 @@ function OverviewTabContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="rounded-lg p-5"
-          style={{ 
-            backgroundColor: '#3a2a1a',
-            border: '2px solid #6a4a2a',
-            boxShadow: 'inset 0 0 20px rgba(245, 158, 11, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
-          }}
+          className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors"
         >
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold text-amber-200 uppercase tracking-wide">Objection</h3>
@@ -1466,12 +1535,7 @@ function OverviewTabContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-lg p-5"
-          style={{ 
-            backgroundColor: '#3a1a2a',
-            border: '2px solid #6a2a4a',
-            boxShadow: 'inset 0 0 20px rgba(236, 72, 153, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
-          }}
+          className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors"
         >
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold text-pink-200 uppercase tracking-wide">Closing</h3>
@@ -1501,7 +1565,7 @@ function OverviewTabContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
+            className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 hover:border-white/30 hover:bg-white/[0.03] transition-colors flex items-center justify-between"
           >
             <div className="flex items-center gap-3">
               <DollarSign className="w-6 h-6 text-green-400" />
@@ -1514,7 +1578,7 @@ function OverviewTabContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
+            className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 hover:border-white/30 hover:bg-white/[0.03] transition-colors flex items-center justify-between"
           >
             <div className="flex items-center gap-3">
               <Target className="w-6 h-6 text-purple-400" />
@@ -1527,7 +1591,7 @@ function OverviewTabContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
+            className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 hover:border-white/30 hover:bg-white/[0.03] transition-colors flex items-center justify-between"
           >
             <div className="flex items-center gap-3">
               <Award className="w-6 h-6 text-yellow-400" />
@@ -1540,7 +1604,7 @@ function OverviewTabContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
+            className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 hover:border-white/30 hover:bg-white/[0.03] transition-colors flex items-center justify-between"
           >
             <div className="flex items-center gap-3">
               <Calendar className="w-6 h-6 text-blue-400" />
@@ -1553,7 +1617,7 @@ function OverviewTabContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 flex items-center justify-between"
+            className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 hover:border-white/30 hover:bg-white/[0.03] transition-colors flex items-center justify-between"
           >
             <div className="flex items-center gap-3">
               <Target className="w-6 h-6 text-emerald-400" />

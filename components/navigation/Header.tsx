@@ -85,6 +85,28 @@ const parseEarnings = (value: unknown): number => {
   return 0
 }
 
+const HamburgerIcon = ({ open }: { open: boolean }) => {
+  return (
+    <span className="flex h-4 w-5 flex-col items-center justify-between py-[2px]">
+      <span
+        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
+          open ? 'translate-y-[6px] rotate-45 bg-white' : ''
+        }`}
+      />
+      <span
+        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
+          open ? 'opacity-0' : ''
+        }`}
+      />
+      <span
+        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
+          open ? '-translate-y-[6px] -rotate-45 bg-white' : ''
+        }`}
+      />
+    </span>
+  )
+}
+
 function HeaderContent() {
   const pathname = usePathname()
   const router = useRouter()
@@ -105,8 +127,6 @@ function HeaderContent() {
   const [lastScrollY, setLastScrollY] = useState(0)
   const [avatarError, setAvatarError] = useState(false)
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
-  const [usedFreeDemo, setUsedFreeDemo] = useState(false)
-  const [showTryForFree, setShowTryForFree] = useState(false)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
 
@@ -301,27 +321,6 @@ function HeaderContent() {
         // Credit system removed - no credit setting needed
       }
       
-      // Check if user should see "Try for Free" CTA
-      if (userData || authUser) {
-        const currentUserId = (userData as any)?.id || authUser.id
-        if (currentUserId) {
-          const { data: freeDemoData } = await supabase
-            .from('users')
-            .select('subscription_status, used_free_demo')
-            .eq('id', currentUserId)
-            .single()
-
-          if (freeDemoData) {
-            const status = freeDemoData.subscription_status || null
-            const hasActiveSub = status === 'active' || status === 'trialing'
-            const hasUsedFreeDemo = freeDemoData.used_free_demo || false
-
-            // Show CTA if user is signed in, has no subscription, and hasn't used free demo
-            setShowTryForFree(!hasActiveSub && !hasUsedFreeDemo)
-            setUsedFreeDemo(hasUsedFreeDemo)
-          }
-        }
-      }
     }
 
     // Initial fetch
@@ -344,7 +343,6 @@ function HeaderContent() {
         setUser(null)
         setAuthMeta(null)
         setHasActiveSubscription(false)
-        setShowTryForFree(false)
       }
     })
 
@@ -365,7 +363,7 @@ function HeaderContent() {
 
   const navigation = useMemo(() => {
     const navItems = [
-      { name: 'Home', href: isSignedIn ? '/home' : '/', icon: Home },
+      { name: 'Home', href: isSignedIn ? '/home' : '/landing', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
       // Sessions only shows for signed-in users
       ...(isSignedIn ? [{ name: 'Sessions', href: '/sessions', icon: FileText }] : []),
@@ -617,29 +615,32 @@ function HeaderContent() {
         </Link>
       )}
 
-      {/* Mini Navigation Menu - Mobile & Desktop */}
-      <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
-        isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-      }`}>
-        <MiniNavMenu />
-      </div>
+      {/* Mini Navigation Menu - Mobile & Desktop - Only show for signed-in users */}
+      {isSignedIn && !isAuthPage && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 ${
+          (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        }`}>
+          <MiniNavMenu />
+        </div>
+      )}
 
-      {/* Centered oval navigation bar - Desktop */}
-      <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center gap-1 md:gap-1.5 rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl ${isSignedIn ? 'pl-4 md:pl-5 lg:pl-6 pr-[69px]' : 'pl-4 md:pl-5 lg:pl-6 pr-4 md:pr-5 lg:pr-6'} py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
-        isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : isScrolledDown ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-      }`}
-      onMouseEnter={() => {
-        // Show menu when hovering over it, even if it's hidden
-        if (shouldHideMenu) {
-          setShowMenuOnHover(true)
-        }
-      }}
-      onMouseLeave={() => {
-        // Hide menu when leaving hover area
-        if (shouldHideMenu) {
-          setShowMenuOnHover(false)
-        }
-      }}>
+      {/* Centered oval navigation bar - Desktop - Only show for signed-in users */}
+      {isSignedIn && !isAuthPage && (
+        <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center gap-1 md:gap-1.5 rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl pl-4 md:pl-5 lg:pl-6 pr-[69px] py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
+          (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        }`}
+        onMouseEnter={() => {
+          // Show menu when hovering over it, even if it's hidden
+          if (shouldHideMenu) {
+            setShowMenuOnHover(true)
+          }
+        }}
+        onMouseLeave={() => {
+          // Hide menu when leaving hover area
+          if (shouldHideMenu) {
+            setShowMenuOnHover(false)
+          }
+        }}>
             <Link href="/" className="flex items-center pr-2 md:pr-2.5 mr-1.5 md:mr-2 border-r border-border/20 dark:border-white/10 flex-shrink-0">
               <Image 
                 src="/dooriqlogo.png" 
@@ -667,32 +668,6 @@ function HeaderContent() {
               )
             })}
 
-            {!isSignedIn && (
-              <div className="ml-2 md:ml-3 pl-2 md:pl-3 border-l border-border/20 dark:border-white/10 flex-shrink-0 flex items-center gap-2">
-                <Link href="/trainer">
-                  <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-600/30 hover:from-purple-500 hover:to-indigo-500 transition">
-                    <span className="tracking-tight whitespace-nowrap">Try for Free</span>
-                  </button>
-                </Link>
-                <Link href="/auth/login">
-                  <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-medium bg-white dark:bg-white text-gray-900 border border-gray-200 dark:border-gray-300 shadow-sm">
-                    <LogIn className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
-                    <span className="tracking-tight whitespace-nowrap">Sign In</span>
-                  </button>
-                </Link>
-              </div>
-            )}
-
-            {isSignedIn && showTryForFree && (
-              <Link
-                href="/trainer"
-                className="ml-2 md:ml-3 pl-2 md:pl-3 border-l border-border/20 dark:border-white/10 flex-shrink-0"
-              >
-                <button className="inline-flex items-center gap-1.5 md:gap-2 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base font-space font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-600/30 hover:from-purple-500 hover:to-indigo-500 transition">
-                  <span className="tracking-tight whitespace-nowrap">Try for Free</span>
-                </button>
-              </Link>
-            )}
 
             {isSignedIn && (
               <div className="flex items-center gap-2 md:gap-3 pl-2 border-l border-border/20 dark:border-white/10 flex-shrink-0 min-w-0">
@@ -750,44 +725,31 @@ function HeaderContent() {
                 </div>
               </div>
             )}
-            {!isSignedIn && (
-              <button
-                ref={sidebarButtonRef}
-                onClick={() => setIsSidebarOpen((prev) => !prev)}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all overflow-hidden cursor-pointer shrink-0 ${
-                  isSidebarOpen
-                    ? 'border-purple-500/70 shadow-[0px_0px_20px_rgba(168,85,247,0.5)] ring-2 ring-purple-500/30 scale-105'
-                    : 'border-white/20 hover:border-purple-500/40 hover:shadow-[0px_0px_12px_rgba(168,85,247,0.3)] hover:scale-105'
-                }`}
-                aria-haspopup="menu"
-                aria-expanded={isSidebarOpen}
-                aria-label="Open account navigation"
-              >
-                <HamburgerIcon open={isSidebarOpen} />
-              </button>
-            )}
-      </div>
+        </div>
+      )}
 
-      {/* Mobile header */}
-      <div className={`fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden transition-opacity duration-300 ${
-        isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-      }`}
-      onMouseEnter={() => {
-        // Show menu when hovering over mobile menu button
-        if (shouldHideMenu) {
-          setShowMenuOnHover(true)
-        }
-      }}>
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all touch-target"
-        >
-          {isMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
-        </button>
-      </div>
+      {/* Mobile header - Only show for signed-in users */}
+      {isSignedIn && (
+        <div className={`fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden transition-opacity duration-300 ${
+          isAuthPage || (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        }`}
+        onMouseEnter={() => {
+          // Show menu when hovering over mobile menu button
+          if (shouldHideMenu) {
+            setShowMenuOnHover(true)
+          }
+        }}>
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all touch-target"
+          >
+            {isMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
+          </button>
+        </div>
+      )}
 
-      {/* Mobile Navigation */}
-      {isMenuOpen && (
+      {/* Mobile Navigation - Only show for signed-in users */}
+      {isSignedIn && isMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           {/* Backdrop */}
           <div 
@@ -813,99 +775,65 @@ function HeaderContent() {
                 </Link>
               )
             })}
-            {!isSignedIn && (
-              <Link
-                href="/auth/login"
-                onClick={() => setIsMenuOpen(false)}
-                className="mt-4"
-              >
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-full text-base sm:text-lg font-space font-medium bg-white dark:bg-white text-gray-900 border border-gray-200 dark:border-gray-300 shadow-sm">
-                  <LogIn className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <span className="tracking-tight">Sign In</span>
-                </button>
-              </Link>
-            )}
-            {isSignedIn ? (
-              <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4">
-                <p className="px-4 text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Account</p>
-                <div className="mt-2 space-y-2">
-                  {profileNavigation.filter(item => {
-                    if (item.adminOnly) {
-                      return userRole === 'admin'
-                    }
-                    if (item.managerOnly) {
-                      return userRole === 'manager' || userRole === 'admin'
-                    }
-                    if (item.repOnly) {
-                      // Dashboard shows ONLY for reps, NOT for managers or admins
-                      return userRole === 'rep'
-                    }
-                    return true
-                  }).map((item) => {
-                    const Icon = item.icon
-                    const active = isActive(item.href)
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setIsMenuOpen(false)}
-                        className={`flex items-center justify-between px-4 py-3 rounded-lg text-base sm:text-lg font-medium transition-all font-space ${
-                          active
-                            ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 text-foreground font-semibold'
-                            : 'text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white'
-                        }`}
-                      >
-                        <span className="flex items-center space-x-3">
-                          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                          <span className="tracking-tight">{item.name}</span>
+            <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4">
+              <p className="px-4 text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Account</p>
+              <div className="mt-2 space-y-2">
+                {profileNavigation.filter(item => {
+                  if (item.adminOnly) {
+                    return userRole === 'admin'
+                  }
+                  if (item.managerOnly) {
+                    return userRole === 'manager' || userRole === 'admin'
+                  }
+                  if (item.repOnly) {
+                    // Dashboard shows ONLY for reps, NOT for managers or admins
+                    return userRole === 'rep'
+                  }
+                  return true
+                }).map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href)
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-lg text-base sm:text-lg font-medium transition-all font-space ${
+                        active
+                          ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 text-foreground font-semibold'
+                          : 'text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white'
+                      }`}
+                    >
+                      <span className="flex items-center space-x-3">
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <span className="tracking-tight">{item.name}</span>
+                      </span>
+                      {item.badge && item.badge > 0 && (
+                        <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-bold rounded-full">
+                          {item.badge}
                         </span>
-                        {item.badge && item.badge > 0 && (
-                          <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-bold rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    )
-                  })}
-                </div>
-                <button
-                  onClick={async () => {
-                    setIsMenuOpen(false)
-                    await handleSignOut()
-                  }}
-                  className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-border/20 dark:border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-base sm:text-lg font-semibold text-foreground dark:text-white transition hover:from-purple-500/40 hover:to-pink-500/40 font-space"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
-                </button>
-                {user && (
-                  <div className="px-4 py-3 border-t border-border/20 dark:border-white/10 mt-4">
-                    <p className="text-base sm:text-lg font-medium text-foreground font-space">{profileName}</p>
-                    {/* Credit display removed */}
-                  </div>
-                )}
+                      )}
+                    </Link>
+                  )
+                })}
               </div>
-            ) : (
-              <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4 px-4">
-                <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 mb-3 font-space">Get Started</p>
-                <div className="space-y-2">
-                  <Link
-                    href="/auth/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-base sm:text-lg font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500 font-space"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/auth/signup"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-border/20 dark:border-white/20 bg-background/50 dark:bg-white/5 px-4 py-3 text-base sm:text-lg font-semibold text-foreground dark:text-white transition hover:bg-background dark:hover:bg-white/10 font-space"
-                  >
-                    Sign Up
-                  </Link>
+              <button
+                onClick={async () => {
+                  setIsMenuOpen(false)
+                  await handleSignOut()
+                }}
+                className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-border/20 dark:border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-base sm:text-lg font-semibold text-foreground dark:text-white transition hover:from-purple-500/40 hover:to-pink-500/40 font-space"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
+              </button>
+              {user && (
+                <div className="px-4 py-3 border-t border-border/20 dark:border-white/10 mt-4">
+                  <p className="text-base sm:text-lg font-medium text-foreground font-space">{profileName}</p>
+                  {/* Credit display removed */}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             </div>
           </div>
         </div>
@@ -950,71 +878,44 @@ function HeaderContent() {
                   </div>
 
                   <div className="px-[19px]">
-                    {isSignedIn ? (
-                      <div className="rounded-xl border border-border/20 dark:border-white/10 bg-card/60 dark:bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
-                        <div className="flex items-center gap-[12px]">
-                          {profileAvatar && !avatarError ? (
-                            <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border border-purple-500/30">
-                              <img 
-                                src={profileAvatar} 
-                                alt={profileName}
-                                className="w-full h-full object-cover"
-                                onError={() => {
-                                  console.error('Failed to load profile avatar:', profileAvatar)
-                                  setAvatarError(true)
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="h-[37px] w-[37px] rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-[14px] font-semibold">
-                              {profileInitial}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm sm:text-base font-semibold text-foreground leading-tight truncate font-space">{profileName}</p>
-                            <p className="text-xs sm:text-sm text-foreground/70 dark:text-slate-300 leading-tight truncate font-sans">{profileEmail}</p>
+                    <div className="rounded-xl border border-border/20 dark:border-white/10 bg-card/60 dark:bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
+                      <div className="flex items-center gap-[12px]">
+                        {profileAvatar && !avatarError ? (
+                          <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border border-purple-500/30">
+                            <img 
+                              src={profileAvatar} 
+                              alt={profileName}
+                              className="w-full h-full object-cover"
+                              onError={() => {
+                                console.error('Failed to load profile avatar:', profileAvatar)
+                                setAvatarError(true)
+                              }}
+                            />
                           </div>
-                        </div>
-                        <div className="mt-[12px] flex items-center justify-between text-sm sm:text-base text-foreground/70 dark:text-slate-300">
-                          <div>
-                            <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-foreground/50 dark:text-slate-400 font-space">Earnings</p>
-                            <p className="mt-[2px] text-base sm:text-lg font-semibold text-foreground font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
+                        ) : (
+                          <div className="h-[37px] w-[37px] rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-[14px] font-semibold">
+                            {profileInitial}
                           </div>
-                          <button
-                            onClick={() => router.push('/settings')}
-                            className="inline-flex items-center gap-[5px] rounded-full border border-border/20 dark:border-white/10 bg-background/50 dark:bg-white/5 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-foreground/80 dark:text-slate-200 hover:bg-background dark:hover:bg-white/10 transition font-space"
-                          >
-                            Manage Account
-                            <ArrowRight className="h-[12px] w-[12px]" />
-                          </button>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm sm:text-base font-semibold text-foreground leading-tight truncate font-space">{profileName}</p>
+                          <p className="text-xs sm:text-sm text-foreground/70 dark:text-slate-300 leading-tight truncate font-sans">{profileEmail}</p>
                         </div>
                       </div>
-                    ) : (
-                      <div className="rounded-xl border border-border/20 dark:border-white/10 bg-card/60 dark:bg-white/[0.06] p-[14px] shadow-inner shadow-purple-500/10">
-                        <p className="text-base sm:text-lg font-semibold text-foreground mb-[9px] font-space">Get Started with DoorIQ</p>
-                        <p className="text-sm text-foreground/70 dark:text-slate-300 leading-snug mb-[14px] font-sans">Sign in to track your progress, compete on the leaderboard, and unlock all features.</p>
-                        <div className="space-y-[7px]">
-                          <button
-                            onClick={() => {
-                              router.push('/auth/login')
-                              setIsSidebarOpen(false)
-                            }}
-                            className="w-full flex items-center justify-center gap-[9px] rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-[14px] py-[9px] text-base sm:text-lg font-semibold text-white shadow-lg shadow-purple-600/30 transition hover:from-purple-500 hover:to-indigo-500 font-space"
-                          >
-                            Sign In
-                          </button>
-                          <button
-                            onClick={() => {
-                              router.push('/auth/signup')
-                              setIsSidebarOpen(false)
-                            }}
-                            className="w-full flex items-center justify-center gap-[9px] rounded-lg border border-border/20 dark:border-white/20 bg-background/50 dark:bg-white/5 px-[14px] py-[9px] text-base sm:text-lg font-semibold text-foreground dark:text-white transition hover:bg-background dark:hover:bg-white/10 font-space"
-                          >
-                            Sign Up
-                          </button>
+                      <div className="mt-[12px] flex items-center justify-between text-sm sm:text-base text-foreground/70 dark:text-slate-300">
+                        <div>
+                          <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-foreground/50 dark:text-slate-400 font-space">Earnings</p>
+                          <p className="mt-[2px] text-base sm:text-lg font-semibold text-foreground font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                         </div>
+                        <button
+                          onClick={() => router.push('/settings')}
+                          className="inline-flex items-center gap-[5px] rounded-full border border-border/20 dark:border-white/10 bg-background/50 dark:bg-white/5 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-foreground/80 dark:text-slate-200 hover:bg-background dark:hover:bg-white/10 transition font-space"
+                        >
+                          Manage Account
+                          <ArrowRight className="h-[12px] w-[12px]" />
+                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   <div className="px-[19px] pt-[14px]">
@@ -1126,26 +1027,4 @@ function HeaderContent() {
 
 export default function Header() {
   return <HeaderContent />
-}
-
-const HamburgerIcon = ({ open }: { open: boolean }) => {
-  return (
-    <span className="flex h-4 w-5 flex-col items-center justify-between py-[2px]">
-      <span
-        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
-          open ? 'translate-y-[6px] rotate-45 bg-white' : ''
-        }`}
-      />
-      <span
-        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
-          open ? 'opacity-0' : ''
-        }`}
-      />
-      <span
-        className={`block h-[2px] w-full rounded-full bg-slate-300 transition-all duration-200 ease-linear ${
-          open ? '-translate-y-[6px] -rotate-45 bg-white' : ''
-        }`}
-      />
-    </span>
-  )
 }

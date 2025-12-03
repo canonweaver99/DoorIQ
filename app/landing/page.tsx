@@ -10,6 +10,7 @@ import { Timeline } from "@/components/ui/timeline";
 import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
 import { TestimonialsColumn, testimonialsData } from "@/components/ui/testimonials-columns-1";
 import { AnimatedText } from "@/components/ui/animated-text";
+import { AIVoiceInput } from "@/components/ui/ai-voice-input";
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 import { getAgentImageStyle } from "@/lib/agents/imageStyles";
 import { createClient } from "@/lib/supabase/client";
@@ -828,13 +829,9 @@ const InlineAgentCarousel = React.memo(() => {
                       )}
                       animate={{
                         rotate: 360,
-                        scale: [1, 1.05, 1],
-                        opacity: [0.7, 0.9, 0.7],
                       }}
                       transition={{
                         rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-                        scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-                        opacity: { duration: 4, repeat: Infinity, ease: "easeInOut" },
                       }}
                     >
                       <div
@@ -847,7 +844,7 @@ const InlineAgentCarousel = React.memo(() => {
                   ))}
 
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                    <div className="relative w-[98%] h-[98%] rounded-full overflow-hidden shadow-2xl">
                       {(() => {
                         const imageStyle = getAgentImageStyle(agent.fullName);
                         const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ');
@@ -888,6 +885,12 @@ const InlineAgentCarousel = React.memo(() => {
                       })()}
                     </div>
                   </div>
+                  
+                  {/* Outer ring overlay that overlaps the image */}
+                  <div className={cn(
+                    "absolute inset-0 rounded-full border-2 pointer-events-none z-10",
+                    variantStyles.border[0]
+                  )} />
                 </div>
               </div>
             );
@@ -920,7 +923,7 @@ function MeetTrainerSection() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Hyper-Realistic AI</span>
           </h2>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
-            Your reps train with lifelike AI homeowners that adapt to every response. From friendly to hostile, they&apos;ll be ready for anything at the door.
+            Your reps train with lifelike AI homeowners that adapt to every response. From friendly to hostile, they&apos;ll be ready for anything.
           </p>
         </motion.div>
       </div>
@@ -934,6 +937,23 @@ function MeetTrainerSection() {
         className="relative w-full -mt-8 md:-mt-12"
       >
         <InlineAgentCarousel />
+      </motion.div>
+
+      {/* AI Voice Input - Hear a snippet from the agents */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.4, duration: 0.8 }}
+        className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 mt-2 md:mt-4"
+      >
+        <div className="flex justify-center dark">
+          <AIVoiceInput 
+            audioUrl="/api/eleven/sample-audio"
+            onStart={() => console.log('Demo started')}
+            onStop={(duration) => console.log(`Demo stopped after ${duration}s`)}
+          />
+        </div>
       </motion.div>
     </section>
   );

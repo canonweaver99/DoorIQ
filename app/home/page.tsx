@@ -1,29 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Database } from '@/lib/supabase/database.types'
-import {
-  ArrowRight,
-  Play,
-  BarChart3,
-  TrendingUp,
-  Clock,
-  Award,
-  Calendar,
-  ChevronRight,
-  Target,
-  Zap,
-} from 'lucide-react'
-import Image from 'next/image'
+import { motion } from 'framer-motion'
+import { Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
+import HomepageContent from '@/app/dashboard/components/HomepageContent'
+import GamificationBar from '@/components/dashboard/GamificationBar'
 
-type LiveSession = Database['public']['Tables']['live_sessions']['Row']
-
-// Animated Background Component (matching landing page)
+// Animated Background Component (matching dashboard)
 function AnimatedBackground() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -91,35 +77,11 @@ function AnimatedBackground() {
   )
 }
 
-// Helper to format duration
-const formatDuration = (seconds: number | null) => {
-  if (!seconds || isNaN(seconds)) return '0m'
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  if (hours > 0) return `${hours}h ${minutes}m`
-  return `${minutes}m`
-}
-
-// Helper to get score color
-const getScoreColor = (score: number | null) => {
-  if (!score || isNaN(score)) return 'text-white/60'
-  if (score >= 80) return 'text-green-400'
-  if (score >= 60) return 'text-yellow-400'
-  return 'text-red-400'
-}
-
 export default function HomePage() {
   const router = useRouter()
   const [userName, setUserName] = useState('')
-  const [stats, setStats] = useState({
-    sessionsThisWeek: 0,
-    totalSessions: 0,
-    avgScore: 0,
-    bestScore: 0,
-  })
-  const [recentSessions, setRecentSessions] = useState<LiveSession[]>([])
-  const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000)
@@ -135,8 +97,16 @@ export default function HomePage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       
+      // TEMPORARILY DISABLED FOR TESTING - Allow viewing without auth
+      // if (!user) {
+      //   router.push('/auth/login')
+      //   return
+      // }
+      
       if (!user) {
-        router.push('/auth/login')
+        // Don't set a name if no user - let it show 'there'
+        setUserName('')
+        setLoading(false)
         return
       }
       
@@ -148,52 +118,28 @@ export default function HomePage() {
         .single()
       
       if (userData?.full_name) {
-        const firstName = userData.full_name.split(' ')[0] || userData.email?.split('@')[0] || 'User'
-        setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+        const firstName = userData.full_name.split(' ')[0] || userData.email?.split('@')[0] || ''
+        if (firstName) {
+          setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+        } else {
+          setUserName('')
+        }
       } else if (userData?.email) {
-        const emailName = userData.email.split('@')[0] || 'User'
-        setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
+        const emailName = userData.email.split('@')[0] || ''
+        if (emailName) {
+          setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
+        } else {
+          setUserName('')
+        }
       } else {
-        setUserName('User')
-      }
-      
-      // Get sessions from this week
-      const oneWeekAgo = new Date()
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-      
-      const { data: sessionsThisWeekData } = await supabase
-        .from('live_sessions')
-        .select('id, overall_score, created_at, ended_at, agent_name, duration_seconds')
-        .eq('user_id', user.id)
-        .gte('created_at', oneWeekAgo.toISOString())
-        .order('created_at', { ascending: false })
-      
-      // Get total sessions count
-      const { data: allSessionsData } = await supabase
-        .from('live_sessions')
-        .select('id, overall_score, created_at, ended_at, agent_name, duration_seconds')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10)
-      
-      if (allSessionsData) {
-        setRecentSessions(allSessionsData)
-        
-        // Calculate stats
-        const sessionsWithScores = allSessionsData.filter(s => s.overall_score !== null && s.overall_score !== undefined)
-        const avgScore = sessionsWithScores.length > 0
-          ? Math.round(sessionsWithScores.reduce((sum, s) => sum + (s.overall_score || 0), 0) / sessionsWithScores.length)
-          : 0
-        const bestScore = sessionsWithScores.length > 0
-          ? Math.max(...sessionsWithScores.map(s => s.overall_score || 0))
-          : 0
-        
-        setStats({
-          sessionsThisWeek: sessionsThisWeekData?.length || 0,
-          totalSessions: allSessionsData.length,
-          avgScore,
-          bestScore,
-        })
+        // Try to get name from auth user metadata as fallback
+        const authName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || ''
+        if (authName) {
+          const firstName = authName.split(' ')[0]
+          setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+        } else {
+          setUserName('')
+        }
       }
       
       setLoading(false)
@@ -211,6 +157,28 @@ export default function HomePage() {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   }
 
+  const getTimeOfDayGreeting = () => {
+    const hour = currentTime.getHours()
+    if (hour < 12) {
+      return { emoji: '☀️', text: 'Good morning' }
+    } else if (hour < 17) {
+      return { emoji: '👋', text: 'Back for more' }
+    } else {
+      return { emoji: '🌙', text: 'Evening grind' }
+    }
+  }
+
+  const getDisplayName = () => {
+    // Always show the name if we have it, even if it's 'Guest' or 'User'
+    // Only fall back to 'there' if userName is truly empty
+    if (!userName || userName.trim() === '') {
+      return 'there'
+    }
+    return userName
+  }
+
+  const timeOfDay = getTimeOfDayGreeting()
+
   if (loading) {
     return (
       <main className="bg-black min-h-screen text-white relative flex items-center justify-center">
@@ -225,258 +193,47 @@ export default function HomePage() {
       <AnimatedBackground />
       
       <div className="relative z-10 pt-24 pb-16 px-6 sm:px-8 lg:px-12">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1800px] mx-auto">
           {/* Welcome Header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="mb-12"
+            className="mb-8 sm:mb-10 lg:mb-12"
           >
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div>
-                <h1 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white font-light tracking-tight mb-4">
-                  Welcome back,{' '}
+              <div className="flex-1">
+                <h1 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-light tracking-tight mb-3">
+                  {timeOfDay.emoji} {timeOfDay.text},{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-                    {userName}
+                    {getDisplayName()}
                   </span>
                 </h1>
+                <p className="text-white/80 text-base sm:text-lg md:text-xl font-normal mb-4">
+                  Ready to level up your pitch?
+                </p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-white/70 text-sm md:text-base font-sans">
                   <span className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    <span>{formatDate(currentTime)}</span>
+                    <span className="break-words">{formatDate(currentTime)}</span>
                   </span>
                   <span className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    <span>{formatTime(currentTime)}</span>
+                    {formatTime(currentTime)}
                   </span>
                 </div>
               </div>
-              
-              {/* Quick Action Button */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-              >
-                <Link
-                  href="/trainer/select-homeowner"
-                  className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-bold rounded-md text-base tracking-tight hover:bg-white/95 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Start Practice Session
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </motion.div>
+              {/* Gamification Bar */}
+              <div className="flex-shrink-0">
+                <GamificationBar />
+              </div>
             </div>
           </motion.div>
 
-          {/* Stats Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12"
-          >
-            {/* Sessions This Week */}
-            <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-white" />
-                </div>
-                <div className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
-                  {stats.sessionsThisWeek}
-                </div>
-              </div>
-              <p className="font-sans text-white/80 text-sm md:text-base font-light">
-                Sessions This Week
-              </p>
-            </div>
-
-            {/* Total Sessions */}
-            <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-white" />
-                </div>
-                <div className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
-                  {stats.totalSessions}
-                </div>
-              </div>
-              <p className="font-sans text-white/80 text-sm md:text-base font-light">
-                Total Sessions
-              </p>
-            </div>
-
-            {/* Average Score */}
-            <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <div className={`font-space text-3xl md:text-4xl font-light tracking-tight ${getScoreColor(stats.avgScore)}`}>
-                  {stats.avgScore || '--'}
-                </div>
-              </div>
-              <p className="font-sans text-white/80 text-sm md:text-base font-light">
-                Average Score
-              </p>
-            </div>
-
-            {/* Best Score */}
-            <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                  <Award className="w-5 h-5 text-white" />
-                </div>
-                <div className={`font-space text-3xl md:text-4xl font-light tracking-tight ${getScoreColor(stats.bestScore)}`}>
-                  {stats.bestScore || '--'}
-                </div>
-              </div>
-              <p className="font-sans text-white/80 text-sm md:text-base font-light">
-                Best Score
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Recent Sessions & Quick Links */}
-          <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
-            {/* Recent Sessions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="lg:col-span-2"
-            >
-              <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-space text-2xl md:text-3xl text-white font-light tracking-tight">
-                    Recent Sessions
-                  </h2>
-                  <Link
-                    href="/dashboard?tab=overview"
-                    className="text-white/80 hover:text-white text-sm font-sans flex items-center gap-2 transition-colors"
-                  >
-                    View All
-                    <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-                
-                {recentSessions.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentSessions.slice(0, 5).map((session) => (
-                      <Link
-                        key={session.id}
-                        href={`/sessions/${session.id}`}
-                        className="block bg-white/[0.02] border border-white/5 rounded-lg p-4 hover:border-white/20 hover:bg-white/[0.03] transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="font-space text-lg text-white font-medium">
-                                {session.agent_name || 'Practice Session'}
-                              </h3>
-                              {session.overall_score !== null && (
-                                <span className={`text-sm font-sans ${getScoreColor(session.overall_score)}`}>
-                                  {session.overall_score}%
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4 text-white/60 text-sm font-sans">
-                              {session.created_at && (
-                                <span>{format(new Date(session.created_at), 'MMM d, yyyy')}</span>
-                              )}
-                              {session.duration_seconds && (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {formatDuration(session.duration_seconds)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <ChevronRight className="w-5 h-5 text-white/40" />
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Play className="w-12 h-12 text-white/40 mx-auto mb-4" />
-                    <p className="text-white/60 font-sans mb-6">
-                      No sessions yet. Start your first practice session!
-                    </p>
-                    <Link
-                      href="/trainer/select-homeowner"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-md text-sm tracking-tight hover:bg-white/95 transition-all"
-                    >
-                      Start Practice Session
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Quick Links */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-            >
-              <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8">
-                <h2 className="font-space text-2xl md:text-3xl text-white font-light tracking-tight mb-6">
-                  Quick Links
-                </h2>
-                <div className="space-y-3">
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-lg hover:border-white/20 hover:bg-white/[0.03] transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <BarChart3 className="w-5 h-5 text-white/80" />
-                      <span className="font-sans text-white/90">Dashboard</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-white/40 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                  
-                  <Link
-                    href="/trainer/select-homeowner"
-                    className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-lg hover:border-white/20 hover:bg-white/[0.03] transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Zap className="w-5 h-5 text-white/80" />
-                      <span className="font-sans text-white/90">Practice</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-white/40 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                  
-                  <Link
-                    href="/sessions"
-                    className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-lg hover:border-white/20 hover:bg-white/[0.03] transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Clock className="w-5 h-5 text-white/80" />
-                      <span className="font-sans text-white/90">All Sessions</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-white/40 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                  
-                  <Link
-                    href="/leaderboard"
-                    className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-lg hover:border-white/20 hover:bg-white/[0.03] transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Award className="w-5 h-5 text-white/80" />
-                      <span className="font-sans text-white/90">Leaderboard</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-white/40 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+          {/* Homepage Content */}
+          <HomepageContent />
         </div>
       </div>
     </main>
   )
 }
-

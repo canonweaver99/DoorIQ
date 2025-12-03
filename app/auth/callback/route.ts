@@ -325,7 +325,7 @@ export async function GET(request: Request) {
       }
 
       // Default redirect destination after successful authentication
-      let redirectPath = requestUrl.searchParams.get('next') || '/home'
+      let redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
       
       // Preserve checkout intent in redirect
       if (checkoutIntent && redirectPath) {
@@ -338,7 +338,7 @@ export async function GET(request: Request) {
     }
   }
   
-  // Fallback: redirect to home if no valid callback parameters
-  console.log('⚠️ No valid callback parameters, redirecting to home')
-  return NextResponse.redirect(new URL('/', requestUrl.origin))
+  // Fallback: redirect to dashboard if no valid callback parameters
+  console.log('⚠️ No valid callback parameters, redirecting to dashboard')
+  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
 }
