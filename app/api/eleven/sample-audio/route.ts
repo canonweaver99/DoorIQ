@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from '@/components/trainer/personas'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getRandomSnippet } from '@/lib/agent-snippets'
 
 /**
  * Generate a sample audio snippet for the landing page demo
@@ -158,8 +159,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Generate sample text based on agent
-    const sampleText = `Hi, I'm ${agentName}. ${agentMetadata.bubble.description}`
+    // Generate sample text using random snippet from sales conversation
+    const sampleText = getRandomSnippet(agentName)
     const modelId = 'eleven_multilingual_v2'
     
     // Call ElevenLabs TTS API with the agent's actual voice
