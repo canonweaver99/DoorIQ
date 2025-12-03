@@ -489,16 +489,29 @@ function ProblemSection() {
         <div className="grid md:grid-cols-3 gap-4 md:gap-6">
           {problems.map((problem, index) => {
             const ref = useRef(null);
-            const isInView = useInView(ref, { once: true, margin: "-100px" });
+            const isInView = useInView(ref, { once: true, margin: "0px" });
+            
+            const variants = {
+              hidden: { 
+                opacity: 0, 
+                y: 30,
+              },
+              visible: { 
+                opacity: 1, 
+                y: 0,
+                transition: { delay: index * 0.3, duration: 0.6, ease: "easeOut" }
+              }
+            };
             
             return (
               <motion.div
                 key={problem.title}
                 ref={ref}
-                initial={{ opacity: 0, y: 30 }}
-                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-                transition={{ delay: index * 0.3, duration: 0.6 }}
-                className={`group relative bg-white/[0.02] border-2 rounded-lg p-6 md:p-8 transition-all duration-500 ${
+                variants={variants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "0px" }}
+                className={`group relative bg-white/[0.02] border-2 rounded-lg p-6 md:p-8 transition-all duration-300 ${
                   isInView 
                     ? 'border-white/30 bg-white/[0.03] shadow-lg shadow-purple-500/20' 
                     : 'border-white/5 hover:border-white/20 hover:bg-white/[0.025]'
