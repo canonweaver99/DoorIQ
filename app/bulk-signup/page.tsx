@@ -3,8 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Loader2, CheckCircle2, XCircle, UserPlus, Mail, Lock, User } from 'lucide-react'
+import { AnimatedBackground } from '@/components/ui/animated-background'
+import { User, Eye, EyeOff, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+
+const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm transition-all duration-200 focus-within:border-purple-400/70 focus-within:bg-purple-500/10 focus-within:shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+    {children}
+  </div>
+)
 
 export default function BulkSignupPage() {
   const router = useRouter()
@@ -14,6 +20,8 @@ export default function BulkSignupPage() {
     password: '',
     confirmPassword: ''
   })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -87,143 +95,144 @@ export default function BulkSignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mb-4">
-            <UserPlus className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Join DoorIQ</h1>
-          <p className="text-slate-400">Create your account to start practicing</p>
-        </div>
+    <div className="h-[100dvh] w-[100dvw] bg-black relative flex items-center justify-center p-4">
+      <AnimatedBackground />
+      
+      <div className="w-full max-w-md relative z-10">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-space font-light tracking-tight leading-tight text-white">
+            Join <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span>
+          </h1>
+          <p className="text-white/80 text-base leading-relaxed font-sans">Create your account and start practicing</p>
 
-        {/* Form */}
-        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-6 shadow-2xl">
           {success ? (
-            <div className="text-center py-8">
+            <div className="bg-white/[0.02] border-2 border-white/20 rounded-lg p-8 text-center">
               <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Account Created!</h2>
-              <p className="text-slate-400 mb-4">Redirecting you to the app...</p>
+              <p className="text-white/80 mb-4">Redirecting you to the app...</p>
               <Loader2 className="w-6 h-6 animate-spin text-purple-400 mx-auto" />
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <p className="text-sm text-red-400 flex items-center gap-2">
-                    <XCircle className="w-4 h-4" />
-                    {error}
-                  </p>
-                </div>
-              )}
-
-              {/* Full Name */}
+            <form className="space-y-3.5" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-slate-300 mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input
-                    id="fullName"
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="John Doe"
-                    required
-                  />
-                </div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Full Name</label>
+                <GlassInputWrapper>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      placeholder="John Doe"
+                      className="w-full bg-transparent text-sm py-3 px-3 pl-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                      required
+                    />
+                  </div>
+                </GlassInputWrapper>
               </div>
 
-              {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Email Address</label>
+                <GlassInputWrapper>
                   <input
-                    id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="john@example.com"
+                    placeholder="you@company.com"
+                    className="w-full bg-transparent text-sm py-3 px-3 rounded-2xl focus:outline-none text-white placeholder-slate-500"
                     required
                   />
-                </div>
+                </GlassInputWrapper>
               </div>
 
-              {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                  />
-                </div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Password</label>
+                <GlassInputWrapper>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Create a password"
+                      className="w-full bg-transparent text-sm py-3 px-3 pr-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-3 flex items-center"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+                      ) : (
+                        <Eye className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+                      )}
+                    </button>
+                  </div>
+                </GlassInputWrapper>
+                <p className="mt-2 text-xs text-slate-400">Minimum 6 characters</p>
               </div>
 
-              {/* Confirm Password */}
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                  />
-                </div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Confirm Password</label>
+                <GlassInputWrapper>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={formData.confirmPassword}
+                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      placeholder="Confirm your password"
+                      className="w-full bg-transparent text-sm py-3 px-3 pr-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-3 flex items-center"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+                      ) : (
+                        <Eye className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
+                      )}
+                    </button>
+                  </div>
+                </GlassInputWrapper>
               </div>
 
-              {/* Submit Button */}
-              <Button
+              {error && (
+                <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-center gap-2">
+                  <XCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-md bg-white text-black py-3.5 text-base font-bold tracking-tight hover:bg-white/95 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
-                  </>
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Creating account...
+                  </span>
                 ) : (
-                  <>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Create Account
-                  </>
+                  'Create Account'
                 )}
-              </Button>
+              </button>
             </form>
           )}
-        </div>
 
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-slate-400">
+          <p className="text-center text-sm text-slate-400">
             Already have an account?{' '}
-            <a href="/auth/login" className="text-purple-400 hover:text-purple-300 font-medium">
-              Sign in
+            <a
+              href="/auth/login"
+              className="text-purple-400 hover:text-purple-300 hover:underline transition-colors font-medium"
+            >
+              Sign In
             </a>
           </p>
         </div>
@@ -231,4 +240,3 @@ export default function BulkSignupPage() {
     </div>
   )
 }
-

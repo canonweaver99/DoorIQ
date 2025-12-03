@@ -22,14 +22,16 @@ export async function POST(request: NextRequest) {
 
     const serviceSupabase = await createServiceSupabaseClient()
 
-    // Check if user already exists
-    const { data: existingUser } = await serviceSupabase.auth.admin.getUserByEmail(email.toLowerCase())
-
-    if (existingUser?.user) {
-      return NextResponse.json(
-        { error: 'An account with this email already exists' },
-        { status: 400 }
-      )
+    // Check if user already exists by listing users and filtering
+    const { data: usersData } = await (serviceSupabase as any).auth.admin.listUsers()
+    if (usersData?.users) {
+      const existingUser = usersData.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+      if (existingUser) {
+        return NextResponse.json(
+          { error: 'An account with this email already exists' },
+          { status: 400 }
+        )
+      }
     }
 
     // Create auth user (auto-confirmed for bulk signup)
@@ -88,9 +90,9 @@ export async function POST(request: NextRequest) {
 
     // No session limits - unlimited practice for all users
 
-    // Send notification email to admin
+    // Send notification email to admin (bulk signup)
     try {
-      await sendNewUserNotification(email, full_name, userId)
+      await sendNewUserNotification(email, full_name, userId, 'bulk-signup')
     } catch (emailError) {
       console.error('Warning: Failed to send notification email:', emailError)
       // Don't fail the request

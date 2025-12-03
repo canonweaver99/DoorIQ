@@ -88,7 +88,7 @@ export async function sendEmail({ to, subject, html, from, replyTo }: SendEmailP
 /**
  * Send notification email to admin when a new user signs up
  */
-export async function sendNewUserNotification(userEmail: string, fullName: string, userId: string) {
+export async function sendNewUserNotification(userEmail: string, fullName: string, userId: string, source?: string) {
   try {
     // Don't send if Resend is not configured
     if (!process.env.RESEND_API_KEY) {
@@ -97,7 +97,8 @@ export async function sendNewUserNotification(userEmail: string, fullName: strin
     }
 
     const adminEmail = 'canonweaver@loopline.design'
-    const subject = `New User Signup: ${fullName || userEmail}`
+    const sourceText = source === 'bulk-signup' ? ' (Bulk Signup)' : ''
+    const subject = `New User Signup${sourceText}: ${fullName || userEmail}`
     
     const html = `
       <!DOCTYPE html>
@@ -112,15 +113,16 @@ export async function sendNewUserNotification(userEmail: string, fullName: strin
             .info-row { margin: 15px 0; padding: 10px; background: #f9fafb; border-radius: 6px; }
             .info-label { font-weight: 600; color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
             .info-value { font-size: 16px; color: #111827; margin-top: 5px; }
+            .source-badge { display: inline-block; background: #f3e8ff; color: #a855f7; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1 style="margin: 0; font-size: 24px;">New User Signup</h1>
+              <h1 style="margin: 0; font-size: 24px;">New User Signup${source === 'bulk-signup' ? ' (Bulk Signup)' : ''}</h1>
             </div>
             <div class="content">
-              <p>A new user has just created an account on DoorIQ:</p>
+              <p>A new user has just created an account on DoorIQ${source === 'bulk-signup' ? ' via bulk signup link' : ''}:</p>
               
               <div class="info-row">
                 <div class="info-label">Name</div>
@@ -141,6 +143,13 @@ export async function sendNewUserNotification(userEmail: string, fullName: strin
                 <div class="info-label">Signup Time</div>
                 <div class="info-value">${new Date().toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'long' })}</div>
               </div>
+              
+              ${source === 'bulk-signup' ? `
+              <div class="info-row" style="background: #fef3c7; border-left: 3px solid #f59e0b;">
+                <div class="info-label" style="color: #92400e;">Signup Source</div>
+                <div class="info-value" style="color: #92400e;">Bulk Signup Link</div>
+              </div>
+              ` : ''}
             </div>
           </div>
         </body>
