@@ -16,7 +16,7 @@ function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; s
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+    <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
       {stats.map((stat, index) => {
         const Icon = stat.icon
         return (
@@ -25,16 +25,16 @@ function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; s
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1 }}
-            className={`bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 sm:p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] ${stat.bgColor} ${stat.borderColor}`}
+            className={`bg-white/[0.02] border-2 border-white/5 rounded-lg p-2.5 sm:p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] ${stat.bgColor} ${stat.borderColor}`}
           >
-            <div className="flex items-center gap-2.5 sm:gap-2.5 mb-3 sm:mb-2.5">
-              <div className={`${stat.color} p-1.5 sm:p-1.5 rounded-lg bg-white/[0.05] flex-shrink-0`}>
-                <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
+            <div className="flex items-center gap-1.5 sm:gap-2.5 mb-2 sm:mb-2.5">
+              <div className={`${stat.color} p-1 sm:p-1.5 rounded-lg bg-white/[0.05] flex-shrink-0`}>
+                <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
-              <span className="font-space text-white/60 text-xs sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider leading-tight">{stat.label}</span>
+              <span className="font-space text-white/60 text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider leading-tight">{stat.label}</span>
             </div>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className={`font-space text-white text-3xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-none ${stat.color}`}>{stat.value}</span>
+              <span className={`font-space text-white text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-none ${stat.color}`}>{stat.value}</span>
             </div>
           </motion.div>
         )
@@ -181,7 +181,7 @@ export default function HomePage() {
                 <div className="h-12 sm:h-16 bg-white/10 rounded w-full sm:w-1/2 mb-4 sm:mb-6" />
                 <div className="h-8 sm:h-10 bg-white/10 rounded w-full" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}

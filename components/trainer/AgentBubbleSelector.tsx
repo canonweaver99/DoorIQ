@@ -513,12 +513,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           </motion.button>
         </motion.div>
 
-        {/* Agent Bubbles Grid - Horizontal scroll on mobile, grid on desktop */}
-        <div className="md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 mb-12 max-w-7xl mx-auto">
-          {/* Mobile: Horizontal scrolling container */}
-          <div className="md:hidden overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
-            <div className="flex gap-5 w-max">
-              {sortedAgents.map((agent, index) => {
+        {/* Agent Bubbles Grid - 2 columns on mobile, grid on desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12 max-w-7xl mx-auto">
+          {sortedAgents.map((agent, index) => {
                 const variantKey = agent.color as keyof typeof COLOR_VARIANTS
                 const variantStyles = COLOR_VARIANTS[variantKey]
                 const isHovered = hoveredAgent === agent.id
@@ -532,7 +529,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                     className={cn(
- "flex-shrink-0 w-[300px] snap-center",
+                      "w-full",
                       agent.isLocked || agent.name === 'Tag Team Tanya & Tom' ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
                     )}
                     role="button"
@@ -550,7 +547,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   >
                     <div
                       className={cn(
-                        "h-full flex flex-col items-center p-6 relative rounded-lg border",
+                        "h-full flex flex-col items-center p-3 sm:p-4 md:p-6 relative rounded-lg border",
                         cardStyle.border,
                         cardStyle.bg,
                         "hover:border-white/20 hover:bg-white/[0.03] transition-all duration-300",
@@ -563,9 +560,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 whileTap={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 0.95 } : {}}
                       disabled={agent.isLocked || agent.name === 'Tag Team Tanya & Tom'}
                       tabIndex={-1}
-                      className={cn("relative mb-3 focus:outline-none group", (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') && "cursor-not-allowed")}
+                      className={cn("relative mb-2 sm:mb-3 focus:outline-none group", (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') && "cursor-not-allowed")}
                     >
-                      <div className="relative h-40 w-40 mx-auto">
+                      <div className="relative h-28 w-28 sm:h-32 sm:w-32 md:h-40 md:w-40 mx-auto">
                         {/* Concentric circles */}
                         {[0, 1, 2].map((i) => (
                           <motion.div
@@ -656,55 +653,55 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </div>
                     </motion.button>
 
-                    {/* Suggested Badge - Mobile */}
+                    {/* Suggested Badge */}
                     {suggestedAgent === agent.name && !agent.isLocked && (
-                      <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
-                        <span className="text-xs text-white/90 font-medium font-space">⭐ Suggested</span>
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 sm:gap-1 border border-white/10">
+                        <span className="text-[10px] sm:text-xs text-white/90 font-medium font-space">⭐ Suggested</span>
                       </div>
                     )}
                     
-                    {/* Coming Soon Badge - Mobile */}
+                    {/* Coming Soon Badge */}
                     {agent.name === 'Tag Team Tanya & Tom' && (
                       <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
-                        <div className="bg-white/[0.05] backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-white/10">
-                          <span className="text-sm text-white/80 font-medium font-space">🚧 Coming Soon</span>
+                        <div className="bg-white/[0.05] backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2 border border-white/10">
+                          <span className="text-xs sm:text-sm text-white/80 font-medium font-space">🚧 Coming Soon</span>
                         </div>
                       </div>
                     )}
                     
-                    {/* Locked Badge - Mobile */}
+                    {/* Locked Badge */}
                     {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
-                      <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
-                        <span className="text-xs text-white/70 font-space">🔒 Locked</span>
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 sm:gap-1 border border-white/10">
+                        <span className="text-[10px] sm:text-xs text-white/70 font-space">🔒 Locked</span>
                       </div>
                     )}
                     
-                    {/* Mastered Badge - Mobile */}
+                    {/* Mastered Badge */}
                     {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
-                      <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-white/10">
-                        <span className="text-xs text-white/80 font-space">🏆</span>
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-white/10">
+                        <span className="text-[10px] sm:text-xs text-white/80 font-space">🏆</span>
                       </div>
                     )}
 
                     {/* Agent Info */}
                     <div className="text-center w-full mt-auto">
-                      <h3 className="text-lg font-medium text-white mb-2 font-space tracking-tight">
+                      <h3 className="text-sm sm:text-base md:text-lg font-medium text-white mb-1 sm:mb-2 font-space tracking-tight">
                         {agent.name}
                       </h3>
-                      <p className="text-sm text-slate-300 mb-3 font-space font-bold">
+                      <p className="text-xs sm:text-sm text-slate-300 mb-2 sm:mb-3 font-space font-bold">
                         {agent.subtitle}
                       </p>
                       {/* Difficulty Dot */}
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                         <div className={cn(
-                          "w-2 h-2 rounded-full flex-shrink-0",
+                          "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0",
                           agent.difficulty === 'Easy' && "bg-green-400",
                           agent.difficulty === 'Moderate' && "bg-yellow-400",
                           agent.difficulty === 'Hard' && "bg-orange-400",
                           agent.difficulty === 'Expert' && "bg-red-400",
                           !agent.difficulty && "bg-white/40"
                         )} />
-                        <span className="text-base text-white/70 font-space font-bold">
+                        <span className="text-xs sm:text-sm md:text-base text-white/70 font-space font-bold">
                           {agent.difficulty || 'Unknown'}
                         </span>
                       </div>
@@ -713,262 +710,6 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </motion.div>
                 )
               })}
-            </div>
-          </div>
-
-          {/* Desktop: Grid layout */}
-          <div className="hidden md:contents">
-          {sortedAgents.map((agent, index) => {
-            const variantKey = agent.color as keyof typeof COLOR_VARIANTS
-            const variantStyles = COLOR_VARIANTS[variantKey]
-            const isHovered = hoveredAgent === agent.id
-            const isSelected = selectedAgent === agent.agentId
-            const cardStyle = getCardStyle(agent.difficulty)
-
-            return (
-              <motion.div
-                key={agent.id}
-                initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.05 }}
-                className={cn(
-                  "select-none focus:outline-none",
-                  agent.isLocked || agent.name === 'Tag Team Tanya & Tom' ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-                )}
-                role="button"
-                tabIndex={agent.isLocked ? -1 : 0}
-                onClick={() => !agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && handleSelectAgent(agent.agentId, agent.name)}
-                onKeyDown={(e) => {
-                  if (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') return
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    handleSelectAgent(agent.agentId, agent.name)
-                  }
-                }}
-                onMouseEnter={() => setHoveredAgent(agent.id)}
-                onMouseLeave={() => setHoveredAgent(null)}
-              >
-                <div
-                  className={cn(
-                    "h-full flex flex-col items-center p-6 relative rounded-lg border",
-                    cardStyle.border,
-                    cardStyle.bg,
-                    "hover:border-white/20 hover:bg-white/[0.03] transition-all duration-300",
-                    agent.isLocked && "opacity-50"
-                  )}
-                >
-                {/* Animated Bubble */}
-                <motion.button
-                  whileHover={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 1.05 } : {}}
-                  whileTap={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 0.95 } : {}}
-                  disabled={agent.isLocked}
-                  tabIndex={-1}
-                  className={cn("relative mb-3 focus:outline-none group", agent.isLocked && "cursor-not-allowed")}
-                >
-                  <div className="relative h-40 w-40 mx-auto">
-                    {/* Concentric circles */}
-                    {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        className={cn(
-                          "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
-                          variantStyles.border[i],
-                          variantStyles.gradient
-                        )}
-                        animate={isHovered ? {
-                          rotate: 360,
-                          scale: 1,
-                          opacity: 1,
-                        } : {
-                          rotate: 360,
-                          scale: [1, 1.05, 1],
-                          opacity: isSelected ? [1, 1, 1] : [0.7, 0.9, 0.7],
-                        }}
-                        transition={isHovered ? {
-                          rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
-                          scale: { duration: 0.3 },
-                          opacity: { duration: 0.3 },
-                        } : {
-                          rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
-                          scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
-                          opacity: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
-                        }}
-                      >
-                        <div
-                          className={cn(
-                            "absolute inset-0 rounded-full mix-blend-screen",
-                            `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
-                              "from-",
-                              ""
-                            )}/20%,transparent_70%)]`
-                          )}
-                        />
-                      </motion.div>
-                    ))}
-
-                    {/* Profile Image in Center - synchronized with circles */}
-                    {agent.image && (
-                      <motion.div 
-                        className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
-                        animate={isHovered ? {
-                          scale: 1,
-                        } : {
-                          scale: [1, 1.05, 1],
-                        }}
-                        transition={isHovered ? {
-                          duration: 0.3,
-                        } : {
-                          duration: 4,
-                          repeat: Number.POSITIVE_INFINITY,
-                          ease: "easeInOut",
-                          delay: 0,
-                        }}
-                      >
-                        <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
-                          {(() => {
-                            const imageStyle = getAgentImageStyle(agent.name)
-                            const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
-                            
-                            // Convert vertical percentage to translateY
-                            // For object-position, 50% = center, 100% = bottom edge, 200% = way below
-                            // For translateY, we need to calculate based on container size
-                            // Since we can't know exact container size, we'll use a percentage transform
-                            // 50% (center) = 0, 100% (bottom) = 50% of container down, 200% = 100% down
-                            let translateY = '0'
-                            const verticalNum = parseFloat(vertical)
-                            if (verticalNum !== 50) {
-                              // Calculate translateY: if vertical is 200%, move down by ~50% of container
-                              // Formula: (verticalNum - 50) / 150 gives us the percentage to translate
-                              // For 200%: (200 - 50) / 150 = 100% translate down
-                              const translatePercent = ((verticalNum - 50) / 150) * 100
-                              translateY = `${translatePercent}%`
-                            }
-                            
-                            // Combine transforms - scale from imageStyle and translateY
-                            const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
-                            const combinedTransform = translateY !== '0' 
-                              ? `scale(${scaleValue}) translateY(${translateY})`
-                              : imageStyle.transform || `scale(${scaleValue})`
-                            
-                            const finalStyle = {
-                              objectFit: 'cover' as const,
-                              objectPosition: `${horizontal} 50%`, // Keep horizontal, center vertical
-                              transform: combinedTransform,
-                            }
-                            
-                            if (agent.name === 'Not Interested Nick') {
-                              console.log('🖼️ Nick style:', { 
-                                agentName: agent.name,
-                                horizontal, 
-                                vertical,
-                                verticalNum,
-                                translateY,
-                                combinedTransform,
-                                finalObjectPosition: finalStyle.objectPosition,
-                                finalTransform: finalStyle.transform
-                              })
-                            }
-                            // URL encode image path if it contains spaces to ensure proper loading
-                            const imageSrc = agent.image.includes(' ') || agent.image.includes('&')
-                              ? agent.image.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                              : agent.image
-                            
-                            return (
-                              <Image
-                                src={imageSrc}
-                                alt={agent.name}
-                                fill
-                                style={finalStyle}
-                                sizes="320px"
-                                quality={95}
-                                priority={index < 6}
-                                unoptimized={agent.image.includes(' ') || agent.image.includes('&')}
-                                onError={(e) => {
-                                  console.error('❌ Agent bubble image failed to load:', agent.image, 'Encoded:', imageSrc)
-                                  e.stopPropagation()
-                                }}
-                              />
-                            )
-                          })()}
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
-                </motion.button>
-
-                {/* Suggested Badge */}
-                {suggestedAgent === agent.name && !agent.isLocked && (
-                  <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
-                    <span className="text-xs text-white/90 font-medium font-space">⭐ Suggested</span>
-                  </div>
-                )}
-                
-                {/* Coming Soon Badge */}
-                {agent.name === 'Tag Team Tanya & Tom' && (
-                  <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
-                    <div className="bg-white/[0.05] backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-white/10">
-                      <span className="text-sm text-white/80 font-medium font-space">🚧 Coming Soon</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Locked Badge */}
-                {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
-                  <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
-                    <span className="text-xs text-white/70 font-space">🔒 Locked</span>
-                  </div>
-                )}
-                
-                {/* Mastered Badge */}
-                {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
-                  <div className="absolute top-2 right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-white/10">
-                    <span className="text-xs text-white/80 font-space">🏆</span>
-                  </div>
-                )}
-
-                {/* Agent Info - Redesigned */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 + 0.2 }}
-                  className="text-center space-y-3 px-2 mt-auto w-full"
-                >
-                  {/* Name and difficulty */}
-                  <div className="flex items-center justify-center gap-2">
-                    <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-space">{agent.name}</h3>
-                    <div className={cn(
-                      "w-2 h-2 rounded-full flex-shrink-0",
-                      agent.difficulty === 'Easy' ? 'bg-green-400' :
-                      agent.difficulty === 'Moderate' ? 'bg-yellow-400' :
-                      agent.difficulty === 'Hard' ? 'bg-orange-400' :
-                      'bg-red-400'
-                    )} />
-                  </div>
-                  
-                  {/* Combined summary */}
-                  <p className="text-sm sm:text-base text-slate-300 max-w-[240px] mx-auto leading-relaxed font-space font-bold">
-                    {agent.description}
-                  </p>
-                  
-                  {/* Stats if available */}
-                  {agent.sessionCount && agent.sessionCount > 0 ? (
-                    <div className="text-sm sm:text-base font-medium pt-2 font-space">
-                      <span className="text-white/90">{agent.sessionCount}x attempted</span>
-                      {agent.bestScore && agent.bestScore > 0 ? (
-                        <span className="text-white/70 ml-2 tabular-nums">• Best: {agent.bestScore}%</span>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="text-sm sm:text-base font-bold text-slate-400 pt-2 font-space">
-                      ✨ Not yet attempted
-                    </div>
-                  )}
-                </motion.div>
-                </div>
-              </motion.div>
-            )
-          })}
-          </div>
         </div>
 
         {/* Footer hint */}

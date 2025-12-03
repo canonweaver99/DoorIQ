@@ -43,7 +43,7 @@ export default function HeroPerformanceCard({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
+        className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-2.5 sm:p-4 md:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
       >
         {/* Subtle purple glow at bottom for depth */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -70,28 +70,28 @@ export default function HeroPerformanceCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-3 sm:p-4 md:p-6 lg:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
+      className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-2.5 sm:p-4 md:p-6 lg:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
     >
       {/* Subtle purple glow at bottom for depth */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       <div className="relative z-10">
         {/* Header with title and date/time */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 md:mb-6 gap-2 sm:gap-0">
-          <div>
+        <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-4 md:mb-6 gap-2">
+          <div className="flex-1">
             <h2 className="font-space text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Most Recent Session</h2>
             {durationMinutes !== null && durationSecs !== null && (
-              <p className="font-space text-white/60 text-xs font-semibold mt-0.5">
+              <p className="font-space text-white/60 text-xs sm:text-xs font-semibold mt-0.5">
                 Duration: {durationMinutes}m {durationSecs}s
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
+              <Clock className="w-3 h-3 sm:w-5 sm:h-5" />
             </div>
             <div className="text-right">
-              <p className="font-space text-white/80 text-xs sm:text-sm md:text-base font-bold">
+              <p className="font-space text-white/80 text-xs sm:text-sm md:text-base font-bold whitespace-nowrap">
                 {formattedDate} at {formattedTime}
               </p>
             </div>
@@ -99,9 +99,9 @@ export default function HeroPerformanceCard({
         </div>
 
         {/* Main Content */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-4 md:mb-6">
           {/* Agent Picture */}
-          <div className="relative h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32 flex-shrink-0">
+          <div className="relative h-16 w-16 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32 flex-shrink-0">
             {/* Concentric circles */}
             {[0, 1, 2].map((i) => (
               <motion.div
@@ -177,22 +177,22 @@ export default function HeroPerformanceCard({
           </div>
 
           {/* Agent Name and Score on Same Line */}
-          <div className="flex-1 flex items-center justify-between gap-2 sm:gap-3 md:gap-4">
+          <div className="flex-1 flex items-center justify-between gap-1.5 sm:gap-3 md:gap-4">
             <div>
-              <p className="font-space text-white/60 text-xs sm:text-sm md:text-base uppercase tracking-wider mb-1 font-semibold">Practice with</p>
+              <p className="font-space text-white/60 text-xs sm:text-sm md:text-base uppercase tracking-wider mb-0.5 sm:mb-1 font-semibold">Practice with</p>
               <p className="font-space text-white text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight">{agentName}</p>
             </div>
             
             {/* Score and Grade Badge */}
-            <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-              <div className="flex items-baseline gap-1 sm:gap-2">
-                <div className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-bold tracking-tight">
+            <div className="flex items-center gap-1.5 sm:gap-3 md:gap-4">
+              <div className="flex items-baseline gap-0.5 sm:gap-2">
+                <div className="font-space text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-bold tracking-tight">
                   {overallScore}
                 </div>
-                <p className="font-space text-white/60 text-sm sm:text-base md:text-lg lg:text-xl font-bold">/100</p>
+                <p className="font-space text-white/60 text-xs sm:text-base md:text-lg lg:text-xl font-bold">/100</p>
               </div>
-              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
-                <span className={`font-space text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight ${grade.color}`}>
+              <div className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
+                <span className={`font-space text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight ${grade.color}`}>
                   {grade.letter}
                 </span>
               </div>
@@ -201,24 +201,24 @@ export default function HeroPerformanceCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+        <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-3 mb-2 sm:mb-4 md:mb-6">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => router.push(`/analytics/${session.id}`)}
-            className="group/btn flex-1 bg-white text-black font-bold rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 md:px-6 font-space"
+            className="group/btn flex-1 bg-white text-black font-bold rounded-md text-xs sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2.5 md:py-3 px-3 sm:px-5 md:px-6 font-space"
           >
             View Full Analysis
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover/btn:translate-x-0.5 transition-transform" />
+            <ArrowRight className="w-3 h-3 sm:w-5 sm:h-5 group-hover/btn:translate-x-0.5 transition-transform" />
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => router.push('/trainer')}
-            className="group/btn flex-1 bg-white text-black font-bold rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 py-2 sm:py-2.5 md:py-3 px-4 sm:px-5 md:px-6 font-space"
+            className="group/btn flex-1 bg-white text-black font-bold rounded-md text-xs sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2.5 md:py-3 px-3 sm:px-5 md:px-6 font-space"
           >
             Practice Again
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover/btn:translate-x-0.5 transition-transform" />
+            <ArrowRight className="w-3 h-3 sm:w-5 sm:h-5 group-hover/btn:translate-x-0.5 transition-transform" />
           </motion.button>
         </div>
 
@@ -228,22 +228,22 @@ export default function HeroPerformanceCard({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="pt-3 sm:pt-4 md:pt-6 border-t border-white/10"
+            className="pt-2 sm:pt-4 md:pt-6 border-t border-white/10"
           >
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-              <span className="font-space text-white/90 text-xs sm:text-sm md:text-base lg:text-lg font-bold tracking-tight">Critical Issues:</span>
+              <span className="font-space text-white/90 text-base sm:text-sm md:text-base lg:text-lg font-bold tracking-tight">Critical Issues:</span>
               {(isMobile ? keyIssues.slice(0, 1) : keyIssues).map((issue, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  className="flex items-center gap-1.5 sm:gap-2 font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold"
+                  className="flex items-center gap-1.5 sm:gap-2 font-space text-white/80 text-base sm:text-sm md:text-base lg:text-lg font-bold"
                 >
                   {issue.severity === 'error' ? (
-                    <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
+                    <XCircle className="w-5 h-5 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
                   ) : (
-                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 flex-shrink-0" />
+                    <AlertTriangle className="w-5 h-5 sm:w-5 sm:h-5 text-yellow-400 flex-shrink-0" />
                   )}
                   <span>{issue.text}</span>
                 </motion.div>

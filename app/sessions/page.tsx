@@ -739,12 +739,12 @@ export default function SessionsPage() {
                                 className="pt-3 sm:pt-4 border-t border-white/10"
                               >
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                                  <span className="font-space text-white/90 text-xs sm:text-sm md:text-base font-bold tracking-tight whitespace-nowrap">Critical Issues:</span>
-                                  <div className="flex items-start sm:items-center gap-2 font-space text-white/80 text-xs sm:text-sm md:text-base font-bold">
+                                  <span className="font-space text-white/90 text-base sm:text-sm md:text-base font-bold tracking-tight whitespace-nowrap">Critical Issues:</span>
+                                  <div className="flex items-start sm:items-center gap-2 font-space text-white/80 text-base sm:text-sm md:text-base font-bold">
                                     {criticalIssue.severity === 'error' ? (
-                                      <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                                      <XCircle className="w-5 h-5 sm:w-4 sm:h-4 text-red-400 flex-shrink-0 mt-0.5 sm:mt-0" />
                                     ) : (
-                                      <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                                      <AlertTriangle className="w-5 h-5 sm:w-4 sm:h-4 text-yellow-400 flex-shrink-0 mt-0.5 sm:mt-0" />
                                     )}
                                     <span className="break-words">{criticalIssue.text}</span>
                                   </div>

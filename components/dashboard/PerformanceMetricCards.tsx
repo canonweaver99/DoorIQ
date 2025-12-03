@@ -558,22 +558,22 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: card.delay }}
-            className={`relative rounded-lg p-3 sm:p-4 md:p-6 lg:p-8 overflow-hidden border-2 ${getBorderColor()} ${getBackgroundColor()}`}
+            className={`relative rounded-lg p-2.5 sm:p-4 md:p-6 lg:p-8 overflow-hidden border-2 ${getBorderColor()} ${getBackgroundColor()}`}
           >
             
             <div className="relative z-10">
               {/* Header */}
-              <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white">
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+              <div className="flex items-center justify-between mb-2 sm:mb-4 md:mb-6">
+                <div className="flex items-center gap-1.5 sm:gap-3">
+                  <div className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white">
+                    <Icon className="w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
                   </div>
-                  <h3 className="font-space text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-white">{card.title}</h3>
+                  <h3 className="font-space text-sm sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-white">{card.title}</h3>
                 </div>
                 {/* Enhanced Status Badge */}
-                <div className={`inline-flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg border-2 ${card.status.borderColor} ${card.status.bgColor}`}
+                <div className={`inline-flex items-center gap-0.5 sm:gap-2 px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-lg border-2 ${card.status.borderColor} ${card.status.bgColor}`}
                 >
-                  <span className={`text-[10px] sm:text-xs font-space font-bold ${card.status.color}`}>
+                  <span className={`text-[9px] sm:text-xs font-space font-bold ${card.status.color}`}>
                     {card.status.text.toUpperCase()}
                   </span>
                 </div>
