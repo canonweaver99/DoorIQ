@@ -747,11 +747,11 @@ const InlineAgentCarousel = React.memo(() => {
 
   const getItemWidth = () => {
     switch (screenSize) {
-      case 'mobile': return 112 + 24;
-      case 'tablet': return 128 + 28;
-      case 'laptop': return 160 + 36;
-      case 'desktop': return 224 + 44;
-      default: return 160 + 36;
+      case 'mobile': return 96 + 20;
+      case 'tablet': return 112 + 24;
+      case 'laptop': return 128 + 28;
+      case 'desktop': return 192 + 36;
+      default: return 128 + 28;
     }
   };
 
@@ -769,7 +769,7 @@ const InlineAgentCarousel = React.memo(() => {
   const animationDuration = getAnimationDuration();
 
   return (
-    <div className="relative w-full overflow-hidden py-8 md:py-12" ref={containerRef}>
+    <div className="relative w-full overflow-hidden py-4 md:py-6" ref={containerRef}>
       <div className="relative w-full">
         <motion.div 
           className="flex items-center justify-center"
@@ -792,7 +792,7 @@ const InlineAgentCarousel = React.memo(() => {
                 key={`${agent.fullName}-${index}`}
                 className="relative flex-shrink-0 mx-2.5 sm:mx-3 md:mx-4 lg:mx-5 xl:mx-6"
               >
-                <div className="relative h-28 w-28 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 xl:h-56 xl:w-56 2xl:h-64 2xl:w-64">
+                <div className="relative h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-40 lg:w-40 xl:h-48 xl:w-48 2xl:h-52 2xl:w-52">
                   {[0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
@@ -879,24 +879,24 @@ InlineAgentCarousel.displayName = "InlineAgentCarousel";
 // Meet the Trainer Section
 function MeetTrainerSection() {
   return (
-    <section id="trainers" className="relative bg-black pt-16 md:pt-20 pb-24 md:pb-32 overflow-hidden">
+    <section id="trainers" className="relative bg-black pt-12 md:pt-16 pb-12 md:pb-16 overflow-hidden">
       <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-6 md:mb-8"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 block">
             Meet the Trainers
           </span>
-          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95] mb-6">
+          <h2 className="font-space text-4xl md:text-6xl lg:text-7xl text-white font-light tracking-tight leading-[0.95] mb-4">
             Practice with
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Hyper-Realistic AI</span>
           </h2>
-          <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-lg md:text-xl leading-relaxed font-light">
             Lifelike AI homeowners that adapt to every response.
           </p>
         </motion.div>
@@ -908,7 +908,7 @@ function MeetTrainerSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.2, duration: 0.8 }}
-        className="relative w-full -mt-8 md:-mt-12"
+        className="relative w-full -mt-4 md:-mt-6"
       >
         <InlineAgentCarousel />
       </motion.div>
@@ -919,7 +919,7 @@ function MeetTrainerSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.4, duration: 0.8 }}
-        className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 mt-2 md:mt-4"
+        className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 mt-4 md:mt-6"
       >
         <div className="flex justify-center dark">
           <AIVoiceInput 

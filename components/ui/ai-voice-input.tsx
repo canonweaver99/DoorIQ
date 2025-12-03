@@ -232,11 +232,11 @@ export function AIVoiceInput({
   };
 
   return (
-    <div className={cn("w-full py-4 -mt-8", className)}>
-      <div className="relative max-w-2xl w-full mx-auto flex items-center flex-col gap-4">
+    <div className={cn("w-full py-2 -mt-8", className)}>
+      <div className="relative max-w-xl w-full mx-auto flex items-center flex-col gap-2">
         <button
           className={cn(
-            "group w-24 h-24 md:w-32 md:h-32 rounded-xl flex items-center justify-center transition-colors",
+            "group w-16 h-16 md:w-20 md:h-20 rounded-xl flex items-center justify-center transition-colors",
             submitted || isPlaying
               ? "bg-black/80"
               : "bg-black/90 hover:bg-black/95"
@@ -246,43 +246,40 @@ export function AIVoiceInput({
         >
           {isLoading ? (
             <div
-              className="w-10 h-10 md:w-12 md:h-12 rounded-sm animate-spin bg-white cursor-pointer pointer-events-auto"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-sm animate-spin bg-white cursor-pointer pointer-events-auto"
               style={{ animationDuration: "3s" }}
             />
           ) : submitted || isPlaying ? (
             currentAudioUrl ? (
-              <Pause className="w-10 h-10 md:w-12 md:h-12 text-white" />
+              <Pause className="w-8 h-8 md:w-10 md:h-10 text-white" />
             ) : (
               <div
-                className="w-10 h-10 md:w-12 md:h-12 rounded-sm animate-spin bg-white cursor-pointer pointer-events-auto"
+                className="w-8 h-8 md:w-10 md:h-10 rounded-sm animate-spin bg-white cursor-pointer pointer-events-auto"
                 style={{ animationDuration: "3s" }}
               />
             )
           ) : (
-            <Play className="w-10 h-10 md:w-12 md:h-12 text-white" />
+            <Play className="w-8 h-8 md:w-10 md:h-10 text-white" />
           )}
         </button>
 
         <span
           className={cn(
-            "font-mono text-base md:text-lg transition-opacity duration-300",
-            submitted
-              ? "text-black/70 dark:text-white/70"
-              : "text-black/30 dark:text-white/30"
+            "font-mono text-sm md:text-base transition-opacity duration-300 text-white"
           )}
         >
           {formatTime(time)}
         </span>
 
-        <div className="h-6 md:h-8 w-96 md:w-[500px] flex items-center justify-center gap-1">
+        <div className="h-4 md:h-5 w-64 md:w-80 flex items-center justify-center gap-0.5">
           {[...Array(visualizerBars)].map((_, i) => (
             <div
               key={i}
               className={cn(
-                "w-1 rounded-full transition-all duration-300",
+                "w-0.5 rounded-full transition-all duration-300",
                 (submitted || isPlaying)
-                  ? "bg-black/50 dark:bg-white/50 animate-pulse"
-                  : "bg-black/10 dark:bg-white/10 h-2"
+                  ? "bg-white/70 animate-pulse"
+                  : "bg-white/30 h-1.5"
               )}
               style={
                 (submitted || isPlaying) && isClient
@@ -296,9 +293,9 @@ export function AIVoiceInput({
           ))}
         </div>
 
-        <p className="h-6 text-base md:text-lg text-white">
+        <p className="h-5 text-sm md:text-base text-white">
           {audioError ? (
-            <span className="text-red-400 text-sm">Audio unavailable</span>
+            <span className="text-red-400 text-xs">Audio unavailable</span>
           ) : submitted || isPlaying ? (
             ""
           ) : isLoading ? (
