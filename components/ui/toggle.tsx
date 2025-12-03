@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { cn } from '@/components/ui/pricing'
+import { cn } from '@/lib/utils'
 
 interface ToggleProps {
   checked: boolean

@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Exclude unnecessary files from build
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   images: {
     remotePatterns: [],
     unoptimized: false,

@@ -122,7 +122,6 @@ function HeaderContent() {
   const sidebarRef = useRef<HTMLDivElement | null>(null)
   const sidebarButtonRef = useRef<HTMLButtonElement | null>(null)
   const [portalReady, setPortalReady] = useState(false)
-  // Credit system removed - no credit display needed
   const [isLiveSession, setIsLiveSession] = useState(false)
   const [isAuthPage, setIsAuthPage] = useState(false)
   const [isScrolledDown, setIsScrolledDown] = useState(false)
@@ -230,7 +229,6 @@ function HeaderContent() {
           setHasActiveSubscription(false)
         }
         
-        // Credit system removed - no credit fetching needed
       } else {
         logger.warn('Header - No user data found, using auth metadata')
         setAuthMeta({
@@ -240,7 +238,6 @@ function HeaderContent() {
           role: metaRole,
           virtual_earnings: null,
         })
-        // Credit system removed - no credit setting needed
       }
       
     }
@@ -255,7 +252,6 @@ function HeaderContent() {
     }
     window.addEventListener('avatar:updated', handleAvatarUpdate)
 
-    // Credit system removed - no credit update listener needed
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
@@ -271,7 +267,6 @@ function HeaderContent() {
     return () => {
       subscription.unsubscribe()
       window.removeEventListener('avatar:updated', handleAvatarUpdate)
-      // Credit system removed - no cleanup needed
     }
   }, [])
 

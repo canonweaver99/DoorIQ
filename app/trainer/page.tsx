@@ -11,7 +11,6 @@ import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSessionLimit } from '@/hooks/useSubscription'
 import { useLiveSessionAnalysis } from '@/hooks/useLiveSessionAnalysis'
 import { useVoiceAnalysis } from '@/hooks/useVoiceAnalysis'
-import { useConversationEndDetection } from '@/hooks/useConversationEndDetection'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -21,8 +20,6 @@ import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { LiveTranscript } from '@/components/trainer/LiveTranscript'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
-// DoorClosingVideo import removed - component disabled due to fullscreen loop glitch
-// import DoorClosingVideo from '@/components/trainer/DoorClosingVideo'
 import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 
 // Dynamic imports for heavy components - only load when needed
@@ -31,7 +28,6 @@ const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>
 })
 const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
-// Credit modals removed - credit system no longer used
 
 interface Agent {
   id: string
@@ -112,7 +108,6 @@ function TrainerPageContent() {
   const [loading, setLoading] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [conversationToken, setConversationToken] = useState<string | null>(null)
-  // Credit modals removed - credit system no longer used
   const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
   const [showDoorCloseAnimation, setShowDoorCloseAnimation] = useState(false) // Direct state trigger for door closing animation
   const loopVideoStartTimeRef = useRef<number>(0) // Track when loop video started playing
@@ -247,9 +242,7 @@ function TrainerPageContent() {
     }
   }, [sessionActive, showDoorCloseAnimation, videoMode, sessionState])
   
-  // Auto-end detection: triggers when USER says goodbye (not agent)
-  // AUTO-END DISABLED - Manual session ending only per user request
-  // useConversationEndDetection({
+  // Auto-end detection disabled - manual session ending only
   //   onConversationEnd: () => {
   //     console.log('🚪 User goodbye detected - triggering door closing sequence')
   //     if (handleCallEndRef.current) {
@@ -393,8 +386,7 @@ function TrainerPageContent() {
     return videoPaths?.closing || '/austin-door-close.mp4' // Fallback to Austin's video
   }, [])
   
-  // Video recording temporarily disabled - archived for future implementation
-  // const { isRecording: isVideoRecording, startRecording: startDualCameraRecording, stopRecording: stopDualCameraRecording } = useDualCameraRecording(sessionId)
+  // Video recording disabled - archived for future implementation
   const isVideoRecording = false
 
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
@@ -988,8 +980,7 @@ function TrainerPageContent() {
       console.log('🎬 Session started. Transcript length:', transcript.length)
       console.log('🎬 Session ID:', newId)
       
-      // Credit system removed - just track session count for analytics
-      // Make this non-blocking so session can start even if API fails
+      // Track session count for analytics (non-blocking)
       fetch('/api/session/increment', { method: 'POST' })
         .then(() => {
           sessionLimit.refresh()
@@ -1114,11 +1105,6 @@ function TrainerPageContent() {
     }
     setShowDoorOpeningVideo(false) // Reset door opening video state
 
-    // Video recording disabled - archived for future
-    // if (isVideoRecording) {
-    //   console.log('🛑 Stopping dual camera recording from endSession')
-    //   stopDualCameraRecording()
-    // }
 
     if (durationInterval.current) {
       clearInterval(durationInterval.current)
@@ -1289,7 +1275,6 @@ function TrainerPageContent() {
   }, [sessionId, duration, transcript, router, sessionActive, sessionState])
 
   // Shared function to handle door closing sequence and end session
-  // DOOR CLOSING VIDEO COMPLETELY REMOVED - Was causing fullscreen loop glitch
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Ending session directly (door closing video disabled):', reason)
     
@@ -1408,81 +1393,7 @@ function TrainerPageContent() {
     
   }, [sessionActive, sessionId, handleDoorClosingSequence])
 
-  // TEMPORARILY DISABLED - Auto end feature causing connection issues
-  // Listen for agent disconnect (NOT user mic issues)
-  // This triggers when ElevenLabs agent disconnects, not when user stops speaking
-  // useEffect(() => {
-  //   if (!sessionActive || typeof window === 'undefined') return
-
-  //   const handleAgentDisconnect = (e: CustomEvent) => {
-  //     const disconnectData = e?.detail
-  //     console.log('🔌 Agent disconnect event received:', disconnectData)
-  //     
-  //     // Only trigger if we have an active session and this is a real agent disconnect
-  //     if (sessionActive && sessionId && disconnectData?.hasSessionId) {
-  //       console.log('🚪 ElevenLabs agent disconnected - triggering door closing sequence')
-  //       handleDoorClosingSequence('Agent disconnected')
-  //     }
-  //   }
-
-  //   const handleConnectionStatus = (e: CustomEvent) => {
-  //     const status = e?.detail
-  //     console.log('🔌 Connection status received:', status)
-  //     
-  //     // Only trigger on disconnect if we have an active session
-  //     // This is specifically for ElevenLabs agent disconnecting, not user mic issues
-  //     if (status === 'disconnected' && sessionActive && sessionId) {
-  //       console.log('🚪 ElevenLabs connection disconnected - triggering door closing sequence')
-  //       handleDoorClosingSequence('Connection disconnected')
-  //     }
-  //   }
-
-  //   // Handle agent inactivity - if agent stops responding for 60+ seconds, end session
-  //   const handleAgentInactivity = (e: CustomEvent) => {
-  //     const data = e?.detail
-  //     console.log('🔇 Agent inactivity detected:', data)
-  //     
-  //     // If agent stopped responding for 60+ seconds during active session, end it
-  //     if (sessionActive && sessionId && data?.secondsSinceLastMessage >= 60 && data?.agentStoppedResponding) {
-  //       console.log('🚪 Agent stopped responding for 60+ seconds - triggering door closing sequence')
-  //       handleDoorClosingSequence('Agent stopped responding')
-  //     }
-  //   }
-
-  //   // Handle door close request from agent (via client tool) - immediate trigger, no wait
-  //   const handleDoorCloseRequested = (e: CustomEvent) => {
-  //     const data = e?.detail
-  //     console.log('🚪 Agent requested door close via client tool:', data)
-  //     
-  //     if (sessionActive && sessionId && data?.intentional) {
-  //       // Optional: Show final message if provided
-  //       if (data?.finalMessage) {
-  //         console.log('💬 Final message from agent:', data.finalMessage)
-  //         // Could display this in UI or use TTS
-  //       }
-  //       
-  //       // Trigger door closing sequence immediately (no 60 second wait)
-  //       console.log('🚪 Triggering immediate door closing sequence:', data.reason)
-  //       handleDoorClosingSequence(data.reason || 'Agent requested door close')
-  //     }
-  //   }
-
-  //   // Listen for explicit agent disconnect event (most reliable)
-  //   window.addEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
-  //   // Also listen for connection status as backup
-  //   window.addEventListener('connection:status', handleConnectionStatus as EventListener)
-  //   // Listen for agent inactivity (agent stopped responding but connection still alive)
-  //   window.addEventListener('agent:inactivity', handleAgentInactivity as EventListener)
-  //   // Listen for door close request from agent (client tool)
-  //   window.addEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
-  //   
-  //   return () => {
-  //     window.removeEventListener('agent:disconnect', handleAgentDisconnect as EventListener)
-  //     window.removeEventListener('connection:status', handleConnectionStatus as EventListener)
-  //     window.removeEventListener('agent:inactivity', handleAgentInactivity as EventListener)
-  //     window.removeEventListener('agent:door-close-requested', handleDoorCloseRequested as EventListener)
-  //   }
-  // }, [sessionActive, sessionId, handleDoorClosingSequence])
+  // Auto-end feature disabled - manual session ending only
 
   // Backup listener for agent:end_call event (in case callback doesn't fire)
   useEffect(() => {
@@ -1562,14 +1473,6 @@ function TrainerPageContent() {
       const status = e?.detail
       console.log('📊 Connection status received:', status)
       
-      // REMOVED: Door closing sound and disconnect handling moved to prevent conflicts
-      // The door closing sequence is handled by handleDoorClosingSequence which properly
-      // manages video state. This handler was causing video fullscreen glitches.
-      // if (status === 'disconnected' && sessionActive) {
-      //   console.log('🔌 ElevenLabs disconnected - playing door closing sound')
-      //   playSound('/sounds/door_close.mp3', 0.9)
-      //   inactivitySoundPlayedRef.current = true
-      // }
     }
 
     const handleInactivity = (e: CustomEvent) => {
@@ -1725,14 +1628,6 @@ function TrainerPageContent() {
     }
   }
 
-  // DOOR CLOSING VIDEO DISABLED - Was causing fullscreen loop glitch
-  // if (sessionState === 'door-closing') {
-  //   return (
-  //     <DoorClosingVideo
-  //       agentId={selectedAgent?.eleven_agent_id || ''}
-  //       agentName={selectedAgent?.name || null}
-  //       onComplete={handleDoorVideoComplete}
-  //       getAgentVideoPaths={getAgentVideoPaths}
   //     />
   //   )
   // }
@@ -1744,7 +1639,6 @@ function TrainerPageContent() {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-black font-sans"
     >
-      {/* Credit modals removed - credit system no longer used */}
 
       {/* Full Screen Session Container */}
       <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">

@@ -389,14 +389,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-// OLD IMPLEMENTATION BELOW - DEPRECATED
-// Keeping for reference but not used
-async function OLD_POST_IMPLEMENTATION(request: NextRequest) {
-  const startTime = Date.now()
-  
-  try {
-    const { sessionId } = await request.json()
     
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })

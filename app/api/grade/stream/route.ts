@@ -241,15 +241,6 @@ export async function POST(request: NextRequest) {
     return new Response(error.message || 'Failed to grade session', { status: 500 })
   }
 }
-
-// OLD IMPLEMENTATION BELOW - DEPRECATED
-// Keeping for reference but not used
-async function OLD_STREAM_IMPLEMENTATION(request: NextRequest) {
-  const encoder = new TextEncoder()
-  const startTime = Date.now()
-  
-  try {
-    const { sessionId } = await request.json()
     
     if (!sessionId) {
       return new Response('Session ID required', { status: 400 })

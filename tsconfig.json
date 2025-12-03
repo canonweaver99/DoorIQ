@@ -39,6 +39,12 @@
   "exclude": [
     "node_modules",
     "src",
-    "archive/**"
+    "archive/**",
+    "_archived/**",
+    "**/*.md",
+    "scripts/**",
+    "modules/**",
+    "objections/**",
+    "mobile/**"
   ]
 }

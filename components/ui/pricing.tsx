@@ -14,14 +14,9 @@ import { Check, Star as LucideStar } from "lucide-react";
 import NumberFlow from "@number-flow/react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { cn } from "@/lib/utils";
 
 // --- UTILITY FUNCTIONS ---
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export function useMediaQuery(query: string) {
   const [value, setValue] = useState(false);
