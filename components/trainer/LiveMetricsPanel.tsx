@@ -483,7 +483,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
         </div>
         
         {/* Percentage markers */}
-        <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-0.5 leading-tight">
+        <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-3 sm:mb-4 leading-tight">
           <span>0%</span>
           <span className="hidden sm:inline">30%</span>
           <span className="hidden sm:inline">60%</span>

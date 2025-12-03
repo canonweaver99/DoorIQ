@@ -1,0 +1,21 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { Footer } from "@/components/ui/footer-section";
+
+export function ConditionalFooter() {
+  const pathname = usePathname();
+  const isLandingPage = pathname === "/landing";
+
+  if (isLandingPage) {
+    return null;
+  }
+
+  return (
+    <div className="px-4 sm:px-6 lg:px-8 pb-10">
+      <Footer />
+    </div>
+  );
+}
+
+

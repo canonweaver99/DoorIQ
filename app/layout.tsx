@@ -5,8 +5,8 @@ import { Suspense } from "react";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-import Header from "@/components/navigation/Header";
-import { Footer } from "@/components/ui/footer-section";
+import { ConditionalHeader } from "@/components/layout/ConditionalHeader";
+import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ToastProvider } from "@/components/ui/toast";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -304,16 +304,12 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <NotificationProvider>
-              <Suspense fallback={null}>
-                <Header />
-              </Suspense>
+              <ConditionalHeader />
               <div className="min-h-screen flex flex-col">
                 <div className="flex-1">
                   {children}
                 </div>
-                <div className="px-4 sm:px-6 lg:px-8 pb-10">
-                  <Footer />
-                </div>
+                <ConditionalFooter />
               </div>
             </NotificationProvider>
           </ToastProvider>

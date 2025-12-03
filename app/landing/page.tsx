@@ -1,0 +1,1400 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import { motion, useInView, useAnimation } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ContainerScroll } from "@/components/ui/container-scroll-animation";
+import { Timeline } from "@/components/ui/timeline";
+import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
+import { TestimonialsColumn, testimonialsData } from "@/components/ui/testimonials-columns-1";
+import { AnimatedText } from "@/components/ui/animated-text";
+import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
+import { getAgentImageStyle } from "@/lib/agents/imageStyles";
+import { createClient } from "@/lib/supabase/client";
+import { COLOR_VARIANTS } from "@/components/ui/scrolling-agent-carousel";
+import { cn } from "@/lib/utils";
+import {
+  ArrowRight,
+  DollarSign,
+  TrendingDown,
+  Users,
+  Target,
+  Zap,
+  BarChart3,
+  CheckCircle2,
+  ChevronRight,
+  ChevronDown,
+  Clock,
+  Mail,
+  Phone,
+  MapPin,
+} from "lucide-react";
+
+// Animated Counter Component
+function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffix?: string; prefix?: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (isInView) {
+      let startTime: number;
+      const duration = 2000;
+
+      const animate = (currentTime: number) => {
+        if (!startTime) startTime = currentTime;
+        const progress = Math.min((currentTime - startTime) / duration, 1);
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        setCount(Math.floor(easeOutQuart * end));
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }
+  }, [isInView, end]);
+
+  return (
+    <span ref={ref}>
+      {prefix}{count}{suffix}
+    </span>
+  );
+}
+
+// Navigation Component
+function Navigation() {
+  const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+      
+      // Update active section based on scroll position
+      const sections = ["hero", "problem", "solution", "features", "stats", "testimonials", "cta"];
+      const scrollPosition = window.scrollY + 100;
+      
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+    
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Initial check
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const offset = 80; // Account for fixed header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
+
+  const navItems = [
+    { id: "features", label: "Features" },
+    { id: "solution", label: "How It Works" },
+    { id: "stats", label: "Results" },
+    { id: "testimonials", label: "Testimonials" },
+  ];
+
+  return (
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        scrolled
+          ? "bg-black/95 backdrop-blur-xl"
+          : "bg-black/50 backdrop-blur-sm"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div className="flex items-center justify-between h-20 md:h-24">
+          {/* Logo */}
+          <Link href="/landing" className="group">
+            <Image 
+              src="/dooriqlogo.png" 
+              alt="DoorIQ" 
+              width={120}
+              height={32}
+              className="h-8 w-auto transition-transform group-hover:scale-105"
+            />
+          </Link>
+
+          {/* Navigation Tabs */}
+          <div className="hidden md:flex items-center gap-2">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => scrollToSection(item.id)}
+                className={`px-5 py-2.5 text-base font-medium tracking-tight transition-all rounded-md ${
+                  activeSection === item.id
+                    ? "text-white bg-white/10"
+                    : "text-white/80 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/auth/login"
+              className="px-6 py-2.5 text-white font-medium rounded-md text-base tracking-tight transition-all hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/book-demo"
+              className="group relative px-6 py-2.5 bg-white text-black font-bold rounded-md text-sm tracking-tight transition-all hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                Book a Demo
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// Hero Section
+function HeroSection() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const fallback = fallbackRef.current;
+
+    if (video && fallback) {
+      const handleCanPlay = () => {
+        fallback.style.display = 'none';
+        // Ensure video plays
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            // Autoplay was prevented, but video is ready
+            console.log('Video autoplay prevented, but video is ready');
+          });
+        }
+      };
+
+      const handleError = () => {
+        fallback.style.display = 'flex';
+      };
+
+      const handleLoadedData = () => {
+        fallback.style.display = 'none';
+        // Try to play when data is loaded
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            console.log('Video autoplay prevented');
+          });
+        }
+      };
+
+      video.addEventListener('canplay', handleCanPlay);
+      video.addEventListener('loadeddata', handleLoadedData);
+      video.addEventListener('error', handleError);
+
+      // Try to play after a short delay to ensure element is ready
+      const timeoutId = setTimeout(() => {
+        if (video.readyState >= 2) {
+          fallback.style.display = 'none';
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {
+              console.log('Video autoplay prevented');
+            });
+          }
+        }
+      }, 500);
+
+      // Check if video can play immediately
+      if (video.readyState >= 2) {
+        fallback.style.display = 'none';
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            console.log('Video autoplay prevented');
+          });
+        }
+      }
+
+      return () => {
+        clearTimeout(timeoutId);
+        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('loadeddata', handleLoadedData);
+        video.removeEventListener('error', handleError);
+      };
+    }
+  }, []);
+
+  return (
+    <div id="hero" className="relative bg-black overflow-hidden">
+      {/* Animated grid pattern */}
+      <motion.div
+        animate={{
+          opacity: [0.02, 0.04, 0.02],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute inset-0"
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+          }}
+        />
+      </motion.div>
+
+      {/* Animated accent glows */}
+      <motion.div
+        animate={{
+          x: [0, 30, 0],
+          y: [0, 20, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
+      />
+      <motion.div
+        animate={{
+          x: [0, -25, 0],
+          y: [0, 30, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
+      />
+
+      <ContainerScroll
+        titleComponent={
+          <div className="flex flex-col items-center gap-4 md:gap-6 pb-4 md:pb-6 pt-16 md:pt-20">
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="px-4 py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
+            >
+              <span className="text-white/80 text-sm md:text-base font-medium tracking-wider uppercase font-space">
+                Enterprise D2D Sales Training Platform
+              </span>
+            </motion.div>
+
+            {/* Headline */}
+            <div className="flex flex-col items-center gap-3 md:gap-4 max-w-5xl pb-2">
+              <AnimatedText
+                text="Stop Losing Deals"
+                textClassName="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white text-center font-light leading-[1.3]"
+                underlineClassName="hidden"
+                duration={0.04}
+                delay={0.015}
+              />
+              <AnimatedText
+                text="To Untrained Reps"
+                textClassName="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.3]"
+                underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
+                underlineHeight="h-[2px] md:h-[3px]"
+                underlineOffset="-bottom-2 md:-bottom-3"
+                duration={0.04}
+                delay={0.015}
+              />
+            </div>
+
+            {/* Subheadline */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              className="font-sans text-xl md:text-2xl lg:text-3xl text-white/80 max-w-4xl text-center leading-relaxed font-light"
+            >
+              AI-powered roleplay training for D2D sales teams. Practice with hyper-realistic homeowners until you&apos;re unstoppable.
+            </motion.p>
+
+            {/* CTA Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+              className="flex justify-center mt-2"
+            >
+              <Link
+                href="/book-demo"
+                className="group px-8 py-3.5 bg-white text-black font-bold rounded-md text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Book a Demo
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </motion.div>
+
+            {/* See it in action label */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65, duration: 0.6 }}
+              className="text-center mt-6 md:mt-8 flex items-center justify-center gap-3"
+            >
+              <span className="text-white/80 text-2xl md:text-4xl lg:text-5xl font-medium tracking-wider uppercase font-space">
+                See it in action
+              </span>
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <ChevronDown className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white/80" />
+              </motion.div>
+            </motion.div>
+          </div>
+        }
+      >
+        {/* Demo Video */}
+        <div className="relative w-full h-full rounded-lg overflow-hidden border border-white/5 bg-black">
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            poster="/dashboard-preview.png"
+            preload="auto"
+            style={{ display: 'block' }}
+          >
+            <source src="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4" type="video/mp4" />
+          </video>
+          {/* Fallback if video doesn't load */}
+          <div 
+            ref={fallbackRef}
+            className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center"
+            style={{ display: 'none' }}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                <BarChart3 className="w-8 h-8 text-white/40" />
+              </div>
+              <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
+            </div>
+          </div>
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black/10 via-transparent to-black/10 pointer-events-none" />
+        </div>
+      </ContainerScroll>
+    </div>
+  );
+}
+
+// Problem Section
+function ProblemSection() {
+  const problems = [
+    {
+      icon: <Users className="w-6 h-6" />,
+      stat: "40%",
+      title: "of New Reps Quit in First 30 Days",
+      description:
+        "Lack of confidence from poor preparation drives attrition",
+    },
+    {
+      icon: <DollarSign className="w-6 h-6" />,
+      stat: "$75K",
+      title: "Revenue Gap Between Average & Top Reps",
+      description:
+        "Top performers close 2-3x more deals. Most reps never reach their potential without proper training.",
+    },
+    {
+      icon: <TrendingDown className="w-6 h-6" />,
+      stat: "60%",
+      title: "of Deals Lost Due to Poor Objection Handling",
+      description:
+        "Reps miss opportunities because they're not prepared for common objections at the door.",
+    },
+  ];
+
+  return (
+    <section id="problem" className="relative bg-black py-16 md:py-20">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-[0.015]">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: "50px 50px",
+          }}
+        />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+            The Problem
+          </span>
+          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95] mb-6">
+            Your Sales Team Is
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Leaking Money</span>
+          </h2>
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
+            Every day without proper training costs you deals, talent, and growth.
+            Here&apos;s what you&apos;re really paying for:
+          </p>
+        </motion.div>
+
+        {/* Problem Cards */}
+        <div className="grid md:grid-cols-3 gap-4 md:gap-6">
+          {problems.map((problem, index) => {
+            const ref = useRef(null);
+            const isInView = useInView(ref, { once: true, margin: "-100px" });
+            
+            return (
+              <motion.div
+                key={problem.title}
+                ref={ref}
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                transition={{ delay: index * 0.3, duration: 0.6 }}
+                className={`group relative bg-white/[0.02] border-2 rounded-lg p-6 md:p-8 transition-all duration-500 ${
+                  isInView 
+                    ? 'border-white/30 bg-white/[0.03] shadow-lg shadow-purple-500/20' 
+                    : 'border-white/5 hover:border-white/20 hover:bg-white/[0.025]'
+                }`}
+              >
+                {/* Icon */}
+                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center text-white mb-6 transition-colors ${
+                  isInView 
+                    ? 'bg-white/[0.08] border-white/20' 
+                    : 'bg-white/[0.05] border-white/10 group-hover:bg-white/[0.08] group-hover:border-white/20'
+                }`}>
+                  {problem.icon}
+                </div>
+
+                {/* Stat */}
+                <div className="font-space text-5xl md:text-6xl text-white font-light mb-3 tracking-tight">
+                  {problem.stat}
+                </div>
+
+                {/* Title */}
+                <h3 className="font-space font-medium text-xl md:text-2xl text-white/90 mb-3 tracking-tight">
+                  {problem.title}
+                </h3>
+
+                {/* Description */}
+                <p className="font-sans text-white/80 leading-relaxed text-base md:text-lg font-light">
+                  {problem.description}
+                </p>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Solution Section with Timeline
+function SolutionSection() {
+  const timelineData = [
+    {
+      title: "01",
+      content: (
+        <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
+          <div className="flex items-center gap-6 mb-6">
+            <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+            <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
+              Connect Your Team
+            </h4>
+          </div>
+          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light">
+            Onboard your entire sales team in under 10 minutes. No complicated
+            setup, no technical headaches. Just send an invite link and
+            you&apos;re ready to go.
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "02",
+      content: (
+        <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+              <Target className="w-5 h-5 text-white" />
+            </div>
+            <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
+              Practice with AI
+            </h4>
+          </div>
+          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light">
+            Your reps practice with hyper-realistic AI homeowners that throw
+            real objections. From friendly to hostile, they&apos;ll be ready for
+            anything at the door.
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "03",
+      content: (
+        <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
+          <div className="flex items-center gap-6 mb-6">
+            <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+              <Zap className="w-8 h-8 text-white" />
+            </div>
+            <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
+              Get Real-Time Feedback
+            </h4>
+          </div>
+          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light">
+            Instant AI coaching on tone, pacing, objection handling, and
+            persuasion. Your reps know exactly what to improve after every
+            session.
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "04",
+      content: (
+        <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
+          <div className="flex items-center gap-6 mb-6">
+            <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+              <BarChart3 className="w-8 h-8 text-white" />
+            </div>
+            <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
+              Track & Improve
+            </h4>
+          </div>
+          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light">
+            Watch your team&apos;s performance metrics climb. Detailed analytics
+            show exactly who&apos;s improving, who needs help, and where to focus
+            your coaching.
+          </p>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <section id="solution" className="relative bg-black py-16 md:py-20 overflow-hidden">
+      {/* Animated background gradients */}
+      <motion.div
+        animate={{
+          x: [0, 50, 0],
+          y: [0, 30, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/2 left-0 w-[600px] h-[600px] bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent rounded-full blur-[150px] -translate-y-1/2"
+      />
+      <motion.div
+        animate={{
+          x: [0, -40, 0],
+          y: [0, -50, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-pink-500/10 via-purple-500/10 to-transparent rounded-full blur-[120px]"
+      />
+
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-8"
+        >
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+            The Solution
+          </span>
+          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95] mb-6">
+            How DoorIQ Works
+          </h2>
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
+            Four simple steps to transform your sales team into a closing machine.
+          </p>
+        </motion.div>
+
+        {/* Timeline */}
+        <div className="relative">
+          <Timeline data={timelineData} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Features Section
+function FeaturesSection() {
+  return (
+    <section id="features" className="relative bg-black pt-16 md:pt-20 pb-20 md:pb-24">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-6"
+        >
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+            Features
+          </span>
+          <div className="mb-6">
+            <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[1.1]">
+              Everything You Need
+            </h2>
+            <h2 className="font-space text-5xl md:text-7xl lg:text-8xl font-light tracking-tight leading-[1.1] mt-3 md:mt-4">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">To Win</span>
+            </h2>
+          </div>
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
+            DoorIQ gives your team the tools to practice, improve, and dominate.
+          </p>
+        </motion.div>
+
+        {/* Features Grid */}
+        <FeaturesSectionWithHoverEffects />
+      </div>
+    </section>
+  );
+}
+
+// Inline Agent Carousel Component (from home hero)
+const InlineAgentCarousel = React.memo(() => {
+  const router = useRouter();
+  const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'laptop' | 'desktop'>('laptop');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      if (width < 640) {
+        setScreenSize('mobile');
+      } else if (width < 1024) {
+        setScreenSize('tablet');
+      } else if (width < 1440) {
+        setScreenSize('laptop');
+      } else {
+        setScreenSize('desktop');
+      }
+    };
+    if (typeof window !== 'undefined') {
+      checkScreenSize();
+      window.addEventListener('resize', checkScreenSize);
+      return () => window.removeEventListener('resize', checkScreenSize);
+    }
+  }, []);
+
+  const agents = React.useMemo(() => {
+    return ALLOWED_AGENT_ORDER.slice(0, 12).map((agentName) => {
+      const metadata = PERSONA_METADATA[agentName];
+      return {
+        name: agentName.split(' ').slice(-1)[0],
+        fullName: agentName,
+        src: metadata?.bubble?.image || '/agents/default.png',
+        color: (metadata?.bubble?.color || 'primary') as keyof typeof COLOR_VARIANTS
+      };
+    });
+  }, []);
+
+
+  if (!agents.length) {
+    return null;
+  }
+
+  const getItemWidth = () => {
+    switch (screenSize) {
+      case 'mobile': return 112 + 24;
+      case 'tablet': return 128 + 28;
+      case 'laptop': return 160 + 36;
+      case 'desktop': return 224 + 44;
+      default: return 160 + 36;
+    }
+  };
+
+  const getAnimationDuration = () => {
+    switch (screenSize) {
+      case 'mobile': return 12.5;
+      case 'tablet': return 35;
+      case 'laptop': return 50;
+      case 'desktop': return 65;
+      default: return 50;
+    }
+  };
+
+  const itemWidth = getItemWidth();
+  const animationDuration = getAnimationDuration();
+
+  return (
+    <div className="relative w-full overflow-hidden py-8 md:py-12" ref={containerRef}>
+      <div className="relative w-full">
+        <motion.div 
+          className="flex items-center justify-center"
+          animate={{ 
+            x: [0, `-${(agents.length * itemWidth)}px`]
+          }}
+          transition={{
+            x: {
+              repeat: Infinity,
+              repeatType: "loop",
+              duration: animationDuration,
+              ease: "linear"
+            }
+          }}
+        >
+          {[...agents, ...agents, ...agents, ...agents].map((agent, index) => {
+            const variantStyles = COLOR_VARIANTS[agent.color];
+            return (
+              <div
+                key={`${agent.fullName}-${index}`}
+                className="relative flex-shrink-0 mx-2.5 sm:mx-3 md:mx-4 lg:mx-5 xl:mx-6"
+              >
+                <div className="relative h-28 w-28 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 xl:h-56 xl:w-56 2xl:h-64 2xl:w-64">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className={cn(
+                        "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
+                        variantStyles.border[i],
+                        variantStyles.gradient
+                      )}
+                      animate={{
+                        rotate: 360,
+                        scale: [1, 1.05, 1],
+                        opacity: [0.7, 0.9, 0.7],
+                      }}
+                      transition={{
+                        rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+                        scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                        opacity: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                      }}
+                    >
+                      <div
+                        className={cn(
+                          "absolute inset-0 rounded-full mix-blend-screen",
+                          `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace("from-", "")}/20%,transparent_70%)]`
+                        )}
+                      />
+                    </motion.div>
+                  ))}
+
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+                      {(() => {
+                        const imageStyle = getAgentImageStyle(agent.fullName);
+                        const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ');
+                        let translateY = '0';
+                        const verticalNum = parseFloat(vertical);
+                        if (verticalNum !== 50) {
+                          const translatePercent = ((verticalNum - 50) / 150) * 100;
+                          translateY = `${translatePercent}%`;
+                        }
+                        const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1';
+                        const combinedTransform = translateY !== '0' 
+                          ? `scale(${scaleValue}) translateY(${translateY})`
+                          : imageStyle.transform || `scale(${scaleValue})`;
+                        const finalStyle = {
+                          objectFit: 'cover' as const,
+                          objectPosition: `${horizontal} 50%`,
+                          transform: combinedTransform,
+                        };
+                        const imageSrc = agent.src.includes(' ') || agent.src.includes('&')
+                          ? agent.src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                          : agent.src;
+                        return (
+                          <Image
+                            src={imageSrc}
+                            alt={agent.name}
+                            fill
+                            style={finalStyle}
+                            sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, (max-width: 1024px) 128px, (max-width: 1440px) 144px, 160px"
+                            quality={95}
+                            priority={index < 6}
+                            unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
+                            onError={(e) => {
+                              console.error('❌ Hero carousel image failed to load:', agent.src, 'Encoded:', imageSrc);
+                              e.stopPropagation();
+                            }}
+                          />
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </motion.div>
+      </div>
+    </div>
+  );
+});
+InlineAgentCarousel.displayName = "InlineAgentCarousel";
+
+// Meet the Trainer Section
+function MeetTrainerSection() {
+  return (
+    <section id="trainers" className="relative bg-black pt-16 md:pt-20 pb-24 md:pb-32 overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+            Meet the Trainers
+          </span>
+          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95] mb-6">
+            Practice with
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Hyper-Realistic AI</span>
+          </h2>
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
+            Your reps train with lifelike AI homeowners that adapt to every response. From friendly to hostile, they&apos;ll be ready for anything at the door.
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Agent Carousel - Full Width */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.2, duration: 0.8 }}
+        className="relative w-full -mt-8 md:-mt-12"
+      >
+        <InlineAgentCarousel />
+      </motion.div>
+    </section>
+  );
+}
+
+// Stats Section
+function StatsSection() {
+  const stats = [
+    { value: 40, suffix: "%", label: "Less Shadowing" },
+    { value: 10, suffix: "", label: "Hours Saved Per Manager Weekly" },
+    { value: 20, suffix: "%", label: "Higher Close Rates" },
+    { value: 100, suffix: "+", label: "Reps Trained Consistently" },
+  ];
+
+  return (
+    <section id="stats" className="relative bg-black py-16 md:py-20 overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0">
+        <motion.div
+          animate={{
+            x: [0, 30, 0],
+            y: [0, 40, 0],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{
+            x: [0, -25, 0],
+            y: [0, -35, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 22,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
+        />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+            Results
+          </span>
+          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95]">
+            Real Numbers.
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Real Results.</span>
+          </h2>
+        </motion.div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.6 }}
+              className="text-center"
+            >
+              <div className="font-space text-5xl md:text-7xl lg:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-light tracking-tight mb-4">
+                {stat.value === 10 ? (
+                  <>
+                    <AnimatedCounter end={stat.value} suffix="" />
+                    <span className="text-3xl md:text-5xl lg:text-6xl"> Hours</span>
+                  </>
+                ) : (
+                <AnimatedCounter end={stat.value} suffix={stat.suffix} />
+                )}
+              </div>
+              <p className="font-sans text-white/80 text-base md:text-lg leading-relaxed font-light">
+                {stat.label}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Trust Badges */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-16 text-center"
+        >
+          <p className="text-white/70 text-sm md:text-base uppercase tracking-[0.2em] mb-4 font-space">
+            As featured by
+          </p>
+          <p className="text-white/50 text-sm md:text-base mb-8 font-space">
+            Golden Door winners who partner with us
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60">
+            {["Solar Co", "Pest Pro", "Home Shield", "RoofMasters", "SecureHome"].map(
+              (company) => (
+                <span
+                  key={company}
+                  className="font-space text-xl md:text-2xl text-white/70"
+                >
+                  {company}
+                </span>
+              )
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// Testimonials Section
+function TestimonialsSection() {
+  // Split testimonials into 3 columns
+  const column1 = testimonialsData.slice(0, 4);
+  const column2 = testimonialsData.slice(4, 7);
+  const column3 = testimonialsData.slice(7, 10);
+
+  return (
+    <section id="testimonials" className="relative bg-black py-16 md:py-20 overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+            Testimonials
+          </span>
+          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95]">
+            What Our Users Say
+          </h2>
+        </motion.div>
+
+        {/* Testimonials Grid */}
+        <div className="grid md:grid-cols-3 gap-4 md:gap-6 [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] h-[600px] md:h-[800px]">
+          <TestimonialsColumn testimonials={column1} duration={20} />
+          <TestimonialsColumn testimonials={column2} duration={25} className="hidden md:block" />
+          <TestimonialsColumn testimonials={column3} duration={22} className="hidden md:block" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Final CTA Section
+function CTASection() {
+  return (
+    <section className="relative bg-black py-16 md:py-20 overflow-hidden">
+      {/* Animated background gradients - reduced glow */}
+      <div className="absolute inset-0 bg-gradient-to-t from-white/[0.02] via-transparent to-transparent" />
+      <motion.div
+        animate={{
+          x: [0, 50, 0],
+          y: [0, 30, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-indigo-500/8 via-purple-500/6 to-pink-500/4 rounded-full blur-[150px]"
+      />
+      <motion.div
+        animate={{
+          x: [0, -40, 0],
+          y: [0, -20, 0],
+          scale: [1, 1.15, 1],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent rounded-full blur-[120px]"
+      />
+
+      <div className="relative max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          {/* Headline */}
+          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95] mb-6">
+            Ready to
+            <br />
+            Transform
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Your Sales Team?</span>
+          </h2>
+
+          {/* Description */}
+          <p className="font-sans text-white/80 mt-6 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-light">
+            Join 500+ companies using DoorIQ to train their reps, boost close
+            rates, and dominate their markets.
+          </p>
+
+          {/* CTA Button */}
+          <div className="mt-8">
+            <Link
+              href="/book-demo"
+              className="group inline-flex items-center gap-3 px-10 py-4 bg-white text-black font-medium rounded-md text-base md:text-lg tracking-tight hover:bg-white/95 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Book Your Demo Today
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="mt-8 flex flex-wrap justify-center items-center gap-6 text-white/70 text-base md:text-lg font-light">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-indigo-500" />
+              No credit card required
+            </span>
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-indigo-500" />
+              Setup in 10 minutes
+            </span>
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-indigo-500" />
+              Cancel anytime
+            </span>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+
+// Animated Background Component
+function AnimatedBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      {/* Animated gradient orbs */}
+      <motion.div
+        animate={{
+          x: [0, 100, 0],
+          y: [0, 50, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-0 left-0 w-[800px] h-[800px] bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-transparent rounded-full blur-[120px]"
+      />
+      <motion.div
+        animate={{
+          x: [0, -80, 0],
+          y: [0, 100, 0],
+          scale: [1, 1.3, 1],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/4 right-0 w-[700px] h-[700px] bg-gradient-to-bl from-pink-500/20 via-purple-500/20 to-transparent rounded-full blur-[120px]"
+      />
+      <motion.div
+        animate={{
+          x: [0, 60, 0],
+          y: [0, -70, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-0 left-1/3 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-500/15 via-blue-500/15 to-transparent rounded-full blur-[100px]"
+      />
+      
+      {/* Mesh gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/95 to-black" />
+      
+      {/* Animated grid pattern */}
+      <motion.div
+        animate={{
+          opacity: [0.03, 0.06, 0.03],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: "60px 60px",
+        }}
+      />
+      
+      {/* Subtle animated particles */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          animate={{
+            x: [0, Math.random() * 200 - 100],
+            y: [0, Math.random() * 200 - 100],
+            opacity: [0.2, 0.5, 0.2],
+          }}
+          transition={{
+            duration: 10 + i * 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.5,
+          }}
+          className="absolute w-2 h-2 bg-white/30 rounded-full blur-sm"
+          style={{
+            left: `${20 + i * 15}%`,
+            top: `${30 + i * 10}%`,
+          }}
+        />
+      ))}
+          </div>
+  );
+}
+
+// Landing Footer Component
+function LandingFooter() {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const offset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
+
+  return (
+    <footer className="bg-black border-t border-white/[0.03] py-12 md:py-16">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+          {/* Logo and Copyright */}
+          <div className="lg:col-span-1">
+            <Link href="/landing" className="inline-block mb-6">
+              <Image 
+                src="/dooriqlogo.png" 
+                alt="DoorIQ Logo" 
+                width={120}
+                height={32}
+                className="h-8 w-auto"
+              />
+            </Link>
+            <p className="text-white/70 text-sm font-light">
+              © {new Date().getFullYear()} DoorIQ. All rights reserved.
+            </p>
+          </div>
+
+          {/* Page Sections */}
+          <div>
+            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4">Sections</h3>
+            <ul className="space-y-3">
+              <li>
+                <button
+                  onClick={() => scrollToSection("features")}
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm"
+                >
+                  Features
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => scrollToSection("solution")}
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm"
+                >
+                  How It Works
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => scrollToSection("stats")}
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm"
+                >
+                  Results
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => scrollToSection("testimonials")}
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm"
+                >
+                  Testimonials
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact Information */}
+          <div>
+            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4">Contact</h3>
+            <ul className="space-y-3">
+              <li>
+                <a
+                  href="mailto:contact@dooriq.ai"
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm inline-flex items-center gap-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  contact@dooriq.ai
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:602-446-1330"
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm inline-flex items-center gap-2"
+                >
+                  <Phone className="w-4 h-4" />
+                  602-446-1330
+                </a>
+              </li>
+              <li>
+                <div className="text-white/80 font-space text-sm inline-flex items-start gap-2">
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>2505 Longview St<br />Austin, TX</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          {/* CTA */}
+          <div>
+            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4">Get Started</h3>
+            <Link
+              href="/book-demo"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black font-semibold rounded-md text-sm tracking-tight hover:bg-white/95 transition-all"
+            >
+              Book a Demo
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// Main Landing Page
+export default function LandingPage() {
+  return (
+    <main className="bg-black min-h-screen text-white relative">
+      <AnimatedBackground />
+      <Navigation />
+      <HeroSection />
+      <MeetTrainerSection />
+      <ProblemSection />
+      <SolutionSection />
+      <FeaturesSection />
+      <StatsSection />
+      <TestimonialsSection />
+      <CTASection />
+      <LandingFooter />
+    </main>
+  );
+}

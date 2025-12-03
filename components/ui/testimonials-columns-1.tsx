@@ -139,22 +139,18 @@ export const TestimonialsColumn = ({
                 return (
                   <a
                     href="/testimonials"
-                    className="group relative p-10 rounded-3xl border-2 border-dashed border-white/20 shadow-lg shadow-black/40 max-w-xs w-full cursor-pointer hover:border-white/30 hover:shadow-black/60 transition-all duration-300 flex flex-col items-center justify-center min-h-[200px] bg-gradient-to-br from-black/50 via-black/30 to-black/50 backdrop-blur-sm"
+                    className="group relative bg-white/[0.02] border-2 border-dashed border-white/20 rounded-lg p-6 md:p-8 hover:border-white/30 transition-all duration-500 hover:bg-white/[0.03] max-w-xs w-full cursor-pointer flex flex-col items-center justify-center min-h-[200px]"
                     key={`${loopIndex}-empty-${testimonialIndex}`}
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)',
-                    }}
                   >
                     <div className="text-center relative z-10">
-                      <div className="text-5xl mb-4 opacity-60 group-hover:opacity-80 transition-opacity duration-300">💬</div>
-                      <div className="font-semibold tracking-tight leading-tight text-white/80 mb-2 text-lg font-space group-hover:text-white transition-colors duration-300">
+                      <div className="text-4xl mb-4 opacity-60 group-hover:opacity-80 transition-opacity duration-300">💬</div>
+                      <div className="font-medium tracking-tight leading-tight text-white/80 mb-2 text-base md:text-lg font-space group-hover:text-white transition-colors duration-300">
                         Enjoying your time?
                       </div>
                       <div className="text-sm text-white/60 font-sans group-hover:text-white/70 transition-colors duration-300">
                         Leave a review
                       </div>
                     </div>
-                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500/0 via-purple-500/0 to-purple-500/0 group-hover:from-purple-500/5 group-hover:via-purple-500/0 group-hover:to-purple-500/5 transition-all duration-300 pointer-events-none"></div>
                   </a>
                 );
               }
@@ -164,63 +160,41 @@ export const TestimonialsColumn = ({
               const hasRealProfilePic = image && image.trim() !== "" && !image.includes("unsplash.com");
               
               return (
-                <a
-                  href="/testimonials"
-                  className="group relative p-8 rounded-3xl border border-white/10 shadow-2xl shadow-black/60 max-w-xs w-full cursor-pointer hover:border-white/20 hover:shadow-black/80 transition-all duration-500 block overflow-hidden"
+                <div
+                  className="group relative bg-white/[0.02] border-2 border-white/20 rounded-lg p-6 md:p-8 hover:border-white/30 transition-all duration-500 hover:bg-white/[0.03] max-w-xs w-full"
                   key={`${loopIndex}-${testimonialIndex}`}
-                  style={{
-                    background: 'linear-gradient(135deg, #000000 0%, #0a0a0a 40%, #1a1a1a 100%)',
-                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(255, 255, 255, 0.05)'
-                  }}
                 >
-                  {/* Animated shine effect overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                  
-                  {/* Subtle gradient accent */}
-                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                  
                   {/* Content */}
                   <div className="relative z-10">
-                    {/* Quote icon */}
-                    <div className="mb-4 text-white/20 group-hover:text-white/30 transition-colors duration-300">
-                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.996 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.984zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-                      </svg>
-                    </div>
-                    
                     {/* Testimonial text */}
-                    <p className="text-white/90 leading-relaxed text-base mb-6 font-sans group-hover:text-white transition-colors duration-300">
+                    <p className="text-white/95 leading-relaxed text-base md:text-lg mb-6 font-sans font-normal">
                       {text}
                     </p>
                     
                     {/* Author info */}
-                    <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+                    <div className="flex items-center gap-3 pt-4 border-t border-white/20">
                       {hasRealProfilePic && (
                         <div className="relative flex-shrink-0">
                           <img
-                            width={48}
-                            height={48}
+                            width={40}
+                            height={40}
                             src={image}
                             alt={name}
-                            className="h-12 w-12 rounded-full object-cover ring-2 ring-white/20 group-hover:ring-white/30 transition-all duration-300"
+                            className="h-10 w-10 rounded-full object-cover border border-white/20"
                           />
-                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </div>
                       )}
                       <div className="flex flex-col min-w-0 flex-1">
-                        <div className="font-semibold tracking-tight leading-tight text-white text-base font-space group-hover:text-white transition-colors duration-300">
+                        <div className="font-medium tracking-tight leading-tight text-white text-sm md:text-base font-space">
                           {name}
                         </div>
-                        <div className="leading-tight text-white/60 text-sm font-sans mt-0.5 group-hover:text-white/70 transition-colors duration-300">
+                        <div className="leading-tight text-white/80 text-xs md:text-sm font-sans mt-0.5">
                           {role}
                         </div>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Hover glow effect */}
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500/0 via-purple-500/0 to-purple-500/0 group-hover:from-purple-500/5 group-hover:via-purple-500/0 group-hover:to-purple-500/5 transition-all duration-500 pointer-events-none"></div>
-                </a>
+                </div>
               );
             })}
             </div>
