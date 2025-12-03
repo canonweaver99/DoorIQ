@@ -175,10 +175,10 @@ function HeaderContent() {
     // Settings pages
     const isSettingsPage = pathname?.startsWith('/settings')
     
-    // Hide menu on all pages except home page, select-homeowner page, sessions page, learning center, and pricing
-    // Admin pages, Dashboard, Signup pages, Live sessions, Grading/Analytics pages, and Settings pages get special treatment - menu is completely hidden
-    const hideMenu = !isHomePage && !isSessionsPage && !isLearningPage && !isPricingPage && pathname !== '/trainer/select-homeowner'
-    setShouldHideMenu(hideMenu || isAdminPage || isDashboardPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage || isSettingsPage) // Force hide on admin, dashboard, signup, live sessions, grading, and settings pages
+    // Hide menu on all pages except home page, dashboard, select-homeowner page, sessions page, learning center, and pricing
+    // Admin pages, Signup pages, Live sessions, Grading/Analytics pages, and Settings pages get special treatment - menu is completely hidden
+    const hideMenu = !isHomePage && !isDashboardPage && !isSessionsPage && !isLearningPage && !isPricingPage && pathname !== '/trainer/select-homeowner'
+    setShouldHideMenu(hideMenu || isAdminPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage || isSettingsPage) // Force hide on admin, signup, live sessions, grading, and settings pages
     
     // Set isLiveSession for backward compatibility
     setIsLiveSession(isLiveSessionPage)
@@ -205,14 +205,14 @@ function HeaderContent() {
     // Settings pages: completely hide menu (no hover)
     const isSettingsPage = pathname?.startsWith('/settings')
     
-    // Admin pages, Dashboard, Signup pages, Live sessions, Grading/Analytics pages, and Settings pages: completely hide menu (no hover)
-    if (isAdminPage || isDashboardPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage || isSettingsPage) {
+    // Admin pages, Signup pages, Live sessions, Grading/Analytics pages, and Settings pages: completely hide menu (no hover)
+    if (isAdminPage || isSignupPage || isLiveSessionPage || isGradingPage || isAnalyticsPage || isSettingsPage) {
       setShowMenuOnHover(false)
       return
     }
     
-    // Always show menu on home page, select-homeowner page, sessions page, learning center, and pricing
-    if (isHomePage || pathname === '/trainer/select-homeowner' || isSessionsPage || isLearningPage || isPricingPage) {
+    // Always show menu on home page, dashboard, select-homeowner page, sessions page, learning center, and pricing
+    if (isHomePage || isDashboardPage || pathname === '/trainer/select-homeowner' || isSessionsPage || isLearningPage || isPricingPage) {
       setShowMenuOnHover(true)
       return
     }
@@ -362,13 +362,20 @@ function HeaderContent() {
   }, [hasActiveSubscription, subscription.hasActiveSubscription, subscription.isTrialing])
 
   const navigation = useMemo(() => {
-    const navItems = [
+    type NavItem = {
+      name: string
+      href: string
+      icon: LucideIcon
+      desktopOnly?: boolean
+    }
+    
+    const navItems: NavItem[] = [
       { name: 'Home', href: isSignedIn ? '/home' : '/landing', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
       // Sessions only shows for signed-in users
       ...(isSignedIn ? [{ name: 'Sessions', href: '/sessions', icon: FileText }] : []),
-      // Dashboard shows for reps and admins (admins can view their own dashboard)
-      ...(userRole === 'rep' || userRole === 'admin' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, desktopOnly: true }] : []),
+      // Dashboard shows for reps and admins (admins can view their own dashboard) - now a regular tab
+      ...(userRole === 'rep' || userRole === 'admin' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }] : []),
       // Learning: always show for signed-in users on mobile (no desktopOnly flag)
       // Desktop sidebar has its own logic to check hasLearningPageAccess
       ...(isSignedIn ? [{ name: 'Learning', href: '/learning', icon: NotebookPen }] : []),

@@ -72,9 +72,9 @@ function LoginForm() {
         if (checkoutIntent) {
           redirectUrl += `${nextUrl.includes('?') ? '&' : '?'}checkout=${checkoutIntent}`
         }
-        router.push(redirectUrl)
+        router.replace(redirectUrl)
       } else {
-        router.push('/dashboard')
+        router.replace('/home')
       }
       router.refresh()
     } catch (err: any) {
