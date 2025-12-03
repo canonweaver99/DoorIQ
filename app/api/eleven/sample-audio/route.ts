@@ -72,43 +72,29 @@ export async function GET(request: NextRequest) {
       logger.warn('Error fetching agent details', { error, agentId })
     }
 
-    // If we couldn't get voice ID from agent details, try using agent ID directly with conversational TTS
-    // Or fall back to a default approach
+    // If we couldn't get voice ID from agent details, use a fallback mapping or default voice
     if (!voiceId) {
-      // Try using the conversational AI text endpoint with agent ID
-      try {
-        const convaiTtsUrl = `https://api.elevenlabs.io/v1/convai/text-to-speech`
-        const convaiResponse = await fetch(convaiTtsUrl, {
-          method: 'POST',
-          headers: {
-            'xi-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            agent_id: agentId,
-            text: `Hi, I'm ${agentName}. ${agentMetadata.bubble.description}`,
-          }),
-        })
-        
-        if (convaiResponse.ok) {
-          const audioBuffer = await convaiResponse.arrayBuffer()
-          return new NextResponse(audioBuffer, {
-            headers: {
-              'Content-Type': 'audio/mpeg',
-              'Content-Length': audioBuffer.byteLength.toString(),
-              'Cache-Control': 'public, max-age=3600',
-            },
-          })
-        }
-      } catch (error) {
-        logger.warn('Conversational TTS failed, falling back to standard TTS', { error })
+      // Fallback voice ID mapping based on agent names (using default ElevenLabs voices)
+      // These are generic voice IDs that should work for TTS
+      const fallbackVoiceMap: Record<string, string> = {
+        'Average Austin': 'pNInz6obpgDQGcFmaJgB', // Adam - professional male
+        'No Problem Nancy': 'EXAVITQu4vr4xnSDxMaL', // Bella - friendly female
+        'Switchover Steve': 'ErXwobaYiN019PkySvjV', // Antoni - confident male
+        'Not Interested Nick': 'MF3mGyEYCl7XYWbV9V6O', // Elli - dismissive female
+        'DIY Dave': 'TxGEqnHWrfWFTfGW9XjX', // Josh - practical male
+        'Too Expensive Tim': 'pNInz6obpgDQGcFmaJgB', // Adam - professional male
+        'Spouse Check Susan': 'EXAVITQu4vr4xnSDxMaL', // Bella - friendly female
+        'Busy Beth': 'EXAVITQu4vr4xnSDxMaL', // Bella - friendly female
+        'Renter Randy': 'pNInz6obpgDQGcFmaJgB', // Adam - professional male
+        'Skeptical Sam': 'pNInz6obpgDQGcFmaJgB', // Adam - professional male
+        'Just Treated Jerry': 'ErXwobaYiN019PkySvjV', // Antoni - confident male
+        'Think About It Tina': 'EXAVITQu4vr4xnSDxMaL', // Bella - friendly female
+        'Veteran Victor': 'pNInz6obpgDQGcFmaJgB', // Adam - professional male
       }
       
-      // Fallback: return error if we can't get the voice
-      return NextResponse.json(
-        { error: 'Could not determine voice for agent', agentName, agentId },
-        { status: 500 }
-      )
+      voiceId = fallbackVoiceMap[agentName] || '21m00Tcm4TlvDq8ikWAM' // Default: Rachel - professional female
+      
+      logger.info('Using fallback voice ID', { agentName, voiceId })
     }
 
     // Generate sample text based on agent
