@@ -176,7 +176,7 @@ export default function LoadingPage() {
   // Show loading while checking first session
   if (!checkedFirstSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <motion.div
             animate={{ rotate: 360 }}

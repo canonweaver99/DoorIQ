@@ -604,7 +604,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           console.error('StreamingGradingDisplay error:', error, errorInfo)
         }}
       >
-        <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-3 sm:p-4 lg:p-6">
+        <div className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6">
           <SessionFeedbackForm 
             sessionId={sessionId} 
             onFeedbackComplete={() => {
@@ -626,7 +626,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         console.error('StreamingGradingDisplay error:', error, errorInfo)
       }}
     >
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-3 sm:p-4 lg:p-6">
+      <div className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6">
       <div className="max-w-2xl w-full">
         <div className="text-center mb-6 sm:mb-8">
           {/* Main Status */}

@@ -1742,12 +1742,12 @@ function TrainerPageContent() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-slate-950 font-sans"
+      className="min-h-screen bg-black font-sans"
     >
       {/* Credit modals removed - credit system no longer used */}
 
       {/* Full Screen Session Container */}
-      <div className="relative w-full h-screen flex flex-col bg-slate-950 overflow-hidden">
+      <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">
         
         {/* Header */}
         <div className="flex items-center justify-between px-3 sm:px-4 lg:px-8 py-2 sm:py-3 lg:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98">
@@ -2145,7 +2145,7 @@ function TrainerPageContent() {
 export default function TrainerPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
           <p className="text-slate-400">Loading session...</p>

@@ -66,7 +66,7 @@ export default function FeedbackPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-16 h-16 text-purple-500 animate-spin mx-auto mb-4" />
           <p className="text-slate-400">Loading feedback form...</p>
@@ -77,7 +77,7 @@ export default function FeedbackPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-6">
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
             <p className="text-red-400 mb-4">{error}</p>

@@ -490,7 +490,7 @@ export default function AnalyticsPage() {
   
     if (loading) {
       return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-4" />
           <p className="text-gray-500">Loading session analysis...</p>
@@ -501,7 +501,7 @@ export default function AnalyticsPage() {
 
     if (!session) {
       return (
-      <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-400 mb-4">Session not found</p>
         </div>
@@ -527,7 +527,7 @@ export default function AnalyticsPage() {
     : null
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836]">
+    <div className="min-h-screen bg-black">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-4 sm:pt-6 lg:pt-8 pb-8 sm:pb-10 lg:pb-12">
         {/* Hero Section - Loads immediately */}
         {loadingStates.hero && comparison && (

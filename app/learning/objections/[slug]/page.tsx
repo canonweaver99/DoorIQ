@@ -45,7 +45,7 @@ export default function ObjectionDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] py-8 px-4 sm:px-6 lg:px-8 pt-32">
+      <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 pt-32">
         <div className="max-w-[1800px] mx-auto">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
@@ -57,7 +57,7 @@ export default function ObjectionDetailPage() {
 
   if (error || !objection) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] py-8 px-4 sm:px-6 lg:px-8 pt-32">
+      <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 pt-32">
         <div className="max-w-[1800px] mx-auto">
           <div className="flex flex-col items-center justify-center py-20">
             <AlertCircle className="w-16 h-16 text-slate-600 mb-4" />
