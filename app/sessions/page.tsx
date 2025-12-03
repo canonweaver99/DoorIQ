@@ -5,8 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2, Timer } from 'lucide-react'
-import WeeklySessionsChart from '@/components/dashboard/WeeklySessionsChart'
+import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2, Timer, BarChart3 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -65,6 +64,59 @@ const getAgentImage = (agentName: string | null): string => {
     return PERSONA_METADATA[agentNameTyped].bubble.image
   }
   return '/agents/default.png'
+}
+
+// Weekly Sessions Card Component - matches other card structure
+function WeeklySessionsCard() {
+  const [weeklyData, setWeeklyData] = useState<{ totalSessions: number; previousWeekTotal: number } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchWeeklySessions = async () => {
+      try {
+        const response = await fetch('/api/homepage/weekly-sessions')
+        if (response.ok) {
+          const result = await response.json()
+          setWeeklyData({
+            totalSessions: result.totalSessions || 0,
+            previousWeekTotal: result.previousWeekTotal || 0
+          })
+        }
+      } catch (err) {
+        console.error('Error fetching weekly sessions:', err)
+        setWeeklyData({ totalSessions: 0, previousWeekTotal: 0 })
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchWeeklySessions()
+  }, [])
+
+  const percentageChange = weeklyData && weeklyData.previousWeekTotal > 0
+    ? Math.round(((weeklyData.totalSessions - weeklyData.previousWeekTotal) / weeklyData.previousWeekTotal) * 100)
+    : weeklyData && weeklyData.totalSessions > 0 ? 100 : 0
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-white/70 font-space uppercase tracking-wider">Weekly Sessions</h3>
+        <BarChart3 className="w-5 h-5 text-purple-400" />
+      </div>
+      {loading ? (
+        <>
+          <div className="h-12 bg-white/10 rounded mb-2 animate-pulse" />
+          <div className="h-4 bg-white/10 rounded w-2/3 animate-pulse" />
+        </>
+      ) : (
+        <>
+          <p className="text-4xl md:text-5xl font-bold text-white font-space mb-2">{weeklyData?.totalSessions || 0}</p>
+          <p className="text-sm text-white/60 font-sans">
+            {percentageChange >= 0 ? '+' : ''}{percentageChange}% from last week
+          </p>
+        </>
+      )}
+    </>
+  )
 }
 
 export default function SessionsPage() {
@@ -482,7 +534,7 @@ export default function SessionsPage() {
           </div>
 
           <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-xl hover:border-white/10 transition-colors">
-            <WeeklySessionsChart />
+            <WeeklySessionsCard />
           </div>
         </motion.div>
 

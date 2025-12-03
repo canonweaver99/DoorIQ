@@ -94,7 +94,7 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center p-3 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6">
       <SessionFeedbackForm 
         sessionId={sessionId} 
         onFeedbackComplete={handleFeedbackComplete}

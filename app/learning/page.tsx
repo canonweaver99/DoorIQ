@@ -173,14 +173,14 @@ export default function LearningPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] py-8 px-4 sm:px-6 lg:px-8 pt-32">
+    <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 pt-32">
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-3 text-center"
+          className="mb-12 text-center"
         >
           <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
             Learning Center
