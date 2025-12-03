@@ -10,6 +10,7 @@ import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ToastProvider } from "@/components/ui/toast";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 
 // Resolve a canonical base URL for metadata to remove Next.js warnings in dev
 const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
@@ -306,11 +307,12 @@ export default function RootLayout({
             <NotificationProvider>
               <ConditionalHeader />
               <div className="min-h-screen flex flex-col">
-                <div className="flex-1">
+                <div className="flex-1 mobile-bottom-nav-padding">
                   {children}
                 </div>
                 <ConditionalFooter />
               </div>
+              <MobileBottomNav />
             </NotificationProvider>
           </ToastProvider>
         </ThemeProvider>

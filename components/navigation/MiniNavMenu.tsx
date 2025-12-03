@@ -66,7 +66,7 @@ export function MiniNavMenu() {
   }
 
   return (
-    <nav className="flex items-center gap-1 bg-slate-900/80 dark:bg-black/80 backdrop-blur-sm border border-slate-800/50 dark:border-white/10 rounded-lg p-1">
+    <nav className="hidden md:flex items-center gap-1 bg-slate-900/80 dark:bg-black/80 backdrop-blur-sm border border-slate-800/50 dark:border-white/10 rounded-lg p-1">
       {menuItems.map((item) => {
         const Icon = item.icon
         const active = isActive(item.href)

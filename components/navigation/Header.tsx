@@ -665,7 +665,7 @@ function HeaderContent() {
           </header>
 
           {/* Mobile Public Header */}
-          <div className="fixed top-3 right-3 sm:top-4 sm:right-4 z-[9999] md:hidden">
+          <div className="hidden fixed top-3 right-3 sm:top-4 sm:right-4 z-[9999]">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full border-4 border-purple-400 bg-purple-600 shadow-2xl shadow-purple-500/50 text-white hover:bg-purple-500 hover:scale-105 transition-all touch-target"
@@ -837,14 +837,14 @@ function HeaderContent() {
         </>
       )}
 
-      {/* Mini Navigation Menu - Mobile & Desktop - Only show for signed-in users */}
+      {/* Mini Navigation Menu - Desktop Only - Only show for signed-in users */}
       {isSignedIn && !isAuthPage && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="hidden md:block fixed top-4 left-1/2 -translate-x-1/2 z-50">
           <MiniNavMenu />
         </div>
       )}
 
-      {/* Full-width header - Desktop - Only show for signed-in users */}
+      {/* Full-width header - Desktop Only - Only show for signed-in users */}
       {isSignedIn && !isAuthPage && (
         <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 overflow-hidden">
           {/* Animated grid pattern */}

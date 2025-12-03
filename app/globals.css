@@ -65,6 +65,17 @@ video:fullscreen {
 }
 
 @layer utilities {
+  /* Mobile bottom nav safe area padding */
+  .mobile-bottom-nav-padding {
+    padding-bottom: calc(64px + max(env(safe-area-inset-bottom), 8px));
+  }
+
+  @media (min-width: 768px) {
+    .mobile-bottom-nav-padding {
+      padding-bottom: 0;
+    }
+  }
+
   /* Hide scrollbar for Chrome, Safari and Opera */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
