@@ -8,12 +8,36 @@ import Image from 'next/image'
 import { Calendar, Clock, TrendingUp, AlertCircle, ChevronRight, DollarSign, Trash2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 
 import { format } from 'date-fns'
+
+// AnimatedGrid component matching landing page style
+const AnimatedGrid = () => (
+  <motion.div
+    animate={{
+      opacity: [0.02, 0.04, 0.02],
+    }}
+    transition={{
+      duration: 8,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }}
+    className="absolute inset-0 pointer-events-none"
+  >
+    <div
+      className="absolute inset-0"
+      style={{
+        backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+        backgroundSize: "60px 60px",
+      }}
+    />
+  </motion.div>
+)
 
 // Dynamic imports for heavy components
 const CircularProgress = dynamic(() => import('@/components/ui/CircularProgress'), { ssr: false })
@@ -327,108 +351,166 @@ export default function SessionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
+        <AnimatedGrid />
+        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836] pt-20 sm:pt-24 md:pt-28 pb-4 lg:pb-6 xl:pb-8">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen w-full overflow-hidden bg-black">
+      <AnimatedGrid />
+      
+      {/* Animated gradient orbs matching landing page */}
+      <motion.div
+        animate={{
+          x: [0, 30, 0],
+          y: [0, 20, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px] pointer-events-none"
+      />
+      <motion.div
+        animate={{
+          x: [0, -25, 0],
+          y: [0, 30, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px] pointer-events-none"
+      />
+
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-16 sm:pt-20 md:pt-24">
         {/* Header */}
-        <div className="mb-4 pt-3">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[56px] leading-[1.2] sm:leading-[1.15] lg:leading-[1.1] tracking-tight font-space font-bold text-white mb-2 pb-0.5">Your Training Sessions</h1>
-          <p className="text-base sm:text-lg text-foreground/70 dark:text-slate-400 font-sans">Review your past sessions and track your improvement</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12 flex flex-col items-center gap-4 md:gap-6"
+        >
+          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white text-center font-light leading-[1.3]">
+            Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Training Sessions</span>
+          </h1>
+          <p className="font-sans text-xl md:text-2xl text-white/80 max-w-3xl leading-relaxed font-light">
+            Review your past sessions and track your improvement
+          </p>
+        </motion.div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 lg:gap-4 xl:gap-5 mb-4">
-          <div className="bg-card/60 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-border/20 dark:border-slate-700 shadow-xl">
-            <div className="flex items-center justify-between mb-1.5">
-              <h3 className="text-xs sm:text-sm font-medium text-foreground/60 dark:text-slate-400 font-space">Average Score</h3>
-              <TrendingUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-purple-400" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8"
+        >
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-xl hover:border-white/10 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-white/70 font-space uppercase tracking-wider">Average Score</h3>
+              <TrendingUp className="w-5 h-5 text-purple-400" />
             </div>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground dark:text-white font-space">{stats.avgScore}%</p>
-            <p className="text-xs sm:text-sm text-foreground/60 dark:text-slate-400 mt-0.5 lg:mt-1 font-sans">
+            <p className="text-4xl md:text-5xl font-bold text-white font-space mb-2">{stats.avgScore}%</p>
+            <p className="text-sm text-white/60 font-sans">
               {stats.avgScore >= 80 ? 'Excellent performance' : 'Keep practicing!'}
             </p>
           </div>
           
-          <div className="bg-card/60 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-border/20 dark:border-slate-700 shadow-xl">
-            <div className="flex items-center justify-between mb-1.5">
-              <h3 className="text-xs sm:text-sm font-medium text-foreground/60 dark:text-slate-400 font-space">Total Earnings</h3>
-              <DollarSign className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-emerald-400" />
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-xl hover:border-white/10 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-white/70 font-space uppercase tracking-wider">Total Earnings</h3>
+              <DollarSign className="w-5 h-5 text-emerald-400" />
             </div>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground dark:text-white font-space">${stats.totalEarnings.toFixed(2)}</p>
-            <p className="text-xs sm:text-sm text-foreground/60 dark:text-slate-400 mt-0.5 lg:mt-1 font-sans">Virtual cash earned</p>
+            <p className="text-4xl md:text-5xl font-bold text-white font-space mb-2">${stats.totalEarnings.toFixed(2)}</p>
+            <p className="text-sm text-white/60 font-sans">Virtual cash earned</p>
           </div>
           
-          <div className="bg-card/60 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-border/20 dark:border-slate-700 shadow-xl">
-            <div className="flex items-center justify-between mb-1.5">
-              <h3 className="text-xs sm:text-sm font-medium text-foreground/60 dark:text-slate-400 font-space">Sessions</h3>
-              <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-pink-400" />
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-xl hover:border-white/10 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-white/70 font-space uppercase tracking-wider">Sessions</h3>
+              <Calendar className="w-5 h-5 text-pink-400" />
             </div>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground dark:text-white font-space">{stats.sessionsCount}</p>
-            <p className="text-xs sm:text-sm text-foreground/60 dark:text-slate-400 mt-0.5 lg:mt-1 font-sans">Completed this {filter}</p>
+            <p className="text-4xl md:text-5xl font-bold text-white font-space mb-2">{stats.sessionsCount}</p>
+            <p className="text-sm text-white/60 font-sans">Completed this {filter === 'week' ? 'week' : filter === 'month' ? 'month' : 'period'}</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-2.5 lg:space-x-3.5 mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="flex items-center justify-center gap-3 mb-8"
+        >
           {(['week', 'month', 'all'] as const).map((period) => (
             <button
               key={period}
               onClick={() => setFilter(period)}
-              className={`px-3 lg:px-4 py-1.5 lg:py-1.5 rounded-xl font-semibold text-sm sm:text-base transition-all duration-200 font-space ${
+              className={`px-6 py-2.5 rounded-lg font-medium text-base transition-all duration-200 font-space ${
                 filter === period
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                  : 'bg-background/50 dark:bg-white/10 backdrop-blur-sm border border-border/30 dark:border-white/30 text-foreground dark:text-white hover:bg-background dark:hover:bg-white/20'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  : 'bg-white/[0.02] backdrop-blur-sm border border-white/5 text-white/80 hover:bg-white/[0.05] hover:text-white hover:border-white/10'
               }`}
             >
               {period === 'week' ? 'Past Week' : period === 'month' ? 'Past Month' : 'All Time'}
             </button>
           ))}
-        </div>
+        </motion.div>
 
         {/* Sessions List */}
-        <div className="space-y-2 lg:space-y-3">
+        <div className="space-y-4">
           {sessions.length === 0 ? (
-            <div className="bg-card/60 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 lg:p-8 text-center border border-border/20 dark:border-slate-700 shadow-xl">
-              <p className="text-base sm:text-lg text-foreground/70 dark:text-white/70 font-sans">No sessions found for this period</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-12 text-center border border-white/5 shadow-xl"
+            >
+              <p className="text-xl text-white/80 font-sans mb-6">No sessions found for this period</p>
               <Link
                 href="/trainer/select-homeowner"
-                className="inline-flex items-center mt-4 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-500 hover:to-purple-500 transition-all shadow-lg font-space text-base sm:text-lg font-semibold"
+                className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-lg hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 transition-all shadow-lg font-space text-lg font-semibold"
               >
                 Start Training
-                <ChevronRight className="ml-2 w-4 h-4" />
+                <ChevronRight className="ml-2 w-5 h-5" />
               </Link>
-            </div>
+            </motion.div>
           ) : (
-            sessions.map((session) => {
+            sessions.map((session, index) => {
               const insights = getKeyInsights(session)
               
               return (
-                <div
+                <motion.div
                   key={session.id}
-                  className="bg-card/60 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-3 lg:p-3.5 xl:p-4 border border-border/20 dark:border-slate-700 hover:border-border/40 dark:hover:border-slate-600 transition-colors shadow-xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 + (index * 0.1) }}
+                  className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/5 hover:border-white/10 transition-all shadow-xl group"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div className="flex-1 flex items-start gap-2 lg:gap-3 min-w-0">
-                      {/* Delete button - moved to left, always visible */}
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div className="flex-1 flex items-start gap-4 min-w-0">
+                      {/* Delete button */}
                       <button
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
                           openDeleteModal(session.id as string)
                         }}
-                        className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 bg-red-500/10 text-red-500 dark:text-red-300 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20 z-10"
+                        className="inline-flex items-center justify-center w-9 h-9 flex-shrink-0 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20 z-10 group-hover:border-red-500/40"
                         title="Delete session"
                       >
-                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                       
-                      <div className="flex-1 flex items-start gap-2 sm:gap-3 min-w-0">
+                      <div className="flex-1 flex items-start gap-4 min-w-0">
                         {/* Agent Avatar with Gradient Rings */}
                         <div 
                           className="relative flex-shrink-0"
@@ -472,16 +554,16 @@ export default function SessionsPage() {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground dark:text-white mb-1 lg:mb-1.5 truncate font-space">
+                          <h3 className="text-xl md:text-2xl font-bold text-white mb-2 truncate font-space">
                             {session.agent_name || 'Training Session'}
                           </h3>
-                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 text-sm sm:text-base text-foreground/60 dark:text-slate-400 font-sans">
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-white/60 font-sans">
                             <span className="flex items-center flex-shrink-0">
-                              <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                              <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
                               <span className="whitespace-nowrap">{format(new Date(session.created_at), 'MMM d, yyyy')}</span>
                             </span>
                             <span className="flex items-center flex-shrink-0">
-                              <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1 flex-shrink-0" />
+                              <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
                               <span className="whitespace-nowrap">{session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}</span>
                             </span>
                           </div>
@@ -489,20 +571,20 @@ export default function SessionsPage() {
                       </div>
                     </div>
                     
-                    <div className="mt-0 flex items-center gap-2 sm:gap-3 lg:gap-3.5 xl:gap-4 flex-shrink-0">
-                      {/* Earnings - Always Show */}
+                    <div className="flex items-center gap-6 flex-shrink-0">
+                      {/* Earnings */}
                       <div className="text-right">
-                        <p className="text-xs sm:text-sm text-foreground/60 dark:text-slate-400 mb-0.5 lg:mb-1 font-space">Earned</p>
-                        <p className={`text-xl sm:text-2xl lg:text-3xl font-bold font-space ${
+                        <p className="text-xs text-white/60 mb-1 font-space uppercase tracking-wider">Earned</p>
+                        <p className={`text-2xl md:text-3xl font-bold font-space ${
                           session.virtual_earnings && session.virtual_earnings > 0 
-                            ? 'text-emerald-500 dark:text-emerald-400' 
-                            : 'text-foreground/50 dark:text-slate-500'
+                            ? 'text-emerald-400' 
+                            : 'text-white/40'
                         }`}>
                           ${session.virtual_earnings ? session.virtual_earnings.toFixed(2) : '0.00'}
                         </p>
                       </div>
                       
-                      {/* Overall Score - Responsive Circular Progress */}
+                      {/* Overall Score */}
                       <div className="text-right">
                         <CircularProgress 
                           percentage={session.overall_score || 0}
@@ -513,33 +595,33 @@ export default function SessionsPage() {
                       
                       <Link
                         href={`/analytics/${session.id}`}
-                        className="inline-flex items-center px-2.5 lg:px-3 py-1.5 lg:py-1.5 text-sm sm:text-base bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-500 dark:text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-indigo-600/30 transition-all border border-purple-500/20 font-space font-semibold"
+                        className="inline-flex items-center px-6 py-2.5 bg-white/[0.02] backdrop-blur-sm border border-white/5 text-white/80 rounded-lg hover:bg-white/[0.05] hover:text-white hover:border-white/10 transition-all font-space font-medium text-sm"
                       >
                         View Details
-                        <ChevronRight className="ml-1 lg:ml-1 w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                        <ChevronRight className="ml-2 w-4 h-4" />
                       </Link>
                     </div>
                   </div>
                   
-                  {/* Key Insights - Larger and more readable */}
+                  {/* Key Insights */}
                   {insights.length > 0 && (
-                    <div className="pt-2.5 lg:pt-3 mt-2.5 lg:mt-3 border-t border-border/20 dark:border-slate-700/50">
-                      <div className="space-y-0.5 lg:space-y-1">
+                    <div className="pt-4 mt-4 border-t border-white/5">
+                      <div className="space-y-2">
                         {insights.map((insight, idx) => (
                           <div
                             key={idx}
-                            className={`flex items-start space-x-2 lg:space-x-2.5 text-base sm:text-lg font-semibold font-space ${
-                              insight.type === 'success' ? 'text-green-500 dark:text-green-400' : 'text-amber-500 dark:text-yellow-400'
+                            className={`flex items-start gap-3 text-base font-medium font-space ${
+                              insight.type === 'success' ? 'text-green-400' : 'text-amber-400'
                             }`}
                           >
-                            <AlertCircle className="w-4 h-4 lg:w-5 lg:h-5 mt-0.5 flex-shrink-0" />
-                            <span className="leading-snug">{insight.text}</span>
+                            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                            <span className="leading-relaxed">{insight.text}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
+                </motion.div>
               )
             })
           )}
