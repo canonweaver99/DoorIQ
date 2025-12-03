@@ -469,7 +469,7 @@ function DashboardPageContent() {
             transition={{ duration: 0.3 }}
           >
           {activeTab === 'overview' && (
-            <HomepageContent />
+            <OverviewTabContent />
           )}
             {activeTab === 'upload' && (
               <UploadTabContent />

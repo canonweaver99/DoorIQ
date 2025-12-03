@@ -30,17 +30,27 @@ export function AIVoiceInput({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | undefined>(audioUrl);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Update currentAudioUrl when audioUrl prop changes
+  useEffect(() => {
+    if (audioUrl) {
+      setCurrentAudioUrl(audioUrl);
+    }
+  }, [audioUrl]);
+
   // Initialize audio element
   useEffect(() => {
-    if (!audioUrl) return;
+    if (!currentAudioUrl) return;
 
-    const audio = new Audio(audioUrl);
+    const audio = new Audio(currentAudioUrl);
     audioRef.current = audio;
 
     const handleTimeUpdate = () => {
@@ -52,6 +62,7 @@ export function AIVoiceInput({
     const handlePlay = () => {
       setIsPlaying(true);
       setSubmitted(true);
+      setIsLoading(false);
       onStart?.();
     };
 
@@ -61,15 +72,29 @@ export function AIVoiceInput({
     };
 
     const handleEnded = () => {
+      // Stop playing and reset state when audio ends
       setIsPlaying(false);
       setSubmitted(false);
       setTime(0);
+      setIsLoading(false);
+      // Reset audio to beginning so it's ready for next play
+      audio.pause();
+      audio.currentTime = 0;
       onStop?.(audio.duration || 0);
     };
 
-    const handleLoadedMetadata = () => {
+    const handleLoadedMetadata = async () => {
       // Audio is ready
       setIsLoading(false);
+      // Auto-play if user clicked to get a new audio clip
+      if (shouldAutoPlay) {
+        setShouldAutoPlay(false);
+        try {
+          await audio.play();
+        } catch (error) {
+          console.error('Error auto-playing audio:', error);
+        }
+      }
     };
 
     const handleError = () => {
@@ -104,10 +129,10 @@ export function AIVoiceInput({
       audio.pause();
       audio.src = '';
     };
-  }, [audioUrl, onStart, onStop]);
+  }, [currentAudioUrl, onStart, onStop]);
 
   useEffect(() => {
-    if (!audioUrl) {
+    if (!currentAudioUrl) {
       // Fallback to timer-based mode if no audio URL
       let intervalId: NodeJS.Timeout;
 
@@ -123,10 +148,10 @@ export function AIVoiceInput({
 
       return () => clearInterval(intervalId);
     }
-  }, [submitted, time, onStart, onStop, audioUrl]);
+  }, [submitted, time, onStart, onStop, currentAudioUrl]);
 
   useEffect(() => {
-    if (!isDemo || audioUrl) return; // Don't run demo mode if audio is playing
+    if (!isDemo || currentAudioUrl) return; // Don't run demo mode if audio is playing
 
     let timeoutId: NodeJS.Timeout;
     const runAnimation = () => {
@@ -142,7 +167,7 @@ export function AIVoiceInput({
       clearTimeout(timeoutId);
       clearTimeout(initialTimeout);
     };
-  }, [isDemo, demoInterval, audioUrl]);
+  }, [isDemo, demoInterval, currentAudioUrl]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -151,19 +176,48 @@ export function AIVoiceInput({
   };
 
   const handleClick = async () => {
-    if (audioRef.current && audioUrl) {
+    if (currentAudioUrl) {
       // Audio playback mode
-      if (isPlaying) {
+      if (isPlaying && audioRef.current) {
+        // If playing, pause it
         audioRef.current.pause();
+        setIsPlaying(false);
+        setSubmitted(false);
       } else {
-        setIsLoading(true);
-        setAudioError(null);
-        try {
-          await audioRef.current.play();
-        } catch (error) {
-          console.error('Error playing audio:', error);
-          setIsLoading(false);
-          setAudioError('Failed to play audio');
+        // Check if audio has ended or we need a new clip
+        const needsNewAudio = !audioRef.current || 
+                              (audioRef.current && audioRef.current.ended) ||
+                              (!isPlaying && !isLoading && audioRef.current?.currentTime === 0);
+        
+        if (needsNewAudio) {
+          // Increment index to get next agent/voice
+          const nextIndex = currentAudioIndex + 1;
+          setCurrentAudioIndex(nextIndex);
+          
+          // Generate new audio URL with index parameter
+          const baseUrl = currentAudioUrl.split('?')[0];
+          const newAudioUrl = `${baseUrl}?index=${nextIndex}`;
+          
+          // Set flag to auto-play when new audio loads
+          setShouldAutoPlay(true);
+          setIsLoading(true);
+          setCurrentAudioUrl(newAudioUrl);
+          
+          // The useEffect will handle creating the new audio element and auto-playing
+          return;
+        }
+        
+        // Resume or start current audio
+        if (audioRef.current) {
+          setIsLoading(true);
+          setAudioError(null);
+          try {
+            await audioRef.current.play();
+          } catch (error) {
+            console.error('Error playing audio:', error);
+            setIsLoading(false);
+            setAudioError('Failed to play audio');
+          }
         }
       }
     } else {
@@ -196,7 +250,7 @@ export function AIVoiceInput({
               style={{ animationDuration: "3s" }}
             />
           ) : submitted || isPlaying ? (
-            audioUrl ? (
+            currentAudioUrl ? (
               <Pause className="w-10 h-10 md:w-12 md:h-12 text-white" />
             ) : (
               <div

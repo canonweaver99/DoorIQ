@@ -17,11 +17,42 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Sample text for the demo - a short snippet from an AI trainer
-    const sampleText = "Hi there! I'm one of DoorIQ's AI trainers. I help sales reps practice their pitch and handle objections until they're ready for anything at the door. Want to hear more?"
-    
-    // Use Rachel voice (professional female voice)
-    const voiceId = '21m00Tcm4TlvDq8ikWAM'
+    // Get index parameter to cycle through different agents
+    const { searchParams } = new URL(request.url)
+    const index = parseInt(searchParams.get('index') || '0', 10)
+
+    // Different agent voices and sample lines
+    const agentSamples = [
+      {
+        text: "Hi there! I'm one of DoorIQ's AI trainers. I help sales reps practice their pitch and handle objections until they're ready for anything at the door. Want to hear more?",
+        voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel - professional female
+      },
+      {
+        text: "I'm Average Austin. I'm skeptical but fair - I'll ask you tough questions and spot pressure tactics instantly. Can you handle that?",
+        voiceId: 'pNInz6obpgDQGcFmaJgB', // Adam - professional male
+      },
+      {
+        text: "Hey! I'm No Problem Nancy. I'm pretty easy-going and usually agree to things quickly. Perfect for building your confidence!",
+        voiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella - friendly female
+      },
+      {
+        text: "I'm Already Got It Alan. I already have a pest control service, so you'll need to give me a really compelling reason to switch.",
+        voiceId: 'ErXwobaYiN019PkySvjV', // Antoni - confident male
+      },
+      {
+        text: "Not Interested Nick here. I'll probably say 'not interested' within ten seconds. Think you can change my mind?",
+        voiceId: 'MF3mGyEYCl7XYWbV9V6O', // Elli - dismissive female
+      },
+      {
+        text: "I'm DIY Dave. I prefer to handle things myself, so you'll need to show me why professional service is worth it.",
+        voiceId: 'TxGEqnHWrfWFTfGW9XjX', // Josh - practical male
+      },
+    ]
+
+    // Cycle through agents using modulo
+    const agent = agentSamples[index % agentSamples.length]
+    const sampleText = agent.text
+    const voiceId = agent.voiceId
     const modelId = 'eleven_multilingual_v2'
     
     // Call ElevenLabs TTS API
