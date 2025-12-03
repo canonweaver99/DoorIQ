@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import HomepageContent from '@/app/dashboard/components/HomepageContent'
+import HomeStatCard from '@/components/dashboard/HomeStatCard'
 
 // Animated Background Component (matching dashboard)
 function AnimatedBackground() {
@@ -159,7 +160,7 @@ export default function HomePage() {
   const getTimeOfDayGreeting = () => {
     const hour = currentTime.getHours()
     if (hour < 12) {
-      return { emoji: '☀️', text: 'Good morning' }
+      return { emoji: '☀️', text: 'Rise and Grind' }
     } else if (hour < 17) {
       return { emoji: '👋', text: 'Back for more' }
     } else {
@@ -200,15 +201,15 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="mb-8 sm:mb-10 lg:mb-12"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
               <div className="flex-1">
-                <h1 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-light tracking-tight mb-3">
+                <h1 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight mb-4">
                   {timeOfDay.emoji} {timeOfDay.text},{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                     {getDisplayName()}
                   </span>
                 </h1>
-                <p className="text-white/80 text-base sm:text-lg md:text-xl font-normal mb-4">
+                <p className="text-white/80 text-lg sm:text-xl md:text-2xl lg:text-3xl font-normal mb-4">
                   Ready to level up your pitch?
                 </p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-white/70 text-sm md:text-base font-sans">
@@ -221,6 +222,10 @@ export default function HomePage() {
                     {formatTime(currentTime)}
                   </span>
                 </div>
+              </div>
+              {/* Stat Card */}
+              <div className="lg:flex-shrink-0">
+                <HomeStatCard />
               </div>
             </div>
           </motion.div>

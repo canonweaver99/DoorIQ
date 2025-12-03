@@ -7,8 +7,9 @@ import PerformanceDashboard from './PerformanceDashboard'
 import PracticeHistoryFeed from './PracticeHistoryFeed'
 import QuickActionsToolbar from './QuickActionsToolbar'
 import OnboardingElements from './OnboardingElements'
-import NextMilestone from '@/components/dashboard/NextMilestone'
+import MiniLeaderboard from '@/components/dashboard/MiniLeaderboard'
 import PerformanceSnapshot from '@/components/dashboard/PerformanceSnapshot'
+import WeeklySessionsChart from '@/components/dashboard/WeeklySessionsChart'
 
 interface HomepageStats {
   overallScore: number
@@ -133,6 +134,17 @@ export default function HomepageContent() {
         </motion.section>
       )}
 
+      {/* Weekly Sessions Chart */}
+      {hasCompletedSessions && (
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.12 }}
+        >
+          <WeeklySessionsChart />
+        </motion.section>
+      )}
+
       {/* Performance Dashboard */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
@@ -147,13 +159,13 @@ export default function HomepageContent() {
         />
       </motion.section>
 
-      {/* Next Milestone */}
+      {/* Mini Leaderboard */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <NextMilestone />
+        <MiniLeaderboard />
       </motion.section>
 
       {/* Practice History Feed */}

@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
         repsToday: 0,
         teamHighestToday: null,
         averageScore: 0,
+        teamRank: 1,
       })
     }
 
@@ -80,11 +81,11 @@ export async function GET(request: NextRequest) {
 
     const repsToday = todaySessions?.length || 0
 
-    // 3. Get highest team score today
-    // First get user's team_id
+    // 3. Get highest team score today and team rank
+    // First get user's team_id and virtual_earnings
     const { data: userProfile } = await supabase
       .from('users')
-      .select('team_id')
+      .select('team_id, virtual_earnings')
       .eq('id', user.id)
       .single()
 
@@ -135,11 +136,28 @@ export async function GET(request: NextRequest) {
       ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
       : 0
 
+    // 5. Calculate team rank based on virtual_earnings
+    let teamRank = 1
+    if (userProfile?.team_id) {
+      const { data: teamMembers } = await supabase
+        .from('users')
+        .select('id, virtual_earnings')
+        .eq('team_id', userProfile.team_id)
+      
+      if (teamMembers && teamMembers.length > 1) {
+        // Sort by virtual_earnings descending (treat null as 0)
+        const sorted = [...teamMembers].sort((a, b) => (b.virtual_earnings || 0) - (a.virtual_earnings || 0))
+        const userIndex = sorted.findIndex(m => m.id === user.id)
+        teamRank = userIndex >= 0 ? userIndex + 1 : teamMembers.length
+      }
+    }
+
     return NextResponse.json({
       streak,
       repsToday,
       teamHighestToday,
       averageScore,
+      teamRank,
     }, {
       headers: {
         'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600',

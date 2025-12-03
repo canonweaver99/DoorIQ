@@ -95,7 +95,7 @@ export default function PerformanceDashboard({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => router.push('/trainer')}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold rounded-lg transition-all shadow-lg shadow-purple-500/30"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 font-bold rounded-lg transition-all"
             >
               Start Practice Now →
             </motion.button>
@@ -111,7 +111,7 @@ export default function PerformanceDashboard({
       <div className="bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] rounded-lg p-6 transition-all">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white/80 text-sm font-medium uppercase tracking-wide">
-            Your Sales Superpower Score 🦸
+            Overall Score
           </h2>
           {trend !== 0 && (
             <div className={`flex items-center gap-1 ${trend > 0 ? 'text-purple-400' : 'text-white/60'}`}>

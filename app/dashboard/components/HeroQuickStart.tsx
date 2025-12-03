@@ -42,7 +42,7 @@ export default function HeroQuickStart({ lastSession }: HeroQuickStartProps) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleStartPractice}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold rounded-lg text-base transition-all shadow-lg shadow-purple-500/20"
+          className="flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 font-bold rounded-lg text-base transition-all"
         >
           <Play className="w-5 h-5" />
           Start Practice Session

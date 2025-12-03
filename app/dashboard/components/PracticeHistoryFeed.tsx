@@ -212,7 +212,7 @@ export default function PracticeHistoryFeed({ initialSessions = [] }: PracticeHi
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => router.push('/trainer')}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold rounded-lg transition-all shadow-lg shadow-purple-500/20 mx-auto"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 font-bold rounded-lg transition-all mx-auto"
           >
             Start Your First Session →
             <ArrowRight className="w-5 h-5" />

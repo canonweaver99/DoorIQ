@@ -938,7 +938,7 @@ function StatsSection() {
   const stats = [
     { value: 40, suffix: "%", label: "Less Shadowing" },
     { value: 10, suffix: "", label: "Hours Saved Per Manager Weekly" },
-    { value: 20, suffix: "%", label: "Higher Close Rates" },
+    { value: 5, suffix: "%", label: "Higher Close Rates" },
     { value: 100, suffix: "+", label: "Reps Trained Consistently" },
   ];
 
