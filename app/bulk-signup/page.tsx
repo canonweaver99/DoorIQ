@@ -101,7 +101,7 @@ export default function BulkSignupPage() {
   }
 
   return (
-    <div className="h-[100dvh] w-[100dvw] bg-black relative flex items-center justify-center p-4">
+    <div className="h-[100dvh] w-[100dvw] bg-black relative flex items-start md:items-center justify-center p-4 pt-8 md:pt-4 overflow-y-auto">
       <AnimatedBackground />
       
       <div className="w-full max-w-md relative z-10">
