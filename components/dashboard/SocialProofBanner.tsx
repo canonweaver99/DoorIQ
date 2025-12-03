@@ -76,7 +76,7 @@ export default function SocialProofBanner() {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] rounded-lg px-4 py-2 mb-4 transition-all"
+      className="bg-white border border-gray-200 hover:bg-gray-50 rounded-lg px-4 py-2 mb-4 transition-all shadow-sm"
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -87,11 +87,11 @@ export default function SocialProofBanner() {
           transition={{ duration: 0.3 }}
           className="flex items-center gap-2 justify-center"
         >
-          {currentMsg.icon && <currentMsg.icon className="w-4 h-4 text-purple-400" />}
-          <p className="text-white font-medium text-sm">
+          {currentMsg.icon && <currentMsg.icon className="w-4 h-4 text-purple-600" />}
+          <p className="text-black font-medium text-sm">
             {currentMsg.text}
             {currentMessage === 0 && data.todayPracticeCount > 0 && (
-              <span className="ml-2 text-purple-300">Join them and start your streak</span>
+              <span className="ml-2 text-purple-600">Join them and start your streak</span>
             )}
           </p>
         </motion.div>

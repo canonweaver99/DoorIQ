@@ -489,9 +489,6 @@ function ProblemSection() {
         {/* Problem Cards */}
         <div className="grid md:grid-cols-3 gap-4 md:gap-6">
           {problems.map((problem, index) => {
-            const ref = useRef(null);
-            const isInView = useInView(ref, { once: true, margin: "0px" });
-            
             const variants = {
               hidden: { 
                 opacity: 0, 
@@ -500,30 +497,21 @@ function ProblemSection() {
               visible: { 
                 opacity: 1, 
                 y: 0,
-                transition: { delay: index * 0.3, duration: 0.6, ease: "easeOut" }
+                transition: { delay: index * 0.2, duration: 0.5, ease: "easeOut" }
               }
             };
             
             return (
               <motion.div
                 key={problem.title}
-                ref={ref}
                 variants={variants}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "0px" }}
-                className={`group relative bg-white/[0.02] border-2 rounded-lg p-6 md:p-8 transition-all duration-300 ${
-                  isInView 
-                    ? 'border-white/30 bg-white/[0.03] shadow-lg shadow-purple-500/20' 
-                    : 'border-white/5 hover:border-white/20 hover:bg-white/[0.025]'
-                }`}
+                viewport={{ once: true, margin: "-100px" }}
+                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025]"
               >
                 {/* Icon */}
-                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center text-white mb-6 transition-colors ${
-                  isInView 
-                    ? 'bg-white/[0.08] border-white/20' 
-                    : 'bg-white/[0.05] border-white/10 group-hover:bg-white/[0.08] group-hover:border-white/20'
-                }`}>
+                <div className="w-12 h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white mb-6 transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
                   {problem.icon}
                 </div>
 

@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Play, Clock, TrendingUp } from 'lucide-react'
+import { Play, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import DailyStreakCounter from './DailyStreakCounter'
 import RecommendedPractice from './RecommendedPractice'
-import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from '@/components/trainer/personas'
+import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 import Image from 'next/image'
 
 interface LastSession {
@@ -23,54 +22,9 @@ interface HeroQuickStartProps {
 
 export default function HeroQuickStart({ lastSession }: HeroQuickStartProps) {
   const router = useRouter()
-  const [recommendedPersonas, setRecommendedPersonas] = useState<AllowedAgentName[]>([])
-  const [personaStats, setPersonaStats] = useState<Record<string, { practiceCount: number }>>({})
-
-  useEffect(() => {
-    // Get top 4 recommended personas (starting with beginner-friendly)
-    const beginnerPersonas: AllowedAgentName[] = [
-      'Average Austin',
-      'No Problem Nancy',
-      'Busy Beth',
-      'Too Expensive Tim'
-    ]
-    setRecommendedPersonas(beginnerPersonas.slice(0, 4))
-    
-    // Fetch persona stats
-    fetchPersonaStats()
-  }, [])
-
-  const fetchPersonaStats = async () => {
-    try {
-      const response = await fetch('/api/homepage/persona-stats')
-      if (response.ok) {
-        const data = await response.json()
-        setPersonaStats(data.global || {})
-      }
-    } catch (error) {
-      console.error('Error fetching persona stats:', error)
-    }
-  }
-
-  const getPersonalityType = (difficulty: string) => {
-    if (difficulty === 'Easy') return { emoji: '🐑', type: 'Sheep' }
-    if (difficulty === 'Moderate') return { emoji: '🐯', type: 'Tiger' }
-    if (difficulty === 'Hard') return { emoji: '🐂', type: 'Bull' }
-    return { emoji: '🦉', type: 'Owl' }
-  }
 
   const handleStartPractice = () => {
     router.push('/trainer')
-  }
-
-  const handlePersonaSelect = (personaName: AllowedAgentName) => {
-    const personaMeta = PERSONA_METADATA[personaName]
-    const agentId = personaMeta?.card?.elevenAgentId
-    if (agentId) {
-      router.push(`/trainer?agent=${encodeURIComponent(agentId)}`)
-    } else {
-      router.push('/trainer')
-    }
   }
 
   const formatDuration = (seconds: number | null) => {
@@ -140,62 +94,6 @@ export default function HeroQuickStart({ lastSession }: HeroQuickStartProps) {
 
       {/* Recommended Practice */}
       <RecommendedPractice />
-
-      {/* Persona Quick Select */}
-      <div>
-        <h3 className="text-white/80 text-sm font-medium mb-3 uppercase tracking-wide">
-          Quick Select Persona
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {recommendedPersonas.map((personaName) => {
-            const personaMeta = PERSONA_METADATA[personaName]
-            const image = personaMeta?.bubble?.image || '/agents/default.png'
-            const subtitle = personaMeta?.bubble?.subtitle || ''
-            const difficulty = personaMeta?.bubble?.difficulty || 'Moderate'
-            const personalityType = getPersonalityType(difficulty)
-            const stats = personaStats[personaName] || { practiceCount: 0 }
-            const practiceCount = stats.practiceCount || 0
-            
-            return (
-              <motion.button
-                key={personaName}
-                whileHover={{ scale: 1.05, y: -4 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handlePersonaSelect(personaName)}
-                className="bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] rounded-lg p-3 transition-all group relative overflow-hidden"
-              >
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-2 border-2 border-white/10 group-hover:border-purple-500/40 transition-all">
-                  <Image
-                    src={image}
-                    alt={personaName}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    sizes="(max-width: 640px) 50vw, 25vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <p className="text-white font-semibold text-sm text-center mb-1">
-                  {personaName.split(' ').pop()}
-                </p>
-                <p className="text-white/70 text-xs text-center mb-1">
-                  {subtitle}
-                </p>
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <span className="text-white/60 text-xs">{personalityType.type}</span>
-                </div>
-                <div className="flex items-center justify-center gap-1 text-white/50 text-xs">
-                  <span>{difficulty}</span>
-                </div>
-                {practiceCount > 0 && (
-                  <div className="mt-1 text-center text-white/40 text-xs">
-                    {practiceCount} attempts today
-                  </div>
-                )}
-              </motion.button>
-            )
-          })}
-        </div>
-      </div>
     </div>
   )
 }

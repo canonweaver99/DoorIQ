@@ -44,7 +44,7 @@ export default function DailyStreakCounter({ className = '' }: DailyStreakCounte
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] transition-all ${className}`}
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all shadow-sm ${className}`}
     >
       <motion.div
         animate={{
@@ -56,9 +56,9 @@ export default function DailyStreakCounter({ className = '' }: DailyStreakCounte
           ease: "easeInOut",
         }}
       >
-        <Flame className="w-4 h-4 text-purple-400" />
+        <Flame className="w-4 h-4 text-purple-600" />
       </motion.div>
-      <span className="text-white font-semibold text-sm">
+      <span className="text-black font-semibold text-sm">
         {streak} day{streak !== 1 ? 's' : ''} practice streak!
       </span>
     </motion.div>

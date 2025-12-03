@@ -7,7 +7,6 @@ import { motion } from 'framer-motion'
 import { Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import HomepageContent from '@/app/dashboard/components/HomepageContent'
-import GamificationBar from '@/components/dashboard/GamificationBar'
 
 // Animated Background Component (matching dashboard)
 function AnimatedBackground() {
@@ -222,10 +221,6 @@ export default function HomePage() {
                     {formatTime(currentTime)}
                   </span>
                 </div>
-              </div>
-              {/* Gamification Bar */}
-              <div className="flex-shrink-0">
-                <GamificationBar />
               </div>
             </div>
           </motion.div>

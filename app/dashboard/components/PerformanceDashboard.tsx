@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Target, Clock, Mic, Rocket, ArrowRight, Lock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import WeeklyPerformanceGraph from './WeeklyPerformanceGraph'
-import SkillBreakdownRadar from './SkillBreakdownRadar'
 
 interface PerformanceMetrics {
   closeRate: number
@@ -16,13 +15,6 @@ interface PerformanceDashboardProps {
   overallScore: number
   metrics: PerformanceMetrics
   weeklyData: Array<{ date: string; score: number }>
-  skillBreakdown: {
-    opening: number
-    objectionHandling: number
-    closing: number
-    tonality: number
-    pace: number
-  }
   trend: number
 }
 
@@ -30,7 +22,6 @@ export default function PerformanceDashboard({
   overallScore,
   metrics,
   weeklyData,
-  skillBreakdown,
   trend
 }: PerformanceDashboardProps) {
   const router = useRouter()
@@ -193,14 +184,6 @@ export default function PerformanceDashboard({
           Weekly Performance
         </h3>
         <WeeklyPerformanceGraph data={weeklyData} />
-      </div>
-
-      {/* Skill Breakdown Radar Chart */}
-      <div className="bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] rounded-lg p-6 transition-all">
-        <h3 className="text-white/80 text-sm font-medium uppercase tracking-wide mb-4">
-          Skill Breakdown
-        </h3>
-        <SkillBreakdownRadar data={skillBreakdown} />
       </div>
     </div>
   )

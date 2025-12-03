@@ -7,8 +7,6 @@ import PerformanceDashboard from './PerformanceDashboard'
 import PracticeHistoryFeed from './PracticeHistoryFeed'
 import QuickActionsToolbar from './QuickActionsToolbar'
 import OnboardingElements from './OnboardingElements'
-import SocialProofBanner from '@/components/dashboard/SocialProofBanner'
-import GamificationBar from '@/components/dashboard/GamificationBar'
 import NextMilestone from '@/components/dashboard/NextMilestone'
 import PerformanceSnapshot from '@/components/dashboard/PerformanceSnapshot'
 
@@ -103,12 +101,6 @@ export default function HomepageContent() {
 
   return (
     <div className="space-y-6">
-      {/* Social Proof Banner */}
-      <SocialProofBanner />
-
-      {/* Gamification Bar */}
-      <GamificationBar />
-
       {/* Onboarding Elements */}
       <OnboardingElements totalSessions={stats.totalSessions} />
 
@@ -151,7 +143,6 @@ export default function HomepageContent() {
           overallScore={stats.overallScore}
           metrics={stats.metrics}
           weeklyData={stats.weeklyData}
-          skillBreakdown={stats.skillBreakdown}
           trend={stats.trend}
         />
       </motion.section>

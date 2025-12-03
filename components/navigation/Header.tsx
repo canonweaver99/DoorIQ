@@ -379,8 +379,8 @@ function HeaderContent() {
       // Learning: always show for signed-in users on mobile (no desktopOnly flag)
       // Desktop sidebar has its own logic to check hasLearningPageAccess
       ...(isSignedIn ? [{ name: 'Learning', href: '/learning', icon: NotebookPen }] : []),
-      // Only show Pricing if user doesn't have an active subscription or free trial (admins handled separately)
-      ...(!userHasActivePlan && userRole !== 'admin' ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
+      // Pricing page temporarily archived
+      // ...(!userHasActivePlan && userRole !== 'admin' ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
     ]
 
     if (userRole === 'manager') {
@@ -401,16 +401,17 @@ function HeaderContent() {
         icon: FileText,
         desktopOnly: true,
       })
+      // Pricing page temporarily archived
       // Add Pricing link for admins (always visible regardless of subscription)
       // Check if Pricing already exists to avoid duplicates
-      const hasPricing = navItems.some(item => item.href === '/pricing')
-      if (!hasPricing) {
-        navItems.push({
-          name: 'Pricing',
-          href: '/pricing',
-          icon: DollarSign,
-        })
-      }
+      // const hasPricing = navItems.some(item => item.href === '/pricing')
+      // if (!hasPricing) {
+      //   navItems.push({
+      //     name: 'Pricing',
+      //     href: '/pricing',
+      //     icon: DollarSign,
+      //   })
+      // }
     }
 
     return navItems
@@ -631,9 +632,9 @@ function HeaderContent() {
         </div>
       )}
 
-      {/* Centered oval navigation bar - Desktop - Only show for signed-in users */}
+      {/* Full-width header - Desktop - Only show for signed-in users */}
       {isSignedIn && !isAuthPage && (
-        <div className={`hidden md:flex fixed top-4 left-1/2 -translate-x-[50%] z-50 items-center gap-1 md:gap-1.5 rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl pl-4 md:pl-5 lg:pl-6 pr-[69px] py-2 shadow-lg shadow-purple-500/10 transition-opacity duration-300 max-w-[calc(100vw-2rem)] overflow-hidden ${
+        <header className={`hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-3 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
           (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
         }`}
         onMouseEnter={() => {
@@ -648,40 +649,48 @@ function HeaderContent() {
             setShowMenuOnHover(false)
           }
         }}>
-            <Link href="/" className="flex items-center pr-2 md:pr-2.5 mr-1.5 md:mr-2 border-r border-border/20 dark:border-white/10 flex-shrink-0">
-              <Image 
-                src="/dooriqlogo.png" 
-                alt="DoorIQ Logo" 
-                width={120} 
-                height={20} 
-                className="h-[20px] w-auto object-contain max-w-[100px] md:max-w-[120px]"
-                priority
-              />
-            </Link>
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-4">
+            {/* Left side: Logo and Navigation */}
+            <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
+              <Link href="/" className="flex items-center flex-shrink-0">
+                <Image 
+                  src="/dooriqlogo.png" 
+                  alt="DoorIQ Logo" 
+                  width={120} 
+                  height={20} 
+                  className="h-[20px] w-auto object-contain max-w-[100px] md:max-w-[120px]"
+                  priority
+                />
+              </Link>
 
-            {navigation.filter(item => !(item as any).desktopOnly).map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.href)
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-2 md:px-2.5 py-1.5 text-sm md:text-base transition-all flex-shrink-0 font-space
-                    ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
-                >
-                  <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
-                  <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
-                </Link>
-              )
-            })}
+              <div className="h-6 w-px bg-border/20 dark:bg-white/10 flex-shrink-0" />
 
+              <nav className="flex items-center gap-1 md:gap-1.5 flex-1 min-w-0">
+                {navigation.filter(item => !(item as any).desktopOnly).map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href)
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-3 md:px-4 py-2 text-sm md:text-base transition-all flex-shrink-0 font-space
+                        ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
+                    >
+                      <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                      <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
+                    </Link>
+                  )
+                })}
+              </nav>
+            </div>
 
+            {/* Right side: User info and menu */}
             {isSignedIn && (
-              <div className="flex items-center gap-2 md:gap-3 pl-2 border-l border-border/20 dark:border-white/10 flex-shrink-0 min-w-0">
-                <div className="relative min-w-0 max-w-[120px] md:max-w-[150px]">
+              <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
+                <div className="relative min-w-0 max-w-[120px] md:max-w-[150px] hidden lg:block">
                   <p className="text-sm md:text-base text-foreground/80 leading-4 truncate font-space font-medium">{user?.full_name ?? profileName}</p>
-                  {/* Credit display removed */}
                 </div>
+                <div className="h-6 w-px bg-border/20 dark:bg-white/10 flex-shrink-0" />
                 <div className="flex items-center gap-2">
                   <button
                     ref={sidebarButtonRef}
@@ -720,7 +729,7 @@ function HeaderContent() {
                   </button>
                   <button
                     onClick={() => setIsSidebarOpen((prev) => !prev)}
-                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all cursor-pointer shrink-0 ml-[21px] ${
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-all cursor-pointer shrink-0 ${
                       isSidebarOpen
                         ? 'border-purple-500/70 shadow-[0px_0px_20px_rgba(168,85,247,0.5)] ring-2 ring-purple-500/30 scale-105 text-purple-400'
                         : 'border-white/20 hover:border-purple-500/40 hover:shadow-[0px_0px_12px_rgba(168,85,247,0.3)] hover:scale-105 text-slate-300 hover:text-white'
@@ -732,7 +741,8 @@ function HeaderContent() {
                 </div>
               </div>
             )}
-        </div>
+          </div>
+        </header>
       )}
 
       {/* Mobile header - Only show for signed-in users */}

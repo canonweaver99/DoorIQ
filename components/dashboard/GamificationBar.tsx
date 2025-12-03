@@ -54,10 +54,10 @@ export default function GamificationBar() {
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex items-center gap-2 px-4 py-2 bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] rounded-lg transition-all"
+        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-all shadow-sm"
       >
-        <Target className="w-4 h-4 text-purple-400" />
-        <span className="text-white font-semibold text-sm">
+        <Target className="w-4 h-4 text-purple-600" />
+        <span className="text-black font-semibold text-sm">
           Start Your Streak Today
         </span>
       </motion.div>
@@ -69,7 +69,7 @@ export default function GamificationBar() {
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-center gap-2 px-4 py-2 bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] rounded-lg transition-all"
+      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-all shadow-sm"
     >
       <motion.div
         animate={{
@@ -81,9 +81,9 @@ export default function GamificationBar() {
           ease: "easeInOut",
         }}
       >
-        <Zap className="w-4 h-4 text-purple-400" />
+        <Zap className="w-4 h-4 text-purple-600" />
       </motion.div>
-      <span className="text-white font-semibold text-sm">
+      <span className="text-black font-semibold text-sm">
         {streakData.streak} Day{streakData.streak !== 1 ? 's' : ''} Streak!
       </span>
     </motion.div>

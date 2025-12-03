@@ -50,7 +50,8 @@ export function MiniNavMenu() {
   const menuItems = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'Practice', href: '/trainer/select-homeowner', icon: Target },
-    ...(!hasActiveSubscription ? [{ label: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
+    // Pricing page temporarily archived
+    // ...(!hasActiveSubscription ? [{ label: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
   ]
 
   const isActive = (href: string) => {
