@@ -891,3 +891,38 @@ input[type="range"].pricing-slider::-moz-range-thumb:hover {
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6);
 }
+
+/* Dashboard Hero Card Gradient Animation */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.bg-gradient-animated {
+  background: linear-gradient(
+    135deg,
+    rgb(88, 28, 135) 0%,
+    rgb(157, 23, 77) 50%,
+    rgb(88, 28, 135) 100%
+  );
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Badge Pulse Animation */
+@keyframes badge-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.badge-pulse {
+  animation: badge-pulse 2s infinite;
+}

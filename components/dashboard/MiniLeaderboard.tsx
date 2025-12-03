@@ -81,7 +81,7 @@ export default function MiniLeaderboard() {
 
   if (loading) {
     return (
-      <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 animate-pulse">
+      <div className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 animate-pulse overflow-hidden">
         <div className="h-6 bg-white/10 rounded w-1/3 mb-6" />
         <div className="grid grid-cols-3 gap-4 mb-4">
           {[...Array(3)].map((_, i) => (
@@ -122,11 +122,15 @@ export default function MiniLeaderboard() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] rounded-lg p-6 transition-all"
+      className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
     >
-      <h3 className="text-white font-bold text-lg mb-6">
-        TEAM LEADERBOARD
-      </h3>
+      {/* Subtle purple glow at bottom for depth */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="relative z-10">
+        <h3 className="text-white font-space font-bold text-lg md:text-xl mb-6">
+          TEAM LEADERBOARD
+        </h3>
 
       {/* Top 3 - Prominently Displayed */}
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -147,7 +151,7 @@ export default function MiniLeaderboard() {
               } ${entry.isYou ? 'ring-2 ring-purple-400/50' : ''}`}
             >
               {/* Rank Badge */}
-              <div className={`text-3xl font-bold mb-2 ${getRankColor(entry.rank)}`}>
+              <div className={`text-3xl font-space font-bold mb-2 ${getRankColor(entry.rank)}`}>
                 {entry.rank}
               </div>
               
@@ -160,7 +164,7 @@ export default function MiniLeaderboard() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white font-bold">
+                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white font-space font-bold">
                     {entry.name.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -168,10 +172,10 @@ export default function MiniLeaderboard() {
 
               {/* Name */}
               <div className="text-center">
-                <p className={`text-sm font-medium ${entry.isYou ? 'text-purple-400' : 'text-white'}`}>
+                <p className={`text-sm font-space font-bold ${entry.isYou ? 'text-purple-400' : 'text-white'}`}>
                   {entry.name}
                 </p>
-                <p className="text-xs text-white/60 mt-1">
+                <p className="text-xs font-space text-white/60 mt-1">
                   ${entry.score.toLocaleString()}
                 </p>
               </div>
@@ -194,18 +198,18 @@ export default function MiniLeaderboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + (entry.rank - 4) * 0.1 }}
-              className={`bg-white/[0.05] border border-white/10 rounded-lg p-3 ${
+              className={`bg-white/[0.05] border-2 border-white/10 rounded-lg p-3 ${
                 entry.isYou ? 'ring-2 ring-purple-400/50' : ''
               }`}
             >
               <div className="flex items-center gap-3">
                 {/* Rank */}
-                <div className="text-lg font-bold text-white/60">
+                <div className="text-lg font-space font-bold text-white/60">
                   {entry.rank}
                 </div>
                 
                 {/* Avatar */}
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20">
                   {entry.avatar ? (
                     <img 
                       src={entry.avatar} 
@@ -213,7 +217,7 @@ export default function MiniLeaderboard() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-white/10 flex items-center justify-center text-white text-xs font-bold">
+                    <div className="w-full h-full bg-white/10 flex items-center justify-center text-white text-xs font-space font-bold">
                       {entry.name.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -221,10 +225,10 @@ export default function MiniLeaderboard() {
 
                 {/* Name and Score */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-medium truncate ${entry.isYou ? 'text-purple-400' : 'text-white'}`}>
+                  <p className={`text-xs font-space font-bold truncate ${entry.isYou ? 'text-purple-400' : 'text-white'}`}>
                     {entry.name}
                   </p>
-                  <p className="text-xs text-white/60">
+                  <p className="text-xs font-space text-white/60">
                     ${entry.score.toLocaleString()}
                   </p>
                 </div>
@@ -233,6 +237,7 @@ export default function MiniLeaderboard() {
           ))}
         </div>
       )}
+      </div>
     </motion.div>
   )
 }

@@ -1020,7 +1020,7 @@ function StatsSection() {
           ))}
         </div>
 
-        {/* Trust Badges */}
+        {/* Early Access CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -1028,23 +1028,14 @@ function StatsSection() {
           className="mt-16 text-center"
         >
           <p className="text-white/70 text-sm md:text-base uppercase tracking-[0.2em] mb-4 font-space">
-            As featured by
+            Join the Early Adopters
           </p>
-          <p className="text-white/50 text-sm md:text-base mb-8 font-space">
-            Golden Door winners who partner with us
+          <p className="text-white/90 text-lg md:text-xl mb-2 font-space font-medium">
+            Be one of the first to transform your sales team
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60">
-            {["Solar Co", "Pest Pro", "Home Shield", "RoofMasters", "SecureHome"].map(
-              (company) => (
-                <span
-                  key={company}
-                  className="font-space text-xl md:text-2xl text-white/70"
-                >
-                  {company}
-                </span>
-              )
-            )}
-          </div>
+          <p className="text-white/60 text-sm md:text-base mb-8 font-sans max-w-2xl mx-auto">
+            Get early access to DoorIQ and help shape the future of sales training
+          </p>
         </motion.div>
       </div>
     </section>

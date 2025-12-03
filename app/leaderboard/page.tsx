@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
-import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award, RefreshCw, Users, ArrowRight } from 'lucide-react'
+import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award, RefreshCw, Users, ArrowRight, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
@@ -12,6 +13,78 @@ type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
   previousRank?: number
   sessionsCount: number
   avgScore: number
+}
+
+// Fake data for guest/demo purposes
+const generateFakeLeaderboardData = (): LeaderboardUser[] => {
+  const fakeUsers = [
+    { name: 'Sarah Martinez', email: 'sarah.martinez@example.com', earnings: 12450.75, sessions: 47, avgScore: 92, previousRank: 2, avatar: 'https://i.pravatar.cc/150?img=1' },
+    { name: 'Michael Chen', email: 'michael.chen@example.com', earnings: 11890.50, sessions: 43, avgScore: 89, previousRank: 1, avatar: 'https://i.pravatar.cc/150?img=12' },
+    { name: 'Emily Johnson', email: 'emily.johnson@example.com', earnings: 11230.25, sessions: 41, avgScore: 87, previousRank: 3, avatar: 'https://i.pravatar.cc/150?img=5' },
+    { name: 'David Rodriguez', email: 'david.rodriguez@example.com', earnings: 10560.00, sessions: 38, avgScore: 85, previousRank: 4, avatar: 'https://i.pravatar.cc/150?img=13' },
+    { name: 'Jessica Williams', email: 'jessica.williams@example.com', earnings: 9870.50, sessions: 35, avgScore: 83, previousRank: 7, avatar: 'https://i.pravatar.cc/150?img=9' },
+    { name: 'James Anderson', email: 'james.anderson@example.com', earnings: 9230.75, sessions: 33, avgScore: 81, previousRank: 6, avatar: 'https://i.pravatar.cc/150?img=14' },
+    { name: 'Amanda Taylor', email: 'amanda.taylor@example.com', earnings: 8650.25, sessions: 31, avgScore: 79, previousRank: 5, avatar: 'https://i.pravatar.cc/150?img=10' },
+    { name: 'Robert Brown', email: 'robert.brown@example.com', earnings: 8120.00, sessions: 29, avgScore: 77, previousRank: 8, avatar: 'https://i.pravatar.cc/150?img=15' },
+    { name: 'Lisa Garcia', email: 'lisa.garcia@example.com', earnings: 7650.50, sessions: 27, avgScore: 75, previousRank: 9, avatar: 'https://i.pravatar.cc/150?img=11' },
+    { name: 'Christopher Lee', email: 'christopher.lee@example.com', earnings: 7230.25, sessions: 26, avgScore: 73, previousRank: 10, avatar: 'https://i.pravatar.cc/150?img=16' },
+    { name: 'Michelle White', email: 'michelle.white@example.com', earnings: 6850.00, sessions: 24, avgScore: 71, previousRank: 12, avatar: 'https://i.pravatar.cc/150?img=20' },
+    { name: 'Daniel Harris', email: 'daniel.harris@example.com', earnings: 6520.75, sessions: 23, avgScore: 69, previousRank: 11, avatar: 'https://i.pravatar.cc/150?img=17' },
+  ]
+
+  return fakeUsers.map((user, index) => ({
+    id: `fake-user-${index + 1}`,
+    full_name: user.name,
+    email: user.email,
+    virtual_earnings: user.earnings,
+    rank: index + 1,
+    sessionsCount: user.sessions,
+    avgScore: user.avgScore,
+    role: 'rep' as const,
+    rep_id: `REP-${String(index + 1).padStart(6, '0')}`,
+    team_id: 'demo-team',
+    organization_id: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    previousRank: user.previousRank,
+    avatar_url: user.avatar,
+  } as LeaderboardUser & { previousRank?: number }))
+}
+
+const generateFakePreviousLeaderboard = (): LeaderboardUser[] => {
+  const fakeUsers = [
+    { name: 'Sarah Martinez', email: 'sarah.martinez@example.com', earnings: 12450.75, sessions: 47, avgScore: 92, rank: 2, avatar: 'https://i.pravatar.cc/150?img=1' },
+    { name: 'Michael Chen', email: 'michael.chen@example.com', earnings: 11890.50, sessions: 43, avgScore: 89, rank: 1, avatar: 'https://i.pravatar.cc/150?img=12' },
+    { name: 'Emily Johnson', email: 'emily.johnson@example.com', earnings: 11230.25, sessions: 41, avgScore: 87, rank: 3, avatar: 'https://i.pravatar.cc/150?img=5' },
+    { name: 'David Rodriguez', email: 'david.rodriguez@example.com', earnings: 10560.00, sessions: 38, avgScore: 85, rank: 4, avatar: 'https://i.pravatar.cc/150?img=13' },
+    { name: 'Jessica Williams', email: 'jessica.williams@example.com', earnings: 9870.50, sessions: 35, avgScore: 83, rank: 7, avatar: 'https://i.pravatar.cc/150?img=9' },
+    { name: 'James Anderson', email: 'james.anderson@example.com', earnings: 9230.75, sessions: 33, avgScore: 81, rank: 6, avatar: 'https://i.pravatar.cc/150?img=14' },
+    { name: 'Amanda Taylor', email: 'amanda.taylor@example.com', earnings: 8650.25, sessions: 31, avgScore: 79, rank: 5, avatar: 'https://i.pravatar.cc/150?img=10' },
+    { name: 'Robert Brown', email: 'robert.brown@example.com', earnings: 8120.00, sessions: 29, avgScore: 77, rank: 8, avatar: 'https://i.pravatar.cc/150?img=15' },
+    { name: 'Lisa Garcia', email: 'lisa.garcia@example.com', earnings: 7650.50, sessions: 27, avgScore: 75, rank: 9, avatar: 'https://i.pravatar.cc/150?img=11' },
+    { name: 'Christopher Lee', email: 'christopher.lee@example.com', earnings: 7230.25, sessions: 26, avgScore: 73, rank: 10, avatar: 'https://i.pravatar.cc/150?img=16' },
+    { name: 'Michelle White', email: 'michelle.white@example.com', earnings: 6850.00, sessions: 24, avgScore: 71, rank: 12, avatar: 'https://i.pravatar.cc/150?img=20' },
+    { name: 'Daniel Harris', email: 'daniel.harris@example.com', earnings: 6520.75, sessions: 23, avgScore: 69, rank: 11, avatar: 'https://i.pravatar.cc/150?img=17' },
+  ]
+
+  return fakeUsers.map((user, index) => ({
+    id: `fake-user-${index + 1}`,
+    full_name: user.name,
+    email: user.email,
+    virtual_earnings: user.earnings,
+    rank: user.rank,
+    sessionsCount: user.sessions,
+    avgScore: user.avgScore,
+    role: 'rep' as const,
+    rep_id: `REP-${String(index + 1).padStart(6, '0')}`,
+    team_id: 'demo-team',
+    organization_id: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    avatar_url: user.avatar,
+  } as LeaderboardUser))
 }
 
 export default function LeaderboardPage() {
@@ -24,6 +97,8 @@ export default function LeaderboardPage() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [userRole, setUserRole] = useState<string>('')
   const [teamMemberCount, setTeamMemberCount] = useState<number>(0)
+  const [previousLeaderboard, setPreviousLeaderboard] = useState<LeaderboardUser[]>([])
+  const leaderboardRef = useRef<LeaderboardUser[]>([])
   const supabaseRef = useRef(createClient())
 
   useEffect(() => {
@@ -101,7 +176,10 @@ export default function LeaderboardPage() {
     const supabase = supabaseRef.current
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (user) {
+    // For guest/demo: set a fake current user ID to highlight in the leaderboard
+    if (!user) {
+      setCurrentUserId('fake-user-5') // Highlight 5th place user as "current user" for demo
+    } else {
       setCurrentUserId(user.id)
     }
 
@@ -156,8 +234,11 @@ export default function LeaderboardPage() {
     if (userTeamId) {
       usersQuery = usersQuery.eq('team_id', userTeamId)
     } else {
-      // If user has no team, show empty leaderboard
-      setLeaderboard([])
+      // If user has no team, show fake data for demo purposes
+      const fakePreviousData = generateFakePreviousLeaderboard()
+      setPreviousLeaderboard(fakePreviousData)
+      const fakeData = generateFakeLeaderboardData()
+      setLeaderboard(fakeData)
       setLoading(false)
       setRefreshing(false)
       return
@@ -165,8 +246,14 @@ export default function LeaderboardPage() {
 
     const { data: users, error } = await usersQuery
 
-    if (error || !users) {
-      console.error('Error fetching leaderboard:', error)
+    if (error || !users || users.length === 0) {
+      console.error('Error fetching leaderboard or no users found:', error)
+      // Show fake data for demo purposes when no real data
+      const fakePreviousData = generateFakePreviousLeaderboard()
+      setPreviousLeaderboard(fakePreviousData)
+      const fakeData = generateFakeLeaderboardData()
+      setLeaderboard(fakeData)
+      setLastUpdated(new Date())
       setLoading(false)
       setRefreshing(false)
       return
@@ -213,6 +300,11 @@ export default function LeaderboardPage() {
       })
     )
 
+    // Store previous leaderboard before updating
+    setPreviousLeaderboard([...leaderboardRef.current])
+    
+    // Update ref and state
+    leaderboardRef.current = leaderboardData as LeaderboardUser[]
     setLeaderboard(leaderboardData as LeaderboardUser[])
     setLastUpdated(new Date())
     setLoading(false)
@@ -226,14 +318,14 @@ export default function LeaderboardPage() {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Crown className="w-5 h-5 text-yellow-500" />
+        return <Crown className="w-7 h-7 text-yellow-500" />
       case 2:
-        return <Medal className="w-5 h-5 text-slate-400" />
+        return <Medal className="w-7 h-7 text-slate-400" />
       case 3:
-        return <Award className="w-5 h-5 text-orange-600" />
+        return <Award className="w-7 h-7 text-orange-600" />
       default:
         return (
-          <div className="w-5 h-5 flex items-center justify-center text-slate-400 text-xs font-bold">
+          <div className="w-7 h-7 flex items-center justify-center text-slate-300 text-xl font-space font-bold">
             {rank}
           </div>
         )
@@ -241,14 +333,45 @@ export default function LeaderboardPage() {
   }
 
   const getRankChange = (user: LeaderboardUser) => {
-    // For now, we'll just show static indicators
-    // In a real app, you'd compare with previous period's rankings
-    if (user.rank <= 3) {
-      return <TrendingUp className="w-4 h-4 text-green-500" />
-    } else if (user.rank > 5) {
-      return <TrendingDown className="w-4 h-4 text-red-500" />
+    // Calculate rank change by comparing with previous leaderboard
+    const previousUser = previousLeaderboard.find(u => u.id === user.id)
+    if (!previousUser) {
+      // New user or no previous data - show neutral
+      return (
+        <div className="flex items-center justify-center gap-1">
+          <Minus className="w-6 h-6 text-slate-500" />
+          <span className="text-lg font-bold text-slate-500 font-space">-</span>
+        </div>
+      )
     }
-    return <Minus className="w-4 h-4 text-slate-500" />
+    
+    const rankChange = previousUser.rank - user.rank // Positive means moved up, negative means moved down
+    
+    if (rankChange > 0) {
+      // Moved up
+      return (
+        <div className="flex items-center gap-1">
+          <TrendingUp className="w-6 h-6 text-green-500 flex-shrink-0" />
+          <span className="text-lg font-bold text-green-500 font-space ml-1">{rankChange}</span>
+        </div>
+      )
+    } else if (rankChange < 0) {
+      // Moved down
+      return (
+        <div className="flex items-center">
+          <TrendingDown className="w-6 h-6 text-red-500 flex-shrink-0" />
+          <span className="text-lg font-bold text-red-500 font-space ml-1">{Math.abs(rankChange)}</span>
+        </div>
+      )
+    } else {
+      // No change
+      return (
+        <div className="flex items-center gap-1">
+          <Minus className="w-6 h-6 text-slate-500" />
+          <span className="text-lg font-bold text-slate-500 font-space">-</span>
+        </div>
+      )
+    }
   }
 
   const getRowStyles = (rank: number, userId: string) => {
@@ -256,15 +379,15 @@ export default function LeaderboardPage() {
       return 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border-purple-500/50'
     }
     if (rank === 1) {
-      return 'bg-yellow-600/10 border-yellow-600/30'
+      return 'bg-gradient-to-r from-yellow-600/20 to-yellow-700/20 border-yellow-500/50'
     }
     if (rank === 2) {
-      return 'bg-slate-600/10 border-slate-600/30'
+      return 'bg-gradient-to-r from-gray-600/20 to-gray-700/20 border-gray-400/50'
     }
     if (rank === 3) {
-      return 'bg-orange-600/10 border-orange-600/30'
+      return 'bg-gradient-to-r from-amber-700/20 to-orange-800/20 border-amber-600/50'
     }
-    return 'bg-slate-800/50 border-slate-700'
+    return 'bg-black border-slate-800'
   }
 
   if (loading) {
@@ -281,7 +404,9 @@ export default function LeaderboardPage() {
         {/* Header */}
         <div className="text-center mb-4">
           <div className="flex items-center justify-center gap-3 mb-2">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg font-space">Leaderboard</h1>
+            <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.3] uppercase">
+              Leaderboard
+            </h1>
             <button
               onClick={handleManualRefresh}
               disabled={refreshing}
@@ -291,147 +416,186 @@ export default function LeaderboardPage() {
               <RefreshCw className={`w-4 h-4 text-white ${refreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
-          <p className="text-base text-slate-400 drop-shadow-md font-sans">See how you rank against your team</p>
-          <p className="text-xs text-slate-500 mt-1 font-sans">
+          <p className="text-lg md:text-xl font-bold text-slate-300 drop-shadow-md font-space">See how you rank against your team</p>
+          <p className="text-sm md:text-base font-semibold text-slate-400 mt-2 font-space">
             Last updated: {lastUpdated.toLocaleTimeString()}
             <span className="ml-2 inline-flex items-center gap-1">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <span className="text-xs">Live</span>
+              <span className="text-sm md:text-base font-semibold">Live</span>
             </span>
           </p>
         </div>
 
-        {/* Timeframe Selector */}
-        <div className="flex justify-center space-x-2 mb-4">
-          {(['week', 'month', 'all'] as const).map((period) => (
-            <button
-              key={period}
-              onClick={() => setTimeframe(period)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                timeframe === period
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                  : 'bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20'
-              }`}
-            >
-              {period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'All Time'}
-            </button>
-          ))}
-        </div>
-
         {/* Top 3 Podium */}
         {leaderboard.length >= 3 && (
-          <div className="grid grid-cols-3 gap-2 mb-4 max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="grid grid-cols-3 gap-4 md:gap-6 mb-6 max-w-4xl mx-auto"
+          >
             {/* 2nd Place */}
-            <div className="order-1 md:order-1">
-              <div className="bg-slate-900/80 backdrop-blur-xl rounded-xl p-3 border-2 border-slate-600 text-center transform translate-y-4 shadow-2xl">
-                <Medal className="w-8 h-8 text-slate-400 mx-auto mb-2 drop-shadow-lg" />
-                <h3 className="text-xs font-bold text-white mb-0.5 drop-shadow truncate font-space">{leaderboard[1].full_name}</h3>
-                <p className="text-lg font-bold text-slate-300 mb-0.5 drop-shadow">
-                  ${leaderboard[1].virtual_earnings.toFixed(2)}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="order-1 md:order-1"
+            >
+              <div className="bg-gradient-to-br from-gray-600/30 to-gray-700/30 backdrop-blur-xl rounded-xl p-3 border-2 border-gray-400/70 text-center transform translate-y-4 shadow-2xl shadow-gray-400/20">
+                <Medal className="w-8 h-8 text-gray-300 mx-auto mb-2 drop-shadow-lg" />
+                <h3 className="text-sm font-bold text-white mb-0.5 drop-shadow truncate font-space">{leaderboard[1].full_name}</h3>
+                <p className="text-lg font-bold text-gray-200 mb-0.5 drop-shadow font-space">
+                  ${Math.round(leaderboard[1].virtual_earnings).toLocaleString()}
                 </p>
-                <p className="text-[10px] text-slate-400 drop-shadow">2nd Place</p>
+                <p className="text-sm text-gray-300 drop-shadow font-space font-bold">2nd Place</p>
               </div>
-            </div>
+            </motion.div>
 
             {/* 1st Place */}
-            <div className="order-2 md:order-2">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="order-2 md:order-2"
+            >
               <div className="bg-gradient-to-br from-yellow-600/30 to-yellow-700/30 backdrop-blur-xl rounded-xl p-3 border-2 border-yellow-500/70 text-center transform scale-105 shadow-2xl shadow-yellow-500/20">
                 <Crown className="w-10 h-10 text-yellow-400 mx-auto mb-2 drop-shadow-lg" />
-                <h3 className="text-sm font-bold text-white mb-0.5 drop-shadow truncate">{leaderboard[0].full_name}</h3>
-                <p className="text-xl font-bold text-yellow-400 mb-0.5 drop-shadow-lg">
-                  ${leaderboard[0].virtual_earnings.toFixed(2)}
+                <h3 className="text-base font-bold text-white mb-0.5 drop-shadow truncate font-space">{leaderboard[0].full_name}</h3>
+                <p className="text-xl font-bold text-yellow-400 mb-0.5 drop-shadow-lg font-space">
+                  ${Math.round(leaderboard[0].virtual_earnings).toLocaleString()}
                 </p>
-                <p className="text-[10px] text-yellow-400 drop-shadow">1st Place</p>
+                <p className="text-base text-yellow-400 drop-shadow font-space font-bold">1st Place</p>
               </div>
-            </div>
+            </motion.div>
 
             {/* 3rd Place */}
-            <div className="order-3 md:order-3">
-              <div className="bg-slate-900/80 backdrop-blur-xl rounded-xl p-3 border-2 border-orange-600/70 text-center transform translate-y-4 shadow-2xl shadow-orange-600/10">
-                <Award className="w-8 h-8 text-orange-500 mx-auto mb-2 drop-shadow-lg" />
-                <h3 className="text-xs font-bold text-white mb-0.5 drop-shadow truncate">{leaderboard[2].full_name}</h3>
-                <p className="text-lg font-bold text-orange-400 mb-0.5 drop-shadow">
-                  ${leaderboard[2].virtual_earnings.toFixed(2)}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="order-3 md:order-3"
+            >
+              <div className="bg-gradient-to-br from-amber-700/30 to-orange-800/30 backdrop-blur-xl rounded-xl p-3 border-2 border-amber-600/70 text-center transform translate-y-4 shadow-2xl shadow-amber-600/20">
+                <Award className="w-8 h-8 text-amber-500 mx-auto mb-2 drop-shadow-lg" />
+                <h3 className="text-sm font-bold text-white mb-0.5 drop-shadow truncate font-space">{leaderboard[2].full_name}</h3>
+                <p className="text-lg font-bold text-amber-400 mb-0.5 drop-shadow font-space">
+                  ${Math.round(leaderboard[2].virtual_earnings).toLocaleString()}
                 </p>
-                <p className="text-[10px] text-orange-400 drop-shadow">3rd Place</p>
+                <p className="text-sm text-amber-400 drop-shadow font-space font-bold">3rd Place</p>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
 
         {/* Full Leaderboard Table */}
-        <div className="bg-slate-900/80 backdrop-blur-xl rounded-xl border border-slate-700 overflow-hidden shadow-2xl">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="bg-slate-900/80 backdrop-blur-xl rounded-xl border border-slate-700 overflow-hidden shadow-2xl"
+        >
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full table-fixed">
               <thead className="bg-slate-950/70">
                 <tr>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="w-[10%] px-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
                     Rank
                   </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="w-[25%] px-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
                     Sales Rep
                   </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="w-[18%] px-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
                     Earnings
                   </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
                     Sessions
                   </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
                     Avg Score
                   </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="w-[15.66%] pl-6 pr-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
                     Trend
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-700">
-                {leaderboard.map((user) => (
-                  <tr
+                {leaderboard.map((user, index) => (
+                  <motion.tr
                     key={user.id}
-                    className={`${getRowStyles(user.rank, user.id)} transition-colors`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 + index * 0.05 }}
+                    className={`${getRowStyles(user.rank, user.id)} transition-all duration-300`}
                   >
-                    <td className="px-3 py-2 whitespace-nowrap">
+                    <td className="px-6 py-6 whitespace-nowrap">
                       <div className="flex items-center">
                         {getRankIcon(user.rank)}
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div>
-                        <div className="text-xs font-medium text-white">
-                          {user.full_name}
-                          {user.id === currentUserId && (
-                            <span className="ml-1 text-[10px] text-purple-400">(You)</span>
-                          )}
+                    <td className="px-6 py-6 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        {user.avatar_url ? (
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0">
+                            <img 
+                              src={user.avatar_url} 
+                              alt={user.full_name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                                const parent = target.parentElement
+                                if (parent) {
+                                  parent.innerHTML = `
+                                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-500 text-white text-lg font-bold">
+                                      ${user.full_name?.charAt(0)?.toUpperCase() || '?'}
+                                    </div>
+                                  `
+                                }
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                            {user.full_name?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                        )}
+                        <div>
+                          <div className="text-xl font-bold text-white font-space">
+                            {user.full_name}
+                            {user.id === currentUserId && (
+                              <span className="ml-2 text-lg font-bold text-purple-400 font-space">(You)</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-[10px] text-slate-400">{user.email}</div>
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-sm font-bold text-green-400">
-                        ${user.virtual_earnings.toFixed(2)}
+                    <td className="px-6 py-6 whitespace-nowrap">
+                      <div className="text-2xl font-bold text-green-400 font-space">
+                        ${Math.round(user.virtual_earnings).toLocaleString()}
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-xs text-slate-300">{user.sessionsCount}</div>
+                    <td className="pl-6 pr-6 py-6 whitespace-nowrap text-left">
+                      <div className="text-2xl font-bold text-slate-200 font-space pl-5">{user.sessionsCount}</div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-xs text-slate-300">
+                    <td className="pl-6 pr-6 py-6 whitespace-nowrap text-left">
+                      <div className="text-2xl font-bold text-slate-200 font-space pl-5">
                         {user.avgScore > 0 ? `${user.avgScore}%` : '-'}
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      {getRankChange(user)}
+                    <td className="pl-6 pr-6 py-6 whitespace-nowrap text-left">
+                      <div className="flex items-center ml-3">
+                        {getRankChange(user)}
+                      </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
 
         {/* CTA for managers with single-member teams */}
         {(userRole === 'manager' || userRole === 'admin') && teamMemberCount <= 1 && (
@@ -443,10 +607,10 @@ export default function LeaderboardPage() {
                     <Users className="w-6 h-6 text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-1">
+                    <h3 className="text-lg font-bold text-white mb-1 font-space">
                       Invite your team to activate the leaderboard
                     </h3>
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-slate-300 font-space">
                       {teamMemberCount === 0 
                         ? "You don't have any team members yet. Invite sales reps to see rankings and foster healthy competition."
                         : "You only have one team member. Invite more reps to create an active leaderboard and motivate your team."
@@ -456,7 +620,7 @@ export default function LeaderboardPage() {
                 </div>
                 <Button
                   onClick={() => router.push('/team')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold whitespace-nowrap"
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold font-space whitespace-nowrap"
                 >
                   Invite Team Members
                   <ArrowRight className="ml-2 w-4 h-4" />
@@ -469,7 +633,7 @@ export default function LeaderboardPage() {
         {/* Motivational Message */}
         <div className="mt-4 text-center">
           <div className="inline-block bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 rounded-xl px-4 py-3 shadow-xl">
-            <p className="text-sm text-white/80 drop-shadow">
+            <p className="text-sm text-white/80 drop-shadow font-space">
               Keep practicing to climb the ranks and earn more virtual cash! 🚀
             </p>
           </div>

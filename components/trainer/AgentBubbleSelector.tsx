@@ -340,7 +340,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
         <AnimatedGrid />
-        <div className="relative z-10 text-white/80 font-space text-lg sm:text-xl">Loading homeowners…</div>
+        <div className="relative z-10 text-slate-300 font-space text-lg sm:text-xl font-bold">Loading homeowners…</div>
       </div>
     )
   }
@@ -350,8 +350,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
       <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
         <AnimatedGrid />
         <div className="relative z-10 text-center text-white/80 space-y-3">
-          <p className="text-xl sm:text-2xl font-light font-space">No homeowner agents found</p>
-          <p className="text-base sm:text-lg text-white/60 max-w-sm font-sans font-light">
+          <p className="text-lg md:text-xl font-bold text-slate-300 drop-shadow-md font-space">No homeowner agents found</p>
+          <p className="text-base sm:text-lg text-slate-400 max-w-sm font-space">
             Add active homeowner personas in Supabase with an ElevenLabs agent ID to see them here.
           </p>
         </div>
@@ -396,18 +396,18 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px] pointer-events-none"
       />
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-16 sm:pt-20 md:pt-24">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-32">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12 flex flex-col items-center gap-4 md:gap-6"
+          className="text-center mb-6 flex flex-col items-center gap-2 md:gap-3"
         >
-          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white text-center font-light leading-[1.3]">
+          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white text-center font-bold leading-[1.3] uppercase">
             Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Challenge</span>
           </h1>
-          <p className="font-sans text-xl md:text-2xl text-white/80 max-w-3xl leading-relaxed font-light">
+          <p className="text-lg md:text-xl font-bold text-slate-300 drop-shadow-md font-space max-w-3xl">
             Select a homeowner to begin your training session
           </p>
         </motion.div>
@@ -417,25 +417,29 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-8 flex flex-wrap items-center justify-center gap-4 px-4 py-2 bg-white/[0.02] border border-white/5 rounded-lg backdrop-blur-sm max-w-2xl mx-auto"
+          className="group relative mb-6 flex flex-wrap items-center justify-center gap-3 px-4 py-2 bg-white/[0.02] border-2 border-white/5 rounded-lg transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden max-w-xl mx-auto"
         >
-          <span className="text-xs sm:text-sm font-medium text-white/70 uppercase tracking-wider font-space">Difficulty:</span>
-          <div className="flex flex-wrap items-center gap-4 sm:gap-5">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-              <span className="text-xs sm:text-sm text-white/80 font-space font-light">Easy</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
-              <span className="text-xs sm:text-sm text-white/80 font-space font-light">Moderate</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
-              <span className="text-xs sm:text-sm text-white/80 font-space font-light">Hard</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
-              <span className="text-xs sm:text-sm text-white/80 font-space font-light">Expert</span>
+          {/* Subtle purple glow at bottom for depth */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10 flex flex-wrap items-center justify-center gap-4">
+            <span className="text-xs sm:text-sm font-medium text-white/70 uppercase tracking-wider font-space">Difficulty:</span>
+            <div className="flex flex-wrap items-center gap-4 sm:gap-5">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-white/80 font-space font-bold">Easy</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-white/80 font-space font-bold">Moderate</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-white/80 font-space font-bold">Hard</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-white/80 font-space font-bold">Expert</span>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -445,7 +449,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mb-8 flex flex-wrap items-center justify-center gap-3"
+          className="mb-6 flex flex-wrap items-center justify-center gap-3"
         >
           <button
             onClick={() => setFilter('all')}
@@ -528,7 +532,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                     className={cn(
-                      "flex-shrink-0 w-[300px] snap-center",
+ "flex-shrink-0 w-[300px] snap-center",
                       agent.isLocked || agent.name === 'Tag Team Tanya & Tom' ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
                     )}
                     role="button"
@@ -687,7 +691,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       <h3 className="text-lg font-medium text-white mb-2 font-space tracking-tight">
                         {agent.name}
                       </h3>
-                      <p className="text-sm text-white/70 mb-3 font-sans font-light">
+                      <p className="text-sm text-slate-300 mb-3 font-space font-bold">
                         {agent.subtitle}
                       </p>
                       {/* Difficulty Dot */}
@@ -700,7 +704,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                           agent.difficulty === 'Expert' && "bg-red-400",
                           !agent.difficulty && "bg-white/40"
                         )} />
-                        <span className="text-xs text-white/70 font-space font-light">
+                        <span className="text-base text-white/70 font-space font-bold">
                           {agent.difficulty || 'Unknown'}
                         </span>
                       </div>
@@ -931,7 +935,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 >
                   {/* Name and difficulty */}
                   <div className="flex items-center justify-center gap-2">
-                    <h3 className="text-lg sm:text-xl font-medium text-white tracking-tight font-space">{agent.name}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight font-space">{agent.name}</h3>
                     <div className={cn(
                       "w-2 h-2 rounded-full flex-shrink-0",
                       agent.difficulty === 'Easy' ? 'bg-green-400' :
@@ -942,7 +946,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   </div>
                   
                   {/* Combined summary */}
-                  <p className="text-sm sm:text-base text-white/80 max-w-[240px] mx-auto leading-relaxed font-sans font-light">
+                  <p className="text-sm sm:text-base text-slate-300 max-w-[240px] mx-auto leading-relaxed font-space font-bold">
                     {agent.description}
                   </p>
                   
@@ -955,7 +959,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       ) : null}
                     </div>
                   ) : (
-                    <div className="text-sm sm:text-base font-light text-white/60 pt-2 font-space">
+                    <div className="text-sm sm:text-base font-bold text-slate-400 pt-2 font-space">
                       ✨ Not yet attempted
                     </div>
                   )}
@@ -974,7 +978,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           transition={{ delay: 0.8 }}
           className="text-center mt-8"
         >
-          <p className="text-sm sm:text-base text-white/60 font-sans font-light">
+          <p className="text-sm sm:text-base text-slate-400 font-space font-bold">
             Hover over a card to see it glow • Click to start your session
           </p>
         </motion.div>

@@ -1,98 +1,169 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Trophy, Crown, Medal, TrendingUp, TrendingDown, Users, Award, Target, ArrowRight } from 'lucide-react'
+import { Users, Building2, Mail, Calendar, Shield } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { LeaderboardEntry } from './types'
 import Link from 'next/link'
 
+interface TeamMember {
+  id: string
+  full_name: string | null
+  email: string
+  role: string | null
+  created_at: string
+  avatar_url?: string | null
+  isCurrentUser?: boolean
+}
+
+interface Organization {
+  id: string
+  name: string | null
+  seat_limit: number | null
+  seats_used: number | null
+}
+
 interface TeamTabProps {
-  leaderboard: LeaderboardEntry[]
-  userRank: number
-  teamStats: {
+  leaderboard?: any[]
+  userRank?: number
+  teamStats?: {
     teamSize: number
     avgTeamScore: number
     yourScore: number
   }
 }
 
-export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabProps) {
-  const [realTeamData, setRealTeamData] = useState({
-    users: leaderboard,
-    currentUserRank: userRank,
-    stats: teamStats
-  })
+export default function TeamTab({}: TeamTabProps) {
+  const [loading, setLoading] = useState(true)
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [organization, setOrganization] = useState<Organization | null>(null)
+  const [error, setError] = useState<string | null>(null)
   
   useEffect(() => {
-    fetchRealTeamData()
+    fetchTeamData()
   }, [])
   
-  const fetchRealTeamData = async () => {
+  const fetchTeamData = async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) return
-    
-    // Fetch all users with their session data
-    const { data: usersData } = await supabase
-      .from('users')
-      .select('id, full_name, email, avatar_url')
-    
-    if (!usersData || usersData.length === 0) return
-    
-    // Fetch last week's sessions for all users
-    const oneWeekAgo = new Date()
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-    
-    const { data: allSessions } = await supabase
-      .from('live_sessions')
-      .select('user_id, overall_score')
-      .gte('created_at', oneWeekAgo.toISOString())
-    
-    // Calculate scores per user
-    const userScores = usersData.map(u => {
-      const userSessions = allSessions?.filter(s => s.user_id === u.id) || []
-      const avgScore = userSessions.length > 0
-        ? Math.round(userSessions.reduce((sum, s) => sum + (s.overall_score || 0), 0) / userSessions.length)
-        : 0
-      
-      return {
-        id: u.id,
-        name: u.full_name || u.email?.split('@')[0] || 'User',
-        score: avgScore,
-        avatar: u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.full_name || 'User')}&background=6366f1&color=fff`,
-        isCurrentUser: u.id === user.id
-      }
-    }).sort((a, b) => b.score - a.score)
-    
-    const currentUserRank = userScores.findIndex(u => u.isCurrentUser) + 1
-    const avgTeamScore = userScores.length > 0
-      ? Math.round(userScores.reduce((sum, u) => sum + u.score, 0) / userScores.length)
-      : 0
-    const yourScore = userScores.find(u => u.isCurrentUser)?.score || 0
-    
-    setRealTeamData({
-      users: userScores,
-      currentUserRank,
-      stats: {
-        teamSize: userScores.length,
-        avgTeamScore,
-        yourScore
-      }
-    })
-  }
-  const getRankIcon = (index: number) => {
-    switch (index) {
-      case 0:
-        return <Crown className="w-6 h-6 text-yellow-400" />
-      case 1:
-        return <Medal className="w-6 h-6 text-slate-300" />
-      case 2:
-        return <Medal className="w-6 h-6 text-amber-600" />
-      default:
-        return <span className="text-lg font-bold text-slate-400">#{index + 1}</span>
+    if (!user) {
+      setLoading(false)
+      return
     }
+    
+    try {
+      // Get user's organization
+      const { data: userData } = await supabase
+        .from('users')
+        .select('organization_id, role')
+        .eq('id', user.id)
+        .single()
+      
+      if (!userData?.organization_id) {
+        setError('You are not part of an organization')
+        setLoading(false)
+        return
+      }
+      
+      // Fetch organization details
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('id, name, seat_limit, seats_used')
+        .eq('id', userData.organization_id)
+        .single()
+      
+      if (orgData) {
+        setOrganization({
+          id: orgData.id,
+          name: orgData.name,
+          seat_limit: orgData.seat_limit,
+          seats_used: orgData.seats_used
+        })
+      }
+      
+      // Fetch team members
+      const { data: membersData } = await supabase
+        .from('users')
+        .select('id, full_name, email, role, created_at, avatar_url')
+        .eq('organization_id', userData.organization_id)
+        .order('created_at', { ascending: false })
+      
+      if (membersData) {
+        const formattedMembers = membersData.map(member => ({
+          id: member.id,
+          full_name: member.full_name,
+          email: member.email,
+          role: member.role,
+          created_at: member.created_at,
+          avatar_url: member.avatar_url,
+          isCurrentUser: member.id === user.id
+        }))
+        setMembers(formattedMembers)
+      }
+    } catch (err: any) {
+      console.error('Error fetching team data:', err)
+      setError('Failed to load team data')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const getRoleBadgeColor = (role: string | null) => {
+    switch (role?.toLowerCase()) {
+      case 'admin':
+        return 'bg-red-500/20 border-red-500/30 text-red-400'
+      case 'manager':
+        return 'bg-purple-500/20 border-purple-500/30 text-purple-400'
+      case 'member':
+        return 'bg-blue-500/20 border-blue-500/30 text-blue-400'
+      default:
+        return 'bg-slate-500/20 border-slate-500/30 text-slate-400'
+    }
+  }
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-6"
+      >
+        <div className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 animate-pulse">
+          <div className="h-8 bg-slate-700 rounded w-1/3 mb-4" />
+          <div className="h-4 bg-slate-700 rounded w-1/2" />
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-[#1e1e30] border border-white/10 rounded-xl p-4 animate-pulse">
+              <div className="h-12 bg-slate-700 rounded" />
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center"
+      >
+        <p className="text-red-400 mb-4">{error}</p>
+        <Link
+          href="/settings/organization"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-white"
+        >
+          Manage Organization
+        </Link>
+      </motion.div>
+    )
   }
 
   return (
@@ -101,203 +172,151 @@ export default function TeamTab({ leaderboard, userRank, teamStats }: TeamTabPro
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="space-y-8"
+      className="space-y-6"
     >
-      {/* Team Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Organization Overview */}
+      {organization && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
+          className="bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-2xl p-6 backdrop-blur-sm"
         >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
-              <Users className="w-6 h-6 text-purple-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Team Size</p>
-              <p className="text-2xl font-bold text-white">{realTeamData.stats.teamSize}</p>
-            </div>
-          </div>
-          <p className="text-xs text-slate-400">Active members</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
-              <Award className="w-6 h-6 text-cyan-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Team Average</p>
-              <p className="text-2xl font-bold text-white">{realTeamData.stats.avgTeamScore}%</p>
-            </div>
-          </div>
-          <p className="text-xs text-slate-400">Average score this week</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-green-500/10 rounded-xl border border-green-500/20">
-              <Target className="w-6 h-6 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Your Performance</p>
-              <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold text-white">{realTeamData.stats.yourScore}%</p>
-                {realTeamData.stats.yourScore > realTeamData.stats.avgTeamScore ? (
-                  <TrendingUp className="w-5 h-5 text-green-400" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 text-red-400" />
-                )}
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                <Building2 className="w-6 h-6 text-purple-400" />
               </div>
-            </div>
-          </div>
-          <p className="text-xs text-slate-400">
-            {realTeamData.stats.yourScore > realTeamData.stats.avgTeamScore
-              ? `${realTeamData.stats.yourScore - realTeamData.stats.avgTeamScore}% above team average`
-              : `${realTeamData.stats.avgTeamScore - realTeamData.stats.yourScore}% below team average`}
-          </p>
-        </motion.div>
-      </div>
-
-      {/* Your Ranking Details */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.25 }}
-        className="bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-2xl p-6 backdrop-blur-sm"
-      >
-        <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">Your Current Ranking</h3>
-              <div className="flex items-center gap-3">
-                <div className="text-5xl font-bold text-purple-400">#{realTeamData.currentUserRank}</div>
-                <div>
-                  <p className="text-sm text-slate-300">of {realTeamData.stats.teamSize} members</p>
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {organization.name || 'Organization'}
+                </h2>
+                <div className="flex items-center gap-4 text-sm text-slate-300">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    {members.length} {members.length === 1 ? 'member' : 'members'}
+                  </span>
+                  {organization.seat_limit && (
+                    <span className="flex items-center gap-1">
+                      <Shield className="w-4 h-4" />
+                      {organization.seats_used || 0} / {organization.seat_limit} seats
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-          <div className="hidden md:block">
-            <div className="p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
-              <Trophy className="w-16 h-16 text-purple-400" />
-            </div>
+            <Link
+              href="/settings/organization"
+              className="px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 rounded-lg text-purple-300 text-sm font-medium transition-all"
+            >
+              Manage
+            </Link>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
-      {/* Full Team Leaderboard */}
+      {/* Team Members List */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
         className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 backdrop-blur-sm"
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
-              <Trophy className="w-5 h-5 text-purple-400" />
+              <Users className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">Full Team Leaderboard</h3>
-              <p className="text-xs text-slate-400">This week's rankings</p>
+              <h3 className="text-lg font-semibold text-white">Team Members</h3>
+              <p className="text-xs text-slate-400">{members.length} {members.length === 1 ? 'member' : 'members'}</p>
             </div>
           </div>
-          <Link
-            href="/leaderboard"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-300 rounded-lg hover:from-purple-600/30 hover:to-indigo-600/30 transition-all border border-purple-500/20 font-semibold text-sm"
-          >
-            View Full Leaderboard
-            <ArrowRight className="w-4 h-4" />
-          </Link>
         </div>
 
-        <div className="space-y-3">
-          {realTeamData.users.map((entry, index) => (
-            <motion.div
-              key={entry.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.35 + index * 0.03 }}
-              whileHover={{ scale: 1.01, x: 4 }}
-              className={`group relative ${
-                entry.isCurrentUser ? 'ring-2 ring-purple-500/50' : ''
-              }`}
-            >
-              {entry.isCurrentUser && (
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 rounded-xl blur-lg" />
-              )}
-              
-              <div className={`relative bg-white/5 hover:bg-white/10 border ${
-                entry.isCurrentUser ? 'border-purple-500/50' : 'border-white/5'
-              } rounded-xl p-4 transition-all duration-300`}>
-                <div className="flex items-center gap-4">
-                  {/* Rank */}
-                  <div className="flex items-center justify-center w-12">
-                    {getRankIcon(index)}
-                  </div>
+        {members.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400">No team members found</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {members.map((member, index) => {
+              const avatarUrl = member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name || member.email)}&background=6366f1&color=fff`
+              const displayName = member.full_name || member.email.split('@')[0] || 'User'
+              const joinDate = new Date(member.created_at).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+              })
 
-                  {/* Avatar */}
-                  <img
-                    src={entry.avatar}
-                    alt={entry.name}
-                    className="w-12 h-12 rounded-full object-cover ring-2 ring-white/10"
-                  />
-
-                  {/* Name & Score */}
-                  <div className="flex-1">
-                    <p className={`text-sm font-semibold ${
-                      entry.isCurrentUser ? 'text-purple-300' : 'text-white'
-                    }`}>
-                      {entry.name}
-                    </p>
-                    <p className="text-xs text-slate-400">{entry.score}% avg score</p>
-                  </div>
-
-                  {/* Performance Indicator */}
-                  <div className="text-right">
-                    <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg ${
-                      index <= 2
-                        ? 'bg-green-500/20 border border-green-500/30'
-                        : index >= realTeamData.users.length - 3
-                        ? 'bg-red-500/20 border border-red-500/30'
-                        : 'bg-yellow-500/20 border border-yellow-500/30'
-                    }`}>
-                      <span className={`text-xs font-semibold ${
-                        index <= 2
-                          ? 'text-green-400'
-                          : index >= realTeamData.users.length - 3
-                          ? 'text-red-400'
-                          : 'text-yellow-400'
-                      }`}>
-                        {index <= 2 ? 'Top Tier' : index >= realTeamData.users.length - 3 ? 'Growth' : 'Mid Tier'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Badge for current user */}
-                  {entry.isCurrentUser && (
-                    <div className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-lg">
-                      <span className="text-xs font-medium text-purple-300">You</span>
-                    </div>
+              return (
+                <motion.div
+                  key={member.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className={`group relative ${
+                    member.isCurrentUser ? 'ring-2 ring-purple-500/50' : ''
+                  }`}
+                >
+                  {member.isCurrentUser && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 rounded-xl blur-lg" />
                   )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                  
+                  <div className={`relative bg-white/5 hover:bg-white/10 border ${
+                    member.isCurrentUser ? 'border-purple-500/50' : 'border-white/5'
+                  } rounded-xl p-4 transition-all duration-300`}>
+                    <div className="flex items-center gap-4">
+                      {/* Avatar */}
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        className="w-12 h-12 rounded-full object-cover ring-2 ring-white/10"
+                      />
+
+                      {/* Member Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm font-semibold ${
+                            member.isCurrentUser ? 'text-purple-300' : 'text-white'
+                          }`}>
+                            {displayName}
+                          </p>
+                          {member.isCurrentUser && (
+                            <span className="px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-xs text-purple-300">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                          <span className="flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            {member.email}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            Joined {joinDate}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Role Badge */}
+                      {member.role && (
+                        <div className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                          getRoleBadgeColor(member.role)
+                        }`}>
+                          {member.role}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   )
 }
-

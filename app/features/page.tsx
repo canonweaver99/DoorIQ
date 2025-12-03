@@ -48,7 +48,7 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background dark:from-[#02010A] dark:via-[#0A0420] dark:to-[#120836]">
       <motion.div
         ref={ref}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12 sm:pb-16 lg:pb-20"
         initial="hidden"
         animate={controls}
         variants={staggerContainer}

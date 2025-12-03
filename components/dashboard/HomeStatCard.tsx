@@ -44,14 +44,14 @@ export default function HomeStatCard() {
 
   if (loading) {
     return (
-      <Card className="bg-white/[0.02] border-2 border-white/5 p-4 w-full lg:w-80 animate-pulse">
+      <div className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 w-full lg:w-80 animate-pulse overflow-hidden">
         <div className="h-6 bg-white/10 rounded w-1/2 mb-4" />
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-12 bg-white/10 rounded" />
           ))}
         </div>
-      </Card>
+      </div>
     )
   }
 
@@ -91,9 +91,13 @@ export default function HomeStatCard() {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
+      className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 w-full lg:w-80 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
     >
-      <Card className="bg-white/[0.02] border-2 border-white/5 p-4 lg:p-6 w-full lg:w-80">
-        <h3 className="text-white/90 font-space font-medium text-sm uppercase tracking-wider mb-4">
+      {/* Subtle purple glow at bottom for depth */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="relative z-10">
+        <h3 className="text-white/90 font-space font-bold text-base md:text-lg uppercase tracking-wider mb-4">
           Your Stats
         </h3>
         <div className="space-y-3">
@@ -111,16 +115,16 @@ export default function HomeStatCard() {
                   <div className={`${item.color} p-1.5 rounded-md bg-white/[0.05]`}>
                     <Icon className="w-4 h-4" />
                   </div>
-                  <span className="text-white/70 text-sm font-sans">{item.label}</span>
+                  <span className="text-white/70 text-sm font-space font-bold">{item.label}</span>
                 </div>
-                <span className="text-white font-space font-medium text-base">
+                <span className="text-white font-space font-bold text-base">
                   {item.value}
                 </span>
               </motion.div>
             )
           })}
         </div>
-      </Card>
+      </div>
     </motion.div>
   )
 }

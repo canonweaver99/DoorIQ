@@ -16,13 +16,15 @@ interface PerformanceDashboardProps {
   metrics: PerformanceMetrics
   weeklyData: Array<{ date: string; score: number }>
   trend: number
+  totalSessions?: number
 }
 
 export default function PerformanceDashboard({
   overallScore,
   metrics,
   weeklyData,
-  trend
+  trend,
+  totalSessions = 0
 }: PerformanceDashboardProps) {
   const router = useRouter()
   const formatDuration = (seconds: number) => {
@@ -31,7 +33,10 @@ export default function PerformanceDashboard({
   }
 
   // Check if this is an empty state (no sessions completed)
-  const isEmpty = overallScore === 0 && metrics.closeRate === 0 && metrics.avgDurationSeconds === 0 && metrics.toneScore === 0
+  // Primary check: totalSessions (most reliable), fallback to metrics check if totalSessions not provided
+  const isEmpty = totalSessions !== undefined 
+    ? totalSessions === 0 
+    : (overallScore === 0 && metrics.closeRate === 0 && metrics.avgDurationSeconds === 0 && metrics.toneScore === 0)
 
   // Empty state component with preview/ghost data
   if (isEmpty) {

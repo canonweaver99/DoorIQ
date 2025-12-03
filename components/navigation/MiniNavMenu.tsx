@@ -71,13 +71,13 @@ export function MiniNavMenu() {
             key={item.href}
             href={item.href}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-space font-medium transition-all duration-200',
+              'flex items-center gap-2.5 px-5 py-3 rounded-md text-base md:text-lg font-space font-medium transition-all duration-200',
               active
                 ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
             )}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-5 h-5 md:w-6 md:h-6" />
             <span>{item.label}</span>
           </Link>
         )

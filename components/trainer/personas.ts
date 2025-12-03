@@ -78,7 +78,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Average Austin': {
     bubble: {
       subtitle: 'Skeptical but Fair',
-      description: 'Challenges pricing and pressure tactics. Practice trust building.',
+      description: 'Challenges pricing. Practice trust building.',
       difficulty: 'Moderate',
       color: 'primary',
       image: '/Austin No Backround.png', // Selection bubble (capital N, B)
@@ -111,7 +111,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'No Problem Nancy': {
     bubble: {
       subtitle: 'Easy Agreement',
-      description: 'Easily agrees. Practice smooth closes and confidence building.',
+      description: 'Easily agrees. Practice smooth closes.',
       difficulty: 'Easy',
       color: 'secondary',
       image: '/Nancy Black No backround.png',
@@ -144,7 +144,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Switchover Steve': {
     bubble: {
       subtitle: 'Current Customer',
-      description: 'Has already been serviced. Practice Competitive positioning.',
+      description: 'Already serviced. Practice competitive positioning.',
       difficulty: 'Hard',
       color: 'tertiary',
       image: '/Already got it Alan no backround 2.png', // Selection bubble
@@ -176,7 +176,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Not Interested Nick': {
     bubble: {
       subtitle: 'Quick Dismissal',
-      description: 'Immediately wants to end conversation. Practice pattern interrupts.',
+      description: 'Wants to end conversation. Practice pattern interrupts.',
       difficulty: 'Expert',
       color: 'quaternary',
       image: '/Not Intersted Nick no backround 2.png',
@@ -209,7 +209,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'DIY Dave': {
     bubble: {
       subtitle: 'Self-Sufficient',
-      description: 'Prefers DIY solutions. Practice demonstrating professional value.',
+      description: 'Prefers DIY. Practice professional value.',
       difficulty: 'Hard',
       color: 'quinary',
       image: '/DIY DAVE no backround 2.png', // Selection bubble
@@ -273,7 +273,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Spouse Check Susan': {
     bubble: {
       subtitle: 'Decision Maker',
-      description: 'Needs partner approval. Practice handling spouse objection.',
+      description: 'Needs partner approval. Practice spouse objection.',
       difficulty: 'Moderate',
       color: 'septenary',
       image: '/Spouse check Susan no backround 2.png',
@@ -305,7 +305,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Busy Beth': {
     bubble: {
       subtitle: 'Time Crunch',
-      description: 'Always pressed for time. Practice delivering value quickly.',
+      description: 'Pressed for time. Practice quick value.',
       difficulty: 'Moderate',
       color: 'octonary',
       image: '/Busy Beth no backround 2.png',
@@ -337,7 +337,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Renter Randy': {
     bubble: {
       subtitle: 'Authority Question',
-      description: 'Renting property. Practice navigating authority objections.',
+      description: 'Renting property. Practice authority objections.',
       difficulty: 'Hard',
       color: 'nonary',
       image: '/Renter randy no backround 2.png',
@@ -369,7 +369,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Skeptical Sam': {
     bubble: {
       subtitle: 'Proof Needed',
-      description: 'Doubts credibility. Practice building trust with proof.',
+      description: 'Doubts credibility. Practice trust building.',
       difficulty: 'Hard',
       color: 'denary',
       image: '/Skeptical Sam no backround 2.png',
@@ -401,7 +401,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Just Treated Jerry': {
     bubble: {
       subtitle: 'Timing Objection',
-      description: 'Recently serviced. Practice timing objections and future booking.',
+      description: 'Recently serviced. Practice timing objections.',
       difficulty: 'Moderate',
       color: 'duodenary',
       image: '/Just treated Jerry no backround 2.png',
@@ -433,7 +433,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Think About It Tina': {
     bubble: {
       subtitle: 'Analysis Paralysis',
-      description: 'Needs time to decide. Practice creating urgency.',
+      description: 'Needs time to decide. Practice urgency.',
       difficulty: 'Hard',
       color: 'undenary',
       image: '/Think About It Tina no backround.png',
@@ -465,7 +465,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Veteran Victor': {
     bubble: {
       subtitle: 'Military Mindset',
-      description: 'Values structure and respect. Practice demonstrating value.',
+      description: 'Values structure. Practice demonstrating value.',
       difficulty: 'Moderate',
       color: 'primary',
       image: '/Veteran Victor No backround.png',
@@ -530,7 +530,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   'Tag Team Tanya & Tom': {
     bubble: {
       subtitle: 'Couple Decision',
-      description: 'Multiple decision-makers. Practice building consensus.',
+      description: 'Multiple decision-makers. Practice consensus.',
       difficulty: 'Hard',
       color: 'tertiary',
       image: '/Tanya and Tom no backround.png', // Bubble image (no background)

@@ -1,19 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Play, Video } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { PERSONA_METADATA } from '@/components/trainer/personas'
+import { motion } from 'framer-motion'
+import { X, Play } from 'lucide-react'
 
 interface OnboardingElementsProps {
   totalSessions: number
 }
 
 export default function OnboardingElements({ totalSessions }: OnboardingElementsProps) {
-  const router = useRouter()
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(false)
-  const [showFirstSessionPrompt, setShowFirstSessionPrompt] = useState(totalSessions === 0)
   const [hasSeenWelcome, setHasSeenWelcome] = useState(false)
 
   useEffect(() => {
@@ -21,18 +17,6 @@ export default function OnboardingElements({ totalSessions }: OnboardingElements
     const seenWelcome = localStorage.getItem('dooriq_seen_welcome')
     setHasSeenWelcome(!!seenWelcome)
   }, [])
-
-  const handleStartFirstSession = () => {
-    // Navigate to Average Austin (beginner-friendly)
-    const averageAustin = PERSONA_METADATA['Average Austin']
-    const agentId = averageAustin?.card?.elevenAgentId
-    if (agentId) {
-      router.push(`/trainer?agent=${encodeURIComponent(agentId)}`)
-    } else {
-      router.push('/trainer')
-    }
-    setShowFirstSessionPrompt(false)
-  }
 
   const handleCloseWelcome = () => {
     setShowWelcomeVideo(false)
@@ -92,47 +76,6 @@ export default function OnboardingElements({ totalSessions }: OnboardingElements
           )}
         </motion.div>
       )}
-
-      {/* Guided First Session Prompt */}
-      <AnimatePresence>
-        {showFirstSessionPrompt && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white/[0.02] border-2 border-white/5 hover:border-white/20 hover:bg-white/[0.03] rounded-lg p-6 mb-6 transition-all"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
-                <Play className="w-6 h-6 text-purple-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-white font-bold text-lg mb-2">
-                  Try Your First Practice Session
-                </h3>
-                <p className="text-white/70 text-sm mb-4">
-                  We'll walk you through your first practice with Average Austin. 
-                  This is a great way to learn the basics and build confidence.
-                </p>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleStartFirstSession}
-                    className="px-6 py-2.5 bg-white text-black hover:bg-white/90 font-semibold rounded-lg transition-all"
-                  >
-                    Start Guided Session
-                  </button>
-                  <button
-                    onClick={() => setShowFirstSessionPrompt(false)}
-                    className="px-4 py-2.5 text-white/60 hover:text-white transition-colors"
-                  >
-                    Maybe Later
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   )
 }

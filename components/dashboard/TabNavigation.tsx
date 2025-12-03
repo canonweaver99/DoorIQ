@@ -20,7 +20,7 @@ interface TabNavigationProps {
 
 export default function TabNavigation({ tabs, activeTab, onChange, demoMode = false }: TabNavigationProps) {
   return (
-    <div className="sticky top-0 z-20 bg-[#0a0a1a]/80 backdrop-blur-xl border-b border-white/10 mb-8">
+    <div className="sticky top-0 z-20 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 mb-8">
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
         {tabs.map((tab, index) => {
           const isActive = activeTab === tab.id

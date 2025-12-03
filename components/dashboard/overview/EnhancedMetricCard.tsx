@@ -140,17 +140,17 @@ export default function EnhancedMetricCard({
             <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
               <Icon className="w-3.5 h-3.5" style={{ color: '#c4b5fd' }} />
             </div>
-            <span className={`text-sm font-semibold ${matte.titleColor}`}>{title}</span>
+            <span className={`text-sm font-space font-bold ${matte.titleColor}`}>{title}</span>
           </div>
           <div className={`flex items-center gap-1 ${trendColor}`}>
             {trendUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-            <span className="text-xs font-semibold">{trendUp ? '+' : ''}{trend}{isPercentMetric ? '%' : ''}</span>
+            <span className="text-xs font-space font-bold">{trendUp ? '+' : ''}{trend}{isPercentMetric ? '%' : ''}</span>
           </div>
         </div>
 
         {/* Main Value */}
         <div>
-          <span className="text-4xl font-bold text-white leading-none">
+          <span className="text-4xl font-space font-bold text-white leading-none">
             {typeof value === 'number' ? displayValue : value}
           </span>
         </div>

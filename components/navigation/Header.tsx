@@ -34,6 +34,10 @@ import {
   Database as DatabaseIcon,
   Upload,
   DollarSign,
+  Sparkles,
+  Info,
+  MessageSquare,
+  Calendar,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
@@ -372,46 +376,38 @@ function HeaderContent() {
     const navItems: NavItem[] = [
       { name: 'Home', href: isSignedIn ? '/home' : '/landing', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
-      // Sessions only shows for signed-in users
-      ...(isSignedIn ? [{ name: 'Sessions', href: '/sessions', icon: FileText }] : []),
-      // Dashboard shows for reps and admins (admins can view their own dashboard) - now a regular tab
-      ...(userRole === 'rep' || userRole === 'admin' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }] : []),
-      // Learning: always show for signed-in users on mobile (no desktopOnly flag)
-      // Desktop sidebar has its own logic to check hasLearningPageAccess
-      ...(isSignedIn ? [{ name: 'Learning', href: '/learning', icon: NotebookPen }] : []),
-      // Pricing page temporarily archived
-      // ...(!userHasActivePlan && userRole !== 'admin' ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
     ]
 
-    if (userRole === 'manager') {
-      const insertIndex = Math.min(5, navItems.length)
-      navItems.splice(insertIndex, 0, {
-        name: 'Manager',
-        href: '/manager',
-        icon: FileText,
-        desktopOnly: true,
-      })
+    // Sessions - Always show for signed-in users
+    if (isSignedIn) {
+      navItems.push({ name: 'Sessions', href: '/sessions', icon: FileText })
     }
-    
+
+    // Dashboard/Manager - Show appropriate dashboard based on role
+    if (userRole === 'manager') {
+      navItems.push({ name: 'Dashboard', href: '/manager', icon: LayoutDashboard })
+    } else if (userRole === 'rep' || userRole === 'admin') {
+      navItems.push({ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard })
+    }
+
+    // Leaderboard - Always show for signed-in users
+    if (isSignedIn) {
+      navItems.push({ name: 'Leaderboard', href: '/leaderboard', icon: Trophy })
+    }
+
+    // Learning: always show for signed-in users
+    if (isSignedIn) {
+      navItems.push({ name: 'Learning', href: '/learning', icon: NotebookPen })
+    }
+
+    // Admin panel - separate from dashboard
     if (userRole === 'admin') {
-      const insertIndex = Math.min(5, navItems.length)
-      navItems.splice(insertIndex, 0, {
+      navItems.push({
         name: 'Admin',
         href: '/admin',
-        icon: FileText,
+        icon: ShieldCheck,
         desktopOnly: true,
       })
-      // Pricing page temporarily archived
-      // Add Pricing link for admins (always visible regardless of subscription)
-      // Check if Pricing already exists to avoid duplicates
-      // const hasPricing = navItems.some(item => item.href === '/pricing')
-      // if (!hasPricing) {
-      //   navItems.push({
-      //     name: 'Pricing',
-      //     href: '/pricing',
-      //     icon: DollarSign,
-      //   })
-      // }
     }
 
     return navItems
@@ -610,17 +606,290 @@ function HeaderContent() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [lastScrollY])
 
+  // Public navigation items for non-authenticated users
+  const publicNavigation = useMemo(() => [
+    { name: 'Home', href: '/home', icon: Home },
+    { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
+    { name: 'Sessions', href: '/sessions', icon: FileText },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
+    { name: 'Learning', href: '/learning', icon: NotebookPen },
+    { name: 'Help', href: '/help', icon: LifeBuoy },
+    { name: 'Contact Sales', href: '/contact-sales', icon: MessageSquare },
+    { name: 'Book Demo', href: '/book-demo', icon: Calendar },
+    { name: 'Features', href: '/features', icon: Sparkles },
+    { name: 'About', href: '/about', icon: Info },
+    { name: 'FAQs', href: '/faqs', icon: HelpCircle },
+  ], [])
+
   return (
     <>
-      {/* Home Button - Show when menu is hidden and not on home page or admin pages */}
-      {shouldHideMenu && pathname !== '/' && !pathname?.startsWith('/admin') && (
-        <Link
-          href="/"
-          className="fixed top-4 left-4 z-[9999] flex items-center gap-2 px-4 py-2 bg-background/80 dark:bg-black/80 backdrop-blur-xl border border-border/20 dark:border-white/10 rounded-full shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all font-space font-medium"
-        >
-          <Home className="w-4 h-4" />
-          <span className="hidden sm:inline">Home</span>
-        </Link>
+      {/* Public Header - Show when NOT signed in */}
+      {!isSignedIn && !isAuthPage && (
+        <>
+          {/* Desktop Public Header */}
+          <header className={`hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 overflow-hidden`}>
+            {/* Animated grid pattern */}
+            <motion.div
+              animate={{
+                opacity: [0.02, 0.04, 0.02],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute inset-0 pointer-events-none"
+            >
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+                  backgroundSize: "60px 60px",
+                }}
+              />
+            </motion.div>
+
+            {/* Animated gradient orbs */}
+            <motion.div
+              animate={{
+                x: [0, 30, 0],
+                y: [0, 20, 0],
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 15,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute top-0 right-1/4 w-[400px] h-[200px] bg-gradient-to-br from-indigo-500/10 via-purple-500/8 to-transparent rounded-full blur-[80px] pointer-events-none"
+            />
+            <motion.div
+              animate={{
+                x: [0, -25, 0],
+                y: [0, 15, 0],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 20,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute top-0 left-1/4 w-[350px] h-[180px] bg-gradient-to-bl from-pink-500/10 via-purple-500/8 to-transparent rounded-full blur-[70px] pointer-events-none"
+            />
+
+            {/* Content wrapper */}
+            <div className="relative z-10 max-w-7xl mx-auto w-full flex items-center justify-between gap-4">
+              {/* Left side: Logo and Navigation */}
+              <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
+                <Link href="/home" className="flex items-center flex-shrink-0">
+                  <Image 
+                    src="/dooriqlogo.png" 
+                    alt="DoorIQ Logo" 
+                    width={120} 
+                    height={20} 
+                    className="h-[20px] w-auto object-contain max-w-[100px] md:max-w-[120px]"
+                    priority
+                  />
+                </Link>
+
+                <div className="h-6 w-px bg-border/20 dark:bg-white/10 flex-shrink-0" />
+
+                <nav className="flex items-center gap-1 md:gap-1.5 flex-1 min-w-0">
+                  {publicNavigation.slice(0, 6).map((item) => {
+                    const Icon = item.icon
+                    const active = isActive(item.href)
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-3 md:px-4 py-3 text-sm md:text-base transition-all flex-shrink-0 font-space
+                          ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
+                      >
+                        <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                        <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                </nav>
+              </div>
+
+              {/* Right side: Auth buttons and Sidebar toggle */}
+              <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
+                <Link
+                  href="/auth/login"
+                  className="px-4 py-2 text-sm md:text-base text-foreground/70 hover:text-foreground dark:text-slate-300 dark:hover:text-white font-medium transition-all font-space"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="px-4 py-2 text-sm md:text-base bg-white text-black font-bold rounded-md transition-all hover:bg-white/90 font-space"
+                >
+                  Sign Up
+                </Link>
+                <button
+                  onClick={() => setIsSidebarOpen((prev) => !prev)}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-white/20 hover:border-purple-500/40 hover:shadow-[0px_0px_12px_rgba(168,85,247,0.3)] hover:scale-105 text-slate-300 hover:text-white transition-all"
+                  aria-label="Open menu"
+                >
+                  <HamburgerIcon open={isSidebarOpen} />
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Mobile Public Header */}
+          <div className="fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all touch-target"
+            >
+              {isMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
+            </button>
+          </div>
+
+          {/* Mobile Public Navigation */}
+          {isMenuOpen && (
+            <div className="fixed inset-0 z-40 md:hidden">
+              {/* Backdrop */}
+              <div 
+                className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"
+                onClick={() => setIsMenuOpen(false)}
+              />
+              {/* Mobile Navigation Panel */}
+              <div className="absolute top-0 right-0 bottom-0 w-full max-w-sm bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-l border-border/20 dark:border-white/10 overflow-y-auto">
+                <div className="p-6 pt-20 space-y-2">
+                  {publicNavigation.map((item) => {
+                    const Icon = item.icon
+                    const active = isActive(item.href)
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base sm:text-lg font-medium transition-all font-space
+                          ${active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 text-foreground font-semibold' : 'text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white'}`}
+                      >
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <span className="tracking-tight">{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                  <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4 space-y-2">
+                    <Link
+                      href="/auth/login"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-3 rounded-lg text-base sm:text-lg font-medium text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white transition-all font-space"
+                    >
+                      Log In
+                    </Link>
+                    <Link
+                      href="/auth/signup"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-3 rounded-lg text-base sm:text-lg font-bold bg-white text-black hover:bg-white/90 transition-all font-space"
+                    >
+                      Sign Up
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Public Sidebar - Desktop */}
+          {portalReady &&
+            createPortal(
+              <AnimatePresence>
+                {isSidebarOpen && !isSignedIn && (
+                  <>
+                    <motion.div
+                      key="sidebar-backdrop"
+                      className="hidden md:block fixed inset-0 z-[998] bg-background/70 dark:bg-black/70"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.7 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      onClick={() => setIsSidebarOpen(false)}
+                      aria-hidden="true"
+                    />
+                    <motion.div
+                      key="sidebar-panel"
+                      ref={sidebarRef}
+                      className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-border/20 dark:border-white/10 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)]"
+                      role="menu"
+                      initial={{ opacity: 0, x: 64 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 64 }}
+                      transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+                    >
+                      <div className="px-[19px] pt-[14px] pb-[9px] flex items-center justify-between">
+                        <div>
+                          <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Navigation</p>
+                          <h2 className="mt-[5px] text-lg sm:text-xl md:text-2xl font-semibold text-foreground font-space">DoorIQ</h2>
+                        </div>
+                        <button
+                          onClick={() => setIsSidebarOpen(false)}
+                          className="rounded-full bg-background/50 dark:bg-white/10 text-foreground/70 dark:text-slate-300 p-[7px] hover:bg-background dark:hover:bg-white/20 transition"
+                          aria-label="Close menu"
+                        >
+                          <X className="w-[16.5px] h-[16.5px]" />
+                        </button>
+                      </div>
+
+                      <nav className="flex-1 overflow-y-auto px-[19px] pt-[14px] pb-[9px]">
+                        <div className="space-y-[14px]">
+                          {publicNavigation.map((item) => {
+                            const Icon = item.icon
+                            const active = isActive(item.href)
+                            return (
+                              <button
+                                key={item.name}
+                                onClick={() => {
+                                  router.push(item.href)
+                                  setIsSidebarOpen(false)
+                                }}
+                                className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-border/10 dark:border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-foreground/80 dark:text-slate-200 transition-all hover:border-border/20 dark:hover:border-white/15 hover:bg-background/50 dark:hover:bg-white/5 font-space ${
+                                  active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/30' : ''
+                                }`}
+                              >
+                                <span className="flex items-center gap-[12px]">
+                                  <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white shrink-0">
+                                    <Icon className="h-[16.5px] w-[16.5px]" />
+                                  </span>
+                                  <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </nav>
+
+                      <div className="px-[19px] pb-[14px] space-y-2">
+                        <Link
+                          href="/auth/login"
+                          onClick={() => setIsSidebarOpen(false)}
+                          className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-background/50 dark:bg-white/5 px-[14px] py-[9px] text-[14px] font-medium text-foreground/80 dark:text-slate-200 transition hover:bg-background dark:hover:bg-white/10"
+                        >
+                          <LogIn className="h-[16.5px] w-[16.5px]" />
+                          <span>Log In</span>
+                        </Link>
+                        <Link
+                          href="/auth/signup"
+                          onClick={() => setIsSidebarOpen(false)}
+                          className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/35 to-pink-600/35 px-[14px] py-[9px] text-[14px] font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40"
+                        >
+                          <ArrowRight className="h-[16.5px] w-[16.5px]" />
+                          <span>Sign Up</span>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>,
+              document.body
+            )}
+        </>
       )}
 
       {/* Mini Navigation Menu - Mobile & Desktop - Only show for signed-in users */}
@@ -634,7 +903,7 @@ function HeaderContent() {
 
       {/* Full-width header - Desktop - Only show for signed-in users */}
       {isSignedIn && !isAuthPage && (
-        <header className={`hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-3 shadow-lg shadow-purple-500/10 transition-opacity duration-300 ${
+        <header className={`hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 transition-opacity duration-300 overflow-hidden ${
           (shouldHideMenu && !showMenuOnHover) ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
         }`}
         onMouseEnter={() => {
@@ -649,6 +918,57 @@ function HeaderContent() {
             setShowMenuOnHover(false)
           }
         }}>
+          {/* Animated grid pattern */}
+          <motion.div
+            animate={{
+              opacity: [0.02, 0.04, 0.02],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute inset-0 pointer-events-none"
+          >
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+                backgroundSize: "60px 60px",
+              }}
+            />
+          </motion.div>
+
+          {/* Animated gradient orbs */}
+          <motion.div
+            animate={{
+              x: [0, 30, 0],
+              y: [0, 20, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 15,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-0 right-1/4 w-[400px] h-[200px] bg-gradient-to-br from-indigo-500/10 via-purple-500/8 to-transparent rounded-full blur-[80px] pointer-events-none"
+          />
+          <motion.div
+            animate={{
+              x: [0, -25, 0],
+              y: [0, 15, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-0 left-1/4 w-[350px] h-[180px] bg-gradient-to-bl from-pink-500/10 via-purple-500/8 to-transparent rounded-full blur-[70px] pointer-events-none"
+          />
+
+          {/* Content wrapper */}
+          <div className="relative z-10 max-w-7xl mx-auto w-full flex items-center justify-between gap-4">
           <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-4">
             {/* Left side: Logo and Navigation */}
             <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
@@ -665,7 +985,7 @@ function HeaderContent() {
 
               <div className="h-6 w-px bg-border/20 dark:bg-white/10 flex-shrink-0" />
 
-              <nav className="flex items-center gap-1 md:gap-1.5 flex-1 min-w-0">
+              <nav className="flex items-center gap-1 md:gap-2 flex-1 min-w-0">
                 {navigation.filter(item => !(item as any).desktopOnly).map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
@@ -673,10 +993,10 @@ function HeaderContent() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-3 md:px-4 py-2 text-sm md:text-base transition-all flex-shrink-0 font-space
+                      className={`inline-flex items-center gap-1.5 md:gap-2 rounded-md px-4 md:px-5 py-3 md:py-3.5 text-base md:text-lg transition-all flex-shrink-0 font-space
                         ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
                     >
-                      <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                      <Icon className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
                       <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
                     </Link>
                   )
@@ -741,6 +1061,7 @@ function HeaderContent() {
                 </div>
               </div>
             )}
+          </div>
           </div>
         </header>
       )}
