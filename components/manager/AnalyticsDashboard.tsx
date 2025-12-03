@@ -290,67 +290,6 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
     }
   }
 
-  const getMockAnalytics = (): Analytics => ({
-    totalSessions: 247,
-    teamAverage: 73,
-    activeReps: 8,
-    trainingROI: 245,
-    performanceData: [
-      { month: 'Jul', teamAvg: 65, topPerformer: 82, industry: 68 },
-      { month: 'Aug', teamAvg: 68, topPerformer: 85, industry: 69 },
-      { month: 'Sep', teamAvg: 71, topPerformer: 88, industry: 70 },
-      { month: 'Oct', teamAvg: 73, topPerformer: 91, industry: 71 },
-      { month: 'Nov', teamAvg: 75, topPerformer: 92, industry: 72 },
-    ],
-    skillDistribution: [
-      { name: 'Rapport Building', value: 78 },
-      { name: 'Discovery', value: 72 },
-      { name: 'Objection Handling', value: 68 },
-      { name: 'Closing', value: 75 },
-      { name: 'Follow-up', value: 70 },
-    ],
-    changes: {
-      sessions: 18,
-      score: 5,
-      reps: 2,
-      roi: 24
-    },
-    repPerformance: [
-      { id: '1', name: 'Sarah Johnson', sessions: 42, avgScore: 87, trend: 8, skills: { rapport: 90, discovery: 85, objections: 88, closing: 85 }, revenue: 12450, lastActive: '2 hours ago' },
-      { id: '2', name: 'Mike Chen', sessions: 38, avgScore: 82, trend: 5, skills: { rapport: 85, discovery: 80, objections: 82, closing: 80 }, revenue: 11200, lastActive: '1 hour ago' },
-      { id: '3', name: 'Emily Rodriguez', sessions: 35, avgScore: 79, trend: 12, skills: { rapport: 82, discovery: 78, objections: 75, closing: 78 }, revenue: 9800, lastActive: '3 hours ago' },
-      { id: '4', name: 'David Park', sessions: 31, avgScore: 76, trend: -2, skills: { rapport: 78, discovery: 75, objections: 73, closing: 78 }, revenue: 8900, lastActive: '5 hours ago' },
-      { id: '5', name: 'Lisa Anderson', sessions: 28, avgScore: 72, trend: 6, skills: { rapport: 75, discovery: 70, objections: 70, closing: 73 }, revenue: 7200, lastActive: '1 day ago' },
-      { id: '6', name: 'James Wilson', sessions: 25, avgScore: 69, trend: -4, skills: { rapport: 72, discovery: 68, objections: 65, closing: 70 }, revenue: 6100, lastActive: '2 days ago' },
-      { id: '7', name: 'Rachel Kim', sessions: 22, avgScore: 66, trend: 3, skills: { rapport: 70, discovery: 65, objections: 63, closing: 68 }, revenue: 5400, lastActive: '3 days ago' },
-      { id: '8', name: 'Chris Martinez', sessions: 18, avgScore: 64, trend: -6, skills: { rapport: 68, discovery: 62, objections: 60, closing: 66 }, revenue: 4200, lastActive: '1 week ago' },
-    ],
-    hourlyPerformance: Array.from({ length: 24 }, (_, i) => ({
-      hour: i,
-      sessions: Math.floor(Math.random() * 20) + 5,
-      avgScore: Math.floor(Math.random() * 15) + 68,
-      closeRate: Math.random() * 0.3 + 0.15
-    })),
-    dailyPerformance: Array.from({ length: 30 }, (_, i) => ({
-      date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      sessions: Math.floor(Math.random() * 15) + 5,
-      avgScore: Math.floor(Math.random() * 20) + 65,
-      revenue: Math.floor(Math.random() * 2000) + 500
-    })),
-    skillProgression: [
-      { skill: 'Rapport Building', current: 78, previous: 74, trend: 'up' },
-      { skill: 'Discovery', current: 72, previous: 70, trend: 'up' },
-      { skill: 'Objection Handling', current: 68, previous: 71, trend: 'down' },
-      { skill: 'Closing', current: 75, previous: 73, trend: 'up' },
-      { skill: 'Follow-up', current: 70, previous: 68, trend: 'up' },
-    ],
-    coachingOpportunities: [
-      { repName: 'Chris Martinez', skill: 'Objection Handling', currentScore: 60, targetScore: 75, impact: 'high' },
-      { repName: 'James Wilson', skill: 'Discovery', currentScore: 68, targetScore: 80, impact: 'high' },
-      { repName: 'Rachel Kim', skill: 'Closing', currentScore: 68, targetScore: 78, impact: 'medium' },
-      { repName: 'David Park', skill: 'Rapport Building', currentScore: 78, targetScore: 85, impact: 'medium' },
-    ]
-  })
 
   if (loading) {
     return (

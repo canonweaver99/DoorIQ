@@ -15,7 +15,9 @@ type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
   avgScore: number
 }
 
-// Fake data for guest/demo purposes
+// NOTE: These fake data functions are ONLY for potential future demo/marketing pages.
+// They are NEVER used for authenticated users - real users always see their actual data from the database.
+// Fake data for guest/demo purposes (unused in production for authenticated users)
 const generateFakeLeaderboardData = (): LeaderboardUser[] => {
   const fakeUsers = [
     { name: 'Sarah Martinez', email: 'sarah.martinez@example.com', earnings: 12450.75, sessions: 47, avgScore: 92, previousRank: 2, avatar: 'https://i.pravatar.cc/150?img=1' },
@@ -234,11 +236,9 @@ export default function LeaderboardPage() {
     if (userTeamId) {
       usersQuery = usersQuery.eq('team_id', userTeamId)
     } else {
-      // If user has no team, show fake data for demo purposes
-      const fakePreviousData = generateFakePreviousLeaderboard()
-      setPreviousLeaderboard(fakePreviousData)
-      const fakeData = generateFakeLeaderboardData()
-      setLeaderboard(fakeData)
+      // Real user without team - show empty state (no fake data)
+      setPreviousLeaderboard([])
+      setLeaderboard([])
       setLoading(false)
       setRefreshing(false)
       return
@@ -246,13 +246,21 @@ export default function LeaderboardPage() {
 
     const { data: users, error } = await usersQuery
 
-    if (error || !users || users.length === 0) {
-      console.error('Error fetching leaderboard or no users found:', error)
-      // Show fake data for demo purposes when no real data
-      const fakePreviousData = generateFakePreviousLeaderboard()
-      setPreviousLeaderboard(fakePreviousData)
-      const fakeData = generateFakeLeaderboardData()
-      setLeaderboard(fakeData)
+    if (error) {
+      console.error('Error fetching leaderboard:', error)
+      // Database error - show empty state, don't show fake data
+      setPreviousLeaderboard([])
+      setLeaderboard([])
+      setLastUpdated(new Date())
+      setLoading(false)
+      setRefreshing(false)
+      return
+    }
+
+    if (!users || users.length === 0) {
+      // No users found - show empty state (real data, just empty)
+      setPreviousLeaderboard([])
+      setLeaderboard([])
       setLastUpdated(new Date())
       setLoading(false)
       setRefreshing(false)
