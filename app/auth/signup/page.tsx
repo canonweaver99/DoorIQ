@@ -4,27 +4,21 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SignUpComponent, Testimonial } from '@/components/ui/sign-up'
+import { testimonialsData } from '@/components/ui/testimonials-columns-1'
 
-const testimonials: Testimonial[] = [
-  {
-    avatarSrc: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    name: 'Cooper Jones',
-    handle: 'Sales Rep (HAWX) Gilbert AZ',
-    text: 'The AI agents sound so real. I love using this software.',
-  },
-  {
-    avatarSrc: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    name: 'Camden Wiser',
-    handle: 'Sales Rep (HAWX) Provo UT',
-    text: 'The AI sounds just like real people. Really impressed.',
-  },
-  {
-    avatarSrc: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
-    name: 'Bennett Black',
-    handle: 'Software dev Austin TX',
-    text: 'The UI looks really good. Clean and easy to use.',
-  },
+// Map landing page testimonials to component format, keeping old images
+const oldImages = [
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+  'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
 ]
+
+const testimonials: Testimonial[] = testimonialsData.slice(0, 3).map((t, index) => ({
+  avatarSrc: oldImages[index] || '',
+  name: t.name,
+  handle: t.role,
+  text: t.text,
+}))
 
 function SignUpForm() {
   const [error, setError] = useState<string | null>(null)
@@ -134,10 +128,10 @@ function SignUpForm() {
       }
       description="Create your account and start mastering door-to-door sales today"
       heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=2160&q=80"
-      testimonials={testimonials}
-      onSignUp={handleSignUp}
-      onGoogleSignUp={handleGoogleSignUp}
-      onSignIn={handleSignIn}
+        testimonials={testimonials}
+        onSignUp={handleSignUp}
+        onGoogleSignUp={handleGoogleSignUp}
+        onSignIn={handleSignIn}
       loading={loading}
       error={error}
     />

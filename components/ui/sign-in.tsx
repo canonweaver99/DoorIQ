@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { AnimatedBackground } from './animated-background';
 
 // --- HELPER COMPONENTS (ICONS) ---
 
@@ -45,13 +46,37 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial; delay: string }) => (
   <a 
     href="/testimonials"
-    className={`animate-testimonial ${delay} flex items-start gap-2 xl:gap-3 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 p-2.5 xl:p-3 2xl:p-4 w-52 xl:w-64 2xl:w-72 hover:bg-white/15 transition-all duration-300 hover:border-purple-500/40 hover:shadow-[0_8px_32px_rgba(168,85,247,0.3)] cursor-pointer`}
+    className={`animate-testimonial ${delay} group relative bg-black border-2 border-white/20 rounded-lg p-3.5 md:p-4 hover:border-white/30 transition-all duration-500 w-[200px] md:w-[220px] cursor-pointer`}
   >
-    <img src={testimonial.avatarSrc} className="h-8 w-8 xl:h-10 xl:w-10 2xl:h-12 2xl:w-12 object-cover rounded-lg ring-2 ring-white/20 flex-shrink-0" alt="avatar" />
-    <div className="text-xs xl:text-xs 2xl:text-sm leading-tight">
-      <p className="flex items-center gap-1 font-bold text-white xl:text-sm 2xl:text-base">{testimonial.name}</p>
-      <p className="text-slate-300 text-xs font-medium">{testimonial.handle}</p>
-      <p className="mt-0.5 xl:mt-1 text-white font-medium leading-snug xl:leading-snug 2xl:leading-relaxed">&ldquo;{testimonial.text}&rdquo;</p>
+    {/* Content */}
+    <div className="relative z-10">
+      {/* Testimonial text */}
+      <p className="text-white leading-relaxed text-xs md:text-sm mb-3 font-sans font-normal">
+        {testimonial.text}
+      </p>
+      
+      {/* Author info */}
+      <div className="flex items-center gap-2 pt-3 border-t border-white/20">
+        {testimonial.avatarSrc && (
+          <div className="relative flex-shrink-0">
+            <img
+              width={36}
+              height={36}
+              src={testimonial.avatarSrc}
+              alt={testimonial.name}
+              className="h-9 w-9 rounded-full object-cover border border-white/20"
+            />
+          </div>
+        )}
+        <div className="flex flex-col min-w-0 flex-1">
+          <div className="font-medium tracking-tight leading-tight text-white text-xs md:text-sm font-space">
+            {testimonial.name}
+          </div>
+          <div className="leading-tight text-white/80 text-xs font-sans mt-0.5">
+            Sales Rep
+          </div>
+        </div>
+      </div>
     </div>
   </a>
 );
@@ -73,15 +98,16 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="min-h-screen h-[100dvh] flex flex-col md:flex-row w-full overflow-x-hidden bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28]">
+    <div className="min-h-screen h-[100dvh] flex flex-col md:flex-row w-full overflow-x-hidden bg-black relative">
+      <AnimatedBackground />
       {/* Left column: sign-in form */}
-      <section className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 pt-4 sm:pt-6 md:pt-4 pb-4 sm:pb-6 md:pb-8 overflow-y-auto">
+      <section className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 pt-4 sm:pt-6 md:pt-4 pb-4 sm:pb-6 md:pb-8 overflow-y-auto relative z-10">
         <div className="w-full max-w-md px-2 sm:px-3 md:px-0">
           <div className="flex flex-col gap-3 sm:gap-4">
-            <h1 className="animate-element animate-delay-100 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight break-words">
+            <h1 className="animate-element animate-delay-100 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-space font-light tracking-tight leading-tight break-words text-white">
               {title}
             </h1>
-            <p className="animate-element animate-delay-200 text-slate-400 text-xs sm:text-sm leading-relaxed break-words hyphens-auto">{description}</p>
+            <p className="animate-element animate-delay-200 text-white/80 text-sm sm:text-base leading-relaxed break-words hyphens-auto font-sans">{description}</p>
 
             <form className="space-y-3 sm:space-y-3.5" onSubmit={onSignIn}>
               <div className="animate-element animate-delay-300">
@@ -147,27 +173,22 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-600 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
+                className="animate-element animate-delay-600 w-full rounded-md bg-white text-black py-2.5 sm:py-3 md:py-3.5 text-sm sm:text-base font-bold tracking-tight hover:bg-white/95 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 
-            <div className="animate-element animate-delay-700 relative flex items-center justify-center mt-4 sm:mt-0">
-              <span className="w-full border-t border-white/10"></span>
-              <span className="px-3 sm:px-4 text-xs sm:text-sm text-slate-400 bg-transparent absolute">Or continue with</span>
-            </div>
-
             <button
               onClick={onGoogleSignIn}
               disabled={loading}
-              className="animate-element animate-delay-800 w-full flex items-center justify-center gap-2 sm:gap-3 border border-white/10 rounded-xl py-2.5 sm:py-3 text-xs sm:text-sm hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium touch-manipulation"
+              className="animate-element animate-delay-700 w-full flex items-center justify-center gap-2 sm:gap-3 border border-white/10 rounded-xl py-2.5 sm:py-3 text-xs sm:text-sm hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium touch-manipulation"
             >
               <GoogleIcon />
               <span className="whitespace-nowrap">Continue with Google</span>
             </button>
 
-            <p className="animate-element animate-delay-900 text-center text-xs sm:text-sm text-slate-400 px-2 sm:px-0">
+            <p className="animate-element animate-delay-800 text-center text-xs sm:text-sm text-slate-400 px-2 sm:px-0">
               New to DoorIQ?{' '}
               <button
                 type="button"
@@ -183,7 +204,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
 
       {/* Right column: hero image + testimonials */}
       {heroImageSrc && (
-        <section className="hidden md:block flex-1 relative -ml-12 lg:-ml-24 overflow-hidden">
+        <section className="hidden md:block flex-1 relative -ml-12 lg:-ml-24 overflow-hidden z-10">
           <div
             className="animate-slide-right animate-delay-300 absolute inset-0 rounded-none bg-cover bg-center shadow-2xl"
             style={{
@@ -192,7 +213,7 @@ export const SignInComponent: React.FC<SignInPageProps> = ({
             }}
           >
             {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#07030f] via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
           </div>
           {testimonials.length > 0 && (
             <div className="absolute bottom-4 md:bottom-6 lg:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 xl:gap-2.5 2xl:gap-3 px-2 xl:px-4 w-full justify-center z-10 max-w-[95vw] xl:max-w-full overflow-x-auto">

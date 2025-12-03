@@ -5,33 +5,22 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
 import PasswordResetModal from '@/components/auth/PasswordResetModal'
+import { testimonialsData } from '@/components/ui/testimonials-columns-1'
 
-const testimonials: Testimonial[] = [
-  {
-    avatarSrc: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    name: 'Cooper Jones',
-    handle: 'Sales Rep (HAWX) Gilbert AZ',
-    text: 'The AI agents sound so real. I love using this software.',
-  },
-  {
-    avatarSrc: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    name: 'Camden Wiser',
-    handle: 'Sales Rep (HAWX) Provo UT',
-    text: 'The AI sounds just like real people. Really impressed.',
-  },
-  {
-    avatarSrc: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
-    name: 'Bennett Black',
-    handle: 'Software dev Austin TX',
-    text: 'The UI looks really good. Clean and easy to use.',
-  },
-  {
-    avatarSrc: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-    name: 'Xander Bushman',
-    handle: 'Gilbert, AZ',
-    text: 'This is amazing. Sometimes I forget I\'m even practicing.',
-  },
+// Map landing page testimonials to component format, keeping old images
+const oldImages = [
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+  'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
 ]
+
+const testimonials: Testimonial[] = testimonialsData.slice(0, 4).map((t, index) => ({
+  avatarSrc: oldImages[index] || '',
+  name: t.name,
+  handle: t.role,
+  text: t.text,
+}))
 
 function LoginForm() {
   const [error, setError] = useState<string | null>(null)

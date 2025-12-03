@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, User } from 'lucide-react';
+import { AnimatedBackground } from './animated-background';
 
 // --- HELPER COMPONENTS (ICONS) ---
 
@@ -44,13 +45,37 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial; delay: string }) => (
   <a 
     href="/testimonials"
-    className={`animate-testimonial ${delay} flex items-start gap-2 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 p-2.5 w-56 hover:bg-white/15 transition-all duration-300 hover:border-purple-500/40 hover:shadow-[0_8px_32px_rgba(168,85,247,0.3)] cursor-pointer block`}
+    className={`animate-testimonial ${delay} group relative bg-black border-2 border-white/20 rounded-lg p-3.5 md:p-4 hover:border-white/30 transition-all duration-500 w-[200px] md:w-[220px] cursor-pointer`}
   >
-    <img src={testimonial.avatarSrc} className="h-9 w-9 object-cover rounded-lg ring-2 ring-white/20" alt="avatar" />
-    <div className="text-xs leading-tight">
-      <p className="flex items-center gap-1 font-bold text-white">{testimonial.name}</p>
-      <p className="text-slate-300 text-xs font-medium">{testimonial.handle}</p>
-      <p className="mt-0.5 text-white font-medium leading-snug">&ldquo;{testimonial.text}&rdquo;</p>
+    {/* Content */}
+    <div className="relative z-10">
+      {/* Testimonial text */}
+      <p className="text-white leading-relaxed text-xs md:text-sm mb-3 font-sans font-normal">
+        {testimonial.text}
+      </p>
+      
+      {/* Author info */}
+      <div className="flex items-center gap-2 pt-3 border-t border-white/20">
+        {testimonial.avatarSrc && (
+          <div className="relative flex-shrink-0">
+            <img
+              width={36}
+              height={36}
+              src={testimonial.avatarSrc}
+              alt={testimonial.name}
+              className="h-9 w-9 rounded-full object-cover border border-white/20"
+            />
+          </div>
+        )}
+        <div className="flex flex-col min-w-0 flex-1">
+          <div className="font-medium tracking-tight leading-tight text-white text-xs md:text-sm font-space">
+            {testimonial.name}
+          </div>
+          <div className="leading-tight text-white/80 text-xs font-sans mt-0.5">
+            Sales Rep
+          </div>
+        </div>
+      </div>
     </div>
   </a>
 );
@@ -71,15 +96,16 @@ export const SignUpComponent: React.FC<SignUpPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="h-[100dvh] flex flex-col md:flex-row w-[100dvw] bg-gradient-to-br from-[#07030f] via-[#0e0b1f] to-[#150c28]">
+    <div className="h-[100dvh] flex flex-col md:flex-row w-[100dvw] bg-black relative">
+      <AnimatedBackground />
       {/* Left column: sign-up form */}
-      <section className="flex-1 flex items-center justify-center p-8 pt-4">
+      <section className="flex-1 flex items-center justify-center p-8 pt-4 relative z-10">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-4">
-            <h1 className="animate-element animate-delay-100 text-3xl md:text-4xl font-semibold leading-tight">
+            <h1 className="animate-element animate-delay-100 text-3xl md:text-4xl lg:text-5xl font-space font-light tracking-tight leading-tight text-white">
               {title}
             </h1>
-            <p className="animate-element animate-delay-200 text-slate-400 text-sm leading-snug">{description}</p>
+            <p className="animate-element animate-delay-200 text-white/80 text-base leading-relaxed font-sans">{description}</p>
 
             <form className="space-y-3.5" onSubmit={onSignUp}>
               <div className="animate-element animate-delay-300">
@@ -148,27 +174,22 @@ export const SignUpComponent: React.FC<SignUpPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-600 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-sm font-semibold text-white hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-600/50 hover:scale-[1.02] active:scale-[0.98]"
+                className="animate-element animate-delay-600 w-full rounded-md bg-white text-black py-3.5 text-base font-bold tracking-tight hover:bg-white/95 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
             </form>
 
-            <div className="animate-element animate-delay-700 relative flex items-center justify-center">
-              <span className="w-full border-t border-white/10"></span>
-              <span className="px-4 text-sm text-slate-400 bg-transparent absolute">Or continue with</span>
-            </div>
-
             <button
               onClick={onGoogleSignUp}
               disabled={loading}
-              className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-white/10 rounded-xl py-3 text-sm hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
+              className="animate-element animate-delay-700 w-full flex items-center justify-center gap-3 border border-white/10 rounded-xl py-3 text-sm hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
             >
               <GoogleIcon />
               Continue with Google
             </button>
 
-            <p className="animate-element animate-delay-900 text-center text-sm text-slate-400">
+            <p className="animate-element animate-delay-800 text-center text-sm text-slate-400">
               Already have an account?{' '}
               <button
                 type="button"
@@ -184,7 +205,7 @@ export const SignUpComponent: React.FC<SignUpPageProps> = ({
 
       {/* Right column: hero image + testimonials */}
       {heroImageSrc && (
-        <section className="hidden md:block flex-1 relative -ml-24">
+        <section className="hidden md:block flex-1 relative -ml-24 z-10">
           <div
             className="animate-slide-right animate-delay-300 absolute inset-0 rounded-none bg-cover bg-center shadow-2xl"
             style={{
@@ -193,10 +214,10 @@ export const SignUpComponent: React.FC<SignUpPageProps> = ({
             }}
           >
             {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#07030f] via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
           </div>
           {testimonials.length > 0 && (
-            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 px-2 w-full justify-center z-10">
+            <div className="absolute bottom-4 md:bottom-6 lg:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 xl:gap-2.5 2xl:gap-3 px-2 xl:px-4 w-full justify-center z-10 max-w-[95vw] xl:max-w-full overflow-x-auto">
               <TestimonialCard testimonial={testimonials[0]} delay="animate-delay-1000" />
               {testimonials[1] && <TestimonialCard testimonial={testimonials[1]} delay="animate-delay-1200" />}
               {testimonials[2] && (
