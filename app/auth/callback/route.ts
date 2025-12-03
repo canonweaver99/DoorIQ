@@ -93,7 +93,7 @@ export async function GET(request: Request) {
           return NextResponse.redirect(new URL('/auth/login?error=Unable to sign you in. Please try signing in manually.', requestUrl.origin))
         }
         
-        const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
+        const redirectPath = requestUrl.searchParams.get('next') || '/home'
         return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
       }
     } catch (error: any) {
@@ -194,7 +194,7 @@ export async function GET(request: Request) {
 
       // Ensure session is properly set before redirecting
       // verifyOtp should have set cookies via setAll callback, but we need to verify
-      const redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
+      const redirectPath = requestUrl.searchParams.get('next') || '/home'
       console.log('🔄 Redirecting verified user to:', redirectPath)
       
       // Create fresh supabase client to verify session was set in cookies
@@ -325,7 +325,7 @@ export async function GET(request: Request) {
       }
 
       // Default redirect destination after successful authentication
-      let redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
+      let redirectPath = requestUrl.searchParams.get('next') || '/home'
       
       // Preserve checkout intent in redirect
       if (checkoutIntent && redirectPath) {
@@ -338,7 +338,7 @@ export async function GET(request: Request) {
     }
   }
   
-  // Fallback: redirect to dashboard if no valid callback parameters
-  console.log('⚠️ No valid callback parameters, redirecting to dashboard')
-  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+  // Fallback: redirect to home if no valid callback parameters
+  console.log('⚠️ No valid callback parameters, redirecting to home')
+  return NextResponse.redirect(new URL('/home', requestUrl.origin))
 }

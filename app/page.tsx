@@ -15,8 +15,8 @@ export default function Home() {
       // First check if user is already authenticated
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // User is authenticated, redirect to dashboard (homepage)
-        router.replace('/dashboard')
+        // User is authenticated, redirect to home
+        router.replace('/home')
         return
       }
       
@@ -89,7 +89,7 @@ export default function Home() {
           
           // Clear the hash from URL and redirect to home
           window.history.replaceState(null, '', window.location.pathname)
-          router.push('/dashboard')
+          router.push('/home')
           router.refresh()
         } else {
           router.replace('/landing')
