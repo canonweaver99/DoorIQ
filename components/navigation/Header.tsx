@@ -665,19 +665,20 @@ function HeaderContent() {
           </header>
 
           {/* Mobile Public Header */}
-          <div className="fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden">
+          <div className="fixed top-3 right-3 sm:top-4 sm:right-4 z-[9999] md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all touch-target"
+              className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full border-4 border-purple-400 bg-purple-600 shadow-2xl shadow-purple-500/50 text-white hover:bg-purple-500 hover:scale-105 transition-all touch-target"
+              aria-label="Open menu"
             >
-              {isMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
+              {isMenuOpen ? <X className="w-7 h-7 sm:w-8 sm:h-8 font-bold" /> : <Menu className="w-7 h-7 sm:w-8 sm:h-8 font-bold" />}
             </button>
           </div>
 
           {/* Mobile Public Navigation */}
           <AnimatePresence>
             {isMenuOpen && (
-              <div className="fixed inset-0 z-40 md:hidden">
+              <div className="fixed inset-0 z-[99] md:hidden">
                 {/* Backdrop */}
                 <motion.div 
                   className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"

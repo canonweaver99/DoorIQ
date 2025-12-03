@@ -25,16 +25,16 @@ function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; s
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1 }}
-            className={`bg-white/[0.02] border-2 border-white/5 rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] ${stat.bgColor} ${stat.borderColor}`}
+            className={`bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 sm:p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] ${stat.bgColor} ${stat.borderColor}`}
           >
-            <div className="flex items-center gap-2 sm:gap-2.5 mb-2 sm:mb-2.5">
-              <div className={`${stat.color} p-1 sm:p-1.5 rounded-lg bg-white/[0.05] flex-shrink-0`}>
-                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <div className="flex items-center gap-2.5 sm:gap-2.5 mb-3 sm:mb-2.5">
+              <div className={`${stat.color} p-1.5 sm:p-1.5 rounded-lg bg-white/[0.05] flex-shrink-0`}>
+                <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
               </div>
-              <span className="font-space text-white/60 text-xs sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider truncate">{stat.label}</span>
+              <span className="font-space text-white/60 text-xs sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider leading-tight">{stat.label}</span>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className={`font-space text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight ${stat.color}`}>{stat.value}</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className={`font-space text-white text-3xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-none ${stat.color}`}>{stat.value}</span>
             </div>
           </motion.div>
         )
@@ -137,7 +137,14 @@ export default function HomePage() {
 
   const getGreeting = () => {
     if (!userName || userName.trim() === '') {
-      return '☀️ Rise and Grind'
+      const hour = currentTime.getHours()
+      if (hour < 12) {
+        return '☀️ Rise and Grind'
+      } else if (hour < 17) {
+        return '🔥 Let\'s Get After It'
+      } else {
+        return '🌙 Let\'s Finish Strong'
+      }
     }
     return getTimeOfDayGreeting().text
   }
@@ -194,7 +201,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative">
-      <div className="relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6 lg:px-8">
+      <div className="relative z-0 pt-24 sm:pt-24 md:pt-28 lg:pt-32 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Header Section - Matching Dashboard Style */}
           <motion.div
@@ -203,7 +210,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="mb-6 sm:mb-8"
           >
-            <h1 className="font-space text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl text-white font-bold tracking-tight mb-2 sm:mb-3 md:mb-4 leading-tight">
+            <h1 className="font-space text-3xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl text-white font-bold tracking-tight mb-2 sm:mb-3 md:mb-4 leading-tight">
               {greeting},{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                 {getDisplayName()}

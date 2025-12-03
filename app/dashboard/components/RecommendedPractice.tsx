@@ -280,18 +280,18 @@ export default function RecommendedPractice() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
-      className="relative bg-white/[0.02] border-2 border-white/5 hover:border-white/30 hover:bg-white/[0.03] rounded-lg p-6 md:p-8 transition-all shadow-lg shadow-white/10 overflow-hidden"
+      className="relative bg-white/[0.02] border-2 border-white/5 hover:border-white/30 hover:bg-white/[0.03] rounded-lg p-4 sm:p-6 md:p-8 transition-all shadow-lg shadow-white/10 overflow-hidden"
     >
-      <div className="flex items-center gap-2 mb-4">
-        <Target className="w-5 h-5 text-purple-400" />
-        <h3 className="text-base font-semibold text-purple-300 uppercase tracking-wide">
+      <div className="flex items-center gap-2 mb-4 sm:mb-4">
+        <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+        <h3 className="text-sm sm:text-base font-semibold text-purple-300 uppercase tracking-wide">
           YOUR MISSION TODAY
         </h3>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6 mb-6">
+      <div className="flex flex-col md:flex-row gap-4 sm:gap-6 mb-4 sm:mb-6">
         {/* Animated Persona Portrait with Colored Circles */}
-        <div className="relative h-32 w-32 md:h-40 md:w-40 mx-auto md:mx-0 flex-shrink-0">
+        <div className="relative h-28 w-28 sm:h-32 sm:w-32 md:h-40 md:w-40 mx-auto md:mx-0 flex-shrink-0">
           {/* Concentric circles */}
           {[0, 1, 2].map((i) => (
             <motion.div
@@ -367,64 +367,64 @@ export default function RecommendedPractice() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col max-w-[60%]">
-          <div className="mb-4 flex-1 min-h-[60%] flex flex-col justify-end">
-            <p className="text-white/90 text-base md:text-lg lg:text-xl font-medium mb-3 italic leading-relaxed">
+        <div className="flex-1 flex flex-col w-full md:max-w-[60%]">
+          <div className="mb-3 sm:mb-4 flex-1 min-h-[60%] flex flex-col justify-end">
+            <p className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl font-medium mb-2 sm:mb-3 italic leading-relaxed">
               "{homeownerQuote}"
             </p>
-            <p className="text-white/70 text-base md:text-lg font-medium">
+            <p className="text-white/70 text-sm sm:text-base md:text-lg font-medium">
               — {personaName}
             </p>
           </div>
 
           {/* Tip */}
-          <div className="flex items-start gap-2 bg-white/[0.05] rounded-lg p-3 md:p-4 border border-white/10 mb-4">
-            <Lightbulb className="w-5 h-5 md:w-6 md:h-6 text-purple-400 flex-shrink-0 mt-0.5" />
-            <p className="text-white/80 text-base md:text-lg">
+          <div className="flex items-start gap-2 bg-white/[0.05] rounded-lg p-2.5 sm:p-3 md:p-4 border border-white/10 mb-3 sm:mb-4">
+            <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-purple-400 flex-shrink-0 mt-0.5" />
+            <p className="text-white/80 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
               <span className="font-medium">Tip:</span> {tip}
             </p>
           </div>
         </div>
 
         {/* Difficulty and Time - Moved to right side */}
-        <div className="flex flex-col items-end justify-start gap-4 md:ml-auto">
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex gap-1.5">
+        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-3 sm:gap-4 md:ml-auto">
+          <div className="flex flex-col items-start md:items-end gap-2">
+            <div className="flex gap-1 sm:gap-1.5">
               {difficultyStars.map((starType, i) => (
-                <div key={i} className="relative w-6 h-6 md:w-7 md:h-7 flex-shrink-0">
+                <div key={i} className="relative w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 flex-shrink-0">
                   {starType === 'filled' ? (
-                    <Star className="w-6 h-6 md:w-7 md:h-7 text-purple-400 fill-purple-400" />
+                    <Star className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-purple-400 fill-purple-400" />
                   ) : starType === 'half' ? (
                     <>
-                      <Star className="w-6 h-6 md:w-7 md:h-7 text-white/20 absolute inset-0" />
+                      <Star className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white/20 absolute inset-0" />
                       <div className="absolute inset-0 overflow-hidden w-1/2">
-                        <Star className="w-6 h-6 md:w-7 md:h-7 text-purple-400 fill-purple-400" />
+                        <Star className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-purple-400 fill-purple-400" />
                       </div>
                     </>
                   ) : (
-                    <Star className="w-6 h-6 md:w-7 md:h-7 text-white/20" />
+                    <Star className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white/20" />
                   )}
                 </div>
               ))}
             </div>
-            <span className="text-white/80 text-base md:text-lg font-medium">
+            <span className="text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-medium">
               {personaMeta?.bubble?.difficulty || 'Moderate'}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-white/70 text-base md:text-lg">
-            <Clock className="w-5 h-5 md:w-6 md:h-6" />
+          <div className="flex items-center gap-1.5 sm:gap-2 text-white/70 text-xs sm:text-sm md:text-base lg:text-lg">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
             <span>{estimatedTime}</span>
           </div>
         </div>
       </div>
 
       {/* CTAs */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleStartPractice}
-          className="relative flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 font-bold rounded-lg transition-all overflow-hidden group"
+          className="relative flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-black hover:bg-white/90 font-bold rounded-lg transition-all overflow-hidden group text-sm sm:text-base"
         >
           <motion.div
             animate={{
