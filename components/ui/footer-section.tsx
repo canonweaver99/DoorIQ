@@ -24,7 +24,8 @@ const footerLinks: FooterSectionType[] = [
     label: 'Product',
     links: [
       { title: 'Features', href: '/features' },
-      { title: 'Pricing', href: '/pricing' },
+      // Pricing page hidden from navigation but accessible via direct URL
+      // { title: 'Pricing', href: '/pricing' },
       { title: 'Testimonials', href: '/testimonials' },
       // Archived: { title: 'Documentation', href: '/documentation' },
     ],
