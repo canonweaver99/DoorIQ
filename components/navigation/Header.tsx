@@ -476,6 +476,13 @@ function HeaderContent() {
     setIsSidebarOpen(false)
   }, [pathname])
 
+  // Close mobile menu when navigating to bulk-signup
+  useEffect(() => {
+    if (pathname === '/bulk-signup') {
+      setIsMenuOpen(false)
+    }
+  }, [pathname])
+
   useEffect(() => {
     if (typeof document === 'undefined') return
 
@@ -668,16 +675,27 @@ function HeaderContent() {
           </div>
 
           {/* Mobile Public Navigation */}
-          {isMenuOpen && (
-            <div className="fixed inset-0 z-40 md:hidden">
-              {/* Backdrop */}
-              <div 
-                className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"
-                onClick={() => setIsMenuOpen(false)}
-              />
-              {/* Mobile Navigation Panel */}
-              <div className="absolute top-0 right-0 bottom-0 w-full max-w-sm bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-l border-border/20 dark:border-white/10 overflow-y-auto">
-                <div className="p-6 pt-20 space-y-2">
+          <AnimatePresence>
+            {isMenuOpen && (
+              <div className="fixed inset-0 z-40 md:hidden">
+                {/* Backdrop */}
+                <motion.div 
+                  className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"
+                  onClick={() => setIsMenuOpen(false)}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+                {/* Mobile Navigation Panel - Dropdown from top */}
+                <motion.div 
+                  className="absolute top-0 left-0 right-0 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-b border-border/20 dark:border-white/10 overflow-y-auto max-h-[85vh]"
+                  initial={{ y: -100, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -100, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                >
+                  <div className="p-6 pt-20 space-y-2">
                   {publicNavigation.map((item) => {
                     const Icon = item.icon
                     const active = isActive(item.href)
@@ -711,9 +729,10 @@ function HeaderContent() {
                     </Link>
                   </div>
                 </div>
+                </motion.div>
               </div>
-            </div>
-          )}
+            )}
+          </AnimatePresence>
 
           {/* Public Sidebar - Desktop */}
           {portalReady &&
@@ -981,17 +1000,32 @@ function HeaderContent() {
       )}
 
       {/* Mobile Navigation - Only show for signed-in users */}
-      {isSignedIn && isMenuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"
-            onClick={() => setIsMenuOpen(false)}
-          />
-          {/* Mobile Navigation Panel */}
-          <div className="absolute top-0 right-0 bottom-0 w-full max-w-sm bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-l border-border/20 dark:border-white/10 overflow-y-auto">
-            <div className="p-6 pt-20 space-y-2">
-            {navigation.filter(item => !(item as any).desktopOnly).map((item) => {
+      <AnimatePresence>
+        {isSignedIn && isMenuOpen && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            {/* Backdrop */}
+            <motion.div 
+              className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"
+              onClick={() => setIsMenuOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            />
+            {/* Mobile Navigation Panel - Dropdown from top */}
+            <motion.div 
+              className="absolute top-0 left-0 right-0 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-b border-border/20 dark:border-white/10 overflow-y-auto max-h-[85vh]"
+              initial={{ y: -100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -100, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+              <div className="p-6 pt-20 space-y-2">
+            {navigation.filter(item => {
+              // Exclude Home, Practice, and Sessions from dropdown (they're visible in MiniNavMenu)
+              const visibleItems = ['Home', 'Practice', 'Sessions']
+              return !(item as any).desktopOnly && !visibleItems.includes(item.name)
+            }).map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
               return (
@@ -1067,9 +1101,10 @@ function HeaderContent() {
               )}
             </div>
             </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
       {portalReady &&
         createPortal(
           <AnimatePresence>

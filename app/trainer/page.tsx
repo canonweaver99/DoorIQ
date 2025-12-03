@@ -1759,7 +1759,7 @@ function TrainerPageContent() {
         </div>
 
         {/* Main Content Area - Mobile: Vertical Stack, Desktop: 2x2 Grid Layout */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[1.15fr_0.85fr] overflow-hidden min-h-0 gap-2 sm:gap-3 p-2 sm:p-3 lg:p-8">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[1.15fr_0.85fr] overflow-hidden min-h-0 gap-4 sm:gap-5 p-2 sm:p-3 lg:p-8">
           
           {/* TOP LEFT QUADRANT - Agent Video */}
           <div className="w-full h-full flex flex-col overflow-hidden">
@@ -2042,7 +2042,7 @@ function TrainerPageContent() {
           </div>
 
           {/* BOTTOM LEFT QUADRANT - Transcript */}
-          <div className="w-full h-full flex flex-col overflow-hidden">
+          <div className="hidden md:flex w-full h-full flex-col overflow-hidden">
             <LiveTranscript 
               transcript={transcript} 
               agentName={selectedAgent?.name}

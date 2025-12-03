@@ -417,7 +417,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-1.5 sm:gap-2">
             <div className="flex items-center gap-1 sm:gap-1.5">
-              <div className="text-xs sm:text-sm lg:text-base font-semibold text-white font-space leading-tight">
+              <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">
                 Sale Sentiment
               </div>
               <button
@@ -965,7 +965,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
   const talkTimeColors = getTalkTimeColor()
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-2.5 h-full">
+    <div className="flex flex-col gap-4 sm:gap-5 h-full">
       {/* Talk Time Card - With Dynamic Bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -983,7 +983,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-              <div className="text-xs sm:text-sm lg:text-base font-semibold text-white font-space leading-tight">Talk Time Ratio</div>
+              <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">Talk Time Ratio</div>
               <div className="text-right flex-shrink-0">
                 <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white font-space leading-tight">{talkTimeRatio}%</div>
                 {talkTimeStatus.badge && (

@@ -3,18 +3,21 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Home, Target, DollarSign } from 'lucide-react'
+import { Home, Target, DollarSign, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
 export function MiniNavMenu() {
   const pathname = usePathname()
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
+  const [isSignedIn, setIsSignedIn] = useState(false)
 
   useEffect(() => {
-    const checkSubscription = async () => {
+    const checkAuthAndSubscription = async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
+      
+      setIsSignedIn(!!user)
       
       if (!user) {
         setHasActiveSubscription(false)
@@ -44,12 +47,13 @@ export function MiniNavMenu() {
       }
     }
 
-    checkSubscription()
+    checkAuthAndSubscription()
   }, [])
-
+  
   const menuItems = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'Practice', href: '/trainer/select-homeowner', icon: Target },
+    ...(isSignedIn ? [{ label: 'Sessions', href: '/sessions', icon: FileText }] : []),
     // Pricing page temporarily archived
     // ...(!hasActiveSubscription ? [{ label: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
   ]

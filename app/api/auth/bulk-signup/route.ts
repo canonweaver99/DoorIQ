@@ -183,34 +183,51 @@ export async function POST(request: NextRequest) {
         .single()
       
       if (teamData && !teamData.owner_id) {
-        await serviceSupabase
-          .from('teams')
-          .update({ owner_id: userId })
-          .eq('id', teamId)
-          .catch((err) => {
-            console.error('Warning: Failed to set team owner:', err)
+        try {
+          const { error: updateError } = await serviceSupabase
+            .from('teams')
+            .update({ owner_id: userId })
+            .eq('id', teamId)
+          
+          if (updateError) {
+            console.error('Warning: Failed to set team owner:', updateError)
             // Don't fail the request
-          })
+          }
+        } catch (err) {
+          console.error('Warning: Failed to set team owner:', err)
+          // Don't fail the request
+        }
       }
     }
 
     // Update organization seats_used (if trigger doesn't handle it)
     // The trigger should handle this automatically, but we'll update just in case
-    await serviceSupabase.rpc('increment_organization_seats', { org_id: organizationId }).catch(async () => {
-      // If RPC doesn't exist, manually update
-      const { data: orgData } = await serviceSupabase
-        .from('organizations')
-        .select('seats_used')
-        .eq('id', organizationId)
-        .single()
+    try {
+      const { error: rpcError } = await serviceSupabase.rpc('increment_organization_seats', { org_id: organizationId })
       
-      if (orgData) {
-        await serviceSupabase
+      if (rpcError) {
+        // If RPC doesn't exist, manually update
+        const { data: orgData } = await serviceSupabase
           .from('organizations')
-          .update({ seats_used: (orgData.seats_used || 0) + 1 })
+          .select('seats_used')
           .eq('id', organizationId)
+          .single()
+        
+        if (orgData) {
+          const { error: updateError } = await serviceSupabase
+            .from('organizations')
+            .update({ seats_used: (orgData.seats_used || 0) + 1 })
+            .eq('id', organizationId)
+          
+          if (updateError) {
+            console.error('Warning: Failed to update organization seats:', updateError)
+          }
+        }
       }
-    })
+    } catch (err) {
+      console.error('Warning: Failed to update organization seats:', err)
+      // Don't fail the request
+    }
 
     // No session limits - unlimited practice for all users
 
