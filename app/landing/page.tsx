@@ -346,7 +346,7 @@ function HeroSection() {
               transition={{ delay: 0.5, duration: 0.6 }}
               className="font-sans text-xl md:text-2xl lg:text-3xl text-white/80 max-w-4xl text-center leading-relaxed font-light"
             >
-              AI-powered roleplay training for D2D sales teams. Practice with hyper-realistic homeowners until you&apos;re unstoppable.
+              Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
             </motion.p>
 
             {/* CTA Button */}
@@ -433,21 +433,21 @@ function ProblemSection() {
       stat: "40%",
       title: "of New Reps Quit in First 30 Days",
       description:
-        "Lack of confidence from poor preparation drives attrition",
+        "Poor preparation kills confidence.",
     },
     {
       icon: <DollarSign className="w-6 h-6" />,
       stat: "$75K",
       title: "Revenue Gap Between Average & Top Reps",
       description:
-        "Top performers close 2-3x more deals. Most reps never reach their potential without proper training.",
+        "Top performers close 2-3x more deals.",
     },
     {
       icon: <TrendingDown className="w-6 h-6" />,
       stat: "60%",
       title: "of Deals Lost Due to Poor Objection Handling",
       description:
-        "Reps miss opportunities because they're not prepared for common objections at the door.",
+        "Unprepared reps miss opportunities.",
     },
   ];
 
@@ -481,7 +481,6 @@ function ProblemSection() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Leaking Money</span>
           </h2>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
-            Every day without proper training costs you deals, talent, and growth.
             Here&apos;s what you&apos;re really paying for:
           </p>
         </motion.div>
@@ -489,47 +488,34 @@ function ProblemSection() {
         {/* Problem Cards */}
         <div className="grid md:grid-cols-3 gap-4 md:gap-6">
           {problems.map((problem, index) => {
-            const variants = {
-              hidden: { 
-                opacity: 0, 
-                y: 30,
-              },
-              visible: { 
-                opacity: 1, 
-                y: 0,
-                transition: { delay: index * 0.2, duration: 0.5, ease: "easeOut" }
-              }
-            };
-            
             return (
-              <motion.div
+              <div
                 key={problem.title}
-                variants={variants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025]"
+                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
               >
+                {/* Subtle purple glow at bottom for depth */}
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
                 {/* Icon */}
-                <div className="w-12 h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white mb-6 transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
+                <div className="w-12 h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white mb-6 transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20 relative z-10">
                   {problem.icon}
                 </div>
 
                 {/* Stat */}
-                <div className="font-space text-5xl md:text-6xl text-white font-light mb-3 tracking-tight">
+                <div className="font-space text-5xl md:text-6xl text-white font-light mb-3 tracking-tight relative z-10">
                   {problem.stat}
                 </div>
 
                 {/* Title */}
-                <h3 className="font-space font-medium text-xl md:text-2xl text-white/90 mb-3 tracking-tight">
+                <h3 className="font-space font-medium text-xl md:text-2xl text-white/90 mb-3 tracking-tight relative z-10">
                   {problem.title}
                 </h3>
 
                 {/* Description */}
-                <p className="font-sans text-white/80 leading-relaxed text-base md:text-lg font-light">
+                <p className="font-sans text-white/80 leading-relaxed text-base md:text-lg font-light relative z-10">
                   {problem.description}
                 </p>
-              </motion.div>
+              </div>
             );
           })}
         </div>
@@ -544,8 +530,10 @@ function SolutionSection() {
     {
       title: "01",
       content: (
-        <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
-          <div className="flex items-center gap-6 mb-6">
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+          {/* Subtle purple glow at bottom for depth */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="flex items-center gap-6 mb-6 relative z-10">
             <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
               <Users className="w-8 h-8 text-white" />
             </div>
@@ -553,10 +541,8 @@ function SolutionSection() {
               Connect Your Team
             </h4>
           </div>
-          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light">
-            Onboard your entire sales team in under 10 minutes. No complicated
-            setup, no technical headaches. Just send an invite link and
-            you&apos;re ready to go.
+          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light relative z-10">
+            Onboard your entire team in under 10 minutes.
           </p>
         </div>
       ),
@@ -564,19 +550,19 @@ function SolutionSection() {
     {
       title: "02",
       content: (
-        <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-              <Target className="w-5 h-5 text-white" />
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+          {/* Subtle purple glow at bottom for depth */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="flex items-center gap-6 mb-6 relative z-10">
+            <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+              <Target className="w-8 h-8 text-white" />
             </div>
             <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
               Practice with AI
             </h4>
           </div>
-          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light">
-            Your reps practice with hyper-realistic AI homeowners that throw
-            real objections. From friendly to hostile, they&apos;ll be ready for
-            anything at the door.
+          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light relative z-10">
+            Unlimited practice sessions with hyper-realistic AI homeowners.
           </p>
         </div>
       ),
@@ -584,8 +570,10 @@ function SolutionSection() {
     {
       title: "03",
       content: (
-        <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
-          <div className="flex items-center gap-6 mb-6">
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+          {/* Subtle purple glow at bottom for depth */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="flex items-center gap-6 mb-6 relative z-10">
             <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
               <Zap className="w-8 h-8 text-white" />
             </div>
@@ -593,10 +581,8 @@ function SolutionSection() {
               Get Real-Time Feedback
             </h4>
           </div>
-          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light">
-            Instant AI coaching on tone, pacing, objection handling, and
-            persuasion. Your reps know exactly what to improve after every
-            session.
+          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light relative z-10">
+            Instant AI coaching after every session.
           </p>
         </div>
       ),
@@ -604,8 +590,10 @@ function SolutionSection() {
     {
       title: "04",
       content: (
-        <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.03] transition-colors">
-          <div className="flex items-center gap-6 mb-6">
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+          {/* Subtle purple glow at bottom for depth */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="flex items-center gap-6 mb-6 relative z-10">
             <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
               <BarChart3 className="w-8 h-8 text-white" />
             </div>
@@ -613,10 +601,8 @@ function SolutionSection() {
               Track & Improve
             </h4>
           </div>
-          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light">
-            Watch your team&apos;s performance metrics climb. Detailed analytics
-            show exactly who&apos;s improving, who needs help, and where to focus
-            your coaching.
+          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light relative z-10">
+            Watch your team&apos;s performance metrics climb.
           </p>
         </div>
       ),
@@ -668,7 +654,7 @@ function SolutionSection() {
             How DoorIQ Works
           </h2>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
-            Four simple steps to transform your sales team into a closing machine.
+            Transform your sales team into a closing machine.
           </p>
         </motion.div>
 
@@ -705,7 +691,7 @@ function FeaturesSection() {
             </h2>
           </div>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
-            DoorIQ gives your team the tools to practice, improve, and dominate.
+            Everything you need to practice, improve, and dominate.
           </p>
         </motion.div>
 
@@ -911,7 +897,7 @@ function MeetTrainerSection() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Hyper-Realistic AI</span>
           </h2>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
-            Your reps train with lifelike AI homeowners that adapt to every response. From friendly to hostile, they&apos;ll be ready for anything.
+            Lifelike AI homeowners that adapt to every response.
           </p>
         </motion.div>
       </div>
@@ -1151,8 +1137,7 @@ function CTASection() {
 
           {/* Description */}
           <p className="font-sans text-white/80 mt-6 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-light">
-            Join 500+ companies using DoorIQ to train their reps, boost close
-            rates, and dominate their markets.
+            Join 500+ companies training reps to dominate their markets.
           </p>
 
           {/* CTA Button */}

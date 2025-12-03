@@ -21,6 +21,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
   const [height, setHeight] = useState(0);
   const [lineEndHeight, setLineEndHeight] = useState(0);
   const [cardHeights, setCardHeights] = useState<number[]>([]);
+  const hapticTriggeredRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (ref.current) {
@@ -122,7 +123,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
     // Use 90% to ensure it doesn't go past the bottom
     const maxTranslate = cardHeight * 0.9;
     
-    return useTransform(
+    const transform = useTransform(
       scrollYProgress,
       [segmentStart, segmentEnd],
       [0, maxTranslate],
@@ -130,6 +131,24 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
         clamp: true, // Clamp to keep within bounds
       }
     );
+
+    // Add haptic feedback when item reaches bottom (95% of maxTranslate)
+    useMotionValueEvent(transform, "change", (latest) => {
+      const threshold = maxTranslate * 0.95;
+      if (latest >= threshold && !hapticTriggeredRef.current.has(index)) {
+        hapticTriggeredRef.current.add(index);
+        // Subtle vibration: 10ms vibration
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          navigator.vibrate(10);
+        }
+      }
+      // Reset if scrolled back up significantly
+      if (latest < threshold * 0.8) {
+        hapticTriggeredRef.current.delete(index);
+      }
+    });
+
+    return transform;
   });
 
   return (
