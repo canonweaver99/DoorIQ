@@ -16,7 +16,7 @@ function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; s
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
       {stats.map((stat, index) => {
         const Icon = stat.icon
         return (
@@ -25,16 +25,16 @@ function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; s
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1 }}
-            className={`bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] ${stat.bgColor} ${stat.borderColor}`}
+            className={`bg-white/[0.02] border-2 border-white/5 rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] ${stat.bgColor} ${stat.borderColor}`}
           >
-            <div className="flex items-center gap-2.5 mb-2.5">
-              <div className={`${stat.color} p-1.5 rounded-lg bg-white/[0.05]`}>
-                <Icon className="w-4 h-4" />
+            <div className="flex items-center gap-2 sm:gap-2.5 mb-2 sm:mb-2.5">
+              <div className={`${stat.color} p-1 sm:p-1.5 rounded-lg bg-white/[0.05] flex-shrink-0`}>
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <span className="font-space text-white/60 text-base md:text-lg font-semibold uppercase tracking-wider">{stat.label}</span>
+              <span className="font-space text-white/60 text-xs sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider truncate">{stat.label}</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className={`font-space text-white text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight ${stat.color}`}>{stat.value}</span>
+              <span className={`font-space text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight ${stat.color}`}>{stat.value}</span>
             </div>
           </motion.div>
         )
@@ -164,24 +164,24 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white relative">
-        <div className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             {/* Loading skeleton */}
-            <div className="space-y-6 md:space-y-8 mt-12">
-              <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-8 md:p-10 animate-pulse">
-                <div className="h-8 bg-white/10 rounded w-1/3 mb-4" />
-                <div className="h-4 bg-white/10 rounded w-1/4 mb-8" />
-                <div className="h-16 bg-white/10 rounded w-1/2 mb-6" />
-                <div className="h-10 bg-white/10 rounded w-full" />
+            <div className="space-y-4 sm:space-y-6 md:space-y-8 mt-8 sm:mt-12">
+              <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 animate-pulse">
+                <div className="h-6 sm:h-8 bg-white/10 rounded w-1/2 sm:w-1/3 mb-3 sm:mb-4" />
+                <div className="h-3 sm:h-4 bg-white/10 rounded w-1/3 sm:w-1/4 mb-6 sm:mb-8" />
+                <div className="h-12 sm:h-16 bg-white/10 rounded w-full sm:w-1/2 mb-4 sm:mb-6" />
+                <div className="h-8 sm:h-10 bg-white/10 rounded w-full" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 animate-pulse"
+                    className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 sm:p-6 animate-pulse"
                   >
-                    <div className="h-6 bg-white/10 rounded w-1/2 mb-4" />
-                    <div className="h-12 bg-white/10 rounded w-3/4 mb-4" />
+                    <div className="h-5 sm:h-6 bg-white/10 rounded w-1/2 mb-3 sm:mb-4" />
+                    <div className="h-8 sm:h-12 bg-white/10 rounded w-3/4 mb-3 sm:mb-4" />
                   </div>
                 ))}
               </div>
@@ -194,22 +194,22 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative">
-      <div className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Header Section - Matching Dashboard Style */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="mb-8"
+            className="mb-6 sm:mb-8"
           >
-            <h1 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-white font-bold tracking-tight mb-3 md:mb-4">
+            <h1 className="font-space text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl text-white font-bold tracking-tight mb-2 sm:mb-3 md:mb-4 leading-tight">
               {greeting},{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                 {getDisplayName()}
               </span>
             </h1>
-            <p className="font-space text-white/70 text-base sm:text-lg md:text-xl lg:text-2xl font-medium max-w-2xl">
+            <p className="font-space text-white/70 text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium max-w-2xl leading-relaxed">
               {getMotivationalSubtext()}
             </p>
           </motion.div>
@@ -219,7 +219,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-8"
+            className="mb-6 sm:mb-8"
           >
             <QuickStatsCard 
               streak={stats.streak} 

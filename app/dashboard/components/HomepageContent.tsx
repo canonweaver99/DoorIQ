@@ -95,12 +95,12 @@ export default function HomepageContent() {
 
   if (loading) {
     return (
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-4 sm:space-y-6 md:space-y-8">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white/[0.02] border border-white/5 rounded-xl p-6 md:p-8 animate-pulse">
-            <div className="h-6 bg-white/10 rounded-lg w-1/3 mb-4" />
-            <div className="h-4 bg-white/10 rounded-lg w-full mb-3" />
-            <div className="h-4 bg-white/10 rounded-lg w-2/3" />
+          <div key={i} className="bg-white/[0.02] border border-white/5 rounded-lg sm:rounded-xl p-4 sm:p-6 md:p-8 animate-pulse">
+            <div className="h-5 sm:h-6 bg-white/10 rounded-lg w-1/2 sm:w-1/3 mb-3 sm:mb-4" />
+            <div className="h-3 sm:h-4 bg-white/10 rounded-lg w-full mb-2 sm:mb-3" />
+            <div className="h-3 sm:h-4 bg-white/10 rounded-lg w-2/3" />
           </div>
         ))}
       </div>
@@ -109,11 +109,11 @@ export default function HomepageContent() {
 
   if (error) {
     return (
-      <div className="bg-white/[0.02] border border-white/10 rounded-xl p-8 text-center">
-        <p className="text-white/80 mb-4 text-lg">Error loading homepage data</p>
+      <div className="bg-white/[0.02] border border-white/10 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center">
+        <p className="text-white/80 mb-4 text-base sm:text-lg">Error loading homepage data</p>
         <button
           onClick={fetchHomepageData}
-          className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg text-white font-medium transition-all"
+          className="px-5 sm:px-6 py-2.5 sm:py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg text-white font-medium transition-all text-sm sm:text-base"
         >
           Retry
         </button>
@@ -124,7 +124,7 @@ export default function HomepageContent() {
   if (!stats) {
     // Show guest-friendly content when no stats
     return (
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-4 sm:space-y-6 md:space-y-8">
         <OnboardingElements totalSessions={0} />
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -156,7 +156,7 @@ export default function HomepageContent() {
     .sort((a, b) => a.score - b.score)
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
       {/* Onboarding Elements - Only show for new users */}
       <OnboardingElements totalSessions={stats.totalSessions} />
 
@@ -174,7 +174,7 @@ export default function HomepageContent() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.05 }}
-        className="my-12 md:my-16 lg:my-20"
+        className="my-8 sm:my-10 md:my-12 lg:my-16 xl:my-20"
       >
         <DailyMotivationalQuote 
           streak={rotatingStats?.streak} 
@@ -189,7 +189,7 @@ export default function HomepageContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="scale-75 origin-top"
+          className="scale-[0.85] sm:scale-[0.8] md:scale-75 origin-top"
         >
           <HeroPerformanceCard
             userName={dashboardData.userName || 'User'}
@@ -267,13 +267,13 @@ function ReadyToPracticeCard() {
   }
 
   return (
-    <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div>
-          <h2 className="font-space text-white text-2xl md:text-3xl font-bold tracking-tight mb-2">
+    <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 sm:p-5 md:p-6 lg:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+        <div className="flex-1 min-w-0">
+          <h2 className="font-space text-white text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 sm:mb-2">
             Ready to Practice?
           </h2>
-          <p className="font-space text-white/60 text-base md:text-lg">
+          <p className="font-space text-white/60 text-sm sm:text-base md:text-lg">
             Start a new practice session and improve your skills
           </p>
         </div>
@@ -281,11 +281,11 @@ function ReadyToPracticeCard() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleStartPractice}
-          className="group/btn flex items-center justify-center gap-3 px-8 py-4 bg-white text-black font-bold rounded-md text-base md:text-lg tracking-tight hover:bg-white/95 transition-all font-space whitespace-nowrap"
+          className="group/btn flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white text-black font-bold rounded-md text-xs sm:text-sm md:text-base lg:text-lg tracking-tight hover:bg-white/95 transition-all font-space whitespace-nowrap w-full sm:w-auto"
         >
-          <Play className="w-5 h-5" />
-          Start Practice Session
-          <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-0.5 transition-transform" />
+          <Play className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+          <span className="truncate">Start Practice Session</span>
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover/btn:translate-x-0.5 transition-transform flex-shrink-0" />
         </motion.button>
       </div>
     </div>

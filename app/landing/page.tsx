@@ -125,26 +125,26 @@ function Navigation() {
           : "bg-black/50 backdrop-blur-sm"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="flex items-center justify-between h-20 md:h-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
+        <div className="flex items-center justify-between h-16 sm:h-20 md:h-24">
           {/* Logo */}
-          <Link href="/landing" className="group">
+          <Link href="/landing" className="group flex-shrink-0">
             <Image 
               src="/dooriqlogo.png" 
               alt="DoorIQ" 
               width={120}
               height={32}
-              className="h-8 w-auto transition-transform group-hover:scale-105"
+              className="h-6 sm:h-7 md:h-8 w-auto transition-transform group-hover:scale-105"
             />
           </Link>
 
-          {/* Navigation Tabs */}
-          <div className="hidden md:flex items-center gap-2">
+          {/* Navigation Tabs - Hidden on mobile */}
+          <div className="hidden lg:flex items-center gap-2">
             {navItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => scrollToSection(item.id)}
-                className={`px-5 py-2.5 text-base font-medium tracking-tight transition-all rounded-md ${
+                className={`px-4 xl:px-5 py-2 xl:py-2.5 text-sm xl:text-base font-medium tracking-tight transition-all rounded-md ${
                   activeSection === item.id
                     ? "text-white bg-white/10"
                     : "text-white/80 hover:text-white hover:bg-white/5"
@@ -156,20 +156,21 @@ function Navigation() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/auth/login"
-              className="px-6 py-2.5 text-white font-medium rounded-md text-base tracking-tight transition-all hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98]"
+              className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 text-white font-medium rounded-md text-xs sm:text-sm md:text-base tracking-tight transition-all hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
             >
               Log In
             </Link>
             <Link
               href="/book-demo"
-              className="group relative px-6 py-2.5 bg-white text-black font-bold rounded-md text-sm tracking-tight transition-all hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98]"
+              className="group relative px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 bg-white text-black font-bold rounded-md text-xs sm:text-sm tracking-tight transition-all hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
             >
-              <span className="relative z-10 flex items-center gap-2">
-                Book a Demo
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <span className="relative z-10 flex items-center gap-1 sm:gap-2">
+                <span className="hidden sm:inline">Book a Demo</span>
+                <span className="sm:hidden">Demo</span>
+                <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 group-hover:translate-x-0.5 transition-transform" />
               </span>
             </Link>
           </div>
@@ -306,34 +307,34 @@ function HeroSection() {
 
       <ContainerScroll
         titleComponent={
-          <div className="flex flex-col items-center gap-4 md:gap-6 pb-4 md:pb-6 pt-16 md:pt-20">
+          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-12 sm:pt-16 md:pt-20 px-4">
             {/* Badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="px-4 py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
             >
-              <span className="text-white/80 text-sm md:text-base font-medium tracking-wider uppercase font-space">
+              <span className="text-white/80 text-xs sm:text-sm md:text-base font-medium tracking-wider uppercase font-space">
                 Enterprise D2D Sales Training Platform
               </span>
             </motion.div>
 
             {/* Headline */}
-            <div className="flex flex-col items-center gap-3 md:gap-4 max-w-5xl pb-2">
+            <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 max-w-5xl pb-2">
               <AnimatedText
                 text="Stop Losing Deals"
-                textClassName="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white text-center font-light leading-[1.3]"
+                textClassName="font-space text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3]"
                 underlineClassName="hidden"
                 duration={0.04}
                 delay={0.015}
               />
               <AnimatedText
                 text="To Untrained Reps"
-                textClassName="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.3]"
+                textClassName="font-space text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3]"
                 underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
-                underlineHeight="h-[2px] md:h-[3px]"
-                underlineOffset="-bottom-2 md:-bottom-3"
+                underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
+                underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
                 duration={0.04}
                 delay={0.015}
               />
@@ -344,7 +345,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="font-sans text-xl md:text-2xl lg:text-3xl text-white/80 max-w-4xl text-center leading-relaxed font-light"
+              className="font-sans text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white/80 max-w-4xl text-center leading-relaxed font-light px-4"
             >
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
             </motion.p>
@@ -358,10 +359,10 @@ function HeroSection() {
             >
               <Link
                 href="/book-demo"
-                className="group px-8 py-3.5 bg-white text-black font-bold rounded-md text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Book a Demo
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </motion.div>
 
@@ -370,9 +371,9 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.65, duration: 0.6 }}
-              className="text-center mt-6 md:mt-8 flex items-center justify-center gap-3"
+              className="text-center mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
             >
-              <span className="text-white/80 text-2xl md:text-4xl lg:text-5xl font-medium tracking-wider uppercase font-space">
+              <span className="text-white/80 text-lg sm:text-xl md:text-2xl lg:text-4xl xl:text-5xl font-medium tracking-wider uppercase font-space">
                 See it in action
               </span>
               <motion.div
@@ -383,7 +384,7 @@ function HeroSection() {
                   ease: "easeInOut"
                 }}
               >
-                <ChevronDown className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white/80" />
+                <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white/80" />
               </motion.div>
             </motion.div>
           </div>
@@ -452,7 +453,7 @@ function ProblemSection() {
   ];
 
   return (
-    <section id="problem" className="relative bg-black py-16 md:py-20">
+    <section id="problem" className="relative bg-black py-12 sm:py-16 md:py-20">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-[0.015]">
         <div
@@ -464,55 +465,55 @@ function ProblemSection() {
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10 md:mb-12"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Problem
           </span>
-          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95] mb-6">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             Your Sales Team Is
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Leaking Money</span>
           </h2>
-          <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
             Here&apos;s what you&apos;re really paying for:
           </p>
         </motion.div>
 
         {/* Problem Cards */}
-        <div className="grid md:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
           {problems.map((problem, index) => {
             return (
               <div
                 key={problem.title}
-                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 md:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
+                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 sm:p-5 md:p-6 lg:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
               >
                 {/* Subtle purple glow at bottom for depth */}
                 <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 {/* Icon */}
-                <div className="w-12 h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white mb-6 transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20 relative z-10">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white mb-4 sm:mb-5 md:mb-6 transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20 relative z-10">
                   {problem.icon}
                 </div>
 
                 {/* Stat */}
-                <div className="font-space text-5xl md:text-6xl text-white font-light mb-3 tracking-tight relative z-10">
+                <div className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-light mb-2 sm:mb-3 tracking-tight relative z-10">
                   {problem.stat}
                 </div>
 
                 {/* Title */}
-                <h3 className="font-space font-medium text-xl md:text-2xl text-white/90 mb-3 tracking-tight relative z-10">
+                <h3 className="font-space font-medium text-lg sm:text-xl md:text-2xl text-white/90 mb-2 sm:mb-3 tracking-tight relative z-10">
                   {problem.title}
                 </h3>
 
                 {/* Description */}
-                <p className="font-sans text-white/80 leading-relaxed text-base md:text-lg font-light relative z-10">
+                <p className="font-sans text-white/80 leading-relaxed text-sm sm:text-base md:text-lg font-light relative z-10">
                   {problem.description}
                 </p>
               </div>
@@ -529,19 +530,19 @@ function SolutionSection() {
   const timelineData = [
     {
       title: "01",
-      content: (
-        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+        content: (
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="flex items-center gap-6 mb-6 relative z-10">
-            <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-              <Users className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6 relative z-10">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
+              <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
+            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-light tracking-tight">
               Connect Your Team
             </h4>
           </div>
-          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light relative z-10">
+          <p className="font-sans text-white/80 leading-relaxed text-base sm:text-lg md:text-xl font-light relative z-10">
             Onboard your entire team in under 10 minutes.
           </p>
         </div>
@@ -549,19 +550,19 @@ function SolutionSection() {
     },
     {
       title: "02",
-      content: (
-        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+        content: (
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="flex items-center gap-6 mb-6 relative z-10">
-            <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-              <Target className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6 relative z-10">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
+              <Target className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
+            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-light tracking-tight">
               Practice with AI
             </h4>
           </div>
-          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light relative z-10">
+          <p className="font-sans text-white/80 leading-relaxed text-base sm:text-lg md:text-xl font-light relative z-10">
             Unlimited practice sessions with hyper-realistic AI homeowners.
           </p>
         </div>
@@ -569,19 +570,19 @@ function SolutionSection() {
     },
     {
       title: "03",
-      content: (
-        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+        content: (
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="flex items-center gap-6 mb-6 relative z-10">
-            <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-              <Zap className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6 relative z-10">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
+            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-light tracking-tight">
               Get Real-Time Feedback
             </h4>
           </div>
-          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light relative z-10">
+          <p className="font-sans text-white/80 leading-relaxed text-base sm:text-lg md:text-xl font-light relative z-10">
             Instant AI coaching after every session.
           </p>
         </div>
@@ -589,19 +590,19 @@ function SolutionSection() {
     },
     {
       title: "04",
-      content: (
-        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-10 md:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+        content: (
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="flex items-center gap-6 mb-6 relative z-10">
-            <div className="w-16 h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-              <BarChart3 className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6 relative z-10">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
+              <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h4 className="font-space text-3xl md:text-4xl text-white font-light tracking-tight">
+            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-light tracking-tight">
               Track & Improve
             </h4>
           </div>
-          <p className="font-sans text-white/80 leading-relaxed text-lg md:text-xl font-light relative z-10">
+          <p className="font-sans text-white/80 leading-relaxed text-base sm:text-lg md:text-xl font-light relative z-10">
             Watch your team&apos;s performance metrics climb.
           </p>
         </div>
@@ -610,7 +611,7 @@ function SolutionSection() {
   ];
 
   return (
-    <section id="solution" className="relative bg-black py-16 md:py-20 overflow-hidden">
+    <section id="solution" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
       {/* Animated background gradients */}
       <motion.div
         animate={{
@@ -639,21 +640,21 @@ function SolutionSection() {
         className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-pink-500/10 via-purple-500/10 to-transparent rounded-full blur-[120px]"
       />
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-8"
+          className="text-center mb-6 sm:mb-8"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Solution
           </span>
-          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95] mb-6">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             How DoorIQ Works
           </h2>
-          <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
             Transform your sales team into a closing machine.
           </p>
         </motion.div>
@@ -670,27 +671,27 @@ function SolutionSection() {
 // Features Section
 function FeaturesSection() {
   return (
-    <section id="features" className="relative bg-black pt-16 md:pt-20 pb-20 md:pb-24">
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+    <section id="features" className="relative bg-black pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-20 md:pb-24">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-6"
+          className="text-center mb-6 sm:mb-8"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Features
           </span>
-          <div className="mb-6">
-            <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[1.1]">
+          <div className="mb-4 sm:mb-6">
+            <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[1.1] px-4">
               Everything You Need
             </h2>
-            <h2 className="font-space text-5xl md:text-7xl lg:text-8xl font-light tracking-tight leading-[1.1] mt-3 md:mt-4">
+            <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-light tracking-tight leading-[1.1] mt-2 sm:mt-3 md:mt-4 px-4">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">To Win</span>
             </h2>
           </div>
-          <p className="font-sans text-white/80 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed font-light">
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
             Everything you need to practice, improve, and dominate.
           </p>
         </motion.div>
@@ -879,24 +880,24 @@ InlineAgentCarousel.displayName = "InlineAgentCarousel";
 // Meet the Trainer Section
 function MeetTrainerSection() {
   return (
-    <section id="trainers" className="relative bg-black pt-12 md:pt-16 pb-12 md:pb-16 overflow-hidden">
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+    <section id="trainers" className="relative bg-black pt-10 sm:pt-12 md:pt-16 pb-10 sm:pb-12 md:pb-16 overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-6 md:mb-8"
+          className="text-center mb-5 sm:mb-6 md:mb-8"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 block">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-2 sm:mb-3 block">
             Meet the Trainers
           </span>
-          <h2 className="font-space text-4xl md:text-6xl lg:text-7xl text-white font-light tracking-tight leading-[0.95] mb-4">
+          <h2 className="font-space text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-3 sm:mb-4 px-4">
             Practice with
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Hyper-Realistic AI</span>
           </h2>
-          <p className="font-sans text-white/80 max-w-3xl mx-auto text-lg md:text-xl leading-relaxed font-light">
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed font-light px-4">
             Lifelike AI homeowners that adapt to every response.
           </p>
         </motion.div>
@@ -919,7 +920,7 @@ function MeetTrainerSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.4, duration: 0.8 }}
-        className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 mt-4 md:mt-6"
+        className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 mt-3 sm:mt-4 md:mt-6"
       >
         <div className="flex justify-center dark">
           <AIVoiceInput 
@@ -943,7 +944,7 @@ function StatsSection() {
   ];
 
   return (
-    <section id="stats" className="relative bg-black py-16 md:py-20 overflow-hidden">
+    <section id="stats" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <motion.div
@@ -974,18 +975,18 @@ function StatsSection() {
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10 md:mb-12"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Results
           </span>
-          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95]">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] px-4">
             Real Numbers.
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Real Results.</span>
@@ -993,7 +994,7 @@ function StatsSection() {
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8">
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -1003,17 +1004,17 @@ function StatsSection() {
               transition={{ delay: index * 0.1, duration: 0.6 }}
               className="text-center"
             >
-              <div className="font-space text-5xl md:text-7xl lg:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-light tracking-tight mb-4">
+              <div className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-light tracking-tight mb-3 sm:mb-4">
                 {stat.value === 10 ? (
                   <>
                     <AnimatedCounter end={stat.value} suffix="" />
-                    <span className="text-3xl md:text-5xl lg:text-6xl"> Hours</span>
+                    <span className="text-xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl"> Hours</span>
                   </>
                 ) : (
                 <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                 )}
               </div>
-              <p className="font-sans text-white/80 text-base md:text-lg leading-relaxed font-light">
+              <p className="font-sans text-white/80 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed font-light px-2">
                 {stat.label}
               </p>
             </motion.div>
@@ -1050,25 +1051,25 @@ function TestimonialsSection() {
   const column3 = testimonialsData.slice(7, 10);
 
   return (
-    <section id="testimonials" className="relative bg-black py-16 md:py-20 overflow-hidden">
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+    <section id="testimonials" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10 md:mb-12"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm md:text-base uppercase tracking-[0.2em] font-space mb-4 block">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Testimonials
           </span>
-          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95]">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] px-4">
             What Our Users Say
           </h2>
         </motion.div>
 
         {/* Testimonials Grid */}
-        <div className="grid md:grid-cols-3 gap-4 md:gap-6 [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] h-[600px] md:h-[800px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6 [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] h-[500px] sm:h-[600px] md:h-[800px]">
           <TestimonialsColumn testimonials={column1} duration={20} />
           <TestimonialsColumn testimonials={column2} duration={25} className="hidden md:block" />
           <TestimonialsColumn testimonials={column3} duration={22} className="hidden md:block" />
@@ -1081,7 +1082,7 @@ function TestimonialsSection() {
 // Final CTA Section
 function CTASection() {
   return (
-    <section className="relative bg-black py-16 md:py-20 overflow-hidden">
+    <section className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
       {/* Animated background gradients - reduced glow */}
       <div className="absolute inset-0 bg-gradient-to-t from-white/[0.02] via-transparent to-transparent" />
       <motion.div
@@ -1111,14 +1112,14 @@ function CTASection() {
         className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent rounded-full blur-[120px]"
       />
 
-      <div className="relative max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
           {/* Headline */}
-          <h2 className="font-space text-5xl md:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[0.95] mb-6">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             Ready to
             <br />
             Transform
@@ -1127,23 +1128,23 @@ function CTASection() {
           </h2>
 
           {/* Description */}
-          <p className="font-sans text-white/80 mt-6 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-light">
+          <p className="font-sans text-white/80 mt-4 sm:mt-6 text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed font-light px-4">
             Join 500+ companies training reps to dominate their markets.
           </p>
 
           {/* CTA Button */}
-          <div className="mt-8">
+          <div className="mt-6 sm:mt-8">
             <Link
               href="/book-demo"
-              className="group inline-flex items-center gap-3 px-10 py-4 bg-white text-black font-medium rounded-md text-base md:text-lg tracking-tight hover:bg-white/95 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-white text-black font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Book Your Demo Today
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-8 flex flex-wrap justify-center items-center gap-6 text-white/70 text-base md:text-lg font-light">
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 text-white/70 text-xs sm:text-sm md:text-base lg:text-lg font-light px-4">
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-indigo-500" />
               No credit card required
@@ -1271,33 +1272,33 @@ function LandingFooter() {
   };
 
   return (
-    <footer className="bg-black border-t border-white/[0.03] py-12 md:py-16">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+    <footer className="bg-black border-t border-white/[0.03] py-8 sm:py-10 md:py-12 lg:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10 lg:gap-12">
           {/* Logo and Copyright */}
           <div className="lg:col-span-1">
-            <Link href="/landing" className="inline-block mb-6">
+            <Link href="/landing" className="inline-block mb-4 sm:mb-6">
               <Image 
                 src="/dooriqlogo.png" 
                 alt="DoorIQ Logo" 
                 width={120}
                 height={32}
-                className="h-8 w-auto"
+                className="h-6 sm:h-7 md:h-8 w-auto"
               />
             </Link>
-            <p className="text-white/70 text-sm font-light">
+            <p className="text-white/70 text-xs sm:text-sm font-light">
               © {new Date().getFullYear()} DoorIQ. All rights reserved.
             </p>
           </div>
 
           {/* Page Sections */}
           <div>
-            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4">Sections</h3>
-            <ul className="space-y-3">
+            <h3 className="text-xs sm:text-sm text-white/70 font-space uppercase tracking-wider mb-3 sm:mb-4">Sections</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
                 <button
                   onClick={() => scrollToSection("features")}
-                  className="text-white/80 font-space hover:text-white transition-colors text-sm"
+                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm"
                 >
                   Features
                 </button>
@@ -1305,7 +1306,7 @@ function LandingFooter() {
               <li>
                 <button
                   onClick={() => scrollToSection("solution")}
-                  className="text-white/80 font-space hover:text-white transition-colors text-sm"
+                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm"
                 >
                   How It Works
                 </button>
@@ -1313,7 +1314,7 @@ function LandingFooter() {
               <li>
                 <button
                   onClick={() => scrollToSection("stats")}
-                  className="text-white/80 font-space hover:text-white transition-colors text-sm"
+                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm"
                 >
                   Results
                 </button>
@@ -1321,7 +1322,7 @@ function LandingFooter() {
               <li>
                 <button
                   onClick={() => scrollToSection("testimonials")}
-                  className="text-white/80 font-space hover:text-white transition-colors text-sm"
+                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm"
                 >
                   Testimonials
                 </button>
@@ -1331,29 +1332,29 @@ function LandingFooter() {
 
           {/* Contact Information */}
           <div>
-            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4">Contact</h3>
-            <ul className="space-y-3">
+            <h3 className="text-xs sm:text-sm text-white/70 font-space uppercase tracking-wider mb-3 sm:mb-4">Contact</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
                 <a
                   href="mailto:contact@dooriq.ai"
-                  className="text-white/80 font-space hover:text-white transition-colors text-sm inline-flex items-center gap-2"
+                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm inline-flex items-center gap-2 break-all"
                 >
-                  <Mail className="w-4 h-4" />
-                  contact@dooriq.ai
+                  <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="break-all">contact@dooriq.ai</span>
                 </a>
               </li>
               <li>
                 <a
                   href="tel:602-446-1330"
-                  className="text-white/80 font-space hover:text-white transition-colors text-sm inline-flex items-center gap-2"
+                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm inline-flex items-center gap-2"
                 >
-                  <Phone className="w-4 h-4" />
+                  <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                   602-446-1330
                 </a>
               </li>
               <li>
-                <div className="text-white/80 font-space text-sm inline-flex items-start gap-2">
-                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div className="text-white/80 font-space text-xs sm:text-sm inline-flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
                   <span>2505 Longview St<br />Austin, TX</span>
                 </div>
               </li>
@@ -1362,13 +1363,13 @@ function LandingFooter() {
 
           {/* CTA */}
           <div>
-            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4">Get Started</h3>
+            <h3 className="text-xs sm:text-sm text-white/70 font-space uppercase tracking-wider mb-3 sm:mb-4">Get Started</h3>
             <Link
               href="/book-demo"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black font-semibold rounded-md text-sm tracking-tight hover:bg-white/95 transition-all"
+              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black font-semibold rounded-md text-xs sm:text-sm tracking-tight hover:bg-white/95 transition-all"
             >
               Book a Demo
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Link>
           </div>
         </div>

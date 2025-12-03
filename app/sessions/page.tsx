@@ -463,18 +463,18 @@ export default function SessionsPage() {
         className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px] pointer-events-none"
       />
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-32">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pt-20 sm:pt-24 md:pt-28 lg:pt-32">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-3 text-center"
+          className="mb-4 sm:mb-6 md:mb-8 text-center px-2"
         >
-          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
+          <h1 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-2 sm:mb-3">
             Training Sessions
           </h1>
-          <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-300 drop-shadow-md font-space">
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-slate-300 drop-shadow-md font-space leading-tight">
             Review your past sessions and{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
               track your improvement
@@ -487,35 +487,35 @@ export default function SessionsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8"
         >
-          <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-white/70 font-space uppercase tracking-wider">Average Score</h3>
-              <TrendingUp className="w-5 h-5 text-purple-400" />
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <h3 className="text-xs sm:text-sm font-medium text-white/70 font-space uppercase tracking-wider">Average Score</h3>
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 flex-shrink-0" />
             </div>
-            <p className="text-4xl md:text-5xl font-bold text-white font-space mb-2">{stats.avgScore}%</p>
-            <p className="text-sm text-white/60 font-sans">
+            <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-white font-space mb-1 sm:mb-2">{stats.avgScore}%</p>
+            <p className="text-xs sm:text-sm text-white/60 font-sans">
               {stats.avgScore >= 80 ? 'Excellent performance' : 'Keep practicing!'}
             </p>
           </div>
           
-          <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-white/70 font-space uppercase tracking-wider">Total Earnings</h3>
-              <DollarSign className="w-5 h-5 text-emerald-400" />
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <h3 className="text-xs sm:text-sm font-medium text-white/70 font-space uppercase tracking-wider">Total Earnings</h3>
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 flex-shrink-0" />
             </div>
-            <p className="text-4xl md:text-5xl font-bold text-white font-space mb-2">${stats.totalEarnings.toFixed(2)}</p>
-            <p className="text-sm text-white/60 font-sans">Virtual cash earned</p>
+            <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-white font-space mb-1 sm:mb-2">${stats.totalEarnings.toFixed(2)}</p>
+            <p className="text-xs sm:text-sm text-white/60 font-sans">Virtual cash earned</p>
           </div>
           
-          <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-white/70 font-space uppercase tracking-wider">Sessions</h3>
-              <Calendar className="w-5 h-5 text-pink-400" />
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <h3 className="text-xs sm:text-sm font-medium text-white/70 font-space uppercase tracking-wider">Sessions</h3>
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400 flex-shrink-0" />
             </div>
-            <p className="text-4xl md:text-5xl font-bold text-white font-space mb-2">{stats.sessionsCount}</p>
-            <p className="text-sm text-white/60 font-sans">Completed sessions</p>
+            <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-white font-space mb-1 sm:mb-2">{stats.sessionsCount}</p>
+            <p className="text-xs sm:text-sm text-white/60 font-sans">Completed sessions</p>
           </div>
         </motion.div>
 
@@ -526,15 +526,15 @@ export default function SessionsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-12 text-center border border-white/5 shadow-xl"
+              className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-8 sm:p-10 md:p-12 text-center border border-white/5 shadow-xl"
             >
-              <p className="text-xl text-white/80 font-sans mb-6">No sessions found for this period</p>
+              <p className="text-base sm:text-lg md:text-xl text-white/80 font-sans mb-4 sm:mb-6">No sessions found for this period</p>
               <Link
                 href="/trainer/select-homeowner"
-                className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-lg hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 transition-all shadow-lg font-space text-lg font-semibold"
+                className="inline-flex items-center px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-lg hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 transition-all shadow-lg font-space text-sm sm:text-base md:text-lg font-semibold"
               >
                 Start Training
-                <ChevronRight className="ml-2 w-5 h-5" />
+                <ChevronRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
             </motion.div>
           ) : (
@@ -546,15 +546,17 @@ export default function SessionsPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: 0.4 + (dayIndex * 0.1) }}
-                    className="flex items-center gap-3 mb-2"
+                    className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-4"
                   >
-                    <h2 className="text-2xl md:text-3xl font-bold text-white font-space">
-                      {formatDayHeader(dayGroup.date)}
-                    </h2>
-                    <span className="text-sm text-white/40 font-sans">
-                      ({dayGroup.sessions.length} {dayGroup.sessions.length === 1 ? 'session' : 'sessions'})
-                    </span>
-                    <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent"></div>
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white font-space">
+                        {formatDayHeader(dayGroup.date)}
+                      </h2>
+                      <span className="text-xs sm:text-sm text-white/40 font-sans">
+                        ({dayGroup.sessions.length} {dayGroup.sessions.length === 1 ? 'session' : 'sessions'})
+                      </span>
+                    </div>
+                    <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent hidden sm:block"></div>
                   </motion.div>
                   
                   {/* Sessions for this day */}
@@ -581,23 +583,23 @@ export default function SessionsPage() {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: 0.4 + (dayIndex * 0.1) + (sessionIndex * 0.05) }}
-                          className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
+                          className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
                         >
                           {/* Subtle purple glow at bottom for depth */}
                           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           
                           <div className="relative z-10">
                             {/* Header with date/time */}
-                            <div className="flex items-center justify-between mb-4">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <Clock className="w-4 h-4 text-white/60" />
-                                  <p className="font-space text-white/80 text-sm font-bold">
+                            <div className="flex items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/60 flex-shrink-0" />
+                                  <p className="font-space text-white/80 text-xs sm:text-sm font-bold break-words">
                                     {formattedDate} at {formattedTime}
                                   </p>
                                 </div>
                                 {durationMinutes !== null && durationSecs !== null && (
-                                  <p className="font-space text-white/60 text-xs font-semibold mt-0.5">
+                                  <p className="font-space text-white/60 text-xs font-semibold mt-0.5 sm:mt-1">
                                     Duration: {durationMinutes}m {durationSecs}s
                                   </p>
                                 )}
@@ -609,18 +611,18 @@ export default function SessionsPage() {
                                   e.stopPropagation()
                                   openDeleteModal(session.id as string)
                                 }}
-                                className="inline-flex items-center justify-center w-8 h-8 flex-shrink-0 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20 z-10 group-hover:border-red-500/40"
+                                className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all border border-red-500/20 z-10 group-hover:border-red-500/40"
                                 title="Delete session"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               </button>
                             </div>
 
                             {/* Main Content Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                               {/* Left: Agent Info */}
-                              <div className="flex items-center gap-3">
-                                <div className="relative h-20 w-20 md:h-24 md:w-24 flex-shrink-0">
+                              <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 flex-shrink-0">
                                   {/* Concentric circles */}
                                   {[0, 1, 2].map((i) => (
                                     <motion.div
@@ -684,22 +686,22 @@ export default function SessionsPage() {
                                     </div>
                                   </motion.div>
                                 </div>
-                                <div>
+                                <div className="min-w-0 flex-1">
                                   <p className="font-space text-white/60 text-xs uppercase tracking-wider mb-0.5 font-semibold">Practice with</p>
-                                  <p className="font-space text-white text-lg md:text-xl font-bold tracking-tight">{agentName}</p>
+                                  <p className="font-space text-white text-base sm:text-lg md:text-xl font-bold tracking-tight truncate">{agentName}</p>
                                 </div>
                               </div>
 
                               {/* Right: Score and Grade Badge */}
-                              <div className="flex items-center justify-center md:justify-end gap-3">
-                                <div className="flex items-baseline gap-1.5">
-                                  <div className="font-space text-4xl md:text-5xl text-white font-bold tracking-tight">
+                              <div className="flex items-center justify-start md:justify-end gap-2 sm:gap-3">
+                                <div className="flex items-baseline gap-1 sm:gap-1.5">
+                                  <div className="font-space text-3xl sm:text-4xl md:text-5xl text-white font-bold tracking-tight">
                                     {overallScore}
                                   </div>
-                                  <p className="font-space text-white/60 text-base md:text-lg font-bold">/100</p>
+                                  <p className="font-space text-white/60 text-sm sm:text-base md:text-lg font-bold">/100</p>
                                 </div>
-                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
-                                  <span className={`font-space text-2xl md:text-3xl font-bold tracking-tight ${grade.color}`}>
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20 flex-shrink-0">
+                                  <span className={`font-space text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${grade.color}`}>
                                     {grade.letter}
                                   </span>
                                 </div>
@@ -707,24 +709,24 @@ export default function SessionsPage() {
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-3 sm:mb-4">
                               <motion.button
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => router.push(`/analytics/${session.id}`)}
-                                className="group/btn flex-1 bg-white text-black font-bold rounded-md text-sm md:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space"
+                                className="group/btn flex-1 bg-white text-black font-bold rounded-md text-xs sm:text-sm md:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 sm:px-4 font-space"
                               >
-                                View Full Analysis
-                                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
+                                <span className="truncate">View Full Analysis</span>
+                                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:translate-x-0.5 transition-transform flex-shrink-0" />
                               </motion.button>
                               <motion.button
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => router.push('/trainer')}
-                                className="group/btn flex-1 bg-white text-black font-bold rounded-md text-sm md:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space"
+                                className="group/btn flex-1 bg-white text-black font-bold rounded-md text-xs sm:text-sm md:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 sm:px-4 font-space"
                               >
-                                Practice Again
-                                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
+                                <span className="truncate">Practice Again</span>
+                                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:translate-x-0.5 transition-transform flex-shrink-0" />
                               </motion.button>
                             </div>
 
@@ -734,17 +736,17 @@ export default function SessionsPage() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="pt-4 border-t border-white/10"
+                                className="pt-3 sm:pt-4 border-t border-white/10"
                               >
-                                <div className="flex items-center gap-3">
-                                  <span className="font-space text-white/90 text-sm md:text-base font-bold tracking-tight">Critical Issues:</span>
-                                  <div className="flex items-center gap-2 font-space text-white/80 text-sm md:text-base font-bold">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                                  <span className="font-space text-white/90 text-xs sm:text-sm md:text-base font-bold tracking-tight whitespace-nowrap">Critical Issues:</span>
+                                  <div className="flex items-start sm:items-center gap-2 font-space text-white/80 text-xs sm:text-sm md:text-base font-bold">
                                     {criticalIssue.severity === 'error' ? (
-                                      <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                                      <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 flex-shrink-0 mt-0.5 sm:mt-0" />
                                     ) : (
-                                      <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                                      <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 flex-shrink-0 mt-0.5 sm:mt-0" />
                                     )}
-                                    <span>{criticalIssue.text}</span>
+                                    <span className="break-words">{criticalIssue.text}</span>
                                   </div>
                                 </div>
                               </motion.div>
