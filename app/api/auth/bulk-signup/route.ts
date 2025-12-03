@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
 
     // Update organization seats_used (if trigger doesn't handle it)
     // The trigger should handle this automatically, but we'll update just in case
-    await serviceSupabase.rpc('increment_organization_seats', { org_id: organizationId }).catch(() => {
+    await serviceSupabase.rpc('increment_organization_seats', { org_id: organizationId }).catch(async () => {
       // If RPC doesn't exist, manually update
       const { data: orgData } = await serviceSupabase
         .from('organizations')
