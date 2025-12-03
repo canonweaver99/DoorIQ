@@ -325,7 +325,7 @@ export async function GET(request: Request) {
       }
 
       // Default redirect destination after successful authentication
-      let redirectPath = requestUrl.searchParams.get('next') || '/dashboard'
+      let redirectPath = requestUrl.searchParams.get('next') || '/home'
       
       // Preserve checkout intent in redirect
       if (checkoutIntent && redirectPath) {

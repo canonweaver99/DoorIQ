@@ -131,19 +131,19 @@ function HeaderContent() {
     setIsAuthPage(onAuthPage)
   }, [pathname])
 
-  // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing - show on hover
-  // Menu should always be visible on home page (/), practice pages (/trainer), sessions page (/sessions), learning center (/learning), and pricing (/pricing)
-  // Admin pages and Dashboard: completely hide menu (no hover)
-  // Live session pages and grading/feedback pages: completely hide menu (no hover) - only show home button
-  useEffect(() => {
-    const isHomePage = pathname === '/'
-    const isPracticePage = pathname?.startsWith('/trainer')
-    const isSessionsPage = pathname?.startsWith('/sessions')
-    const isLearningPage = pathname?.startsWith('/learning')
-    const isPricingPage = pathname?.startsWith('/pricing')
-    const isSignupPage = pathname?.startsWith('/team/signup')
-    const isAdminPage = pathname?.startsWith('/admin')
-    const isDashboardPage = pathname?.startsWith('/dashboard')
+    // Hide menu on all pages except home page, practice page, sessions page, learning center, and pricing - show on hover
+    // Menu should always be visible on home page (/), authenticated home page (/home), practice pages (/trainer), sessions page (/sessions), learning center (/learning), and pricing (/pricing)
+    // Admin pages and Dashboard: completely hide menu (no hover)
+    // Live session pages and grading/feedback pages: completely hide menu (no hover) - only show home button
+    useEffect(() => {
+      const isHomePage = pathname === '/' || pathname === '/home'
+      const isPracticePage = pathname?.startsWith('/trainer')
+      const isSessionsPage = pathname?.startsWith('/sessions')
+      const isLearningPage = pathname?.startsWith('/learning')
+      const isPricingPage = pathname?.startsWith('/pricing')
+      const isSignupPage = pathname?.startsWith('/team/signup')
+      const isAdminPage = pathname?.startsWith('/admin')
+      const isDashboardPage = pathname?.startsWith('/dashboard')
     
     // Live session page: /trainer but NOT /trainer/select-homeowner
     const isLiveSessionPage = pathname === '/trainer' || (pathname?.startsWith('/trainer') && pathname !== '/trainer/select-homeowner' && !pathname?.startsWith('/trainer/upload'))
@@ -166,7 +166,7 @@ function HeaderContent() {
 
   // Handle mouse position to show menu at top when hovering on pages where it's hidden
   useEffect(() => {
-    const isHomePage = pathname === '/'
+    const isHomePage = pathname === '/' || pathname === '/home'
     const isPracticePage = pathname?.startsWith('/trainer')
     const isSessionsPage = pathname?.startsWith('/sessions')
     const isLearningPage = pathname?.startsWith('/learning')
@@ -365,7 +365,7 @@ function HeaderContent() {
 
   const navigation = useMemo(() => {
     const navItems = [
-      { name: 'Home', href: '/', icon: Home },
+      { name: 'Home', href: isSignedIn ? '/home' : '/', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
       // Sessions only shows for signed-in users
       ...(isSignedIn ? [{ name: 'Sessions', href: '/sessions', icon: FileText }] : []),
@@ -424,6 +424,7 @@ function HeaderContent() {
       {
         title: 'Workspace',
         items: [
+          ...(isSignedIn ? [{ name: 'Home', href: '/home', icon: Home }] : []),
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, repOnly: true, desktopOnly: true },
           ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, repOnly: true, desktopOnly: true }]),
           ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),

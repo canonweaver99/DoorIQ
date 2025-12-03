@@ -74,7 +74,7 @@ function LoginForm() {
         }
         router.push(redirectUrl)
       } else {
-        router.push('/dashboard')
+        router.push('/home')
       }
       router.refresh()
     } catch (err: any) {

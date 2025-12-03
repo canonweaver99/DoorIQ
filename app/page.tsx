@@ -77,9 +77,9 @@ export default function Home() {
             }
           }
           
-          // Clear the hash from URL and redirect to dashboard
+          // Clear the hash from URL and redirect to home
           window.history.replaceState(null, '', window.location.pathname)
-          router.push('/dashboard')
+          router.push('/home')
           router.refresh()
         } else {
           router.replace('/landing')
