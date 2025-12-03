@@ -490,6 +490,7 @@ export interface Database {
           name: string
           persona: string | null
           eleven_agent_id: string
+          eleven_voice_id: string | null
           is_active: boolean
           created_at: string
         }
@@ -498,6 +499,7 @@ export interface Database {
           name: string
           persona?: string | null
           eleven_agent_id: string
+          eleven_voice_id?: string | null
           is_active?: boolean
           created_at?: string
         }
@@ -506,6 +508,7 @@ export interface Database {
           name?: string
           persona?: string | null
           eleven_agent_id?: string
+          eleven_voice_id?: string | null
           is_active?: boolean
           created_at?: string
         }

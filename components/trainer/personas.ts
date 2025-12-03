@@ -66,6 +66,7 @@ interface PersonaCardDetail {
   recommended?: boolean
   mostChallenging?: boolean
   elevenAgentId?: string
+  elevenVoiceId?: string // Voice ID for TTS snippets - get from ElevenLabs agent configuration
 }
 
 interface PersonaMetadata {
