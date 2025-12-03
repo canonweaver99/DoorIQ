@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AnimatedBackground } from '@/components/ui/animated-background'
-import { User, Eye, EyeOff, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { User, Eye, EyeOff, Loader2, CheckCircle2, XCircle, Building2, Users } from 'lucide-react'
 
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm transition-all duration-200 focus-within:border-purple-400/70 focus-within:bg-purple-500/10 focus-within:shadow-[0_0_20px_rgba(168,85,247,0.15)]">
@@ -18,7 +18,10 @@ export default function BulkSignupPage() {
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'rep' as 'rep' | 'manager',
+    organizationName: '',
+    teamName: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -32,7 +35,7 @@ export default function BulkSignupPage() {
     setError(null)
 
     // Validation
-    if (!formData.fullName || !formData.email || !formData.password) {
+    if (!formData.fullName || !formData.email || !formData.password || !formData.role || !formData.organizationName || !formData.teamName) {
       setError('Please fill in all fields')
       setLoading(false)
       return
@@ -58,7 +61,10 @@ export default function BulkSignupPage() {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          full_name: formData.fullName
+          full_name: formData.fullName,
+          role: formData.role,
+          organization_name: formData.organizationName,
+          team_name: formData.teamName
         })
       })
 
@@ -198,6 +204,56 @@ export default function BulkSignupPage() {
                         <Eye className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
                       )}
                     </button>
+                  </div>
+                </GlassInputWrapper>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Role</label>
+                <GlassInputWrapper>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'rep' | 'manager' })}
+                    className="w-full bg-transparent text-sm py-3 px-3 rounded-2xl focus:outline-none text-white"
+                    required
+                  >
+                    <option value="" className="bg-slate-900">Select role...</option>
+                    <option value="rep" className="bg-slate-900">Rep</option>
+                    <option value="manager" className="bg-slate-900">Manager</option>
+                  </select>
+                </GlassInputWrapper>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Organization Name</label>
+                <GlassInputWrapper>
+                  <div className="relative">
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={formData.organizationName}
+                      onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
+                      placeholder="e.g. Legion"
+                      className="w-full bg-transparent text-sm py-3 px-3 pl-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                      required
+                    />
+                  </div>
+                </GlassInputWrapper>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Team Name</label>
+                <GlassInputWrapper>
+                  <div className="relative">
+                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={formData.teamName}
+                      onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
+                      placeholder="e.g. Sales Team A"
+                      className="w-full bg-transparent text-sm py-3 px-3 pl-11 rounded-2xl focus:outline-none text-white placeholder-slate-500"
+                      required
+                    />
                   </div>
                 </GlassInputWrapper>
               </div>

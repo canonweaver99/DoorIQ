@@ -4,11 +4,18 @@ import { sendNewUserNotification } from '@/lib/email/send'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, full_name } = await request.json()
+    const { email, password, full_name, role, organization_name, team_name } = await request.json()
 
-    if (!email || !password || !full_name) {
+    if (!email || !password || !full_name || !role || !organization_name || !team_name) {
       return NextResponse.json(
-        { error: 'Email, password, and full name are required' },
+        { error: 'Email, password, full name, role, organization name, and team name are required' },
+        { status: 400 }
+      )
+    }
+
+    if (!['rep', 'manager'].includes(role)) {
+      return NextResponse.json(
+        { error: 'Role must be either "rep" or "manager"' },
         { status: 400 }
       )
     }
@@ -64,6 +71,82 @@ export async function POST(request: NextRequest) {
     // Generate rep ID
     const repId = `REP-${Date.now().toString().slice(-6)}`
 
+    // Find or create organization
+    const orgName = organization_name.trim()
+    let { data: organization, error: orgFindError } = await serviceSupabase
+      .from('organizations')
+      .select('id, seat_limit, seats_used')
+      .eq('name', orgName)
+      .single()
+
+    let organizationId: string
+
+    if (!organization) {
+      // Create new organization
+      const { data: newOrg, error: orgCreateError } = await serviceSupabase
+        .from('organizations')
+        .insert({
+          name: orgName,
+          plan_tier: 'team',
+          seat_limit: 100, // Default high limit for bulk signups
+          seats_used: 0
+        })
+        .select()
+        .single()
+
+      if (orgCreateError || !newOrg) {
+        console.error('Error creating organization:', orgCreateError)
+        await serviceSupabase.auth.admin.deleteUser(userId)
+        return NextResponse.json(
+          { error: 'Failed to create organization' },
+          { status: 500 }
+        )
+      }
+
+      organization = newOrg
+      organizationId = newOrg.id
+    } else {
+      organizationId = organization.id
+    }
+
+    // Find or create team within organization
+    const teamName = team_name.trim()
+    let { data: team } = await serviceSupabase
+      .from('teams')
+      .select('id')
+      .eq('name', teamName)
+      .eq('organization_id', organizationId)
+      .maybeSingle()
+
+    let teamId: string
+
+    if (!team) {
+      // Create new team
+      const { data: newTeam, error: teamCreateError } = await serviceSupabase
+        .from('teams')
+        .insert({
+          name: teamName,
+          organization_id: organizationId
+          // owner_id will be set after user is created if role is manager
+        })
+        .select()
+        .single()
+
+      if (teamCreateError || !newTeam) {
+        console.error('Error creating team:', teamCreateError)
+        await serviceSupabase.auth.admin.deleteUser(userId)
+        return NextResponse.json(
+          { error: 'Failed to create team' },
+          { status: 500 }
+        )
+      }
+
+      team = newTeam
+      teamId = newTeam.id
+    } else {
+      teamId = team.id
+    }
+
     // Create user profile - unlimited practice, no credits
     const { error: profileError } = await serviceSupabase
       .from('users')
@@ -72,7 +155,9 @@ export async function POST(request: NextRequest) {
         email: email.toLowerCase(),
         full_name: full_name,
         rep_id: repId,
-        role: 'rep',
+        role: role,
+        organization_id: organizationId,
+        team_id: teamId,
         virtual_earnings: 0,
         onboarding_completed: true, // Skip onboarding for bulk signups
         onboarding_dismissed: true
@@ -87,6 +172,45 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // If user is manager and team doesn't have owner, set them as owner
+    if (role === 'manager') {
+      // Check if team has owner
+      const { data: teamData } = await serviceSupabase
+        .from('teams')
+        .select('owner_id')
+        .eq('id', teamId)
+        .single()
+      
+      if (teamData && !teamData.owner_id) {
+        await serviceSupabase
+          .from('teams')
+          .update({ owner_id: userId })
+          .eq('id', teamId)
+          .catch((err) => {
+            console.error('Warning: Failed to set team owner:', err)
+            // Don't fail the request
+          })
+      }
+    }
+
+    // Update organization seats_used (if trigger doesn't handle it)
+    // The trigger should handle this automatically, but we'll update just in case
+    await serviceSupabase.rpc('increment_organization_seats', { org_id: organizationId }).catch(() => {
+      // If RPC doesn't exist, manually update
+      const { data: orgData } = await serviceSupabase
+        .from('organizations')
+        .select('seats_used')
+        .eq('id', organizationId)
+        .single()
+      
+      if (orgData) {
+        await serviceSupabase
+          .from('organizations')
+          .update({ seats_used: (orgData.seats_used || 0) + 1 })
+          .eq('id', organizationId)
+      }
+    })
 
     // No session limits - unlimited practice for all users
 
