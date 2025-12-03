@@ -147,13 +147,13 @@ function MetricCard({ icon, label, value, color, subtitle, badge, badgeVariant =
             <div className="flex justify-between text-xs sm:text-sm text-slate-300 font-space font-medium">
               {progressLabel.includes('Target') ? (
                 <>
-                  <span className="truncate">Current: {wpmValue || Math.round((progress / 100) * 200)} WPM</span>
+                  <span className="truncate">{wpmValue || Math.round((progress / 100) * 200)} WPM</span>
                   <span className="hidden sm:inline">{progressLabel}</span>
                 </>
               ) : (
                 <>
                   <span className="truncate">Them: {progress}%</span>
-                  <span className="hidden sm:inline">Ideal: 60%</span>
+                  <span className="hidden sm:inline">60%</span>
                   <span className="truncate">You: {100 - progress}%</span>
                 </>
               )}
@@ -491,10 +491,10 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
         </div>
       </div>
       
-      {/* Current and ideal range - Bottom corners */}
+      {/* Percentage values - Bottom corners */}
       <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
-        <span className="truncate">Current: {statusLabel}</span>
-        <span className="truncate ml-1 sm:ml-2">Goal: 60%+</span>
+        <span className="truncate">{statusLabel}</span>
+        <span className="truncate ml-1 sm:ml-2">60%+</span>
       </div>
       
       {/* Expanded breakdown */}
@@ -1044,10 +1044,10 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
         </div>
         
-        {/* Current and ideal range - Bottom corners */}
+        {/* Percentage values - Bottom corners */}
         <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
-          <span className="whitespace-nowrap truncate">Current: {talkTimeRatio}%</span>
-          <span className="whitespace-nowrap truncate">Ideal: 40-60%</span>
+          <span className="whitespace-nowrap truncate">{talkTimeRatio}%</span>
+          <span className="whitespace-nowrap truncate">40-60%</span>
         </div>
       </motion.div>
       

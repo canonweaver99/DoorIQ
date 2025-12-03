@@ -94,7 +94,7 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-black flex items-start justify-center pt-16 sm:pt-20 lg:pt-24 px-3 sm:px-4 lg:px-6 pb-6">
       <SessionFeedbackForm 
         sessionId={sessionId} 
         onFeedbackComplete={handleFeedbackComplete}

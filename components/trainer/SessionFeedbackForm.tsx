@@ -73,22 +73,22 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-2xl w-full mx-auto"
+      className="max-w-3xl w-full mx-auto"
     >
-      <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-slate-700 shadow-2xl">
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-2 font-space">
+      <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-5 sm:p-7 border border-slate-700 shadow-2xl">
+        <div className="text-center mb-5 sm:mb-7">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-2 font-space">
             How did your session go?
           </h2>
-          <p className="text-slate-400 text-sm sm:text-base">
+          <p className="text-slate-400 text-xs sm:text-sm">
             Your feedback helps us improve the AI agent and your training experience
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-7">
           {/* Rating Section */}
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-4 font-space">
+            <label className="block text-xs sm:text-sm font-semibold text-slate-300 mb-3 sm:mb-4 font-space">
               Rate your session experience (1-10)
             </label>
             <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
@@ -98,7 +98,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
                   type="button"
                   onClick={() => setRating(num)}
                   className={`
-                    w-10 h-10 sm:w-12 sm:h-12 rounded-lg font-semibold text-sm sm:text-base transition-all
+                    w-9 h-9 sm:w-11 sm:h-11 rounded-lg font-semibold text-xs sm:text-sm transition-all
                     ${rating === num
                       ? 'bg-purple-500 text-white scale-110 shadow-lg shadow-purple-500/50'
                       : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-600'
@@ -126,17 +126,17 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
 
           {/* Improvement Area Section */}
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-4 font-space">
+            <label className="block text-xs sm:text-sm font-semibold text-slate-300 mb-3 sm:mb-4 font-space">
               What improvements should be made to the AI agent?
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               {IMPROVEMENT_OPTIONS.map((option) => (
                 <button
                   key={option}
                   type="button"
                   onClick={() => setImprovementArea(option)}
                   className={`
-                    px-4 py-3 rounded-lg text-left transition-all border
+                    px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-left transition-all border text-xs sm:text-sm
                     ${improvementArea === option
                       ? 'bg-purple-500/20 border-purple-500 text-purple-300'
                       : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750 hover:border-slate-600'
@@ -151,7 +151,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
 
           {/* Text Feedback Section */}
           <div>
-            <label htmlFor="feedback-text" className="block text-sm font-semibold text-slate-300 mb-3 font-space">
+            <label htmlFor="feedback-text" className="block text-xs sm:text-sm font-semibold text-slate-300 mb-2 sm:mb-3 font-space">
               Additional feedback <span className="text-slate-500 font-normal">(optional)</span>
             </label>
             <textarea
@@ -159,8 +159,8 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder="Tell us more about your session experience and how the AI agent performed... (optional)"
-              rows={5}
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none font-sans"
+              rows={4}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none font-sans text-xs sm:text-sm"
             />
           </div>
 
@@ -179,7 +179,7 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
           <button
             type="submit"
             disabled={isSubmitting || !rating || !improvementArea}
-            className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space"
+            className="w-full px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space text-sm sm:text-base"
           >
             {isSubmitting ? (
               <>
