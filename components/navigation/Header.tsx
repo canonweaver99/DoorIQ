@@ -993,10 +993,10 @@ function HeaderContent() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`inline-flex items-center gap-1.5 md:gap-2 rounded-md px-4 md:px-5 py-3 md:py-3.5 text-base md:text-lg transition-all flex-shrink-0 font-space
+                      className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base transition-all flex-shrink-0 font-space
                         ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
                     >
-                      <Icon className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
+                      <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
                       <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
                     </Link>
                   )

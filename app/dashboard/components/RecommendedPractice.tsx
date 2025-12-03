@@ -10,6 +10,8 @@ import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/pe
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { useModules } from '@/hooks/learning/useModules'
 import { ModuleCategory } from '@/lib/learning/types'
+import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { cn } from '@/lib/utils'
 
 interface Recommendation {
   recommendedPersona: string
@@ -246,6 +248,11 @@ export default function RecommendedPractice() {
   const estimatedTime = personaMeta?.card?.estimatedTime || '5-7 min'
   const difficultyStars = getDifficultyStars(personaMeta?.bubble?.difficulty || 'Moderate')
   const tip = personaMeta?.card?.bestFor || recommendation.reasoning
+  
+  // Get agent bubble color variant
+  const variantKey = (personaMeta?.bubble?.color || 'primary') as keyof typeof COLOR_VARIANTS
+  const variantStyles = COLOR_VARIANTS[variantKey]
+  const imageStyle = getAgentImageStyle(personaName)
 
   // Homeowner quote
   const homeownerQuote = "Howdy Partner, what can I do for ya? Yeah I think I'm all covered on that front but thanks!"
@@ -265,26 +272,81 @@ export default function RecommendedPractice() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-6 mb-6">
-        {/* Animated Persona Portrait */}
-        <motion.div
-          animate={{
-            scale: [1, 1.02, 1],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="relative w-32 h-32 md:w-40 md:h-40 mx-auto md:mx-0 rounded-full overflow-hidden border-2 border-white/10 flex-shrink-0"
-        >
-          <Image
-            src={agentImage}
-            alt={personaName}
-            fill
-            className="object-cover relative z-10"
-            sizes="160px"
-          />
-        </motion.div>
+        {/* Animated Persona Portrait with Colored Circles */}
+        <div className="relative h-32 w-32 md:h-40 md:w-40 mx-auto md:mx-0 flex-shrink-0">
+          {/* Concentric circles */}
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className={cn(
+                "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
+                variantStyles.border[i],
+                variantStyles.gradient
+              )}
+              animate={{
+                rotate: 360,
+                scale: [1, 1.05, 1],
+                opacity: [0.7, 0.9, 0.7],
+              }}
+              transition={{
+                rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+                scale: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0 },
+                opacity: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0 },
+              }}
+            >
+              <div
+                className={cn(
+                  "absolute inset-0 rounded-full mix-blend-screen",
+                  `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
+                    "from-",
+                    ""
+                  )}/20%,transparent_70%)]`
+                )}
+              />
+            </motion.div>
+          ))}
+
+          {/* Profile Image */}
+          <motion.div 
+            className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
+            animate={{
+              scale: [1, 1.05, 1],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0,
+            }}
+          >
+            <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
+              {(() => {
+                const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                let translateY = '0'
+                const verticalNum = parseFloat(vertical)
+                if (verticalNum !== 50) {
+                  const translatePercent = ((verticalNum - 50) / 150) * 100
+                  translateY = `${translatePercent}%`
+                }
+                const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                
+                return (
+                  <Image
+                    src={agentImage}
+                    alt={personaName}
+                    fill
+                    className="object-cover"
+                    style={{
+                      objectPosition: `${horizontal} ${vertical}`,
+                      transform: `scale(${scaleValue}) translateY(${translateY})`,
+                    }}
+                    sizes="160px"
+                  />
+                )
+              })()}
+            </div>
+          </motion.div>
+        </div>
 
         {/* Content */}
         <div className="flex-1 flex flex-col max-w-[60%]">

@@ -54,7 +54,7 @@ export default function OnboardingElements({ totalSessions }: OnboardingElements
           </div>
           
           {showWelcomeVideo ? (
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+            <div className="aspect-video bg-black rounded-lg overflow-hidden w-1/2 mx-auto">
               {/* Embed video here - replace with actual video URL */}
               <div className="w-full h-full flex items-center justify-center">
                 <p className="text-white/60 text-sm">Video placeholder - Add your welcome video URL</p>
@@ -63,7 +63,7 @@ export default function OnboardingElements({ totalSessions }: OnboardingElements
           ) : (
             <button
               onClick={() => setShowWelcomeVideo(true)}
-              className="w-full aspect-video bg-black/50 border border-white/10 rounded-lg flex items-center justify-center hover:border-purple-500/40 transition-colors group"
+              className="w-1/2 mx-auto aspect-video bg-black/50 border border-white/10 rounded-lg flex items-center justify-center hover:border-purple-500/40 transition-colors group"
             >
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-3 bg-purple-500/20 rounded-full flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">

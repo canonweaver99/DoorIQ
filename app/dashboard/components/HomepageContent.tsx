@@ -2,21 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import HeroQuickStart from './HeroQuickStart'
 import PerformanceDashboard from './PerformanceDashboard'
-import PracticeHistoryFeed from './PracticeHistoryFeed'
 import QuickActionsToolbar from './QuickActionsToolbar'
 import OnboardingElements from './OnboardingElements'
 import MiniLeaderboard from '@/components/dashboard/MiniLeaderboard'
 import PerformanceSnapshot from '@/components/dashboard/PerformanceSnapshot'
 import WeeklySessionsChart from '@/components/dashboard/WeeklySessionsChart'
 import DailyMotivationalQuote from '@/components/dashboard/DailyMotivationalQuote'
-import QuickTips from '@/components/dashboard/QuickTips'
 import RecommendedAgents from '@/components/dashboard/RecommendedAgents'
 import SkillGapsAnalysis from '@/components/dashboard/SkillGapsAnalysis'
 import RecommendedPractice from './RecommendedPractice'
+import HeroPerformanceCard from '@/components/dashboard/HeroPerformanceCard'
 import { useRouter } from 'next/navigation'
-import { Play, ArrowRight } from 'lucide-react'
+import { Play, ArrowRight, BarChart3 } from 'lucide-react'
 
 interface HomepageStats {
   overallScore: number
@@ -53,6 +51,7 @@ interface RotatingStats {
 export default function HomepageContent() {
   const [stats, setStats] = useState<HomepageStats | null>(null)
   const [rotatingStats, setRotatingStats] = useState<RotatingStats | null>(null)
+  const [dashboardData, setDashboardData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -65,9 +64,10 @@ export default function HomepageContent() {
       setLoading(true)
       setError(null)
 
-      const [statsResponse, rotatingResponse] = await Promise.all([
+      const [statsResponse, rotatingResponse, dashboardResponse] = await Promise.all([
         fetch('/api/homepage/stats'),
-        fetch('/api/homepage/rotating-stats')
+        fetch('/api/homepage/rotating-stats'),
+        fetch('/api/dashboard/data')
       ])
 
       if (!statsResponse.ok) {
@@ -80,6 +80,11 @@ export default function HomepageContent() {
       if (rotatingResponse.ok) {
         const rotatingData = await rotatingResponse.json()
         setRotatingStats(rotatingData)
+      }
+
+      if (dashboardResponse.ok) {
+        const dashboardDataResult = await dashboardResponse.json()
+        setDashboardData(dashboardDataResult)
       }
     } catch (err: any) {
       console.error('Error fetching homepage data:', err)
@@ -178,26 +183,22 @@ export default function HomepageContent() {
         />
       </motion.section>
 
-      {/* Quick Tips - Show for all users */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.05 }}
-      >
-        <QuickTips 
-          skillGaps={hasCompletedSessions ? skillGaps : []} 
-          overallScore={stats.overallScore} 
-        />
-      </motion.section>
 
       {/* Hero/Quick Start Section - Main CTA */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <HeroQuickStart lastSession={stats.lastSession} />
-      </motion.section>
+      {dashboardData && (
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="scale-75 origin-top"
+        >
+          <HeroPerformanceCard
+            userName={dashboardData.userName || 'User'}
+            currentDateTime={dashboardData.currentDateTime || new Date().toISOString()}
+            session={dashboardData.session}
+          />
+        </motion.section>
+      )}
 
       {/* Recommended Agents - Show for all users */}
       <motion.section
@@ -208,34 +209,29 @@ export default function HomepageContent() {
         <RecommendedAgents skillGaps={hasCompletedSessions ? skillGaps : []} />
       </motion.section>
 
-      {/* Performance Snapshot (shown after first session) */}
+      {/* Performance Snapshot with Weekly Sessions (shown after first session) */}
       {hasCompletedSessions && !isEmpty && (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <PerformanceSnapshot
-            overallScore={stats.overallScore}
-            avgDurationSeconds={stats.metrics.avgDurationSeconds}
-            toneScore={stats.metrics.toneScore}
-            trend={{
-              score: stats.trend,
-              duration: 0,
-              tone: 0,
-            }}
-          />
-        </motion.section>
-      )}
-
-      {/* Weekly Sessions Chart */}
-      {hasCompletedSessions && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-        >
-          <WeeklySessionsChart />
+          <div className="bg-white/[0.02] border border-white/10 rounded-xl p-6 md:p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
+                </div>
+                <div>
+                  <h2 className="text-white font-space font-medium text-lg md:text-xl tracking-tight">
+                    Performance Snapshot
+                  </h2>
+                  <p className="text-white/60 text-sm">Your recent average metrics</p>
+                </div>
+              </div>
+            </div>
+            <WeeklySessionsChart />
+          </div>
         </motion.section>
       )}
 
@@ -274,14 +270,6 @@ export default function HomepageContent() {
         <MiniLeaderboard />
       </motion.section>
 
-      {/* Practice History Feed */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.45 }}
-      >
-        <PracticeHistoryFeed />
-      </motion.section>
 
       {/* Quick Actions Toolbar */}
       <motion.section

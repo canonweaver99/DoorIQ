@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Medal, Award } from 'lucide-react'
+import { Trophy, Medal, Award, Crown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface LeaderboardEntry {
@@ -132,62 +132,66 @@ export default function MiniLeaderboard() {
           TEAM LEADERBOARD
         </h3>
 
-      {/* Top 3 - Prominently Displayed */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {topThree.map((entry, index) => {
-          const isFirst = entry.rank === 1
-          return (
-            <motion.div
-              key={entry.rank}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`relative flex flex-col items-center p-4 rounded-lg border-2 ${
-                isFirst 
-                  ? 'border-yellow-400/50 bg-yellow-400/10' 
-                  : entry.rank === 2
-                  ? 'border-gray-300/50 bg-gray-300/10'
-                  : 'border-orange-400/50 bg-orange-400/10'
-              } ${entry.isYou ? 'ring-2 ring-purple-400/50' : ''}`}
-            >
-              {/* Rank Badge */}
-              <div className={`text-3xl font-space font-bold mb-2 ${getRankColor(entry.rank)}`}>
-                {entry.rank}
-              </div>
-              
-              {/* Avatar */}
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/20 mb-2">
-                {entry.avatar ? (
-                  <img 
-                    src={entry.avatar} 
-                    alt={entry.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white font-space font-bold">
-                    {entry.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
+      {/* Top 3 Podium - Matching Leaderboard Page Style */}
+      {topThree.length >= 3 && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="grid grid-cols-3 gap-4 md:gap-6 mb-6"
+        >
+          {/* 2nd Place */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="order-1"
+          >
+            <div className={`bg-gradient-to-br from-gray-600/30 to-gray-700/30 backdrop-blur-xl rounded-xl p-3 border-2 border-gray-400/70 text-center transform translate-y-4 shadow-2xl shadow-gray-400/20 ${topThree[1].isYou ? 'ring-2 ring-purple-400/50' : ''}`}>
+              <Medal className="w-8 h-8 text-gray-300 mx-auto mb-2 drop-shadow-lg" />
+              <h3 className="text-sm font-bold text-white mb-0.5 drop-shadow truncate font-space">{topThree[1].name}</h3>
+              <p className="text-lg font-bold text-gray-200 mb-0.5 drop-shadow font-space">
+                ${topThree[1].score.toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-300 drop-shadow font-space font-bold">2nd Place</p>
+            </div>
+          </motion.div>
 
-              {/* Name */}
-              <div className="text-center">
-                <p className={`text-sm font-space font-bold ${entry.isYou ? 'text-purple-400' : 'text-white'}`}>
-                  {entry.name}
-                </p>
-                <p className="text-xs font-space text-white/60 mt-1">
-                  ${entry.score.toLocaleString()}
-                </p>
-              </div>
+          {/* 1st Place */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="order-2"
+          >
+            <div className={`bg-gradient-to-br from-yellow-600/30 to-yellow-700/30 backdrop-blur-xl rounded-xl p-3 border-2 border-yellow-500/70 text-center transform scale-105 shadow-2xl shadow-yellow-500/20 ${topThree[0].isYou ? 'ring-2 ring-purple-400/50' : ''}`}>
+              <Crown className="w-10 h-10 text-yellow-400 mx-auto mb-2 drop-shadow-lg" />
+              <h3 className="text-base font-bold text-white mb-0.5 drop-shadow truncate font-space">{topThree[0].name}</h3>
+              <p className="text-xl font-bold text-yellow-400 mb-0.5 drop-shadow-lg font-space">
+                ${topThree[0].score.toLocaleString()}
+              </p>
+              <p className="text-base text-yellow-400 drop-shadow font-space font-bold">1st Place</p>
+            </div>
+          </motion.div>
 
-              {/* Rank Icon */}
-              <div className="absolute top-2 right-2">
-                {getRankIcon(entry.rank)}
-              </div>
-            </motion.div>
-          )
-        })}
-      </div>
+          {/* 3rd Place */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="order-3"
+          >
+            <div className={`bg-gradient-to-br from-amber-700/30 to-orange-800/30 backdrop-blur-xl rounded-xl p-3 border-2 border-amber-600/70 text-center transform translate-y-4 shadow-2xl shadow-amber-600/20 ${topThree[2].isYou ? 'ring-2 ring-purple-400/50' : ''}`}>
+              <Award className="w-8 h-8 text-amber-500 mx-auto mb-2 drop-shadow-lg" />
+              <h3 className="text-sm font-bold text-white mb-0.5 drop-shadow truncate font-space">{topThree[2].name}</h3>
+              <p className="text-lg font-bold text-amber-400 mb-0.5 drop-shadow font-space">
+                ${topThree[2].score.toLocaleString()}
+              </p>
+              <p className="text-sm text-amber-400 drop-shadow font-space font-bold">3rd Place</p>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* 4th, 5th, 6th - Cards Below */}
       {rest.length > 0 && (
