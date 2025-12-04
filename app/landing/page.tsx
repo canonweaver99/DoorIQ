@@ -159,18 +159,18 @@ function Navigation() {
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/auth/login"
-              className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 text-white font-medium rounded-md text-xs sm:text-sm md:text-base tracking-tight transition-all hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              className="px-5 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 text-white font-medium rounded-md text-sm sm:text-sm md:text-base tracking-tight transition-all hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
             >
               Log In
             </Link>
             <Link
               href="/book-demo"
-              className="group relative px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 bg-white text-black font-bold rounded-md text-xs sm:text-sm tracking-tight transition-all hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              className="group relative px-5 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 bg-white text-black font-bold rounded-md text-sm sm:text-sm tracking-tight transition-all hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
             >
               <span className="relative z-10 flex items-center gap-1 sm:gap-2">
                 <span className="hidden sm:inline">Book a Demo</span>
                 <span className="sm:hidden">Demo</span>
-                <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className="w-4 h-4 sm:w-4 sm:h-4 group-hover:translate-x-0.5 transition-transform" />
               </span>
             </Link>
           </div>
@@ -255,7 +255,7 @@ function HeroSection() {
   }, []);
 
   return (
-    <div id="hero" className="relative bg-black overflow-hidden">
+    <div id="hero" className="relative bg-black overflow-hidden pt-24 sm:pt-24 md:pt-16">
       {/* Animated grid pattern */}
       <motion.div
         animate={{
@@ -305,9 +305,11 @@ function HeroSection() {
         className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
       />
 
-      <ContainerScroll
+      {/* Desktop Hero Section - Hidden on Mobile */}
+      <div className="hidden md:block">
+        <ContainerScroll
         titleComponent={
-          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-12 sm:pt-16 md:pt-20 px-4">
+          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-16 sm:pt-16 md:pt-12 px-0 sm:px-4 w-full">
             {/* Badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -321,22 +323,23 @@ function HeroSection() {
             </motion.div>
 
             {/* Headline */}
-            <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 max-w-5xl pb-2">
+            <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
               <AnimatedText
                 text="Stop Losing Deals"
-                textClassName="font-space text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3]"
+                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
                 underlineClassName="hidden"
                 duration={0.04}
                 delay={0.015}
               />
               <AnimatedText
                 text="To Untrained Reps"
-                textClassName="font-space text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3]"
+                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
                 underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                 underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
                 underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
-                duration={0.04}
-                delay={0.015}
+                animationType="fade"
+                underlineFirst={true}
+                startDelay={1.3}
               />
             </div>
 
@@ -345,7 +348,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="font-sans text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white/80 max-w-4xl text-center leading-relaxed font-light px-4"
+              className="font-sans text-lg sm:text-lg md:text-lg lg:text-xl xl:text-2xl text-white/80 w-full max-w-full md:max-w-4xl text-center leading-relaxed font-light px-4"
             >
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
             </motion.p>
@@ -371,7 +374,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.65, duration: 0.6 }}
-              className="text-center mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
+              className="text-center mt-2 sm:mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
             >
               <span className="text-white/80 text-lg sm:text-xl md:text-2xl lg:text-4xl xl:text-5xl font-medium tracking-wider uppercase font-space">
                 See it in action
@@ -422,6 +425,129 @@ function HeroSection() {
           <div className="absolute inset-0 bg-gradient-to-br from-black/10 via-transparent to-black/10 pointer-events-none" />
         </div>
       </ContainerScroll>
+      </div>
+      
+      {/* Mobile Only - iPad Scroll Animation */}
+      <div className="block md:hidden mt-8">
+        <ContainerScroll
+          titleComponent={
+            <div className="flex flex-col items-center gap-3 sm:gap-4 pb-4 sm:pb-5 pt-4 sm:pt-8 px-4 w-full">
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
+              >
+                <span className="text-white/80 text-xs sm:text-sm font-medium tracking-wider uppercase font-space">
+                  Enterprise D2D Sales Training Platform
+                </span>
+              </motion.div>
+
+              {/* Headline */}
+              <div className="flex flex-col items-center gap-2 sm:gap-3 w-full max-w-full pb-2 px-4 sm:px-0">
+                <AnimatedText
+                  text="Stop Losing Deals"
+                  textClassName="font-space text-5xl xs:text-6xl sm:text-7xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                  underlineClassName="hidden"
+                  duration={0.04}
+                  delay={0.015}
+                />
+                <AnimatedText
+                  text="To Untrained Reps"
+                  textClassName="font-space text-5xl xs:text-6xl sm:text-7xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                  underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
+                  underlineHeight="h-[2px] sm:h-[2px]"
+                  underlineOffset="-bottom-1 sm:-bottom-2"
+                  animationType="fade"
+                  underlineFirst={true}
+                  startDelay={1.3}
+                />
+              </div>
+
+              {/* Subheadline */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                className="font-sans text-xl sm:text-2xl text-white/80 w-full max-w-full text-center leading-relaxed font-light px-4"
+              >
+                Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
+              </motion.p>
+
+              {/* CTA Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                className="flex justify-center mt-2"
+              >
+                <Link
+                  href="/book-demo"
+                  className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Book a Demo
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </motion.div>
+
+              {/* See it in action label */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.65, duration: 0.6 }}
+                className="text-center mt-2 sm:mt-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
+              >
+                <span className="text-white/80 text-lg sm:text-xl font-medium tracking-wider uppercase font-space">
+                  See it in action
+                </span>
+                <motion.div
+                  animate={{ y: [0, 8, 0] }}
+                  transition={{ 
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
+                </motion.div>
+              </motion.div>
+            </div>
+          }
+        >
+          {/* Demo Video */}
+          <div className="relative w-full h-full rounded-lg overflow-hidden border border-white/5 bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+              poster="/dashboard-preview.png"
+              preload="auto"
+              style={{ display: 'block' }}
+            >
+              <source src="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4" type="video/mp4" />
+            </video>
+            {/* Fallback if video doesn't load */}
+            <div 
+              ref={fallbackRef}
+              className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center"
+              style={{ display: 'none' }}
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                  <BarChart3 className="w-8 h-8 text-white/40" />
+                </div>
+                <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
+              </div>
+            </div>
+            {/* Subtle gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-black/10 via-transparent to-black/10 pointer-events-none" />
+          </div>
+        </ContainerScroll>
+      </div>
     </div>
   );
 }
@@ -476,7 +602,7 @@ function ProblemSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Problem
           </span>
-          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             Your Sales Team Is
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Leaking Money</span>
@@ -531,7 +657,7 @@ function SolutionSection() {
     {
       title: "01",
         content: (
-        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-4 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6 relative z-10">
@@ -551,7 +677,7 @@ function SolutionSection() {
     {
       title: "02",
         content: (
-        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-4 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6 relative z-10">
@@ -571,7 +697,7 @@ function SolutionSection() {
     {
       title: "03",
         content: (
-        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-4 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6 relative z-10">
@@ -591,7 +717,7 @@ function SolutionSection() {
     {
       title: "04",
         content: (
-        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
+        <div className="group relative bg-black border-2 border-white/5 rounded-lg p-4 sm:p-8 md:p-10 lg:p-12 hover:border-white/30 hover:bg-white/[0.02] transition-all duration-300 overflow-hidden">
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/5 via-purple-500/3 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6 relative z-10">
@@ -640,18 +766,18 @@ function SolutionSection() {
         className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-pink-500/10 via-purple-500/10 to-transparent rounded-full blur-[120px]"
       />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
+      <div className="relative max-w-7xl mx-auto px-0 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-6 sm:mb-8"
+          className="text-center mb-6 sm:mb-8 px-4 sm:px-0"
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Solution
           </span>
-          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             How DoorIQ Works
           </h2>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
@@ -671,7 +797,7 @@ function SolutionSection() {
 // Features Section
 function FeaturesSection() {
   return (
-    <section id="features" className="relative bg-black pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-20 md:pb-24">
+    <section id="features" className="relative bg-black pt-12 sm:pt-16 md:pt-20 pb-24 sm:pb-20 md:pb-24">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
@@ -684,11 +810,8 @@ function FeaturesSection() {
             Features
           </span>
           <div className="mb-4 sm:mb-6">
-            <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[1.1] px-4">
-              Everything You Need
-            </h2>
-            <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-light tracking-tight leading-[1.1] mt-2 sm:mt-3 md:mt-4 px-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">To Win</span>
+            <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[1.1] px-4">
+              Everything You Need <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">To Win</span>
             </h2>
           </div>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
@@ -748,7 +871,7 @@ const InlineAgentCarousel = React.memo(() => {
 
   const getItemWidth = () => {
     switch (screenSize) {
-      case 'mobile': return 96 + 20;
+      case 'mobile': return Math.round((96 + 20) * 1.1); // 10% bigger
       case 'tablet': return 112 + 24;
       case 'laptop': return 128 + 28;
       case 'desktop': return 192 + 36;
@@ -758,7 +881,7 @@ const InlineAgentCarousel = React.memo(() => {
 
   const getAnimationDuration = () => {
     switch (screenSize) {
-      case 'mobile': return 12.5;
+      case 'mobile': return 18; // Slower - increased from 12.5
       case 'tablet': return 35;
       case 'laptop': return 50;
       case 'desktop': return 65;
@@ -793,7 +916,7 @@ const InlineAgentCarousel = React.memo(() => {
                 key={`${agent.fullName}-${index}`}
                 className="relative flex-shrink-0 mx-2.5 sm:mx-3 md:mx-4 lg:mx-5 xl:mx-6"
               >
-                <div className="relative h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-40 lg:w-40 xl:h-48 xl:w-48 2xl:h-52 2xl:w-52">
+                <div className="relative h-[106px] w-[106px] sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-40 lg:w-40 xl:h-48 xl:w-48 2xl:h-52 2xl:w-52">
                   {[0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
@@ -847,7 +970,7 @@ const InlineAgentCarousel = React.memo(() => {
                             alt={agent.name}
                             fill
                             style={finalStyle}
-                            sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, (max-width: 1024px) 128px, (max-width: 1440px) 144px, 160px"
+                            sizes="(max-width: 640px) 106px, (max-width: 768px) 112px, (max-width: 1024px) 128px, (max-width: 1440px) 144px, 160px"
                             quality={95}
                             priority={index < 6}
                             unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
@@ -892,7 +1015,7 @@ function MeetTrainerSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-2 sm:mb-3 block">
             Meet the Trainers
           </span>
-          <h2 className="font-space text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-3 sm:mb-4 px-4">
+          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-3 sm:mb-4 px-4">
             Practice with
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Hyper-Realistic AI</span>
@@ -986,7 +1109,7 @@ function StatsSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Results
           </span>
-          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] px-4">
+          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] px-4">
             Real Numbers.
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Real Results.</span>
@@ -1004,17 +1127,17 @@ function StatsSection() {
               transition={{ delay: index * 0.1, duration: 0.6 }}
               className="text-center"
             >
-              <div className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-light tracking-tight mb-3 sm:mb-4">
+              <div className="font-space text-5xl sm:text-5xl md:text-5xl lg:text-7xl xl:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-light tracking-tight mb-3 sm:mb-4">
                 {stat.value === 10 ? (
                   <>
                     <AnimatedCounter end={stat.value} suffix="" />
-                    <span className="text-xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl"> Hours</span>
+                    <span className="text-2xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl"> Hours</span>
                   </>
                 ) : (
                 <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                 )}
               </div>
-              <p className="font-sans text-white/80 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed font-light px-2">
+              <p className="font-sans text-white/80 text-sm sm:text-sm md:text-base lg:text-lg leading-relaxed font-light px-2">
                 {stat.label}
               </p>
             </motion.div>
@@ -1060,18 +1183,18 @@ function TestimonialsSection() {
           viewport={{ once: true }}
           className="text-center mb-8 sm:mb-10 md:mb-12"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm sm:text-base md:text-lg lg:text-xl uppercase tracking-[0.2em] font-space mb-4 sm:mb-5 md:mb-6 block">
             Testimonials
           </span>
-          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] px-4">
+          <h2 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl text-white font-light tracking-tight leading-[0.95] px-4">
             What Our Users Say
           </h2>
         </motion.div>
 
         {/* Testimonials Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6 [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] h-[500px] sm:h-[600px] md:h-[800px]">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6 [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] h-[500px] sm:h-[600px] md:h-[800px]">
           <TestimonialsColumn testimonials={column1} duration={20} />
-          <TestimonialsColumn testimonials={column2} duration={25} className="hidden md:block" />
+          <TestimonialsColumn testimonials={column2} duration={25} />
           <TestimonialsColumn testimonials={column3} duration={22} className="hidden md:block" />
         </div>
       </div>
@@ -1119,7 +1242,7 @@ function CTASection() {
           viewport={{ once: true }}
         >
           {/* Headline */}
-          <h2 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             Ready to
             <br />
             Transform
@@ -1144,7 +1267,7 @@ function CTASection() {
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 text-white/70 text-xs sm:text-sm md:text-base lg:text-lg font-light px-4">
+          <div className="mt-6 sm:mt-8 flex flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 text-white/70 text-xs sm:text-sm md:text-base lg:text-lg font-light px-4">
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-indigo-500" />
               No credit card required
@@ -1272,11 +1395,11 @@ function LandingFooter() {
   };
 
   return (
-    <footer className="bg-black border-t border-white/[0.03] py-8 sm:py-10 md:py-12 lg:py-16">
+    <footer className="bg-black border-t border-white/[0.03] py-5 sm:py-5 md:py-12 lg:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10 lg:gap-12">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10 lg:gap-12">
           {/* Logo and Copyright */}
-          <div className="lg:col-span-1">
+          <div className="col-span-1">
             <Link href="/landing" className="inline-block mb-4 sm:mb-6">
               <Image 
                 src="/dooriqlogo.png" 
@@ -1286,19 +1409,62 @@ function LandingFooter() {
                 className="h-6 sm:h-7 md:h-8 w-auto"
               />
             </Link>
-            <p className="text-white/70 text-xs sm:text-sm font-light">
+            <p className="text-white/70 text-sm font-light leading-relaxed">
               © {new Date().getFullYear()} DoorIQ. All rights reserved.
             </p>
           </div>
 
+          {/* CTA - Right side on mobile */}
+          <div className="col-span-1 sm:col-span-2 lg:col-span-1 text-right sm:text-right lg:text-left">
+            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4 leading-none">Get Started</h3>
+            <Link
+              href="/book-demo"
+              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black font-semibold rounded-md text-sm tracking-tight hover:bg-white/95 transition-all ml-auto sm:ml-0 lg:ml-0"
+            >
+              Book a Demo
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Contact Information */}
+          <div className="col-span-2 sm:col-span-1 lg:col-span-1">
+            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4 leading-none">Contact</h3>
+            <ul className="space-y-3 list-none p-0 m-0">
+              <li>
+                <a
+                  href="mailto:contact@dooriq.ai"
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm inline-flex items-center gap-1.5 break-all"
+                >
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <span className="break-all">contact@dooriq.ai</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:602-446-1330"
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm inline-flex items-center gap-1.5"
+                >
+                  <Phone className="w-4 h-4 flex-shrink-0" />
+                  602-446-1330
+                </a>
+              </li>
+              <li>
+                <div className="text-white/80 font-space text-sm inline-flex items-start gap-1.5">
+                  <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>2505 Longview St<br />Austin, TX</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
           {/* Page Sections */}
-          <div>
-            <h3 className="text-xs sm:text-sm text-white/70 font-space uppercase tracking-wider mb-3 sm:mb-4">Sections</h3>
-            <ul className="space-y-2 sm:space-y-3">
+          <div className="hidden sm:block lg:col-span-1">
+            <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4 leading-none">Sections</h3>
+            <ul className="space-y-3 list-none p-0 m-0">
               <li>
                 <button
                   onClick={() => scrollToSection("features")}
-                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm"
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm text-left"
                 >
                   Features
                 </button>
@@ -1306,7 +1472,7 @@ function LandingFooter() {
               <li>
                 <button
                   onClick={() => scrollToSection("solution")}
-                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm"
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm text-left"
                 >
                   How It Works
                 </button>
@@ -1314,7 +1480,7 @@ function LandingFooter() {
               <li>
                 <button
                   onClick={() => scrollToSection("stats")}
-                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm"
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm text-left"
                 >
                   Results
                 </button>
@@ -1322,55 +1488,12 @@ function LandingFooter() {
               <li>
                 <button
                   onClick={() => scrollToSection("testimonials")}
-                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm"
+                  className="text-white/80 font-space hover:text-white transition-colors text-sm text-left"
                 >
                   Testimonials
                 </button>
               </li>
             </ul>
-          </div>
-
-          {/* Contact Information */}
-          <div>
-            <h3 className="text-xs sm:text-sm text-white/70 font-space uppercase tracking-wider mb-3 sm:mb-4">Contact</h3>
-            <ul className="space-y-2 sm:space-y-3">
-              <li>
-                <a
-                  href="mailto:contact@dooriq.ai"
-                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm inline-flex items-center gap-2 break-all"
-                >
-                  <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="break-all">contact@dooriq.ai</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="tel:602-446-1330"
-                  className="text-white/80 font-space hover:text-white transition-colors text-xs sm:text-sm inline-flex items-center gap-2"
-                >
-                  <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                  602-446-1330
-                </a>
-              </li>
-              <li>
-                <div className="text-white/80 font-space text-xs sm:text-sm inline-flex items-start gap-2">
-                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
-                  <span>2505 Longview St<br />Austin, TX</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* CTA */}
-          <div>
-            <h3 className="text-xs sm:text-sm text-white/70 font-space uppercase tracking-wider mb-3 sm:mb-4">Get Started</h3>
-            <Link
-              href="/book-demo"
-              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black font-semibold rounded-md text-xs sm:text-sm tracking-tight hover:bg-white/95 transition-all"
-            >
-              Book a Demo
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </Link>
           </div>
         </div>
       </div>
