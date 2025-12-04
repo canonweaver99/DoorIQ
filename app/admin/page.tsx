@@ -109,12 +109,12 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] px-6 pb-6">
+    <div className="min-h-screen bg-[#0a0a0a] px-4 sm:px-6 lg:px-8 pb-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-space font-bold tracking-tight text-white mb-2">Admin Dashboard</h1>
-          <p className="text-[#a0a0a0] font-sans leading-relaxed">Overview of all organizations and system metrics</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-space font-bold tracking-tight text-white mb-2">Admin Dashboard</h1>
+          <p className="text-sm sm:text-base text-[#a0a0a0] font-sans leading-relaxed">Overview of all organizations and system metrics</p>
         </div>
 
         {/* Main Stats Cards */}
@@ -191,53 +191,53 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-space font-semibold tracking-tight text-white mb-4">Quick Actions</h2>
+        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] shadow-sm p-4 sm:p-6 mb-8">
+          <h2 className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/admin/organizations">
-              <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+              <div className="p-4 sm:p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group min-h-[80px] sm:min-h-0">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">View Organizations</h3>
-                    <p className="text-sm text-[#a0a0a0] font-sans">Manage all organizations</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">View Organizations</h3>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Manage all organizations</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors flex-shrink-0 ml-2" />
                 </div>
               </div>
             </Link>
             
             <Link href="/admin/sales-leads">
-              <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+              <div className="p-4 sm:p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group min-h-[80px] sm:min-h-0">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Sales Leads</h3>
-                    <p className="text-sm text-[#a0a0a0] font-sans">View and manage leads</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Sales Leads</h3>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">View and manage leads</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors flex-shrink-0 ml-2" />
                 </div>
               </div>
             </Link>
             
             <Link href="/admin/sessions">
-              <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+              <div className="p-4 sm:p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group min-h-[80px] sm:min-h-0">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Training Sessions</h3>
-                    <p className="text-sm text-[#a0a0a0] font-sans">View all sessions</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Training Sessions</h3>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">View all sessions</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors flex-shrink-0 ml-2" />
                 </div>
               </div>
             </Link>
 
             <Link href="/pricing">
-              <div className="p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+              <div className="p-4 sm:p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group min-h-[80px] sm:min-h-0">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Pricing</h3>
-                    <p className="text-sm text-[#a0a0a0] font-sans">View pricing plans</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Pricing</h3>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">View pricing plans</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors flex-shrink-0 ml-2" />
                 </div>
               </div>
             </Link>
@@ -307,15 +307,15 @@ function StatCard({
               : 'bg-[#2a2a2a]'
 
   return (
-    <div className={`${darkBgColor} rounded-xl p-6 border border-[#2a2a2a] shadow-sm hover:shadow-md transition-shadow`}>
+    <div className={`${darkBgColor} rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm hover:shadow-md transition-shadow`}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[#a0a0a0] text-sm font-space font-medium">{title}</span>
+        <span className="text-[#a0a0a0] text-xs sm:text-sm font-space font-medium">{title}</span>
         <div className={`${darkIconBg} p-2 rounded-lg`}>
           {icon}
         </div>
       </div>
       <div className="flex items-baseline gap-2 mb-1">
-        <p className={`${size === "normal" ? "text-3xl" : "text-2xl"} font-space font-bold tracking-tight text-white`}>{displayValue}</p>
+        <p className={`${size === "normal" ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-space font-bold tracking-tight text-white`}>{displayValue}</p>
         {change && (
           <span className={`text-sm font-space font-semibold ${
             change.isPositive ? 'text-green-400' : 'text-red-400'

@@ -95,7 +95,7 @@ export default function OrganizationDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
@@ -103,9 +103,9 @@ export default function OrganizationDetailPage() {
 
   if (!organization) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-slate-400 mb-4">Organization not found</p>
+          <p className="text-[#a0a0a0] mb-4 font-sans">Organization not found</p>
           <Button onClick={() => router.push('/admin/organizations')}>
             Back to Organizations
           </Button>
@@ -117,43 +117,44 @@ export default function OrganizationDetailPage() {
   const monthlyCost = organization.seat_limit * 69
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-[#0a0a0a] px-4 sm:px-6 lg:px-8 pb-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Button
             variant="ghost"
             onClick={() => router.push('/admin/organizations')}
-            className="mb-4"
+            className="mb-4 min-h-[44px] sm:min-h-0"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Organizations
           </Button>
           
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <Building2 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg">
+                  <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-white">{organization.name}</h1>
-                  <p className="text-slate-400 capitalize">{organization.plan_tier || 'No plan'} Plan</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white">{organization.name}</h1>
+                  <p className="text-sm sm:text-base text-[#a0a0a0] capitalize font-sans">{organization.plan_tier || 'No plan'} Plan</p>
                 </div>
               </div>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               {organization.stripe_customer_id && (
                 <Button
                   variant="outline"
                   onClick={() => window.open(`https://dashboard.stripe.com/customers/${organization.stripe_customer_id}`, '_blank')}
+                  className="min-h-[44px] sm:min-h-0"
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   View in Stripe
                 </Button>
               )}
-              <Button onClick={() => setSeatModalOpen(true)}>
+              <Button onClick={() => setSeatModalOpen(true)} className="min-h-[44px] sm:min-h-0">
                 <Settings className="w-4 h-4 mr-2" />
                 Manage Seats
               </Button>
@@ -162,39 +163,39 @@ export default function OrganizationDetailPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a]">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-400 text-sm">Members</p>
-              <Users className="w-5 h-5 text-blue-400" />
+              <p className="text-[#a0a0a0] text-xs sm:text-sm font-sans">Members</p>
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
             </div>
-            <p className="text-3xl font-bold text-white">{members.length}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{members.length}</p>
           </div>
           
-          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
+          <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a]">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-400 text-sm">Seats Used</p>
-              <Users className="w-5 h-5 text-green-400" />
+              <p className="text-[#a0a0a0] text-xs sm:text-sm font-sans">Seats Used</p>
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
             </div>
-            <p className="text-3xl font-bold text-white">
+            <p className="text-2xl sm:text-3xl font-bold text-white">
               {organization.seats_used}/{organization.seat_limit}
             </p>
           </div>
           
-          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
+          <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a]">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-400 text-sm">Monthly Billing</p>
-              <CreditCard className="w-5 h-5 text-yellow-400" />
+              <p className="text-[#a0a0a0] text-xs sm:text-sm font-sans">Monthly Billing</p>
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
             </div>
-            <p className="text-3xl font-bold text-white">${monthlyCost.toLocaleString()}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">${monthlyCost.toLocaleString()}</p>
           </div>
           
-          <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-800">
+          <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a]">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-400 text-sm">Created</p>
-              <Calendar className="w-5 h-5 text-purple-400" />
+              <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Created</p>
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
             </div>
-            <p className="text-lg font-bold text-white">
+            <p className="text-lg sm:text-xl font-bold text-white">
               {format(new Date(organization.created_at), 'MMM d, yyyy')}
             </p>
           </div>
@@ -206,38 +207,38 @@ export default function OrganizationDetailPage() {
         </div>
 
         {/* Members Section */}
-        <div className="bg-slate-900/50 rounded-xl border border-slate-800 mb-8">
-          <div className="p-6 border-b border-slate-800">
-            <h2 className="text-xl font-semibold text-white">Members ({members.length})</h2>
+        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] mb-6 sm:mb-8">
+          <div className="p-4 sm:p-6 border-b border-[#2a2a2a]">
+            <h2 className="text-lg sm:text-xl font-semibold text-white font-space">Members ({members.length})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-800/50 border-b border-slate-800">
+              <thead className="bg-[#0a0a0a] border-b border-[#2a2a2a]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Joined</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[#a0a0a0] uppercase font-space">Name</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[#a0a0a0] uppercase font-space">Email</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[#a0a0a0] uppercase font-space">Role</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[#a0a0a0] uppercase font-space">Joined</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-[#2a2a2a]">
                 {members.map((member) => (
-                  <tr key={member.id} className="hover:bg-slate-800/30">
-                    <td className="px-6 py-4 text-sm text-white">{member.full_name}</td>
-                    <td className="px-6 py-4 text-sm text-slate-400">{member.email}</td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 capitalize">
+                  <tr key={member.id} className="hover:bg-[#0a0a0a] transition-colors">
+                    <td className="px-4 sm:px-6 py-4 text-sm text-white font-sans">{member.full_name}</td>
+                    <td className="px-4 sm:px-6 py-4 text-sm text-[#a0a0a0] font-sans break-all">{member.email}</td>
+                    <td className="px-4 sm:px-6 py-4">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400 capitalize font-space">
                         {member.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-400">
+                    <td className="px-4 sm:px-6 py-4 text-sm text-[#a0a0a0] font-sans">
                       {format(new Date(member.created_at), 'MMM d, yyyy')}
                     </td>
                   </tr>
                 ))}
                 {members.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan={4} className="px-4 sm:px-6 py-12 text-center text-[#a0a0a0] font-sans">
                       No members found
                     </td>
                   </tr>
@@ -249,23 +250,23 @@ export default function OrganizationDetailPage() {
 
         {/* Pending Invitations */}
         {invitations.length > 0 && (
-          <div className="bg-slate-900/50 rounded-xl border border-slate-800">
-            <div className="p-6 border-b border-slate-800">
-              <h2 className="text-xl font-semibold text-white">Pending Invitations ({invitations.length})</h2>
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a]">
+            <div className="p-4 sm:p-6 border-b border-[#2a2a2a]">
+              <h2 className="text-lg sm:text-xl font-semibold text-white font-space">Pending Invitations ({invitations.length})</h2>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="space-y-3">
                 {invitations.map((invite) => (
-                  <div key={invite.id} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-slate-400" />
-                        <span className="text-white">{invite.email}</span>
-                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 capitalize">
+                  <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-[#0a0a0a] rounded-lg gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Mail className="w-4 h-4 text-[#666] flex-shrink-0" />
+                        <span className="text-white font-sans break-all">{invite.email}</span>
+                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-500/20 text-yellow-400 capitalize font-space">
                           {invite.role}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 mt-1">
+                      <p className="text-sm text-[#a0a0a0] mt-1 font-sans">
                         Expires {format(new Date(invite.expires_at), 'MMM d, yyyy')}
                       </p>
                     </div>

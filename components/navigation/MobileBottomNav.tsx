@@ -126,16 +126,14 @@ export function MobileBottomNav() {
       // Manager Panel - Show for managers and admins
       { name: 'Manager Panel', href: '/manager', icon: Users, show: isManager || isAdmin },
       
-      // Learning & Analytics
+      // Learning
       { name: 'Learning', href: '/learning', icon: BookOpen, show: isSignedIn },
-      { name: 'Analytics', href: '/analytics', icon: TrendingUp, show: isSignedIn },
       
       // Team & Management
       { name: 'Team', href: '/team', icon: Users, show: isSignedIn && userData?.team_id },
       { name: 'Admin Panel', href: '/admin', icon: ShieldCheck, show: isAdmin },
       
-      // Profile & Settings
-      { name: 'Profile', href: '/profile', icon: UserCircle, show: isSignedIn },
+      // Settings
       { name: 'Settings', href: '/settings', icon: SettingsIcon, show: true },
       
       // Help & Support
@@ -394,62 +392,62 @@ export function MobileBottomNav() {
 
                   {/* Menu Items */}
                   <nav className="space-y-1">
-                    {menuItems.map((item) => {
-                      const Icon = item.icon
-                      const active = isActive(item.href)
-                      const isSignOut = (item as any).isSignOut
-                      
-                      // Sign Out button (special handling)
-                      if (isSignOut) {
+                    {menuItems
+                      .filter(item => !(item as any).isSignOut) // Filter out sign out from regular items
+                      .map((item) => {
+                        const Icon = item.icon
+                        const active = isActive(item.href)
+                        
+                        // Regular menu items
                         return (
-                          <button
-                            key="sign-out"
-                            onClick={handleSignOut}
-                            disabled={signingOut}
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setIsMenuOpen(false)}
                             className={cn(
-                              'w-full flex items-center gap-4',
+                              'flex items-center gap-4',
                               'px-4 py-4 rounded-xl',
                               'min-h-[56px]',
                               'transition-all duration-200',
                               'touch-manipulation',
                               'active:scale-[0.98]',
-                              'text-red-400 hover:bg-red-600/20 hover:text-red-300 active:bg-red-600/30',
-                              'border border-red-600/30',
-                              signingOut && 'opacity-50 cursor-not-allowed'
+                              active
+                                ? 'bg-purple-600/20 text-purple-400 border border-purple-600/30'
+                                : 'text-gray-300 hover:bg-gray-800 hover:text-white active:bg-gray-700'
                             )}
                           >
-                            <Icon className="w-6 h-6 flex-shrink-0 text-red-400" />
-                            <span className="font-medium text-base">
-                              {signingOut ? 'Signing out...' : item.name}
-                            </span>
-                          </button>
+                            <Icon className={cn('w-6 h-6 flex-shrink-0', active ? 'text-purple-400' : 'text-gray-400')} />
+                            <span className="font-medium text-base">{item.name}</span>
+                          </Link>
                         )
-                      }
-                      
-                      // Regular menu items
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setIsMenuOpen(false)}
-                          className={cn(
-                            'flex items-center gap-4',
-                            'px-4 py-4 rounded-xl',
-                            'min-h-[56px]',
-                            'transition-all duration-200',
-                            'touch-manipulation',
-                            'active:scale-[0.98]',
-                            active
-                              ? 'bg-purple-600/20 text-purple-400 border border-purple-600/30'
-                              : 'text-gray-300 hover:bg-gray-800 hover:text-white active:bg-gray-700'
-                          )}
-                        >
-                          <Icon className={cn('w-6 h-6 flex-shrink-0', active ? 'text-purple-400' : 'text-gray-400')} />
-                          <span className="font-medium text-base">{item.name}</span>
-                        </Link>
-                      )
-                    })}
+                      })}
                   </nav>
+
+                  {/* Sign Out Button - Always at bottom */}
+                  {isSignedIn && (
+                    <div className="mt-6 pt-6 border-t border-gray-800">
+                      <button
+                        onClick={handleSignOut}
+                        disabled={signingOut}
+                        className={cn(
+                          'w-full flex items-center gap-4',
+                          'px-4 py-4 rounded-xl',
+                          'min-h-[56px]',
+                          'transition-all duration-200',
+                          'touch-manipulation',
+                          'active:scale-[0.98]',
+                          'text-red-400 hover:bg-red-600/20 hover:text-red-300 active:bg-red-600/30',
+                          'border border-red-600/30',
+                          signingOut && 'opacity-50 cursor-not-allowed'
+                        )}
+                      >
+                        <LogOut className="w-6 h-6 flex-shrink-0 text-red-400" />
+                        <span className="font-medium text-base">
+                          {signingOut ? 'Signing out...' : 'Sign Out'}
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </>

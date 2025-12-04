@@ -6,6 +6,7 @@ import { Building2, Search, Filter, Users, CreditCard } from 'lucide-react'
 import { OrganizationTable } from '@/components/admin/OrganizationTable'
 import { OrganizationCard } from '@/components/admin/OrganizationCard'
 import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface Organization {
   id: string
@@ -24,6 +25,7 @@ export default function AdminOrganizationsPage() {
   const [search, setSearch] = useState('')
   const [planFilter, setPlanFilter] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     fetchOrganizations()
@@ -76,61 +78,64 @@ export default function AdminOrganizationsPage() {
   const totalMonthlyRevenue = organizations.reduce((sum, org) => sum + (org.seat_limit * 69), 0)
   const activeSubscriptions = organizations.filter(org => org.stripe_subscription_id).length
 
+  // On mobile, force grid view for better UX
+  const effectiveViewMode = isMobile ? 'grid' : viewMode
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] px-6 pb-6">
+    <div className="min-h-screen bg-[#0a0a0a] px-4 sm:px-6 lg:px-8 pb-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-space font-bold tracking-tight text-white mb-2">Organizations</h1>
-          <p className="text-[#a0a0a0] font-sans leading-relaxed">Manage all organizations using DoorIQ</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-space font-bold tracking-tight text-white mb-2">Organizations</h1>
+          <p className="text-sm sm:text-base text-[#a0a0a0] font-sans leading-relaxed">Manage all organizations using DoorIQ</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[#a0a0a0] text-sm font-space font-medium">Total Organizations</p>
+              <p className="text-[#a0a0a0] text-xs sm:text-sm font-space font-medium">Total Organizations</p>
               <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Building2 className="w-5 h-5 text-purple-400" />
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
               </div>
             </div>
-            <p className="text-3xl font-space font-bold tracking-tight text-white">{organizations.length}</p>
+            <p className="text-2xl sm:text-3xl font-space font-bold tracking-tight text-white">{organizations.length}</p>
           </div>
           
-          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] shadow-sm">
+          <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[#a0a0a0] text-sm font-medium">Total Members</p>
+              <p className="text-[#a0a0a0] text-xs sm:text-sm font-medium">Total Members</p>
               <div className="p-2 bg-blue-500/20 rounded-lg">
-                <Users className="w-5 h-5 text-blue-400" />
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{totalMembers}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{totalMembers}</p>
           </div>
           
-          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] shadow-sm">
+          <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[#a0a0a0] text-sm font-medium">Active Subscriptions</p>
+              <p className="text-[#a0a0a0] text-xs sm:text-sm font-medium">Active Subscriptions</p>
               <div className="p-2 bg-green-500/20 rounded-lg">
-                <CreditCard className="w-5 h-5 text-green-400" />
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{activeSubscriptions}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{activeSubscriptions}</p>
           </div>
           
-          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] shadow-sm">
+          <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[#a0a0a0] text-sm font-medium">Monthly Revenue</p>
+              <p className="text-[#a0a0a0] text-xs sm:text-sm font-medium">Monthly Revenue</p>
               <div className="p-2 bg-yellow-500/20 rounded-lg">
-                <CreditCard className="w-5 h-5 text-yellow-400" />
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">${totalMonthlyRevenue.toLocaleString()}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">${totalMonthlyRevenue.toLocaleString()}</p>
           </div>
         </div>
 
         {/* Filters and Search */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="flex-1 min-w-[200px]">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+          <div className="flex-1 w-full sm:min-w-[200px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666] w-4 h-4" />
               <input
@@ -138,17 +143,17 @@ export default function AdminOrganizationsPage() {
                 placeholder="Search organizations..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 sm:py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm sm:text-base text-white placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-[#a0a0a0]" />
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Filter className="w-5 h-5 text-[#a0a0a0] flex-shrink-0" />
             <select
               value={planFilter}
               onChange={(e) => setPlanFilter(e.target.value)}
-              className="bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="flex-1 sm:flex-none bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg px-3 py-2.5 sm:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px] sm:min-h-0"
             >
               <option value="all">All Plans</option>
               <option value="starter">Starter</option>
@@ -157,22 +162,26 @@ export default function AdminOrganizationsPage() {
             </select>
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'table' ? 'default' : 'outline'}
-              onClick={() => setViewMode('table')}
-              size="sm"
-            >
-              Table
-            </Button>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              onClick={() => setViewMode('grid')}
-              size="sm"
-            >
-              Grid
-            </Button>
-          </div>
+          {!isMobile && (
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                onClick={() => setViewMode('table')}
+                size="sm"
+                className="min-h-[44px] sm:min-h-0"
+              >
+                Table
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                onClick={() => setViewMode('grid')}
+                size="sm"
+                className="min-h-[44px] sm:min-h-0"
+              >
+                Grid
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Organizations List */}
@@ -180,10 +189,10 @@ export default function AdminOrganizationsPage() {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
           </div>
-        ) : viewMode === 'table' ? (
+        ) : effectiveViewMode === 'table' ? (
           <OrganizationTable organizations={filteredOrganizations} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredOrganizations.map((org) => (
               <OrganizationCard key={org.id} organization={org} />
             ))}

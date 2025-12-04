@@ -156,19 +156,19 @@ export default function LearningPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 pt-32">
+    <div className="min-h-screen bg-black py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-12 text-center"
+          className="mb-8 sm:mb-12 text-center px-2"
         >
-          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
+          <h1 className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1 sm:mb-2">
             Learning Center
           </h1>
-          <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-300 drop-shadow-md font-space">
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-slate-300 drop-shadow-md font-space leading-tight">
             Master D2D sales{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
               fundamentals
@@ -182,23 +182,23 @@ export default function LearningPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="mb-6"
+            className="mb-4 sm:mb-6"
           >
             <Link
               href={`/learning/modules/${nextModule.slug}`}
-              className="block bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/30 rounded-lg p-4 hover:border-purple-500/50 transition-all duration-300"
+              className="block bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/30 rounded-lg p-3 sm:p-4 active:border-purple-500/50 transition-all duration-300 touch-manipulation"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                    <ArrowRight className="w-5 h-5 text-purple-400" />
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
                   </div>
-                <div>
-                    <p className="text-sm text-purple-400 font-semibold font-space">Continue where you left off</p>
-                    <p className="text-white font-medium font-sans">{nextModule.title}</p>
+                <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-purple-400 font-semibold font-space">Continue where you left off</p>
+                    <p className="text-white font-medium font-sans text-sm sm:text-base truncate">{nextModule.title}</p>
                 </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-purple-400" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>
@@ -209,7 +209,7 @@ export default function LearningPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
         >
           {categoryCards.map((card, index) => {
             const Icon = card.icon
@@ -261,9 +261,9 @@ export default function LearningPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 * index }}
               >
-                <Link href={card.href}>
+                <Link href={card.href} className="touch-manipulation active:scale-[0.98] transition-transform">
                   <div 
-                    className="relative rounded-xl p-6 h-full flex flex-col min-h-[256px] overflow-hidden"
+                    className="relative rounded-xl p-4 sm:p-5 lg:p-6 h-full flex flex-col min-h-[200px] sm:min-h-[240px] lg:min-h-[256px] overflow-hidden"
                     style={{
                       backgroundColor: cardColors.bg,
                       border: `2px solid ${cardColors.border}`,
@@ -292,47 +292,47 @@ export default function LearningPage() {
                     
                     {/* Badge */}
                     {card.badge && (
-                      <div className="absolute top-12 right-4 z-10">
+                      <div className="absolute top-8 sm:top-10 lg:top-12 right-2 sm:right-3 lg:right-4 z-10">
                         <span className={`
-                          px-3 py-1 rounded-full text-xs font-bold
+                          px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold
                           ${card.badge === 'Start' ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gradient-to-r from-red-500 to-orange-500'}
                           text-white shadow-lg
                           flex items-center gap-1
                         `}>
-                          {card.badge === 'Start' && <Sparkles className="w-3 h-3" />}
+                          {card.badge === 'Start' && <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                           {card.badge}
                         </span>
                       </div>
                     )}
                     
                     {/* Large Icon */}
-                    <div className="mb-4 flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm flex items-center justify-center border border-white/10">
-                        <Icon className="w-10 h-10 text-white drop-shadow-lg" />
+                    <div className="mb-3 sm:mb-4 flex items-center justify-center">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm flex items-center justify-center border border-white/10">
+                        <Icon className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white drop-shadow-lg" />
                       </div>
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-2xl font-bold text-white mb-2 font-space leading-tight uppercase">
+                    <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1.5 sm:mb-2 font-space leading-tight uppercase">
                       {card.title}
                     </h3>
 
                     {/* Subtitle */}
-                    <p className="text-white text-xl font-bold mb-4 font-space flex-1 leading-tight uppercase">
+                    <p className="text-white text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 font-space flex-1 leading-tight uppercase">
                       {card.subtitle}
                     </p>
 
                     {/* Get Started/Continue Button */}
-                    <div className="mt-auto pt-3 border-t border-white/10">
+                    <div className="mt-auto pt-2 sm:pt-3 border-t border-white/10">
                       <div
-                        className="w-full py-2.5 px-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full py-2.5 sm:py-2.5 px-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer min-h-[44px] sm:min-h-auto"
                         style={{
                           backgroundColor: cardColors.border,
                           color: 'white'
                         }}
                       >
                         {buttonText}
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </div>
                   </div>

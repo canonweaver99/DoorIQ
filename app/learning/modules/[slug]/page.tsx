@@ -57,10 +57,10 @@ export default function ModuleDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 pt-32">
+      <div className="min-h-screen bg-black py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
         <div className="max-w-[1800px] mx-auto">
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-purple-500"></div>
           </div>
         </div>
       </div>
@@ -69,16 +69,16 @@ export default function ModuleDetailPage() {
 
   if (error || !module) {
     return (
-      <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 pt-32">
+      <div className="min-h-screen bg-black py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
         <div className="max-w-[1800px] mx-auto">
-          <div className="flex flex-col items-center justify-center py-20">
-            <BookOpen className="w-16 h-16 text-slate-600 mb-4" />
-            <p className="text-red-400 font-sans mb-4">
+          <div className="flex flex-col items-center justify-center py-12 sm:py-20 px-4">
+            <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-slate-600 mb-3 sm:mb-4" />
+            <p className="text-red-400 font-sans mb-3 sm:mb-4 text-sm sm:text-base text-center">
               {error?.message || 'Module not found'}
             </p>
             <Link
               href="/learning/modules"
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors font-space"
+              className="px-4 py-2.5 sm:py-2 bg-purple-600 active:bg-purple-700 text-white rounded-lg font-semibold transition-colors font-space text-sm sm:text-base min-h-[44px] flex items-center touch-manipulation"
             >
               Back to Modules
             </Link>
@@ -89,21 +89,22 @@ export default function ModuleDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 pt-32">
+    <div className="min-h-screen bg-black py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
       <div className="max-w-[1800px] mx-auto">
         {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
           <Link
             href={module.category ? `/learning/modules?category=${module.category}` : '/learning'}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-slate-600/50 rounded-lg text-white transition-all duration-200 font-sans"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-800/50 active:bg-slate-700/50 border border-slate-700/50 active:border-slate-600/50 rounded-lg text-white transition-all duration-200 font-sans text-sm sm:text-base min-h-[44px] touch-manipulation"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to {module.category ? categoryLabels[module.category] : 'Learning Center'}</span>
+            <span className="hidden sm:inline">Back to {module.category ? categoryLabels[module.category] : 'Learning Center'}</span>
+            <span className="sm:hidden">Back</span>
           </Link>
         </motion.div>
 

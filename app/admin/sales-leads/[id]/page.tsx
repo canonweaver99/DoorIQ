@@ -175,8 +175,8 @@ export default function SalesLeadDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
       </div>
     )
   }
@@ -192,53 +192,58 @@ export default function SalesLeadDetailPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 pb-6">
+    <div className="min-h-screen bg-[#0a0a0a] px-4 sm:px-6 lg:px-8 pb-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Link
             href="/admin/sales-leads"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors font-sans"
+            className="inline-flex items-center gap-2 text-[#a0a0a0] hover:text-white mb-4 transition-colors font-sans min-h-[44px] sm:min-h-0"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to CRM
           </Link>
           
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-space font-bold tracking-tight text-gray-900 mb-2">{lead.full_name}</h1>
-              <p className="text-gray-600 font-sans leading-relaxed">{lead.job_title} at {lead.company_name}</p>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-space font-bold tracking-tight text-white mb-2">{lead.full_name}</h1>
+              <p className="text-sm sm:text-base text-[#a0a0a0] font-sans leading-relaxed">{lead.job_title} at {lead.company_name}</p>
             </div>
             
             <select
               value={lead.status}
               onChange={(e) => updateLeadStatus(e.target.value as CRMStage)}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium border bg-white",
-                config.color
+                "px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium border bg-[#1a1a1a] text-white min-h-[44px] sm:min-h-0",
+                lead.status === 'lead' ? 'border-blue-500/30' :
+                lead.status === 'qualified' ? 'border-purple-500/30' :
+                lead.status === 'proposal' ? 'border-yellow-500/30' :
+                lead.status === 'negotiation' ? 'border-orange-500/30' :
+                lead.status === 'closed_won' ? 'border-green-500/30' :
+                'border-red-500/30'
               )}
             >
               {stages.map(s => (
-                <option key={s} value={s}>{stageConfig[s].label}</option>
+                <option key={s} value={s} className="bg-[#1a1a1a]">{stageConfig[s].label}</option>
               ))}
             </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Deal Information */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
               <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-space font-semibold tracking-tight text-gray-900 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-purple-600" />
+              <h2 className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-purple-400" />
                 Deal Information
               </h2>
                 {!editingDeal && (
                   <button
                     onClick={() => setEditingDeal(true)}
-                    className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                    className="text-sm text-purple-400 hover:text-purple-300 font-medium min-h-[44px] sm:min-h-0 px-2"
                   >
                     Edit
                   </button>
@@ -247,9 +252,9 @@ export default function SalesLeadDetailPage() {
               
               {editingDeal ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-space font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-space font-medium text-[#a0a0a0] mb-1">
                         Estimated Value ($)
                       </label>
                       <input
@@ -257,11 +262,11 @@ export default function SalesLeadDetailPage() {
                         step="0.01"
                         value={dealFields.estimated_value}
                         onChange={(e) => setDealFields({ ...dealFields, estimated_value: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2.5 sm:py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px] sm:min-h-0"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-space font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-space font-medium text-[#a0a0a0] mb-1">
                         Probability (%)
                       </label>
                       <input
@@ -270,22 +275,22 @@ export default function SalesLeadDetailPage() {
                         max="100"
                         value={dealFields.probability}
                         onChange={(e) => setDealFields({ ...dealFields, probability: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2.5 sm:py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px] sm:min-h-0"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-space font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-space font-medium text-[#a0a0a0] mb-1">
                         Expected Close Date
                       </label>
                       <input
                         type="date"
                         value={dealFields.expected_close_date}
                         onChange={(e) => setDealFields({ ...dealFields, expected_close_date: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2.5 sm:py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px] sm:min-h-0"
                       />
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2">
+                  <div className="flex flex-col sm:flex-row justify-end gap-2">
                     <button
                       onClick={() => {
                         setEditingDeal(false)
@@ -295,46 +300,46 @@ export default function SalesLeadDetailPage() {
                           expected_close_date: lead.expected_close_date || ''
                         })
                       }}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      className="px-4 py-2.5 sm:py-2 text-[#a0a0a0] bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg hover:bg-[#2a2a2a] min-h-[44px] sm:min-h-0"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={saveDealInfo}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                      className="px-4 py-2.5 sm:py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 min-h-[44px] sm:min-h-0"
                     >
                       Save
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Estimated Value</p>
-                    <p className="text-lg font-space font-semibold tracking-tight text-gray-900">
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Estimated Value</p>
+                    <p className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white">
                       {lead.estimated_value ? `$${lead.estimated_value.toLocaleString()}` : '—'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 mb-1 font-sans">Probability</p>
-                    <p className="text-lg font-space font-semibold tracking-tight text-gray-900">
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Probability</p>
+                    <p className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white">
                       {lead.probability ? `${lead.probability}%` : '—'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 mb-1 font-sans">Expected Close Date</p>
-                    <p className="text-lg font-space font-semibold tracking-tight text-gray-900">
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Expected Close Date</p>
+                    <p className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white">
                       {lead.expected_close_date 
                         ? new Date(lead.expected_close_date).toLocaleDateString()
                         : '—'}
                     </p>
                   </div>
                   {weightedValue && (
-                    <div className="md:col-span-3 pt-4 border-t border-gray-200">
+                    <div className="sm:col-span-3 pt-4 border-t border-[#2a2a2a]">
                       <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-purple-600" />
-                        <p className="text-sm text-gray-600 font-sans">Weighted Value:</p>
-                        <p className="text-lg font-space font-semibold tracking-tight text-purple-600">
+                        <TrendingUp className="w-4 h-4 text-purple-400" />
+                        <p className="text-sm text-[#a0a0a0] font-sans">Weighted Value:</p>
+                        <p className="text-lg font-space font-semibold tracking-tight text-purple-400">
                           ${Math.round(weightedValue).toLocaleString()}
                         </p>
                       </div>
@@ -345,43 +350,43 @@ export default function SalesLeadDetailPage() {
             </div>
 
             {/* Contact Information */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <h2 className="text-xl font-space font-semibold tracking-tight text-gray-900 mb-4 flex items-center gap-2">
-                <Mail className="w-5 h-5 text-purple-600" />
+            <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
+              <h2 className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white mb-4 flex items-center gap-2">
+                <Mail className="w-5 h-5 text-purple-400" />
                 Contact Information
               </h2>
               
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Email</p>
-                  <a href={`mailto:${lead.work_email}`} className="text-purple-600 hover:text-purple-700 hover:underline">
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Email</p>
+                  <a href={`mailto:${lead.work_email}`} className="text-purple-400 hover:text-purple-300 hover:underline break-all">
                     {lead.work_email}
                   </a>
                 </div>
                 
                 {lead.phone_number && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Phone</p>
-                    <a href={`tel:${lead.phone_number}`} className="text-gray-900 hover:text-purple-600">
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Phone</p>
+                    <a href={`tel:${lead.phone_number}`} className="text-white hover:text-purple-400 break-all">
                       {lead.phone_number}
                     </a>
                   </div>
                 )}
                 
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Preferred Contact Method</p>
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Preferred Contact Method</p>
                   <div className="flex items-center gap-2">
-                    <ContactIcon className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900 capitalize">{lead.preferred_contact_method}</span>
+                    <ContactIcon className="w-4 h-4 text-[#666]" />
+                    <span className="text-white capitalize">{lead.preferred_contact_method}</span>
                   </div>
                 </div>
                 
                 {lead.best_time_to_reach && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Best Time to Reach</p>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Best Time to Reach</p>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-900">{lead.best_time_to_reach} {lead.timezone}</span>
+                      <Clock className="w-4 h-4 text-[#666]" />
+                      <span className="text-white">{lead.best_time_to_reach} {lead.timezone}</span>
                     </div>
                   </div>
                 )}
@@ -389,66 +394,66 @@ export default function SalesLeadDetailPage() {
             </div>
 
             {/* Company Details */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <h2 className="text-xl font-space font-semibold tracking-tight text-gray-900 mb-4 flex items-center gap-2">
-                <Building className="w-5 h-5 text-purple-600" />
+            <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
+              <h2 className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white mb-4 flex items-center gap-2">
+                <Building className="w-5 h-5 text-purple-400" />
                 Company Details
               </h2>
               
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Company Name</p>
-                  <p className="text-gray-900 font-space font-medium">{lead.company_name}</p>
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Company Name</p>
+                  <p className="text-white font-space font-medium">{lead.company_name}</p>
                 </div>
                 
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Industry</p>
-                  <p className="text-gray-900">{lead.industry}</p>
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Industry</p>
+                  <p className="text-white">{lead.industry}</p>
                 </div>
                 
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Team Size</p>
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Team Size</p>
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900 font-space font-medium">{lead.number_of_reps} sales reps</span>
+                    <Users className="w-4 h-4 text-[#666]" />
+                    <span className="text-white font-space font-medium">{lead.number_of_reps} sales reps</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Needs & Interest */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <h2 className="text-xl font-space font-semibold tracking-tight text-gray-900 mb-4 flex items-center gap-2">
-                <Target className="w-5 h-5 text-purple-600" />
+            <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
+              <h2 className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white mb-4 flex items-center gap-2">
+                <Target className="w-5 h-5 text-purple-400" />
                 Needs & Interest
               </h2>
               
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">How They Found Us</p>
-                  <p className="text-gray-900">{lead.how_did_you_hear}</p>
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">How They Found Us</p>
+                  <p className="text-white">{lead.how_did_you_hear}</p>
                 </div>
                 
                 {lead.primary_use_case && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Primary Use Case</p>
-                    <p className="text-gray-900">{lead.primary_use_case}</p>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Primary Use Case</p>
+                    <p className="text-white">{lead.primary_use_case}</p>
                   </div>
                 )}
                 
                 {lead.additional_comments && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Additional Comments</p>
-                    <p className="text-gray-900 whitespace-pre-wrap">{lead.additional_comments}</p>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] mb-1 font-sans">Additional Comments</p>
+                    <p className="text-white whitespace-pre-wrap break-words">{lead.additional_comments}</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Internal Notes */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <h2 className="text-xl font-space font-semibold tracking-tight text-gray-900 mb-4 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-purple-600" />
+            <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
+              <h2 className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-purple-400" />
                 Internal Notes
               </h2>
               
@@ -456,14 +461,14 @@ export default function SalesLeadDetailPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={6}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
+                className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
                 placeholder="Add notes about this lead..."
               />
               
               <button
                 onClick={saveNotes}
                 disabled={savingNotes || notes === lead.notes}
-                className="mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all"
+                className="mt-4 px-6 py-2.5 sm:py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-[#2a2a2a] disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all min-h-[44px] sm:min-h-0 w-full sm:w-auto"
               >
                 {savingNotes ? 'Saving...' : 'Save Notes'}
               </button>
@@ -471,15 +476,15 @@ export default function SalesLeadDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <h3 className="text-lg font-space font-semibold tracking-tight text-gray-900 mb-4">Quick Actions</h3>
+            <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
+              <h3 className="text-base sm:text-lg font-space font-semibold tracking-tight text-white mb-4">Quick Actions</h3>
               
               <div className="space-y-3">
                 <a
                   href={`mailto:${lead.work_email}`}
-                  className="flex items-center gap-3 w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all"
+                  className="flex items-center justify-center gap-3 w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all min-h-[44px]"
                 >
                   <Mail className="w-5 h-5" />
                   Send Email
@@ -488,7 +493,7 @@ export default function SalesLeadDetailPage() {
                 {lead.phone_number && (
                   <a
                     href={`tel:${lead.phone_number}`}
-                    className="flex items-center gap-3 w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg font-medium transition-all"
+                    className="flex items-center justify-center gap-3 w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] hover:bg-[#2a2a2a] text-white rounded-lg font-medium transition-all min-h-[44px]"
                   >
                     <Phone className="w-5 h-5" />
                     Call Now
@@ -498,7 +503,7 @@ export default function SalesLeadDetailPage() {
                 <button
                   onClick={() => updateLeadStatus('qualified')}
                   disabled={lead.status === 'qualified'}
-                  className="flex items-center gap-3 w-full px-4 py-3 bg-purple-100 hover:bg-purple-200 disabled:bg-gray-100 disabled:cursor-not-allowed text-purple-700 rounded-lg font-medium transition-all"
+                  className="flex items-center justify-center gap-3 w-full px-4 py-3 bg-purple-500/20 hover:bg-purple-500/30 disabled:bg-[#2a2a2a] disabled:cursor-not-allowed text-purple-400 rounded-lg font-medium transition-all min-h-[44px]"
                 >
                   <Target className="w-5 h-5" />
                   Mark as Qualified
@@ -507,13 +512,13 @@ export default function SalesLeadDetailPage() {
             </div>
 
             {/* Timeline */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <h3 className="text-lg font-space font-semibold tracking-tight text-gray-900 mb-4">Timeline</h3>
+            <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#2a2a2a] shadow-sm">
+              <h3 className="text-base sm:text-lg font-space font-semibold tracking-tight text-white mb-4">Timeline</h3>
               
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-600">Created</p>
-                  <p className="text-gray-900 font-space font-medium">
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Created</p>
+                  <p className="text-sm sm:text-base text-white font-space font-medium">
                     {new Date(lead.created_at).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -527,8 +532,8 @@ export default function SalesLeadDetailPage() {
                 
                 {lead.last_contacted_at && (
                   <div>
-                    <p className="text-sm text-gray-600">Last Contacted</p>
-                    <p className="text-gray-900 font-medium">
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Last Contacted</p>
+                    <p className="text-sm sm:text-base text-white font-medium">
                       {new Date(lead.last_contacted_at).toLocaleDateString('en-US', {
                         weekday: 'long',
                         year: 'numeric',
@@ -542,8 +547,8 @@ export default function SalesLeadDetailPage() {
                 )}
                 
                 <div>
-                  <p className="text-sm text-gray-600">Last Updated</p>
-                  <p className="text-gray-900 font-medium">
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Last Updated</p>
+                  <p className="text-sm sm:text-base text-white font-medium">
                     {new Date(lead.updated_at).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',

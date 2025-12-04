@@ -195,42 +195,52 @@ export function ModuleCard({ module, delay = 0, isLast = false, displayNumber }:
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay }}
-          className="w-full rounded-lg p-7 transition-all duration-300 cursor-pointer flex items-center gap-6 relative overflow-hidden group"
+          className="w-full rounded-lg p-4 sm:p-6 lg:p-7 transition-all duration-300 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 relative overflow-hidden group touch-manipulation"
           style={{
             backgroundColor: cardColors.bg,
             border: `2px solid ${cardColors.border}`,
             boxShadow: `inset 0 0 20px ${cardColors.glow}, 0 4px 16px rgba(0, 0, 0, 0.4)`
           }}
         >
-          {/* Lesson Number */}
-          <div className="flex-shrink-0 w-14 h-14 rounded-lg flex items-center justify-center font-bold text-xl text-white"
-            style={{ backgroundColor: cardColors.numberBg }}>
-            {displayNumber !== undefined ? displayNumber : module.display_order}
-          </div>
+          {/* Top Row: Number, Icon, Content */}
+          <div className="flex items-center gap-3 sm:gap-4 w-full">
+            {/* Lesson Number */}
+            <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-lg flex items-center justify-center font-bold text-lg sm:text-xl text-white"
+              style={{ backgroundColor: cardColors.numberBg }}>
+              {displayNumber !== undefined ? displayNumber : module.display_order}
+            </div>
 
-          {/* Icon */}
-          <div className="flex-shrink-0">
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: cardColors.iconBg }}>
-              <IconComponent className="w-6 h-6 text-white" />
+            {/* Icon */}
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: cardColors.iconBg }}>
+                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-1 sm:mb-2 font-space line-clamp-2 sm:line-clamp-1 leading-tight">
+                {module.title}
+              </h3>
+              {hookLine && (
+                <p className="text-sm sm:text-base text-white/85 font-sans line-clamp-1 hidden sm:block">
+                  {hookLine}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-white mb-2 font-space line-clamp-1">
-              {module.title}
-            </h3>
-            {hookLine && (
-              <p className="text-base text-white/85 font-sans line-clamp-1">
-                {hookLine}
-              </p>
-            )}
-          </div>
-
-          {/* Right side: Progress, Time, Button */}
-          <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Progress Indicator */}
+          {/* Bottom Row: Progress, Time, Button (Mobile) / Right Side (Desktop) */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto sm:flex-shrink-0">
+            {/* Progress Indicator - Show on mobile too */}
+            <div className="sm:hidden">
+              <ProgressIndicator
+                completed={isCompleted}
+                timeSpent={timeSpent}
+                estimatedMinutes={module.estimated_minutes}
+              />
+            </div>
             <div className="hidden sm:block">
               <ProgressIndicator
                 completed={isCompleted}
@@ -239,39 +249,42 @@ export function ModuleCard({ module, delay = 0, isLast = false, displayNumber }:
               />
             </div>
 
-            {/* Time */}
-            <div className="flex items-center gap-1.5 text-base text-white/80 font-sans font-bold">
-              <Clock className="w-5 h-5" />
-              <span>{module.estimated_minutes} min</span>
-            </div>
+            {/* Time and Button Row */}
+            <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-4">
+              {/* Time */}
+              <div className="flex items-center gap-1.5 text-sm sm:text-base text-white/80 font-sans font-bold">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>{module.estimated_minutes} min</span>
+              </div>
 
-            {/* Button */}
-            <button
-              className={cn(
-                'px-5 py-2.5 rounded-lg font-semibold text-base transition-all duration-200 flex items-center gap-2 text-white',
-                'group-hover:scale-105'
-              )}
-              style={isCompleted ? {
-                backgroundColor: cardColors.numberBg,
-              } : isInProgress ? {
-                backgroundColor: cardColors.numberBg,
-              } : {
-                backgroundColor: '#3a3a3a',
-              }}
-              onClick={(e) => {
-                e.preventDefault()
-                window.location.href = `/learning/modules/${module.slug}`
-              }}
-            >
-              {buttonText}
-              <ArrowRight className="w-5 h-5" />
-            </button>
+              {/* Button */}
+              <button
+                className={cn(
+                  'px-4 sm:px-5 py-2.5 sm:py-2.5 rounded-lg font-semibold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 text-white min-h-[44px] sm:min-h-auto touch-manipulation active:scale-95',
+                  'group-hover:scale-105'
+                )}
+                style={isCompleted ? {
+                  backgroundColor: cardColors.numberBg,
+                } : isInProgress ? {
+                  backgroundColor: cardColors.numberBg,
+                } : {
+                  backgroundColor: '#3a3a3a',
+                }}
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.location.href = `/learning/modules/${module.slug}`
+                }}
+              >
+                {buttonText}
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Completion Overlay */}
           {isCompleted && (
-            <div className="absolute top-3 right-3">
-              <CheckCircle2 className="w-7 h-7 text-green-400" />
+            <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+              <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7 text-green-400" />
             </div>
           )}
         </motion.div>
@@ -279,8 +292,8 @@ export function ModuleCard({ module, delay = 0, isLast = false, displayNumber }:
       
       {/* Connecting Line */}
       {!isLast && (
-        <div className="flex justify-center py-3">
-          <div className="w-1 h-8" style={{ backgroundColor: isCompleted ? cardColors.border : '#3a3a3a' }} />
+        <div className="flex justify-center py-2 sm:py-3">
+          <div className="w-1 h-6 sm:h-8" style={{ backgroundColor: isCompleted ? cardColors.border : '#3a3a3a' }} />
         </div>
       )}
     </>

@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { Search, Filter, RefreshCw, Calendar, Clock, User, ChevronRight } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { SessionMobileCard } from '@/components/admin/SessionMobileCard'
 
 type LiveSession = {
   id: string
@@ -32,6 +34,7 @@ export default function AdminSessionsPage() {
   const [q, setQ] = useState('')
   const [range, setRange] = useState<'week'|'month'|'all'>('week')
   const [outcome, setOutcome] = useState<'any'|'SUCCESS'|'FAILURE'|'PARTIAL'>('any')
+  const isMobile = useIsMobile()
 
   useEffect(() => { fetchSessions() }, [range, outcome])
 
@@ -78,28 +81,28 @@ export default function AdminSessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] px-6 pb-6">
+    <div className="min-h-screen bg-[#0a0a0a] px-4 sm:px-6 lg:px-8 pb-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-space font-bold tracking-tight text-white mb-2">Training Sessions</h1>
-          <p className="text-[#a0a0a0] font-sans leading-relaxed">View and manage all training sessions</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-space font-bold tracking-tight text-white mb-2">Training Sessions</h1>
+          <p className="text-sm sm:text-base text-[#a0a0a0] font-sans leading-relaxed">View and manage all training sessions</p>
         </div>
         
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
+        <div className="mb-6 flex flex-col gap-3 sm:gap-4">
+          <div className="relative w-full">
             <Search className="w-4 h-4 text-[#666] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search name, email, or conversation id"
-              className="w-full pl-9 pr-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-9 pr-3 py-2.5 sm:py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2">
             <select
               value={range}
               onChange={(e) => setRange(e.target.value as any)}
-              className="py-2 px-3 bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="flex-1 sm:flex-none py-2.5 sm:py-2 px-3 bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px] sm:min-h-0"
             >
               <option value="week">Last 7 days</option>
               <option value="month">Last 30 days</option>
@@ -108,7 +111,7 @@ export default function AdminSessionsPage() {
             <select
               value={outcome}
               onChange={(e) => setOutcome(e.target.value as any)}
-              className="py-2 px-3 bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="flex-1 sm:flex-none py-2.5 sm:py-2 px-3 bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px] sm:min-h-0"
             >
               <option value="any">Any outcome</option>
               <option value="SUCCESS">Success</option>
@@ -117,78 +120,98 @@ export default function AdminSessionsPage() {
             </select>
             <button 
               onClick={fetchSessions} 
-              className="inline-flex items-center px-3 py-2 text-sm bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg hover:bg-[#2a2a2a] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="inline-flex items-center justify-center px-4 py-2.5 sm:py-2 text-sm bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg hover:bg-[#2a2a2a] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px] sm:min-h-0"
             >
               <RefreshCw className="w-4 h-4 mr-2" /> Refresh
             </button>
           </div>
         </div>
 
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#0a0a0a] border-b border-[#2a2a2a]">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">When</th>
-                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Rep</th>
-                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Score</th>
-                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Outcome</th>
-                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Duration</th>
-                  <th className="px-4 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#2a2a2a]">
-                {loading ? (
-                  <tr><td className="p-8 text-center text-[#a0a0a0]" colSpan={6}>Loading…</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td className="p-8 text-center text-[#a0a0a0]" colSpan={6}>No sessions found</td></tr>
-                ) : (
-                  filtered.map((s) => (
-                    <tr key={s.id} className="hover:bg-[#0a0a0a] transition-colors">
-                      <td className="px-4 py-3 text-sm text-white">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-[#666]" />
-                          {format(new Date(s.created_at), 'MMM d, yyyy h:mm a')}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-white">
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-[#666]" />
-                          <div>
-                            <div className="font-space font-medium">{s.users?.full_name || '—'}</div>
-                            <div className="text-[#a0a0a0] text-xs font-sans">{s.users?.email || '—'}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="font-space font-semibold text-white">
-                          {s.overall_score ?? '—'}
-                        </div>
-                        <div className="text-xs text-[#a0a0a0] font-sans">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${s.outcome === 'SUCCESS' ? 'bg-green-500/20 text-green-400' : s.outcome === 'FAILURE' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                          {s.outcome || '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-white">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-[#666]" />
-                          {formatDuration(s.duration_seconds)}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-purple-400 hover:text-purple-300 font-space font-medium">
-                          View <ChevronRight className="w-4 h-4 ml-1" />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        {isMobile ? (
+          /* Mobile Card View */
+          <div className="space-y-3">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-12 bg-[#1a1a1a] rounded-xl border border-[#2a2a2a]">
+                <p className="text-[#a0a0a0] font-sans">No sessions found</p>
+              </div>
+            ) : (
+              filtered.map((s) => (
+                <SessionMobileCard key={s.id} session={s} formatDuration={formatDuration} />
+              ))
+            )}
           </div>
-        </div>
+        ) : (
+          /* Desktop Table View */
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-[#0a0a0a] border-b border-[#2a2a2a]">
+                  <tr>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">When</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Rep</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Score</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Outcome</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Duration</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-space font-medium text-[#a0a0a0] uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2a2a2a]">
+                  {loading ? (
+                    <tr><td className="p-8 text-center text-[#a0a0a0]" colSpan={6}>Loading…</td></tr>
+                  ) : filtered.length === 0 ? (
+                    <tr><td className="p-8 text-center text-[#a0a0a0]" colSpan={6}>No sessions found</td></tr>
+                  ) : (
+                    filtered.map((s) => (
+                      <tr key={s.id} className="hover:bg-[#0a0a0a] transition-colors">
+                        <td className="px-4 sm:px-6 py-3 text-sm text-white">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-[#666]" />
+                            {format(new Date(s.created_at), 'MMM d, yyyy h:mm a')}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm text-white">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-[#666]" />
+                            <div>
+                              <div className="font-space font-medium">{s.users?.full_name || '—'}</div>
+                              <div className="text-[#a0a0a0] text-xs font-sans">{s.users?.email || '—'}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm">
+                          <div className="font-space font-semibold text-white">
+                            {s.overall_score ?? '—'}
+                          </div>
+                          <div className="text-xs text-[#a0a0a0] font-sans">R:{s.rapport_score ?? '—'} · O:{s.objection_handling_score ?? '—'}</div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${s.outcome === 'SUCCESS' ? 'bg-green-500/20 text-green-400' : s.outcome === 'FAILURE' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                            {s.outcome || '—'}
+                          </span>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm text-white">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-[#666]" />
+                            {formatDuration(s.duration_seconds)}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm">
+                          <Link href={`/analytics/${s.id}`} className="inline-flex items-center text-purple-400 hover:text-purple-300 font-space font-medium min-h-[44px] items-center">
+                            View <ChevronRight className="w-4 h-4 ml-1" />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
