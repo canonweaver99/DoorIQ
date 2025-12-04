@@ -21,7 +21,17 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
   const [height, setHeight] = useState(0);
   const [lineEndHeight, setLineEndHeight] = useState(0);
   const [cardHeights, setCardHeights] = useState<number[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
   const hapticTriggeredRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (ref.current) {
@@ -153,26 +163,26 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
 
   return (
     <div
-      className="w-full font-sans md:px-10"
+      className="w-full font-sans px-4 md:px-10"
       ref={containerRef}
     >
-      <div ref={ref} className="relative max-w-7xl mx-auto pb-20">
+      <div ref={ref} className="relative max-w-7xl mx-auto pb-12 md:pb-20">
         {data.map((item, index) => (
           <div
             key={index}
             ref={index === data.length - 1 ? lastItemRef : null}
-            className="flex justify-start items-start pt-8 md:pt-16 lg:pt-20 md:gap-0"
+            className="flex justify-start items-start pt-6 md:pt-16 lg:pt-20 md:gap-0"
           >
             <motion.div 
-              className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start md:w-auto md:ml-0 lg:ml-0 md:mr-0"
+              className="relative md:sticky flex flex-col md:flex-row z-40 items-center md:top-40 self-start md:w-auto md:ml-0 lg:ml-0 md:mr-0"
               style={{
-                translateY: itemTransforms[index],
+                translateY: !isMobile ? itemTransforms[index] : 0,
               }}
             >
-              <div className="h-10 absolute left-[0.875rem] md:left-[1.875rem] w-10 rounded-full bg-black flex items-center justify-center -translate-x-1/2 z-50">
-                <div className="h-4 w-4 rounded-full bg-white/[0.05] border border-white/10 p-2" />
+              <div className="h-8 md:h-10 absolute left-[0.5rem] md:left-[1.875rem] w-8 md:w-10 rounded-full bg-black flex items-center justify-center -translate-x-1/2 z-50">
+                <div className="h-3 w-3 md:h-4 md:w-4 rounded-full bg-white/[0.05] border border-white/10 p-1.5 md:p-2" />
               </div>
-              <h3 className="hidden md:block text-2xl md:pl-[3.5rem] md:text-5xl lg:text-6xl font-light text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-space tracking-tight leading-tight md:pr-0">
+              <h3 className="hidden md:block text-2xl md:pl-[3.5rem] md:text-6xl lg:text-7xl xl:text-8xl font-light text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-space tracking-tight leading-tight md:pr-0">
                 {item.title}
               </h3>
             </motion.div>
@@ -181,9 +191,9 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className="relative pl-16 pr-4 md:pl-[5.5rem] w-full flex items-start pt-1"
+              className="relative pl-12 md:pl-[5.5rem] pr-2 md:pr-4 w-full flex flex-col items-start pt-1"
             >
-              <h3 className="md:hidden block text-3xl mb-4 text-left font-light text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-space tracking-tight">
+              <h3 className="md:hidden block text-4xl sm:text-5xl mb-3 md:mb-4 text-left font-light text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-space tracking-tight w-full">
                 {item.title}
               </h3>
               <TimelineCardWrapper index={index}>
@@ -196,14 +206,14 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
           style={{
             height: (lineEndHeight || height) + "px",
           }}
-          className="absolute md:left-[1.75rem] left-[0.75rem] top-8 md:top-16 lg:top-20 overflow-hidden w-[4px] bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-transparent from-[0%] via-neutral-700 to-transparent to-[99%] [mask-image:linear-gradient(to_bottom,black_0%,black_10%,black_90%,transparent_100%)]"
+          className="absolute md:left-[1.75rem] left-[0.5rem] top-6 md:top-16 lg:top-20 overflow-hidden w-[3px] md:w-[4px] bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-transparent from-[0%] via-neutral-700 to-transparent to-[99%] [mask-image:linear-gradient(to_bottom,black_0%,black_10%,black_90%,transparent_100%)]"
         >
           <motion.div
             style={{
               height: lineHeightTransform,
               opacity: opacityTransform,
             }}
-            className="absolute inset-x-0 top-0 w-[4px] bg-gradient-to-t from-indigo-600 via-purple-600 to-pink-600 from-[0%] via-[10%] rounded-full"
+            className="absolute inset-x-0 top-0 w-full bg-gradient-to-t from-indigo-600 via-purple-600 to-pink-600 from-[0%] via-[10%] rounded-full"
           />
         </div>
       </div>

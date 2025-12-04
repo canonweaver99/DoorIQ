@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
+import { Home, Mic, FileText, Trophy } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
@@ -1036,6 +1038,54 @@ function TrainerPageContent() {
     window.location.href = `/trainer/feedback/${sessionId}`
   }, [])
 
+  const restartSession = useCallback(async () => {
+    if (!selectedAgent?.eleven_agent_id) {
+      alert('Please select an agent first')
+      return
+    }
+
+    try {
+      // End current session first
+      if (sessionActive && sessionId) {
+        // Clear session state without redirecting
+        setSessionActive(false)
+        setConversationToken(null)
+        setTranscript([])
+        setDuration(0)
+        
+        if (durationInterval.current) {
+          clearInterval(durationInterval.current)
+          durationInterval.current = null
+        }
+        
+        // Finalize current session
+        try {
+          await fetch('/api/session', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session_id: sessionId,
+              transcript,
+              duration_seconds: duration,
+              end_reason: 'restart',
+            }),
+          })
+        } catch (e) {
+          console.error('Error finalizing session before restart:', e)
+        }
+      }
+
+      // Wait a moment for cleanup
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Start new session
+      await startSession()
+    } catch (error: any) {
+      logger.error('Error restarting session', error)
+      alert(`Failed to restart session: ${error?.message || 'Unknown error'}`)
+    }
+  }, [selectedAgent, sessionActive, sessionId, transcript, duration, startSession])
+
   const endSession = useCallback(async (endReason?: string, skipRedirect: boolean = false) => {
     // Session ending (manual end - skip video, go straight to analytics/loading)
     // skipRedirect: if true, don't redirect (used when auto-grading after door close)
@@ -1876,6 +1926,7 @@ function TrainerPageContent() {
                       onMuteToggle={handleMuteToggle}
                       onCameraToggle={handleCameraToggle}
                       onEndSession={() => endSession()}
+                      onRestartSession={restartSession}
                       isMuted={isMuted}
                       isCameraOff={isCameraOff}
                       personaName={selectedAgent?.name}
@@ -1888,7 +1939,7 @@ function TrainerPageContent() {
           </div>
 
           {/* TOP RIGHT QUADRANT - Metrics Panel */}
-          <div className="w-full h-full flex flex-col overflow-hidden">
+          <div className="hidden md:flex w-full h-full flex flex-col overflow-hidden">
             <div className="h-full flex flex-col overflow-hidden">
               <LiveMetricsPanel 
                 metrics={metrics} 
@@ -1917,6 +1968,40 @@ function TrainerPageContent() {
             <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
           </div>
         </div>
+
+        {/* Mobile Bottom Navigation - Only show during active session */}
+        {sessionActive && (
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 h-[64px] flex items-center justify-around px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}>
+            <Link
+              href="/dashboard"
+              className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+            >
+              <Home className="w-6 h-6" />
+              <span className="text-[10px] mt-0.5">Home</span>
+            </Link>
+            <Link
+              href="/trainer/select-homeowner"
+              className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+            >
+              <Mic className="w-6 h-6" />
+              <span className="text-[10px] mt-0.5">Practice</span>
+            </Link>
+            <Link
+              href="/sessions"
+              className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+            >
+              <FileText className="w-6 h-6" />
+              <span className="text-[10px] mt-0.5">Sessions</span>
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+            >
+              <Trophy className="w-6 h-6" />
+              <span className="text-[10px] mt-0.5">Leaderboard</span>
+            </Link>
+          </nav>
+        )}
       </div>
 
       {/* Hidden ElevenLabs Component */}

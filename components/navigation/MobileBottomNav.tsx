@@ -110,8 +110,8 @@ export function MobileBottomNav() {
     return pathname?.startsWith(href)
   }
 
-  // Hide nav during active practice sessions
-  if (isPracticeActive) {
+  // Hide nav during active practice sessions or on landing page
+  if (isPracticeActive || pathname === '/landing') {
     return null
   }
 
