@@ -553,7 +553,7 @@ export default function InviteTeamPage() {
                             title: 'Plan upgrade required', 
                             message: data.error 
                           })
-                          router.push('/pricing')
+                          router.push('/')
                           return
                         }
                         throw new Error(data.error || 'Failed to add seats')

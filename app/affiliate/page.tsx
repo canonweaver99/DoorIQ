@@ -85,14 +85,6 @@ export default function AffiliateLandingPage() {
               Start for Free
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => router.push('/pricing')}
-              className="border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg"
-            >
-              View Pricing
-            </Button>
           </div>
         </motion.div>
 

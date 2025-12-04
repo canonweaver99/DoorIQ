@@ -9,7 +9,6 @@ export function MobileNavMenu() {
   const menuItems = [
     { label: 'Home', route: '/dashboard', icon: '🏠' },
     { label: 'Practice', route: '/trainer/select-homeowner', icon: '🎯' },
-    { label: 'Pricing', route: '/pricing', icon: '💰' },
   ]
 
   const isActive = (route: string) => {

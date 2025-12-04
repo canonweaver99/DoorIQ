@@ -261,7 +261,7 @@ function TeamPageContent() {
               monthlyCost={monthlyCost}
               pricePerSeat={pricePerSeat}
               onInviteClick={() => setShowInviteModal(true)}
-              onUpgradeClick={() => router.push('/pricing')}
+              onUpgradeClick={() => router.push('/')}
             />
           </div>
         )}

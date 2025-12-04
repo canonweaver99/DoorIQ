@@ -152,12 +152,6 @@ export default function ThankYouPage() {
           >
             Return to Home
           </button>
-          <button
-            onClick={() => router.push('/pricing')}
-            className="px-6 py-3 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-700 transition-all border border-slate-700"
-          >
-            View Pricing
-          </button>
         </motion.div>
       </motion.div>
     </div>

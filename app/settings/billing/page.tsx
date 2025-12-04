@@ -565,7 +565,7 @@ function BillingSettingsPage() {
                 'Manager dashboard',
                 'Basic sales playbook',
               ]}
-              onSelect={() => router.push('/pricing')}
+              onSelect={() => router.push('/')}
             />
             <PlanCard
               tier="team"

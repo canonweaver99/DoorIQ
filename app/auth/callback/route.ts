@@ -163,8 +163,9 @@ export async function GET(request: Request) {
 
         if (insertError) {
           console.error('❌ Error creating user profile:', insertError.message, insertError)
-          // Don't fail the flow - user is authenticated even if profile creation fails
-          // They can be created later or via admin
+          // If user creation fails, sign them out and redirect to book demo
+          await supabase.auth.signOut()
+          return NextResponse.redirect(new URL('/book-demo', requestUrl.origin))
         } else {
           console.log('✅ User profile created successfully')
           
@@ -188,6 +189,19 @@ export async function GET(request: Request) {
           const userName = userMetadata.full_name || userMetadata.name || verificationData.user.email?.split('@')[0] || 'User'
           await sendNewUserNotification(verificationData.user.email || '', userName, verificationData.user.id)
         }
+      }
+      
+      // Double-check user exists before proceeding (in case of race condition)
+      const { data: finalUserCheck } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', verificationData.user.id)
+        .single()
+      
+      if (!finalUserCheck) {
+        console.log('⚠️ User not found after creation attempt. Redirecting to book demo.')
+        await supabase.auth.signOut()
+        return NextResponse.redirect(new URL('/book-demo', requestUrl.origin))
       } else {
         console.log('✅ User profile already exists')
       }
@@ -226,6 +240,19 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL('/auth/login?error=Unable to sign you in. Please try signing in manually.', requestUrl.origin))
       }
       
+      // Final check: ensure user exists in users table before allowing access
+      const { data: finalUserCheck } = await freshSupabase
+        .from('users')
+        .select('id')
+        .eq('id', finalSession.user.id)
+        .single()
+      
+      if (!finalUserCheck) {
+        console.log('⚠️ User not found in database after verification. Redirecting to book demo.')
+        await freshSupabase.auth.signOut()
+        return NextResponse.redirect(new URL('/book-demo', requestUrl.origin))
+      }
+      
       console.log('✅ Session confirmed in cookies:', { hasSession: !!finalSession, userId: finalSession?.user?.id })
       
       // Create redirect response
@@ -251,56 +278,17 @@ export async function GET(request: Request) {
       console.log('✅ User authenticated:', data.user.email)
 
       // Check if user profile exists in the users table
-      const { data: existingUser } = await supabase
+      const { data: existingUser, error: userCheckError } = await supabase
         .from('users')
         .select('*')
         .eq('id', data.user.id)
         .single()
 
-      // If user doesn't exist in users table, create profile
-      if (!existingUser) {
-        console.log('📝 Creating user profile in database...')
-        const userMetadata = data.user.user_metadata
-        
-        // Use service role client to bypass RLS for user creation
-        const serviceSupabase = await createServiceSupabaseClient()
-        
-        const { error: insertError } = await serviceSupabase.from('users').insert({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User',
-          rep_id: `REP-${Date.now().toString().slice(-6)}`,
-          role: 'rep',
-          virtual_earnings: 0
-        })
-
-        if (insertError) {
-          console.error('❌ Error creating user profile:', insertError.message, insertError)
-          // Don't fail the flow - user is authenticated even if profile creation fails
-          // They can be created later or via admin
-        } else {
-          console.log('✅ User profile created successfully')
-          
-          // Grant 5 free credits to new free users
-          const { error: creditsError } = await serviceSupabase
-            .from('user_session_limits')
-            .insert({
-              user_id: data.user.id,
-              sessions_this_month: 0,
-              sessions_limit: 5,
-              last_reset_date: new Date().toISOString().split('T')[0]
-            })
-
-          if (creditsError) {
-            console.error('⚠️ Failed to create credits record:', creditsError)
-          } else {
-            console.log('✅ Granted 5 free credits to new user')
-          }
-          
-          // Send notification email to admin about new user signup
-          const userName = userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User'
-          await sendNewUserNotification(data.user.email || '', userName, data.user.id)
-        }
+      // If user doesn't exist in users table, sign them out and redirect to book demo
+      if (!existingUser || userCheckError) {
+        console.log('⚠️ User authenticated but account not found in database. Redirecting to book demo.')
+        await supabase.auth.signOut()
+        return NextResponse.redirect(new URL('/book-demo', requestUrl.origin))
       } else {
         console.log('✅ User profile already exists')
       }
@@ -325,6 +313,19 @@ export async function GET(request: Request) {
       }
 
       // Default redirect destination after successful authentication
+      // Final check: ensure user exists in users table before allowing access
+      const { data: finalUserCheck } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', data.user.id)
+        .single()
+      
+      if (!finalUserCheck) {
+        console.log('⚠️ User not found in database after OAuth. Redirecting to book demo.')
+        await supabase.auth.signOut()
+        return NextResponse.redirect(new URL('/book-demo', requestUrl.origin))
+      }
+      
       let redirectPath = requestUrl.searchParams.get('next') || '/home'
       
       // Preserve checkout intent in redirect
