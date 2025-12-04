@@ -26,61 +26,63 @@ export function FeaturesSectionWithHoverEffects({ features }: FeaturesSectionPro
       title: "AI Roleplay Agents",
       description:
         "Practice with hyper-realistic AI homeowners that adapt to your pitch and throw real objections.",
-      icon: <Bot className="w-5 h-5" />,
+      icon: <Bot className="w-6 h-6" />,
     },
     {
       title: "Real-time Feedback",
       description:
         "Get instant coaching on tone, pacing, and persuasion techniques as you practice.",
-      icon: <MessageSquare className="w-5 h-5" />,
+      icon: <MessageSquare className="w-6 h-6" />,
     },
     {
       title: "Performance Analytics",
       description:
         "Deep insights into every rep's strengths, weaknesses, and improvement trajectory.",
-      icon: <BarChart3 className="w-5 h-5" />,
+      icon: <BarChart3 className="w-6 h-6" />,
     },
     {
       title: "Objection Handling",
       description:
         "Master the toughest objections with AI-powered scenarios that prepare reps for anything.",
-      icon: <Shield className="w-5 h-5" />,
+      icon: <Shield className="w-6 h-6" />,
     },
     {
       title: "Team Leaderboards",
       description:
         "Drive healthy competition with gamified rankings that motivate your team.",
-      icon: <Trophy className="w-5 h-5" />,
+      icon: <Trophy className="w-6 h-6" />,
     },
     {
       title: "Manager Insights",
       description:
         "See exactly where each rep needs coaching without sitting in on calls.",
-      icon: <LineChart className="w-5 h-5" />,
+      icon: <LineChart className="w-6 h-6" />,
     },
     {
       title: "Lightning Fast Setup",
       description:
         "Get your team onboarded and practicing in under 10 minutes.",
-      icon: <Zap className="w-5 h-5" />,
+      icon: <Zap className="w-6 h-6" />,
     },
     {
       title: "Unlimited Practice",
       description:
         "No caps, no limits. Your reps train as much as they need to become closers.",
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users className="w-6 h-6" />,
     },
   ];
 
   const featuresToRender = features || defaultFeatures;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-0 relative z-10 pt-6 pb-6 md:pb-8 max-w-5xl mx-auto">
-      {featuresToRender.map((feature, index) => (
-        <div key={feature.title} className="scale-[0.95] md:scale-100 h-full flex">
-          <Feature {...feature} index={index} totalFeatures={featuresToRender.length} />
-        </div>
-      ))}
+    <div className="flex justify-center w-full relative z-10 pt-8 pb-8 md:pt-12 md:pb-12">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-0 max-w-7xl w-full">
+        {featuresToRender.map((feature, index) => (
+          <div key={feature.title} className="h-full flex">
+            <Feature {...feature} index={index} totalFeatures={featuresToRender.length} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -98,33 +100,44 @@ const Feature = ({
   index: number;
   totalFeatures: number;
 }) => {
+  const isLeftColumn = index % 4 === 0;
+  const isTopRow = index < 4;
+  const isBottomRow = index >= totalFeatures - 4;
+
   return (
     <div
       className={cn(
-        "flex flex-col border-r-[2px] md:border-r-[2px] py-4 md:py-6 relative group/feature border-white/20 h-full min-h-[200px] md:min-h-0",
-        (index % 2 === 0) && "border-l-[2px] md:border-l-[2px] border-white/20",
-        (index < totalFeatures - 2) && "border-b-[2px] md:border-b-[2px] border-white/20",
-        // Add bottom border to last 2 features on mobile
-        (index >= totalFeatures - 2) && "border-b-[2px] md:border-b-[2px] border-white/20 pb-6 md:pb-8",
-        (index < 2) && "border-t-[2px] md:border-t-[2px] border-white/20"
+        "flex flex-col py-6 md:py-8 lg:py-10 relative group/feature border-white/20 h-full min-h-[220px] md:min-h-[280px]",
+        // Left border for left column only
+        isLeftColumn && "border-l-[2px]",
+        // Right border for all cards (creates dividers and right edge)
+        "border-r-[2px]",
+        // Top border for top row
+        isTopRow && "border-t-[2px]",
+        // Bottom border for all cards
+        "border-b-[2px]",
+        // Extra padding for bottom row
+        isBottomRow && "pb-8 md:pb-10"
       )}
     >
-      {index % 2 === 0 && (
+      {index % 4 < 2 && (
         <div className="opacity-0 group-hover/feature:opacity-100 transition duration-300 absolute inset-0 h-full w-full bg-gradient-to-t from-white/[0.02] to-transparent pointer-events-none" />
       )}
-      {index % 2 === 1 && (
+      {index % 4 >= 2 && (
         <div className="opacity-0 group-hover/feature:opacity-100 transition duration-300 absolute inset-0 h-full w-full bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
       )}
-      <div className="mb-3 relative z-10 px-4 md:px-8 text-white">
-        {icon}
+      <div className="mb-4 md:mb-5 relative z-10 px-5 md:px-8 lg:px-10 text-white">
+        <div className="scale-110 md:scale-125">
+          {icon}
+        </div>
       </div>
-      <div className="text-xl md:text-2xl font-medium mb-2 relative z-10 px-4 md:px-8">
-        <div className="absolute left-0 inset-y-0 h-5 group-hover/feature:h-6 w-[3px] bg-purple-500/80 group-hover/feature:bg-purple-400 transition-all duration-300 origin-center rounded-full" />
+      <div className="text-xl md:text-2xl lg:text-3xl font-medium mb-3 md:mb-4 relative z-10 px-5 md:px-8 lg:px-10">
+        <div className="absolute left-0 inset-y-0 h-6 group-hover/feature:h-7 w-[3px] bg-purple-500/80 group-hover/feature:bg-purple-400 transition-all duration-300 origin-center rounded-full" />
         <span className="group-hover/feature:translate-x-1 transition duration-300 inline-block text-white font-space tracking-tight leading-relaxed">
           {title}
         </span>
       </div>
-      <p className="text-base md:text-lg text-white/95 max-w-xs relative z-10 px-4 md:px-8 font-normal leading-relaxed">
+      <p className="text-sm md:text-base lg:text-lg text-white/95 max-w-sm md:max-w-md relative z-10 px-5 md:px-8 lg:px-10 font-normal leading-relaxed">
         {description}
       </p>
     </div>
