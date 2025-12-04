@@ -1930,7 +1930,6 @@ function TrainerPageContent() {
                 </div>
               )}
             </div>
-            </div>
           </div>
 
           {/* Mobile Bottom Section - Scrollable Metrics/Transcript/Feedback */}
