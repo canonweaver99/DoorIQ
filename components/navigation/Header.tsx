@@ -591,10 +591,11 @@ function HeaderContent() {
                   <Image 
                     src="/dooriqlogo.png" 
                     alt="DoorIQ Logo" 
-                    width={120} 
-                    height={20} 
+                    width={1280} 
+                    height={214} 
                     className="h-[20px] w-auto object-contain max-w-[100px] md:max-w-[120px]"
                     priority
+                    unoptimized={false}
                   />
                 </Link>
 
@@ -885,8 +886,8 @@ function HeaderContent() {
                 <Image 
                   src="/dooriqlogo.png" 
                   alt="DoorIQ Logo" 
-                  width={120} 
-                  height={20} 
+                  width={1280} 
+                  height={214} 
                   className="h-[20px] w-auto object-contain max-w-[100px] md:max-w-[120px]"
                   priority
                 />

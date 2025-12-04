@@ -146,8 +146,8 @@ function Navigation() {
             <Image 
               src="/dooriqlogo.png" 
               alt="DoorIQ" 
-              width={120}
-              height={32}
+              width={1280}
+              height={214}
               className="h-6 sm:h-7 md:h-8 w-auto transition-transform group-hover:scale-105"
             />
           </Link>
@@ -1432,8 +1432,8 @@ function LandingFooter() {
               <Image 
                 src="/dooriqlogo.png" 
                 alt="DoorIQ Logo" 
-                width={120}
-                height={32}
+                width={1280}
+                height={214}
                 className="h-6 sm:h-7 md:h-8 w-auto"
               />
             </Link>

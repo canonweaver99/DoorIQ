@@ -226,8 +226,8 @@ export default function BookDemoPage() {
               <Image 
                 src="/dooriqlogo.png" 
                 alt="DoorIQ" 
-                width={120}
-                height={32}
+                width={1280}
+                height={214}
                 className="h-8 w-auto transition-transform group-hover:scale-105"
               />
             </Link>

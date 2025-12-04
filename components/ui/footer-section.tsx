@@ -67,8 +67,8 @@ export function Footer() {
             <Image 
               src="/dooriqlogo.png" 
               alt="DoorIQ Logo" 
-              width={120} 
-              height={38} 
+              width={1280} 
+              height={214} 
               className="h-10 w-auto object-contain"
               priority
             />
