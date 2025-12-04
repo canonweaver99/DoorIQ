@@ -251,22 +251,37 @@ const InlineAgentCarousel = React.memo(() => {
                           objectPosition: `${horizontal} 50%`,
                           transform: combinedTransform,
                         }
-                        // Properly encode image paths with spaces
-                        const imageSrc = agent.src.includes(' ') || agent.src.includes('&')
-                          ? '/' + agent.src.slice(1).split('/').map(part => encodeURIComponent(part)).join('/')
-                          : agent.src
+                        // Use regular img tag for images with spaces (Next.js Image doesn't handle them well)
+                        const hasSpaces = agent.src.includes(' ') || agent.src.includes('&')
+                        if (hasSpaces) {
+                          return (
+                            <img
+                              src={agent.src}
+                              alt={agent.name}
+                              style={{
+                                ...finalStyle,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                              }}
+                              onError={(e) => {
+                                console.error('❌ Hero carousel image failed to load:', agent.src)
+                                e.stopPropagation()
+                              }}
+                            />
+                          )
+                        }
                         return (
                           <Image
-                            src={imageSrc}
+                            src={agent.src}
                             alt={agent.name}
                             fill
                             style={finalStyle}
                             sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, (max-width: 1024px) 128px, (max-width: 1440px) 144px, 160px"
                             quality={95}
                             priority={index < 6}
-                            unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
                             onError={(e) => {
-                              console.error('❌ Hero carousel image failed to load:', agent.src, 'Encoded:', imageSrc)
+                              console.error('❌ Hero carousel image failed to load:', agent.src)
                               e.stopPropagation()
                             }}
                           />

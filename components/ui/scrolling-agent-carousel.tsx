@@ -346,14 +346,30 @@ export function ScrollingAgentCarousel({
                           transform: combinedTransform,
                         }
                         
-                        // Properly encode image paths with spaces
-                        const imageSrc = agent.src.includes(' ') || agent.src.includes('&')
-                          ? '/' + agent.src.slice(1).split('/').map(part => encodeURIComponent(part)).join('/')
-                          : agent.src
-                        
+                        // Use regular img tag for images with spaces (Next.js Image doesn't handle them well)
+                        const hasSpaces = agent.src.includes(' ') || agent.src.includes('&')
+                        if (hasSpaces) {
+                          return (
+                            <img
+                              src={agent.src}
+                              alt={agent.name}
+                              className="object-cover relative z-10"
+                              style={{
+                                ...finalStyle,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                              }}
+                              onError={(e) => {
+                                console.error('❌ Carousel agent image failed to load:', agent.src)
+                                e.stopPropagation()
+                              }}
+                            />
+                          )
+                        }
                         return (
                           <Image
-                            src={imageSrc}
+                            src={agent.src}
                             alt={agent.name}
                             fill
                             className="object-cover relative z-10"
@@ -361,9 +377,8 @@ export function ScrollingAgentCarousel({
                             sizes="(max-width: 640px) 150px, (max-width: 768px) 200px, 240px"
                             quality={95}
                             priority={scale > 0.8}
-                            unoptimized={agent.src.includes(' ') || agent.src.includes('&')}
                             onError={(e) => {
-                              console.error('❌ Carousel agent image failed to load:', agent.src, 'Encoded:', imageSrc)
+                              console.error('❌ Carousel agent image failed to load:', agent.src)
                               e.stopPropagation()
                             }}
                           />
