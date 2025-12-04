@@ -212,22 +212,9 @@ function HeaderContent() {
         setAuthMeta(null)
         setAvatarError(false) // Reset avatar error when user data changes
         
-        // Check if user has an active subscription via organization
-        if ((userData as any).organization_id) {
-          const { data: orgData } = await supabase
-            .from('organizations')
-            .select('plan_tier, stripe_subscription_id')
-            .eq('id', (userData as any).organization_id)
-            .single()
-          
-          if (orgData && (orgData.plan_tier || orgData.stripe_subscription_id)) {
-            setHasActiveSubscription(true)
-          } else {
-            setHasActiveSubscription(false)
-          }
-        } else {
-          setHasActiveSubscription(false)
-        }
+        // ARCHIVED: All paywalls removed - software is now free for signed-in users
+        // Set subscription as active for all authenticated users
+        setHasActiveSubscription(true)
         
       } else {
         logger.warn('Header - No user data found, using auth metadata')
@@ -260,7 +247,7 @@ function HeaderContent() {
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setAuthMeta(null)
-        setHasActiveSubscription(false)
+        setHasActiveSubscription(false) // No subscription when signed out
       }
     })
 
@@ -270,13 +257,11 @@ function HeaderContent() {
     }
   }, [])
 
-  // Check if user has active subscription or is trialing (combine org and individual checks)
+  // ARCHIVED: All paywalls removed - software is now free for signed-in users
+  // All authenticated users have access
   const userHasActivePlan = useMemo(() => {
-    // Check individual subscription status from hook
-    const hasIndividualSubscription = subscription.hasActiveSubscription || subscription.isTrialing
-    // Combine with organization-level subscription check
-    return hasActiveSubscription || hasIndividualSubscription
-  }, [hasActiveSubscription, subscription.hasActiveSubscription, subscription.isTrialing])
+    return hasActiveSubscription || subscription.hasActiveSubscription
+  }, [hasActiveSubscription, subscription.hasActiveSubscription])
 
   const navigation = useMemo(() => {
     type NavItem = {
@@ -990,17 +975,8 @@ function HeaderContent() {
         </header>
       )}
 
-      {/* Mobile header - Only show for signed-in users */}
-      {isSignedIn && !isAuthPage && (
-        <div className="fixed top-2 right-2 sm:top-3 sm:right-3 z-50 md:hidden">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-border/20 dark:border-white/10 bg-background/80 dark:bg-black/80 backdrop-blur-xl shadow-lg shadow-purple-500/10 text-foreground/70 dark:text-slate-300 hover:text-foreground dark:hover:text-white hover:bg-background/50 dark:hover:bg-white/5 transition-all touch-target"
-          >
-            {isMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
-          </button>
-        </div>
-      )}
+      {/* Mobile header - Hidden since hamburger is now in bottom nav */}
+      {/* Removed mobile hamburger menu - now handled by MobileBottomNav */}
 
       {/* Mobile Navigation - Only show for signed-in users */}
       <AnimatePresence>

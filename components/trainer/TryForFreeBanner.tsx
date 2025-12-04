@@ -30,16 +30,10 @@ export function TryForFreeBanner() {
           .eq('id', user.id)
           .single()
 
-        const status = userData?.subscription_status || null
-        const hasActiveSubscription = status === 'active' || status === 'trialing'
-        const hasUsedFreeDemo = userData?.used_free_demo || false
-
-        // Show banner if user has no subscription and hasn't used free demo
-        if (!hasActiveSubscription && !hasUsedFreeDemo) {
-          setShow(true)
-        }
-        
-        setUsedFreeDemo(hasUsedFreeDemo)
+        // ARCHIVED: All paywalls removed - software is now free for signed-in users
+        // Banner no longer needed - all authenticated users have free access
+        setShow(false)
+        setUsedFreeDemo(false)
       } catch (error) {
         console.error('Error checking user status:', error)
       } finally {

@@ -208,15 +208,18 @@ export default function HomePage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="mb-6 sm:mb-8"
+            className="mb-3 text-center"
           >
-            <h1 className="font-space text-3xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl text-white font-bold tracking-tight mb-2 sm:mb-3 md:mb-4 leading-tight">
+            <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
+              Home
+            </h1>
+            <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-300 drop-shadow-md font-space">
               {greeting},{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                 {getDisplayName()}
               </span>
-            </h1>
-            <p className="font-space text-white/70 text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium max-w-2xl leading-relaxed">
+            </p>
+            <p className="font-space text-white/70 text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
               {getMotivationalSubtext()}
             </p>
           </motion.div>

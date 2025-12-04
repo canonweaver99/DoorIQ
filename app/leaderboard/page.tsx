@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
-import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award, RefreshCw, Users, ArrowRight, User } from 'lucide-react'
+import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award, RefreshCw, Users, ArrowRight, User, DollarSign, Target, BarChart3 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
@@ -89,12 +89,15 @@ const generateFakePreviousLeaderboard = (): LeaderboardUser[] => {
   } as LeaderboardUser))
 }
 
+type Category = 'earnings' | 'sessions' | 'avgScore' | 'overall'
+
 export default function LeaderboardPage() {
   const router = useRouter()
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('month')
+  const [category, setCategory] = useState<Category>('earnings')
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [userRole, setUserRole] = useState<string>('')
@@ -308,16 +311,66 @@ export default function LeaderboardPage() {
       })
     )
 
+    // Sort by selected category
+    const sortedData = [...leaderboardData].sort((a, b) => {
+      switch (category) {
+        case 'earnings':
+          return (b.virtual_earnings || 0) - (a.virtual_earnings || 0)
+        case 'sessions':
+          return b.sessionsCount - a.sessionsCount
+        case 'avgScore':
+          return b.avgScore - a.avgScore
+        case 'overall':
+          return (b.avgScore || 0) - (a.avgScore || 0)
+        default:
+          return (b.virtual_earnings || 0) - (a.virtual_earnings || 0)
+      }
+    })
+
+    // Update ranks based on sorted order
+    const rankedData = sortedData.map((user, index) => ({
+      ...user,
+      rank: index + 1
+    }))
+
     // Store previous leaderboard before updating
     setPreviousLeaderboard([...leaderboardRef.current])
     
     // Update ref and state
-    leaderboardRef.current = leaderboardData as LeaderboardUser[]
-    setLeaderboard(leaderboardData as LeaderboardUser[])
+    leaderboardRef.current = rankedData as LeaderboardUser[]
+    setLeaderboard(rankedData as LeaderboardUser[])
     setLastUpdated(new Date())
     setLoading(false)
     setRefreshing(false)
   }
+
+  // Re-sort when category changes
+  useEffect(() => {
+    if (leaderboardRef.current.length > 0) {
+      const sortedData = [...leaderboardRef.current].sort((a, b) => {
+        switch (category) {
+          case 'earnings':
+            return (b.virtual_earnings || 0) - (a.virtual_earnings || 0)
+          case 'sessions':
+            return b.sessionsCount - a.sessionsCount
+          case 'avgScore':
+            return b.avgScore - a.avgScore
+          case 'overall':
+            return (b.avgScore || 0) - (a.avgScore || 0)
+          default:
+            return (b.virtual_earnings || 0) - (a.virtual_earnings || 0)
+        }
+      })
+
+      const rankedData = sortedData.map((user, index) => ({
+        ...user,
+        rank: index + 1
+      }))
+
+      leaderboardRef.current = rankedData as LeaderboardUser[]
+      setLeaderboard(rankedData)
+    }
+  }, [category])
 
   const handleManualRefresh = () => {
     fetchLeaderboard(true)
@@ -398,6 +451,32 @@ export default function LeaderboardPage() {
     return 'bg-black border-slate-800'
   }
 
+  const getCategoryValue = (user: LeaderboardUser) => {
+    switch (category) {
+      case 'earnings':
+        return `$${Math.round(user.virtual_earnings || 0).toLocaleString()}`
+      case 'sessions':
+        return user.sessionsCount.toString()
+      case 'avgScore':
+        return user.avgScore > 0 ? `${user.avgScore}%` : '-'
+      default:
+        return `$${Math.round(user.virtual_earnings || 0).toLocaleString()}`
+    }
+  }
+
+  const getCategoryLabel = () => {
+    switch (category) {
+      case 'earnings':
+        return 'Earnings'
+      case 'sessions':
+        return 'Sessions'
+      case 'avgScore':
+        return 'Avg Score'
+      default:
+        return 'Earnings'
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
@@ -437,6 +516,42 @@ export default function LeaderboardPage() {
           </p>
         </div>
 
+        {/* Category Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-6"
+        >
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide md:justify-center">
+            {[
+              { id: 'earnings' as Category, label: 'Earnings', icon: DollarSign },
+              { id: 'sessions' as Category, label: 'Sessions', icon: Target },
+              { id: 'avgScore' as Category, label: 'Avg Score', icon: BarChart3 },
+            ].map((tab) => {
+              const Icon = tab.icon
+              const isActive = category === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setCategory(tab.id)}
+                  className={`
+                    flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-space font-semibold text-sm sm:text-base
+                    whitespace-nowrap transition-all duration-200
+                    ${isActive
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/50'
+                      : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10'
+                    }
+                  `}
+                >
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </motion.div>
+
         {/* Top 3 Podium */}
         {leaderboard.length >= 3 && (
           <motion.div
@@ -456,7 +571,7 @@ export default function LeaderboardPage() {
                 <Medal className="w-8 h-8 text-gray-300 mx-auto mb-2 drop-shadow-lg" />
                 <h3 className="text-sm font-bold text-white mb-0.5 drop-shadow truncate font-space">{leaderboard[1].full_name}</h3>
                 <p className="text-lg font-bold text-gray-200 mb-0.5 drop-shadow font-space">
-                  ${Math.round(leaderboard[1].virtual_earnings).toLocaleString()}
+                  {getCategoryValue(leaderboard[1])}
                 </p>
                 <p className="text-sm text-gray-300 drop-shadow font-space font-bold">2nd Place</p>
               </div>
@@ -473,7 +588,7 @@ export default function LeaderboardPage() {
                 <Crown className="w-10 h-10 text-yellow-400 mx-auto mb-2 drop-shadow-lg" />
                 <h3 className="text-base font-bold text-white mb-0.5 drop-shadow truncate font-space">{leaderboard[0].full_name}</h3>
                 <p className="text-xl font-bold text-yellow-400 mb-0.5 drop-shadow-lg font-space">
-                  ${Math.round(leaderboard[0].virtual_earnings).toLocaleString()}
+                  {getCategoryValue(leaderboard[0])}
                 </p>
                 <p className="text-base text-yellow-400 drop-shadow font-space font-bold">1st Place</p>
               </div>
@@ -490,7 +605,7 @@ export default function LeaderboardPage() {
                 <Award className="w-8 h-8 text-amber-500 mx-auto mb-2 drop-shadow-lg" />
                 <h3 className="text-sm font-bold text-white mb-0.5 drop-shadow truncate font-space">{leaderboard[2].full_name}</h3>
                 <p className="text-lg font-bold text-amber-400 mb-0.5 drop-shadow font-space">
-                  ${Math.round(leaderboard[2].virtual_earnings).toLocaleString()}
+                  {getCategoryValue(leaderboard[2])}
                 </p>
                 <p className="text-sm text-amber-400 drop-shadow font-space font-bold">3rd Place</p>
               </div>
@@ -498,14 +613,15 @@ export default function LeaderboardPage() {
           </motion.div>
         )}
 
-        {/* Full Leaderboard Table */}
+        {/* Full Leaderboard - Mobile Cards / Desktop Table */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
           className="bg-slate-900/80 backdrop-blur-xl rounded-xl border border-slate-700 overflow-hidden shadow-2xl"
         >
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full table-fixed">
               <thead className="bg-slate-950/70">
                 <tr>
@@ -515,13 +631,13 @@ export default function LeaderboardPage() {
                   <th className="w-[25%] px-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
                     Sales Rep
                   </th>
-                  <th className="w-[18%] px-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
+                  <th className={`w-[18%] px-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space ${category === 'earnings' ? 'text-purple-400' : 'text-slate-300'}`}>
                     Earnings
                   </th>
-                  <th className="w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
+                  <th className={`w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space ${category === 'sessions' ? 'text-purple-400' : 'text-slate-300'}`}>
                     Sessions
                   </th>
-                  <th className="w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
+                  <th className={`w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space ${category === 'avgScore' ? 'text-purple-400' : 'text-slate-300'}`}>
                     Avg Score
                   </th>
                   <th className="w-[15.66%] pl-6 pr-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
@@ -580,16 +696,16 @@ export default function LeaderboardPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-6 whitespace-nowrap">
-                      <div className="text-2xl font-bold text-green-400 font-space">
+                    <td className={`px-6 py-6 whitespace-nowrap ${category === 'earnings' ? 'bg-purple-500/10' : ''}`}>
+                      <div className={`text-2xl font-bold font-space ${category === 'earnings' ? 'text-purple-400' : 'text-green-400'}`}>
                         ${Math.round(user.virtual_earnings).toLocaleString()}
                       </div>
                     </td>
-                    <td className="pl-6 pr-6 py-6 whitespace-nowrap text-left">
-                      <div className="text-2xl font-bold text-slate-200 font-space pl-5">{user.sessionsCount}</div>
+                    <td className={`pl-6 pr-6 py-6 whitespace-nowrap text-left ${category === 'sessions' ? 'bg-purple-500/10' : ''}`}>
+                      <div className={`text-2xl font-bold font-space pl-5 ${category === 'sessions' ? 'text-purple-400' : 'text-slate-200'}`}>{user.sessionsCount}</div>
                     </td>
-                    <td className="pl-6 pr-6 py-6 whitespace-nowrap text-left">
-                      <div className="text-2xl font-bold text-slate-200 font-space pl-5">
+                    <td className={`pl-6 pr-6 py-6 whitespace-nowrap text-left ${category === 'avgScore' ? 'bg-purple-500/10' : ''}`}>
+                      <div className={`text-2xl font-bold font-space pl-5 ${category === 'avgScore' ? 'text-purple-400' : 'text-slate-200'}`}>
                         {user.avgScore > 0 ? `${user.avgScore}%` : '-'}
                       </div>
                     </td>
@@ -602,6 +718,90 @@ export default function LeaderboardPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden divide-y divide-slate-700">
+            {leaderboard.map((user, index) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 + index * 0.05 }}
+                className={`p-4 ${getRowStyles(user.rank, user.id)} transition-all duration-300`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  {/* Left: Rank and Avatar */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center justify-center w-10 h-10">
+                      {getRankIcon(user.rank)}
+                    </div>
+                    {user.avatar_url ? (
+                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0">
+                        <img 
+                          src={user.avatar_url} 
+                          alt={user.full_name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            const parent = target.parentElement
+                            if (parent) {
+                              parent.innerHTML = `
+                                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-500 text-white text-lg font-bold">
+                                  ${user.full_name?.charAt(0)?.toUpperCase() || '?'}
+                                </div>
+                              `
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                        {user.full_name?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-base font-bold text-white font-space truncate">
+                        {user.full_name}
+                        {user.id === currentUserId && (
+                          <span className="ml-2 text-sm font-bold text-purple-400 font-space">(You)</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Category Value and Trend */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="text-right">
+                      <div className={`text-xl font-bold font-space ${category === 'earnings' ? 'text-green-400' : category === 'sessions' ? 'text-blue-400' : 'text-purple-400'}`}>
+                        {getCategoryValue(user)}
+                      </div>
+                      <div className="text-xs text-slate-400 font-space mt-0.5">{getCategoryLabel()}</div>
+                    </div>
+                    <div className="flex items-center">
+                      {getRankChange(user)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Stats Row */}
+                <div className="flex items-center justify-between gap-4 mt-3 pt-3 border-t border-slate-700/50">
+                  <div className="text-center flex-1">
+                    <div className="text-sm font-bold text-slate-300 font-space">${Math.round(user.virtual_earnings || 0).toLocaleString()}</div>
+                    <div className="text-xs text-slate-500 font-space">Earnings</div>
+                  </div>
+                  <div className="text-center flex-1">
+                    <div className="text-sm font-bold text-slate-300 font-space">{user.sessionsCount}</div>
+                    <div className="text-xs text-slate-500 font-space">Sessions</div>
+                  </div>
+                  <div className="text-center flex-1">
+                    <div className="text-sm font-bold text-slate-300 font-space">{user.avgScore > 0 ? `${user.avgScore}%` : '-'}</div>
+                    <div className="text-xs text-slate-500 font-space">Avg Score</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
 

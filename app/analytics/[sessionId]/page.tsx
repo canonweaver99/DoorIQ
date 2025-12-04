@@ -313,39 +313,8 @@ export default function AnalyticsPage() {
           return
         }
         
-        // Check for anonymous free demo redirect (localStorage)
-        const usedFreeDemo = localStorage.getItem('used_free_demo') === 'true'
-        if (usedFreeDemo && !user) {
-          // Anonymous user who used free demo - redirect after viewing analytics
-          const checkAndRedirect = () => {
-            // Wait for analytics to load (give them time to see feedback)
-            setTimeout(() => {
-              // Check if they've scrolled or interacted (basic check)
-              let hasInteracted = false
-              const interactionTimeout = setTimeout(() => {
-                if (!hasInteracted) {
-                  // Redirect to pricing after viewing analytics
-                  window.location.href = '/pricing?from=demo'
-                }
-              }, 30000) // 30 seconds to view analytics
-              
-              // Track interactions
-              const handleInteraction = () => {
-                hasInteracted = true
-                clearTimeout(interactionTimeout)
-                // Redirect after they've interacted
-                setTimeout(() => {
-                  window.location.href = '/pricing?from=demo'
-                }, 10000) // 10 seconds after interaction
-              }
-              
-              window.addEventListener('scroll', handleInteraction, { once: true })
-              window.addEventListener('click', handleInteraction, { once: true })
-            }, 5000) // Wait 5 seconds for analytics to load
-          }
-          
-          checkAndRedirect()
-        }
+        // ARCHIVED: Pricing redirects removed - software is now free for signed-in users
+        // Anonymous users can still view analytics, but will be prompted to sign in for full access
         
         if (!user) return
         
@@ -365,42 +334,8 @@ export default function AnalyticsPage() {
           setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
         }
         
-        // Check if user used free demo and needs to be redirected to pricing
-        const status = userData?.subscription_status || null
-        const usedFreeDemoAuth = userData?.used_free_demo || false
-        const freeDemoUsedAt = userData?.free_demo_used_at
-        
-        // If user has no subscription and used free demo, redirect after viewing analytics
-        if ((!status || status === 'none') && usedFreeDemoAuth && freeDemoUsedAt) {
-          const checkAndRedirect = () => {
-            // Wait for analytics to load (give them time to see feedback)
-            setTimeout(() => {
-              // Check if they've scrolled or interacted (basic check)
-              let hasInteracted = false
-              const interactionTimeout = setTimeout(() => {
-                if (!hasInteracted) {
-                  // Redirect to pricing after viewing analytics
-                  window.location.href = '/pricing?from=demo'
-                }
-              }, 30000) // 30 seconds to view analytics
-              
-              // Track interactions
-              const handleInteraction = () => {
-                hasInteracted = true
-                clearTimeout(interactionTimeout)
-                // Redirect after they've interacted
-                setTimeout(() => {
-                  window.location.href = '/pricing?from=demo'
-                }, 10000) // 10 seconds after interaction
-              }
-              
-              window.addEventListener('scroll', handleInteraction, { once: true })
-              window.addEventListener('click', handleInteraction, { once: true })
-            }, 5000) // Wait 5 seconds for analytics to load
-          }
-          
-          checkAndRedirect()
-        }
+        // ARCHIVED: Pricing redirects removed - software is now free for signed-in users
+        // Authenticated users have free access - no redirects needed
       } catch (error) {
         console.error('Error fetching user name:', error)
       }

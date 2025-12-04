@@ -31,40 +31,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // ARCHIVED: All paywall checks removed - software is now free for signed-in users
     // If anonymous free demo, allow it
     if (isFreeDemo && !user) {
       console.log('✅ Allowing anonymous free demo conversation token')
       // Continue to create token
     } else if (user) {
-      // Check subscription for authenticated users
-      const { data: userData } = await supabase
-        .from('users')
-        .select('subscription_status, trial_ends_at, used_free_demo')
-        .eq('id', user.id)
-        .single()
-
-      const status = userData?.subscription_status || null
-      const trialEndsAt = userData?.trial_ends_at || null
-      const now = Date.now()
-      const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
-      const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
-      const hasActiveSubscription = status === 'active' || isTrialing
-      const usedFreeDemo = userData?.used_free_demo || false
-
-      // Allow free demo for authenticated users without subscription
-      if (!hasActiveSubscription && !usedFreeDemo && isFreeDemo) {
-        console.log('✅ Allowing authenticated free demo conversation token')
-        // Continue to create token
-      } else if (!hasActiveSubscription && !isFreeDemo) {
-        return NextResponse.json(
-          { 
-            error: 'Free trial required',
-            details: 'Please start a free trial to use agents. Visit /pricing to get started.',
-            requiresTrial: true
-          },
-          { status: 403 }
-        );
-      }
+      // Authenticated users have free access - no subscription checks needed
+      console.log('✅ Authenticated user - free access granted')
+      // Continue to create token
     }
 
     const apiKey = process.env.ELEVEN_LABS_API_KEY;

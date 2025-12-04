@@ -847,14 +847,14 @@ function TrainerPageContent() {
       const { data: { user } } = await supabase.auth.getUser()
       const isAnonymous = !user
       let isFreeDemo = false
-      let hasActiveSubscription = false
       
+      // ARCHIVED: All paywall checks removed - software is now free for signed-in users
       // Check for anonymous free demo usage via localStorage
       if (isAnonymous) {
         const usedFreeDemo = localStorage.getItem('used_free_demo') === 'true'
         if (usedFreeDemo) {
-          // They've already used their free demo, redirect to pricing
-          router.push(`/pricing?from=demo`)
+          // Anonymous users still need to sign in for unlimited access
+          router.push(`/auth/login?redirect=/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`)
           setLoading(false)
           return
         } else {
@@ -866,43 +866,9 @@ function TrainerPageContent() {
           // Continue with session start (will create anonymous session)
         }
       } else {
-        // Authenticated user - check subscription status
-        const { data: userData } = await supabase
-          .from('users')
-          .select('subscription_status, trial_ends_at, used_free_demo')
-          .eq('id', user.id)
-          .single()
-
-        const status = userData?.subscription_status || null
-        const trialEndsAt = userData?.trial_ends_at || null
-        const usedFreeDemo = userData?.used_free_demo || false
-        const now = Date.now()
-        const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
-        const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
-        hasActiveSubscription = status === 'active' || isTrialing
-
-        if (!hasActiveSubscription) {
-          // Allow 1 free demo session if they haven't used it yet
-          if (!usedFreeDemo) {
-            // Mark user as having used free demo
-            await supabase
-              .from('users')
-              .update({ 
-                used_free_demo: true,
-                free_demo_used_at: new Date().toISOString()
-              })
-              .eq('id', user.id)
-            
-            isFreeDemo = true
-            console.log('✅ Free demo session granted - user can try 1 session for free')
-            // Continue with session start
-          } else {
-            // They've already used their free demo, redirect to pricing
-            router.push(`/pricing?redirect=/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`)
-            setLoading(false)
-            return
-          }
-        }
+        // Authenticated user - FREE ACCESS (all paywalls archived)
+        console.log('✅ Authenticated user - free access granted')
+        // Continue with session start - no subscription checks needed
       }
 
       const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id, isFreeDemo)

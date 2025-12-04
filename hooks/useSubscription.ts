@@ -83,25 +83,21 @@ export function useSubscription(): SubscriptionData & { refetch: () => Promise<v
         return
       }
 
-      const status = (userData.subscription_status || 'none') as SubscriptionStatus
-      const trialEndsAt = userData.trial_ends_at || null
-      const now = Date.now()
-      const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : null
-      const isTrialing = status === 'trialing' && trialEndMs !== null && trialEndMs > now
-      const hasActiveSubscription = status === 'active' || isTrialing
-      const daysRemainingInTrial = isTrialing && trialEndMs
-        ? Math.max(0, Math.ceil((trialEndMs - now) / (1000 * 60 * 60 * 24)))
-        : null
+      // ARCHIVED: All paywalls removed - software is now free for signed-in users
+      // Return active subscription status for all authenticated users
+      const status = 'active' as SubscriptionStatus
+      const hasActiveSubscription = true
+      const isTrialing = false
 
       setData({
         status,
-        trialEndsAt,
-        currentPeriodEnd: userData.subscription_current_period_end || null,
-        cancelAtPeriodEnd: userData.subscription_cancel_at_period_end || false,
+        trialEndsAt: null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
         hasActiveSubscription,
         isTrialing,
-        isPastDue: status === 'past_due',
-        daysRemainingInTrial,
+        isPastDue: false,
+        daysRemainingInTrial: null,
         loading: false
       })
     } catch (error) {

@@ -487,7 +487,7 @@ export default function SessionsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8"
+          className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8"
         >
           <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
@@ -509,7 +509,7 @@ export default function SessionsPage() {
             <p className="text-xs sm:text-sm text-white/60 font-sans">Virtual cash earned</p>
           </div>
           
-          <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors sm:col-span-2 lg:col-span-1">
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <h3 className="text-xs sm:text-sm font-medium text-white/70 font-space uppercase tracking-wider">Sessions</h3>
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400 flex-shrink-0" />
@@ -618,10 +618,10 @@ export default function SessionsPage() {
                               </button>
                             </div>
 
-                            {/* Main Content Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                            {/* Main Content - Flex Layout */}
+                            <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
                               {/* Left: Agent Info */}
-                              <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                                 <div className="relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 flex-shrink-0">
                                   {/* Concentric circles */}
                                   {[0, 1, 2].map((i) => (
@@ -693,7 +693,7 @@ export default function SessionsPage() {
                               </div>
 
                               {/* Right: Score and Grade Badge */}
-                              <div className="flex items-center justify-start md:justify-end gap-2 sm:gap-3">
+                              <div className="flex items-center justify-end gap-2 sm:gap-3 flex-shrink-0">
                                 <div className="flex items-baseline gap-1 sm:gap-1.5">
                                   <div className="font-space text-3xl sm:text-4xl md:text-5xl text-white font-bold tracking-tight">
                                     {overallScore}

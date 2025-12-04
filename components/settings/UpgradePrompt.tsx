@@ -39,11 +39,9 @@ export function UpgradePrompt({
 
   const handleUpgrade = () => {
     onClose()
-    if (requiredTier === 'enterprise') {
-      router.push('/enterprise/signup')
-    } else {
-      router.push('/pricing')
-    }
+    // ARCHIVED: All paywalls removed - software is now free for signed-in users
+    // Redirect to home instead of pricing
+    router.push('/')
   }
 
   return (

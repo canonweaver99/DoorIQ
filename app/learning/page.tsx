@@ -149,27 +149,10 @@ export default function LearningPage() {
     )
   }
 
-  if (!hasAccess && ENABLE_ACCESS_CHECK) {
-    return (
-      <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 pt-32">
-        <div className="max-w-[1800px] mx-auto">
-          <div className="flex flex-col items-center justify-center py-20">
-            <Lock className="w-16 h-16 text-purple-400 mb-6" />
-            <h2 className="text-3xl font-bold text-white mb-4 font-space">Sales Playbook Unavailable</h2>
-            <p className="text-slate-400 text-center max-w-md mb-8 font-sans">
-              The Learning page with Sales Playbook is only available for Starter, Team, and Enterprise plans. 
-              Please ensure you have an active subscription.
-            </p>
-            <button
-              onClick={() => router.push('/pricing')}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors font-sans"
-            >
-              View Plans
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+  // ARCHIVED: All paywalls removed - software is now free for signed-in users
+  // Access check disabled - all authenticated users have access
+  if (false) { // Keep structure but never execute
+    return null
   }
 
   return (

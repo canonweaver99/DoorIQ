@@ -30,21 +30,9 @@ export function MiniNavMenu() {
         .eq('id', user.id)
         .single()
 
-      if (userData?.organization_id) {
-        const { data: orgData } = await supabase
-          .from('organizations')
-          .select('plan_tier, stripe_subscription_id')
-          .eq('id', userData.organization_id)
-          .single()
-        
-        if (orgData && (orgData.plan_tier || orgData.stripe_subscription_id)) {
-          setHasActiveSubscription(true)
-        } else {
-          setHasActiveSubscription(false)
-        }
-      } else {
-        setHasActiveSubscription(false)
-      }
+      // ARCHIVED: All paywalls removed - software is now free for signed-in users
+      // Set subscription as active for all authenticated users
+      setHasActiveSubscription(true)
     }
 
     checkAuthAndSubscription()
