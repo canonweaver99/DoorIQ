@@ -673,7 +673,7 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             <div className={`${isMobile ? "h-[300px]" : "h-[450px]"} flex items-center justify-center text-white`}>
               <div className="text-center">
                 <Activity className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} mx-auto mb-4 opacity-50`} />
-                <p className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold font-sans">No performance data available yet</p>
+                <p className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold font-sans`}>No performance data available yet</p>
                 <p className={`${isMobile ? 'text-sm' : 'text-base'} mt-2 text-white/60`}>Start training sessions to see performance metrics</p>
               </div>
             </div>
