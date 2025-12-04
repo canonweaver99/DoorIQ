@@ -94,23 +94,21 @@ export function VideoControls({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onRestartSession}
-            className="flex p-2 sm:p-2.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white"
+            className="hidden sm:flex p-2 sm:p-2.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white"
             aria-label="Restart session"
           >
             <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="ml-1 sm:hidden text-xs font-medium">Restart</span>
           </motion.button>
         )}
         
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onEndSession}
-          className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 font-space touch-manipulation min-w-0"
+          className="hidden sm:flex flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base font-semibold rounded-lg transition-all duration-200 items-center justify-center gap-1.5 sm:gap-2 font-space touch-manipulation min-w-0"
           aria-label="End session"
         >
           <PhoneOff className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-          <span className="hidden sm:inline">End Session</span>
-          <span className="sm:hidden text-xs font-medium">End</span>
+          <span>End Session</span>
         </motion.button>
       </div>
     </div>

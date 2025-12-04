@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, Mic, FileText, Trophy } from 'lucide-react'
+import { Home, Mic, FileText, Trophy, RotateCcw, PhoneOff } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
@@ -1666,6 +1666,32 @@ function TrainerPageContent() {
               {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
             </span>
           </div>
+          {/* Mobile: Restart and End Session Buttons */}
+          {sessionActive && (
+            <div className="sm:hidden flex items-center gap-2">
+              {restartSession && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={restartSession}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white"
+                  aria-label="Restart session"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="text-xs font-medium">Restart</span>
+                </motion.button>
+              )}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => endSession()}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation"
+                aria-label="End session"
+              >
+                <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="font-medium">End</span>
+              </motion.button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Layout - Split View */}
@@ -1993,8 +2019,8 @@ function TrainerPageContent() {
           </div>
         </div>
 
-        {/* Desktop Layout - 2x2 Grid */}
-        <div className="hidden md:flex flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[1.15fr_0.85fr] overflow-hidden min-h-0 gap-4 sm:gap-5 p-2 sm:p-3 lg:p-8">
+        {/* Desktop Layout - 2x2 Grid (4 Quadrants) */}
+        <div className="hidden md:grid flex-1 grid-cols-2 grid-rows-2 overflow-hidden min-h-0 gap-2 p-2 sm:p-3 lg:p-8 pt-4 sm:pt-5 lg:pt-10">
           {/* TOP LEFT QUADRANT - Agent Video */}
           <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Webcam - Full height of quadrant */}
