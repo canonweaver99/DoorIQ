@@ -1703,6 +1703,157 @@ function TrainerPageContent() {
   //   )
   // }
 
+  const renderAgentVideo = () => {
+    const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
+    
+    if (shouldUseVideo) {
+      const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+      if (!videoPaths) return null
+      
+      const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
+        ? videoPaths.closing
+        : videoMode === 'opening' && videoPaths.opening
+        ? videoPaths.opening
+        : videoMode === 'loop'
+        ? videoPaths.loop
+        : videoPaths.closing
+      
+      const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
+        ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+        : videoSrcRaw
+      
+      return (
+        <video
+          key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
+          ref={agentVideoRef}
+          src={videoSrc}
+          className="w-full h-full object-cover"
+          style={{ objectFit: 'cover', objectPosition: 'center center' }}
+          autoPlay
+          muted
+          loop={false}
+          playsInline
+          // @ts-ignore - webkit-playsinline is needed for older iOS Safari
+          webkit-playsinline="true"
+          // @ts-ignore - x-webkit-airplay prevents AirPlay fullscreen
+          x-webkit-airplay="deny"
+          disablePictureInPicture
+          controls={false}
+          controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+          onLoadedData={() => {
+            if (agentVideoRef.current) {
+              console.log('🎬 Video loaded, attempting to play:', videoSrcRaw, 'Mode:', videoMode, 'ShowClose:', showDoorCloseAnimation)
+              // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
+              agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+              // CRITICAL: Exit fullscreen if somehow entered
+              if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {})
+              }
+              agentVideoRef.current.play().catch((err) => {
+                console.warn('Video autoplay failed:', err)
+              })
+            }
+          }}
+          onCanPlay={() => {
+            if (agentVideoRef.current) {
+              // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
+              agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+              // CRITICAL: Exit fullscreen if somehow entered
+              if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {})
+              }
+              if (showDoorCloseAnimation || videoMode === 'closing') {
+                console.log('🎬 Video can play, forcing play for closing animation')
+                agentVideoRef.current.loop = false // Ensure closing video doesn't loop
+                agentVideoRef.current.play().catch((err) => {
+                  console.warn('Video force play failed:', err)
+                })
+              }
+            }
+          }}
+          onPlay={() => {
+            if (agentVideoRef.current) {
+              // CRITICAL: Exit fullscreen immediately when video plays
+              if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                console.log('🚫 Fullscreen detected during play, exiting')
+                document.exitFullscreen().catch(() => {
+                  if ((document as any).webkitExitFullscreen) {
+                    (document as any).webkitExitFullscreen().catch(() => {})
+                  }
+                })
+              }
+              // CRITICAL: Only loop when explicitly in loop mode, otherwise NEVER loop
+              agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+            }
+          }}
+          onEnded={() => {
+            if (agentVideoRef.current && (videoMode === 'closing' || showDoorCloseAnimation)) {
+              console.log('🎬 Closing video ended, stopping playback')
+              agentVideoRef.current.pause()
+              agentVideoRef.current.currentTime = agentVideoRef.current.duration
+              agentVideoRef.current.loop = false
+              // Exit fullscreen
+              if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {})
+              }
+            }
+          }}
+          onError={(e) => {
+            console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
+            e.stopPropagation()
+            // Exit fullscreen on error
+            if (document.fullscreenElement) {
+              document.exitFullscreen().catch(() => {})
+            }
+          }}
+          onDoubleClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            // Prevent fullscreen on double-click
+            if (document.fullscreenElement) {
+              document.exitFullscreen().catch(() => {
+                if ((document as any).webkitExitFullscreen) {
+                  (document as any).webkitExitFullscreen().catch(() => {})
+                }
+              })
+            }
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault()
+            // Exit fullscreen on context menu
+            if (document.fullscreenElement) {
+              document.exitFullscreen().catch(() => {})
+            }
+          }}
+        />
+      )
+    }
+    
+    const src = resolveAgentImage(selectedAgent, sessionActive)
+    const imageSrc = src && (src.includes(' ') || src.includes('&'))
+      ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+      : src
+    
+    return imageSrc ? (
+      <Image
+        src={imageSrc}
+        alt={selectedAgent?.name || 'Agent'}
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover"
+        style={{ objectFit: 'cover', objectPosition: 'center center' }}
+        priority
+        unoptimized={src?.includes(' ') || src?.includes('&')}
+        onError={(e) => {
+          console.error('❌ Image failed to load:', src, 'Encoded:', imageSrc)
+          e.stopPropagation()
+        }}
+        placeholder="blur"
+        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+      />
+    ) : null
+  }
+
   return (
     shouldAnimate ? (
       <motion.div
