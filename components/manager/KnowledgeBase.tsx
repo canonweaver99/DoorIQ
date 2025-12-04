@@ -1,11 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Building2, Package, DollarSign, MessageCircle, Upload, 
   FileText, Save, Plus, Trash2, Edit2, Check, X, Zap
 } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { useHaptic } from '@/hooks/useHaptic'
+import { IOSCard } from '@/components/ui/ios-card'
+import { IOSSegmentedControl } from '@/components/ui/ios-segmented-control'
+import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import { useToast } from '@/components/ui/toast'
 
 type Tab = 'company' | 'pricing' | 'objections' | 'documents'
@@ -58,6 +63,8 @@ interface KnowledgeDocument {
 
 export default function KnowledgeBase() {
   const { showToast } = useToast()
+  const isMobile = useIsMobile()
+  const { trigger } = useHaptic()
   const [activeTab, setActiveTab] = useState<Tab>('company')
   const [config, setConfig] = useState<TeamGradingConfig>({
     company_values: [],
@@ -137,6 +144,11 @@ export default function KnowledgeBase() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleRefresh = async () => {
+    setLoading(true)
+    await loadData()
   }
 
   const saveConfig = async () => {
@@ -279,73 +291,93 @@ export default function KnowledgeBase() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white font-space">Knowledge Base Management</h2>
-          <p className="text-slate-400 mt-1 font-sans">Manage company knowledge and training data</p>
+    <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className={`flex items-center justify-between ${isMobile ? 'flex-col gap-4' : ''}`}>
+          <div>
+            <h2 className={`font-bold text-white font-space ${isMobile ? 'text-xl' : 'text-2xl'}`}>Knowledge Base Management</h2>
+            <p className={`text-slate-400 mt-1 font-sans ${isMobile ? 'text-sm' : ''}`}>Manage company knowledge and training data</p>
+          </div>
+          <button
+            onClick={() => {
+              trigger('medium')
+              saveConfig()
+            }}
+            disabled={saving}
+            className={`flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 font-space min-h-[44px] ${isMobile ? 'w-full' : ''}`}
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Changes
+              </>
+            )}
+          </button>
         </div>
-        <button
-          onClick={saveConfig}
-          disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 font-space"
-        >
-          {saving ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Save Changes
-            </>
-          )}
-        </button>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="border-b border-white/10">
-        <div className="flex items-center gap-1 overflow-x-auto">
-          {tabs.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all whitespace-nowrap font-space ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.name}
+        {/* Tab Navigation - iOS Segmented Control on mobile */}
+        {isMobile ? (
+          <IOSSegmentedControl
+            options={tabs.map(tab => ({
+              value: tab.id,
+              label: tab.name,
+              icon: <tab.icon className="w-4 h-4" />
+            }))}
+            value={activeTab}
+            onChange={(value) => {
+              trigger('selection')
+              setActiveTab(value as Tab)
+            }}
+            size="md"
+          />
+        ) : (
+          <div className="border-b border-white/10">
+            <div className="flex items-center gap-1 overflow-x-auto">
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
                 
-                {isActive && (
-                  <motion.div
-                    layoutId="activeKnowledgeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all whitespace-nowrap font-space ${
+                      isActive
+                        ? 'text-white'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.name}
+                    
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeKnowledgeTab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
-      {/* Tab Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6"
-      >
+        {/* Tab Content */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className={isMobile ? "bg-transparent" : "bg-[#1e1e30] border border-white/10 rounded-2xl p-6"}
+        >
         {/* Company Info Tab */}
         {activeTab === 'company' && (
           <CompanyInfoTab config={config} setConfig={setConfig} />
@@ -370,16 +402,18 @@ export default function KnowledgeBase() {
             onDelete={deleteDocument}
           />
         )}
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
+    </PullToRefresh>
   )
 }
 
 // Subcomponents for each tab
 
 function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setConfig: (c: TeamGradingConfig) => void }) {
+  const isMobile = useIsMobile()
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isMobile ? 'p-4 bg-white/5 border border-white/10 rounded-2xl' : ''}`}>
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2 font-space">Company Name</label>
         <input
@@ -387,7 +421,7 @@ function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setC
           value={config.company_name || ''}
           onChange={(e) => setConfig({ ...config, company_name: e.target.value })}
           placeholder="e.g., Pest Control Pro"
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans"
+          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans min-h-[44px] backdrop-blur-xl"
         />
       </div>
 
@@ -398,7 +432,7 @@ function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setC
           onChange={(e) => setConfig({ ...config, company_mission: e.target.value })}
           placeholder="Protect homes and families by providing superior pest control services with exceptional customer care..."
           rows={3}
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans"
+          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans backdrop-blur-xl"
         />
       </div>
 
@@ -409,7 +443,7 @@ function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setC
           onChange={(e) => setConfig({ ...config, product_description: e.target.value })}
           placeholder="Comprehensive pest control services including quarterly treatments, rodent protection, termite inspections..."
           rows={4}
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans"
+          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans backdrop-blur-xl"
         />
       </div>
 
@@ -420,7 +454,7 @@ function CompanyInfoTab({ config, setConfig }: { config: TeamGradingConfig; setC
           onChange={(e) => setConfig({ ...config, service_guarantees: e.target.value })}
           placeholder="100% satisfaction guarantee. If pests return within treatment period, we re-treat at no additional cost..."
           rows={3}
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans"
+          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans backdrop-blur-xl"
         />
       </div>
     </div>
@@ -577,15 +611,19 @@ function DocumentsTab({ documents, uploading, onUpload, onDelete }: {
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   onDelete: (id: string) => void
 }) {
+  const isMobile = useIsMobile()
+  const { trigger } = useHaptic()
+  const [swipedDocId, setSwipedDocId] = useState<string | null>(null)
+
   return (
     <div className="space-y-6">
-      <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center">
-        <Upload className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-        <h3 className="text-lg font-semibold text-white mb-2">Upload Documents</h3>
-        <p className="text-sm text-slate-400 mb-4">
+      <div className={`border-2 border-dashed border-white/20 rounded-xl text-center ${isMobile ? 'p-6' : 'p-8'}`}>
+        <Upload className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} text-slate-400 mx-auto mb-3`} />
+        <h3 className={`font-semibold text-white mb-2 ${isMobile ? 'text-base' : 'text-lg'}`}>Upload Documents</h3>
+        <p className={`text-slate-400 mb-4 ${isMobile ? 'text-xs' : 'text-sm'}`}>
           Upload training materials, playbooks, product catalogs, or any documents you want the AI to reference during grading
         </p>
-        <label className="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer">
+        <label className={`inline-flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer min-h-[44px] ${isMobile ? 'w-full justify-center' : ''}`}>
           {uploading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -611,37 +649,121 @@ function DocumentsTab({ documents, uploading, onUpload, onDelete }: {
 
       {documents.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Uploaded Documents ({documents.length})</h3>
-          <div className="space-y-2">
-            {documents.map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <FileText className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{doc.document_name}</p>
-                    <p className="text-xs text-slate-400">
-                      {(doc.file_size_bytes / 1024).toFixed(1)} KB • {doc.document_type}
-                      {doc.is_shared_with_team && ' • Shared'}
-                    </p>
+          <h3 className={`font-semibold text-white mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>Uploaded Documents ({documents.length})</h3>
+          <div className="space-y-3">
+            {documents.map((doc) => {
+              const cardRef = useRef<HTMLDivElement>(null)
+              
+              useEffect(() => {
+                const element = cardRef.current
+                if (!element || !isMobile) return
+
+                let startX = 0
+                let isSwiping = false
+
+                const handleTouchStart = (e: TouchEvent) => {
+                  startX = e.touches[0].clientX
+                  isSwiping = true
+                }
+
+                const handleTouchEnd = (e: TouchEvent) => {
+                  if (!isSwiping) return
+                  const endX = e.changedTouches[0].clientX
+                  const deltaX = endX - startX
+                  
+                  if (deltaX < -50) {
+                    // Swipe left - show delete
+                    trigger('light')
+                    setSwipedDocId(doc.id)
+                    setTimeout(() => {
+                      onDelete(doc.id)
+                      setSwipedDocId(null)
+                    }, 300)
+                  }
+                  
+                  isSwiping = false
+                }
+
+                element.addEventListener('touchstart', handleTouchStart, { passive: true })
+                element.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+                return () => {
+                  element.removeEventListener('touchstart', handleTouchStart)
+                  element.removeEventListener('touchend', handleTouchEnd)
+                }
+              }, [doc.id, isMobile, onDelete, trigger])
+
+              return isMobile ? (
+                <IOSCard
+                  key={doc.id}
+                  ref={cardRef}
+                  variant="elevated"
+                  interactive
+                  className="overflow-hidden"
+                >
+                  <div className="p-4">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-8 h-8 text-purple-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{doc.document_name}</p>
+                        <p className="text-xs text-white/60 mt-1">
+                          {(doc.file_size_bytes / 1024).toFixed(1)} KB • {doc.document_type}
+                        </p>
+                        {doc.is_shared_with_team && (
+                          <p className="text-xs text-purple-400 mt-1">Shared with team</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          doc.use_in_grading 
+                            ? 'bg-green-500/20 text-green-300' 
+                            : 'bg-slate-500/20 text-slate-400'
+                        }`}>
+                          {doc.use_in_grading ? 'In Use' : 'Inactive'}
+                        </span>
+                        <button
+                          onClick={() => {
+                            trigger('warning')
+                            onDelete(doc.id)
+                          }}
+                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        >
+                          <Trash2 className="w-5 h-5 text-red-400" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </IOSCard>
+              ) : (
+                <div key={doc.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FileText className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{doc.document_name}</p>
+                      <p className="text-xs text-slate-400">
+                        {(doc.file_size_bytes / 1024).toFixed(1)} KB • {doc.document_type}
+                        {doc.is_shared_with_team && ' • Shared'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      doc.use_in_grading 
+                        ? 'bg-green-500/20 text-green-300' 
+                        : 'bg-slate-500/20 text-slate-400'
+                    }`}>
+                      {doc.use_in_grading ? 'In Use' : 'Inactive'}
+                    </span>
+                    <button
+                      onClick={() => onDelete(doc.id)}
+                      className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    doc.use_in_grading 
-                      ? 'bg-green-500/20 text-green-300' 
-                      : 'bg-slate-500/20 text-slate-400'
-                  }`}>
-                    {doc.use_in_grading ? 'In Use' : 'Inactive'}
-                  </span>
-                  <button
-                    onClick={() => onDelete(doc.id)}
-                    className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

@@ -3,6 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Video, Play, Trash2, Upload, X } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { useHaptic } from '@/hooks/useHaptic'
+import { IOSCard } from '@/components/ui/ios-card'
+import { IOSSegmentedControl } from '@/components/ui/ios-segmented-control'
+import { PullToRefresh } from '@/components/ui/pull-to-refresh'
+import { IOSBottomSheet } from '@/components/ui/ios-bottom-sheet'
 import { createClient } from '@/lib/supabase/client'
 
 interface InstructionalVideo {
@@ -32,11 +38,14 @@ interface TeamVideo {
 
 export default function TrainingVideos() {
   const supabase = createClient()
+  const isMobile = useIsMobile()
+  const { trigger } = useHaptic()
   const [instructionalVideos, setInstructionalVideos] = useState<InstructionalVideo[]>([])
   const [teamVideos, setTeamVideos] = useState<TeamVideo[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'instructional' | 'team'>('instructional')
   const [managerTeamId, setManagerTeamId] = useState<string | null>(null)
+  const [selectedVideo, setSelectedVideo] = useState<InstructionalVideo | TeamVideo | null>(null)
   
   // Upload form state
   const [uploading, setUploading] = useState(false)
@@ -107,6 +116,11 @@ export default function TrainingVideos() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleRefresh = async () => {
+    setLoading(true)
+    await fetchData()
   }
 
   const formatFileSize = (bytes: number | null) => {
@@ -322,45 +336,74 @@ export default function TrainingVideos() {
   const videos = activeTab === 'instructional' ? instructionalVideos : teamVideos
 
   return (
-    <div className="space-y-6">
-      {/* Tab Navigation */}
-      <div className="flex items-center justify-between border-b border-[#2a2a2a]">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => {
-              setActiveTab('instructional')
-              resetUploadForm()
-            }}
-            className={`px-4 py-2 text-sm font-medium transition-colors font-space ${
-              activeTab === 'instructional'
-                ? 'text-white border-b-2 border-purple-500'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Instructional Videos
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('team')
-              resetUploadForm()
-            }}
-            className={`px-4 py-2 text-sm font-medium transition-colors font-space ${
-              activeTab === 'team'
-                ? 'text-white border-b-2 border-purple-500'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Team Videos
-          </button>
-        </div>
-        <button
-          onClick={() => setShowUploadForm(!showUploadForm)}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2 font-space"
-        >
-          <Upload className="w-4 h-4" />
-          Upload Video
-        </button>
-      </div>
+    <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>
+      <div className="space-y-6">
+        {/* Tab Navigation - iOS Segmented Control on mobile */}
+        {isMobile ? (
+          <div className="space-y-4">
+            <IOSSegmentedControl
+              options={[
+                { value: 'instructional', label: 'Instructional' },
+                { value: 'team', label: 'Team' }
+              ]}
+              value={activeTab}
+              onChange={(value) => {
+                trigger('selection')
+                setActiveTab(value as 'instructional' | 'team')
+                resetUploadForm()
+              }}
+              size="md"
+            />
+            <button
+              onClick={() => {
+                trigger('medium')
+                setShowUploadForm(!showUploadForm)
+              }}
+              className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 font-space min-h-[44px]"
+            >
+              <Upload className="w-5 h-5" />
+              Upload Video
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between border-b border-[#2a2a2a]">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setActiveTab('instructional')
+                  resetUploadForm()
+                }}
+                className={`px-4 py-2 text-sm font-medium transition-colors font-space ${
+                  activeTab === 'instructional'
+                    ? 'text-white border-b-2 border-purple-500'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Instructional Videos
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('team')
+                  resetUploadForm()
+                }}
+                className={`px-4 py-2 text-sm font-medium transition-colors font-space ${
+                  activeTab === 'team'
+                    ? 'text-white border-b-2 border-purple-500'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Team Videos
+              </button>
+            </div>
+            <button
+              onClick={() => setShowUploadForm(!showUploadForm)}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2 font-space"
+            >
+              <Upload className="w-4 h-4" />
+              Upload Video
+            </button>
+          </div>
+        )}
 
       {/* Upload Form */}
       {showUploadForm && (
@@ -515,70 +558,152 @@ export default function TrainingVideos() {
         </motion.div>
       )}
 
-      {/* Videos Grid */}
-      {videos.length === 0 ? (
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-12 text-center">
-          <Video className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400 font-sans mb-3">
-            No {activeTab === 'instructional' ? 'instructional' : 'team'} videos uploaded yet.
-          </p>
-          {activeTab === 'instructional' && (
-            <p className="text-sm text-slate-500 font-sans max-w-md mx-auto">
-              When you upload instructional videos here, they will automatically appear as new modules for your reps in their Learning Center. Your team members will be able to access and watch these training videos to improve their skills.
+        {/* Videos List/Grid */}
+        {videos.length === 0 ? (
+          <div className={`bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-center ${isMobile ? 'p-8' : 'p-12'}`}>
+            <Video className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-slate-600 mx-auto mb-4`} />
+            <p className={`text-slate-400 font-sans mb-3 ${isMobile ? 'text-sm' : ''}`}>
+              No {activeTab === 'instructional' ? 'instructional' : 'team'} videos uploaded yet.
             </p>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {videos.map((video, idx) => (
-            <motion.div
-              key={video.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: idx * 0.05 }}
-              className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden hover:border-[#a855f7]/50 transition-colors relative"
-            >
-              <div className="relative bg-black aspect-video">
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900/20 to-indigo-900/20">
-                  <Play className="w-12 h-12 text-white/50" />
-                </div>
+            {activeTab === 'instructional' && (
+              <p className={`text-slate-500 font-sans max-w-md mx-auto ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                When you upload instructional videos here, they will automatically appear as new modules for your reps in their Learning Center. Your team members will be able to access and watch these training videos to improve their skills.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className={isMobile ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
+            {videos.map((video, idx) => (
+              <motion.div
+                key={video.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                onClick={() => {
+                  trigger('light')
+                  setSelectedVideo(video)
+                }}
+              >
+                {isMobile ? (
+                  <IOSCard variant="elevated" interactive haptic className="overflow-hidden">
+                    <div className="flex gap-4">
+                      <div className="relative bg-black aspect-video w-32 flex-shrink-0 rounded-xl overflow-hidden">
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900/20 to-indigo-900/20">
+                          <Play className="w-8 h-8 text-white/50" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0 py-2">
+                        <h4 className="text-base font-bold text-white mb-1 line-clamp-2 font-space">
+                          {video.title}
+                        </h4>
+                        {video.description && (
+                          <p className="text-xs text-white/60 mb-2 line-clamp-2 font-sans">
+                            {video.description}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-white/50 mb-2 font-sans">
+                          <span>{formatDate(video.created_at)}</span>
+                          {video.file_size && (
+                            <span>{formatFileSize(video.file_size)}</span>
+                          )}
+                        </div>
+                        {'uploaded_by_name' in video && video.uploaded_by_name && (
+                          <p className="text-xs text-white/50 font-sans">
+                            By {video.uploaded_by_name}
+                          </p>
+                        )}
+                        {activeTab === 'team' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              trigger('warning')
+                              handleDeleteTeamVideo(video.id)
+                            }}
+                            className="mt-2 px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex items-center gap-2 font-space min-h-[44px]"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </IOSCard>
+                ) : (
+                  <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden hover:border-[#a855f7]/50 transition-colors relative cursor-pointer">
+                    <div className="relative bg-black aspect-video">
+                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900/20 to-indigo-900/20">
+                        <Play className="w-12 h-12 text-white/50" />
+                      </div>
+                    </div>
+                    
+                    <div className="p-4">
+                      <h4 className="text-base font-bold text-white mb-2 line-clamp-2 font-space">
+                        {video.title}
+                      </h4>
+                      {video.description && (
+                        <p className="text-sm text-slate-400 mb-3 line-clamp-2 font-sans">
+                          {video.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between text-xs text-slate-500 mb-2 font-sans">
+                        <span>{formatDate(video.created_at)}</span>
+                        {video.file_size && (
+                          <span>{formatFileSize(video.file_size)}</span>
+                        )}
+                      </div>
+                      {'uploaded_by_name' in video && video.uploaded_by_name && (
+                        <p className="text-xs text-slate-500 mb-2 font-sans">
+                          Uploaded by {video.uploaded_by_name}
+                        </p>
+                      )}
+                      {activeTab === 'team' && (
+                        <button
+                          onClick={() => handleDeleteTeamVideo(video.id)}
+                          className="mt-2 px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex items-center gap-2 font-space"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Video Player Modal - iOS Bottom Sheet on mobile */}
+        {selectedVideo && (
+          <IOSBottomSheet
+            isOpen={!!selectedVideo}
+            onClose={() => setSelectedVideo(null)}
+            title={selectedVideo.title}
+            maxHeight={isMobile ? '90vh' : '85vh'}
+          >
+            <div className="space-y-4">
+              <div className="relative bg-black aspect-video rounded-xl overflow-hidden">
+                <video
+                  src={selectedVideo.video_url}
+                  controls
+                  className="w-full h-full"
+                  playsInline
+                />
               </div>
-              
-              <div className="p-4">
-                <h4 className="text-base font-bold text-white mb-2 line-clamp-2 font-space">
-                  {video.title}
-                </h4>
-                {video.description && (
-                  <p className="text-sm text-slate-400 mb-3 line-clamp-2 font-sans">
-                    {video.description}
-                  </p>
-                )}
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-2 font-sans">
-                  <span>{formatDate(video.created_at)}</span>
-                  {video.file_size && (
-                    <span>{formatFileSize(video.file_size)}</span>
-                  )}
-                </div>
-                {'uploaded_by_name' in video && video.uploaded_by_name && (
-                  <p className="text-xs text-slate-500 mb-2 font-sans">
-                    Uploaded by {video.uploaded_by_name}
-                  </p>
-                )}
-                {activeTab === 'team' && (
-                  <button
-                    onClick={() => handleDeleteTeamVideo(video.id)}
-                    className="mt-2 px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex items-center gap-2 font-space"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    Delete
-                  </button>
+              {selectedVideo.description && (
+                <p className="text-white/80 font-sans">{selectedVideo.description}</p>
+              )}
+              <div className="flex items-center justify-between text-sm text-white/60">
+                <span>{formatDate(selectedVideo.created_at)}</span>
+                {selectedVideo.file_size && (
+                  <span>{formatFileSize(selectedVideo.file_size)}</span>
                 )}
               </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
+            </div>
+          </IOSBottomSheet>
+        )}
+      </div>
+    </PullToRefresh>
   )
 }
 

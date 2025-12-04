@@ -1,8 +1,15 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo, memo, useCallback } from 'react'
 import { Search, Filter, ChevronDown, MoreVertical, Mail, Target, X, TrendingUp, TrendingDown, CheckSquare, UserCheck, MessageSquare, Eye, Download, ArrowUpRight, ArrowDownRight, ChevronRight, Trash2, AlertTriangle } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { useHaptic } from '@/hooks/useHaptic'
+import { IOSCard } from '@/components/ui/ios-card'
+import { IOSSegmentedControl } from '@/components/ui/ios-segmented-control'
+import { IOSActionSheet } from '@/components/ui/ios-action-sheet'
+import { PullToRefresh } from '@/components/ui/pull-to-refresh'
+import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import RepProfileModal from './RepProfileModal'
 
 interface Rep {
@@ -38,6 +45,8 @@ interface RepPerformance {
 }
 
 export default function RepManagement() {
+  const isMobile = useIsMobile()
+  const { trigger } = useHaptic()
   const [reps, setReps] = useState<Rep[]>([])
   const [repPerformance, setRepPerformance] = useState<RepPerformance[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,10 +57,13 @@ export default function RepManagement() {
   const [selectedReps, setSelectedReps] = useState<string[]>([])
   const [selectedRep, setSelectedRep] = useState<Rep | null>(null)
   const [actionMenuRepId, setActionMenuRepId] = useState<string | null>(null)
+  const [swipedRepId, setSwipedRepId] = useState<string | null>(null)
   const actionMenuRef = useRef<HTMLDivElement | null>(null)
   const [repToRemove, setRepToRemove] = useState<Rep | null>(null)
   const [removing, setRemoving] = useState(false)
   const [removeError, setRemoveError] = useState<string | null>(null)
+  const [showActionSheet, setShowActionSheet] = useState(false)
+  const [actionSheetRep, setActionSheetRep] = useState<Rep | null>(null)
 
   // Load reps data
   useEffect(() => {
@@ -87,18 +99,21 @@ export default function RepManagement() {
     }
   }
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!actionMenuRepId) return
-      if (actionMenuRef.current?.contains(event.target as Node)) return
-      setActionMenuRepId(null)
+  const handleRefresh = async () => {
+    setLoading(true)
+    setPerformanceLoading(true)
+    await Promise.all([loadReps(), loadRepPerformance()])
+  }
+
+  const handleSwipeLeft = useCallback((repId: string) => {
+    const rep = reps.find(r => r.id === repId)
+    if (rep) {
+      setActionSheetRep(rep)
+      setShowActionSheet(true)
     }
+  }, [reps])
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [actionMenuRepId])
-
-  const handleAction = (action: 'message' | 'profile' | 'remove', repId: string) => {
+  const handleAction = useCallback((action: 'message' | 'profile' | 'remove', repId: string) => {
     switch (action) {
       case 'message':
         // Navigate to messages tab for this rep
@@ -116,7 +131,18 @@ export default function RepManagement() {
         break
     }
     setActionMenuRepId(null)
-  }
+  }, [reps])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!actionMenuRepId) return
+      if (actionMenuRef.current?.contains(event.target as Node)) return
+      setActionMenuRepId(null)
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [actionMenuRepId])
 
   const handleRemoveRep = async () => {
     if (!repToRemove) return
@@ -173,43 +199,45 @@ export default function RepManagement() {
     }
   }
 
-  const toggleRepSelection = (id: string) => {
+  const toggleRepSelection = useCallback((id: string) => {
     setSelectedReps(prev =>
       prev.includes(id) ? prev.filter(repId => repId !== id) : [...prev, id]
     )
-  }
+  }, [])
 
-  const toggleSelectAll = () => {
-    setSelectedReps(selectedReps.length === reps.length ? [] : reps.map(r => r.id))
-  }
+  const toggleSelectAll = useCallback(() => {
+    setSelectedReps(selectedReps.length === filteredReps.length ? [] : filteredReps.map(r => r.id))
+  }, [selectedReps.length, filteredReps])
 
-  // Filter and sort reps
-  const filteredReps = reps
-    .filter(rep => {
-      // Search filter
-      if (searchQuery && !rep.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false
-      }
-      // Status filter
-      if (statusFilter !== 'all' && rep.status.toLowerCase().replace(' ', '') !== statusFilter) {
-        return false
-      }
-      return true
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'score':
-          return b.score - a.score
-        case 'name':
-          return a.name.localeCompare(b.name)
-        case 'sessions':
-          return b.sessionsWeek - a.sessionsWeek
-        case 'lastActive':
-          return 0 // Could implement time-based sorting
-        default:
-          return 0
-      }
-    })
+  // Filter and sort reps - memoized for performance
+  const filteredReps = useMemo(() => {
+    return reps
+      .filter(rep => {
+        // Search filter
+        if (searchQuery && !rep.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+          return false
+        }
+        // Status filter
+        if (statusFilter !== 'all' && rep.status.toLowerCase().replace(' ', '') !== statusFilter) {
+          return false
+        }
+        return true
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'score':
+            return b.score - a.score
+          case 'name':
+            return a.name.localeCompare(b.name)
+          case 'sessions':
+            return b.sessionsWeek - a.sessionsWeek
+          case 'lastActive':
+            return 0 // Could implement time-based sorting
+          default:
+            return 0
+        }
+      })
+  }, [reps, searchQuery, statusFilter, sortBy])
 
   if (loading) {
     return (
@@ -335,44 +363,91 @@ export default function RepManagement() {
       )}
 
       {/* Filters and Search */}
-      <div className="flex flex-col md:flex-row gap-4">
-        {/* Search */}
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search reps by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-[#1e1e30] border border-white/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+      {isMobile ? (
+        <div className="space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search reps..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40 backdrop-blur-xl transition-all min-h-[44px]"
+            />
+          </div>
+
+          {/* Status Filter - iOS Segmented Control */}
+          <IOSSegmentedControl
+            options={[
+              { value: 'all', label: 'All' },
+              { value: 'intraining', label: 'Training' },
+              { value: 'infield', label: 'In Field' },
+              { value: 'available', label: 'Available' },
+            ]}
+            value={statusFilter}
+            onChange={(value) => {
+              trigger('selection')
+              setStatusFilter(value)
+            }}
+            size="sm"
+          />
+
+          {/* Sort By - iOS Segmented Control */}
+          <IOSSegmentedControl
+            options={[
+              { value: 'score', label: 'Score' },
+              { value: 'name', label: 'Name' },
+              { value: 'sessions', label: 'Sessions' },
+            ]}
+            value={sortBy}
+            onChange={(value) => {
+              trigger('selection')
+              setSortBy(value)
+            }}
+            size="sm"
           />
         </div>
+      ) : (
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search reps by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-[#1e1e30] border border-white/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+            />
+          </div>
 
-        {/* Status Filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-3 bg-[#1e1e30] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all appearance-none cursor-pointer"
-        >
-          <option value="all">All Status</option>
-          <option value="intraining">In Training</option>
-          <option value="infield">In Field</option>
-          <option value="available">Available</option>
-          <option value="offline">Offline</option>
-        </select>
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-3 bg-[#1e1e30] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all appearance-none cursor-pointer"
+          >
+            <option value="all">All Status</option>
+            <option value="intraining">In Training</option>
+            <option value="infield">In Field</option>
+            <option value="available">Available</option>
+            <option value="offline">Offline</option>
+          </select>
 
-        {/* Sort By */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="px-4 py-3 bg-[#1e1e30] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all appearance-none cursor-pointer"
-        >
-          <option value="score">Sort by Score</option>
-          <option value="name">Sort by Name</option>
-          <option value="sessions">Sort by Sessions</option>
-          <option value="lastActive">Sort by Last Active</option>
-        </select>
-      </div>
+          {/* Sort By */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-3 bg-[#1e1e30] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all appearance-none cursor-pointer"
+          >
+            <option value="score">Sort by Score</option>
+            <option value="name">Sort by Name</option>
+            <option value="sessions">Sort by Sessions</option>
+            <option value="lastActive">Sort by Last Active</option>
+          </select>
+        </div>
+      )}
 
       {/* Bulk Actions */}
       {selectedReps.length > 0 && (
@@ -400,184 +475,297 @@ export default function RepManagement() {
         </motion.div>
       )}
 
-      {/* Rep Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-        className="bg-[#1e1e30] border border-white/10 rounded-2xl overflow-visible"
-      >
-        {/* Table Header */}
-        <div className="border-b border-white/10 bg-white/5 px-6 py-4">
-          <div className="grid grid-cols-12 gap-4 items-center">
-            <div className="col-span-1">
-              <input
-                type="checkbox"
-                checked={selectedReps.length === filteredReps.length && filteredReps.length > 0}
-                onChange={toggleSelectAll}
-                className="custom-checkbox"
-              />
-            </div>
-            <div className="col-span-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-space">Rep</span>
-            </div>
-            <div className="col-span-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</span>
-            </div>
-            <div className="col-span-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Score</span>
-            </div>
-            <div className="col-span-2 hidden lg:block">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sessions</span>
-            </div>
-            <div className="col-span-1 hidden xl:block">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Trend</span>
-            </div>
-            <div className="col-span-1">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</span>
-            </div>
-          </div>
-        </div>
+      {/* Rep List - Mobile Cards or Desktop Table */}
+      <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>
+        {isMobile ? (
+          <div className="space-y-3">
+            {filteredReps.map((rep, index) => {
+              const cardRef = useRef<HTMLDivElement>(null)
+              
+              useEffect(() => {
+                const element = cardRef.current
+                if (!element) return
 
-        {/* Table Body */}
-        <div className="divide-y divide-white/5 overflow-visible">
-          {filteredReps.map((rep, index) => (
-            <motion.div
-              key={rep.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
-              className="px-6 py-4 hover:bg-white/5 transition-colors cursor-pointer group"
-              onClick={() => window.location.href = `/manager/rep/${rep.id}`}
-            >
+                let startX = 0
+                let isSwiping = false
+
+                const handleTouchStart = (e: TouchEvent) => {
+                  startX = e.touches[0].clientX
+                  isSwiping = true
+                }
+
+                const handleTouchEnd = (e: TouchEvent) => {
+                  if (!isSwiping) return
+                  const endX = e.changedTouches[0].clientX
+                  const deltaX = endX - startX
+                  
+                  if (deltaX < -50) {
+                    // Swipe left
+                    trigger('light')
+                    handleSwipeLeft(rep.id)
+                  }
+                  
+                  isSwiping = false
+                }
+
+                element.addEventListener('touchstart', handleTouchStart, { passive: true })
+                element.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+                return () => {
+                  element.removeEventListener('touchstart', handleTouchStart)
+                  element.removeEventListener('touchend', handleTouchEnd)
+                }
+              }, [rep.id])
+
+              return (
+                <motion.div
+                  key={rep.id}
+                  ref={cardRef}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <IOSCard
+                    interactive
+                    haptic
+                    variant="elevated"
+                    className="overflow-hidden"
+                    onClick={() => {
+                      trigger('light')
+                      window.location.href = `/manager/rep/${rep.id}`
+                    }}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        {/* Avatar and Info */}
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {rep.avatar_url ? (
+                            <img 
+                              src={rep.avatar_url} 
+                              alt={rep.name}
+                              className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/10 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-base ring-2 ring-white/10 flex-shrink-0">
+                              {rep.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="text-base font-semibold text-white font-space truncate">{rep.name}</p>
+                              <div className={`w-2 h-2 rounded-full ${getStatusDot(rep.status)} ${rep.status !== 'Offline' ? 'animate-pulse' : ''} flex-shrink-0`} />
+                            </div>
+                            <p className="text-xs text-white/60 font-sans truncate">{rep.email}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-xs font-medium ${getStatusColor(rep.status)}`}>
+                                {rep.status}
+                              </div>
+                              {rep.trend !== 0 && (
+                                <div className={`flex items-center gap-1 ${rep.trendUp ? 'text-green-400' : 'text-red-400'}`}>
+                                  {rep.trendUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                  <span className="text-xs font-semibold font-space">{Math.abs(rep.trend)}%</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Score and Metrics */}
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <span className={`text-2xl font-bold font-space ${
+                            rep.score >= 80 ? 'text-green-400' : rep.score >= 60 ? 'text-yellow-400' : 'text-red-400'
+                          }`}>
+                            {rep.score}%
+                          </span>
+                          <p className="text-xs text-white/50 font-sans">{rep.sessionsWeek} sessions</p>
+                        </div>
+                      </div>
+                    </div>
+                  </IOSCard>
+                </motion.div>
+              )
+            })}
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="bg-[#1e1e30] border border-white/10 rounded-2xl overflow-visible"
+          >
+            {/* Table Header */}
+            <div className="border-b border-white/10 bg-white/5 px-6 py-4">
               <div className="grid grid-cols-12 gap-4 items-center">
-                {/* Checkbox */}
-                <div className="col-span-1" onClick={(e) => e.stopPropagation()}>
+                <div className="col-span-1">
                   <input
                     type="checkbox"
-                    checked={selectedReps.includes(rep.id)}
-                    onChange={() => toggleRepSelection(rep.id)}
+                    checked={selectedReps.length === filteredReps.length && filteredReps.length > 0}
+                    onChange={toggleSelectAll}
                     className="custom-checkbox"
                   />
                 </div>
-
-                {/* Profile */}
-                <div className="col-span-3 flex items-center gap-3">
-                  {rep.avatar_url ? (
-                    <img 
-                      src={rep.avatar_url} 
-                      alt={rep.name}
-                      className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/10">
-                      {rep.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-semibold text-white font-space">{rep.name}</p>
-                    <p className="text-xs text-slate-400 font-sans">{rep.lastActive}</p>
-                  </div>
+                <div className="col-span-3">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-space">Rep</span>
                 </div>
-
-                {/* Status */}
                 <div className="col-span-2">
-                  <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium ${getStatusColor(rep.status)}`}>
-                    <div className={`w-2 h-2 rounded-full ${getStatusDot(rep.status)} ${rep.status !== 'Offline' ? 'animate-pulse' : ''}`} />
-                    {rep.status}
-                  </div>
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</span>
                 </div>
-
-                {/* Score */}
                 <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-lg font-bold font-space ${
-                      rep.score >= 80 ? 'text-green-400' : rep.score >= 60 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
-                      {rep.score}%
-                    </span>
-                  </div>
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Score</span>
                 </div>
-
-                {/* Sessions */}
                 <div className="col-span-2 hidden lg:block">
-                  <span className="text-sm font-semibold text-white font-sans">{rep.sessionsWeek} sessions</span>
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sessions</span>
                 </div>
-
-                {/* Trend */}
                 <div className="col-span-1 hidden xl:block">
-                  {rep.trend !== 0 && (
-                    <div className={`flex items-center gap-1 ${rep.trendUp ? 'text-green-400' : 'text-red-400'}`}>
-                      {rep.trendUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                      <span className="text-sm font-semibold font-space">{Math.abs(rep.trend)}%</span>
-                    </div>
-                  )}
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Trend</span>
                 </div>
-
-                {/* Actions */}
-                <div className="col-span-1 relative" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                    onClick={() => setActionMenuRepId((prev) => (prev === rep.id ? null : rep.id))}
-                    aria-haspopup="menu"
-                    aria-expanded={actionMenuRepId === rep.id}
-                    aria-label={`Open actions for ${rep.name}`}
-                  >
-                    <MoreVertical className="w-5 h-5 text-slate-400" />
-                  </button>
-
-                  <AnimatePresence>
-                    {actionMenuRepId === rep.id && (
-                      <motion.div
-                        ref={actionMenuRef}
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-[#1f1f32] shadow-lg shadow-purple-600/20 z-10"
-                        role="menu"
-                        aria-label="Rep actions"
-                      >
-                        {[
-                          {
-                            key: 'profile' as const,
-                            label: 'View Dashboard',
-                            icon: <Eye className="w-4 h-4 text-green-300" />,
-                          },
-                          {
-                            key: 'message' as const,
-                            label: 'Send Message',
-                            icon: <MessageSquare className="w-4 h-4 text-purple-300" />,
-                          },
-                          {
-                            key: 'remove' as const,
-                            label: 'Remove from Team',
-                            icon: <Trash2 className="w-4 h-4 text-red-300" />,
-                          },
-                        ].map((item) => (
-                          <button
-                            key={item.key}
-                            onClick={() => handleAction(item.key, rep.id)}
-                            className={`flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors ${
-                              item.key === 'remove'
-                                ? 'text-red-300 hover:text-red-200 hover:bg-red-500/10'
-                                : 'text-white/80 hover:text-white hover:bg-white/10'
-                            }`}
-                            role="menuitem"
-                          >
-                            {item.icon}
-                            {item.label}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                <div className="col-span-1">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</span>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+            </div>
+
+            {/* Table Body */}
+            <div className="divide-y divide-white/5 overflow-visible">
+              {filteredReps.map((rep, index) => (
+                <motion.div
+                  key={rep.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
+                  className="px-6 py-4 hover:bg-white/5 transition-colors cursor-pointer group"
+                  onClick={() => window.location.href = `/manager/rep/${rep.id}`}
+                >
+                  <div className="grid grid-cols-12 gap-4 items-center">
+                    {/* Checkbox */}
+                    <div className="col-span-1" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedReps.includes(rep.id)}
+                        onChange={() => toggleRepSelection(rep.id)}
+                        className="custom-checkbox"
+                      />
+                    </div>
+
+                    {/* Profile */}
+                    <div className="col-span-3 flex items-center gap-3">
+                      {rep.avatar_url ? (
+                        <img 
+                          src={rep.avatar_url} 
+                          alt={rep.name}
+                          className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/10">
+                          {rep.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-white font-space">{rep.name}</p>
+                        <p className="text-xs text-slate-400 font-sans">{rep.lastActive}</p>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="col-span-2">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium ${getStatusColor(rep.status)}`}>
+                        <div className={`w-2 h-2 rounded-full ${getStatusDot(rep.status)} ${rep.status !== 'Offline' ? 'animate-pulse' : ''}`} />
+                        {rep.status}
+                      </div>
+                    </div>
+
+                    {/* Score */}
+                    <div className="col-span-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-lg font-bold font-space ${
+                          rep.score >= 80 ? 'text-green-400' : rep.score >= 60 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {rep.score}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Sessions */}
+                    <div className="col-span-2 hidden lg:block">
+                      <span className="text-sm font-semibold text-white font-sans">{rep.sessionsWeek} sessions</span>
+                    </div>
+
+                    {/* Trend */}
+                    <div className="col-span-1 hidden xl:block">
+                      {rep.trend !== 0 && (
+                        <div className={`flex items-center gap-1 ${rep.trendUp ? 'text-green-400' : 'text-red-400'}`}>
+                          {rep.trendUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                          <span className="text-sm font-semibold font-space">{Math.abs(rep.trend)}%</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="col-span-1 relative" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        onClick={() => setActionMenuRepId((prev) => (prev === rep.id ? null : rep.id))}
+                        aria-haspopup="menu"
+                        aria-expanded={actionMenuRepId === rep.id}
+                        aria-label={`Open actions for ${rep.name}`}
+                      >
+                        <MoreVertical className="w-5 h-5 text-slate-400" />
+                      </button>
+
+                      <AnimatePresence>
+                        {actionMenuRepId === rep.id && (
+                          <motion.div
+                            ref={actionMenuRef}
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-[#1f1f32] shadow-lg shadow-purple-600/20 z-10"
+                            role="menu"
+                            aria-label="Rep actions"
+                          >
+                            {[
+                              {
+                                key: 'profile' as const,
+                                label: 'View Dashboard',
+                                icon: <Eye className="w-4 h-4 text-green-300" />,
+                              },
+                              {
+                                key: 'message' as const,
+                                label: 'Send Message',
+                                icon: <MessageSquare className="w-4 h-4 text-purple-300" />,
+                              },
+                              {
+                                key: 'remove' as const,
+                                label: 'Remove from Team',
+                                icon: <Trash2 className="w-4 h-4 text-red-300" />,
+                              },
+                            ].map((item) => (
+                              <button
+                                key={item.key}
+                                onClick={() => handleAction(item.key, rep.id)}
+                                className={`flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                                  item.key === 'remove'
+                                    ? 'text-red-300 hover:text-red-200 hover:bg-red-500/10'
+                                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                                }`}
+                                role="menuitem"
+                              >
+                                {item.icon}
+                                {item.label}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </PullToRefresh>
 
       {/* Rep Profile Modal */}
       <AnimatePresence>
@@ -588,6 +776,43 @@ export default function RepManagement() {
           />
         )}
       </AnimatePresence>
+
+      {/* iOS Action Sheet for Mobile */}
+      {isMobile && actionSheetRep && (
+        <IOSActionSheet
+          isOpen={showActionSheet}
+          onClose={() => {
+            setShowActionSheet(false)
+            setActionSheetRep(null)
+          }}
+          title={actionSheetRep.name}
+          actions={[
+            {
+              label: 'View Dashboard',
+              icon: <Eye className="w-5 h-5" />,
+              action: () => {
+                window.location.href = `/manager/rep/${actionSheetRep.id}`
+              }
+            },
+            {
+              label: 'Send Message',
+              icon: <MessageSquare className="w-5 h-5" />,
+              action: () => {
+                handleAction('message', actionSheetRep.id)
+              }
+            },
+            {
+              label: 'Remove from Team',
+              icon: <Trash2 className="w-5 h-5" />,
+              action: () => {
+                setRepToRemove(actionSheetRep)
+                setShowActionSheet(false)
+              },
+              destructive: true
+            }
+          ]}
+        />
+      )}
 
       {/* Remove Rep Confirmation Modal */}
       <AnimatePresence>
@@ -604,7 +829,7 @@ export default function RepManagement() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#1e1e30] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl"
+              className={`bg-[#1e1e30] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl ${isMobile ? 'rounded-3xl' : ''}`}
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-red-500/10 rounded-xl border border-red-500/20">
@@ -624,21 +849,21 @@ export default function RepManagement() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-3 ${isMobile ? 'flex-col' : ''}`}>
                 <button
                   onClick={() => {
                     setRepToRemove(null)
                     setRemoveError(null)
                   }}
                   disabled={removing}
-                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed font-space"
+                  className={`px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed font-space min-h-[44px] ${isMobile ? 'w-full' : 'flex-1'}`}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRemoveRep}
                   disabled={removing}
-                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space"
+                  className={`px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space min-h-[44px] ${isMobile ? 'w-full' : 'flex-1'}`}
                 >
                   {removing ? (
                     <>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
@@ -13,7 +13,16 @@ import {
   ChevronRight, Sparkles, ArrowUpRight, ArrowDownRight, Brain,
   Target as TargetIcon, UserCheck, Timer, CheckCircle2, XCircle, Star, Mail, UserPlus, Trophy, X, Copy, MessageSquare
 } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { IOSCard } from '@/components/ui/ios-card'
+import { IOSSegmentedControl } from '@/components/ui/ios-segmented-control'
+import { PullToRefresh } from '@/components/ui/pull-to-refresh'
+import { useHaptic } from '@/hooks/useHaptic'
 import Link from 'next/link'
+
+// Lazy load charts for better performance
+const LazyLineChart = lazy(() => Promise.resolve({ default: LineChart }))
+const LazyComposedChart = lazy(() => Promise.resolve({ default: ComposedChart }))
 
 const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#EC4899', '#F59E0B', '#EF4444']
 
@@ -111,6 +120,8 @@ interface AnalyticsDashboardProps {
 }
 
 export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashboardProps = {}) {
+  const isMobile = useIsMobile()
+  const { trigger } = useHaptic()
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [teamStats, setTeamStats] = useState<TeamStats | null>(null)
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
@@ -206,6 +217,12 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
       const body = `Hi,\n\nI'd like to invite you to join my team on DoorIQ. Click the link below to get started:\n\n${inviteUrl}\n\nLooking forward to working with you!`
       window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
     }
+  }
+
+  const handleRefresh = async () => {
+    setLoading(true)
+    await Promise.all([loadAnalytics(), loadTeamStats(), loadRevenueData()])
+    setLoading(false)
   }
 
   const loadRevenueData = async () => {
@@ -312,10 +329,10 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
     )
   }
 
-  const topPerformers = analytics.repPerformance?.slice(0, 3) || []
-  const needsAttention = analytics.repPerformance?.filter(r => r.trend < 0).slice(0, 3) || []
+  const topPerformers = useMemo(() => analytics.repPerformance?.slice(0, 3) || [], [analytics.repPerformance])
+  const needsAttention = useMemo(() => analytics.repPerformance?.filter(r => r.trend < 0).slice(0, 3) || [], [analytics.repPerformance])
 
-  const displayTeamStats = teamStats || {
+  const displayTeamStats = useMemo(() => teamStats || {
     totalReps: analytics?.activeReps || 0,
     activeNow: analytics?.activeReps || 0,
     teamAverage: analytics?.teamAverage || 0,
@@ -328,12 +345,110 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
       sessionCount: r.sessions,
       earnings: r.revenue
     })) || []
-  }
+  }, [teamStats, analytics])
 
   return (
-    <div className="space-y-8">
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>
+      <div className="space-y-6 md:space-y-8">
+        {/* Key Metrics Grid - Horizontal scroll on mobile */}
+        {isMobile ? (
+          <div className="overflow-x-auto -mx-4 px-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div className="flex gap-4" style={{ width: 'max-content' }}>
+              {[
+                { 
+                  label: 'Total Earned', 
+                  value: `$${displayTeamStats.totalEarned.toLocaleString()}`, 
+                  change: '', 
+                  changeValue: 0,
+                  icon: DollarSign,
+                  bgColor: '#1a3a2a',
+                  borderColor: '#2a6a4a',
+                  textColor: 'text-emerald-200',
+                  iconColor: 'text-emerald-300',
+                  subtitle: 'Virtual earnings'
+                },
+                { 
+                  label: 'Total Sessions', 
+                  value: analytics.totalSessions.toLocaleString(), 
+                  change: `${analytics.changes.sessions > 0 ? '+' : ''}${analytics.changes.sessions}%`, 
+                  changeValue: analytics.changes.sessions,
+                  icon: Target,
+                  bgColor: '#1a1a1a',
+                  borderColor: '#2a2a2a',
+                  textColor: 'text-gray-300',
+                  iconColor: 'text-gray-400',
+                  subtitle: 'Training sessions'
+                },
+                { 
+                  label: 'Team Average', 
+                  value: `${analytics.teamAverage}%`, 
+                  percentage: analytics.teamAverage,
+                  change: `${analytics.changes.score > 0 ? '+' : ''}${analytics.changes.score}%`, 
+                  changeValue: analytics.changes.score,
+                  icon: TrendingUp,
+                  bgColor: '#1a1a1a',
+                  borderColor: '#2a2a2a',
+                  textColor: 'text-gray-300',
+                  iconColor: 'text-gray-400',
+                  subtitle: 'Performance rating'
+                },
+                { 
+                  label: 'Close %', 
+                  value: `${analytics.teamClosePercentage || 0}%`, 
+                  percentage: analytics.teamClosePercentage || 0,
+                  change: '', 
+                  changeValue: 0,
+                  icon: Target,
+                  bgColor: '#1a1a1a',
+                  borderColor: '#2a2a2a',
+                  textColor: 'text-gray-300',
+                  iconColor: 'text-gray-400',
+                  subtitle: 'Sessions closed'
+                },
+              ].map((metric, idx) => {
+                const Icon = metric.icon
+                const isPositive = metric.changeValue > 0
+                return (
+                  <IOSCard
+                    key={idx}
+                    variant="elevated"
+                    className="min-w-[280px] p-5"
+                    style={{
+                      backgroundColor: metric.bgColor,
+                      border: `2px solid ${metric.borderColor}`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="p-2.5 rounded-xl border" style={{ 
+                        backgroundColor: metric.bgColor === '#1a3a2a' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        borderColor: metric.borderColor 
+                      }}>
+                        <Icon className={`w-5 h-5 ${metric.iconColor}`} />
+                      </div>
+                      {metric.change && (
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${
+                          isPositive ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30'
+                        }`}>
+                          {isPositive ? (
+                            <ArrowUpRight className="w-3 h-3 text-emerald-300" />
+                          ) : (
+                            <ArrowDownRight className="w-3 h-3 text-red-300" />
+                          )}
+                          <span className={`text-xs font-semibold font-space ${isPositive ? 'text-emerald-300' : 'text-red-300'}`}>
+                            {metric.change}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-3xl font-bold text-white mb-1 font-space">{metric.value}</p>
+                    <p className="text-sm text-white/60 font-sans">{metric.subtitle}</p>
+                  </IOSCard>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { 
             label: 'Total Earned', 
@@ -432,7 +547,8 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             </motion.div>
           )
         })}
-      </div>
+          </div>
+        )}
 
       {/* Team Performance Chart & Revenue vs. Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -448,24 +564,39 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
               <h3 className="text-xl font-bold text-white mb-1 font-space">Team Performance</h3>
               <p className="text-sm text-white/70 font-sans">Overall session performance over time</p>
             </div>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg p-1">
-              {(['day', 'week', 'month'] as const).map((period) => (
-                <button
-                  key={period}
-                  onClick={() => setRevenueTimePeriod(period)}
-                  className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 font-space ${
-                    revenueTimePeriod === period
-                      ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
-                      : 'text-white/70 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {period.charAt(0).toUpperCase() + period.slice(1)}
-                </button>
-              ))}
-            </div>
+            {isMobile ? (
+              <IOSSegmentedControl
+                options={(['day', 'week', 'month'] as const).map(period => ({
+                  value: period,
+                  label: period.charAt(0).toUpperCase() + period.slice(1)
+                }))}
+                value={revenueTimePeriod}
+                onChange={(value) => {
+                  trigger('selection')
+                  setRevenueTimePeriod(value as 'day' | 'week' | 'month')
+                }}
+                size="sm"
+              />
+            ) : (
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg p-1">
+                {(['day', 'week', 'month'] as const).map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => setRevenueTimePeriod(period)}
+                    className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 font-space ${
+                      revenueTimePeriod === period
+                        ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                        : 'text-white/70 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {period.charAt(0).toUpperCase() + period.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           {revenueData.length > 0 ? (
-            <div className="h-[450px]">
+            <div className={isMobile ? "h-[300px]" : "h-[450px]"}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={revenueData} margin={{ top: 20, right: 20, left: 20, bottom: 50 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} opacity={0.5} />
@@ -539,11 +670,11 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-[450px] flex items-center justify-center text-white">
+            <div className={`${isMobile ? "h-[300px]" : "h-[450px]"} flex items-center justify-center text-white`}>
               <div className="text-center">
-                <Activity className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-semibold font-sans">No performance data available yet</p>
-                <p className="text-base mt-2 text-white/60">Start training sessions to see performance metrics</p>
+                <Activity className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} mx-auto mb-4 opacity-50`} />
+                <p className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold font-sans">No performance data available yet</p>
+                <p className={`${isMobile ? 'text-sm' : 'text-base'} mt-2 text-white/60`}>Start training sessions to see performance metrics</p>
               </div>
             </div>
           )}
@@ -565,7 +696,7 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             <DollarSign className="w-5 h-5 text-emerald-400" />
           </div>
           {analytics.repPerformance && (
-            <div className="h-[450px]">
+            <div className={isMobile ? "h-[300px]" : "h-[450px]"}>
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={analytics.repPerformance.map(r => ({ name: r.name, revenue: r.revenue, score: r.avgScore }))} margin={{ top: 20, right: 20, left: 20, bottom: 50 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} opacity={0.5} />
@@ -982,7 +1113,8 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
           </motion.div>
         </div>
       )}
-    </div>
+      </div>
+    </PullToRefresh>
   )
 }
 
