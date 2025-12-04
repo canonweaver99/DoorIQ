@@ -261,45 +261,45 @@ function OrganizationSettingsPage() {
         return (
           <>
             {/* Seat Usage */}
-            <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
-              <div className="flex items-center justify-between">
+            <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
                 <div>
-                  <h2 className="text-xl font-semibold text-white mb-2 font-space">Organization Overview</h2>
-                  <p className="text-sm text-[#a0a0a0] font-sans">
+                  <h2 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 font-space">Organization Overview</h2>
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">
                     Manage your organization members and seats
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-white font-space">
+                <div className="text-left sm:text-right">
+                  <p className="text-2xl sm:text-3xl font-bold text-white font-space">
                     {seatUsage.used} / {seatUsage.limit}
                   </p>
-                  <p className="text-sm text-[#a0a0a0] font-sans">Seats Used</p>
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Seats Used</p>
                 </div>
               </div>
             </div>
 
             {/* Invite Member */}
             {isManager && (
-              <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8" data-walkthrough="invite-section">
-                <div className="space-y-4">
+              <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8" data-walkthrough="invite-section">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <h2 className="text-xl font-semibold text-white mb-2 font-space">Invite Team Member</h2>
-                    <p className="text-sm text-[#a0a0a0] font-sans">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 font-space">Invite Team Member</h2>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">
                       Send an invitation to join your organization
                     </p>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <div className="flex-1 w-full">
                       <Label htmlFor="inviteEmail" className="sr-only">Email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666]" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666] z-10" />
                         <Input
                           id="inviteEmail"
                           type="email"
                           value={inviteEmail}
                           onChange={(e) => setInviteEmail(e.target.value)}
                           placeholder="email@example.com"
-                          className="pl-10 bg-[#0a0a0a] border-[#2a2a2a] text-white focus:border-[#00d4aa] focus:ring-[#00d4aa]/20"
+                          className="pl-10 h-12 sm:h-10 bg-[#0a0a0a] border-[#2a2a2a] text-white text-base sm:text-sm focus:border-[#00d4aa] focus:ring-[#00d4aa]/20 w-full"
                           onKeyPress={(e) => e.key === 'Enter' && handleInvite()}
                         />
                       </div>
@@ -307,7 +307,7 @@ function OrganizationSettingsPage() {
                     <Button
                       onClick={handleInvite}
                       disabled={inviting || !inviteEmail.trim()}
-                      className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium font-sans"
+                      className="w-full sm:w-auto bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium font-sans min-h-[48px] sm:min-h-0 touch-manipulation active:scale-95"
                     >
                       {inviting ? (
                         <>
@@ -328,11 +328,11 @@ function OrganizationSettingsPage() {
 
             {/* Pending Invites */}
             {isManager && pendingInvites.length > 0 && (
-              <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
-                <div className="space-y-4">
+              <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <h2 className="text-xl font-semibold text-white mb-2 font-space">Pending Invites</h2>
-                    <p className="text-sm text-[#a0a0a0] font-sans">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 font-space">Pending Invites</h2>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">
                       {pendingInvites.length} invite{pendingInvites.length !== 1 ? 's' : ''} pending
                     </p>
                   </div>
@@ -340,11 +340,11 @@ function OrganizationSettingsPage() {
                     {pendingInvites.map((invite) => (
                       <div
                         key={invite.id}
-                        className="p-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-between"
+                        className="p-3 sm:p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-between gap-3"
                       >
-                        <div>
-                          <p className="font-medium text-white font-sans">{invite.email}</p>
-                          <p className="text-xs text-[#a0a0a0] font-sans capitalize">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-white text-sm sm:text-base font-sans break-words">{invite.email}</p>
+                          <p className="text-xs text-[#a0a0a0] font-sans capitalize mt-0.5">
                             {invite.role} • Expires {new Date(invite.expires_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -356,46 +356,46 @@ function OrganizationSettingsPage() {
             )}
 
             {/* Team Members */}
-            <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8" data-walkthrough="members-section">
-              <div className="space-y-4">
+            <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8" data-walkthrough="members-section">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h2 className="text-xl font-semibold text-white mb-2 font-space">Team Members</h2>
-                  <p className="text-sm text-[#a0a0a0] font-sans">
+                  <h2 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 font-space">Team Members</h2>
+                  <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">
                     {members.length} member{members.length !== 1 ? 's' : ''}
                   </p>
                 </div>
 
                 {members.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="w-12 h-12 text-[#666] mx-auto mb-4" />
-                    <p className="text-[#a0a0a0] font-sans">No team members yet</p>
+                  <div className="text-center py-8 sm:py-12">
+                    <Users className="w-10 h-10 sm:w-12 sm:h-12 text-[#666] mx-auto mb-3 sm:mb-4" />
+                    <p className="text-sm sm:text-base text-[#a0a0a0] font-sans">No team members yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {members.map((member, index) => (
                       <div
                         key={member.id}
-                        className="p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] hover:border-[#2a2a2a] transition-colors"
+                        className="p-3 sm:p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] hover:border-[#2a2a2a] transition-colors"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center flex-shrink-0">
                               <User className="w-5 h-5 text-[#a0a0a0]" />
                             </div>
-                            <div>
-                              <p className="font-medium text-white font-sans">
+                            <div className="min-w-0">
+                              <p className="font-medium text-white text-sm sm:text-base font-sans break-words">
                                 {member.full_name || 'No name'}
                               </p>
-                              <p className="text-sm text-[#a0a0a0] font-sans">{member.email}</p>
+                              <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans break-words">{member.email}</p>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                             {isManager && (
                               <select
                                 value={member.role}
                                 onChange={(e) => handleUpdateRole(member.id, e.target.value)}
-                                className="px-3 py-1.5 rounded-lg border border-[#2a2a2a] bg-[#0a0a0a] text-white text-sm font-sans"
+                                className="flex-1 sm:flex-none px-3 py-2.5 sm:py-1.5 h-10 sm:h-auto rounded-lg border border-[#2a2a2a] bg-[#0a0a0a] text-white text-sm font-sans touch-manipulation"
                                 {...(index === 0 ? { 'data-walkthrough': 'roles-section' } : {})}
                               >
                                 <option value="rep">Rep</option>
@@ -407,19 +407,19 @@ function OrganizationSettingsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleRemoveMember(member.id, member.full_name || member.email)}
-                                className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 touch-manipulation active:scale-95"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             )}
                             {!isManager && (
-                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2a2a2a] border border-[#2a2a2a]">
+                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2a2a2a] border border-[#2a2a2a] ml-auto sm:ml-0">
                                 {member.role === 'manager' || member.role === 'admin' ? (
                                   <Shield className="w-4 h-4 text-[#00d4aa]" />
                                 ) : (
                                   <User className="w-4 h-4 text-[#00d4aa]" />
                                 )}
-                                <span className="text-sm font-medium text-[#00d4aa] capitalize font-sans">
+                                <span className="text-xs sm:text-sm font-medium text-[#00d4aa] capitalize font-sans">
                                   {member.role}
                                 </span>
                               </div>
@@ -453,7 +453,7 @@ function OrganizationSettingsPage() {
   }
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-4 sm:space-y-6 relative">
       {/* Walkthrough overlay */}
       {showWalkthrough && isManager && (
         <TeamManagementWalkthrough
@@ -464,7 +464,14 @@ function OrganizationSettingsPage() {
 
       {/* Tab Navigation */}
       <div className="border-b border-[#2a2a2a]" data-walkthrough="tabs">
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+        <div 
+          className="flex items-center gap-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            scrollPaddingLeft: '1rem',
+            scrollPaddingRight: '1rem',
+          }}
+        >
           {tabs.map((tab, index) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -479,15 +486,18 @@ function OrganizationSettingsPage() {
                 onClick={() => !isDisabled && handleTabChange(tab.id)}
                 disabled={isDisabled}
                 className={cn(
-                  'relative flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-200 font-space',
+                  'relative flex items-center gap-2 px-4 sm:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 font-space',
+                  'min-h-[44px] sm:min-h-0',
+                  'snap-start flex-shrink-0',
+                  'touch-manipulation active:scale-95',
                   isDisabled
-                    ? 'text-[#666] cursor-not-allowed'
+                    ? 'text-[#666] cursor-not-allowed opacity-50'
                     : isActive
                     ? 'text-white bg-[#1a1a1a]'
-                    : 'text-[#888888] hover:text-[#bbbbbb]'
+                    : 'text-[#888888] hover:text-[#bbbbbb] active:bg-[#1a1a1a]/50'
                 )}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4 flex-shrink-0" />
                 <span>{tab.name}</span>
                 
                 {isActive && (

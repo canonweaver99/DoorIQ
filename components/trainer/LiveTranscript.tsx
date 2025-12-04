@@ -84,9 +84,9 @@ function TranscriptMessage({
     >
       {/* Avatar */}
       <div className={cn(
-        "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden",
+        "w-8 h-8 sm:w-9 sm:h-9 lg:w-8 lg:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden",
         isUser ? "bg-slate-700" : "bg-slate-700",
-        !avatarUrl && "text-[10px] sm:text-xs font-semibold",
+        !avatarUrl && "text-xs sm:text-sm font-semibold",
         isUser && !avatarUrl && "text-slate-200",
         !isUser && !avatarUrl && "text-slate-300"
       )}>
@@ -94,8 +94,8 @@ function TranscriptMessage({
           <Image
             src={avatarUrl}
             alt={isUser ? 'You' : agentName || 'Homeowner'}
-            width={32}
-            height={32}
+            width={36}
+            height={36}
             className="w-full h-full object-cover"
             unoptimized={avatarUrl?.startsWith('http')}
           />
@@ -113,16 +113,16 @@ function TranscriptMessage({
           )}>
             {isUser ? 'You' : agentName || 'Homeowner'}
           </span>
-          <span className="text-[10px] sm:text-sm text-slate-300 font-space font-medium">{formatTime(entry.timestamp)}</span>
+          <span className="text-[10px] sm:text-xs lg:text-sm text-slate-300 font-space font-medium whitespace-nowrap">{formatTime(entry.timestamp)}</span>
           <button
             onClick={handleCopy}
-            className="ml-auto opacity-0 sm:group-hover:opacity-100 transition-opacity p-0.5 sm:p-1 rounded hover:bg-slate-700/70 touch-manipulation"
+            className="ml-auto opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1.5 sm:p-1 rounded active:bg-slate-700/70 touch-manipulation min-w-[32px] min-h-[32px] flex items-center justify-center"
             aria-label="Copy message"
           >
             {copied ? (
-              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
+              <Check className="w-4 h-4 sm:w-4 sm:h-4 text-slate-300" />
             ) : (
-              <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+              <Copy className="w-4 h-4 sm:w-4 sm:h-4 text-slate-400" />
             )}
           </button>
         </div>
@@ -167,10 +167,11 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
       
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-1 custom-scrollbar space-y-2 sm:space-y-2.5 min-h-0"
+        className="flex-1 overflow-y-auto px-2.5 sm:px-3 lg:px-4 pt-2.5 sm:pt-3 lg:pt-4 pb-1 custom-scrollbar space-y-2 sm:space-y-2.5 min-h-0 will-change-scroll"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {transcript.length === 0 ? (
-          <div className="flex items-center justify-center h-full w-full text-slate-300 text-sm font-space font-medium">
+          <div className="flex items-center justify-center h-full w-full text-slate-300 text-xs sm:text-sm font-space font-medium px-2">
             <p className="text-center">Waiting for conversation to begin...</p>
           </div>
         ) : (

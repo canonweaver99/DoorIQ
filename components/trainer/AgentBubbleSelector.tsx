@@ -379,7 +379,247 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px] pointer-events-none"
       />
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-32">
+      {/* Mobile Layout */}
+      <div className="md:hidden relative z-10 w-full px-4 py-6 pb-24">
+        {/* Mobile Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-center mb-6 pt-4"
+        >
+          <h1 className="font-space text-3xl tracking-tight text-white font-bold leading-tight mb-2">
+            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Challenge</span>
+          </h1>
+          <p className="text-sm text-white/70 font-space">
+            Select a homeowner to begin
+          </p>
+        </motion.div>
+
+        {/* Mobile Filter Bar - Simplified */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="mb-4 flex items-center justify-center gap-2"
+        >
+          <button
+            onClick={() => setFilter('all')}
+            className={cn(
+              "px-4 py-2 rounded-2xl text-sm font-medium transition-all font-space",
+              filter === 'all'
+                ? "bg-white/10 text-white shadow-lg"
+                : "bg-white/[0.05] text-white/70 border border-white/10"
+            )}
+          >
+            All
+          </button>
+          <motion.button
+            type="button"
+            onClick={handleRandomAgent}
+            disabled={loading || agents.length === 0}
+            whileHover={loading || agents.length === 0 ? {} : { scale: 1.02 }}
+            whileTap={loading || agents.length === 0 ? {} : { scale: 0.98 }}
+            className={cn(
+              "px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-2xl text-sm shadow-xl",
+              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+            )}
+          >
+            🎲 Random
+          </motion.button>
+        </motion.div>
+
+        {/* Mobile Agent Grid - 2 columns */}
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          {sortedAgents.map((agent, index) => {
+            const variantKey = agent.color as keyof typeof COLOR_VARIANTS
+            const variantStyles = COLOR_VARIANTS[variantKey]
+            const isHovered = hoveredAgent === agent.id
+            const isSelected = selectedAgent === agent.agentId
+            const cardStyle = getCardStyle(agent.difficulty)
+
+            return (
+              <motion.div
+                key={agent.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.03 }}
+                className={cn(
+                  "w-full",
+                  agent.isLocked || agent.name === 'Tag Team Tanya & Tom' ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                )}
+                role="button"
+                tabIndex={agent.isLocked ? -1 : 0}
+                onClick={() => !agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && handleSelectAgent(agent.agentId, agent.name)}
+                onKeyDown={(e) => {
+                  if (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') return
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleSelectAgent(agent.agentId, agent.name)
+                  }
+                }}
+                onMouseEnter={() => setHoveredAgent(agent.id)}
+                onMouseLeave={() => setHoveredAgent(null)}
+              >
+                <div
+                  className={cn(
+                    "h-full flex flex-col items-center p-4 relative rounded-3xl border border-white/10 bg-white/[0.03] shadow-xl",
+                    "transition-all duration-300",
+                    agent.isLocked && "opacity-50"
+                  )}
+                >
+                  {/* Mobile Agent Avatar */}
+                  <motion.button
+                    whileHover={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 1.05 } : {}}
+                    whileTap={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 0.95 } : {}}
+                    disabled={agent.isLocked || agent.name === 'Tag Team Tanya & Tom'}
+                    tabIndex={-1}
+                    className={cn("relative mb-3 focus:outline-none", (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') && "cursor-not-allowed")}
+                  >
+                    <div className="relative h-20 w-20 mx-auto">
+                      {[0, 1, 2].map((i) => (
+                        <motion.div
+                          key={i}
+                          className={cn(
+                            "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
+                            variantStyles.border[i],
+                            variantStyles.gradient
+                          )}
+                          animate={isHovered ? {
+                            rotate: 360,
+                            scale: 1,
+                            opacity: 1,
+                          } : {
+                            rotate: 360,
+                            scale: [1, 1.05, 1],
+                            opacity: isSelected ? [1, 1, 1] : [0.7, 0.9, 0.7],
+                          }}
+                          transition={isHovered ? {
+                            rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                            scale: { duration: 0.3 },
+                            opacity: { duration: 0.3 },
+                          } : {
+                            rotate: { duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
+                            scale: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                            opacity: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
+                          }}
+                        >
+                          <div
+                            className={cn(
+                              "absolute inset-0 rounded-full mix-blend-screen",
+                              `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
+                                "from-",
+                                ""
+                              )}/20%,transparent_70%)]`
+                            )}
+                          />
+                        </motion.div>
+                      ))}
+
+                      {agent.image && (
+                        <motion.div 
+                          className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
+                          animate={isHovered ? {
+                            scale: 1,
+                          } : {
+                            scale: [1, 1.05, 1],
+                          }}
+                          transition={isHovered ? {
+                            duration: 0.3,
+                          } : {
+                            duration: 4,
+                            repeat: Number.POSITIVE_INFINITY,
+                            ease: "easeInOut",
+                            delay: 0,
+                          }}
+                        >
+                          <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl">
+                            {(() => {
+                              const imageStyle = getAgentImageStyle(agent.name)
+                              const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                              let translateY = '0'
+                              const verticalNum = parseFloat(vertical)
+                              if (verticalNum !== 50) {
+                                const translatePercent = ((verticalNum - 50) / 150) * 100
+                                translateY = `${translatePercent}%`
+                              }
+                              const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                              
+                              return (
+                                <Image
+                                  src={agent.image}
+                                  alt={agent.name}
+                                  fill
+                                  className="object-cover"
+                                  style={{
+                                    objectPosition: `${horizontal} ${vertical}`,
+                                    transform: `scale(${scaleValue}) translateY(${translateY})`,
+                                  }}
+                                  sizes="80px"
+                                />
+                              )
+                            })()}
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.button>
+
+                  {/* Mobile Badges */}
+                  {suggestedAgent === agent.name && !agent.isLocked && (
+                    <div className="absolute top-2 right-2 z-20 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-white/20">
+                      <span className="text-[9px] text-white font-medium">⭐</span>
+                    </div>
+                  )}
+                  
+                  {agent.name === 'Tag Team Tanya & Tom' && (
+                    <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-white/10">
+                      <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+                        <span className="text-xs text-white/80 font-medium">🚧 Soon</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
+                    <div className="absolute top-2 right-2 z-20 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-white/20">
+                      <span className="text-[9px] text-white/70">🔒</span>
+                    </div>
+                  )}
+                  
+                  {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
+                    <div className="absolute top-2 right-2 z-20 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-white/20">
+                      <span className="text-[9px] text-white/80">🏆</span>
+                    </div>
+                  )}
+
+                  {/* Mobile Agent Info */}
+                  <div className="text-center w-full mt-auto">
+                    <h3 className="text-sm font-medium text-white mb-1 font-space tracking-tight line-clamp-1">
+                      {agent.name}
+                    </h3>
+                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        agent.difficulty === 'Easy' && "bg-green-400",
+                        agent.difficulty === 'Moderate' && "bg-yellow-400",
+                        agent.difficulty === 'Hard' && "bg-orange-400",
+                        agent.difficulty === 'Expert' && "bg-red-400",
+                        !agent.difficulty && "bg-white/40"
+                      )} />
+                      <span className="text-xs text-white/70 font-space font-bold">
+                        {agent.difficulty || 'Unknown'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden md:block relative z-10 w-full max-w-7xl mx-auto px-4 py-8 pt-32">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

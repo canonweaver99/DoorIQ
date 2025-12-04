@@ -404,11 +404,11 @@ function BillingSettingsPage() {
       )}
 
       {/* Current Plan */}
-      <div className="p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div>
-              <h2 className="text-2xl font-space font-bold text-foreground mb-2">Current Plan</h2>
+              <h2 className="text-xl sm:text-2xl font-space font-bold text-foreground mb-1 sm:mb-2">Current Plan</h2>
               <p className="text-sm text-foreground/60 font-sans">
                 {plan.tier.charAt(0).toUpperCase() + plan.tier.slice(1)} Plan
               </p>
@@ -428,12 +428,12 @@ function BillingSettingsPage() {
           )}
 
           {subscription && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-purple-500/20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-4 border-t border-purple-500/20">
               <div className="flex items-start gap-3">
                 <Calendar className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-foreground/60 mb-1">Current Period Ends</p>
-                  <p className="text-base font-medium text-foreground">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-foreground/60 mb-1">Current Period Ends</p>
+                  <p className="text-sm sm:text-base font-medium text-foreground break-words">
                     {formatDate(subscription.currentPeriodEnd)}
                   </p>
                 </div>
@@ -442,9 +442,9 @@ function BillingSettingsPage() {
               {plan.trialEndsAt && (
                 <div className="flex items-start gap-3">
                   <Sparkles className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground/60 mb-1">Trial Ends</p>
-                    <p className="text-base font-medium text-foreground">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-foreground/60 mb-1">Trial Ends</p>
+                    <p className="text-sm sm:text-base font-medium text-foreground break-words">
                       {formatDate(plan.trialEndsAt)}
                     </p>
                   </div>
@@ -484,7 +484,7 @@ function BillingSettingsPage() {
             <Button
               onClick={handleManageSubscription}
               disabled={portalLoading}
-              className="bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a]"
+              className="w-full sm:w-auto bg-[#1a1a1a] border border-[#2a2a2a] text-white hover:bg-[#2a2a2a] hover:border-[#3a3a3a] min-h-[48px] sm:min-h-0 touch-manipulation active:scale-95"
             >
               {portalLoading ? (
                 <>
@@ -508,7 +508,7 @@ function BillingSettingsPage() {
                 <Button
                   onClick={() => setShowCancelModal(true)}
                   variant="outline"
-                  className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                  className="w-full sm:w-auto border-red-500/30 text-red-400 hover:bg-red-500/10 min-h-[48px] sm:min-h-0 touch-manipulation active:scale-95"
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Cancel Subscription
@@ -542,15 +542,15 @@ function BillingSettingsPage() {
       )}
 
       {/* Upgrade Plans */}
-      <div className="p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+      <div className="p-4 sm:p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
         <div className="space-y-4">
           <div>
-            <h2 className="text-2xl font-space font-bold text-foreground mb-2">Available Plans</h2>
+            <h2 className="text-xl sm:text-2xl font-space font-bold text-foreground mb-1 sm:mb-2">Available Plans</h2>
             <p className="text-sm text-foreground/60 font-sans">
               Upgrade or change your plan
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             <PlanCard
               tier="starter"
               currentTier={plan.tier}

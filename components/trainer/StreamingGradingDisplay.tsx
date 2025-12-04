@@ -604,7 +604,13 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           console.error('StreamingGradingDisplay error:', error, errorInfo)
         }}
       >
-        <div className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6">
+        <div 
+          className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6"
+          style={{ 
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)'
+          }}
+        >
           <SessionFeedbackForm 
             sessionId={sessionId} 
             onFeedbackComplete={() => {
@@ -626,9 +632,15 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         console.error('StreamingGradingDisplay error:', error, errorInfo)
       }}
     >
-      <div className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6">
+      <div 
+        className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6"
+        style={{ 
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)'
+        }}
+      >
       <div className="max-w-2xl w-full">
-        <div className="text-center mb-6 sm:mb-8">
+        <div className="text-center mb-4 sm:mb-6 lg:mb-8">
           {/* Main Status */}
           <motion.div
             animate={isComplete ? {} : { rotate: 360 }}
@@ -642,11 +654,11 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             )}
           </motion.div>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-2 sm:mb-3 font-space px-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent mb-2 sm:mb-3 font-space px-2 leading-tight">
             {status}
           </h1>
           
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-slate-400 font-sans px-2">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm text-slate-400 font-sans px-2">
             <span>{formatTime(elapsedTime)} elapsed</span>
             <span className="hidden sm:inline">•</span>
             <span>{getSectionProgress()}% complete</span>
@@ -675,7 +687,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
           {error && (
             <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
-              <div className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-sans border ${
+              <div className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-sans border leading-relaxed ${
                 errorType === 'timeout' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
                 errorType === 'network' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' :
                 'bg-red-500/10 border-red-500/20 text-red-400'
@@ -697,7 +709,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               {connectionState === 'failed' && (
                 <button
                   onClick={handleRetry}
-                  className="w-full px-3 sm:px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg sm:rounded-xl text-purple-300 font-medium transition-colors font-space touch-manipulation text-sm sm:text-base"
+                  className="w-full px-4 sm:px-5 py-3 sm:py-3.5 bg-purple-500/20 hover:bg-purple-500/30 active:bg-purple-500/40 border border-purple-500/30 rounded-lg sm:rounded-xl text-purple-300 font-medium transition-colors font-space touch-manipulation text-sm sm:text-base min-h-[44px] sm:min-h-[48px]"
                 >
                   Retry Connection
                 </button>
@@ -707,7 +719,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         </div>
 
         {/* Progress Sections */}
-        <div className="space-y-2 sm:space-y-3">
+        <div className="space-y-2 sm:space-y-2.5 lg:space-y-3">
           <AnimatePresence mode="popLayout">
             {Object.entries(SECTION_LABELS).map(([key, label]) => {
               const Icon = SECTION_ICONS[key]
@@ -740,9 +752,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                     />
                   )}
                   
-                  <div className="relative p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+                  <div className="relative p-3 sm:p-3.5 lg:p-4 flex items-center gap-2.5 sm:gap-3 lg:gap-4">
                     <div className={`
-                      flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center
+                      flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center
                       ${isCompleted 
                         ? 'bg-emerald-500/20 text-emerald-400' 
                         : isCurrent
@@ -761,7 +773,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
 
                     <div className="flex-1 min-w-0">
                       <div className={`
-                        text-sm sm:text-base font-medium font-space
+                        text-sm sm:text-base font-medium font-space leading-snug
                         ${isCompleted 
                           ? 'text-emerald-300' 
                           : isCurrent
@@ -779,7 +791,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                         animate={{ scale: 1 }}
                         className="flex-shrink-0"
                       >
-                        <div className="text-xs font-semibold text-emerald-400">✓</div>
+                        <div className="text-xs sm:text-sm font-semibold text-emerald-400">✓</div>
                       </motion.div>
                     )}
                   </div>
@@ -795,10 +807,10 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 2 }}
-            className="mt-6 sm:mt-8 text-center"
+            className="mt-4 sm:mt-6 lg:mt-8 text-center px-2"
           >
-            <div className="inline-block px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-500/10 border border-purple-500/20 rounded-full">
-              <span className="text-xs sm:text-sm text-purple-300 font-sans">
+            <div className="inline-block px-3 sm:px-5 lg:px-6 py-2 sm:py-2.5 lg:py-3 bg-purple-500/10 border border-purple-500/20 rounded-full">
+              <span className="text-xs sm:text-sm text-purple-300 font-sans leading-relaxed">
                 Our AI is analyzing {sections.session_summary?.total_lines || 'hundreds of'} lines in real-time
               </span>
             </div>

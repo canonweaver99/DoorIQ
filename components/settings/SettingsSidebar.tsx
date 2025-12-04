@@ -67,8 +67,15 @@ export function SettingsSidebar() {
         })}
       </div>
 
-      {/* Mobile: Horizontal scroll */}
-      <div className="md:hidden flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-4 sm:-mx-6 px-4 sm:px-6">
+      {/* Mobile: Horizontal scroll with snap */}
+      <div 
+        className="md:hidden flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x snap-mandatory"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          scrollPaddingLeft: '1rem',
+          scrollPaddingRight: '1rem',
+        }}
+      >
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href === '/settings/organization' && pathname?.startsWith('/settings/organization'))
@@ -78,14 +85,17 @@ export function SettingsSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap flex-shrink-0',
+                'flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 whitespace-nowrap flex-shrink-0 snap-start',
+                'min-w-[44px] min-h-[44px]',
+                'touch-manipulation',
+                'active:scale-95',
                 isActive
-                  ? 'bg-[#1a1a1a] text-white'
-                  : 'text-[#a0a0a0] hover:text-white hover:bg-[#1a1a1a]/50 bg-[#0a0a0a]'
+                  ? 'bg-[#1a1a1a] text-white shadow-sm shadow-purple-500/20'
+                  : 'text-[#a0a0a0] hover:text-white hover:bg-[#1a1a1a]/50 bg-[#0a0a0a] active:bg-[#1a1a1a]/70'
               )}
             >
-              <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-[#a0a0a0]')} strokeWidth={isActive ? 2 : 1.5} />
-              <span className="font-medium text-xs font-sans">{item.name}</span>
+              <Icon className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-[#a0a0a0]')} strokeWidth={isActive ? 2 : 1.5} />
+              <span className="font-medium text-sm font-sans">{item.name}</span>
             </Link>
           )
         })}

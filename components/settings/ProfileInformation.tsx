@@ -154,48 +154,50 @@ export function ProfileInformation({
     const isEditing = editingField === field
     
     return (
-      <div className="py-4 border-b border-[#2a2a2a] last:border-0">
-        <Label className="text-sm font-semibold text-white mb-2 block font-space">
+      <div className="py-3 sm:py-4 border-b border-[#2a2a2a] last:border-0">
+        <Label className="text-sm font-semibold text-white mb-2 sm:mb-3 block font-space">
           {label}
         </Label>
         {isEditing ? (
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 mt-2">
             <div className="relative flex-1">
-              <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
+              <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[#666] z-10" />
               <Input
                 type={type}
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                className="pl-10 bg-[#0a0a0a] border-[#2a2a2a] text-white focus:border-[#00d4aa] focus:ring-[#00d4aa]/20"
+                className="pl-10 sm:pl-12 h-12 sm:h-10 bg-[#0a0a0a] border-[#2a2a2a] text-white text-base sm:text-sm focus:border-[#00d4aa] focus:ring-[#00d4aa]/20 w-full"
                 autoFocus
               />
             </div>
-            <button
-              onClick={() => saveField(field)}
-              disabled={saving}
-              className="px-4 py-2 text-sm text-[#00d4aa] hover:bg-[#1a1a1a] rounded transition-colors disabled:opacity-50 font-sans"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                'Save'
-              )}
-            </button>
-            <button
-              onClick={cancelEditing}
-              disabled={saving}
-              className="px-4 py-2 text-sm text-[#a0a0a0] hover:text-white hover:bg-[#1a1a1a] rounded transition-colors disabled:opacity-50 font-sans"
-            >
-              Cancel
-            </button>
+            <div className="flex gap-2 sm:flex-shrink-0">
+              <button
+                onClick={() => saveField(field)}
+                disabled={saving}
+                className="flex-1 sm:flex-none px-4 py-3 sm:py-2 min-h-[48px] sm:min-h-0 text-sm text-[#00d4aa] hover:bg-[#1a1a1a] rounded transition-colors disabled:opacity-50 font-sans touch-manipulation active:scale-95"
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto sm:mx-0" />
+                ) : (
+                  'Save'
+                )}
+              </button>
+              <button
+                onClick={cancelEditing}
+                disabled={saving}
+                className="flex-1 sm:flex-none px-4 py-3 sm:py-2 min-h-[48px] sm:min-h-0 text-sm text-[#a0a0a0] hover:text-white hover:bg-[#1a1a1a] rounded transition-colors disabled:opacity-50 font-sans touch-manipulation active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-white text-sm font-sans">{value || 'Not set'}</p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mt-1">
+            <p className="text-white text-sm sm:text-base font-sans break-words flex-1">{value || 'Not set'}</p>
             {!disabled && (
               <button
                 onClick={() => startEditing(field, value)}
-                className="px-4 py-1.5 text-sm text-[#a0a0a0] hover:text-white border border-[#2a2a2a] hover:border-[#2a2a2a] rounded transition-colors font-sans"
+                className="px-4 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm text-[#a0a0a0] hover:text-white border border-[#2a2a2a] hover:border-[#2a2a2a] rounded transition-colors font-sans touch-manipulation active:scale-95 w-full sm:w-auto"
               >
                 Edit
               </button>
@@ -207,15 +209,15 @@ export function ProfileInformation({
   }
 
   return (
-    <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
+    <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
       {/* Profile Photo Section */}
-      <div className="mb-8 pb-8 border-b border-[#2a2a2a]">
-        <Label className="text-sm font-semibold text-white mb-4 block font-space">
+      <div className="mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-[#2a2a2a]">
+        <Label className="text-sm font-semibold text-white mb-3 sm:mb-4 block font-space">
           Profile Photo
         </Label>
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#2a2a2a] border border-[#2a2a2a]">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-[#2a2a2a] border border-[#2a2a2a]">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -230,12 +232,12 @@ export function ProfileInformation({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <User className="w-10 h-10 text-[#666]" />
+                  <User className="w-8 h-8 sm:w-10 sm:h-10 text-[#666]" />
                 </div>
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 w-full sm:w-auto">
             {userId && (
               <SimpleAvatarUpload
                 currentAvatarUrl={avatarUrl}
@@ -289,11 +291,11 @@ export function ProfileInformation({
 
       {/* Save Changes Button */}
       {hasChanges && (
-        <div className="mt-8 pt-6 border-t border-[#2a2a2a]">
+        <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-[#2a2a2a]">
           <Button
             onClick={handleSaveAll}
             disabled={saving}
-            className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium px-6 font-sans"
+            className="w-full sm:w-auto bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium px-6 py-3 sm:py-2 min-h-[48px] sm:min-h-0 font-sans touch-manipulation active:scale-95"
           >
             {saving ? (
               <>

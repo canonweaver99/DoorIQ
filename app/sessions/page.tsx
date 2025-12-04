@@ -16,6 +16,7 @@ import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/pe
 
 import { format, isToday, isYesterday, startOfDay } from 'date-fns'
 import type { GradeInfo, KeyIssue } from '@/app/dashboard/types'
+import { cn } from '@/lib/utils'
 
 // AnimatedGrid component matching landing page style
 const AnimatedGrid = () => (
@@ -426,7 +427,15 @@ export default function SessionsPage() {
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center">
         <AnimatedGrid />
-        <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+        {/* Mobile Loading */}
+        <div className="md:hidden relative z-10 flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500"></div>
+          <p className="text-white/60 text-sm font-space">Loading sessions...</p>
+        </div>
+        {/* Desktop Loading */}
+        <div className="hidden md:flex relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+        </div>
       </div>
     )
   }
@@ -463,7 +472,315 @@ export default function SessionsPage() {
         className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px] pointer-events-none"
       />
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pt-20 sm:pt-24 md:pt-28 lg:pt-32">
+      {/* Mobile Layout */}
+      <div className="md:hidden relative z-10 w-full px-4 py-6 pb-24">
+        {/* Mobile Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-4 text-center"
+        >
+          <h1 className="font-space text-2xl tracking-tight text-white font-bold leading-tight mb-1">
+            Training Sessions
+          </h1>
+          <p className="text-sm text-white/70 font-space">
+            Review your past sessions
+          </p>
+        </motion.div>
+
+        {/* Mobile Filter Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="mb-4 flex gap-2 overflow-x-auto scrollbar-hide pb-2"
+        >
+          {(['week', 'month', 'all'] as const).map((filterOption) => (
+            <button
+              key={filterOption}
+              onClick={() => setFilter(filterOption)}
+              className={cn(
+                "px-4 py-2 rounded-2xl text-sm font-medium transition-all font-space whitespace-nowrap",
+                filter === filterOption
+                  ? "bg-white/10 text-white shadow-lg"
+                  : "bg-white/[0.05] text-white/70 border border-white/10"
+              )}
+            >
+              {filterOption === 'week' && 'Past Week'}
+              {filterOption === 'month' && 'Past Month'}
+              {filterOption === 'all' && 'All Time'}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Mobile Stats Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="grid grid-cols-3 gap-3 mb-6"
+        >
+          <div className="bg-white/[0.03] rounded-3xl p-4 shadow-xl border border-white/10 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[10px] font-medium text-white/70 font-space uppercase tracking-wider">Score</h3>
+              <TrendingUp className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+            </div>
+            <p className="text-2xl font-bold text-white font-space mb-1">{stats.avgScore}%</p>
+            <p className="text-[10px] text-white/60 font-sans line-clamp-1">
+              {stats.avgScore >= 80 ? 'Excellent' : 'Keep going'}
+            </p>
+          </div>
+          
+          <div className="bg-white/[0.03] rounded-3xl p-4 shadow-xl border border-white/10 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[10px] font-medium text-white/70 font-space uppercase tracking-wider">Earnings</h3>
+              <DollarSign className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+            </div>
+            <p className="text-2xl font-bold text-white font-space mb-1">${stats.totalEarnings.toFixed(0)}</p>
+            <p className="text-[10px] text-white/60 font-sans">Virtual cash</p>
+          </div>
+          
+          <div className="bg-white/[0.03] rounded-3xl p-4 shadow-xl border border-white/10 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[10px] font-medium text-white/70 font-space uppercase tracking-wider">Total</h3>
+              <Calendar className="w-3.5 h-3.5 text-pink-400 flex-shrink-0" />
+            </div>
+            <p className="text-2xl font-bold text-white font-space mb-1">{stats.sessionsCount}</p>
+            <p className="text-[10px] text-white/60 font-sans">Sessions</p>
+          </div>
+        </motion.div>
+
+        {/* Mobile Sessions List */}
+        <div className="space-y-6">
+          {sessions.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="bg-white/[0.03] rounded-3xl p-8 text-center border border-white/10 shadow-xl backdrop-blur-sm"
+            >
+              <p className="text-sm text-white/80 font-sans mb-4">No sessions found for this period</p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push('/trainer/select-homeowner')}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-2xl shadow-xl font-space text-sm font-semibold"
+              >
+                Start Training
+                <ChevronRight className="ml-2 w-4 h-4" />
+              </motion.button>
+            </motion.div>
+          ) : (
+            groupedSessions.map((dayGroup, dayIndex) => {
+              return (
+                <div key={dayGroup.date.toISOString()} className="space-y-3">
+                  {/* Mobile Day Header */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 + (dayIndex * 0.05) }}
+                    className="flex items-center gap-2 mb-2"
+                  >
+                    <h2 className="text-lg font-bold text-white font-space">
+                      {formatDayHeader(dayGroup.date)}
+                    </h2>
+                    <span className="text-xs text-white/40 font-sans">
+                      ({dayGroup.sessions.length})
+                    </span>
+                  </motion.div>
+                  
+                  {/* Mobile Sessions for this day */}
+                  <div className="space-y-3">
+                    {dayGroup.sessions.map((session, sessionIndex) => {
+                      const overallScore = session.overall_score || 0
+                      const grade = calculateGrade(overallScore)
+                      const criticalIssue = getFirstCriticalIssue(session)
+                      const agentName = session.agent_name || 'Average Austin'
+                      const agentMetadata = PERSONA_METADATA[agentName as AllowedAgentName]
+                      const agentImage = agentMetadata?.bubble?.image || '/agents/default.png'
+                      const variantKey = getAgentColorVariant(agentName)
+                      const variantStyles = COLOR_VARIANTS[variantKey]
+                      const imageStyle = getAgentImageStyle(agentName as AllowedAgentName)
+                      const formattedTime = format(new Date(session.created_at), 'h:mm a')
+                      const durationMinutes = session.duration_seconds ? Math.floor(session.duration_seconds / 60) : null
+                      const durationSecs = session.duration_seconds ? session.duration_seconds % 60 : null
+                      
+                      return (
+                        <motion.div
+                          key={session.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.3 + (dayIndex * 0.05) + (sessionIndex * 0.03) }}
+                          className="bg-white/[0.03] rounded-3xl p-4 shadow-xl border border-white/10 backdrop-blur-sm"
+                        >
+                          {/* Mobile Session Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <Clock className="w-3.5 h-3.5 text-white/60 flex-shrink-0" />
+                                <p className="font-space text-white/80 text-xs font-bold">
+                                  {formattedTime}
+                                </p>
+                              </div>
+                              {durationMinutes !== null && durationSecs !== null && (
+                                <p className="font-space text-white/60 text-[10px] font-semibold">
+                                  {durationMinutes}m {durationSecs}s
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                openDeleteModal(session.id as string)
+                              }}
+                              className="inline-flex items-center justify-center w-7 h-7 flex-shrink-0 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 transition-all border border-red-500/20"
+                              title="Delete session"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {/* Mobile Agent and Score */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <div className="relative h-12 w-12 flex-shrink-0">
+                                {[0, 1, 2].map((i) => (
+                                  <motion.div
+                                    key={i}
+                                    className={cn(
+                                      "absolute inset-0 rounded-full border-2 bg-gradient-to-br to-transparent",
+                                      variantStyles.border[i],
+                                      variantStyles.gradient
+                                    )}
+                                    animate={{
+                                      rotate: 360,
+                                      scale: [1, 1.05, 1],
+                                      opacity: [0.7, 0.9, 0.7],
+                                    }}
+                                    transition={{
+                                      rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+                                      scale: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0 },
+                                      opacity: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0 },
+                                    }}
+                                  >
+                                    <div
+                                      className={cn(
+                                        "absolute inset-0 rounded-full mix-blend-screen",
+                                        `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace('from-', '')}/20%,transparent_70%)]`
+                                      )}
+                                    />
+                                  </motion.div>
+                                ))}
+                                <motion.div 
+                                  className="absolute inset-[2px] flex items-center justify-center pointer-events-none"
+                                  animate={{
+                                    scale: [1, 1.05, 1],
+                                  }}
+                                  transition={{
+                                    duration: 4,
+                                    repeat: Infinity,
+                                    ease: "easeInOut",
+                                    delay: 0,
+                                  }}
+                                >
+                                  <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl">
+                                    {(() => {
+                                      const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
+                                      let translateY = '0'
+                                      const verticalNum = parseFloat(vertical)
+                                      if (verticalNum !== 50) {
+                                        const translatePercent = ((verticalNum - 50) / 150) * 100
+                                        translateY = `${translatePercent}%`
+                                      }
+                                      const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
+                                      
+                                      return (
+                                        <Image
+                                          src={agentImage}
+                                          alt={agentName}
+                                          fill
+                                          className="object-cover"
+                                          style={{
+                                            objectPosition: `${horizontal} ${vertical}`,
+                                            transform: `scale(${scaleValue}) translateY(${translateY})`,
+                                          }}
+                                          sizes="48px"
+                                        />
+                                      )
+                                    })()}
+                                  </div>
+                                </motion.div>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-space text-white/60 text-[10px] uppercase tracking-wider mb-0.5 font-semibold">Practice with</p>
+                                <p className="font-space text-white text-sm font-bold tracking-tight truncate">{agentName}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <div className="flex items-baseline gap-1">
+                                <div className="font-space text-2xl text-white font-bold tracking-tight">
+                                  {overallScore}
+                                </div>
+                                <p className="font-space text-white/60 text-xs font-bold">/100</p>
+                              </div>
+                              <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/[0.05] flex items-center justify-center flex-shrink-0">
+                                <span className={cn("font-space text-lg font-bold tracking-tight", grade.color)}>
+                                  {grade.letter}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Mobile Action Buttons */}
+                          <div className="flex flex-col gap-2 mb-3">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => router.push(`/analytics/${session.id}`)}
+                              className="w-full bg-white text-black font-bold rounded-2xl text-sm tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space min-h-[44px]"
+                            >
+                              <span>View Full Analysis</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => router.push('/trainer')}
+                              className="w-full bg-white/10 border border-white/20 text-white font-bold rounded-2xl text-sm tracking-tight hover:bg-white/20 transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space min-h-[44px]"
+                            >
+                              <span>Practice Again</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </motion.button>
+                          </div>
+
+                          {/* Mobile Critical Issue */}
+                          {criticalIssue && (
+                            <div className="pt-3 border-t border-white/10">
+                              <div className="flex items-start gap-2">
+                                {criticalIssue.severity === 'error' ? (
+                                  <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                                ) : (
+                                  <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+                                )}
+                                <span className="font-space text-white/80 text-xs font-bold break-words">{criticalIssue.text}</span>
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden md:block relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pt-20 sm:pt-24 md:pt-28 lg:pt-32">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

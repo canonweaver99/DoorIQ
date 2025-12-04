@@ -403,16 +403,16 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "bg-slate-900 rounded-md sm:rounded-lg pt-3 sm:pt-4 px-2.5 sm:px-4 pb-3 sm:pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col cursor-pointer relative touch-manipulation w-full",
+        "bg-slate-900 rounded-md sm:rounded-lg pt-3 sm:pt-4 px-3 sm:px-4 pb-3 sm:pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col cursor-pointer relative touch-manipulation w-full active:scale-[0.99]",
         colors.border,
         className
       )}
       onClick={() => setIsExpanded(!isExpanded)}
     >
       {/* Header: Icon + Title + Percentage */}
-      <div className="flex items-start gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-shrink-0">
-        <div className={cn("p-1 sm:p-1.5 rounded-md transition-colors flex-shrink-0", colors.bg, colors.hover)}>
-          <TrendingUp className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5", colors.icon)} />
+      <div className="flex items-start gap-2 sm:gap-2 mb-2 sm:mb-3 flex-shrink-0">
+        <div className={cn("p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0", colors.bg, colors.hover)}>
+          <TrendingUp className={cn("w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5", colors.icon)} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-1.5 sm:gap-2">
@@ -425,10 +425,10 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
                   e.stopPropagation()
                   setShowInfo(!showInfo)
                 }}
-                className="p-0.5 hover:bg-slate-700/50 rounded transition-colors flex-shrink-0 touch-manipulation"
+                className="p-1 sm:p-0.5 active:bg-slate-700/50 rounded transition-colors flex-shrink-0 touch-manipulation min-w-[28px] min-h-[28px] flex items-center justify-center"
                 aria-label="Show sentiment calculation info"
               >
-                <Info className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 hover:text-slate-200" />
+                <Info className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-slate-400 active:text-slate-200" />
               </button>
             </div>
             <div className="text-right flex-shrink-0">
@@ -444,8 +444,8 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
       </div>
       
       {/* Progress Bar - Centered */}
-      <div className="-mt-1 sm:-mt-2 pt-5 sm:pt-7 flex-shrink-0 min-h-0">
-        <div className="relative h-1.5 sm:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-0.5 sm:mb-1">
+      <div className="-mt-1 sm:-mt-2 pt-4 sm:pt-6 lg:pt-7 flex-shrink-0 min-h-0">
+        <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
           {/* Background zones */}
           <div className="absolute inset-0 flex">
             <div className="w-[30%] bg-orange-500/20" />
@@ -475,7 +475,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
         </div>
         
         {/* Scale labels */}
-        <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-0.5 leading-tight">
+        <div className="flex justify-between text-[11px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 sm:mb-1 leading-tight">
           <span>Low</span>
           <span className="hidden xs:inline">Building</span>
           <span className="xs:hidden">Build</span>
@@ -483,7 +483,7 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
         </div>
         
         {/* Percentage markers */}
-        <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-3 sm:mb-4 leading-tight">
+        <div className="flex justify-between text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium mb-2 sm:mb-3 lg:mb-4 leading-tight">
           <span>0%</span>
           <span className="hidden sm:inline">30%</span>
           <span className="hidden sm:inline">60%</span>
@@ -492,9 +492,9 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
       </div>
       
       {/* Percentage values - Bottom corners */}
-      <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
+      <div className="absolute bottom-2 sm:bottom-3 lg:bottom-4 left-2 sm:left-3 lg:left-4 right-2 sm:right-3 lg:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
         <span className="truncate">{statusLabel}</span>
-        <span className="truncate ml-1 sm:ml-2">60%+</span>
+        <span className="truncate ml-1 sm:ml-2 hidden sm:inline">60%+</span>
       </div>
       
       {/* Expanded breakdown */}
@@ -965,21 +965,21 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
   const talkTimeColors = getTalkTimeColor()
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5 h-full">
+    <div className="flex flex-col gap-3 sm:gap-4 lg:gap-5 h-full">
       {/* Talk Time Card - With Dynamic Bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "bg-slate-900 rounded-md sm:rounded-lg pt-3 sm:pt-4 px-2.5 sm:px-4 pb-3 sm:pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col relative w-full",
+          "bg-slate-900 rounded-md sm:rounded-lg pt-3 sm:pt-4 px-3 sm:px-4 pb-3 sm:pb-4 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col relative w-full",
           talkTimeColors.border
         )}
       >
         {/* Header: Icon + Title + Percentage */}
-        <div className="flex items-start gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-shrink-0">
-          <div className={cn("p-1 sm:p-1.5 rounded-md transition-colors flex-shrink-0", talkTimeColors.bg, talkTimeColors.hover)}>
-            <Mic className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5", talkTimeColors.icon)} />
+        <div className="flex items-start gap-2 sm:gap-2 mb-2 sm:mb-3 flex-shrink-0">
+          <div className={cn("p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0", talkTimeColors.bg, talkTimeColors.hover)}>
+            <Mic className={cn("w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5", talkTimeColors.icon)} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-1.5 sm:gap-2">
@@ -987,7 +987,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
               <div className="text-right flex-shrink-0">
                 <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white font-space leading-tight">{talkTimeRatio}%</div>
                 {talkTimeStatus.badge && (
-                  <Badge variant={talkTimeStatus.variant} className="text-[10px] sm:text-xs lg:text-sm px-1 sm:px-1.5 lg:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold mt-0.5">
+                  <Badge variant={talkTimeStatus.variant} className="text-[10px] sm:text-xs lg:text-sm px-1.5 sm:px-1.5 lg:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold mt-0.5">
                     {talkTimeStatus.badge}
                   </Badge>
                 )}
@@ -997,8 +997,8 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
         </div>
         
         {/* Dynamic Progress Bar - Centered */}
-        <div className="-mt-1 sm:-mt-2 pt-5 sm:pt-7 flex-shrink-0 min-h-0">
-          <div className="relative h-1.5 sm:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-0.5 sm:mb-1">
+        <div className="-mt-1 sm:-mt-2 pt-4 sm:pt-6 lg:pt-7 flex-shrink-0 min-h-0">
+          <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
             {/* Background zones */}
             <div className="absolute inset-0 flex">
               <div className="w-[40%] bg-orange-500/20" />
@@ -1028,7 +1028,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
           
           {/* Scale labels */}
-          <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-0.5 leading-tight">
+          <div className="flex justify-between text-[11px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 sm:mb-1 leading-tight">
             <span>Listen</span>
             <span className="hidden xs:inline">Balanced</span>
             <span className="xs:hidden">Bal.</span>
@@ -1036,7 +1036,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
           </div>
           
           {/* Percentage markers */}
-          <div className="flex justify-between text-xs sm:text-sm text-white font-space font-medium mb-0.5 leading-tight">
+          <div className="flex justify-between text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 leading-tight">
             <span className="flex-shrink-0">0%</span>
             <span className="flex-shrink-0 hidden sm:inline">40%</span>
             <span className="flex-shrink-0 hidden sm:inline">60%</span>
@@ -1045,9 +1045,9 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
         </div>
         
         {/* Percentage values - Bottom corners */}
-        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
+        <div className="absolute bottom-2 sm:bottom-3 lg:bottom-4 left-2 sm:left-3 lg:left-4 right-2 sm:right-3 lg:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
           <span className="whitespace-nowrap truncate">{talkTimeRatio}%</span>
-          <span className="whitespace-nowrap truncate">40-60%</span>
+          <span className="whitespace-nowrap truncate hidden sm:inline">40-60%</span>
         </div>
       </motion.div>
       

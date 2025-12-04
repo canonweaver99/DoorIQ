@@ -161,7 +161,7 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
       transition={{ duration: 0.3 }}
       className={cn(
         "relative rounded-lg p-2.5 sm:p-3 transition-all group",
-        "w-full min-h-[60px] sm:h-[70px] flex-shrink-0",
+        "w-full min-h-[64px] sm:min-h-[70px] flex-shrink-0",
         config.bgColor,
         "border-[2px] shadow-[0_4px_12px_rgba(0,0,0,0.4)]",
         config.borderColor
@@ -179,22 +179,22 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
           "p-1.5 sm:p-2 rounded-md flex-shrink-0",
           config.iconBg
         )}>
-          <Icon className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", config.iconColor)} />
+          <Icon className={cn("w-4 h-4 sm:w-4 sm:h-4", config.iconColor)} />
         </div>
         
         {/* Content */}
         <div className="flex-1 min-w-0 h-full flex flex-col">
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-shrink-0 flex-wrap">
             <Badge 
               variant={config.badgeVariant}
-              className="text-[8px] sm:text-[9px] font-semibold px-1.5 sm:px-2 py-0.5 bg-slate-800 border-slate-600 text-white"
+              className="text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 sm:py-1 bg-slate-800 border-slate-600 text-white"
             >
               {config.badgeText}
             </Badge>
-            <span className="text-[10px] sm:text-xs text-slate-300 font-space font-medium">{formatTime(item.timestamp)}</span>
+            <span className="text-[10px] sm:text-xs text-slate-300 font-space font-medium whitespace-nowrap">{formatTime(item.timestamp)}</span>
           </div>
-          <p className="text-xs sm:text-sm text-white leading-relaxed break-words font-space font-medium line-clamp-2 overflow-hidden">
-            {item.message.length > 120 ? `${item.message.substring(0, 117)}...` : item.message}
+          <p className="text-xs sm:text-sm text-white leading-relaxed break-words font-space font-medium line-clamp-2 sm:line-clamp-3 overflow-hidden">
+            {item.message.length > 100 ? `${item.message.substring(0, 97)}...` : item.message}
           </p>
         </div>
       </div>
@@ -243,14 +243,17 @@ export function LiveFeedbackFeed({ feedbackItems, sessionActive = false }: LiveF
       
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 sm:px-3 pt-2.5 sm:pt-3 pb-0 custom-scrollbar space-y-2 sm:space-y-2.5 min-h-0 max-h-full"
-        style={{ maxHeight: '100%' }}
+        className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 sm:px-3 pt-2.5 sm:pt-3 pb-0 custom-scrollbar space-y-2 sm:space-y-2.5 min-h-0 max-h-full will-change-scroll"
+        style={{ 
+          maxHeight: '100%',
+          WebkitOverflowScrolling: 'touch'
+        }}
       >
         {deduplicatedItems.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-300 text-sm font-space font-medium">
+          <div className="flex items-center justify-center h-full text-slate-300 text-sm font-space font-medium px-2">
             <div className="text-center">
-              <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50 text-slate-400" />
-              <p>Waiting for feedback...</p>
+              <Lightbulb className="w-7 h-7 sm:w-8 sm:h-8 mx-auto mb-2 opacity-50 text-slate-400" />
+              <p className="text-xs sm:text-sm">Waiting for feedback...</p>
             </div>
           </div>
         ) : (

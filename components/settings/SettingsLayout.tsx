@@ -10,7 +10,7 @@ export function SettingsLayout({
 }) {
   return (
     <div className="min-h-screen bg-[#000000]">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-12 md:pb-16">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 md:pt-24 pb-20 sm:pb-12 md:pb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -33,7 +33,7 @@ export function SettingsLayout({
           </aside>
 
           {/* Mobile Navigation - Horizontal scroll on mobile */}
-          <div className="md:hidden -mx-4 sm:-mx-6 px-4 sm:px-6">
+          <div className="md:hidden -mx-4 px-4 mb-4">
             <SettingsSidebar />
           </div>
 

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Upload, Users, Settings, LayoutDashboard } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X } from 'lucide-react'
 import HeroPerformanceCard from '@/components/dashboard/HeroPerformanceCard'
 import PerformanceMetricCards from '@/components/dashboard/PerformanceMetricCards'
 import CriticalAlertsSection from '@/components/dashboard/CriticalAlertsSection'
@@ -14,12 +14,14 @@ import UploadTab from '@/components/dashboard/tabs/UploadTab'
 import TeamTab from '@/components/dashboard/tabs/TeamTab'
 import type { DashboardData } from '@/app/dashboard/types'
 import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
+import { cn } from '@/lib/utils'
 
 function DashboardPageContent() {
   const router = useRouter()
   const isMobile = useIsMobile()
   const prefersReducedMotion = useReducedMotion()
   const [activeTab, setActiveTab] = useState('overview')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     userName: '',
     currentDateTime: new Date().toISOString(),
@@ -74,12 +76,51 @@ function DashboardPageContent() {
     }
   }
 
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'upload', label: 'Upload Pitch', icon: Upload },
+    { id: 'team', label: 'Team', icon: Users },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ]
+
+  const activeTabData = tabs.find(tab => tab.id === activeTab)
+
+  const handleTabChange = (tabId: string) => {
+    setIsDropdownOpen(false)
+    if (tabId === 'settings') {
+      router.push('/settings')
+    } else {
+      setActiveTab(tabId)
+    }
+  }
+
   if (dashboardData.loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white relative">
-        <div className="relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-12 sm:pb-14 md:pb-16 px-4 sm:px-6 lg:px-8">
+        {/* Mobile Loading Skeleton */}
+        <div className="md:hidden relative z-10 pt-6 pb-24 px-4">
+          <div className="max-w-full mx-auto space-y-4">
+            <div className="text-center animate-pulse">
+              <div className="h-6 bg-white/10 rounded w-32 mx-auto mb-2" />
+              <div className="h-4 bg-white/10 rounded w-48 mx-auto" />
+            </div>
+            <div className="bg-white/5 rounded-3xl p-5 animate-pulse">
+              <div className="h-5 bg-white/10 rounded w-1/2 mb-3" />
+              <div className="h-20 bg-white/10 rounded w-full mb-3" />
+              <div className="h-4 bg-white/10 rounded w-1/3" />
+            </div>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white/5 rounded-3xl p-5 animate-pulse">
+                <div className="h-5 bg-white/10 rounded w-1/2 mb-3" />
+                <div className="h-16 bg-white/10 rounded w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Loading Skeleton */}
+        <div className="hidden md:block relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-12 sm:pb-14 md:pb-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            {/* Loading skeleton */}
             <div className="space-y-6 md:space-y-8 mt-12">
               <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 md:p-10 animate-pulse">
                 <div className="h-8 bg-gray-700 rounded w-1/3 mb-4" />
@@ -108,30 +149,175 @@ function DashboardPageContent() {
 
   if (dashboardData.error) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-red-400 mb-4">{dashboardData.error}</p>
-          <button
+          <p className="text-red-400 mb-4 text-sm md:text-base">{dashboardData.error}</p>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={fetchDashboardData}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-2xl shadow-xl transition-all min-h-[44px]"
           >
             Retry
-          </button>
+          </motion.button>
         </div>
       </div>
     )
   }
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'upload', label: 'Upload Pitch', icon: Upload },
-    { id: 'team', label: 'Team', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings },
-  ]
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative">
-      <div className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8">
+      {/* Mobile Layout */}
+      <div className="md:hidden relative z-10 pt-6 pb-24 px-4">
+        <div className="max-w-full mx-auto">
+          {/* Mobile Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="mb-4 text-center"
+          >
+            <h1 className="font-space text-2xl tracking-tight text-white font-bold leading-tight mb-1">
+              Dashboard
+            </h1>
+            <p className="text-sm text-white/70 font-space">
+              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">{dashboardData.userName}</span>
+            </p>
+          </motion.div>
+
+          {/* Mobile Tab Dropdown */}
+          <div className="relative mb-6">
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/10 rounded-3xl shadow-xl backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-3">
+                {activeTabData && (
+                  <>
+                    <activeTabData.icon className="w-5 h-5 text-purple-400" />
+                    <span className="font-space text-white font-medium">{activeTabData.label}</span>
+                  </>
+                )}
+              </div>
+              <ChevronDown className={cn(
+                "w-5 h-5 text-white/60 transition-transform duration-200",
+                isDropdownOpen && "rotate-180"
+              )} />
+            </motion.button>
+
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {isDropdownOpen && (
+                <>
+                  {/* Backdrop */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="fixed inset-0 bg-black/60 z-40"
+                  />
+                  
+                  {/* Dropdown */}
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-white/[0.05] border border-white/10 rounded-3xl shadow-xl backdrop-blur-xl overflow-hidden z-50"
+                  >
+                    {tabs.map((tab) => {
+                      const Icon = tab.icon
+                      const isActive = activeTab === tab.id
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => handleTabChange(tab.id)}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-4 py-3 transition-colors",
+                            isActive
+                              ? "bg-purple-600/20 text-purple-400"
+                              : "text-white/80 hover:bg-white/5"
+                          )}
+                        >
+                          <Icon className="w-5 h-5" />
+                          <span className="font-space font-medium">{tab.label}</span>
+                        </button>
+                      )
+                    })}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Mobile Tab Content */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-4"
+          >
+            {activeTab === 'overview' && (
+              <div className="space-y-4">
+                {/* Hero Performance Card - Prominent */}
+                <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                  <HeroPerformanceCard
+                    userName={dashboardData.userName}
+                    currentDateTime={dashboardData.currentDateTime}
+                    session={dashboardData.session}
+                  />
+                </div>
+
+                {/* Critical Alerts */}
+                <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                  <CriticalAlertsSection session={dashboardData.session} />
+                </div>
+
+                {/* Performance Metrics */}
+                <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                  <PerformanceMetricCards session={dashboardData.session} />
+                </div>
+
+                {/* Recent Sessions */}
+                <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                  <RecentSessionsPreview />
+                </div>
+
+                {/* Recommended Actions */}
+                <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                  <RecommendedActions session={dashboardData.session} />
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'upload' && (
+              <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                <UploadTab />
+              </div>
+            )}
+
+            {activeTab === 'team' && (
+              <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                <TeamTab
+                  leaderboard={[]}
+                  userRank={1}
+                  teamStats={{
+                    teamSize: 1,
+                    avgTeamScore: 0,
+                    yourScore: 0
+                  }}
+                />
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden md:block relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
           <motion.div

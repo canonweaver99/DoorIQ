@@ -102,7 +102,7 @@ export function AccountPreferences({ userId }: AccountPreferencesProps) {
 
   if (loading) {
     return (
-      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-5 h-5 animate-spin text-[#00d4aa]" />
         </div>
@@ -111,17 +111,17 @@ export function AccountPreferences({ userId }: AccountPreferencesProps) {
   }
 
   return (
-    <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
-      <div className="space-y-6">
+    <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
+      <div className="space-y-4 sm:space-y-6">
         <div>
-          <Label className="text-sm font-semibold text-white mb-2 block font-space">
+          <Label className="text-sm font-semibold text-white mb-2 sm:mb-3 block font-space">
             What will you be using DoorIQ for?
           </Label>
           <select
             value={usage}
             onChange={(e) => handleUsageChange(e.target.value)}
             disabled={saving}
-            className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-md text-white text-sm focus:outline-none focus:border-[#00d4aa] focus:ring-1 focus:ring-[#00d4aa]/20 font-sans mt-2"
+            className="w-full px-4 py-3 sm:py-2 h-12 sm:h-10 bg-[#0a0a0a] border border-[#2a2a2a] rounded-md text-white text-base sm:text-sm focus:outline-none focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 font-sans mt-2 touch-manipulation"
           >
             <option value="">Select an option</option>
             <option value="sales-training">Sales Training</option>
@@ -134,14 +134,14 @@ export function AccountPreferences({ userId }: AccountPreferencesProps) {
         </div>
 
         <div>
-          <Label className="text-sm font-semibold text-white mb-2 block font-space">
+          <Label className="text-sm font-semibold text-white mb-2 sm:mb-3 block font-space">
             Language
           </Label>
           <select
             value={language}
             onChange={(e) => handleLanguageChange(e.target.value)}
             disabled={saving}
-            className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-md text-white text-sm focus:outline-none focus:border-[#00d4aa] focus:ring-1 focus:ring-[#00d4aa]/20 font-sans mt-2"
+            className="w-full px-4 py-3 sm:py-2 h-12 sm:h-10 bg-[#0a0a0a] border border-[#2a2a2a] rounded-md text-white text-base sm:text-sm focus:outline-none focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 font-sans mt-2 touch-manipulation"
           >
             <option value="en">English (US)</option>
             <option value="en-GB">English (UK)</option>

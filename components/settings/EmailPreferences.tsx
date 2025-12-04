@@ -76,7 +76,7 @@ export function EmailPreferences({ userId }: EmailPreferencesProps) {
 
   if (loading) {
     return (
-      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-5 h-5 animate-spin text-[#00d4aa]" />
         </div>
@@ -85,21 +85,21 @@ export function EmailPreferences({ userId }: EmailPreferencesProps) {
   }
 
   return (
-    <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-white mb-2 font-space">Email Preferences</h2>
+    <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 font-space">Email Preferences</h2>
         <p className="text-sm text-[#a0a0a0] font-sans">Manage how you receive notifications</p>
       </div>
 
-      <div className="flex items-center justify-between p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
-        <div className="flex items-center gap-3">
-          <Bell className="w-5 h-5 text-[#a0a0a0]" />
-          <div>
+      <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <Bell className="w-5 h-5 text-[#a0a0a0] flex-shrink-0" />
+          <div className="min-w-0">
             <p className="font-medium text-white text-sm font-sans">Email Notifications</p>
             <p className="text-xs text-[#a0a0a0] mt-0.5 font-sans">Receive email updates about your account</p>
           </div>
         </div>
-        <label className="relative inline-flex items-center cursor-pointer">
+        <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 touch-manipulation">
           <input
             type="checkbox"
             checked={emailNotifications}
@@ -107,7 +107,7 @@ export function EmailPreferences({ userId }: EmailPreferencesProps) {
             disabled={updating}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-[#2a2a2a] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#00d4aa]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00d4aa] disabled:opacity-50"></div>
+          <div className="w-12 h-7 sm:w-11 sm:h-6 bg-[#2a2a2a] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#00d4aa]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-[#00d4aa] disabled:opacity-50"></div>
         </label>
       </div>
     </div>
