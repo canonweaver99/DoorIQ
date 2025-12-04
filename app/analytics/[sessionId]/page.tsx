@@ -463,7 +463,7 @@ export default function AnalyticsPage() {
   
   return (
     <div className="min-h-screen bg-black">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-4 sm:pt-6 lg:pt-8 pb-8 sm:pb-10 lg:pb-12">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-4 sm:pt-6 lg:pt-16 pb-8 sm:pb-10 lg:pb-12">
         {/* Hero Section - Loads immediately */}
         {loadingStates.hero && comparison && (
           <HeroSection
