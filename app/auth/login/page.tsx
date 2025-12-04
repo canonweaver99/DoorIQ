@@ -43,28 +43,12 @@ function LoginForm() {
 
     try {
       const supabase = createClient()
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) throw signInError
-
-      // Check if user exists in the users table
-      if (signInData.user) {
-        const { data: userData, error: userCheckError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', signInData.user.id)
-          .single()
-
-        // If user doesn't exist in users table, redirect to book demo
-        if (!userData || userCheckError) {
-          await supabase.auth.signOut()
-          router.replace('/book-demo')
-          return
-        }
-      }
 
       // If user came via invite link, accept it now
       if (inviteToken) {
