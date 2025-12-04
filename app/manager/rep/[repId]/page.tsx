@@ -444,8 +444,8 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
                 </p>
               </div>
             </motion.div>
-            )}
           </div>
+          )}
 
           {/* Stats Cards - Horizontal scroll on mobile */}
           {isMobile ? (
