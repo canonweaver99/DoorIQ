@@ -346,9 +346,9 @@ export function ScrollingAgentCarousel({
                           transform: combinedTransform,
                         }
                         
-                        // URL encode image path if it contains spaces to ensure proper loading
+                        // Properly encode image paths with spaces
                         const imageSrc = agent.src.includes(' ') || agent.src.includes('&')
-                          ? agent.src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                          ? '/' + agent.src.slice(1).split('/').map(part => encodeURIComponent(part)).join('/')
                           : agent.src
                         
                         return (
